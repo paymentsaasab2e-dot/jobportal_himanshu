@@ -1,0 +1,46 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" rx="48" fill="url(#bg)"/>
+  <circle cx="162" cy="154" r="184" fill="url(#orb1)"/>
+  <circle cx="1032" cy="590" r="214" fill="url(#orb2)"/>
+  <rect x="72" y="74" width="210" height="48" rx="24" fill="rgba(255,255,255,0.16)"/>
+  <text x="110" y="106" fill="#E9D5FF" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="0.22em">COMMUNICATION</text>
+  <text x="72" y="228" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="64" font-weight="700">Professional</text>
+  <text x="72" y="304" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="64" font-weight="700">communication</text>
+  <text x="72" y="374" fill="#DDD6FE" font-family="Arial, sans-serif" font-size="28" font-weight="500">Build trust with updates, stakeholder alignment, and concise written clarity.</text>
+  <g filter="url(#shadow)">
+    <rect x="730" y="140" width="382" height="438" rx="42" fill="rgba(255,255,255,0.12)"/>
+  </g>
+  <rect x="786" y="200" width="232" height="118" rx="30" fill="#FFFFFF"/>
+  <rect x="842" y="304" width="56" height="36" rx="14" fill="#FFFFFF"/>
+  <rect x="842" y="352" width="214" height="112" rx="30" fill="#C4B5FD"/>
+  <rect x="916" y="448" width="52" height="34" rx="14" fill="#C4B5FD"/>
+  <rect x="830" y="236" width="132" height="18" rx="9" fill="#1E1B4B" fill-opacity="0.16"/>
+  <rect x="830" y="270" width="154" height="14" rx="7" fill="#1E1B4B" fill-opacity="0.12"/>
+  <rect x="886" y="388" width="122" height="18" rx="9" fill="#312E81" fill-opacity="0.18"/>
+  <rect x="886" y="422" width="132" height="14" rx="7" fill="#312E81" fill-opacity="0.12"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#312E81"/>
+      <stop offset="0.45" stop-color="#5B21B6"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+    <radialGradient id="orb1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(162 154) rotate(90) scale(184)">
+      <stop stop-color="#C4B5FD" stop-opacity="0.86"/>
+      <stop offset="1" stop-color="#C4B5FD" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1032 590) rotate(90) scale(214)">
+      <stop stop-color="#A78BFA" stop-opacity="0.82"/>
+      <stop offset="1" stop-color="#A78BFA" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="704" y="120" width="434" height="486" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="8"/>
+      <feGaussianBlur stdDeviation="13"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.0588235 0 0 0 0 0.0235294 0 0 0 0 0.141176 0 0 0 0.18 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_0"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_0" result="shape"/>
+    </filter>
+  </defs>
+</svg>

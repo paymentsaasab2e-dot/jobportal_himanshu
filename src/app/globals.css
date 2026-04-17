@@ -1,0 +1,537 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  /* Set at runtime by Header (ResizeObserver); fallback for first paint / pages without Header */
+  --app-header-height: 5.75rem;
+  /* Fonts: Inter for headings, Arimo for body */
+  --font-heading: var(--font-inter), "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: var(--font-arimo), "Arimo", "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-plus-jakarta: "Inter", "Segoe UI", sans-serif;
+  --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --brand-primary: #28A8E1;
+  --brand-primary-strong: #28A8DF;
+  --brand-primary-soft: #E8F7FD;
+  --brand-secondary: #28A8DF;
+  --brand-secondary-soft: #E6F7FC;
+  --brand-accent: #FC9620;
+  --brand-accent-soft: #FFF1DF;
+  --brand-primary-glow: rgba(40, 168, 225, 0.22);
+  --brand-accent-glow: rgba(252, 150, 32, 0.18);
+  --dashboard-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.05),
+    0 1px 0 rgba(255, 255, 255, 0.82) inset;
+  --dashboard-shadow-hover:
+    0 14px 34px rgba(15, 23, 42, 0.07),
+    0 1px 0 rgba(255, 255, 255, 0.84) inset;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(40, 168, 225, 0.12), transparent 32%),
+    radial-gradient(circle at 84% 10%, rgba(40, 168, 223, 0.08), transparent 18%),
+    radial-gradient(circle at 18% 88%, rgba(252, 150, 32, 0.07), transparent 20%),
+    linear-gradient(180deg, #f5f7ff 0%, #f8fbff 38%, #fcfdff 100%);
+  color: var(--foreground);
+  font-family: var(--font-body);
+}
+
+/* Headings use Inter */
+h1, h2, h3, h4, h5, h6,
+.font-heading {
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+/* Body text uses Arimo */
+p, span, div, li, td, th, label, input, textarea, select,
+.font-body {
+  font-family: var(--font-body);
+}
+
+a {
+  color: inherit;
+}
+
+/* Use hand cursor for clickable controls across the app */
+a[href],
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+summary,
+label[for],
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+}
+
+/* Hide default date picker icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  right: 0;
+}
+
+input[type="date"]::-moz-calendar-picker-indicator {
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  right: 0;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Range slider styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Custom scrollbar for profile sidebar */
+.profile-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.profile-sidebar-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.profile-sidebar-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.profile-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.profile-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Shimmer animation for progress bar */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* Notification animations */
+@keyframes notification-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes notification-slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+    max-height: 0;
+    min-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    max-height: 100px;
+    min-height: 56px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
+@keyframes notification-slide-out-bottom {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    max-height: 100px;
+    min-height: 56px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    overflow: hidden;
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+    max-height: 0;
+    min-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+.animate-notification-in {
+  animation: notification-slide-in-top 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-notification-out {
+  animation: notification-slide-out-bottom 0.5s ease-in forwards;
+}
+
+.dashboard-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.dashboard-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.dashboard-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+  transition: background 180ms ease;
+}
+
+.dashboard-scrollbar:hover {
+  scrollbar-color: rgba(100, 116, 139, 0.42) transparent;
+}
+
+.dashboard-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.42);
+}
+
+@layer base {
+  ::placeholder {
+    color: #9095A1 !important;
+    opacity: 1;
+    /* Firefox */
+  }
+
+  :-ms-input-placeholder {
+    color: #9095A1 !important;
+  }
+
+  ::-ms-input-placeholder {
+    color: #9095A1 !important;
+  }
+
+  select {
+    color: #4B5563; /* Neutral gray for initial state */
+  }
+
+  select:focus,
+  select:active,
+  select:not([value=""]) {
+    color: #000000 !important;
+  }
+
+  select option {
+    color: #111827;
+    /* Standard dark color for options */
+  }
+}
+
+/* Modal text and placeholder black for clear visibility (utilities layer overrides base) */
+@layer utilities {
+  .dashboard-surface {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 255, 0.88));
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: var(--dashboard-shadow);
+    backdrop-filter: blur(18px);
+  }
+
+  .dashboard-surface-hover {
+    transition:
+      transform 220ms ease,
+      box-shadow 220ms ease,
+      border-color 220ms ease;
+  }
+
+  .dashboard-surface-hover:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--dashboard-shadow-hover);
+    border-color: rgba(40, 168, 225, 0.18);
+  }
+
+  .brand-ring {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.65),
+      0 12px 30px var(--brand-primary-glow);
+  }
+
+  .dashboard-status-pill {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    transition:
+      border-color 220ms ease,
+      box-shadow 220ms ease,
+      transform 220ms ease;
+  }
+
+  .dashboard-status-pill::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0;
+    background:
+      linear-gradient(
+        120deg,
+        rgba(252, 150, 32, 0.26),
+        rgba(40, 168, 225, 0.18),
+        rgba(40, 168, 223, 0.24),
+        rgba(252, 150, 32, 0.22)
+      );
+    background-size: 240% 240%;
+    transition:
+      opacity 220ms ease,
+      transform 280ms ease;
+  }
+
+  .dashboard-status-pill::after {
+    content: "";
+    position: absolute;
+    top: -40%;
+    left: -24%;
+    z-index: 0;
+    height: 180%;
+    width: 55%;
+    opacity: 0;
+    border-radius: 999px;
+    background: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.72) 0%,
+      rgba(255, 255, 255, 0.22) 42%,
+      rgba(255, 255, 255, 0) 78%
+    );
+    filter: blur(8px);
+    transform: translateX(0);
+    transition:
+      opacity 240ms ease,
+      transform 480ms ease;
+  }
+
+  .dashboard-status-pill:hover {
+    transform: translateY(-1px);
+    border-color: rgba(40, 168, 225, 0.26);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.78),
+      0 12px 28px rgba(40, 168, 225, 0.16),
+      0 0 0 1px rgba(252, 150, 32, 0.08);
+  }
+
+  .dashboard-status-pill-active {
+    transform: translateY(-1px);
+    border-color: rgba(40, 168, 225, 0.26);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.78),
+      0 12px 28px rgba(40, 168, 225, 0.16),
+      0 0 0 1px rgba(252, 150, 32, 0.08);
+  }
+
+  .dashboard-status-pill:hover::before {
+    opacity: 1;
+    transform: scale(1.02);
+    animation: gradientShift 2.2s linear infinite;
+  }
+
+  .dashboard-status-pill-active::before {
+    opacity: 1;
+    transform: scale(1.02);
+    animation: gradientShift 2.2s linear infinite;
+  }
+
+  .dashboard-status-pill:hover::after {
+    opacity: 0.95;
+    transform: translateX(150%);
+  }
+
+  .dashboard-status-pill-active::after {
+    opacity: 0.95;
+    transform: translateX(150%);
+  }
+
+  /* All form inputs, textareas, and selects in modals */
+  .modal-placeholder-black input,
+  .modal-placeholder-black textarea,
+  .modal-placeholder-black select,
+  .modal-placeholder-black input[type="text"],
+  .modal-placeholder-black input[type="email"],
+  .modal-placeholder-black input[type="tel"],
+  .modal-placeholder-black input[type="date"],
+  .modal-placeholder-black input[type="number"],
+  .modal-placeholder-black input[type="url"],
+  .modal-placeholder-black input[type="password"] {
+    color: #000000 !important;
+  }
+
+  /* All placeholders in modals */
+  .modal-placeholder-black input::placeholder,
+  .modal-placeholder-black textarea::placeholder,
+  .modal-placeholder-black ::placeholder {
+    color: #000000 !important;
+    opacity: 1 !important;
+  }
+
+  /* IE and Edge placeholders */
+  .modal-placeholder-black :-ms-input-placeholder,
+  .modal-placeholder-black ::-ms-input-placeholder {
+    color: #000000 !important;
+    opacity: 1 !important;
+  }
+
+  /* Select dropdown text - must be very specific */
+  .modal-placeholder-black select,
+  .modal-placeholder-black select:focus,
+  .modal-placeholder-black select:active,
+  .modal-placeholder-black select:hover {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+  }
+
+  /* Select dropdown options */
+  .modal-placeholder-black select option {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+  }
+
+  /* Select dropdown when empty (placeholder state) */
+  .modal-placeholder-black select:invalid,
+  .modal-placeholder-black select option[value=""] {
+    color: #000000 !important;
+  }
+
+  /* Ensure selected option text is black */
+  .modal-placeholder-black select option:checked {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+  }
+
+  /* Selected option using attribute selector */
+  .modal-placeholder-black select option[selected] {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+  }
+
+  /* Override gray text classes in modals - make all text black */
+  .modal-placeholder-black .text-gray-400,
+  .modal-placeholder-black .text-gray-500,
+  .modal-placeholder-black .text-gray-600,
+  .modal-placeholder-black .text-gray-700,
+  .modal-placeholder-black .text-gray-800,
+  .modal-placeholder-black .text-gray-900 {
+    color: #000000 !important;
+  }
+
+  /* Ensure displayed values in inputs are black */
+  .modal-placeholder-black input[value],
+  .modal-placeholder-black select[value] {
+    color: #000000 !important;
+  }
+}
+
+/* LMS — subtle AI accent pulse (scoped utility) */
+@keyframes lms-ai-glow-key {
+  0%,
+  100% {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 0 rgba(40, 168, 225, 0.12);
+  }
+  50% {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08), 0 0 24px 2px rgba(252, 150, 32, 0.08);
+  }
+}
+
+.lms-ai-glow {
+  animation: lms-ai-glow-key 4s ease-in-out infinite;
+}

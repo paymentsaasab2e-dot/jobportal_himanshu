@@ -1,0 +1,38 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" rx="48" fill="url(#bg)"/>
+  <circle cx="1048" cy="140" r="210" fill="url(#orb1)"/>
+  <circle cx="156" cy="604" r="206" fill="url(#orb2)"/>
+  <rect x="72" y="72" width="214" height="48" rx="24" fill="rgba(255,255,255,0.16)"/>
+  <text x="110" y="104" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="0.2em">MASTERCLASS</text>
+  <text x="72" y="226" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="62" font-weight="700">System design</text>
+  <text x="72" y="300" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="62" font-weight="700">patterns 2026</text>
+  <text x="72" y="372" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="28" font-weight="500">A big-picture architecture session on scalable patterns and platform trade-offs.</text>
+  <g stroke="#E2E8F0" stroke-width="14" stroke-linecap="round">
+    <path d="M756 236H956"/>
+    <path d="M856 236V356"/>
+    <path d="M756 356H956"/>
+    <path d="M756 474H956"/>
+  </g>
+  <g fill="#FFFFFF">
+    <rect x="688" y="192" width="136" height="88" rx="26"/>
+    <rect x="888" y="192" width="136" height="88" rx="26"/>
+    <rect x="788" y="312" width="136" height="88" rx="26"/>
+    <rect x="688" y="430" width="136" height="88" rx="26"/>
+    <rect x="888" y="430" width="136" height="88" rx="26"/>
+  </g>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A"/>
+      <stop offset="0.52" stop-color="#1E293B"/>
+      <stop offset="1" stop-color="#334155"/>
+    </linearGradient>
+    <radialGradient id="orb1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1048 140) rotate(90) scale(210)">
+      <stop stop-color="#94A3B8" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#94A3B8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(156 604) rotate(90) scale(206)">
+      <stop stop-color="#64748B" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#64748B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg>

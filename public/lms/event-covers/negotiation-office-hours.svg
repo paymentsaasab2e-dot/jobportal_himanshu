@@ -1,0 +1,45 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" rx="48" fill="url(#bg)"/>
+  <circle cx="1050" cy="128" r="206" fill="url(#orb1)"/>
+  <circle cx="162" cy="612" r="210" fill="url(#orb2)"/>
+  <rect x="72" y="72" width="198" height="48" rx="24" fill="rgba(255,255,255,0.16)"/>
+  <text x="110" y="104" fill="#EDE9FE" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="0.2em">OFFICE HOURS</text>
+  <text x="72" y="226" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="64" font-weight="700">Negotiation</text>
+  <text x="72" y="302" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="64" font-weight="700">office hours</text>
+  <text x="72" y="374" fill="#DDD6FE" font-family="Arial, sans-serif" font-size="28" font-weight="500">Salary, equity, and offer framing practice with a calm decision lens.</text>
+  <g filter="url(#shadow)">
+    <rect x="726" y="118" width="392" height="486" rx="40" fill="rgba(15,23,42,0.28)"/>
+  </g>
+  <rect x="790" y="178" width="264" height="148" rx="28" fill="rgba(255,255,255,0.12)"/>
+  <rect x="834" y="224" width="176" height="18" rx="9" fill="#DDD6FE"/>
+  <rect x="834" y="258" width="122" height="14" rx="7" fill="#DDD6FE" fill-opacity="0.76"/>
+  <circle cx="852" cy="452" r="82" fill="#A78BFA"/>
+  <circle cx="992" cy="452" r="82" fill="#C4B5FD"/>
+  <text x="816" y="464" fill="#1E1B4B" font-family="Arial, sans-serif" font-size="56" font-weight="700">$</text>
+  <text x="962" y="464" fill="#312E81" font-family="Arial, sans-serif" font-size="56" font-weight="700">%</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#312E81"/>
+      <stop offset="0.52" stop-color="#4C1D95"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+    <radialGradient id="orb1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1050 128) rotate(90) scale(206)">
+      <stop stop-color="#A78BFA" stop-opacity="0.74"/>
+      <stop offset="1" stop-color="#A78BFA" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(162 612) rotate(90) scale(210)">
+      <stop stop-color="#C4B5FD" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#C4B5FD" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="700" y="96" width="444" height="542" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="8"/>
+      <feGaussianBlur stdDeviation="13"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.0588235 0 0 0 0 0.0235294 0 0 0 0 0.141176 0 0 0 0.16 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_0"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_0" result="shape"/>
+    </filter>
+  </defs>
+</svg>

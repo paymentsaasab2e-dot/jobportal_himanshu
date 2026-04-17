@@ -1,0 +1,42 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" rx="48" fill="url(#bg)"/>
+  <circle cx="1036" cy="136" r="198" fill="url(#orb1)"/>
+  <circle cx="154" cy="604" r="214" fill="url(#orb2)"/>
+  <rect x="72" y="72" width="170" height="48" rx="24" fill="rgba(255,255,255,0.22)"/>
+  <text x="110" y="104" fill="#7C2D12" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="0.2em">MEETUP</text>
+  <text x="72" y="226" fill="#111827" font-family="Arial, sans-serif" font-size="64" font-weight="700">Networking</text>
+  <text x="72" y="302" fill="#111827" font-family="Arial, sans-serif" font-size="64" font-weight="700">breakfast</text>
+  <text x="72" y="374" fill="#374151" font-family="Arial, sans-serif" font-size="28" font-weight="500">Low-pressure conversations, warm intros, and real local hiring market context.</text>
+  <g filter="url(#shadow)">
+    <rect x="730" y="118" width="388" height="488" rx="40" fill="rgba(255,255,255,0.72)"/>
+  </g>
+  <circle cx="862" cy="392" r="108" fill="#F59E0B"/>
+  <circle cx="862" cy="392" r="72" fill="#FDE68A"/>
+  <rect x="1006" y="266" width="36" height="188" rx="18" fill="#FB923C"/>
+  <rect x="784" y="520" width="224" height="24" rx="12" fill="#78350F" fill-opacity="0.22"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF7ED"/>
+      <stop offset="0.5" stop-color="#FEF3C7"/>
+      <stop offset="1" stop-color="#FFEDD5"/>
+    </linearGradient>
+    <radialGradient id="orb1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1036 136) rotate(90) scale(198)">
+      <stop stop-color="#FDBA74" stop-opacity="0.76"/>
+      <stop offset="1" stop-color="#FDBA74" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(154 604) rotate(90) scale(214)">
+      <stop stop-color="#FDE68A" stop-opacity="0.78"/>
+      <stop offset="1" stop-color="#FDE68A" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="704" y="96" width="440" height="544" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="8"/>
+      <feGaussianBlur stdDeviation="13"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.168627 0 0 0 0 0.0901961 0 0 0 0 0.0313726 0 0 0 0.12 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_0"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_0" result="shape"/>
+    </filter>
+  </defs>
+</svg>

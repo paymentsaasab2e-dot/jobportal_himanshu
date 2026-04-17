@@ -1,0 +1,51 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" rx="48" fill="url(#bg)"/>
+  <circle cx="1024" cy="128" r="200" fill="url(#orb1)"/>
+  <circle cx="148" cy="612" r="224" fill="url(#orb2)"/>
+  <rect x="72" y="72" width="188" height="48" rx="24" fill="rgba(255,255,255,0.2)"/>
+  <text x="110" y="104" fill="#083344" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="0.2em">WORKSHOP</text>
+  <text x="72" y="226" fill="#0F172A" font-family="Arial, sans-serif" font-size="64" font-weight="700">UI portfolio</text>
+  <text x="72" y="302" fill="#0F172A" font-family="Arial, sans-serif" font-size="64" font-weight="700">critique live</text>
+  <text x="72" y="374" fill="#334155" font-family="Arial, sans-serif" font-size="28" font-weight="500">Live teardown sessions that sharpen portfolio storytelling before design rounds.</text>
+  <g filter="url(#shadow)">
+    <rect x="736" y="118" width="388" height="492" rx="40" fill="rgba(255,255,255,0.74)"/>
+  </g>
+  <rect x="788" y="174" width="284" height="170" rx="24" fill="url(#panel)"/>
+  <rect x="822" y="208" width="154" height="18" rx="9" fill="#FFFFFF" fill-opacity="0.86"/>
+  <rect x="822" y="242" width="196" height="14" rx="7" fill="#FFFFFF" fill-opacity="0.66"/>
+  <rect x="822" y="270" width="132" height="14" rx="7" fill="#FFFFFF" fill-opacity="0.52"/>
+  <rect x="792" y="386" width="280" height="160" rx="24" fill="#FFFFFF"/>
+  <circle cx="848" cy="450" r="26" fill="#22C55E"/>
+  <rect x="892" y="430" width="132" height="16" rx="8" fill="#0F172A" fill-opacity="0.16"/>
+  <rect x="892" y="460" width="104" height="14" rx="7" fill="#0F172A" fill-opacity="0.1"/>
+  <rect x="828" y="500" width="208" height="14" rx="7" fill="#0F172A" fill-opacity="0.08"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ECFEFF"/>
+      <stop offset="0.48" stop-color="#CCFBF1"/>
+      <stop offset="1" stop-color="#DBEAFE"/>
+    </linearGradient>
+    <radialGradient id="orb1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1024 128) rotate(90) scale(200)">
+      <stop stop-color="#67E8F9" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#67E8F9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(148 612) rotate(90) scale(224)">
+      <stop stop-color="#86EFAC" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#86EFAC" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="788" y1="174" x2="1072" y2="344" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#14B8A6"/>
+      <stop offset="1" stop-color="#0EA5E9"/>
+    </linearGradient>
+    <filter id="shadow" x="708" y="96" width="444" height="548" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="8"/>
+      <feGaussianBlur stdDeviation="14"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.0431373 0 0 0 0 0.133333 0 0 0 0 0.211765 0 0 0 0.14 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_0"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_0" result="shape"/>
+    </filter>
+  </defs>
+</svg>
