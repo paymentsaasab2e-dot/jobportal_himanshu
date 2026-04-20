@@ -169,7 +169,15 @@ export default function BasicInfoModal({
 
     if (!payload.firstName) nextErrors.firstName = 'First name is required.';
     if (!payload.email) nextErrors.email = 'Email is required.';
-    if (!payload.phone) nextErrors.phone = 'Phone number is required.';
+    if (!payload.phone) {
+      nextErrors.phone = 'Phone number is required.';
+    } else {
+      const expectedLength = selectedPhoneCodeOption.phoneLength;
+      const digitsOnly = payload.phone.replace(/\D/g, '');
+      if (digitsOnly.length !== expectedLength) {
+        nextErrors.phone = `Phone number must be exactly ${expectedLength} digits for ${selectedPhoneCodeOption.name}.`;
+      }
+    }
     if (!payload.gender) nextErrors.gender = 'Gender is required.';
     if (!payload.dob) {
       nextErrors.dob = 'Date of birth is required.';
@@ -382,6 +390,8 @@ export default function BasicInfoModal({
                                   setPhoneCode(formatPhoneCodeLabel(item));
                                   setIsPhoneCodeOpen(false);
                                   setPhoneCodeSearch('');
+                                  // Clear phone when country changes to prevent invalid length
+                                  setPhoneValue('');
                                 }}
                                 className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2"
                               >
@@ -399,12 +409,28 @@ export default function BasicInfoModal({
                       <input
                         type="tel"
                         value={phoneValue}
-                        onChange={(e) => setPhoneValue(e.target.value)}
+                        onChange={(e) => {
+                          const digitsOnly = e.target.value.replace(/\D/g, '');
+                          const maxLength = selectedPhoneCodeOption.phoneLength;
+                          setPhoneValue(digitsOnly.slice(0, maxLength));
+                        }}
+                        maxLength={selectedPhoneCodeOption.phoneLength}
                         className={`h-11 w-full rounded-lg px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${errors.phone ? 'border-red-400' : 'border-gray-200'}`}
-                        placeholder="Enter phone number"
+                        placeholder={`${selectedPhoneCodeOption.phoneLength} digits`}
                       />
                     </div>
-                    {errors.phone && <p className="text-xs text-red-600">{errors.phone}</p>}
+                    <div className="flex items-center justify-between">
+                      {errors.phone ? (
+                        <p className="text-xs text-red-600">{errors.phone}</p>
+                      ) : (
+                        <p className="text-xs text-gray-400">
+                          {selectedPhoneCodeOption.name}: {selectedPhoneCodeOption.phoneLength} digits required
+                        </p>
+                      )}
+                      <p className={`text-xs ${phoneValue.replace(/\D/g, '').length === selectedPhoneCodeOption.phoneLength ? 'text-green-500' : 'text-gray-400'}`}>
+                        {phoneValue.replace(/\D/g, '').length}/{selectedPhoneCodeOption.phoneLength}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </section>

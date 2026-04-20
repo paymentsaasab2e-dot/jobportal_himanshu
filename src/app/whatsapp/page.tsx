@@ -222,6 +222,7 @@ export default function WhatsAppLogin() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
   const [whatsappNumberValue, setWhatsappNumberValue] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [emailValue, setEmailValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -234,17 +235,79 @@ export default function WhatsAppLogin() {
     setCountrySearch("");
   };
 
-  const filteredCountries = countries.filter((country) => {
-    const query = countrySearch.trim().toLowerCase();
-    if (!query) return true;
-    return (
-      country.name.toLowerCase().includes(query) ||
-      country.code.toLowerCase().includes(query) ||
-      country.dialCode.includes(query.replace(/\s/g, ""))
-    );
-  });
+  // Handle keyboard typing when dropdown is open for inline search
+  const handleDropdownKeyDown = (e: React.KeyboardEvent) => {
+    // Ignore navigation keys
+    if (['ArrowUp', 'ArrowDown', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
+      if (e.key === 'Escape') {
+        setIsDropdownOpen(false);
+        setCountrySearch("");
+      }
+      return;
+    }
+    
+    // Allow typing to search
+    if (e.key.length === 1) {
+      e.preventDefault();
+      const char = e.key.toLowerCase();
+      setCountrySearch(prev => {
+        const newSearch = prev + char;
+        return newSearch.slice(0, 20); // Limit search length
+      });
+    } else if (e.key === 'Backspace') {
+      e.preventDefault();
+      setCountrySearch(prev => prev.slice(0, -1));
+    }
+  };
 
-  // Close dropdown when clicking outside
+  const filteredCountries = countries
+    .filter((country) => {
+      const query = countrySearch.trim().toLowerCase();
+      if (!query) return true;
+      const cleanQuery = query.replace(/\s/g, "");
+      return (
+        country.name.toLowerCase().includes(query) ||
+        country.code.toLowerCase().includes(query) ||
+        country.dialCode.includes(cleanQuery) ||
+        country.dialCode.replace(/\+/g, "").includes(cleanQuery)
+      );
+    })
+    .sort((a, b) => {
+      const query = countrySearch.trim().toLowerCase().replace(/\s/g, "");
+      if (!query) return 0;
+      
+      // Check for exact dial code match (priority 1)
+      const aDialExact = a.dialCode === `+${query}` || a.dialCode === query;
+      const bDialExact = b.dialCode === `+${query}` || b.dialCode === query;
+      
+      if (aDialExact && !bDialExact) return -1;
+      if (bDialExact && !aDialExact) return 1;
+      
+      // Check for dial code starts with (priority 2)
+      const aDialStart = a.dialCode.replace(/\+/g, "").startsWith(query);
+      const bDialStart = b.dialCode.replace(/\+/g, "").startsWith(query);
+      
+      if (aDialStart && !bDialStart) return -1;
+      if (bDialStart && !aDialStart) return 1;
+      
+      // Check for name starts with (priority 3)
+      const aNameStart = a.name.toLowerCase().startsWith(query);
+      const bNameStart = b.name.toLowerCase().startsWith(query);
+      
+      if (aNameStart && !bNameStart) return -1;
+      if (bNameStart && !aNameStart) return 1;
+      
+      // Check for country code starts with (priority 4)
+      const aCodeStart = a.code.toLowerCase().startsWith(query);
+      const bCodeStart = b.code.toLowerCase().startsWith(query);
+      
+      if (aCodeStart && !bCodeStart) return -1;
+      if (bCodeStart && !aCodeStart) return 1;
+      
+      return 0;
+    });
+
+  // Close dropdown when clicking outside + auto-focus search when opened
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -252,11 +315,14 @@ export default function WhatsAppLogin() {
         !dropdownRef.current.contains(event.target as Node)
       ) {
         setIsDropdownOpen(false);
+        setCountrySearch("");
       }
     };
 
     if (isDropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      // Auto-focus the search input when dropdown opens
+      setTimeout(() => searchInputRef.current?.focus(), 10);
     }
 
     return () => {
@@ -276,14 +342,14 @@ export default function WhatsAppLogin() {
     }
 
     if (!emailValue.trim()) {
-      setError("Please enter your Gmail address");
+      setError("Please enter your mail address");
       return;
     }
 
     const normalizedEmail = emailValue.trim().toLowerCase();
     const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
     if (!gmailRegex.test(normalizedEmail)) {
-      setError("Please enter a valid Gmail address");
+      setError("Please enter a valid mail address");
       return;
     }
 
@@ -407,17 +473,46 @@ export default function WhatsAppLogin() {
                     </button>
 
                     {isDropdownOpen && (
-                      <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-[240px] max-h-[300px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(0,0,0,0.08)] py-2">
-                        <div className="px-3 pb-2 sticky top-0 bg-white z-10">
-                          <input
-                            type="text"
-                            value={countrySearch}
-                            onChange={(e) => setCountrySearch(e.target.value)}
-                            placeholder="Search country / code"
-                            className="w-full h-9 px-3 rounded-lg border border-slate-200 text-[13px] font-medium text-slate-700 outline-none focus:ring-2 focus:ring-sky-100 focus:border-sky-400"
-                          />
+                      <div 
+                        className="absolute top-[calc(100%+8px)] left-0 z-50 w-[260px] max-h-[320px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
+                        onKeyDown={handleDropdownKeyDown}
+                        tabIndex={-1}
+                      >
+                        {/* Inline search display - shows current search query */}
+                        <div className="sticky top-0 bg-white z-10 border-b border-slate-100">
+                          <div className="px-3 py-2.5 flex items-center gap-2">
+                            <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+                              <span className="text-slate-400 text-xs">Search:</span>
+                              <input
+                                ref={searchInputRef}
+                                type="text"
+                                value={countrySearch}
+                                onChange={(e) => setCountrySearch(e.target.value)}
+                                placeholder="Type country or code..."
+                                className="flex-1 bg-transparent text-[13px] font-semibold text-slate-700 outline-none placeholder:text-slate-400"
+                              />
+                              {countrySearch && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCountrySearch("");
+                                    searchInputRef.current?.focus();
+                                  }}
+                                  className="text-slate-400 hover:text-slate-600 text-xs"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          {countrySearch && (
+                            <div className="px-3 pb-2 text-[11px] text-slate-500">
+                              Found {filteredCountries.length} result{filteredCountries.length !== 1 ? 's' : ''}
+                            </div>
+                          )}
                         </div>
 
+                        <div className="py-1">
                         {filteredCountries.map((country) => (
                           <div
                             key={country.code}
@@ -430,10 +525,18 @@ export default function WhatsAppLogin() {
                           </div>
                         ))}
                         {filteredCountries.length === 0 && (
-                          <div className="px-4 py-3 text-[13px] font-medium text-slate-500">
-                            No country found
+                          <div className="px-4 py-4 text-center">
+                            <p className="text-[13px] font-medium text-slate-500">No country found</p>
+                            <button
+                              type="button"
+                              onClick={() => setCountrySearch("")}
+                              className="mt-2 text-[12px] text-sky-600 hover:text-sky-700 font-semibold"
+                            >
+                              Clear search
+                            </button>
                           </div>
                         )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -462,7 +565,7 @@ export default function WhatsAppLogin() {
 
               {/* Email input group */}
               <div>
-                <label className="block text-[12px] font-black text-slate-700 uppercase tracking-widest mb-2 ml-1">Gmail Address</label>
+                <label className="block text-[12px] font-black text-slate-700 uppercase tracking-widest mb-2 ml-1">mail Address</label>
                 <div className="relative rounded-[16px] border border-slate-200 shadow-sm overflow-hidden bg-white focus-within:ring-4 focus-within:ring-sky-100/50 focus-within:border-sky-400 transition-all">
                   <div className="absolute left-4 top-0 bottom-0 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5 text-slate-400" />

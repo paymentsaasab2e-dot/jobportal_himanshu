@@ -51,6 +51,7 @@ export default function EducationModal({
   const [courseDuration, setCourseDuration] = useState(initialData?.courseDuration || '');
   const [documents, setDocuments] = useState<EducationDocument[]>(initialData?.documents || []);
   const [dragActive, setDragActive] = useState(false);
+  const [dateError, setDateError] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update values when initialData changes
@@ -168,6 +169,52 @@ export default function EducationModal({
   const isGradeNumeric = /^\d+(\.\d{1,2})?$/.test(grade.trim());
   const isCourseDurationNumeric = /^\d+(\.\d{1,2})?$/.test(courseDuration.trim());
 
+  // Generate year options (last 50 years to next 10 years)
+  const currentYear = new Date().getFullYear();
+  const startYearOptions = [];
+  for (let i = currentYear - 50; i <= currentYear + 10; i++) {
+    startYearOptions.push(i);
+  }
+
+  // End year options must be >= start year
+  const endYearOptions = startYear
+    ? startYearOptions.filter((year) => year >= Number(startYear))
+    : startYearOptions;
+
+  const validateYearOrder = (start: string, end: string): string => {
+    if (!start || !end) return '';
+    if (Number(end) < Number(start)) {
+      return 'End year must be after start year';
+    }
+    return '';
+  };
+
+  const handleStartYearChange = (value: string) => {
+    setStartYear(value);
+    setDateError('');
+    // If end year exists and is now invalid, reset it
+    if (endYear && value) {
+      const error = validateYearOrder(value, endYear);
+      if (error) {
+        setEndYear('');
+        setDateError(error);
+      }
+    }
+  };
+
+  const handleEndYearChange = (value: string) => {
+    if (startYear && value) {
+      const error = validateYearOrder(startYear, value);
+      setDateError(error);
+      if (!error) {
+        setEndYear(value);
+      }
+    } else {
+      setDateError('');
+      setEndYear(value);
+    }
+  };
+
   const missingRequiredFields: string[] = [];
   if (!educationLevel.trim()) missingRequiredFields.push('Education Level');
   if (!degreeProgram.trim()) missingRequiredFields.push('Degree / Program');
@@ -227,13 +274,6 @@ export default function EducationModal({
     });
     onClose();
   };
-
-  // Generate year options (last 50 years to next 10 years)
-  const currentYear = new Date().getFullYear();
-  const yearOptions = [];
-  for (let i = currentYear - 50; i <= currentYear + 10; i++) {
-    yearOptions.push(i);
-  }
 
   if (!isOpen) return null;
 
@@ -332,11 +372,11 @@ export default function EducationModal({
                   </label>
                   <select
                     value={startYear}
-                    onChange={(e) => setStartYear(e.target.value)}
+                    onChange={(e) => handleStartYearChange(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select Start Year</option>
-                    {yearOptions.map((year) => (
+                    {startYearOptions.map((year) => (
                       <option key={year} value={year.toString()}>
                         {year}
                       </option>
@@ -349,12 +389,12 @@ export default function EducationModal({
                   </label>
                   <select
                     value={endYear}
-                    onChange={(e) => setEndYear(e.target.value)}
+                    onChange={(e) => handleEndYearChange(e.target.value)}
                     disabled={currentlyStudying}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${dateError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
                   >
                     <option value="">Select End Year</option>
-                    {yearOptions.map((year) => (
+                    {endYearOptions.map((year) => (
                       <option key={year} value={year.toString()}>
                         {year}
                       </option>
@@ -373,12 +413,16 @@ export default function EducationModal({
                       setCurrentlyStudying(e.target.checked);
                       if (e.target.checked) {
                         setEndYear('');
+                        setDateError('');
                       }
                     }}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
                   <span className="ml-2 text-sm text-gray-700">I am currently studying here</span>
                 </label>
+                {dateError && (
+                  <p className="mt-2 text-xs text-red-600">{dateError}</p>
+                )}
               </div>
 
               {/* Academic Details Section */}

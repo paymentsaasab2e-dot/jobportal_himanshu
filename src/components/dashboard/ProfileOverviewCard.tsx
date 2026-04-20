@@ -141,9 +141,7 @@ export default function ProfileOverviewCard({
               <p className="text-lg font-semibold tracking-tight text-slate-950">
                 {profile?.fullName || "Candidate"}
               </p>
-              <p className="mt-1 text-[13px] font-medium text-slate-500">
-                Career dashboard optimized for your next move
-              </p>
+              
             </div>
 
             <div className="flex flex-wrap gap-1.5 text-[11px] font-semibold text-slate-600">
@@ -194,20 +192,32 @@ export default function ProfileOverviewCard({
             <button
               type="button"
               onClick={onCompleteProfile}
-              className="group mt-2.5 flex w-full items-center justify-between rounded-[15px] border border-white/70 bg-white/72 px-2.5 py-2 text-left shadow-[0_8px_18px_rgba(15,23,42,0.04)] transition-all duration-200 hover:border-[rgba(252,150,32,0.26)] hover:bg-white"
+              className="group mt-2.5 flex w-full items-start justify-between rounded-[15px] border border-white/70 bg-white/72 px-2.5 py-2.5 text-left shadow-[0_8px_18px_rgba(15,23,42,0.04)] transition-all duration-200 hover:border-[rgba(252,150,32,0.26)] hover:bg-white"
             >
-              <span className="min-w-0">
+              <span className="min-w-0 flex-1">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-accent-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-accent)]">
                   <Sparkles className="h-3 w-3" strokeWidth={2.1} />
                   Quick win
                 </span>
-                <span className="mt-1 block text-[12px] font-medium leading-5 text-slate-600">
-                  {visibleMissingSections.length > 0
-                    ? `Finish ${visibleMissingSections.join(" and ")} next.`
-                    : "Add the last details to improve recruiter confidence."}
-                </span>
+                {visibleMissingSections.length > 0 ? (
+                  <span className="mt-2 flex flex-col gap-1">
+                    {visibleMissingSections.map((section, index) => (
+                      <span key={section} className="flex items-center gap-1.5 text-[12px] font-medium leading-5 text-slate-600">
+                        <span className="h-1 w-1 rounded-full bg-[var(--brand-accent)]" />
+                        {index === 0 ? "Start with" : "Then add"} {section}
+                        {index === 0 && visibleMissingSections.length > 1 && (
+                          <span className="text-[10px] text-slate-400">(priority)</span>
+                        )}
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="mt-1 block text-[12px] font-medium leading-5 text-slate-600">
+                    Add the last details to improve recruiter confidence.
+                  </span>
+                )}
               </span>
-              <ChevronRight className="ml-3 h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--brand-primary)]" />
+              <ChevronRight className="ml-3 mt-0.5 h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--brand-primary)]" />
             </button>
           ) : null}
         </div>

@@ -6,7 +6,18 @@ import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 
 const currentYear = new Date().getFullYear();
 
-const footerLinks = [
+interface FooterLinkItem {
+  href: string;
+  label: string;
+  external?: boolean;
+}
+
+interface FooterLinkGroup {
+  title: string;
+  items: FooterLinkItem[];
+}
+
+const footerLinks: FooterLinkGroup[] = [
   {
     title: "Platform",
     items: [
@@ -28,9 +39,9 @@ const footerLinks = [
   {
     title: "Legal",
     items: [
-      { href: "/privacypolicy", label: "Privacy Policy" },
-      { href: "#", label: "Terms of Service" },
-      { href: "#", label: "Trust & Safety" },
+      { href: "/privacypolicy", label: "Privacy Policy", external: true },
+      { href: "/terms", label: "Terms of Service", external: true },
+      { href: "/trust-safety", label: "Trust & Safety", external: true },
     ],
   },
 ];
@@ -108,6 +119,8 @@ export default function Footer() {
                     <Link
                       key={item.label}
                       href={item.href}
+                      target={item.external ? "_blank" : undefined}
+                      rel={item.external ? "noopener noreferrer" : undefined}
                       className="text-[14px] font-medium transition-colors hover:text-[var(--brand-primary)]"
                     >
                       {item.label}

@@ -85,6 +85,7 @@ export default function ProfileCompletionDrawer({
   const [showFallback, setShowFallback] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
 
   const currentSection = useMemo(
@@ -100,6 +101,12 @@ export default function ProfileCompletionDrawer({
     onCompletionUpdated(freshData);
     return freshData;
   }, [candidateId, onCompletionUpdated]);
+
+  const scrollToBottom = useCallback(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, []);
 
   const requestQuestion = useCallback(
     async (
@@ -121,6 +128,8 @@ export default function ProfileCompletionDrawer({
         setConversation((prev) => [...prev, { role: "assistant", content: message }]);
         setCurrentSectionKey(section.key);
         setShowFallback(false);
+        // Scroll after AI replies
+        setTimeout(scrollToBottom, 100);
       } catch (error) {
         console.error("Failed to get AI question:", error);
         setShowFallback(true);
@@ -133,7 +142,7 @@ export default function ProfileCompletionDrawer({
         setLoadingQuestion(false);
       }
     },
-    []
+    [scrollToBottom]
   );
 
   useEffect(() => {
@@ -211,6 +220,8 @@ export default function ProfileCompletionDrawer({
     const updatedHistory = [...conversation, { role: "user" as const, content: message }];
     setConversation(updatedHistory);
     setInputValue("");
+    // Scroll after user sends message
+    setTimeout(scrollToBottom, 50);
 
     if (currentSection.key !== "resume") {
       try {
@@ -361,7 +372,10 @@ export default function ProfileCompletionDrawer({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-[#F9FAFB] px-5 py-4">
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto bg-[#F9FAFB] px-5 py-4"
+        >
           {drawerError ? (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {drawerError}

@@ -19,7 +19,7 @@ const arimo = Arimo({
 });
 
 export const metadata: Metadata = {
-  title: "SAASA B2E",
+  title: "HRYANTRA B2E",
   description: "AI-powered career dashboard and learning platform",
 };
 

@@ -75,6 +75,7 @@ export default function InternshipModal({
   const [skills, setSkills] = useState<string[]>(initialData?.skills || []);
   const [documents, setDocuments] = useState<InternshipDocument[]>(initialData?.documents || []);
   const [dragActive, setDragActive] = useState(false);
+  const [dateError, setDateError] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update state when modal opens or initial data changes
@@ -183,6 +184,42 @@ export default function InternshipModal({
     e.stopPropagation();
     setDragActive(false);
     handleFileSelect(e.dataTransfer.files);
+  };
+
+  const validateEndDate = (start: string, end: string): string => {
+    if (!start || !end) return '';
+    const startDateObj = new Date(start);
+    const endDateObj = new Date(end);
+    if (endDateObj < startDateObj) {
+      return 'End date must be after start date';
+    }
+    return '';
+  };
+
+  const handleStartDateChange = (value: string) => {
+    setStartDate(value);
+    setDateError('');
+    // If end date exists and is now invalid, reset it
+    if (endDate && value) {
+      const error = validateEndDate(value, endDate);
+      if (error) {
+        setEndDate('');
+        setDateError(error);
+      }
+    }
+  };
+
+  const handleEndDateChange = (value: string) => {
+    if (startDate && value) {
+      const error = validateEndDate(startDate, value);
+      setDateError(error);
+      if (!error) {
+        setEndDate(value);
+      }
+    } else {
+      setDateError('');
+      setEndDate(value);
+    }
   };
 
   const getMissingRequiredFields = () => {
@@ -362,7 +399,8 @@ export default function InternshipModal({
                     <input
                       type="date"
                       value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
+                      max={endDate || undefined}
+                      onChange={(e) => handleStartDateChange(e.target.value)}
                       className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       style={{
                         fontFamily: 'Inter, sans-serif',
@@ -387,9 +425,10 @@ export default function InternshipModal({
                     <input
                       type="date"
                       value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
+                      min={startDate || undefined}
+                      onChange={(e) => handleEndDateChange(e.target.value)}
                       disabled={currentlyWorking}
-                      className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className={`w-full px-4 py-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${dateError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
                       style={{
                         fontFamily: 'Inter, sans-serif',
                         fontSize: '14px',
@@ -412,12 +451,16 @@ export default function InternshipModal({
                         setCurrentlyWorking(e.target.checked);
                         if (e.target.checked) {
                           setEndDate('');
+                          setDateError('');
                         }
                       }}
                       className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
                     />
                     <span className="text-sm text-blue-600 font-medium">I am currently working here</span>
                   </label>
+                  {dateError && (
+                    <p className="mt-2 text-xs text-red-600">{dateError}</p>
+                  )}
                 </div>
               </div>
             </div>

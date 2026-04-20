@@ -573,7 +573,8 @@ export default function WorkExperienceModal({
       workSkills.length > 0 ||
       documents.length > 0
   );
-  const canSaveWorkExperience = isFormComplete || workExperiences.length > 0;
+  // Only show save button when all compulsory fields are filled
+  const canSaveWorkExperience = isFormComplete;
 
   // Helper function to check if an ID is a persisted MongoDB ObjectId
   const isPersistedId = (value?: string) => Boolean(value && /^[a-f\d]{24}$/i.test(value));
@@ -1086,39 +1087,6 @@ export default function WorkExperienceModal({
               </div>
             )}
 
-            {/* Add Button */}
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleAddWorkExperience}
-                disabled={!isFormComplete}
-                className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M8 3.33333V12.6667"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M3.33333 8H12.6667"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                Add Work Experience
-              </button>
-            </div>
 
             {/* SECTION 7: ADDED EXPERIENCE PREVIEW */}
             {workExperiences.length > 0 && (

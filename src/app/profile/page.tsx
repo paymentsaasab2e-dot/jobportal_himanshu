@@ -1989,9 +1989,11 @@ export default function ProfilePage() {
                                 expandedAcademicAchievementId ===
                                 (achievementItem.id || `academic-achievement-${index}`)
                               }
-                              onToggleExpand={() =>
-                                openDetailsModal('Academic Achievement Details', achievementItem)
-                              }
+                              onToggleExpand={() => {
+                                setAcademicAchievementModalMode('edit');
+                                setEditingAcademicAchievementId(achievementItem.id || null);
+                                setIsAcademicAchievementModalOpen(true);
+                              }}
                               onEdit={() => {
                                 setAcademicAchievementModalMode('edit');
                                 setEditingAcademicAchievementId(achievementItem.id || null);
