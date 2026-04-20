@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import Header from '../../../components/common/Header';
 import Image from 'next/image';
 
 interface Course {
@@ -170,8 +169,6 @@ The course also covers AI-driven networking strategies and market analysis, help
         background: 'linear-gradient(210deg, rgba(255, 171, 98, 0.40) 1.61%, #FFF 32.61%, rgba(40, 168, 223, 0.25) 87.92%), #FFF',
       }}
     >
-      <Header />
-
       <main className="mx-auto max-w-[1180px] px-4 py-10 sm:px-5 lg:px-6">
         {/* Back Button */}
         <button

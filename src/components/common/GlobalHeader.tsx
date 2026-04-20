@@ -17,7 +17,8 @@ export default function GlobalHeader() {
         '/uploadcv', 
         '/services', 
         '/ats-check', 
-        '/executive-services'
+        '/executive-services',
+        '/courses'
     ];
     const shouldHide = hideHeaderPaths.some(path => pathname === path || pathname.startsWith(path + '/'));
 

@@ -21,7 +21,7 @@ const footerLinks: FooterLinkGroup[] = [
   {
     title: "Platform",
     items: [
-      { href: "/explore-jobs", label: "Find Jobs" },
+      { href: "/", label: "Find Jobs" },
       { href: "/courses", label: "Courses & LMS" },
       { href: "/services", label: "Expert Services" },
       { href: "/aicveditor", label: "AI CV Tools" },
