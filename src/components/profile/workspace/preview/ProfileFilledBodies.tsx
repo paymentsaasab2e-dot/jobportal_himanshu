@@ -288,13 +288,6 @@ export function ProfileInternshipFilled({
           ) : null}
           <div className="flex flex-wrap items-center gap-2">
             <PreviewDocCount count={docCount} />
-            <button
-              type="button"
-              onClick={onToggleExpand}
-              className="text-xs font-semibold text-gray-600 hover:text-gray-900"
-            >
-              {isExpanded ? 'Hide details' : 'View full details'}
-            </button>
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -404,13 +397,6 @@ export function ProfileGapExplanationFilled({
               {desc}
             </p>
           ) : null}
-          <button
-            type="button"
-            onClick={onToggleExpand}
-            className="text-xs font-semibold text-gray-600 hover:text-gray-900"
-          >
-            {isExpanded ? 'Hide full explanation' : 'View full explanation'}
-          </button>
         </div>
         <div className="flex shrink-0 gap-1">
           <button
@@ -711,13 +697,6 @@ export function ProfileProjectFilled({
           ) : null}
           <div className="flex flex-wrap items-center gap-2">
             <PreviewDocCount count={docCount} />
-            <button
-              type="button"
-              onClick={onToggleExpand}
-              className="text-xs font-semibold text-gray-600 hover:text-gray-900"
-            >
-              {isExpanded ? 'Hide details' : 'View full details'}
-            </button>
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -1007,13 +986,6 @@ export function ProfileCareerPreferencesFilled({
               value={data.noticePeriod || '—'}
             />
           </PreviewMetaGrid>
-          <button
-            type="button"
-            onClick={onToggleExpand}
-            className="text-xs font-semibold text-gray-600 hover:text-gray-900"
-          >
-            {isExpanded ? 'Hide salary & extras' : 'Salary history & extras'}
-          </button>
         </div>
         <div className="flex shrink-0 gap-1">
           <button
@@ -1172,13 +1144,6 @@ export function ProfileVisaFilled({
           ) : null}
           <div className="flex flex-wrap items-center gap-2">
             <PreviewDocCount count={docCount} />
-            <button
-              type="button"
-              onClick={onToggleExpand}
-              className="text-xs font-semibold text-gray-600 hover:text-gray-900"
-            >
-              {isExpanded ? 'Hide legal details' : 'View legal details'}
-            </button>
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -1322,13 +1287,6 @@ export function ProfileVaccinationFilled({
               }
             />
           </PreviewMetaGrid>
-          <button
-            type="button"
-            onClick={onToggleExpand}
-            className="text-xs font-semibold text-gray-600 hover:text-gray-900"
-          >
-            {isExpanded ? 'Hide' : 'More detail'}
-          </button>
         </div>
         <div className="flex shrink-0 gap-1">
           <button
@@ -1399,13 +1357,6 @@ export function ProfileAcademicAchievementFilled({
           ) : null}
           <div className="flex flex-wrap items-center gap-2">
             <PreviewDocCount count={docCount} />
-            <button
-              type="button"
-              onClick={onToggleExpand}
-              className="text-xs font-semibold text-gray-600 hover:text-gray-900"
-            >
-              {isExpanded ? 'Hide details' : 'View full details'}
-            </button>
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -1504,13 +1455,6 @@ export function ProfileCompetitiveExamFilled({
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <PreviewDocCount count={docCount} />
-            <button
-              type="button"
-              onClick={onToggleExpand}
-              className="text-xs font-semibold text-gray-600 hover:text-gray-900"
-            >
-              {isExpanded ? 'Hide details' : 'View full details'}
-            </button>
           </div>
         </div>
         <div className="flex shrink-0 gap-1">

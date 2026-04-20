@@ -23,7 +23,6 @@ type Props = {
 export function EducationEntryPreview({
   entry,
   isExpanded,
-  onToggleExpand,
   onEdit,
   onDelete,
   getDocumentName,
@@ -82,13 +81,6 @@ export function EducationEntryPreview({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <PreviewDocCount count={docCount} />
-            <button
-              type="button"
-              onClick={onToggleExpand}
-              className="text-xs font-semibold text-gray-600 hover:text-gray-900"
-            >
-              {isExpanded ? 'Hide details' : 'View full details'}
-            </button>
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
