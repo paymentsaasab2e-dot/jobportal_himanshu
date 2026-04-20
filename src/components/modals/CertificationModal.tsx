@@ -132,7 +132,7 @@ export default function CertificationModal({
     if (editingCertId && certifications.length > 0) {
       const cert = certifications.find(c => c.id === editingCertId);
       if (cert && cert.documents) {
-        const normalizedDocs: CertificationDocument[] = cert.documents.map((doc, index) => {
+        const normalizedDocs: CertificationDocument[] = cert.documents.map((doc: string | CertificationDocument, index) => {
           if (typeof doc === 'string') {
             return {
               id: `doc-${Date.now()}-${index}`,
@@ -141,11 +141,11 @@ export default function CertificationModal({
             };
           } else if (doc && typeof doc === 'object') {
             return {
-              id: (doc as CertificationDocument).id || `doc-${Date.now()}-${index}`,
-              file: (doc as CertificationDocument).file,
-              name: (doc as CertificationDocument).name || 'Document',
-              url: (doc as CertificationDocument).url,
-              size: (doc as CertificationDocument).size,
+              id: doc.id || `doc-${Date.now()}-${index}`,
+              file: doc.file,
+              name: doc.name || 'Document',
+              url: doc.url,
+              size: doc.size,
             };
           } else {
             return {

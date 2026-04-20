@@ -107,7 +107,7 @@ export default function AccomplishmentModal({
             : null
         );
         setDocuments(
-          (accomplishmentToEdit.documents || []).map((doc, index) => {
+          (accomplishmentToEdit.documents || []).map((doc: string | { id?: string; file?: File; name?: string; url?: string; size?: number }, index) => {
             if (typeof doc === 'string') {
               return {
                 id: `doc-${accomplishmentToEdit.id}-${index}`,

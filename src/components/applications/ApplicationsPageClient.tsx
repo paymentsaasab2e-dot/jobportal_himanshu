@@ -233,13 +233,13 @@ function formatSavedSalary(job: SavedJobRecord) {
   if (job.salaryMin == null && job.salaryMax == null) return null;
 
   if (job.salaryMin != null && job.salaryMax != null) {
-    return `${formatCompactMoney(job.salaryMin, job.salaryCurrency)} - ${formatCompactMoney(
+    return `${formatCompactMoney(job.salaryMin, job.salaryCurrency ?? undefined)} - ${formatCompactMoney(
       job.salaryMax,
-      job.salaryCurrency
+      job.salaryCurrency ?? undefined
     )}`;
   }
 
-  return formatCompactMoney(job.salaryMin ?? job.salaryMax ?? 0, job.salaryCurrency);
+  return formatCompactMoney(job.salaryMin ?? job.salaryMax ?? 0, job.salaryCurrency ?? undefined);
 }
 
 function mapJobRecord(job: Record<string, unknown>, fallbackId: string): DashboardJob {
@@ -868,7 +868,7 @@ export default function ApplicationsPageClient() {
 
         return null;
       })
-      .filter((job): job is SavedJobRecord => job !== null);
+      .filter((job): job is NonNullable<typeof job> => job !== null) as SavedJobRecord[];
   }, [backendSavedJobs, savedJobIds, savedJobSourceJobs]);
 
   const filteredInterviews = useMemo(() => {

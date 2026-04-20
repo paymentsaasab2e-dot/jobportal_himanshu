@@ -60,7 +60,7 @@ export default function CompetitiveExamsModal({
       setAdditionalNotes(initialData.additionalNotes || '');
       // Normalize documents to ensure each has a unique id
       if (initialData.documents) {
-        const normalizedDocs = initialData.documents.map((doc, index) => {
+        const normalizedDocs = initialData.documents.map((doc: string | { id?: string; name?: string; url?: string; file?: File; size?: number }, index) => {
           if (typeof doc === 'string') {
             return {
               id: `doc-${index}-${Date.now()}`,
