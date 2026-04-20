@@ -59,9 +59,7 @@ export default function EmployerLandingPage() {
                 >
                   Request Demo <ArrowRight className="w-4 h-4" />
                 </button>
-                <button className="w-full sm:w-auto h-14 px-8 rounded-full bg-white border border-slate-200 shadow-sm text-slate-800 font-bold text-[15px] hover:bg-slate-50 transition-all">
-                  Explore Platform
-                </button>
+                
               </div>
 
               {/* Trust Signals */}
