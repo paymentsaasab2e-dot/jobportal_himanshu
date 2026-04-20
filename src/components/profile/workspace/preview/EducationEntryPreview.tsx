@@ -86,7 +86,10 @@ export function EducationEntryPreview({
         <div className="flex shrink-0 gap-1">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
             aria-label="Delete education"
           >

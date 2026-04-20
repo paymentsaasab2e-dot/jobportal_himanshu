@@ -36,27 +36,36 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
   const method = req.method.toUpperCase();
   const hasBody = !['GET', 'HEAD'].includes(method);
 
-  const response = await fetch(targetUrl, {
-    method,
-    headers,
-    body: hasBody ? req.body : undefined,
-    // Needed for streaming body in Node runtime
-    duplex: hasBody ? 'half' : undefined,
-    redirect: 'manual',
-  } as RequestInit & { duplex?: 'half' });
+  try {
+    const response = await fetch(targetUrl, {
+      method,
+      headers,
+      body: hasBody ? req.body : undefined,
+      // Needed for streaming body in Node runtime
+      duplex: hasBody ? 'half' : undefined,
+      redirect: 'manual',
+    } as RequestInit & { duplex?: 'half' });
 
-  const respHeaders = new Headers(response.headers);
-  // Avoid passing compression/length headers that can mismatch proxied body.
-  respHeaders.delete('content-length');
-  respHeaders.delete('content-encoding');
-  respHeaders.delete('transfer-encoding');
-  respHeaders.delete('connection');
+    const respHeaders = new Headers(response.headers);
+    // Avoid passing compression/length headers that can mismatch proxied body.
+    respHeaders.delete('content-length');
+    respHeaders.delete('content-encoding');
+    respHeaders.delete('transfer-encoding');
+    respHeaders.delete('connection');
 
-  return new NextResponse(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: respHeaders,
-  });
+    return new NextResponse(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: respHeaders,
+    });
+  } catch (error) {
+    console.error(`Proxy error connecting to ${targetUrl}:`, error);
+    // Return empty response for phase2-public-jobs when backend is unavailable
+    if (pathParts[0] === 'phase2-public-jobs') {
+      return NextResponse.json({ jobs: [], total: 0, page: 1, limit: 120 }, { status: 200 });
+    }
+    return NextResponse.json({ error: 'Backend service unavailable' }, { status: 503 });
+  }
 }
 
 export async function GET(req: NextRequest, context: { params: Promise<{ path: string[] }> }) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence, type Variants } from 'framer-motion';
 import { 
   FileText, 
   BrainCircuit, 
@@ -15,12 +15,12 @@ import {
 } from 'lucide-react';
 
 // --- Animation Variants ---
-const fadeInUp = {
+const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const } }
 };
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -28,14 +28,14 @@ const staggerContainer = {
   }
 };
 
-const floatingAnimation = {
+const floatingAnimation: Variants = {
   initial: { y: 0 },
   animate: {
     y: [0, -15, 0],
     transition: {
       duration: 5,
       repeat: Infinity,
-      ease: "easeInOut"
+      ease: "easeInOut" as const
     }
   }
 };

@@ -293,7 +293,10 @@ export function ProfileInternshipFilled({
         <div className="flex shrink-0 gap-1">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
             aria-label="Delete internship"
           >
@@ -401,7 +404,10 @@ export function ProfileGapExplanationFilled({
         <div className="flex shrink-0 gap-1">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
             aria-label="Delete gap explanation"
           >
@@ -490,7 +496,10 @@ export function ProfileSkillsFilled({
         <div className="flex gap-1">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
             aria-label="Delete skills"
           >
@@ -574,7 +583,10 @@ export function ProfileLanguagesFilled({
         <div className="flex gap-1">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
             aria-label="Delete languages"
           >
@@ -702,7 +714,10 @@ export function ProfileProjectFilled({
         <div className="flex shrink-0 gap-1">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
             aria-label="Delete project"
           >
@@ -808,7 +823,10 @@ export function ProfilePortfolioLinksFilled({
         <div className="flex gap-1">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
             aria-label="Delete portfolio links"
           >
@@ -990,7 +1008,10 @@ export function ProfileCareerPreferencesFilled({
         <div className="flex shrink-0 gap-1">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
             aria-label="Delete career preferences"
           >
@@ -1149,7 +1170,10 @@ export function ProfileVisaFilled({
         <div className="flex shrink-0 gap-1">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
             aria-label="Delete visa"
           >
@@ -1291,7 +1315,10 @@ export function ProfileVaccinationFilled({
         <div className="flex shrink-0 gap-1">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
             aria-label="Delete vaccination"
           >
@@ -1362,7 +1389,10 @@ export function ProfileAcademicAchievementFilled({
         <div className="flex shrink-0 gap-1">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
             aria-label="Delete academic achievement"
           >
@@ -1460,7 +1490,10 @@ export function ProfileCompetitiveExamFilled({
         <div className="flex shrink-0 gap-1">
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
             aria-label="Delete competitive exam"
           >

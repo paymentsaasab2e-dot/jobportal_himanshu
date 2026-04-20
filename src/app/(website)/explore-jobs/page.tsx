@@ -675,7 +675,7 @@ const ExploreJobsPageContent = () => {
             normalizedJobProfile: job.normalizedJobProfile
           };
         })
-        .filter((job): job is JobListing => job !== null);
+        .filter((job) => job !== null) as JobListing[];
 
         setJobListings(transformedJobs);
         if (transformedJobs.length > 0) {

@@ -1609,6 +1609,10 @@ export default function ProfilePage() {
                                       throw new Error(errorData.message || 'Failed to delete work experience');
                                     }
 
+                                    // Optimistically remove from UI immediately
+                                    setWorkExperienceData(prev => ({
+                                      workExperiences: prev?.workExperiences?.filter(e => e.id !== entry.id) || []
+                                    }));
                                     await refreshProfileData(candidateId);
                                     showAlert('Work experience deleted successfully');
                                   } catch (error) {
@@ -1709,6 +1713,8 @@ export default function ProfilePage() {
                                     const errorData = await response.json().catch(() => ({}));
                                     throw new Error(errorData.message || 'Failed to delete internship');
                                   }
+                                  // Optimistically remove from UI immediately
+                                  setInternshipData(prev => prev.filter(item => item.id !== internshipItem.id));
                                   if (expandedInternshipId === (internshipItem.id || `internship-${index}`)) {
                                     setExpandedInternshipId(null);
                                   }
@@ -1816,6 +1822,8 @@ export default function ProfilePage() {
                                     const errorData = await response.json().catch(() => ({}));
                                     throw new Error(errorData.message || 'Failed to delete gap explanation');
                                   }
+                                  // Optimistically remove from UI immediately
+                                  setGapExplanationData(prev => prev.filter(item => item.id !== gapItem.id));
                                   if (expandedGapExplanationId === (gapItem.id || `gap-${index}`)) {
                                     setExpandedGapExplanationId(null);
                                   }
@@ -1919,6 +1927,10 @@ export default function ProfilePage() {
                                       const errorData = await response.json().catch(() => ({}));
                                       throw new Error(errorData.message || 'Failed to delete education');
                                     }
+                                    // Optimistically remove from UI immediately
+                                    setEducationData(prev => ({
+                                      educations: prev?.educations?.filter(e => e.id !== entry.id) || []
+                                    }));
                                     await refreshProfileData(candidateId);
                                     showAlert('Education deleted successfully');
                                   } catch (error) {
@@ -2023,6 +2035,8 @@ export default function ProfilePage() {
                                   );
                                   if (!response.ok)
                                     throw new Error('Failed to delete academic achievement');
+                                  // Optimistically remove from UI immediately
+                                  setAcademicAchievementData(prev => prev.filter(item => item.id !== achievementItem.id));
                                   if (
                                     expandedAcademicAchievementId ===
                                     (achievementItem.id || `academic-achievement-${index}`)
@@ -2129,6 +2143,8 @@ export default function ProfilePage() {
                                     },
                                   );
                                   if (!response.ok) throw new Error('Failed to delete competitive exam');
+                                  // Optimistically remove from UI immediately
+                                  setCompetitiveExamsData(prev => prev.filter(item => item.id !== exam.id));
                                   if (expandedCompetitiveExamId === (exam.id || `competitive-exam-${index}`)) {
                                     setExpandedCompetitiveExamId(null);
                                   }
@@ -2213,6 +2229,8 @@ export default function ProfilePage() {
                                 { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
                               );
                               if (!response.ok) throw new Error('Failed to delete skills');
+                              // Optimistically clear from UI immediately
+                              setSkillsData(undefined);
                               await refreshProfileData(candidateId);
                               showAlert('Skills deleted successfully');
                             } catch (error) {
@@ -2313,6 +2331,8 @@ export default function ProfilePage() {
                                 { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
                               );
                               if (!response.ok) throw new Error('Failed to delete languages');
+                              // Optimistically clear from UI immediately
+                              setLanguagesData(undefined);
                               await refreshProfileData(candidateId);
                               showAlert('Languages deleted successfully');
                             } catch (error) {
@@ -2414,6 +2434,8 @@ export default function ProfilePage() {
                                     },
                                   );
                                   if (!response.ok) throw new Error('Failed to delete project');
+                                  // Optimistically remove from UI immediately
+                                  setProjectData(prev => prev.filter(item => item.id !== projectItem.id));
                                   if (expandedProjectId === (projectItem.id || `project-${index}`)) {
                                     setExpandedProjectId(null);
                                   }
@@ -2503,6 +2525,8 @@ export default function ProfilePage() {
                                 },
                               );
                               if (!response.ok) throw new Error('Failed to delete portfolio links');
+                              // Optimistically clear from UI immediately
+                              setPortfolioLinksData(undefined);
                               await refreshProfileData(candidateId);
                               showAlert('Portfolio links deleted successfully');
                             } catch (error) {
@@ -2602,6 +2626,11 @@ export default function ProfilePage() {
                                       },
                                     );
                                     if (!response.ok) throw new Error('Failed to delete certification');
+                                    // Optimistically remove from UI immediately
+                                    setCertificationsData(prev => prev ? {
+                                      ...prev,
+                                      certifications: prev.certifications?.filter(c => c.id !== cert.id) || []
+                                    } : undefined);
                                     await refreshProfileData(candidateId);
                                     showAlert('Certification deleted successfully');
                                   } catch (error) {
@@ -2701,6 +2730,11 @@ export default function ProfilePage() {
                                       },
                                     );
                                     if (!response.ok) throw new Error('Failed to delete accomplishment');
+                                    // Optimistically remove from UI immediately
+                                    setAccomplishmentsData(prev => prev ? {
+                                      ...prev,
+                                      accomplishments: prev.accomplishments?.filter(a => a.id !== acc.id) || []
+                                    } : undefined);
                                     await refreshProfileData(candidateId);
                                     showAlert('Accomplishment deleted successfully');
                                   } catch (error) {
@@ -2789,6 +2823,8 @@ export default function ProfilePage() {
                                 headers: { 'Content-Type': 'application/json' },
                               });
                               if (!response.ok) throw new Error('Failed to delete career preferences');
+                              // Optimistically clear from UI immediately
+                              setCareerPreferencesData(undefined);
                               await refreshProfileData(candidateId);
                               showAlert('Career preferences deleted successfully');
                             } catch (error) {
@@ -2880,6 +2916,8 @@ export default function ProfilePage() {
                               );
                               if (!response.ok)
                                 throw new Error('Failed to delete visa work authorization');
+                              // Optimistically clear from UI immediately
+                              setVisaWorkAuthorizationData(undefined);
                               await refreshProfileData(candidateId);
                               showAlert('Visa & work authorization deleted successfully');
                             } catch (error) {
@@ -2963,6 +3001,8 @@ export default function ProfilePage() {
                                 },
                               );
                               if (!response.ok) throw new Error('Failed to delete vaccination');
+                              // Optimistically clear from UI immediately
+                              setVaccinationData(undefined);
                               await refreshProfileData(candidateId);
                               showAlert('Vaccination information deleted successfully');
                             } catch (error) {

@@ -361,7 +361,7 @@ function sanitizePlannedItems(value: unknown): LmsPlannedItem[] {
         createdAt: typeof item.createdAt === 'number' && Number.isFinite(item.createdAt) ? item.createdAt : Date.now(),
       } satisfies LmsPlannedItem;
     })
-    .filter((item): item is LmsPlannedItem => item !== null);
+    .filter((item) => item !== null) as LmsPlannedItem[];
 }
 
 function sanitizeNumberRecord(
@@ -371,7 +371,7 @@ function sanitizeNumberRecord(
   if (!isRecord(value)) return {};
   const entries = Object.entries(value)
     .map(([key, raw]) => (typeof raw === 'number' && Number.isFinite(raw) ? [key, normalizer(raw)] : null))
-    .filter((entry): entry is [string, number] => Boolean(entry));
+    .filter((entry) => Boolean(entry)) as [string, number][];
   return Object.fromEntries(entries);
 }
 
