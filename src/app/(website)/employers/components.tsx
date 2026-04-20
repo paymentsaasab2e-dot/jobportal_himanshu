@@ -458,7 +458,7 @@ function TechCircuit({ searchMode }: { searchMode: 'search' | 'ai' }) {
             </feMerge>
           </filter>
         </defs>
-        {/* Circuit Lines mirroring homepage for brand consistency */}
+        {/* Circuit Lines */}
         {[
           "M0,200 L400,200 L500,100 L1440,100",
           "M0,400 L300,400 L450,550 L1000,550 L1150,400 L1440,400",
@@ -467,11 +467,11 @@ function TechCircuit({ searchMode }: { searchMode: 'search' | 'ai' }) {
           "M1440,700 L1000,700 L800,500 L0,500"
         ].map((path, i) => (
           <g key={i}>
-            <path d={path} stroke={searchMode === 'ai' ? '#581c87' : '#e9d5ff'} strokeWidth="0.3" fill="none" opacity="0.15" />
+            <path d={path} stroke={searchMode === 'ai' ? '#7c2d12' : '#cbd5e1'} strokeWidth="0.3" fill="none" opacity="0.15" />
             <path 
               key={`${searchMode}-${i}`}
               d={path} 
-              stroke={searchMode === 'ai' ? '#9333EA' : '#c026d3'} 
+              stroke={searchMode === 'ai' ? '#ea580c' : '#39ade2'} 
               strokeWidth="0.6" 
               fill="none" 
               strokeDasharray="2000, 2000"
@@ -479,6 +479,10 @@ function TechCircuit({ searchMode }: { searchMode: 'search' | 'ai' }) {
               filter="url(#aiGlow)"
               style={{ animationDelay: `${i * 0.6}s` }}
             />
+            <circle cx={400} cy={200} r="1.5" fill={searchMode === 'ai' ? "#ea580c" : "#39ade2"} opacity="0.3" />
+            <circle cx={500} cy={100} r="1.5" fill={searchMode === 'ai' ? "#ea580c" : "#39ade2"} opacity="0.3" />
+            <circle cx={600} cy={600} r="1.5" fill={searchMode === 'ai' ? "#ea580c" : "#39ade2"} opacity="0.3" />
+            <circle cx={750} cy={450} r="1.5" fill={searchMode === 'ai' ? "#ea580c" : "#39ade2"} opacity="0.3" />
           </g>
         ))}
       </svg>
@@ -609,13 +613,7 @@ function HeroSection() {
   };
 
   return (
-    <section className={`relative transition-all duration-700 ease-in-out ${searchMode === 'ai' ? 'bg-slate-950' : 'bg-white'} border-b border-slate-100 flex flex-col items-center justify-center overflow-hidden min-h-[600px] lg:min-h-[700px]`}>
-      {/* Filling Animation Layer coming from Right-to-Left */}
-      <div 
-        className={`absolute inset-y-0 right-0 z-0 bg-slate-950 transition-all duration-1000 ease-in-out pointer-events-none ${
-          searchMode === 'ai' ? 'w-full opacity-100' : 'w-0 opacity-0'
-        }`}
-      />
+    <section className="relative pt-12 pb-12 lg:pt-20 lg:pb-20 overflow-hidden bg-white border-b border-slate-100 flex items-center justify-center">
 
       <style dangerouslySetInnerHTML={{ __html: `
           @keyframes slideAndStay {
@@ -647,50 +645,32 @@ function HeroSection() {
           }
       `}} />
       
-      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center pt-12 pb-12 lg:pt-20 lg:pb-24">
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-6">
         <TechCircuit searchMode={searchMode} />
         
         {/* Subtle modern background elements */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_center,rgba(40,168,225,0.08)_0%,rgba(255,255,255,0)_70%)] pointer-events-none" />
+        <div className="absolute top-0 right-1/4 -mt-[10%] w-[500px] h-[500px] bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 -ml-[10%] w-[600px] h-[600px] bg-sky-400/10 blur-[150px] rounded-full pointer-events-none" />
         
-        <div className="relative z-10 w-full max-w-5xl mx-auto px-6 text-center">
-          <div className={`inline-flex items-center gap-2 border rounded-full px-4 py-2 mb-8 shadow-sm scale-90 sm:scale-100 transition-all duration-700 ${
-            searchMode === 'ai' 
-              ? 'bg-purple-950/40 border-purple-800/50 from-purple-900 to-indigo-900' 
-              : 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200/80'
-          }`}>
-            <span className="flex h-2 w-2 rounded-full bg-purple-500 animate-pulse"></span>
-            <span className={`text-[12px] font-black uppercase tracking-[0.18em] transition-colors duration-700 ${
-              searchMode === 'ai' ? 'text-purple-300' : 'text-purple-700'
-            }`}>HR Yantra — AI Based System</span>
+        <div className="flex flex-col items-center justify-center text-center">
+          <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col items-center">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200/80 rounded-full px-4 py-2 mb-6 shadow-sm">
+              <span className="flex h-2 w-2 rounded-full bg-sky-500 animate-pulse"></span>
+              <span className="text-[12px] font-black uppercase tracking-[0.18em] text-sky-700">HR Yantra AI - Powered Job Search</span>
+            </div>
+
+            <h1 className="text-4xl md:text-[3.75rem] font-black tracking-tight text-slate-900 mb-5 leading-[1.12]">
+              Find the job that<br className="hidden sm:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600">
+                fits you perfectly.
+              </span>
+            </h1>
+
+            <p className="text-[17px] text-slate-500 font-medium max-w-2xl leading-relaxed">
+              HR Yantra AI matches you to roles that suit your skills, experience &amp; goals - so every application counts.
+            </p>
           </div>
-
-          <h1 className={`text-4xl md:text-[3.75rem] font-black tracking-tight mb-6 leading-[1.15] transition-colors duration-700 ${
-            searchMode === 'ai' ? 'text-white' : 'text-slate-900'
-          }`}>
-            HR Yantra 
-            <span className={`inline-flex items-center gap-2 px-3 py-1.5 mx-3 border rounded-2xl align-middle shadow-sm scale-90 sm:scale-100 transition-all duration-700 ${
-              searchMode === 'ai' ? 'bg-white/10 border-white/20' : 'bg-purple-50 border-purple-100'
-            }`}>
-              <Image 
-                src="/ai2yantra-removebg.png" 
-                alt="AI" 
-                width={42} 
-                height={42} 
-                className={`object-contain transition-all duration-700 ${searchMode === 'ai' ? 'brightness-0 invert' : 'brightness-0'}`} 
-              />
-            </span>
-            has an <br className="hidden sm:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-600">
-              unparalleled edge.
-            </span>
-          </h1>
-
-          <p className={`text-[18px] font-medium max-w-2xl mx-auto mb-12 leading-relaxed transition-colors duration-700 ${
-            searchMode === 'ai' ? 'text-slate-400' : 'text-slate-500'
-          }`}>
-            The autonomous recruitment command layer. Use natural language to create jobs, analyze candidates, and optimize your entire hiring lifecycle.
-          </p>
 
           {/* Sync Search Box Style from homepage */}
           <form 
@@ -704,7 +684,7 @@ function HeroSection() {
             {searchMode === 'search' ? (
               <>
                 <div className="flex-1 flex items-center bg-transparent rounded-[24px] sm:rounded-full px-6 border border-transparent focus-within:bg-slate-50/80 transition-colors min-h-[64px] relative">
-                  <PlusCircle className="h-6 w-6 text-purple-600 mr-4 shrink-0 group-focus-within:scale-110 transition-transform" />
+                  <Search className="h-6 w-6 text-sky-500 mr-4 shrink-0 group-focus-within:scale-110 transition-transform" />
                   <div className="relative flex-1 flex items-center h-full text-left">
                     <input 
                       type="text" 
@@ -758,7 +738,7 @@ function HeroSection() {
                 </div>
                 <div className="hidden sm:block w-[1.5px] h-12 bg-slate-200/80 my-auto rounded-full shrink-0"></div>
                 <div className="flex-1 flex items-center bg-transparent rounded-[24px] sm:rounded-full px-6 border border-transparent focus-within:bg-slate-50/80 transition-colors min-h-[64px] relative">
-                  <Target className="h-6 w-6 text-slate-400 mr-4 shrink-0 group-focus-within:text-purple-600 transition-colors" />
+                  <MapPin className="h-6 w-6 text-slate-400 mr-4 shrink-0 group-focus-within:text-sky-500 transition-colors" />
                   <div className="relative flex-1 flex items-center h-full text-left">
                     <input 
                       type="text" 
@@ -867,7 +847,7 @@ function HeroSection() {
                     />
                   </button>
                </div>
-               <button type="submit" className={`rounded-[24px] sm:rounded-full px-8 py-4 sm:py-0 font-bold text-[17px] tracking-wide transition-all duration-700 flex items-center justify-center gap-3 shadow-lg active:scale-[0.98] shrink-0 min-h-[64px] w-full sm:w-[155px] ${searchMode === 'ai' ? 'bg-gradient-to-br from-purple-600 to-indigo-700 text-white shadow-purple-500/20' : 'bg-slate-900 text-white'}`}>
+               <button type="submit" className={`rounded-[24px] sm:rounded-full px-8 py-4 sm:py-0 font-bold text-[17px] tracking-wide transition-all duration-700 flex items-center justify-center gap-3 shadow-lg active:scale-[0.98] shrink-0 min-h-[64px] w-full sm:w-[155px] ${searchMode === 'ai' ? 'bg-gradient-to-br from-[#2563EB] to-[#9333EA] hover:brightness-110 text-white shadow-purple-500/20' : 'bg-slate-900 hover:bg-sky-500 text-white shadow-slate-900/10'}`}>
                   {searchMode === 'ai' ? (
                     <>
                       <span>Portal</span>
@@ -880,7 +860,7 @@ function HeroSection() {
                       />
                     </>
                   ) : (
-                    <><ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" /> Launch</>
+                    <><Search className="w-5 h-5" /> Search</>
                   )}
                </button>
             </div>
@@ -2161,4 +2141,3 @@ export function EmployerLandingPage() {
     </div>
   );
 }
-

@@ -71,7 +71,7 @@ export default function ServicesLandingPage() {
     <div className="min-h-screen font-sans bg-white flex flex-col selection:bg-sky-100 selection:text-sky-900 overflow-hidden">
       <main className="flex-1">
         {/* 1. Cinematic Multi-Layer Hero */}
-        <div className="relative pt-44 pb-20">
+        <div className="relative pt-14 lg:pt-16 pb-20">
           {/* Background decoration */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-to-b from-sky-50 to-transparent rounded-full blur-[120px] opacity-40 pointer-events-none" />
           <ServicesHero />
@@ -85,14 +85,14 @@ export default function ServicesLandingPage() {
         {/* 3. Personalized Intelligence Section */}
         <section className="py-24 relative overflow-hidden">
            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-sky-100/20 rounded-full blur-[100px] -mr-40 pointer-events-none" />
-           <div className="mx-auto max-w-[1240px] px-6">
+           <div className="mx-auto max-w-[1360px] px-4 sm:px-5 lg:px-6">
               <RecommendedServicesSection />
            </div>
         </section>
 
         {/* 4. Interactive Services Control Center (Filters + Grid) */}
         <section id="services-grid" className="py-24 bg-[#FCFDFE]">
-          <div className="mx-auto max-w-[1240px] px-6">
+          <div className="mx-auto max-w-[1360px] px-4 sm:px-5 lg:px-6">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-10 mb-16">
               <div className="max-w-2xl">
                 <div className="inline-flex items-center gap-2 bg-sky-50 border border-sky-100 rounded-full px-5 py-2 mb-6">
@@ -148,7 +148,7 @@ export default function ServicesLandingPage() {
 
         {/* 8. High-Conversion Final CTA */}
         <section className="py-32 bg-slate-50 rounded-t-[60px] border-t border-slate-100">
-          <div className="mx-auto max-w-[1240px] px-6">
+          <div className="mx-auto max-w-[1360px] px-4 sm:px-5 lg:px-6">
             <ServicesBottomCta />
           </div>
         </section>

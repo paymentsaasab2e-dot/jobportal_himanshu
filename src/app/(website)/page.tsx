@@ -201,15 +201,25 @@ export default function LandingPage() {
           const res = await fetch(`${getApiBaseUrl()}/jobs/recommend?q=${encodeURIComponent(heroSearch.title)}`);
           if (res.ok) {
             const result = await res.json();
-            setSuggestions(result.data || []);
-            setShowSuggestions(true);
+            const rawSuggestions = Array.isArray(result.data) ? result.data : [];
+            const dbOnlySuggestions = rawSuggestions.filter((item: any) => {
+              if (!item) return false;
+              if (item.isAiSuggestion || item.isAi) return false;
+              const label = getSuggestionLabel(item);
+              return Boolean(String(label || '').trim());
+            });
+            setSuggestions(dbOnlySuggestions);
+            setShowSuggestions(dbOnlySuggestions.length > 0);
           }
         } catch (err) {
           console.error("Suggestion fetch failed", err);
+          setSuggestions([]);
+          setShowSuggestions(false);
         } finally {
           setIsSuggesting(false);
         }
       } else {
+        setSuggestions([]);
         setShowSuggestions(false);
       }
     }, 300);
@@ -224,13 +234,23 @@ export default function LandingPage() {
           const res = await fetch(`${getApiBaseUrl()}/jobs/location-recommend?q=${encodeURIComponent(heroSearch.location)}`);
           if (res.ok) {
             const result = await res.json();
-            setLocSuggestions(result.data || []);
-            setShowLocSuggestions(true);
+            const rawLocationSuggestions = Array.isArray(result.data) ? result.data : [];
+            const dbOnlyLocationSuggestions = rawLocationSuggestions.filter((item: any) => {
+              if (!item) return false;
+              if (item.isAiSuggestion || item.isAi) return false;
+              const label = getSuggestionLabel(item);
+              return Boolean(String(label || '').trim());
+            });
+            setLocSuggestions(dbOnlyLocationSuggestions);
+            setShowLocSuggestions(dbOnlyLocationSuggestions.length > 0);
           }
         } catch (err) {
           console.error("Loc suggestion fetch failed", err);
+          setLocSuggestions([]);
+          setShowLocSuggestions(false);
         }
       } else {
+        setLocSuggestions([]);
         setShowLocSuggestions(false);
       }
     }, 250);
@@ -280,11 +300,21 @@ export default function LandingPage() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    triggerSearch();
+  };
+
+  const triggerSearch = () => {
     if (searchMode === 'ai') {
       router.push('/whatsapp');
       return;
     }
     router.push(buildSearchJobsUrl(heroSearch.title, heroSearch.location));
+  };
+
+  const preventEnterSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+    }
   };
 
   const applyTitleSuggestion = (value: string, shouldSearch = false) => {
@@ -501,6 +531,7 @@ export default function LandingPage() {
                           className="w-full bg-transparent border-none outline-none text-slate-900 font-semibold text-[17px] relative z-10"
                           value={heroSearch.title}
                           onChange={e => setHeroSearch({ ...heroSearch, title: e.target.value })}
+                          onKeyDown={preventEnterSubmit}
                           onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                         />
@@ -524,7 +555,7 @@ export default function LandingPage() {
                                     e.preventDefault();
                                     const suggestionLabel = getSuggestionLabel(s);
                                     if (suggestionLabel) {
-                                      applyTitleSuggestion(suggestionLabel, true);
+                                      applyTitleSuggestion(suggestionLabel);
                                     }
                                   }}
                                   className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-colors text-left"
@@ -535,12 +566,6 @@ export default function LandingPage() {
                                       <p className="mt-1 text-sm text-slate-500">{s.company}</p>
                                     )}
                                   </div>
-                                  {/* AI Batch only */}
-                                  {s.isAiSuggestion && (
-                                    <div className="flex items-center justify-center p-2 rounded-lg bg-violet-50 border border-violet-100/50">
-                                      <Sparkles className="w-4 h-4 text-violet-600" />
-                                    </div>
-                                  )}
                                 </button>
                               ))}
                             </div>
@@ -561,6 +586,7 @@ export default function LandingPage() {
                           className="w-full bg-transparent border-none outline-none text-slate-900 font-semibold text-[17px] relative z-10"
                           value={heroSearch.location}
                           onChange={e => setHeroSearch({ ...heroSearch, location: e.target.value })}
+                          onKeyDown={preventEnterSubmit}
                           onFocus={() => locSuggestions.length > 0 && setShowLocSuggestions(true)}
                           onBlur={() => setTimeout(() => setShowLocSuggestions(false), 200)}
                         />
@@ -585,7 +611,7 @@ export default function LandingPage() {
                                     e.preventDefault();
                                     const suggestionLabel = getSuggestionLabel(s);
                                     if (suggestionLabel) {
-                                      applyLocationSuggestion(suggestionLabel, true);
+                                      applyLocationSuggestion(suggestionLabel);
                                     }
                                   }}
                                   className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-colors text-left"
@@ -593,9 +619,6 @@ export default function LandingPage() {
                                   <div className="flex-1 pr-4">
                                     <p className="font-bold text-slate-900 leading-tight">{getSuggestionLabel(s)}</p>
                                   </div>
-                                  {s.isAi && (
-                                    <Sparkles className="w-4 h-4 text-violet-400 shrink-0" />
-                                  )}
                                 </button>
                               ))}
                             </div>
@@ -620,6 +643,7 @@ export default function LandingPage() {
                           className="w-full bg-transparent border-none outline-none text-white font-semibold text-[18px] relative z-10"
                           value={heroSearch.title}
                           onChange={e => setHeroSearch({ ...heroSearch, title: e.target.value })}
+                          onKeyDown={preventEnterSubmit}
                         />
                         {!heroSearch.title && (
                           <div className="absolute inset-0 flex items-center pointer-events-none">
@@ -648,7 +672,10 @@ export default function LandingPage() {
 
                     <button
                       type="button"
-                      onClick={() => setSearchMode('search')}
+                      onClick={() => {
+                        setSearchMode('search');
+                        router.push(buildSearchJobsUrl(heroSearch.title, heroSearch.location));
+                      }}
                       className={`relative z-10 flex items-center justify-center w-[50%] h-full rounded-full transition-colors duration-300 ${searchMode === 'search'
                           ? 'text-slate-900'
                           : 'text-slate-400 hover:text-white'

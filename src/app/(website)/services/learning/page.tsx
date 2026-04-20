@@ -41,10 +41,10 @@ export default function LmsServicePage() {
     <div className="min-h-screen bg-white">
       <main>
         {/* Learning Hero Section */}
-        <section className="relative pt-44 pb-20 overflow-hidden bg-slate-950 text-white rounded-b-[60px]">
+        <section className="relative pt-52 pb-20 overflow-hidden bg-slate-950 text-white rounded-b-[60px]">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.15),transparent_50%)]" />
           
-          <div className="mx-auto max-w-[1240px] px-6 relative z-10 text-center lg:text-left">
+          <div className="mx-auto max-w-[1360px] px-4 sm:px-5 lg:px-6 relative z-10 text-center lg:text-left">
             <div className="grid lg:grid-cols-[1.2fr_1fr] gap-20 items-center">
               <div className="animate-in fade-in slide-in-from-left-8 duration-700">
                 <div className="inline-flex items-center rounded-full border border-sky-400/30 bg-sky-400/10 px-5 py-2 text-[11px] font-black uppercase tracking-[0.25em] text-sky-300 mb-8 mx-auto lg:mx-0">
@@ -107,7 +107,7 @@ export default function LmsServicePage() {
 
         {/* Structured Outcome Section */}
          <section className="py-24 bg-white">
-           <div className="mx-auto max-w-[1240px] px-6">
+           <div className="mx-auto max-w-[1360px] px-4 sm:px-5 lg:px-6">
               <div className="text-center max-w-3xl mx-auto mb-20">
                  <h2 className="text-4xl lg:text-5xl font-black text-slate-950 mb-6 tracking-tight">Structured for outcome.</h2>
                  <p className="text-lg text-slate-500 font-medium leading-relaxed">
@@ -136,7 +136,7 @@ export default function LmsServicePage() {
 
          {/* Trending Courses - Professional Grid */}
          <section className="py-24 bg-slate-50/50 border-y border-slate-100">
-           <div className="mx-auto max-w-[1240px] px-6">
+           <div className="mx-auto max-w-[1360px] px-4 sm:px-5 lg:px-6">
               <div className="flex flex-col sm:flex-row justify-between items-end mb-16 gap-6">
                  <div>
                     <h2 className="text-3xl lg:text-4xl font-black text-slate-950 tracking-tight">Trending Skills Decoded</h2>

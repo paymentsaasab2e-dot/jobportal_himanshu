@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { MoveRight, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 const navLinks = [
   { name: "Jobs", href: "/" },
@@ -42,8 +42,7 @@ export default function WebsiteNavbar() {
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const isEmployerRoute = pathname === "/employers" || pathname.startsWith("/services/employers");
-  const loginSignupHref = isEmployerRoute ? "https://employers.hryantra.com/" : "/whatsapp";
+  const loginSignupHref = "/whatsapp";
 
   // Sliding pill state
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
@@ -89,8 +88,8 @@ export default function WebsiteNavbar() {
     <nav
       className={`fixed top-0 left-0 right-0 z-[500] transition-all duration-500 ${
         isScrolled
-          ? "bg-white/80 backdrop-blur-xl border-b border-slate-200 py-3 shadow-sm"
-          : "bg-transparent py-5"
+          ? "bg-white/80 backdrop-blur-xl border-b border-slate-200 py-2 shadow-sm"
+          : "bg-transparent py-2.5"
       }`}
     >
       <div className="mx-auto flex max-w-[1180px] items-center justify-between px-4 sm:px-5 lg:px-6">
@@ -137,7 +136,7 @@ export default function WebsiteNavbar() {
                     {link.name}
                     <svg className="w-4 h-4 opacity-70 group-hover/nav:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                   </button>
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[440px] bg-white/95 backdrop-blur-md border border-slate-100 rounded-[20px] shadow-xl p-5 opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0.5 w-[440px] bg-white/95 backdrop-blur-md border border-slate-100 rounded-[20px] shadow-xl p-5 opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200">
                     <div className="grid grid-cols-2 gap-6">
                       {link.categories.map((category) => (
                         <div key={category.title}>
@@ -177,17 +176,8 @@ export default function WebsiteNavbar() {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-4">
-          {isEmployerRoute && (
-            <a
-              href="mailto:support@saasab2e.com?subject=Book%20a%20SAASA%20B2E%20Employer%20Demo"
-              className="bg-[#28A8DF] text-white px-6 py-2 rounded-full text-[15px] font-bold hover:bg-sky-500 transition-all shadow-md shadow-sky-500/20"
-            >
-              Request Demo
-            </a>
-          )}
           <Link
             href={loginSignupHref}
-            {...(isEmployerRoute ? { target: "_blank", rel: "noreferrer" } : {})}
             className="border-2 border-black !text-black px-6 py-2 rounded-full text-[15px] font-bold hover:bg-black hover:!text-white transition-all"
           >
             Login/Signup
@@ -240,18 +230,8 @@ export default function WebsiteNavbar() {
           ))}
           <div className="h-px bg-slate-100 my-2" />
           <div className="flex flex-col gap-3 mt-2">
-            {isEmployerRoute && (
-              <a
-                href="mailto:support@saasab2e.com?subject=Book%20a%20SAASA%20B2E%20Employer%20Demo"
-                className="bg-[#28A8DF] text-white text-center py-4 rounded-[18px] font-bold text-lg hover:bg-sky-500 transition-all shadow-md"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Request Demo
-              </a>
-            )}
             <Link
               href={loginSignupHref}
-              {...(isEmployerRoute ? { target: "_blank", rel: "noreferrer" } : {})}
               className="border-2 border-black !text-black text-center py-4 rounded-[18px] font-bold text-lg hover:bg-black hover:!text-white transition-all"
               onClick={() => setIsMobileMenuOpen(false)}
             >
