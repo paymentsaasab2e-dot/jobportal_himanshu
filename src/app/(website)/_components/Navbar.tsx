@@ -42,7 +42,9 @@ export default function WebsiteNavbar() {
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const loginSignupHref = "/whatsapp";
+  const employersLoginHref = "https://employers.hryantra.com/login?redirect=%2Fleads";
+  const isEmployersPage = pathname === "/employers" || pathname.startsWith("/employers/");
+  const loginSignupHref = isEmployersPage ? employersLoginHref : "/whatsapp";
 
   // Sliding pill state
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
