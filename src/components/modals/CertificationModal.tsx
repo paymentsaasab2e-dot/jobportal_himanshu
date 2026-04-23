@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
-import { API_ORIGIN } from '@/lib/api-base';
+import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 
 interface CertificationModalProps {
   isOpen: boolean;
@@ -226,7 +226,8 @@ export default function CertificationModal({
     Boolean(
       certificationName.trim() &&
       issuingOrganization.trim() &&
-      issueDate.trim()
+      issueDate.trim() &&
+      documents.length > 0
     ) &&
     (!credentialUrl.trim() || isValidUrl(credentialUrl)) &&
     (doesNotExpire || !expiryDate.trim() || expiryDate >= issueDate);
@@ -368,8 +369,11 @@ export default function CertificationModal({
       } else {
         certificationsToSave = [...certifications, formCertification];
       }
-    } else if (certifications.length === 0) {
+    } else if (certifications.length === 0 || !isCertificationFormReady) {
       validateForm();
+      if (documents.length === 0) {
+          alert('Please upload at least one certification document.');
+      }
       return;
     }
 
@@ -412,7 +416,7 @@ export default function CertificationModal({
                   {/* Certification Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Certification Name <span className="text-red-500">*</span>
+                      Certification Name <span className="text-amber-600">*</span>
                     </label>
                     <input
                       type="text"
@@ -424,19 +428,22 @@ export default function CertificationModal({
                         }
                       }}
                       placeholder="Enter certification name..."
-                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.certificationName ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        (!certificationName.trim() || errors.certificationName) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
                       }`}
                     />
+                    {!certificationName.trim() && (
+                      <p className="mt-1 text-xs text-amber-600">Certification name is required</p>
+                    )}
                     {errors.certificationName && (
-                      <p className="mt-1 text-sm text-red-600">{errors.certificationName}</p>
+                      <p className="mt-1 text-sm text-amber-600">{errors.certificationName}</p>
                     )}
                   </div>
 
                   {/* Issue Date */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Issue Date <span className="text-red-500">*</span>
+                      Issue Date <span className="text-amber-600">*</span>
                     </label>
                     <input
                       type="month"
@@ -447,12 +454,15 @@ export default function CertificationModal({
                           setErrors({ ...errors, issueDate: '' });
                         }
                       }}
-                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.issueDate ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        (!issueDate.trim() || errors.issueDate) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
                       }`}
                     />
+                    {!issueDate.trim() && (
+                      <p className="mt-1 text-xs text-amber-600">Issue date is required</p>
+                    )}
                     {errors.issueDate && (
-                      <p className="mt-1 text-sm text-red-600">{errors.issueDate}</p>
+                      <p className="mt-1 text-sm text-amber-600">{errors.issueDate}</p>
                     )}
                   </div>
 
@@ -491,16 +501,16 @@ export default function CertificationModal({
                       className={`w-full px-4 py-6 border-2 border-dashed rounded-lg transition-colors ${
                         dragActive
                           ? 'border-blue-500 bg-blue-50'
-                          : 'border-blue-300 bg-blue-50 hover:bg-blue-100'
+                          : (documents.length === 0 ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-blue-300 bg-blue-50 hover:bg-blue-100')
                       }`}
                     >
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full flex flex-col items-center justify-center gap-2 text-blue-600"
+                        className={`w-full flex flex-col items-center justify-center gap-2 ${documents.length === 0 ? 'text-amber-600' : 'text-blue-600'}`}
                       >
                         <svg
-                          className="w-8 h-8"
+                          className={`w-8 h-8 ${documents.length === 0 ? 'text-amber-600' : 'text-blue-600'}`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -508,9 +518,12 @@ export default function CertificationModal({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <span className="text-sm font-medium">Click to upload or drag and drop</span>
-                        <span className="text-xs text-gray-500">PDF, PNG, JPG (Max 5MB per file)</span>
+                        <span className={`text-xs ${documents.length === 0 ? 'text-amber-600' : 'text-gray-500'}`}>PDF, PNG, JPG (Max 5MB per file)</span>
                       </button>
                     </div>
+                    {documents.length === 0 && (
+                      <p className="mt-1 text-xs text-amber-600">Certification document is required</p>
+                    )}
                     {documents.length > 0 && (
                       <div className="mt-3 space-y-2">
                         {documents.map((doc) => (
@@ -528,21 +541,39 @@ export default function CertificationModal({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>
                               <span className="text-sm text-gray-700 truncate">{doc.name}</span>
-                              {doc.url && (
-                                <a
-                                  href={`${API_ORIGIN}${doc.url}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 text-xs"
-                                >
-                                  View
-                                </a>
-                              )}
-                            </div>
+                                  <div className="flex items-center gap-3 shrink-0 ml-2">
+                                    {doc.url && (
+                                      <>
+                                        <a
+                                          href={resolveDocumentUrl(doc.url)}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:text-blue-700 transition-colors"
+                                          title="View Document"
+                                        >
+                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                          </svg>
+                                        </a>
+                                        <a
+                                          href={resolveDocumentUrl(doc.url)}
+                                          download={doc.name}
+                                          className="text-orange-600 hover:text-orange-700 transition-colors"
+                                          title="Download Document"
+                                        >
+                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                          </svg>
+                                        </a>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
                             <button
                               type="button"
                               onClick={() => handleRemoveFile(doc.id)}
-                              className="ml-2 text-red-600 hover:text-red-800"
+                              className="ml-2 text-amber-600 hover:text-amber-700"
                             >
                               <svg
                                 className="w-5 h-5"
@@ -565,7 +596,7 @@ export default function CertificationModal({
                   {/* Issuing Organization */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Issuing Organization <span className="text-red-500">*</span>
+                      Issuing Organization <span className="text-amber-600">*</span>
                     </label>
                     <input
                       type="text"
@@ -577,12 +608,15 @@ export default function CertificationModal({
                         }
                       }}
                       placeholder="e.g., Coursera, Google, AWS, Microsoft"
-                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.issuingOrganization ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        (!issuingOrganization.trim() || errors.issuingOrganization) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
                       }`}
                     />
+                    {!issuingOrganization.trim() && (
+                      <p className="mt-1 text-xs text-amber-600">Issuing organization is required</p>
+                    )}
                     {errors.issuingOrganization && (
-                      <p className="mt-1 text-sm text-red-600">{errors.issuingOrganization}</p>
+                      <p className="mt-1 text-sm text-amber-600">{errors.issuingOrganization}</p>
                     )}
                   </div>
 
@@ -607,7 +641,7 @@ export default function CertificationModal({
                       }`}
                     />
                     {errors.expiryDate && (
-                      <p className="mt-1 text-sm text-red-600">{errors.expiryDate}</p>
+                      <p className="mt-1 text-sm text-amber-600">{errors.expiryDate}</p>
                     )}
                     <div className="mt-2">
                       <label className="flex items-center gap-2">
@@ -675,7 +709,7 @@ export default function CertificationModal({
                       />
                     </div>
                     {errors.credentialUrl && (
-                      <p className="mt-1 text-sm text-red-600">{errors.credentialUrl}</p>
+                      <p className="mt-1 text-sm text-amber-600">{errors.credentialUrl}</p>
                     )}
                   </div>
                 </div>

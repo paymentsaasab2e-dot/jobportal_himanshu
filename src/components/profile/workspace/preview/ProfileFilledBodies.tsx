@@ -341,15 +341,36 @@ export function ProfileInternshipFilled({
               </p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {data.documents!.map((doc, i) => (
-                  <a
+                  <div
                     key={i}
-                    href={resolveDocHref(doc)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    <span className="truncate">{getDocumentName(doc)}</span>
-                  </a>
+                    <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
+                    <div className="flex items-center gap-3 shrink-0 ml-2">
+                      <a
+                        href={resolveDocHref(doc)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 transition-colors"
+                        title="View Document"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </a>
+                      <a
+                        href={resolveDocHref(doc)}
+                        download={getDocumentName(doc)}
+                        className="text-orange-600 hover:text-orange-700 transition-colors"
+                        title="Download Document"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -615,18 +636,33 @@ export function ProfileLanguagesFilled({
                 </div>
               </div>
               {lang.documents && lang.documents.length > 0 ? (
-                <a
-                  href={getApiDocumentHref(lang.documents[0])}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-orange-700 hover:underline"
-                  title={getDocumentName(lang.documents[0])}
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  Proof ({lang.documents.length})
-                </a>
+                <div className="flex shrink-0 items-center gap-2">
+                  <a
+                    href={getApiDocumentHref(lang.documents[0])}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                    title="View Proof"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View ({lang.documents.length})
+                  </a>
+                  <span className="text-gray-300">|</span>
+                  <a
+                    href={getApiDocumentHref(lang.documents[0])}
+                    download={getDocumentName(lang.documents[0])}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-600 hover:text-orange-700 transition-colors"
+                    title="Download Proof"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    DL
+                  </a>
+                </div>
               ) : null}
             </div>
           </div>
@@ -770,15 +806,36 @@ export function ProfileProjectFilled({
               </p>
               <div className="flex flex-wrap gap-2">
                 {data.documents!.map((doc, i) => (
-                  <a
+                  <div
                     key={i}
-                    href={getApiDocumentHref(doc)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                    className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    {getDocumentName(doc)}
-                  </a>
+                    <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
+                    <div className="flex items-center gap-3 shrink-0 ml-2">
+                      <a
+                        href={getApiDocumentHref(doc)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 transition-colors"
+                        title="View Document"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </a>
+                      <a
+                        href={getApiDocumentHref(doc)}
+                        download={getDocumentName(doc)}
+                        className="text-orange-600 hover:text-orange-700 transition-colors"
+                        title="Download Document"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -1213,13 +1270,36 @@ export function ProfileVisaFilled({
                 {expected.visaType} · {expected.visaStatus}
               </p>
               {expected.documents?.map((doc, i) => (
-                <a
+                <div
                   key={i}
-                  href={getApiDocumentHref(doc)}
-                  className="mt-2 mr-2 inline-block text-xs text-orange-700 hover:underline"
+                  className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
-                  {getDocumentName(doc)}
-                </a>
+                  <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
+                  <div className="flex items-center gap-3 shrink-0 ml-2">
+                    <a
+                      href={getApiDocumentHref(doc)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 transition-colors"
+                      title="View Document"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </a>
+                    <a
+                      href={getApiDocumentHref(doc)}
+                      download={getDocumentName(doc)}
+                      className="text-orange-600 hover:text-orange-700 transition-colors"
+                      title="Download Document"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -1235,13 +1315,36 @@ export function ProfileVisaFilled({
                 {entry.visaDetails?.visaType} · {entry.visaDetails?.visaStatus}
               </p>
               {entry.visaDetails?.documents?.map((doc: unknown, i: number) => (
-                <a
-                  key={i}
-                  href={getApiDocumentHref(doc)}
-                  className="mr-2 mt-2 inline-block text-orange-700 hover:underline"
-                >
-                  {getDocumentName(doc)}
-                </a>
+              <div
+                key={i}
+                className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
+                <div className="flex items-center gap-3 shrink-0 ml-2">
+                  <a
+                    href={getApiDocumentHref(doc)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-700 transition-colors"
+                    title="View Document"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </a>
+                  <a
+                    href={getApiDocumentHref(doc)}
+                    download={getDocumentName(doc)}
+                    className="text-orange-600 hover:text-orange-700 transition-colors"
+                    title="Download Document"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
               ))}
             </div>
           ))}
@@ -1294,14 +1397,33 @@ export function ProfileVaccinationFilled({
               value={
                 hasCert ? (
                   certificateHref ? (
-                    <a
-                      href={certificateHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-orange-700 hover:underline"
-                    >
-                      {certificateLabel || 'View certificate'}
-                    </a>
+                    <div className="mt-1 flex items-center gap-3">
+                      <a
+                        href={certificateHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+                        title="View Certificate"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        View
+                      </a>
+                      <span className="text-gray-300">|</span>
+                      <a
+                        href={certificateHref}
+                        download={certificateLabel || 'VaccinationCertificate'}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700"
+                        title="Download Certificate"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download
+                      </a>
+                    </div>
                   ) : (
                     <PreviewChip tone="green">Uploaded</PreviewChip>
                   )
@@ -1419,15 +1541,36 @@ export function ProfileAcademicAchievementFilled({
               </p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {data.documents!.map((doc, i) => (
-                  <a
+                  <div
                     key={i}
-                    href={resolveDocHref(doc)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    <span className="truncate">{getDocumentName(doc)}</span>
-                  </a>
+                    <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
+                    <div className="flex items-center gap-3 shrink-0 ml-2">
+                      <a
+                        href={resolveDocHref(doc)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 transition-colors"
+                        title="View Document"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </a>
+                      <a
+                        href={resolveDocHref(doc)}
+                        download={getDocumentName(doc)}
+                        className="text-orange-600 hover:text-orange-700 transition-colors"
+                        title="Download Document"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -1521,15 +1664,36 @@ export function ProfileCompetitiveExamFilled({
               </p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {data.documents!.map((doc, i) => (
-                  <a
+                  <div
                     key={i}
-                    href={resolveDocHref(doc)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    <span className="truncate">{getDocumentName(doc)}</span>
-                  </a>
+                    <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
+                    <div className="flex items-center gap-3 shrink-0 ml-2">
+                      <a
+                        href={resolveDocHref(doc)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 transition-colors"
+                        title="View Document"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </a>
+                      <a
+                        href={resolveDocHref(doc)}
+                        download={getDocumentName(doc)}
+                        className="text-orange-600 hover:text-orange-700 transition-colors"
+                        title="Download Document"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

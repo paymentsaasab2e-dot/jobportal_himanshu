@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 
 interface ProjectModalProps {
   isOpen: boolean;
@@ -225,6 +226,14 @@ export default function ProjectModal({
     });
   };
 
+  const missingRequiredFields: string[] = [];
+  if (!String(projectTitle || '').trim()) missingRequiredFields.push('Project Title');
+  if (!String(projectType || '').trim()) missingRequiredFields.push('Project Type');
+  if (!startDate) missingRequiredFields.push('Start Date');
+  if (!String(projectDescription || '').trim()) missingRequiredFields.push('Project Description');
+
+  const isFormValid = missingRequiredFields.length === 0 && !fieldErrors.projectLink && !fieldErrors.endDate;
+
   const handleSave = () => {
     const nextErrors: Record<string, string> = {};
 
@@ -258,20 +267,28 @@ export default function ProjectModal({
     setValidationError('');
 
     onSave({
-      projectTitle,
+      projectTitle: projectTitle.trim(),
       projectType,
-      organizationClient,
+      organizationClient: organizationClient.trim(),
       currentlyWorking,
       startDate,
       endDate,
-      projectDescription,
-      responsibilities,
+      projectDescription: projectDescription.trim(),
+      responsibilities: responsibilities.trim(),
       technologies,
-      projectOutcome,
-      projectLink,
+      projectOutcome: projectOutcome.trim(),
+      projectLink: projectLink.trim(),
       documents,
     });
+    onClose();
   };
+
+  const inputClassName =
+    'h-11 w-full rounded-lg border border-gray-200 px-4 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
+  const selectClassName =
+    'h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
+  const textareaClassName =
+    'min-h-[100px] w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 resize-none';
 
   if (!isOpen) return null;
 
@@ -291,7 +308,6 @@ export default function ProjectModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={!projectTitle.trim() || !projectType.trim() || !startDate.trim() || !projectDescription.trim()}
             className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-gray-300"
           >
             {isEditMode ? 'Update Project' : 'Save Project'}
@@ -301,14 +317,14 @@ export default function ProjectModal({
     >
             <div className="space-y-6">
               {validationError ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2 text-sm text-amber-700">
                   {validationError}
                 </div>
               ) : null}
               {/* Project Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Project Title <span className="text-red-500">*</span>
+                  Project Title <span className="text-amber-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -320,8 +336,11 @@ export default function ProjectModal({
                     }
                   }}
                   placeholder="e.g., E-commerce Website, Machine Learning Model, Marketing Campaign"
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.projectTitle ? 'border-red-400' : 'border-gray-300'}`}
+                  className={`${inputClassName} ${(!projectTitle.trim() || fieldErrors.projectTitle) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
                 />
+                {!projectTitle.trim() && (
+                  <p className="mt-1 text-xs text-amber-600">Project title is required</p>
+                )}
                 {fieldErrors.projectTitle ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectTitle}</p> : null}
               </div>
 
@@ -330,7 +349,7 @@ export default function ProjectModal({
                 {/* Project Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Project Type <span className="text-red-500">*</span>
+                    Project Type <span className="text-amber-600">*</span>
                   </label>
                   <select
                     value={projectType}
@@ -340,13 +359,16 @@ export default function ProjectModal({
                         setFieldErrors((prev) => ({ ...prev, projectType: '' }));
                       }
                     }}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.projectType ? 'border-red-400' : 'border-gray-300'}`}
+                    className={`${selectClassName} ${(!projectType.trim() || fieldErrors.projectType) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
                   >
                     <option value="">Select Project Type</option>
                     {PROJECT_TYPES.map((type) => (
                       <option key={type} value={type}>{type}</option>
                     ))}
                   </select>
+                  {!projectType.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Project type is required</p>
+                  )}
                   {fieldErrors.projectType ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectType}</p> : null}
                 </div>
 
@@ -360,7 +382,7 @@ export default function ProjectModal({
                     value={organizationClient}
                     onChange={(e) => setOrganizationClient(e.target.value)}
                     placeholder="If applicable — Company, University, or Client Name"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={inputClassName}
                   />
                 </div>
               </div>
@@ -382,7 +404,7 @@ export default function ProjectModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Start Date <span className="text-red-500">*</span>
+                    Start Date <span className="text-amber-600">*</span>
                   </label>
                   <div className="relative">
                     <input
@@ -394,7 +416,7 @@ export default function ProjectModal({
                           setFieldErrors((prev) => ({ ...prev, startDate: '' }));
                         }
                       }}
-                      className={`w-full px-4 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.startDate ? 'border-red-400' : 'border-gray-300'}`}
+                      className={`${inputClassName} ${(!startDate || fieldErrors.startDate) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''} pr-10`}
                     />
                     <svg
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9095A1] pointer-events-none"
@@ -405,6 +427,9 @@ export default function ProjectModal({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
+                  {!startDate && (
+                    <p className="mt-1 text-xs text-amber-600">Start date is required</p>
+                  )}
                   {fieldErrors.startDate ? <p className="mt-1 text-xs text-red-600">{fieldErrors.startDate}</p> : null}
                 </div>
                 <div>
@@ -422,7 +447,7 @@ export default function ProjectModal({
                         }
                       }}
                       disabled={currentlyWorking}
-                      className={`w-full px-4 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${fieldErrors.endDate ? 'border-red-400' : 'border-gray-300'}`}
+                      className={`${inputClassName} ${(!currentlyWorking && !endDate) ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''} ${fieldErrors.endDate ? 'border-amber-400 bg-amber-50 focus:ring-amber-500' : ''} pr-10 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                     />
                     <svg
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9095A1] pointer-events-none"
@@ -433,6 +458,9 @@ export default function ProjectModal({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
+                  {!currentlyWorking && !endDate && (
+                    <p className="mt-1 text-xs text-amber-600">End date is required</p>
+                  )}
                   {fieldErrors.endDate ? <p className="mt-1 text-xs text-red-600">{fieldErrors.endDate}</p> : null}
                 </div>
               </div>
@@ -440,7 +468,7 @@ export default function ProjectModal({
               {/* Project Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Project Description <span className="text-red-500">*</span>
+                  Project Description <span className="text-amber-600">*</span>
                 </label>
                 <textarea
                   value={projectDescription}
@@ -452,8 +480,11 @@ export default function ProjectModal({
                   }}
                   placeholder="Explain the project goals, your role, key tasks, and outcomes…"
                   rows={4}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none ${fieldErrors.projectDescription ? 'border-red-400' : 'border-gray-300'}`}
+                  className={`${textareaClassName} ${(!projectDescription.trim() || fieldErrors.projectDescription) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
                 />
+                {!projectDescription.trim() && (
+                  <p className="mt-1 text-xs text-amber-600">Project description is required</p>
+                )}
                 {fieldErrors.projectDescription ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectDescription}</p> : null}
               </div>
 
@@ -467,7 +498,7 @@ export default function ProjectModal({
                   onChange={(e) => setResponsibilities(e.target.value)}
                   placeholder="Mention what you contributed—features built, research done, tasks handled…"
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className={textareaClassName}
                 />
               </div>
 
@@ -482,7 +513,7 @@ export default function ProjectModal({
                   onChange={(e) => setTechnologiesInput(e.target.value)}
                   onKeyPress={handleAddTechnology}
                   placeholder="Add technologies (e.g., React, Python, Figma, SQL)…"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={inputClassName}
                 />
                 {technologies.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
@@ -526,7 +557,7 @@ export default function ProjectModal({
                   onChange={(e) => setProjectOutcome(e.target.value)}
                   placeholder="Mention improvements, results, metrics, awards, or impact…"
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className={textareaClassName}
                 />
               </div>
 
@@ -545,7 +576,7 @@ export default function ProjectModal({
                     }
                   }}
                   placeholder="GitHub, Behance, Portfolio, Drive link…"
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.projectLink ? 'border-red-400' : 'border-gray-300'}`}
+                  className={`${inputClassName} ${fieldErrors.projectLink ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
                 />
                 {fieldErrors.projectLink ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectLink}</p> : null}
               </div>
@@ -602,18 +633,46 @@ export default function ProjectModal({
                           <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{doc.name}</p>
-                            {doc.size && (
-                              <p className="text-xs text-gray-500">
-                                {(doc.size / 1024 / 1024).toFixed(2)} MB
-                              </p>
-                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{doc.name}</p>
+                              {doc.size && (
+                                <p className="text-xs text-gray-500">
+                                  {(doc.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0 ml-2">
+                              {doc.url && (
+                                <>
+                                  <a
+                                    href={resolveDocumentUrl(doc.url)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-700 transition-colors"
+                                    title="View Document"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                  </a>
+                                  <a
+                                    href={resolveDocumentUrl(doc.url)}
+                                    download={doc.name}
+                                    className="text-orange-600 hover:text-orange-700 transition-colors"
+                                    title="Download Document"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                  </a>
+                                </>
+                              )}
+                            </div>
                           </div>
-                        </div>
                         <button
                           onClick={() => handleRemoveFile(doc.id)}
-                          className="ml-3 text-red-500 hover:text-red-700 flex-shrink-0"
+                          className="ml-3 text-amber-600 hover:text-amber-700 flex-shrink-0"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

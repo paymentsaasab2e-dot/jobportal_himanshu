@@ -206,7 +206,7 @@ export default function GapExplanationModal({
               <select
                 value={reasonForGap}
                 onChange={(e) => setReasonForGap(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white ${!reasonForGap ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '14px',
@@ -220,6 +220,9 @@ export default function GapExplanationModal({
                 <option value="travel">Travel</option>
                 <option value="other">Other</option>
               </select>
+              {!reasonForGap && (
+                <p className="mt-1 text-xs text-amber-600">Reason for gap is required</p>
+              )}
             </div>
 
             {/* Gap Duration */}
@@ -230,7 +233,7 @@ export default function GapExplanationModal({
               <select
                 value={gapDuration}
                 onChange={(e) => setGapDuration(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white ${!gapDuration ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '14px',
@@ -243,6 +246,9 @@ export default function GapExplanationModal({
                 <option value="1-2 years">1-2 years</option>
                 <option value="More than 2 years">More than 2 years</option>
               </select>
+              {!gapDuration && (
+                <p className="mt-1 text-xs text-amber-600">Gap duration is required</p>
+              )}
               <p className="mt-1 text-xs text-gray-500">
                 Pre-filled from onboarding — you can edit if incorrect.
               </p>
@@ -265,7 +271,7 @@ export default function GapExplanationModal({
                     }
                   }}
                   placeholder="Add relevant skills (e.g., Communication, Excel, Coding, Sales)"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+                  className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 ${selectedSkills.length === 0 ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                   style={{
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '14px',
@@ -282,6 +288,9 @@ export default function GapExplanationModal({
                   </svg>
                 </button>
               </div>
+              {selectedSkills.length === 0 && (
+                <p className="mt-1 text-xs text-amber-600">At least one skill is required</p>
+              )}
               {selectedSkills.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {selectedSkills.map((skill, index) => (
@@ -316,13 +325,16 @@ export default function GapExplanationModal({
                 value={coursesText}
                 onChange={(e) => setCoursesText(e.target.value)}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${!coursesText.trim() ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                 placeholder="e.g., Completed a Data Science bootcamp, obtained PMP certification, attended workshops on Agile methodologies."
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '14px',
                 }}
               />
+              {!coursesText.trim() && (
+                <p className="mt-1 text-xs text-amber-600">Course/training details are required</p>
+              )}
             </div>
 
             {/* Preferred Support When Returning to Work */}
@@ -330,7 +342,7 @@ export default function GapExplanationModal({
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 Preferred Support When Returning to Work
               </label>
-              <div className="space-y-3">
+              <div className={`space-y-3 p-3 rounded-lg ${!hasPreferredSupport ? 'bg-red-50 border border-red-200' : ''}`}>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -368,6 +380,9 @@ export default function GapExplanationModal({
                   <span className="text-sm text-gray-700">Skill refresher recommendations</span>
                 </label>
               </div>
+              {!hasPreferredSupport && (
+                <p className="mt-1 text-xs text-amber-600">Select at least one support option</p>
+              )}
             </div>
           </div>
     </ProfileDrawer>

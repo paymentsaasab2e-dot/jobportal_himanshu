@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 
 interface CompetitiveExamsModalProps {
   isOpen: boolean;
@@ -172,27 +173,39 @@ export default function CompetitiveExamsModal({
     });
   };
 
-  const isFormComplete = Boolean(
-    examName.trim() &&
-    yearTaken.trim() &&
-    resultStatus.trim() &&
-    scoreMarks.trim() &&
-    scoreType.trim()
-  );
+  const missingRequiredFields: string[] = [];
+  if (!String(examName || '').trim()) missingRequiredFields.push('Exam Name');
+  if (!String(yearTaken || '').trim()) missingRequiredFields.push('Year Taken');
+  if (!String(resultStatus || '').trim()) missingRequiredFields.push('Result Status');
+  if (!String(scoreMarks || '').trim()) missingRequiredFields.push('Score / Marks');
+  if (!String(scoreType || '').trim()) missingRequiredFields.push('Score Type');
+
+  const isFormValid = missingRequiredFields.length === 0;
 
   const handleSave = () => {
+    if (!isFormValid) {
+      alert(`Please complete all required fields: ${missingRequiredFields.join(', ')}`);
+      return;
+    }
     onSave({
-      examName,
+      examName: examName.trim(),
       yearTaken,
       resultStatus,
-      scoreMarks,
+      scoreMarks: scoreMarks.trim(),
       scoreType,
       validUntil,
-      additionalNotes,
+      additionalNotes: additionalNotes.trim(),
       documents,
     });
     onClose();
   };
+
+  const inputClassName =
+    'h-11 w-full rounded-lg border border-gray-200 px-4 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
+  const selectClassName =
+    'h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
+  const textareaClassName =
+    'min-h-[100px] w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 resize-none';
 
   // Generate year options (last 50 years to current year)
   const currentYear = new Date().getFullYear();
@@ -217,7 +230,7 @@ export default function CompetitiveExamsModal({
           >
             Cancel
           </button>
-          {isFormComplete && (
+          {isFormValid && (
             <button
               onClick={handleSave}
               className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
@@ -232,13 +245,13 @@ export default function CompetitiveExamsModal({
               {/* Exam Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Exam Name <span className="text-red-500">*</span>
+                  Exam Name <span className="text-amber-600">*</span>
                 </label>
                 <div className="relative">
                   <select
                     value={examName}
                     onChange={(e) => setExamName(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white pr-10"
+                    className={`${selectClassName} ${!examName && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'} appearance-none pr-10`}
                     style={{
                       backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2399A1AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
                       backgroundRepeat: 'no-repeat',
@@ -260,18 +273,21 @@ export default function CompetitiveExamsModal({
                     <option value="CLAT">CLAT</option>
                     <option value="Other">Other</option>
                   </select>
+                  {!examName && (
+                    <p className="mt-1 text-xs text-amber-600">Exam name is required</p>
+                  )}
                 </div>
               </div>
 
               {/* Year Taken */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Year Taken <span className="text-red-500">*</span>
+                  Year Taken <span className="text-amber-600">*</span>
                 </label>
                 <select
                   value={yearTaken}
                   onChange={(e) => setYearTaken(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                  className={`${selectClassName} ${!yearTaken && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'} appearance-none`}
                   style={{
                     backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2399A1AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
                     backgroundRepeat: 'no-repeat',
@@ -286,17 +302,20 @@ export default function CompetitiveExamsModal({
                     </option>
                   ))}
                 </select>
+                {!yearTaken && (
+                  <p className="mt-1 text-xs text-amber-600">Year taken is required</p>
+                )}
               </div>
 
               {/* Result Status */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Result Status <span className="text-red-500">*</span>
+                  Result Status <span className="text-amber-600">*</span>
                 </label>
                 <select
                   value={resultStatus}
                   onChange={(e) => setResultStatus(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                  className={`${selectClassName} ${!resultStatus && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'} appearance-none`}
                   style={{
                     backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2399A1AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
                     backgroundRepeat: 'no-repeat',
@@ -311,12 +330,15 @@ export default function CompetitiveExamsModal({
                   <option value="Qualified">Qualified</option>
                   <option value="Not Qualified">Not Qualified</option>
                 </select>
+                {!resultStatus && (
+                  <p className="mt-1 text-xs text-amber-600">Result status is required</p>
+                )}
               </div>
 
               {/* Score / Marks */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Score / Marks <span className="text-red-500">*</span>
+                  Score / Marks <span className="text-amber-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -328,8 +350,11 @@ export default function CompetitiveExamsModal({
                   inputMode="numeric"
                   pattern="[0-9]*"
                   placeholder="Enter marks"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`${inputClassName} ${!scoreMarks.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
                 />
+                {!scoreMarks.trim() && (
+                  <p className="mt-1 text-xs text-amber-600">Score/Marks is required</p>
+                )}
               </div>
 
               {/* Score Type */}
@@ -340,12 +365,11 @@ export default function CompetitiveExamsModal({
                 <select
                   value={scoreType}
                   onChange={(e) => setScoreType(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
+                  className={`${selectClassName} ${!scoreType && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'} appearance-none pr-10`}
                   style={{
                     backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2399A1AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'right 12px center',
-                    paddingRight: '40px'
                   }}
                 >
                   <option value="">Select score type</option>
@@ -358,6 +382,9 @@ export default function CompetitiveExamsModal({
                   <option value="CGPA">CGPA</option>
                   <option value="Other">Other</option>
                 </select>
+                {!scoreType && (
+                  <p className="mt-1 text-xs text-amber-600">Score type is required</p>
+                )}
               </div>
 
               {/* Valid Until */}
@@ -380,7 +407,7 @@ export default function CompetitiveExamsModal({
                       e.target.type = 'text';
                     }
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={inputClassName}
                 />
               </div>
 
@@ -394,7 +421,7 @@ export default function CompetitiveExamsModal({
                   onChange={(e) => setAdditionalNotes(e.target.value)}
                   placeholder="Add any notes such as attempts, section scores, or additional details..."
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className={textareaClassName}
                 />
               </div>
 
@@ -420,24 +447,26 @@ export default function CompetitiveExamsModal({
                   className={`w-full px-4 py-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
                     dragActive
                       ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-300 hover:border-blue-500 hover:bg-gray-50'
+                      : 'border-amber-200 bg-amber-50/50 focus:ring-amber-500 hover:bg-gray-50'
                   }`}
                 >
                   <div className="flex flex-col items-center justify-center gap-2">
                     <svg
-                      className="w-8 h-8 text-gray-400"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
-                      viewBox="0 0 24 24"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-gray-400"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 text-center">
                       <span className="text-blue-600 font-medium">Click to upload</span> or drag and drop
                     </p>
                     <p className="text-xs text-gray-500">PDF, PNG, JPG (MAX. 10MB each)</p>
@@ -472,11 +501,39 @@ export default function CompetitiveExamsModal({
                               </p>
                             )}
                           </div>
-                        </div>
+                            <div className="flex items-center gap-3 shrink-0 ml-2">
+                              {doc.url && (
+                                <>
+                                  <a
+                                    href={resolveDocumentUrl(doc.url)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-700 transition-colors"
+                                    title="View Document"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                  </a>
+                                  <a
+                                    href={resolveDocumentUrl(doc.url)}
+                                    download={doc.name}
+                                    className="text-orange-600 hover:text-orange-700 transition-colors"
+                                    title="Download Document"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                  </a>
+                                </>
+                              )}
+                            </div>
+                          </div>
                         <button
                           type="button"
                           onClick={() => handleRemoveFile(doc.id)}
-                          className="ml-2 p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                          className="ml-2 p-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded transition-colors"
                         >
                           <svg
                             className="w-5 h-5"

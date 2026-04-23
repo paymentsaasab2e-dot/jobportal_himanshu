@@ -308,9 +308,12 @@ export default function BasicInfoModal({
                       type="text"
                       value={firstNameValue}
                       onChange={(e) => setFirstNameValue(e.target.value)}
-                      className={`h-11 w-full rounded-lg px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${errors.firstName ? 'border-red-400' : 'border-gray-200'}`}
+                      className={`h-11 w-full rounded-lg px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${(!firstNameValue.trim() || errors.firstName) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
                       placeholder="Enter first name"
                     />
+                    {!firstNameValue.trim() && (
+                      <p className="mt-1 text-xs text-amber-600">First name is required</p>
+                    )}
                     {errors.firstName && <p className="text-xs text-red-600">{errors.firstName}</p>}
                   </div>
                   <div className="space-y-1.5">
@@ -349,10 +352,13 @@ export default function BasicInfoModal({
                         type="email"
                         value={emailValue}
                         onChange={(e) => setEmailValue(e.target.value)}
-                        className={`h-11 w-full rounded-lg px-3 pr-24 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${errors.email ? 'border-red-400' : 'border-gray-200'}`}
+                        className={`h-11 w-full rounded-lg px-3 pr-24 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${(!emailValue.trim() || errors.email) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
                         placeholder="Enter email address"
                       />
                     </div>
+                    {!emailValue.trim() && (
+                      <p className="mt-1 text-xs text-amber-600">Email address is required</p>
+                    )}
                     {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
                   </div>
                   <div className="space-y-1.5 md:col-span-2">
@@ -415,7 +421,7 @@ export default function BasicInfoModal({
                           setPhoneValue(digitsOnly.slice(0, maxLength));
                         }}
                         maxLength={selectedPhoneCodeOption.phoneLength}
-                        className={`h-11 w-full rounded-lg px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${errors.phone ? 'border-red-400' : 'border-gray-200'}`}
+                        className={`h-11 w-full rounded-lg px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${(!phoneValue.trim() || errors.phone) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
                         placeholder={`${selectedPhoneCodeOption.phoneLength} digits`}
                       />
                     </div>
@@ -446,7 +452,7 @@ export default function BasicInfoModal({
                     <select
                       value={genderValue}
                       onChange={(e) => setGenderValue(e.target.value)}
-                      className={`h-11 w-full rounded-lg bg-white px-3 text-black font-medium shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none appearance-none ${errors.gender ? 'border-red-400' : 'border-gray-200'}`}
+                      className={`h-11 w-full rounded-lg bg-white px-3 text-black font-medium shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none appearance-none ${(!genderValue || errors.gender) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
                     >
                       <option value="">Select Gender</option>
                       <option>Male</option>
@@ -478,7 +484,7 @@ export default function BasicInfoModal({
                         max={maxDobInputValue}
                         onChange={(e) => setDobValue(e.target.value)}
                         onClick={() => dateInputRef.current?.showPicker()}
-                        className={`h-11 w-full rounded-lg px-3 pl-10 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none [color-scheme:light] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full ${errors.dob ? 'border-red-400' : 'border-gray-200'}`}
+                        className={`h-11 w-full rounded-lg px-3 pl-10 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none [color-scheme:light] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full ${(!dobValue || errors.dob) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
                       />
                     </div>
                     {errors.dob && <p className="text-xs text-red-600">{errors.dob}</p>}
@@ -498,7 +504,7 @@ export default function BasicInfoModal({
                       type="text"
                       value={cityValue}
                       onChange={(e) => setCityValue(e.target.value)}
-                      className={`h-11 w-full rounded-lg bg-white px-3 text-black font-medium shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${errors.city ? 'border-red-400' : 'border-gray-200'}`}
+                      className={`h-11 w-full rounded-lg bg-white px-3 text-black font-medium shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${(!cityValue.trim() || errors.city) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
                       placeholder="Enter current city"
                     />
                     {errors.city && <p className="text-xs text-red-600">{errors.city}</p>}
@@ -508,7 +514,7 @@ export default function BasicInfoModal({
                     <select
                       value={countryValue}
                       onChange={(e) => setCountryValue(e.target.value)}
-                      className={`h-11 w-full rounded-lg bg-white px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none appearance-none ${errors.country ? 'border-red-400' : 'border-gray-200'}`}
+                      className={`h-11 w-full rounded-lg bg-white px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none appearance-none ${(!countryValue || errors.country) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
                     >
                       <option value="">Select Country</option>
                       {ALL_COUNTRY_CODES.map((country) => (

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 
 interface VaccinationModalProps {
   isOpen: boolean;
@@ -123,14 +124,13 @@ export default function VaccinationModal({
           >
             Cancel
           </button>
-          {isFormComplete && (
-            <button
-              onClick={handleSave}
-              className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
-            >
-              Save & Update
-            </button>
-          )}
+          <button
+            onClick={handleSave}
+            disabled={!isFormComplete}
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Save & Update
+          </button>
         </div>
       )}
     >
@@ -149,8 +149,11 @@ export default function VaccinationModal({
                   value={vaccineType}
                   onChange={(e) => setVaccineType(e.target.value)}
                   placeholder="eg. Yellow Fever"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!vaccineType.trim() ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                 />
+                {!vaccineType.trim() && (
+                  <p className="mt-1 text-xs text-amber-600">Vaccine type is required</p>
+                )}
               </div>
 
               {/* Last Vaccination Date */}
@@ -163,7 +166,7 @@ export default function VaccinationModal({
                     type="date"
                     value={lastVaccinationDate}
                     onChange={(e) => setLastVaccinationDate(e.target.value)}
-                    className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full px-4 py-2 pl-10 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!lastVaccinationDate ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                   />
                   <svg
                     className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9095A1] pointer-events-none"
@@ -171,11 +174,14 @@ export default function VaccinationModal({
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
+                {!lastVaccinationDate && (
+                  <p className="mt-1 text-xs text-amber-600">Date is required</p>
+                )}
                 <p className="mt-1 text-xs text-gray-500">
-                  Optional. The date of your last vaccination.
+                  The date of your last vaccination.
                 </p>
               </div>
 
@@ -190,7 +196,7 @@ export default function VaccinationModal({
                     <select
                       value={validityMonth}
                       onChange={(e) => setValidityMonth(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-gray-900"
+                      className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-gray-900 ${!validityMonth ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                     >
                       <option value="">Select Month</option>
                       <option value="01">January</option>
@@ -206,13 +212,16 @@ export default function VaccinationModal({
                       <option value="11">November</option>
                       <option value="12">December</option>
                     </select>
+                    {!validityMonth && (
+                      <p className="mt-1 text-[10px] text-amber-600">Required</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs text-gray-600 mb-1">Year</label>
                     <select
                       value={validityYear}
                       onChange={(e) => setValidityYear(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-gray-900"
+                      className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-gray-900 ${!validityYear ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                     >
                       <option value="">Select Year</option>
                       {Array.from({ length: 20 }, (_, i) => {
@@ -224,6 +233,9 @@ export default function VaccinationModal({
                         );
                       })}
                     </select>
+                    {!validityYear && (
+                      <p className="mt-1 text-[10px] text-amber-600">Required</p>
+                    )}
                   </div>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
@@ -274,9 +286,37 @@ export default function VaccinationModal({
                         {certificate instanceof File ? certificate.name : certificate}
                       </p>
                     </div>
+                    <div className="flex items-center gap-3 shrink-0 ml-2">
+                      {typeof certificate === 'string' && (
+                        <>
+                          <a
+                            href={resolveDocumentUrl(certificate)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-700 transition-colors"
+                            title="View Document"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </a>
+                          <a
+                            href={resolveDocumentUrl(certificate)}
+                            download={certificate.split('/').pop()}
+                            className="text-orange-600 hover:text-orange-700 transition-colors"
+                            title="Download Document"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </a>
+                        </>
+                      )}
+                    </div>
                     <button
                       onClick={handleRemoveFile}
-                      className="text-[#9095A1] hover:text-red-600"
+                      className="text-[#9095A1] hover:text-amber-700"
                       title="Remove file"
                     >
                       <svg

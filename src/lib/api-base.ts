@@ -53,3 +53,26 @@ export const API_ORIGIN = (() => {
   return HOSTED_API_ORIGIN;
 })();
 
+export const resolveDocumentUrl = (url?: string): string => {
+  if (!url) return '';
+  let trimmed = url.trim();
+  
+  // Fix common malformation: 'https//' or 'http//' missing the colon
+  if (trimmed.match(/^https? \/\//i)) {
+    trimmed = trimmed.replace(/^(https?)( \/\/)/i, '$1:$2');
+  }
+  // Also handle cases where there's no space but still no colon
+  if (trimmed.match(/^https?\/\//i)) {
+    trimmed = trimmed.replace(/^(https?)\/\//i, '$1://');
+  }
+
+  // Check if it's now a proper absolute URL
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('//')) {
+    return trimmed;
+  }
+  
+  // Ensure relative URLs start with a slash
+  const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return `${API_ORIGIN}${path}`;
+};
+

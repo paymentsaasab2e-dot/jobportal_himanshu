@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 
 interface InternshipModalProps {
   isOpen: boolean;
@@ -225,16 +226,16 @@ export default function InternshipModal({
   const getMissingRequiredFields = () => {
     const missingFields: string[] = [];
 
-    if (!internshipTitle.trim()) missingFields.push('Internship Title');
-    if (!companyName.trim()) missingFields.push('Company / Organization Name');
+    if (!String(internshipTitle || '').trim()) missingFields.push('Internship Title');
+    if (!String(companyName || '').trim()) missingFields.push('Company / Organization Name');
     if (!internshipType) missingFields.push('Internship Type');
     if (!domainDepartment) missingFields.push('Domain / Department');
     if (!startDate) missingFields.push('Start Date');
     if (!currentlyWorking && !endDate) missingFields.push('End Date');
-    if (!location.trim()) missingFields.push('Location');
+    if (!String(location || '').trim()) missingFields.push('Location');
     if (!workMode) missingFields.push('Work Mode');
-    if (!responsibilities.trim()) missingFields.push('Responsibilities / Tasks Performed');
-    if (!learnings.trim()) missingFields.push('Learnings or Outcomes');
+    if (!String(responsibilities || '').trim()) missingFields.push('Responsibilities / Tasks Performed');
+    if (!String(learnings || '').trim()) missingFields.push('Learnings or Outcomes');
     if (skills.length === 0) missingFields.push('Skills Applied');
     if (documents.length === 0) missingFields.push('Internship Certificates/Documents');
 
@@ -302,30 +303,33 @@ export default function InternshipModal({
                 {/* Internship Title */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Internship Title <span className="text-red-500">*</span>
+                    Internship Title <span className="text-amber-600">*</span>
                   </label>
                   <input
                     type="text"
                     value={internshipTitle}
                     onChange={(e) => setInternshipTitle(e.target.value)}
                     placeholder="e.g., Marketing & Communications Intern"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!internshipTitle.trim() ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
                     style={{
                       fontFamily: 'Inter, sans-serif',
                       fontSize: '14px',
                     }}
                   />
+                  {!internshipTitle.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Internship title is required</p>
+                  )}
                 </div>
 
                 {/* Internship Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Internship Type <span className="text-red-500">*</span>
+                    Internship Type <span className="text-amber-600">*</span>
                   </label>
                   <select
                     value={internshipType}
                     onChange={(e) => setInternshipType(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white ${!internshipType ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
                     style={{
                       fontFamily: 'Inter, sans-serif',
                       fontSize: '14px',
@@ -337,6 +341,9 @@ export default function InternshipModal({
                     <option value="remote">Remote Internship</option>
                     <option value="hybrid">Hybrid Internship</option>
                   </select>
+                  {!internshipType && (
+                    <p className="mt-1 text-xs text-amber-600">Internship type is required</p>
+                  )}
                 </div>
               </div>
 
@@ -345,30 +352,33 @@ export default function InternshipModal({
                 {/* Company / Organization Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Company / Organization Name <span className="text-red-500">*</span>
+                    Company / Organization Name <span className="text-amber-600">*</span>
                   </label>
                   <input
                     type="text"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="e.g., SAASA Corp."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!companyName.trim() ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
                     style={{
                       fontFamily: 'Inter, sans-serif',
                       fontSize: '14px',
                     }}
                   />
+                  {!companyName.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Company name is required</p>
+                  )}
                 </div>
 
                 {/* Domain / Department */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Domain / Department <span className="text-red-500">*</span>
+                    Domain / Department <span className="text-amber-600">*</span>
                   </label>
                   <select
                     value={domainDepartment}
                     onChange={(e) => setDomainDepartment(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white ${!domainDepartment ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
                     style={{
                       fontFamily: 'Inter, sans-serif',
                       fontSize: '14px',
@@ -383,6 +393,9 @@ export default function InternshipModal({
                     <option value="sales">Sales</option>
                     <option value="design">Design</option>
                   </select>
+                  {!domainDepartment && (
+                    <p className="mt-1 text-xs text-amber-600">Domain/Department is required</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -393,7 +406,7 @@ export default function InternshipModal({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Start Date <span className="text-red-500">*</span>
+                    Start Date <span className="text-amber-600">*</span>
                   </label>
                   <div className="relative">
                     <input
@@ -401,7 +414,7 @@ export default function InternshipModal({
                       value={startDate}
                       max={endDate || undefined}
                       onChange={(e) => handleStartDateChange(e.target.value)}
-                      className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className={`w-full px-4 py-3 pl-10 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!startDate ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
                       style={{
                         fontFamily: 'Inter, sans-serif',
                         fontSize: '14px',
@@ -416,10 +429,13 @@ export default function InternshipModal({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
+                  {!startDate && (
+                    <p className="mt-1 text-xs text-amber-600">Start date is required</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    End Date {!currentlyWorking && <span className="text-red-500">*</span>}
+                    End Date {!currentlyWorking && <span className="text-amber-600">*</span>}
                   </label>
                   <div className="relative">
                     <input
@@ -428,7 +444,7 @@ export default function InternshipModal({
                       min={startDate || undefined}
                       onChange={(e) => handleEndDateChange(e.target.value)}
                       disabled={currentlyWorking}
-                      className={`w-full px-4 py-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${dateError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
+                      className={`w-full px-4 py-3 pl-10 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${!currentlyWorking && !endDate ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : (dateError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300')}`}
                       style={{
                         fontFamily: 'Inter, sans-serif',
                         fontSize: '14px',
@@ -443,6 +459,9 @@ export default function InternshipModal({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
+                  {!currentlyWorking && !endDate && (
+                    <p className="mt-1 text-xs text-amber-600">End date is required</p>
+                  )}
                   <label className="flex items-center gap-2 mt-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -459,7 +478,7 @@ export default function InternshipModal({
                     <span className="text-sm text-blue-600 font-medium">I am currently working here</span>
                   </label>
                   {dateError && (
-                    <p className="mt-2 text-xs text-red-600">{dateError}</p>
+                    <p className="mt-2 text-xs text-amber-600">{dateError}</p>
                   )}
                 </div>
               </div>
@@ -471,28 +490,31 @@ export default function InternshipModal({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Location <span className="text-red-500">*</span>
+                    Location <span className="text-amber-600">*</span>
                   </label>
                   <input
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="City, Country"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!location.trim() ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
                     style={{
                       fontFamily: 'Inter, sans-serif',
                       fontSize: '14px',
                     }}
                   />
+                  {!location.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Location is required</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Work Mode <span className="text-red-500">*</span>
+                    Work Mode <span className="text-amber-600">*</span>
                   </label>
                   <select
                     value={workMode}
                     onChange={(e) => setWorkMode(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white ${!workMode ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
                     style={{
                       fontFamily: 'Inter, sans-serif',
                       fontSize: '14px',
@@ -503,6 +525,9 @@ export default function InternshipModal({
                     <option value="hybrid">Hybrid</option>
                     <option value="onsite">On-site</option>
                   </select>
+                  {!workMode && (
+                    <p className="mt-1 text-xs text-amber-600">Work mode is required</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -514,37 +539,43 @@ export default function InternshipModal({
               {/* Responsibilities / Tasks Performed */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Responsibilities / Tasks Performed <span className="text-red-500">*</span>
+                  Responsibilities / Tasks Performed <span className="text-amber-600">*</span>
                 </label>
                 <textarea
                   value={responsibilities}
                   onChange={(e) => setResponsibilities(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${!responsibilities.trim() ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
                   placeholder="Describe your main tasks, duties, and contributions..."
                   style={{
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '14px',
                   }}
                 />
+                {!responsibilities.trim() && (
+                  <p className="mt-1 text-xs text-amber-600">Responsibilities are required</p>
+                )}
               </div>
 
               {/* Learnings or Outcomes */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Learnings or Outcomes <span className="text-red-500">*</span>
+                  Learnings or Outcomes <span className="text-amber-600">*</span>
                 </label>
                 <textarea
                   value={learnings}
                   onChange={(e) => setLearnings(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${!learnings.trim() ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
                   placeholder="Describe what you learned, skills gained, or outcomes achieved..."
                   style={{
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '14px',
                   }}
                 />
+                {!learnings.trim() && (
+                  <p className="mt-1 text-xs text-amber-600">Learnings are required</p>
+                )}
               </div>
             </div>
 
@@ -553,7 +584,7 @@ export default function InternshipModal({
               <h3 className="text-base font-semibold text-gray-900">Skills Used</h3>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Skills Applied <span className="text-red-500">*</span>
+                  Skills Applied <span className="text-amber-600">*</span>
                 </label>
                 {skills.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
@@ -590,7 +621,7 @@ export default function InternshipModal({
                       }
                     }}
                     placeholder="Add skills you used during this internship..."
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`flex-1 px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${skills.length === 0 ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
                     style={{
                       fontFamily: 'Inter, sans-serif',
                       fontSize: '14px',
@@ -609,13 +640,16 @@ export default function InternshipModal({
                     Add
                   </button>
                 </div>
+                {skills.length === 0 && (
+                  <p className="mt-1 text-xs text-amber-600">At least one skill is required</p>
+                )}
               </div>
             </div>
 
             {/* Upload Documents Section */}
             <div className="space-y-4">
               <h3 className="text-base font-semibold text-gray-900">
-                Upload Your Internship Certificates/Documents <span className="text-red-500">*</span>
+                Upload Your Internship Certificates/Documents <span className="text-amber-600">*</span>
               </h3>
               
               {/* File Input (Hidden) */}
@@ -638,12 +672,12 @@ export default function InternshipModal({
                 className={`w-full px-4 py-6 border-2 border-dashed rounded-lg transition-colors cursor-pointer ${
                   dragActive
                     ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-300 hover:border-blue-500 hover:bg-gray-50'
+                    : (documents.length === 0 ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300 hover:border-blue-500 hover:bg-gray-50')
                 }`}
               >
                 <div className="flex flex-col items-center justify-center gap-2">
                   <svg
-                    className="w-8 h-8 text-gray-400"
+                    className={`w-8 h-8 ${documents.length === 0 ? 'text-amber-600' : 'text-gray-400'}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -655,19 +689,22 @@ export default function InternshipModal({
                       d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                     />
                   </svg>
-                  <p className="text-sm text-gray-600 text-center">
-                    <span className="text-blue-600 font-medium">Click to upload</span> or drag and drop
+                  <p className={`text-sm text-center ${documents.length === 0 ? 'text-amber-600' : 'text-gray-600'}`}>
+                    <span className={`${documents.length === 0 ? 'text-amber-700' : 'text-blue-600'} font-medium`}>Click to upload</span> or drag and drop
                   </p>
-                  <p className="text-xs text-gray-500">PDF, PNG, JPG (Max 5MB per file)</p>
+                  <p className={`text-xs ${documents.length === 0 ? 'text-amber-600' : 'text-gray-500'}`}>PDF, PNG, JPG (Max 5MB per file)</p>
                 </div>
               </div>
+              {documents.length === 0 && (
+                <p className="mt-1 text-xs text-amber-600">Internship certificate is required</p>
+              )}
 
               {/* Uploaded Files List */}
               {documents.length > 0 && (
                 <div className="space-y-2">
                   {documents.map((doc, index) => (
                     <div
-                      key={doc.id || `doc-${index}-${doc.name || 'document'}`}
+                      key={doc.id || `doc-${index}`}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -692,22 +729,45 @@ export default function InternshipModal({
                             </p>
                           )}
                         </div>
+                        <div className="flex items-center gap-3 shrink-0 ml-2">
+                          {doc.url && (
+                            <>
+                              <a
+                                href={resolveDocumentUrl(doc.url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-700 transition-colors"
+                                title="View Document"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </a>
+                              <a
+                                href={resolveDocumentUrl(doc.url)}
+                                download={doc.name}
+                                className="text-orange-600 hover:text-orange-700 transition-colors"
+                                title="Download Document"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                              </a>
+                            </>
+                          )}
+                        </div>
                       </div>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRemoveFile(doc.id);
                         }}
-                        className="ml-2 p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                        className="ml-2 p-1 text-amber-600 hover:text-amber-700 hover:bg-red-50 rounded transition-colors"
                         aria-label="Remove file"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
                     </div>
@@ -717,8 +777,8 @@ export default function InternshipModal({
             </div>
 
             {missingRequiredFields.length > 0 && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-                <p className="text-xs font-medium text-red-700">
+              <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2">
+                <p className="text-xs font-medium text-amber-700">
                   Missing required fields: {missingRequiredFields.join(', ')}
                 </p>
               </div>

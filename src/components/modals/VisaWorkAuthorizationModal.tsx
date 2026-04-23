@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 
 interface VisaWorkAuthorizationModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ export interface VisaDocument {
   id: string;
   file: File | string;
   name: string;
+  url?: string;
   size?: number;
 }
 
@@ -351,7 +353,7 @@ export default function VisaWorkAuthorizationModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Visa Type <span className="text-red-500">*</span>
+                  Visa Type <span className="text-amber-600">*</span>
                 </label>
                 <select
                   value={sectionData.visaType}
@@ -483,27 +485,41 @@ export default function VisaWorkAuthorizationModal({
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          className="text-blue-600 hover:text-blue-700 text-sm"
-                          title="View"
-                        >
-                          View
-                        </button>
-                        <span className="text-gray-300">|</span>
-                        <button
-                          className="text-blue-600 hover:text-blue-700 text-sm"
-                          title="Edit"
-                        >
-                          Edit
-                        </button>
-                        <span className="text-gray-300">|</span>
+                      <div className="flex items-center gap-3 shrink-0 ml-2">
+                        {doc.url && (
+                          <>
+                            <a
+                              href={resolveDocumentUrl(doc.url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-700 transition-colors"
+                              title="View Document"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </a>
+                            <a
+                              href={resolveDocumentUrl(doc.url)}
+                              download={doc.name}
+                              className="text-orange-600 hover:text-orange-700 transition-colors"
+                              title="Download Document"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                            </a>
+                          </>
+                        )}
                         <button
                           onClick={() => handleRemoveFile(sectionId, doc.id)}
-                          className="text-red-600 hover:text-red-700 text-sm"
-                          title="Delete"
+                          className="p-1 text-amber-600 hover:text-amber-700 hover:bg-red-50 rounded transition-colors"
+                          aria-label="Remove file"
                         >
-                          Del
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         </button>
                       </div>
                     </div>
@@ -532,14 +548,13 @@ export default function VisaWorkAuthorizationModal({
           >
             Cancel
           </button>
-          {(isFormComplete || visaEntries.length > 0) && (
-            <button
-              onClick={handleSave}
-              className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
-            >
-              Save Visa & Work Authorization
-            </button>
-          )}
+          <button
+            onClick={handleSave}
+            disabled={!(isFormComplete || visaEntries.length > 0)}
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Save Visa & Work Authorization
+          </button>
         </div>
       )}
     >
@@ -555,7 +570,7 @@ export default function VisaWorkAuthorizationModal({
                     setSelectedDestination(e.target.value);
                     setRequiresVisa('');
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!selectedDestination ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                 >
                   <option value="">Select a Country...</option>
                   {COUNTRIES.map((country) => (
@@ -564,6 +579,9 @@ export default function VisaWorkAuthorizationModal({
                     </option>
                   ))}
                 </select>
+                {!selectedDestination && (
+                  <p className="mt-1 text-xs text-amber-600">Country selection is required</p>
+                )}
                 <p className="mt-1 text-xs text-gray-500">
                   Select all countries where you are legally authorized to work.
                 </p>
@@ -575,7 +593,7 @@ export default function VisaWorkAuthorizationModal({
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Do you require a visa for this country?
                   </label>
-                  <div className="flex gap-6">
+                  <div className={`flex gap-6 p-2 rounded-lg ${!requiresVisa ? 'bg-amber-50 border border-amber-200' : ''}`}>
                     <label className="flex items-center gap-2">
                       <input
                         type="radio"
@@ -599,6 +617,9 @@ export default function VisaWorkAuthorizationModal({
                       <span className="text-sm text-gray-700">No</span>
                     </label>
                   </div>
+                  {!requiresVisa && (
+                    <p className="mt-1 text-xs text-amber-600">Please select an option</p>
+                  )}
                 </div>
               )}
 
@@ -609,32 +630,38 @@ export default function VisaWorkAuthorizationModal({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Visa Type <span className="text-red-500">*</span>
+                        Visa Type <span className="text-amber-600">*</span>
                       </label>
                       <select
                         value={visaDetailsExpected?.visaType || ''}
                         onChange={(e) => handleVisaDetailChange('expected', 'visaType', e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.visaType ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                       >
                         <option value="">Select Visa Type</option>
                         {VISA_TYPES.map((type) => (
                           <option key={type} value={type}>{type}</option>
                         ))}
                       </select>
+                      {!visaDetailsExpected?.visaType && (
+                        <p className="mt-1 text-[10px] text-amber-600">Required</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Visa Status <span className="text-red-500">*</span>
+                        Visa Status <span className="text-amber-600">*</span>
                       </label>
                       <select
                         value={visaDetailsExpected?.visaStatus || 'Active'}
                         onChange={(e) => handleVisaDetailChange('expected', 'visaStatus', e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.visaStatus ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                       >
                         {VISA_STATUSES.map((status) => (
                           <option key={status} value={status}>{status}</option>
                         ))}
                       </select>
+                      {!visaDetailsExpected?.visaStatus && (
+                        <p className="mt-1 text-[10px] text-amber-600">Required</p>
+                      )}
                     </div>
                   </div>
 
@@ -642,7 +669,7 @@ export default function VisaWorkAuthorizationModal({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Visa Expiry Date <span className="text-red-500">*</span>
+                        Visa Expiry Date <span className="text-amber-600">*</span>
                       </label>
                       <div className="relative">
                         <svg
@@ -657,31 +684,37 @@ export default function VisaWorkAuthorizationModal({
                           type="date"
                           value={visaDetailsExpected?.visaExpiryDate || ''}
                           onChange={(e) => handleVisaDetailChange('expected', 'visaExpiryDate', e.target.value)}
-                          className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className={`w-full px-4 py-2 pl-10 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.visaExpiryDate ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                         />
                       </div>
+                      {!visaDetailsExpected?.visaExpiryDate && (
+                        <p className="mt-1 text-xs text-amber-600">Expiry date is required</p>
+                      )}
                       <p className="mt-1 text-xs text-gray-500">
                         This helps employers understand your visa timeline.
                       </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Work Permit Number <span className="text-red-500">*</span>
+                        Work Permit Number <span className="text-amber-600">*</span>
                       </label>
                       <input
                         type="text"
                         value={visaDetailsExpected?.itemFamilyNumber || ''}
                         onChange={(e) => handleVisaDetailChange('expected', 'itemFamilyNumber', e.target.value)}
                         placeholder="Enter work permit number"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.itemFamilyNumber ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                       />
+                      {!visaDetailsExpected?.itemFamilyNumber && (
+                        <p className="mt-1 text-xs text-amber-600">Work permit number is required</p>
+                      )}
                     </div>
                   </div>
 
                   {/* Row 3: Upload Visa / Work Permit Document */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Upload Visa / Work Permit Document <span className="text-red-500">*</span>
+                      Upload Visa / Work Permit Document <span className="text-amber-600">*</span>
                     </label>
                     <input
                       ref={(el) => { fileInputRefs.current['expected'] = el; }}
@@ -691,21 +724,26 @@ export default function VisaWorkAuthorizationModal({
                       className="hidden"
                     />
                     {(!visaDetailsExpected?.documents || visaDetailsExpected.documents.length === 0) ? (
-                      <button
-                        type="button"
-                        onClick={() => fileInputRefs.current['expected']?.click()}
-                        className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 flex items-center justify-center gap-2"
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRefs.current['expected']?.click()}
+                          className={`w-full px-4 py-3 border-2 border-dashed rounded-lg flex items-center justify-center gap-2 ${(!visaDetailsExpected?.documents || visaDetailsExpected.documents.length === 0) ? 'border-red-300 bg-red-50 hover:bg-red-100' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'} text-gray-600`}
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        Choose file
-                      </button>
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          </svg>
+                          Choose file
+                        </button>
+                        {(!visaDetailsExpected?.documents || visaDetailsExpected.documents.length === 0) && (
+                          <p className="mt-1 text-xs text-amber-600">Supporting document is required</p>
+                        )}
+                      </>
                     ) : (
                       <div className="space-y-2">
                         {visaDetailsExpected.documents.map((doc) => (
@@ -728,7 +766,7 @@ export default function VisaWorkAuthorizationModal({
                             </div>
                             <button
                               onClick={() => handleRemoveFile('expected', doc.id)}
-                              className="text-[#9095A1] hover:text-red-600"
+                              className="text-[#9095A1] hover:text-amber-600"
                               title="Delete"
                             >
                               <svg
@@ -780,7 +818,7 @@ export default function VisaWorkAuthorizationModal({
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleRemoveVisaEntry(entry.id)}
-                            className="text-red-500 hover:text-red-700 p-1"
+                            className="text-amber-600 hover:text-amber-700 p-1"
                             title="Delete"
                           >
                             <svg

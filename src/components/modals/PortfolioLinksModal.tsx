@@ -276,34 +276,40 @@ export default function PortfolioLinksModal({
               {/* Link Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Link Type <span className="text-red-500">*</span>
+                  Link Type <span className="text-amber-600">*</span>
                 </label>
                 <select
                   value={linkType}
                   onChange={(e) => setLinkType(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!linkType.trim() ? 'border-red-300 bg-red-50 focus:ring-red-500' : 'border-gray-300'}`}
                 >
                   <option value="">Select Link Type</option>
                   {LINK_TYPES.map((type) => (
                     <option key={type} value={type}>{type}</option>
                   ))}
                 </select>
+                {!linkType.trim() && (
+                  <p className="mt-1 text-xs text-amber-600">Link type is required</p>
+                )}
               </div>
 
               {/* Link URL */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Link URL <span className="text-red-500">*</span>
+                  Link URL <span className="text-amber-600">*</span>
                 </label>
                 <input
                   type="text"
                   value={url}
                   onChange={(e) => handleUrlChange(e.target.value)}
                   placeholder="Enter full URL (https://…)"
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    urlError ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    (!url.trim() || urlError) ? 'border-red-300 bg-red-50 focus:ring-red-500' : 'border-gray-300'
                   }`}
                 />
+                {!url.trim() && (
+                  <p className="mt-1 text-xs text-amber-600">URL is required</p>
+                )}
                 {urlError && (
                   <p className="mt-1 text-sm text-red-600">{urlError}</p>
                 )}

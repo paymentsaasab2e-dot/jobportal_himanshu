@@ -401,9 +401,19 @@ export default function ProfilePage() {
 
   const resolveProfileDocHref = (doc: unknown): string => {
     const url = getDocumentUrl(doc);
-    return url.startsWith('http')
-      ? url
-      : `${API_BASE_URL.replace('/api', '')}${url}`;
+    if (!url) return '';
+    let trimmed = url.trim();
+
+    // Fix common malformation: 'https//' or 'http//' missing the colon
+    if (trimmed.match(/^https?\/\//i)) {
+      trimmed = trimmed.replace(/^(https?)\/\//i, '$1://');
+    }
+
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('//')) {
+      return trimmed;
+    }
+    
+    return `${API_BASE_URL.toString().replace('/api', '')}${trimmed.startsWith('/') ? trimmed : `/${trimmed}`}`;
   };
 
   const serializeMaybeFile = (value?: File | string) => {
@@ -1556,7 +1566,11 @@ export default function ProfilePage() {
                         {workExperienceData.workExperiences.map((entry, index) => {
                           const cardKey = entry.id ?? `work-${index}`;
                           const isExpanded = expandedWorkExperienceCards[cardKey] === true;
-                          const toggleCard = () => openDetailsModal('Work Experience', entry);
+                          const toggleCard = () =>
+                            setExpandedWorkExperienceCards((prev) => ({
+                              ...prev,
+                              [entry.id]: !prev[entry.id],
+                            }));
 
                           return (
                             <div
@@ -1680,7 +1694,11 @@ export default function ProfilePage() {
                               formatEnum={formatEnumValue}
                               isExpanded={expandedInternshipId === (internshipItem.id || `internship-${index}`)}
                               onToggleExpand={() =>
-                                openDetailsModal('Internship Details', internshipItem)
+                                setExpandedInternshipId((prev) =>
+                                  prev === (internshipItem.id || `internship-${index}`)
+                                    ? null
+                                    : (internshipItem.id || `internship-${index}`),
+                                )
                               }
                               onEdit={() => {
                                 setInternshipModalMode('edit');
@@ -1883,7 +1901,11 @@ export default function ProfilePage() {
                         {educationData.educations.map((entry, index) => {
                           const cardKey = entry.id ?? `education-${index}`;
                           const isCardExpanded = expandedEducationCards[cardKey] === true;
-                          const toggleCard = () => openDetailsModal('Education Details', entry);
+                          const toggleCard = () =>
+                            setExpandedEducationCards((prev) => ({
+                              ...prev,
+                              [entry.id]: !prev[entry.id],
+                            }));
                           return (
                             <div
                               key={cardKey}
@@ -2001,11 +2023,13 @@ export default function ProfilePage() {
                                 expandedAcademicAchievementId ===
                                 (achievementItem.id || `academic-achievement-${index}`)
                               }
-                              onToggleExpand={() => {
-                                setAcademicAchievementModalMode('edit');
-                                setEditingAcademicAchievementId(achievementItem.id || null);
-                                setIsAcademicAchievementModalOpen(true);
-                              }}
+                              onToggleExpand={() =>
+                                setExpandedAcademicAchievementId((prev) =>
+                                  prev === (achievementItem.id || `academic-achievement-${index}`)
+                                    ? null
+                                    : (achievementItem.id || `academic-achievement-${index}`),
+                                )
+                              }
                               onEdit={() => {
                                 setAcademicAchievementModalMode('edit');
                                 setEditingAcademicAchievementId(achievementItem.id || null);
@@ -2117,7 +2141,11 @@ export default function ProfilePage() {
                               data={exam}
                               isExpanded={expandedCompetitiveExamId === (exam.id || `competitive-exam-${index}`)}
                               onToggleExpand={() =>
-                                openDetailsModal('Competitive Exam Details', exam)
+                                setExpandedCompetitiveExamId((prev) =>
+                                  prev === (exam.id || `competitive-exam-${index}`)
+                                    ? null
+                                    : (exam.id || `competitive-exam-${index}`),
+                                )
                               }
                               onEdit={() => {
                                 setCompetitiveExamsModalMode('edit');
@@ -2408,7 +2436,11 @@ export default function ProfilePage() {
                               data={projectItem}
                               isExpanded={expandedProjectId === (projectItem.id || `project-${index}`)}
                               onToggleExpand={() =>
-                                openDetailsModal('Project Details', projectItem)
+                                setExpandedProjectId((prev) =>
+                                  prev === (projectItem.id || `project-${index}`)
+                                    ? null
+                                    : (projectItem.id || `project-${index}`),
+                                )
                               }
                               onEdit={() => {
                                 setProjectModalMode('edit');
@@ -2605,7 +2637,12 @@ export default function ProfilePage() {
                               <CertificationEntryPreview
                                 cert={cert}
                                 isExpanded={isExpanded}
-                                onToggleExpand={() => openDetailsModal('Certification Details', cert)}
+                                onToggleExpand={() =>
+                                  setIsCertificationCardExpanded((prev) => ({
+                                    ...prev,
+                                    [cert.id]: !prev[cert.id],
+                                  }))
+                                }
                                 onEdit={() => {
                                   setEditingCertificationId(cert.id ?? null);
                                   setIsCertificationModalOpen(true);
@@ -2709,7 +2746,12 @@ export default function ProfilePage() {
                               <AccomplishmentEntryPreview
                                 acc={acc}
                                 isExpanded={isExpanded}
-                                onToggleExpand={() => openDetailsModal('Accomplishment Details', acc)}
+                                onToggleExpand={() =>
+                                  setIsAccomplishmentCardExpanded((prev) => ({
+                                    ...prev,
+                                    [acc.id]: !prev[acc.id],
+                                  }))
+                                }
                                 onEdit={() => {
                                   setEditingAccomplishmentId(acc.id ?? null);
                                   setIsAccomplishmentModalOpen(true);

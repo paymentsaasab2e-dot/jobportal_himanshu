@@ -11,15 +11,13 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, AlertTriangle, CheckCircle2, Info, X } from 'lucide-react';
 import { TOAST_EVENT, inferAlertTone, type ToastPayload, type ToastTone } from './toast';
-
-type ToastPhase = 'entering' | 'visible' | 'leaving';
 
 type ToastItem = Required<Pick<ToastPayload, 'id' | 'title'>> &
   Pick<ToastPayload, 'message' | 'duration'> & {
     tone: ToastTone;
-    phase: ToastPhase;
   };
 
 type ToastApi = {
@@ -33,7 +31,6 @@ type ToastApi = {
 const ToastContext = createContext<ToastApi | null>(null);
 
 const DEFAULT_DURATION = 3400;
-const EXIT_DURATION = 220;
 const MAX_VISIBLE_TOASTS = 4;
 
 function normalizeTone(tone?: ToastTone): Exclude<ToastTone, 'critical' | 'destructive'> {
@@ -90,32 +87,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const dismissTimersRef = useRef<Map<string, number>>(new Map());
   const dedupeRef = useRef<Map<string, number>>(new Map());
 
-  const clearTimersForToast = useCallback((id: string) => {
-    const existingTimer = dismissTimersRef.current.get(id);
-    if (existingTimer != null) {
-      window.clearTimeout(existingTimer);
-      dismissTimersRef.current.delete(id);
-    }
-  }, []);
-
   const removeToast = useCallback(
     (id: string) => {
-      setToasts((current) =>
-        current.map((toast) =>
-          toast.id === id && toast.phase !== 'leaving' ? { ...toast, phase: 'leaving' } : toast
-        )
-      );
-
-      clearTimersForToast(id);
-
-      const timer = window.setTimeout(() => {
-        setToasts((current) => current.filter((toast) => toast.id !== id));
-        dismissTimersRef.current.delete(id);
-      }, EXIT_DURATION);
-
-      dismissTimersRef.current.set(id, timer);
+      setToasts((current) => current.filter((toast) => toast.id !== id));
+      const timer = dismissTimersRef.current.get(id);
+      if (timer) window.clearTimeout(timer);
+      dismissTimersRef.current.delete(id);
     },
-    [clearTimersForToast]
+    []
   );
 
   const push = useCallback(
@@ -142,16 +121,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         message: toast.message,
         duration,
         tone,
-        phase: 'entering',
       };
 
       setToasts((current) => [nextToast, ...current].slice(0, MAX_VISIBLE_TOASTS));
-
-      window.setTimeout(() => {
-        setToasts((current) =>
-          current.map((item) => (item.id === id ? { ...item, phase: 'visible' } : item))
-        );
-      }, 16);
 
       const timer = window.setTimeout(() => removeToast(id), duration);
       dismissTimersRef.current.set(id, timer);
@@ -214,51 +186,56 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      {isMounted && toasts.length > 0 && typeof document !== 'undefined'
+      {isMounted && typeof document !== 'undefined'
         ? createPortal(
             <div className="pointer-events-none fixed inset-x-4 top-4 z-[10000] flex flex-col items-end gap-2 sm:left-auto sm:right-4 sm:w-[360px]">
-              {toasts.map((toast) => {
-                const tone = normalizeTone(toast.tone);
-                const Icon = iconForTone(tone);
-                const classes = toneClasses(tone);
-                const phaseClass =
-                  toast.phase === 'visible'
-                    ? 'translate-y-0 opacity-100'
-                    : toast.phase === 'leaving'
-                    ? 'translate-y-1 opacity-0'
-                    : 'translate-y-2 opacity-0';
+              <AnimatePresence mode="popLayout">
+                {toasts.map((toast) => {
+                  const tone = normalizeTone(toast.tone);
+                  const Icon = iconForTone(tone);
+                  const classes = toneClasses(tone);
 
-                return (
-                  <div
-                    key={toast.id}
-                    className={`pointer-events-auto w-full rounded-2xl border px-4 py-3 backdrop-blur-md transition-all duration-200 ${classes.shell} ${phaseClass}`}
-                    role="status"
-                    aria-live="polite"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${classes.icon}`}
-                      >
-                        <Icon className="h-4 w-4" strokeWidth={2.2} aria-hidden />
+                  return (
+                    <motion.div
+                      key={toast.id}
+                      layout
+                      initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                      transition={{ 
+                        type: 'spring', 
+                        damping: 25, 
+                        stiffness: 300 
+                      }}
+                      className={`pointer-events-auto w-full rounded-2xl border px-4 py-3 backdrop-blur-md ${classes.shell}`}
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div
+                          className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${classes.icon}`}
+                        >
+                          <Icon className="h-4 w-4" strokeWidth={2.2} aria-hidden />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold leading-5">{toast.title}</p>
+                          {toast.message ? (
+                            <p className="mt-1 text-xs font-medium leading-5 opacity-80">{toast.message}</p>
+                          ) : null}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeToast(toast.id)}
+                          aria-label="Dismiss notification"
+                          className={`rounded-xl p-1.5 transition-colors ${classes.close}`}
+                        >
+                          <X className="h-4 w-4" strokeWidth={2.2} />
+                        </button>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold leading-5">{toast.title}</p>
-                        {toast.message ? (
-                          <p className="mt-1 text-xs font-medium leading-5 opacity-80">{toast.message}</p>
-                        ) : null}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeToast(toast.id)}
-                        aria-label="Dismiss notification"
-                        className={`rounded-xl p-1.5 transition-colors ${classes.close}`}
-                      >
-                        <X className="h-4 w-4" strokeWidth={2.2} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
             </div>,
             document.body
           )

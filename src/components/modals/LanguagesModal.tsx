@@ -216,9 +216,29 @@ export default function LanguagesModal({
     setLanguages(updatedLanguages);
   };
 
+  const isFormValid = languages.length > 0;
+
   const handleSave = () => {
+    // If the user has filled the "new" row but hasn't clicked "Add", auto-add it if valid
+    let finalLanguages = [...languages];
+    if (newLanguage && newProficiency) {
+      finalLanguages.push({
+        name: newLanguage,
+        proficiency: newProficiency,
+        speak: newSpeak,
+        read: newRead,
+        write: newWrite,
+        documents: [],
+      });
+    }
+
+    if (finalLanguages.length === 0) {
+      alert('Please add at least one language.');
+      return;
+    }
+
     // Merge documents into languages
-    const languagesWithDocuments = languages.map((lang, index) => ({
+    const languagesWithDocuments = finalLanguages.map((lang, index) => ({
       ...lang,
       documents: languageDocuments[index] || lang.documents || [],
     }));
@@ -247,7 +267,8 @@ export default function LanguagesModal({
           </button>
           <button
             onClick={handleSave}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
+            disabled={languages.length === 0 && (!newLanguage || !newProficiency)}
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Save Language
           </button>
@@ -323,7 +344,7 @@ export default function LanguagesModal({
                         <td className="py-3 px-4 text-center">
                           <button
                             onClick={() => handleRemoveLanguage(index)}
-                            className="text-red-500 hover:text-red-700"
+                            className="text-amber-600 hover:text-amber-700"
                             title="Delete language"
                           >
                             <svg
@@ -351,7 +372,7 @@ export default function LanguagesModal({
                         <select
                           value={newLanguage}
                           onChange={(e) => setNewLanguage(e.target.value)}
-                          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-black"
+                          className={`w-full px-3 py-1.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-black ${!newLanguage && languages.length === 0 ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
                           style={{ color: '#000000' }}
                         >
                           <option value="" style={{ color: '#000000' }}>Select Language</option>
@@ -359,12 +380,15 @@ export default function LanguagesModal({
                             <option key={lang} value={lang}>{lang}</option>
                           ))}
                         </select>
+                        {!newLanguage && languages.length === 0 && (
+                          <p className="mt-1 text-[10px] text-amber-600 text-left">Required</p>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <select
                           value={newProficiency}
                           onChange={(e) => setNewProficiency(e.target.value)}
-                          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-black"
+                          className={`w-full px-3 py-1.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-black ${!newProficiency && languages.length === 0 ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
                           style={{ color: '#000000' }}
                         >
                           <option value="" style={{ color: '#000000' }}>Select proficiency level</option>
@@ -372,6 +396,9 @@ export default function LanguagesModal({
                             <option key={level} value={level}>{level}</option>
                           ))}
                         </select>
+                        {!newProficiency && languages.length === 0 && (
+                          <p className="mt-1 text-[10px] text-amber-600 text-left">Required</p>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-center">
                         <input

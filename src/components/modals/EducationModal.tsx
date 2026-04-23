@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 
 interface EducationModalProps {
   isOpen: boolean;
@@ -166,10 +167,7 @@ export default function EducationModal({
     handleFileSelect(e.dataTransfer.files);
   };
 
-  const isGradeNumeric = /^\d+(\.\d{1,2})?$/.test(grade.trim());
-  const isCourseDurationNumeric = /^\d+(\.\d{1,2})?$/.test(courseDuration.trim());
 
-  // Generate year options (last 50 years to next 10 years)
   const currentYear = new Date().getFullYear();
   const startYearOptions = [];
   for (let i = currentYear - 50; i <= currentYear + 10; i++) {
@@ -216,23 +214,42 @@ export default function EducationModal({
   };
 
   const missingRequiredFields: string[] = [];
-  if (!educationLevel.trim()) missingRequiredFields.push('Education Level');
-  if (!degreeProgram.trim()) missingRequiredFields.push('Degree / Program');
-  if (!institutionName.trim()) missingRequiredFields.push('Institution / University Name');
-  if (!fieldOfStudy.trim()) missingRequiredFields.push('Field of Study / Major');
+  if (!String(educationLevel || '').trim()) missingRequiredFields.push('Education Level');
+  if (!String(degreeProgram || '').trim()) missingRequiredFields.push('Degree / Program');
+  if (!String(institutionName || '').trim()) missingRequiredFields.push('Institution / University Name');
+  if (!String(fieldOfStudy || '').trim()) missingRequiredFields.push('Field of Study / Major');
+  
   if (!startYear) missingRequiredFields.push('Start Year');
   if (!currentlyStudying && !endYear) missingRequiredFields.push('End Year');
-  if (!grade.trim()) missingRequiredFields.push('Grade / Percentage / GPA');
-  if (!modeOfStudy.trim()) missingRequiredFields.push('Mode of Study');
-  if (!courseDuration.trim()) missingRequiredFields.push('Course Duration');
+  
+  if (!String(grade || '').trim()) missingRequiredFields.push('Grade / Percentage / GPA');
+  if (!String(modeOfStudy || '').trim()) missingRequiredFields.push('Mode of Study');
+  if (!String(courseDuration || '').trim()) missingRequiredFields.push('Course Duration');
   if (documents.length === 0) missingRequiredFields.push('Education Certificates/Documents');
+
+  const isGradeNumeric = /^\d+(\.\d{1,2})?$/.test(String(grade || '').trim());
+  const isCourseDurationNumeric = /^\d+(\.\d{1,2})?$/.test(String(courseDuration || '').trim());
 
   const hasDateOrderError =
     !currentlyStudying &&
-    Boolean(startYear && endYear && Number(endYear) < Number(startYear));
+    startYear &&
+    endYear &&
+    parseInt(endYear) < parseInt(startYear);
+
   const hasNumericError =
-    (grade.trim().length > 0 && !isGradeNumeric) ||
-    (courseDuration.trim().length > 0 && !isCourseDurationNumeric);
+    (String(grade || '').trim().length > 0 && !isGradeNumeric) ||
+    (String(courseDuration || '').trim().length > 0 && !isCourseDurationNumeric);
+
+  const validationErrors: string[] = [];
+  if (missingRequiredFields.length > 0) {
+    validationErrors.push(`Missing required fields: ${missingRequiredFields.join(', ')}`);
+  }
+  if (hasDateOrderError) {
+    validationErrors.push('End Year cannot be earlier than Start Year');
+  }
+  if (hasNumericError) {
+    validationErrors.push('Please enter valid numeric values for Grade and Course Duration (e.g., 85.5 or 4)');
+  }
 
   const isFormValid =
     missingRequiredFields.length === 0 &&
@@ -241,19 +258,6 @@ export default function EducationModal({
 
   const handleSave = () => {
     if (!isFormValid) {
-      const validationErrors: string[] = [];
-      if (missingRequiredFields.length > 0) {
-        validationErrors.push(`Missing required fields: ${missingRequiredFields.join(', ')}`);
-      }
-      if (hasDateOrderError) {
-        validationErrors.push('End Year cannot be before Start Year');
-      }
-      if (grade.trim().length > 0 && !isGradeNumeric) {
-        validationErrors.push('Grade / Percentage / GPA must be a valid number');
-      }
-      if (courseDuration.trim().length > 0 && !isCourseDurationNumeric) {
-        validationErrors.push('Course Duration must be a valid number');
-      }
       alert(validationErrors.join('\n'));
       return;
     }
@@ -274,6 +278,13 @@ export default function EducationModal({
     });
     onClose();
   };
+
+  const inputClassName =
+    'h-11 w-full rounded-lg border border-gray-200 px-4 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
+  const selectClassName =
+    'h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
+  const textareaClassName =
+    'min-h-[100px] w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 resize-none';
 
   if (!isOpen) return null;
 
@@ -305,75 +316,88 @@ export default function EducationModal({
               {/* Education Level */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Education Level <span className="text-red-500">*</span>
+                  Education Level <span className="text-amber-600">*</span>
                 </label>
-                <select
-                  value={educationLevel}
-                  onChange={(e) => setEducationLevel(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select Education Level</option>
-                  <option value="High School">High School</option>
-                  <option value="Diploma">Diploma</option>
-                  <option value="Bachelor's">Bachelor's</option>
-                  <option value="Master's">Master's</option>
-                  <option value="PhD">PhD</option>
-                  <option value="Other">Other</option>
-                </select>
+                  <select
+                    value={educationLevel}
+                    onChange={(e) => setEducationLevel(e.target.value)}
+                    className={`${selectClassName} ${!educationLevel && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  >
+                    <option value="">Select Education Level</option>
+                    <option value="High School">High School</option>
+                    <option value="Associate Degree">Associate Degree</option>
+                    <option value="Bachelor's Degree">Bachelor's Degree</option>
+                    <option value="Master's Degree">Master's Degree</option>
+                    <option value="Doctorate (PhD)">Doctorate (PhD)</option>
+                    <option value="Diploma">Diploma</option>
+                    <option value="Certification">Certification</option>
+                  </select>
+                  {!educationLevel && (
+                    <p className="mt-1 text-xs text-amber-600">Education level is required</p>
+                  )}
               </div>
 
               {/* Degree / Program */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Degree / Program <span className="text-red-500">*</span>
+                  Degree / Program <span className="text-amber-600">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={degreeProgram}
-                  onChange={(e) => setDegreeProgram(e.target.value)}
-                  placeholder="e.g., B.Tech in Computer Science"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+                  <input
+                    type="text"
+                    value={degreeProgram}
+                    onChange={(e) => setDegreeProgram(e.target.value)}
+                    placeholder="e.g., Bachelor of Computer Science"
+                    className={`${inputClassName} ${!degreeProgram.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  />
+                  {!degreeProgram.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Degree/Program is required</p>
+                  )}
               </div>
 
               {/* Institution / University Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Institution / University Name <span className="text-red-500">*</span>
+                  Institution / University Name <span className="text-amber-600">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={institutionName}
-                  onChange={(e) => setInstitutionName(e.target.value)}
-                  placeholder="e.g., Delhi University"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+                  <input
+                    type="text"
+                    value={institutionName}
+                    onChange={(e) => setInstitutionName(e.target.value)}
+                    placeholder="e.g., University of Mumbai"
+                    className={`${inputClassName} ${!institutionName.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  />
+                  {!institutionName.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Institution name is required</p>
+                  )}
               </div>
 
               {/* Field of Study / Major */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Field of Study / Major <span className="text-red-500">*</span>
+                  Field of Study / Major <span className="text-amber-600">*</span>
                 </label>
                 <input
                   type="text"
                   value={fieldOfStudy}
                   onChange={(e) => setFieldOfStudy(e.target.value)}
                   placeholder="e.g., Computer Science"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`${inputClassName} ${!fieldOfStudy.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
                 />
+                {!fieldOfStudy.trim() && (
+                  <p className="mt-1 text-xs text-amber-600">Field of study is required</p>
+                )}
               </div>
 
               {/* Dates Section */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Start Year <span className="text-red-500">*</span>
+                    Start Year <span className="text-amber-600">*</span>
                   </label>
                   <select
                     value={startYear}
                     onChange={(e) => handleStartYearChange(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`${selectClassName} ${!startYear && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
                   >
                     <option value="">Select Start Year</option>
                     {startYearOptions.map((year) => (
@@ -382,16 +406,19 @@ export default function EducationModal({
                       </option>
                     ))}
                   </select>
+                  {!startYear && (
+                    <p className="mt-1 text-xs text-amber-600">Start year is required</p>
+                  )}
                 </div>
                 <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    End Year {!currentlyStudying && <span className="text-red-500">*</span>}
+                    End Year {!currentlyStudying && <span className="text-amber-600">*</span>}
                   </label>
                   <select
                     value={endYear}
                     onChange={(e) => handleEndYearChange(e.target.value)}
                     disabled={currentlyStudying}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed ${dateError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}`}
+                    className={`${selectClassName} disabled:bg-gray-100 disabled:cursor-not-allowed ${(!currentlyStudying && !endYear) || hasDateOrderError ? 'border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
                   >
                     <option value="">Select End Year</option>
                     {endYearOptions.map((year) => (
@@ -400,6 +427,9 @@ export default function EducationModal({
                       </option>
                     ))}
                   </select>
+                  {!currentlyStudying && !endYear && (
+                    <p className="mt-1 text-xs text-amber-600">End year is required</p>
+                  )}
                 </div>
               </div>
 
@@ -432,7 +462,7 @@ export default function EducationModal({
                 {/* Grade / Percentage / GPA */}
                 <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Grade / Percentage / GPA <span className="text-red-500">*</span>
+                    Grade / Percentage / GPA <span className="text-amber-600">*</span>
                   </label>
                   <input
                     type="number"
@@ -442,8 +472,11 @@ export default function EducationModal({
                     value={grade}
                     onChange={(e) => setGrade(e.target.value)}
                     placeholder="e.g., 8.2 or 78 or 3.5"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`${inputClassName} ${(!grade.trim() || (grade.trim().length > 0 && !isGradeNumeric)) && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
                   />
+                  {!grade.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Grade is required</p>
+                  )}
                   {grade.trim().length > 0 && !isGradeNumeric && (
                     <p className="mt-1 text-xs text-red-600">Enter a valid number (up to 2 decimals).</p>
                   )}
@@ -452,12 +485,12 @@ export default function EducationModal({
                 {/* Mode of Study */}
                 <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mode of Study <span className="text-red-500">*</span>
+                    Mode of Study <span className="text-amber-600">*</span>
                   </label>
                   <select
                     value={modeOfStudy}
                     onChange={(e) => setModeOfStudy(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`${selectClassName} ${!modeOfStudy.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
                   >
                     <option value="">Select Mode of Study</option>
                     <option value="Full-time">Full-time</option>
@@ -465,12 +498,15 @@ export default function EducationModal({
                     <option value="Online">Online</option>
                     <option value="Distance Learning">Distance Learning</option>
                   </select>
+                  {!modeOfStudy.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Mode of study is required</p>
+                  )}
                 </div>
 
                 {/* Course Duration */}
                 <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Course Duration <span className="text-red-500">*</span>
+                    Course Duration <span className="text-amber-600">*</span>
                   </label>
                   <input
                     type="number"
@@ -480,8 +516,11 @@ export default function EducationModal({
                     value={courseDuration}
                     onChange={(e) => setCourseDuration(e.target.value)}
                     placeholder="e.g., 3"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`${inputClassName} ${(!courseDuration.trim() || (courseDuration.trim().length > 0 && !isCourseDurationNumeric)) && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
                   />
+                  {!courseDuration.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Course duration is required</p>
+                  )}
                   {courseDuration.trim().length > 0 && !isCourseDurationNumeric && (
                     <p className="mt-1 text-xs text-red-600">Enter a valid number (up to 2 decimals).</p>
                   )}
@@ -491,7 +530,7 @@ export default function EducationModal({
               {/* Upload Documents */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Your Education Certificates/Documents <span className="text-red-500">*</span>
+                  Upload Your Education Certificates/Documents <span className="text-amber-600">*</span>
                 </label>
                 
                 {/* Hidden file input */}
@@ -514,6 +553,8 @@ export default function EducationModal({
                   className={`w-full px-4 py-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
                     dragActive
                       ? 'border-blue-500 bg-blue-50'
+                      : documents.length === 0
+                      ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500'
                       : 'border-gray-300 hover:border-blue-500 hover:bg-gray-50'
                   }`}
                 >
@@ -527,18 +568,21 @@ export default function EducationModal({
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="text-gray-400"
+                      className={documents.length === 0 ? 'text-red-400' : 'text-gray-400'}
                     >
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                       <polyline points="17 8 12 3 7 8" />
                       <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
-                    <p className="text-sm text-gray-600 text-center">
-                      <span className="text-blue-600 font-medium">Click to upload</span> or drag and drop
+                    <p className={`text-sm text-center ${documents.length === 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                      <span className={documents.length === 0 ? 'text-amber-700 font-medium' : 'text-blue-600 font-medium'}>Click to upload</span> or drag and drop
                     </p>
-                    <p className="text-xs text-gray-500">PDF, PNG, JPG (Max 5MB per file)</p>
+                    <p className={`text-xs ${documents.length === 0 ? 'text-amber-600' : 'text-gray-500'}`}>PDF, PNG, JPG (Max 5MB per file)</p>
                   </div>
                 </div>
+                {documents.length === 0 && (
+                  <p className="mt-1 text-xs text-amber-600">At least one document is required</p>
+                )}
 
                 {/* Display uploaded files */}
                 {documents.length > 0 && (
@@ -572,10 +616,38 @@ export default function EducationModal({
                             </span>
                           )}
                         </div>
+                        <div className="flex items-center gap-3 shrink-0 ml-2">
+                          {doc.url && (
+                            <>
+                              <a
+                                href={resolveDocumentUrl(doc.url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-700 transition-colors"
+                                title="View Document"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </a>
+                              <a
+                                href={resolveDocumentUrl(doc.url)}
+                                download={doc.name}
+                                className="text-orange-600 hover:text-orange-700 transition-colors"
+                                title="Download Document"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                              </a>
+                            </>
+                          )}
+                        </div>
                         <button
                           type="button"
                           onClick={() => handleRemoveFile(doc.id)}
-                          className="ml-2 p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                          className="ml-2 p-1 text-red-600 hover:text-amber-700 hover:bg-red-50 rounded transition-colors"
                           aria-label="Remove file"
                         >
                           <svg
@@ -599,14 +671,14 @@ export default function EducationModal({
               </div>
 
               {(missingRequiredFields.length > 0 || hasDateOrderError) && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-                  <p className="text-xs font-medium text-red-700">
+                <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2">
+                  <p className="text-xs font-medium text-amber-700">
                     {missingRequiredFields.length > 0
                       ? `Missing required fields: ${missingRequiredFields.join(', ')}`
                       : 'Please fix validation errors before saving.'}
                   </p>
                   {hasDateOrderError && (
-                    <p className="mt-1 text-xs font-medium text-red-700">
+                    <p className="mt-1 text-xs font-medium text-amber-700">
                       End Year cannot be before Start Year.
                     </p>
                   )}

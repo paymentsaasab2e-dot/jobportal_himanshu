@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import GapExplanationModal, { GapExplanationData } from './GapExplanationModal';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import type { RefObject } from 'react';
 
 interface WorkExperienceModalProps {
@@ -528,26 +529,26 @@ export default function WorkExperienceModal({
   const getMissingRequiredFields = () => {
     const missingFields: string[] = [];
 
-    if (!jobTitle.trim()) missingFields.push('Job Title');
-    if (!companyName.trim()) missingFields.push('Company Name');
+    if (!String(jobTitle || '').trim()) missingFields.push('Job Title');
+    if (!String(companyName || '').trim()) missingFields.push('Company Name');
     if (!employmentType) missingFields.push('Employment Type');
     if (!industryDomain) missingFields.push('Industry / Domain');
-    if (!numberOfReportees.trim()) missingFields.push('Number of Reportees');
+    if (!String(numberOfReportees || '').trim()) missingFields.push('Number of Reportees');
 
     if (!workSkills.length) missingFields.push('Skills Used');
     if (!documents.length) missingFields.push('Documents');
 
     if (!startDate) missingFields.push('Start Date');
-    if (!currentlyWorkHere && !endDate) missingFields.push('End Date');
+    if (!currentlyWorkHere && !endDate) missingFields.push('End Year');
 
-    if (!workLocation.trim()) missingFields.push('Work Location');
+    if (!String(workLocation || '').trim()) missingFields.push('Work Location');
     if (!workMode) missingFields.push('Work Mode');
 
-    if (!companyProfile.trim()) missingFields.push('Company Profile');
+    if (!String(companyProfile || '').trim()) missingFields.push('Company Profile');
     if (!companyTurnover) missingFields.push('Company Turnover');
 
-    if (!keyResponsibilities.trim()) missingFields.push('Key Responsibilities');
-    if (!achievements.trim()) missingFields.push('Achievements');
+    if (!String(keyResponsibilities || '').trim()) missingFields.push('Key Responsibilities');
+    if (!String(achievements || '').trim()) missingFields.push('Achievements');
 
     return missingFields;
   };
@@ -673,11 +674,11 @@ export default function WorkExperienceModal({
   if (!isOpen) return null;
 
   const inputClassName =
-    'h-11 w-full rounded-lg border border-gray-200 px-4 text-sm transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
+    'h-11 w-full rounded-lg border border-gray-200 px-4 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
   const selectClassName =
-    'h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
+    'h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
   const textareaClassName =
-    'min-h-[100px] w-full rounded-lg border border-gray-200 px-4 py-3 text-sm transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 resize-none';
+    'min-h-[100px] w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 resize-none';
   const sectionTitleClassName =
     'text-sm font-semibold uppercase tracking-wide text-gray-500';
 
@@ -737,16 +738,38 @@ export default function WorkExperienceModal({
               <h3 className={sectionTitleClassName}>Role Details</h3>
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Job Title <span className="text-red-500">*</span></label>
-                  <input type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="e.g., Software Developer" className={inputClassName} />
+                  <label className="block text-sm font-medium text-gray-700">Job Title <span className="text-amber-600">*</span></label>
+                  <input
+                    type="text"
+                    value={jobTitle}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                    placeholder="e.g., Software Developer"
+                    className={`${inputClassName} ${!jobTitle.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  />
+                  {!jobTitle.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Job title is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Company Name <span className="text-red-500">*</span></label>
-                  <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g., TCS, Deloitte, Amazon" className={inputClassName} />
+                  <label className="block text-sm font-medium text-gray-700">Company Name <span className="text-amber-600">*</span></label>
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="e.g., TCS, Deloitte, Amazon"
+                    className={`${inputClassName} ${!companyName.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  />
+                  {!companyName.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Company name is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Employment Type <span className="text-red-500">*</span></label>
-                  <select value={employmentType} onChange={(e) => setEmploymentType(e.target.value)} className={selectClassName}>
+                  <label className="block text-sm font-medium text-gray-700">Employment Type <span className="text-amber-600">*</span></label>
+                  <select
+                    value={employmentType}
+                    onChange={(e) => setEmploymentType(e.target.value)}
+                    className={`${selectClassName} ${!employmentType && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  >
                     <option value="">Select employment type</option>
                     <option value="full-time">Full-time</option>
                     <option value="part-time">Part-time</option>
@@ -754,10 +777,17 @@ export default function WorkExperienceModal({
                     <option value="internship">Internship</option>
                     <option value="freelance">Freelance</option>
                   </select>
+                  {!employmentType && (
+                    <p className="mt-1 text-xs text-amber-600">Employment type is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Industry / Domain <span className="text-red-500">*</span></label>
-                  <select value={industryDomain} onChange={(e) => setIndustryDomain(e.target.value)} className={selectClassName}>
+                  <label className="block text-sm font-medium text-gray-700">Industry / Domain <span className="text-amber-600">*</span></label>
+                  <select
+                    value={industryDomain}
+                    onChange={(e) => setIndustryDomain(e.target.value)}
+                    className={`${selectClassName} ${!industryDomain && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  >
                     <option value="">Select Industry / Domain</option>
                     <option value="technology">Technology</option>
                     <option value="finance">Finance</option>
@@ -765,10 +795,22 @@ export default function WorkExperienceModal({
                     <option value="education">Education</option>
                     <option value="consulting">Consulting</option>
                   </select>
+                  {!industryDomain && (
+                    <p className="mt-1 text-xs text-amber-600">Industry/Domain is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Number of Reportees <span className="text-red-500">*</span></label>
-                  <input type="number" value={numberOfReportees} onChange={(e) => setNumberOfReportees(e.target.value)} placeholder="e.g., 5" className={inputClassName} />
+                  <label className="block text-sm font-medium text-gray-700">Number of Reportees <span className="text-amber-600">*</span></label>
+                  <input
+                    type="number"
+                    value={numberOfReportees}
+                    onChange={(e) => setNumberOfReportees(e.target.value)}
+                    placeholder="e.g., 5"
+                    className={`${inputClassName} ${!numberOfReportees.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  />
+                  {!numberOfReportees.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Number of reportees is required</p>
+                  )}
                   <p className="text-xs text-gray-400">How many people directly reported to you in this role?</p>
                 </div>
               </div>
@@ -779,12 +821,12 @@ export default function WorkExperienceModal({
               <h3 className={sectionTitleClassName}>Duration</h3>
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Start Date <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Start Date <span className="text-amber-600">*</span></label>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => openDatePicker(startDateInputRef)}
-                      className={`${inputClassName} text-left ${startDate ? 'text-gray-900' : 'text-gray-400'}`}
+                      className={`${inputClassName} text-left ${startDate ? 'text-gray-900' : 'text-gray-400'} ${!startDate && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
                     >
                       {startDate ? formatDateForDisplay(startDate) : 'Select start date'}
                     </button>
@@ -801,15 +843,18 @@ export default function WorkExperienceModal({
                       aria-hidden="true"
                     />
                   </div>
+                  {!startDate && (
+                    <p className="mt-1 text-xs text-amber-600">Start date is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">End Date {!currentlyWorkHere && <span className="text-red-500">*</span>}</label>
+                  <label className="block text-sm font-medium text-gray-700">End Date {!currentlyWorkHere && <span className="text-amber-600">*</span>}</label>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => openDatePicker(endDateInputRef)}
                       disabled={currentlyWorkHere}
-                      className={`${inputClassName} text-left ${currentlyWorkHere || endDate ? 'text-gray-900' : 'text-gray-400'} disabled:cursor-not-allowed disabled:bg-gray-100`}
+                      className={`${inputClassName} text-left ${endDate ? 'text-gray-900' : 'text-gray-400'} ${currentlyWorkHere ? 'bg-gray-100' : (!endDate && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500')}`}
                     >
                       {currentlyWorkHere ? 'Present' : endDate ? formatDateForDisplay(endDate) : 'Select end date'}
                     </button>
@@ -827,6 +872,9 @@ export default function WorkExperienceModal({
                       aria-hidden="true"
                     />
                   </div>
+                  {!currentlyWorkHere && !endDate && (
+                    <p className="mt-1 text-xs text-amber-600">End date is required</p>
+                  )}
                   <label className="flex items-center gap-2 text-sm text-gray-600">
                     <input
                       type="checkbox"
@@ -850,17 +898,33 @@ export default function WorkExperienceModal({
               <h3 className={sectionTitleClassName}>Location & Work Mode</h3>
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Work Location <span className="text-red-500">*</span></label>
-                  <input type="text" value={workLocation} onChange={(e) => setWorkLocation(e.target.value)} placeholder="City, Country" className={inputClassName} />
+                  <label className="block text-sm font-medium text-gray-700">Work Location <span className="text-amber-600">*</span></label>
+                  <input
+                    type="text"
+                    value={workLocation}
+                    onChange={(e) => setWorkLocation(e.target.value)}
+                    placeholder="e.g., Bangalore, India"
+                    className={`${inputClassName} ${!workLocation.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  />
+                  {!workLocation.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Work location is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Work Mode <span className="text-red-500">*</span></label>
-                  <select value={workMode} onChange={(e) => setWorkMode(e.target.value)} className={selectClassName}>
+                  <label className="block text-sm font-medium text-gray-700">Work Mode <span className="text-amber-600">*</span></label>
+                  <select
+                    value={workMode}
+                    onChange={(e) => setWorkMode(e.target.value)}
+                    className={`${selectClassName} ${!workMode && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  >
                     <option value="">Select work mode</option>
                     <option value="remote">Remote</option>
                     <option value="hybrid">Hybrid</option>
                     <option value="onsite">On-site</option>
                   </select>
+                  {!workMode && (
+                    <p className="mt-1 text-xs text-amber-600">Work mode is required</p>
+                  )}
                 </div>
               </div>
             </section>
@@ -869,27 +933,34 @@ export default function WorkExperienceModal({
             <section className="space-y-4 border-t pt-6">
               <h3 className={sectionTitleClassName}>Company Details</h3>
               <div className="grid grid-cols-2 gap-5">
-                <div className="col-span-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Company Profile <span className="text-red-500">*</span></label>
+                <div className="col-span-2 space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Company Profile <span className="text-amber-600">*</span></label>
                   <textarea
                     value={companyProfile}
                     onChange={(e) => setCompanyProfile(e.target.value)}
-                    rows={3}
-                    className={`${textareaClassName} bg-white`}
-                    placeholder="Brief description of the company during your tenure (size, business focus)"
+                    placeholder="Brief description of the company..."
+                    className={`${textareaClassName} ${!companyProfile.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
                   />
-                  <p className="mt-2 text-right text-xs text-gray-400">{companyProfile.length}/500</p>
+                  {!companyProfile.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Company profile is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Company Turnover <span className="text-red-500">*</span></label>
-                  <select value={companyTurnover} onChange={(e) => setCompanyTurnover(e.target.value)} className={selectClassName}>
-                    <option value="">Select annual revenue</option>
-                    <option value="less-than-1m">Less than $1M</option>
-                    <option value="1m-10m">$1M - $10M</option>
-                    <option value="10m-50m">$10M - $50M</option>
-                    <option value="50m-100m">$50M - $100M</option>
-                    <option value="more-than-100m">More than $100M</option>
+                  <label className="block text-sm font-medium text-gray-700">Company Turnover <span className="text-amber-600">*</span></label>
+                  <select
+                    value={companyTurnover}
+                    onChange={(e) => setCompanyTurnover(e.target.value)}
+                    className={`${selectClassName} ${!companyTurnover && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  >
+                    <option value="">Select Turnover</option>
+                    <option value="0-10">0-10 Crores</option>
+                    <option value="10-50">10-50 Crores</option>
+                    <option value="50-100">50-100 Crores</option>
+                    <option value="100+">100+ Crores</option>
                   </select>
+                  {!companyTurnover && (
+                    <p className="mt-1 text-xs text-amber-600">Company turnover is required</p>
+                  )}
                 </div>
               </div>
             </section>
@@ -897,17 +968,30 @@ export default function WorkExperienceModal({
             {/* SECTION 5: ROLE CONTRIBUTION */}
             <section className="space-y-4 border-t pt-6">
               <h3 className={sectionTitleClassName}>Role Contribution</h3>
-              <div className="space-y-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
-                <p className="text-xs text-blue-700">Describe your impact, not just responsibilities</p>
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="col-span-2 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Key Responsibilities <span className="text-red-500">*</span></label>
-                    <textarea value={keyResponsibilities} onChange={(e) => setKeyResponsibilities(e.target.value)} rows={4} className={`${textareaClassName} bg-white`} placeholder="Describe your main tasks, duties, and contributions..." />
-                  </div>
-                  <div className="col-span-2 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Achievements <span className="text-red-500">*</span></label>
-                    <textarea value={achievements} onChange={(e) => setAchievements(e.target.value)} rows={4} className={`${textareaClassName} bg-white`} placeholder="Highlight major results, improvements, awards, metrics, etc." />
-                  </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Key Responsibilities <span className="text-amber-600">*</span></label>
+                  <textarea
+                    value={keyResponsibilities}
+                    onChange={(e) => setKeyResponsibilities(e.target.value)}
+                    placeholder="Describe your primary duties and responsibilities..."
+                    className={`${textareaClassName} ${!keyResponsibilities.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  />
+                  {!keyResponsibilities.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Key responsibilities are required</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Achievements <span className="text-amber-600">*</span></label>
+                  <textarea
+                    value={achievements}
+                    onChange={(e) => setAchievements(e.target.value)}
+                    placeholder="List your key accomplishments in this role..."
+                    className={`${textareaClassName} ${!achievements.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  />
+                  {!achievements.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Achievements are required</p>
+                  )}
                 </div>
               </div>
             </section>
@@ -917,7 +1001,7 @@ export default function WorkExperienceModal({
               <h3 className={sectionTitleClassName}>Skills & Documents</h3>
               <div className="grid grid-cols-2 gap-5">
                 <div className="col-span-2 space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">Skills Used <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Skills Used <span className="text-amber-600">*</span></label>
                   <div className="grid grid-cols-12 gap-2">
                     <input
                       type="text"
@@ -970,7 +1054,7 @@ export default function WorkExperienceModal({
                 <div className="col-span-2 space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Upload Your Work Experience Certificates/Documents
-                    <span className="text-red-500"> *</span>
+                    <span className="text-amber-600"> *</span>
                   </label>
               
               {/* Hidden file input */}
@@ -1048,6 +1132,34 @@ export default function WorkExperienceModal({
                             <p className="text-xs text-gray-500">{formatFileSize(doc.size)}</p>
                           )}
                         </div>
+                        <div className="flex items-center gap-3 shrink-0 ml-2">
+                          {doc.url && (
+                            <>
+                              <a
+                                href={resolveDocumentUrl(doc.url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-700 transition-colors"
+                                title="View Document"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </a>
+                              <a
+                                href={resolveDocumentUrl(doc.url)}
+                                download={doc.name}
+                                className="text-orange-600 hover:text-orange-700 transition-colors"
+                                title="Download Document"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                              </a>
+                            </>
+                          )}
+                        </div>
                       </div>
                       <button
                         type="button"
@@ -1055,7 +1167,7 @@ export default function WorkExperienceModal({
                           e.stopPropagation();
                           handleRemoveFile(doc.id);
                         }}
-                        className="text-red-600 hover:text-red-800"
+                        className="text-amber-700 hover:text-amber-800"
                       >
                         <svg
                           className="w-5 h-5"
@@ -1080,8 +1192,8 @@ export default function WorkExperienceModal({
             </section>
 
             {hasAnyFormData && missingRequiredFields.length > 0 && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-                <p className="text-xs font-medium text-red-700">
+              <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2">
+                <p className="text-xs font-medium text-amber-700">
                   Missing required fields: {missingRequiredFields.join(', ')}
                 </p>
               </div>
@@ -1110,7 +1222,7 @@ export default function WorkExperienceModal({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleRemoveWorkExperience(entry.id)}
-                          className="text-red-500 hover:text-red-700 p-1"
+                          className="text-amber-600 hover:text-amber-700 p-1"
                           title="Delete"
                         >
                           <svg

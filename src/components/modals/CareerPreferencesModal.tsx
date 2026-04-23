@@ -273,13 +273,14 @@ export default function CareerPreferencesModal({
     setPreferredLocations(preferredLocations.filter(l => l !== location));
   };
 
-  const isFormComplete = Boolean(
-    preferredJobTitles.length > 0 &&
-    preferredIndustry.trim() &&
-    functionalArea.trim() &&
-    jobTypes.length > 0 &&
-    workModes.length > 0
-  );
+  const missingRequiredFields: string[] = [];
+  if (preferredJobTitles.length === 0) missingRequiredFields.push('Preferred Job Titles');
+  if (!preferredIndustry.trim()) missingRequiredFields.push('Preferred Industry');
+  if (!functionalArea.trim()) missingRequiredFields.push('Functional Area');
+  if (jobTypes.length === 0) missingRequiredFields.push('Job Types');
+  if (workModes.length === 0) missingRequiredFields.push('Work Modes');
+
+  const isFormComplete = missingRequiredFields.length === 0;
 
   const handleSave = () => {
     onSave({
@@ -315,14 +316,13 @@ export default function CareerPreferencesModal({
           >
             Cancel
           </button>
-          {isFormComplete && (
-            <button
-              onClick={handleSave}
-              className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
-            >
-              Save Preferences
-            </button>
-          )}
+          <button
+            onClick={handleSave}
+            disabled={!isFormComplete}
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Save Preferences
+          </button>
         </div>
       )}
     >
@@ -372,8 +372,11 @@ export default function CareerPreferencesModal({
                       onChange={(e) => setJobTitleInput(e.target.value)}
                       onKeyPress={handleAddJobTitle}
                       placeholder="e.g., Software Engineer, Marketing Executive…"
-                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${preferredJobTitles.length === 0 ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                     />
+                    {preferredJobTitles.length === 0 && (
+                      <p className="mt-1 text-xs text-amber-600">At least one job title is required</p>
+                    )}
 
                     <div className="mt-3 rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-sky-50 p-4">
                       <div className="mb-3 flex items-center gap-2">
@@ -432,13 +435,16 @@ export default function CareerPreferencesModal({
                       <select
                         value={preferredIndustry}
                         onChange={(e) => setPreferredIndustry(e.target.value)}
-                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!preferredIndustry.trim() ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                       >
                         <option value="">Select Industry</option>
                         {INDUSTRIES.map((industry) => (
                           <option key={industry} value={industry}>{industry}</option>
                         ))}
                       </select>
+                      {!preferredIndustry.trim() && (
+                        <p className="mt-1 text-xs text-amber-600">Industry is required</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -447,13 +453,16 @@ export default function CareerPreferencesModal({
                       <select
                         value={functionalArea}
                         onChange={(e) => setFunctionalArea(e.target.value)}
-                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!functionalArea.trim() ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                       >
                         <option value="">Select Functional Area</option>
                         {FUNCTIONAL_AREAS.map((area) => (
                           <option key={area} value={area}>{area}</option>
                         ))}
                       </select>
+                      {!functionalArea.trim() && (
+                        <p className="mt-1 text-xs text-amber-600">Functional area is required</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -468,7 +477,7 @@ export default function CareerPreferencesModal({
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       Job Type
                     </label>
-                    <div className="space-y-2">
+                    <div className={`space-y-2 p-3 rounded-lg ${jobTypes.length === 0 ? 'bg-red-50 border border-red-200' : ''}`}>
                       {JOB_TYPES.map((jobType) => (
                         <label key={jobType} className="flex items-center gap-2">
                           <input
@@ -481,6 +490,9 @@ export default function CareerPreferencesModal({
                         </label>
                       ))}
                     </div>
+                    {jobTypes.length === 0 && (
+                      <p className="mt-1 text-xs text-amber-600">Select at least one job type</p>
+                    )}
                   </div>
 
                   {/* Work Mode */}
@@ -488,7 +500,7 @@ export default function CareerPreferencesModal({
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       Work Mode
                     </label>
-                    <div className="space-y-2">
+                    <div className={`space-y-2 p-3 rounded-lg ${workModes.length === 0 ? 'bg-red-50 border border-red-200' : ''}`}>
                       {WORK_MODES.map((mode) => (
                         <label key={mode} className="flex items-center gap-2">
                           <input
@@ -501,6 +513,9 @@ export default function CareerPreferencesModal({
                         </label>
                       ))}
                     </div>
+                    {workModes.length === 0 && (
+                      <p className="mt-1 text-xs text-amber-600">Select at least one work mode</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -647,6 +662,15 @@ export default function CareerPreferencesModal({
                 </div>
               </div>
             </div>
+            {missingRequiredFields.length > 0 && (
+              <div className="mt-6 rounded-lg border border-amber-100 bg-amber-50/50 p-3">
+                <p className="text-xs font-medium text-amber-700">
+                  Required: {missingRequiredFields.join(', ')}
+                </p>
+              </div>
+            )}
+          
+
 
     </ProfileDrawer>
   );

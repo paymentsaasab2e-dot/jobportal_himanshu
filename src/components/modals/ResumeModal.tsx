@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 
 interface ResumeModalProps {
   isOpen: boolean;
@@ -130,7 +131,7 @@ export default function ResumeModal({
       const url = URL.createObjectURL(resumeFile);
       window.open(url, '_blank');
     } else if (uploadedResume?.url) {
-      window.open(uploadedResume.url, '_blank');
+      window.open(resolveDocumentUrl(uploadedResume.url), '_blank');
     } else if (uploadedResume) {
       alert('Preview not available since the file URL was not provided.');
     }
@@ -236,9 +237,12 @@ export default function ResumeModal({
                     ? 'scale-[1.01] border-blue-500 bg-blue-100 shadow-sm'
                     : uploadedResume
                       ? 'border-gray-300 bg-gray-50 p-8 hover:border-blue-400 hover:bg-blue-50'
-                      : 'border-gray-300 bg-gray-50 p-12 hover:border-blue-400 hover:bg-blue-50'
+                      : 'border-amber-200 bg-amber-50/50 p-12 hover:border-amber-400 hover:bg-amber-50'
                   }`}
               >
+                {!uploadedResume && (
+                   <p className="mb-4 text-xs font-medium text-amber-600">Resume is required to save</p>
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -311,67 +315,48 @@ export default function ResumeModal({
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-shrink-0 items-center gap-4">
-                      <button
-                        onClick={handlePreview}
-                        className="flex items-center gap-1 rounded-lg px-1 py-1 text-sm text-blue-600 transition-colors hover:bg-blue-50 hover:underline"
-                        title="Preview"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                          <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                        Preview
-                      </button>
+                    <div className="flex flex-shrink-0 items-center gap-3">
+                      {(resumeFile || uploadedResume?.url) && (
+                        <>
+                          <button
+                            onClick={handlePreview}
+                            className="text-blue-600 hover:text-blue-700 transition-colors"
+                            title="View Resume"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </button>
+                          <a
+                            href={resumeFile ? URL.createObjectURL(resumeFile) : resolveDocumentUrl(uploadedResume?.url)}
+                            download={uploadedResume?.name || 'resume'}
+                            className="text-orange-600 hover:text-orange-700 transition-colors"
+                            title="Download Resume"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </a>
+                        </>
+                      )}
                       <button
                         onClick={handleReplace}
-                        className="flex items-center gap-1 rounded-lg px-1 py-1 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
-                        title="Replace"
+                        className="p-1 text-blue-600 hover:text-blue-700 transition-colors"
+                        title="Replace Resume"
                       >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="23 4 23 10 17 10"></polyline>
-                          <polyline points="1 20 1 14 7 14"></polyline>
-                          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        Replace
                       </button>
                       <button
                         onClick={handleDelete}
-                        className="flex items-center gap-1 rounded-lg px-1 py-1 text-sm text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
-                        title="Delete"
+                        className="p-1 text-amber-600 hover:text-amber-700 hover:bg-red-50 rounded transition-colors"
+                        title="Delete Resume"
                       >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                        Delete
                       </button>
                     </div>
                   </div>

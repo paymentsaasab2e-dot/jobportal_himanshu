@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
-import { API_ORIGIN } from '@/lib/api-base';
+import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 
 interface AccomplishmentModalProps {
   isOpen: boolean;
@@ -342,7 +342,7 @@ export default function AccomplishmentModal({
               {/* Accomplishment Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Accomplishment Title <span className="text-red-500">*</span>
+                  Accomplishment Title <span className="text-amber-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -354,10 +354,13 @@ export default function AccomplishmentModal({
                     }
                   }}
                   placeholder="Enter accomplishment title..."
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.title ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    (!title.trim() || errors.title) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
                   }`}
                 />
+                {!title.trim() && (
+                  <p className="mt-1 text-xs text-amber-600">Accomplishment title is required</p>
+                )}
                 {errors.title && (
                   <p className="mt-1 text-sm text-red-600">{errors.title}</p>
                 )}
@@ -368,7 +371,7 @@ export default function AccomplishmentModal({
                 {/* Category / Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category / Type <span className="text-red-500">*</span>
+                    Category / Type <span className="text-amber-600">*</span>
                   </label>
                   <select
                     value={category}
@@ -378,8 +381,8 @@ export default function AccomplishmentModal({
                         setErrors({ ...errors, category: '' });
                       }
                     }}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.category ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      (!category.trim() || errors.category) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
                     }`}
                   >
                     <option value="">Select Category</option>
@@ -387,6 +390,9 @@ export default function AccomplishmentModal({
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
+                  {!category.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Category is required</p>
+                  )}
                   {errors.category && (
                     <p className="mt-1 text-sm text-red-600">{errors.category}</p>
                   )}
@@ -410,7 +416,7 @@ export default function AccomplishmentModal({
               {/* Achievement Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Achievement Date <span className="text-red-500">*</span>
+                  Achievement Date <span className="text-amber-600">*</span>
                 </label>
                 <div className="relative">
                   <input
@@ -422,11 +428,14 @@ export default function AccomplishmentModal({
                         setErrors({ ...errors, achievementDate: '' });
                       }
                     }}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.achievementDate ? 'border-red-300' : 'border-gray-300'
+                    className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      (!achievementDate.trim() || errors.achievementDate) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
                     }`}
                   />
                 </div>
+                {!achievementDate.trim() && (
+                  <p className="mt-1 text-xs text-amber-600">Achievement date is required</p>
+                )}
                 {errors.achievementDate && (
                   <p className="mt-1 text-sm text-red-600">{errors.achievementDate}</p>
                 )}
@@ -504,16 +513,34 @@ export default function AccomplishmentModal({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                           <span className="text-sm text-gray-700 truncate">{doc.name}</span>
-                          {doc.url && (
-                            <a
-                              href={`${API_ORIGIN}${doc.url}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 text-xs"
-                            >
-                              View
-                            </a>
-                          )}
+                                <div className="flex items-center gap-3 shrink-0 ml-2">
+                                  {doc.url && (
+                                    <>
+                                      <a
+                                        href={resolveDocumentUrl(doc.url)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:text-blue-700 transition-colors"
+                                        title="View Document"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                      </a>
+                                      <a
+                                        href={resolveDocumentUrl(doc.url)}
+                                        download={doc.name}
+                                        className="text-orange-600 hover:text-orange-700 transition-colors"
+                                        title="Download Document"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                      </a>
+                                    </>
+                                  )}
+                                </div>
                         </div>
                         <button
                           type="button"
