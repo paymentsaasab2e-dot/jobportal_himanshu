@@ -10,31 +10,7 @@ const navLinks = [
   { name: "Jobs", href: "/" },
   // { name: "Courses", href: "/explore-jobs" },
   { name: "Employers", href: "/employers" },
-  { 
-    name: "Services", 
-    href: "/services",
-    categories: [
-      {
-        title: "For Candidates",
-        links: [
-          { name: "All Candidate Services", href: "/services" },
-          { name: "ATS Resume Check", href: "/ats-check" },
-          { name: "LMS & Upskilling", href: "/services/learning" },
-          { name: "AI Resume Intelligence", href: "/services/ai-resume-intelligence" },
-          { name: "Executive Services", href: "/services/executive-services" },
-        ]
-      },
-      {
-        title: "For Employers",
-        links: [
-          { name: "Ecosystem Overview", href: "/services/employers/ecosystem" },
-          { name: "Recruitment Modules", href: "/services/employers/modules" },
-          { name: "Connected Workflow", href: "/services/employers/workflow" },
-          { name: "AI & Operations", href: "/services/employers/operations" },
-        ]
-      }
-    ]
-  },
+  { name: "Services", href: "/services" },
 ];
 
 export default function WebsiteNavbar() {

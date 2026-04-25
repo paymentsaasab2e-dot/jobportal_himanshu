@@ -149,7 +149,7 @@ export default function ProjectModal({
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    
+
     Array.from(e.target.files).forEach((file) => {
       // Validate file type
       const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
@@ -315,375 +315,374 @@ export default function ProjectModal({
         </div>
       )}
     >
-            <div className="space-y-6">
-              {validationError ? (
-                <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2 text-sm text-amber-700">
-                  {validationError}
-                </div>
-              ) : null}
-              {/* Project Title */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Project Title <span className="text-amber-600">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={projectTitle}
-                  onChange={(e) => {
-                    setProjectTitle(e.target.value);
-                    if (fieldErrors.projectTitle) {
-                      setFieldErrors((prev) => ({ ...prev, projectTitle: '' }));
-                    }
-                  }}
-                  placeholder="e.g., E-commerce Website, Machine Learning Model, Marketing Campaign"
-                  className={`${inputClassName} ${(!projectTitle.trim() || fieldErrors.projectTitle) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
-                />
-                {!projectTitle.trim() && (
-                  <p className="mt-1 text-xs text-amber-600">Project title is required</p>
-                )}
-                {fieldErrors.projectTitle ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectTitle}</p> : null}
-              </div>
+      <div className="space-y-6">
+        {validationError ? (
+          <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2 text-sm text-amber-700">
+            {validationError}
+          </div>
+        ) : null}
+        {/* Project Title */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Project Title <span className="text-amber-600">*</span>
+          </label>
+          <input
+            type="text"
+            value={projectTitle}
+            onChange={(e) => {
+              setProjectTitle(e.target.value);
+              if (fieldErrors.projectTitle) {
+                setFieldErrors((prev) => ({ ...prev, projectTitle: '' }));
+              }
+            }}
+            placeholder="e.g., E-commerce Website, Machine Learning Model, Marketing Campaign"
+            className={`${inputClassName} ${(!projectTitle.trim() || fieldErrors.projectTitle) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
+          />
+          {!projectTitle.trim() && (
+            <p className="mt-1 text-xs text-amber-600">Project title is required</p>
+          )}
+          {fieldErrors.projectTitle ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectTitle}</p> : null}
+        </div>
 
-              {/* Project Type and Organization / Client - Two Column */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Project Type */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Project Type <span className="text-amber-600">*</span>
-                  </label>
-                  <select
-                    value={projectType}
-                    onChange={(e) => {
-                      setProjectType(e.target.value);
-                      if (fieldErrors.projectType) {
-                        setFieldErrors((prev) => ({ ...prev, projectType: '' }));
-                      }
-                    }}
-                    className={`${selectClassName} ${(!projectType.trim() || fieldErrors.projectType) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
-                  >
-                    <option value="">Select Project Type</option>
-                    {PROJECT_TYPES.map((type) => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                  {!projectType.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Project type is required</p>
-                  )}
-                  {fieldErrors.projectType ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectType}</p> : null}
-                </div>
+        {/* Project Type and Organization / Client - Two Column */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Project Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Project Type <span className="text-amber-600">*</span>
+            </label>
+            <select
+              value={projectType}
+              onChange={(e) => {
+                setProjectType(e.target.value);
+                if (fieldErrors.projectType) {
+                  setFieldErrors((prev) => ({ ...prev, projectType: '' }));
+                }
+              }}
+              className={`${selectClassName} ${(!projectType.trim() || fieldErrors.projectType) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
+            >
+              <option value="">Select Project Type</option>
+              {PROJECT_TYPES.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+            {!projectType.trim() && (
+              <p className="mt-1 text-xs text-amber-600">Project type is required</p>
+            )}
+            {fieldErrors.projectType ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectType}</p> : null}
+          </div>
 
-                {/* Organization / Client */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Organization / Client <span className="text-gray-500 text-xs">(Optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={organizationClient}
-                    onChange={(e) => setOrganizationClient(e.target.value)}
-                    placeholder="If applicable — Company, University, or Client Name"
-                    className={inputClassName}
-                  />
-                </div>
-              </div>
+          {/* Organization / Client */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Organization / Client <span className="text-gray-500 text-xs">(Optional)</span>
+            </label>
+            <input
+              type="text"
+              value={organizationClient}
+              onChange={(e) => setOrganizationClient(e.target.value)}
+              placeholder="If applicable — Company, University, or Client Name"
+              className={inputClassName}
+            />
+          </div>
+        </div>
 
-              {/* Currently Working Checkbox */}
-              <div>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={currentlyWorking}
-                    onChange={(e) => setCurrentlyWorking(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">I am currently working on this project</span>
-                </label>
-              </div>
+        {/* Currently Working Checkbox */}
+        <div>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={currentlyWorking}
+              onChange={(e) => setCurrentlyWorking(e.target.checked)}
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-700">I am currently working on this project</span>
+          </label>
+        </div>
 
-              {/* Dates - Two Column */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Start Date <span className="text-amber-600">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => {
-                        setStartDate(e.target.value);
-                        if (fieldErrors.startDate) {
-                          setFieldErrors((prev) => ({ ...prev, startDate: '' }));
-                        }
-                      }}
-                      className={`${inputClassName} ${(!startDate || fieldErrors.startDate) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''} pr-10`}
-                    />
-                    <svg
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9095A1] pointer-events-none"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  {!startDate && (
-                    <p className="mt-1 text-xs text-amber-600">Start date is required</p>
-                  )}
-                  {fieldErrors.startDate ? <p className="mt-1 text-xs text-red-600">{fieldErrors.startDate}</p> : null}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    End Date <span className="text-gray-500 text-xs">(Optional)</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => {
-                        setEndDate(e.target.value);
-                        if (fieldErrors.endDate) {
-                          setFieldErrors((prev) => ({ ...prev, endDate: '' }));
-                        }
-                      }}
-                      disabled={currentlyWorking}
-                      className={`${inputClassName} ${(!currentlyWorking && !endDate) ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''} ${fieldErrors.endDate ? 'border-amber-400 bg-amber-50 focus:ring-amber-500' : ''} pr-10 disabled:bg-gray-100 disabled:cursor-not-allowed`}
-                    />
-                    <svg
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9095A1] pointer-events-none"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  {!currentlyWorking && !endDate && (
-                    <p className="mt-1 text-xs text-amber-600">End date is required</p>
-                  )}
-                  {fieldErrors.endDate ? <p className="mt-1 text-xs text-red-600">{fieldErrors.endDate}</p> : null}
-                </div>
-              </div>
+        {/* Dates - Two Column */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Start Date <span className="text-amber-600">*</span>
+            </label>
+            <div className="relative">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  if (fieldErrors.startDate) {
+                    setFieldErrors((prev) => ({ ...prev, startDate: '' }));
+                  }
+                }}
+                className={`${inputClassName} ${(!startDate || fieldErrors.startDate) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''} pr-10`}
+              />
+              <svg
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9095A1] pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            {!startDate && (
+              <p className="mt-1 text-xs text-amber-600">Start date is required</p>
+            )}
+            {fieldErrors.startDate ? <p className="mt-1 text-xs text-red-600">{fieldErrors.startDate}</p> : null}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              End Date <span className="text-gray-500 text-xs">(Optional)</span>
+            </label>
+            <div className="relative">
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  if (fieldErrors.endDate) {
+                    setFieldErrors((prev) => ({ ...prev, endDate: '' }));
+                  }
+                }}
+                disabled={currentlyWorking}
+                className={`${inputClassName} ${(!currentlyWorking && !endDate) ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''} ${fieldErrors.endDate ? 'border-amber-400 bg-amber-50 focus:ring-amber-500' : ''} pr-10 disabled:bg-gray-100 disabled:cursor-not-allowed`}
+              />
+              <svg
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9095A1] pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            {!currentlyWorking && !endDate && (
+              <p className="mt-1 text-xs text-amber-600">End date is required</p>
+            )}
+            {fieldErrors.endDate ? <p className="mt-1 text-xs text-red-600">{fieldErrors.endDate}</p> : null}
+          </div>
+        </div>
 
-              {/* Project Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Project Description <span className="text-amber-600">*</span>
-                </label>
-                <textarea
-                  value={projectDescription}
-                  onChange={(e) => {
-                    setProjectDescription(e.target.value);
-                    if (fieldErrors.projectDescription) {
-                      setFieldErrors((prev) => ({ ...prev, projectDescription: '' }));
-                    }
-                  }}
-                  placeholder="Explain the project goals, your role, key tasks, and outcomes…"
-                  rows={4}
-                  className={`${textareaClassName} ${(!projectDescription.trim() || fieldErrors.projectDescription) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
-                />
-                {!projectDescription.trim() && (
-                  <p className="mt-1 text-xs text-amber-600">Project description is required</p>
-                )}
-                {fieldErrors.projectDescription ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectDescription}</p> : null}
-              </div>
+        {/* Project Description */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Project Description <span className="text-amber-600">*</span>
+          </label>
+          <textarea
+            value={projectDescription}
+            onChange={(e) => {
+              setProjectDescription(e.target.value);
+              if (fieldErrors.projectDescription) {
+                setFieldErrors((prev) => ({ ...prev, projectDescription: '' }));
+              }
+            }}
+            placeholder="Explain the project goals, your role, key tasks, and outcomes…"
+            rows={4}
+            className={`${textareaClassName} ${(!projectDescription.trim() || fieldErrors.projectDescription) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
+          />
+          {!projectDescription.trim() && (
+            <p className="mt-1 text-xs text-amber-600">Project description is required</p>
+          )}
+          {fieldErrors.projectDescription ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectDescription}</p> : null}
+        </div>
 
-              {/* Responsibilities / Contributions */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Responsibilities / Contributions <span className="text-gray-500 text-xs">(Optional)</span>
-                </label>
-                <textarea
-                  value={responsibilities}
-                  onChange={(e) => setResponsibilities(e.target.value)}
-                  placeholder="Mention what you contributed—features built, research done, tasks handled…"
-                  rows={4}
-                  className={textareaClassName}
-                />
-              </div>
+        {/* Responsibilities / Contributions */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Responsibilities / Contributions <span className="text-gray-500 text-xs">(Optional)</span>
+          </label>
+          <textarea
+            value={responsibilities}
+            onChange={(e) => setResponsibilities(e.target.value)}
+            placeholder="Mention what you contributed—features built, research done, tasks handled…"
+            rows={4}
+            className={textareaClassName}
+          />
+        </div>
 
-              {/* Technologies / Tools Used */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Technologies / Tools Used <span className="text-gray-500 text-xs">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={technologiesInput}
-                  onChange={(e) => setTechnologiesInput(e.target.value)}
-                  onKeyPress={handleAddTechnology}
-                  placeholder="Add technologies (e.g., React, Python, Figma, SQL)…"
-                  className={inputClassName}
-                />
-                {technologies.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {technologies.map((tech, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
-                      >
-                        {tech}
-                        <button
-                          onClick={() => handleRemoveTechnology(index)}
-                          className="text-blue-700 hover:text-blue-900"
-                        >
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <line x1="18" y1="6" x2="6" y2="18" />
-                            <line x1="6" y1="6" x2="18" y2="18" />
-                          </svg>
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Project Outcome / Results */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Project Outcome / Results <span className="text-gray-500 text-xs">(Optional)</span>
-                </label>
-                <textarea
-                  value={projectOutcome}
-                  onChange={(e) => setProjectOutcome(e.target.value)}
-                  placeholder="Mention improvements, results, metrics, awards, or impact…"
-                  rows={4}
-                  className={textareaClassName}
-                />
-              </div>
-
-              {/* Project Link */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Project Link <span className="text-gray-500 text-xs">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={projectLink}
-                  onChange={(e) => {
-                    setProjectLink(e.target.value);
-                    if (fieldErrors.projectLink) {
-                      setFieldErrors((prev) => ({ ...prev, projectLink: '' }));
-                    }
-                  }}
-                  placeholder="GitHub, Behance, Portfolio, Drive link…"
-                  className={`${inputClassName} ${fieldErrors.projectLink ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
-                />
-                {fieldErrors.projectLink ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectLink}</p> : null}
-              </div>
-
-              {/* Upload Your Project Documents/Certificates */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Your Project Documents/Certificates <span className="text-gray-500 text-xs">(Optional)</span>
-                </label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept=".pdf,.png,.jpg,.jpeg"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <div
-                  onDragEnter={handleDragEnter}
-                  onDragLeave={handleDragLeave}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
-                    dragActive
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-                  }`}
+        {/* Technologies / Tools Used */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Technologies / Tools Used <span className="text-gray-500 text-xs">(Optional)</span>
+          </label>
+          <input
+            type="text"
+            value={technologiesInput}
+            onChange={(e) => setTechnologiesInput(e.target.value)}
+            onKeyPress={handleAddTechnology}
+            placeholder="Add technologies (e.g., React, Python, Figma, SQL)…"
+            className={inputClassName}
+          />
+          {technologies.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {technologies.map((tech, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
                 >
-                  <svg
-                    className="mx-auto h-12 w-12 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  {tech}
+                  <button
+                    onClick={() => handleRemoveTechnology(index)}
+                    className="text-blue-700 hover:text-blue-900"
                   >
-                    <path
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                    />
-                  </svg>
-                  <p className="mt-2 text-sm text-gray-600">Click to upload or drag and drop</p>
-                  <p className="mt-1 text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
-                </div>
-                {documents.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {documents.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{doc.name}</p>
-                              {doc.size && (
-                                <p className="text-xs text-gray-500">
-                                  {(doc.size / 1024 / 1024).toFixed(2)} MB
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3 shrink-0 ml-2">
-                              {doc.url && (
-                                <>
-                                  <a
-                                    href={resolveDocumentUrl(doc.url)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-700 transition-colors"
-                                    title="View Document"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                  </a>
-                                  <a
-                                    href={resolveDocumentUrl(doc.url)}
-                                    download={doc.name}
-                                    className="text-orange-600 hover:text-orange-700 transition-colors"
-                                    title="Download Document"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                    </svg>
-                                  </a>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        <button
-                          onClick={() => handleRemoveFile(doc.id)}
-                          className="ml-3 text-amber-600 hover:text-amber-700 flex-shrink-0"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
             </div>
+          )}
+        </div>
+
+        {/* Project Outcome / Results */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Project Outcome / Results <span className="text-gray-500 text-xs">(Optional)</span>
+          </label>
+          <textarea
+            value={projectOutcome}
+            onChange={(e) => setProjectOutcome(e.target.value)}
+            placeholder="Mention improvements, results, metrics, awards, or impact…"
+            rows={4}
+            className={textareaClassName}
+          />
+        </div>
+
+        {/* Project Link */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Project Link <span className="text-gray-500 text-xs">(Optional)</span>
+          </label>
+          <input
+            type="text"
+            value={projectLink}
+            onChange={(e) => {
+              setProjectLink(e.target.value);
+              if (fieldErrors.projectLink) {
+                setFieldErrors((prev) => ({ ...prev, projectLink: '' }));
+              }
+            }}
+            placeholder="GitHub, Behance, Portfolio, Drive link…"
+            className={`${inputClassName} ${fieldErrors.projectLink ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
+          />
+          {fieldErrors.projectLink ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectLink}</p> : null}
+        </div>
+
+        {/* Upload Your Project Documents/Certificates */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Upload Your Project Documents/Certificates <span className="text-gray-500 text-xs">(Optional)</span>
+          </label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.png,.jpg,.jpeg"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <div
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${dragActive
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+              }`}
+          >
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            <p className="mt-2 text-sm text-gray-600">Click to upload or drag and drop</p>
+            <p className="mt-1 text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
+          </div>
+          {documents.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {documents.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{doc.name}</p>
+                      {doc.size && (
+                        <p className="text-xs text-gray-500">
+                          {(doc.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0 ml-2">
+                      {doc.url && (
+                        <>
+                          <a
+                            href={resolveDocumentUrl(doc.url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-700 transition-colors"
+                            title="View Document"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </a>
+                          <a
+                            href={resolveDocumentUrl(doc.url)}
+                            download={doc.name}
+                            className="text-orange-600 hover:text-orange-700 transition-colors"
+                            title="Download Document"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveFile(doc.id)}
+                    className="ml-3 text-amber-600 hover:text-amber-700 flex-shrink-0"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
     </ProfileDrawer>
   );

@@ -179,6 +179,7 @@ export default function ProfilePage() {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [projectModalMode, setProjectModalMode] = useState<'add' | 'edit'>('edit');
   const [isPortfolioLinksModalOpen, setIsPortfolioLinksModalOpen] = useState(false);
+  const [editingPortfolioLinkId, setEditingPortfolioLinkId] = useState<string | null>(null);
   const [isCertificationModalOpen, setIsCertificationModalOpen] = useState(false);
   const [isAccomplishmentModalOpen, setIsAccomplishmentModalOpen] = useState(false);
   const [isCareerPreferencesModalOpen, setIsCareerPreferencesModalOpen] = useState(false);
@@ -1339,30 +1340,28 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-        {/* Back Button */}
-        <button
-          onClick={() => router.back()}
-          className="mb-5 flex items-center gap-2 text-gray-600 transition-all duration-200 hover:text-gray-900"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        {/* Main Title Area & Back Button */}
+        <div className="mb-6 flex items-start gap-3">
+          <button
+            onClick={() => router.back()}
+            className="mt-6 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
+            title="Go Back"
           >
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-          Back
-        </button>
-
-        {/* Main Title Area */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="mb-1.5 text-3xl font-bold text-gray-900">Your Profile</h1>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <div className="pl-1 pt-6">
+            <h1 className="mb-0.5 text-3xl font-bold text-gray-900">Your Profile</h1>
             <p className="text-gray-500">View and update all sections of your SAASA profile.</p>
           </div>
         </div>
@@ -2526,11 +2525,13 @@ export default function ProfilePage() {
                         tabIndex={0}
                         onClick={(event) =>
                           handleEditableCardClick(event, () => {
+                            setEditingPortfolioLinkId(null);
                             setIsPortfolioLinksModalOpen(true);
                           })
                         }
                         onKeyDown={(event) =>
                           handleEditableCardKeyDown(event, () => {
+                            setEditingPortfolioLinkId(null);
                             setIsPortfolioLinksModalOpen(true);
                           })
                         }
@@ -2540,7 +2541,14 @@ export default function ProfilePage() {
                           data={portfolioLinksData}
                           isExpanded={isPortfolioLinksCardExpanded}
                           onToggleExpand={() => openDetailsModal('Portfolio Links Details', portfolioLinksData)}
-                          onEdit={() => setIsPortfolioLinksModalOpen(true)}
+                          onEdit={() => {
+                            setEditingPortfolioLinkId(null);
+                            setIsPortfolioLinksModalOpen(true);
+                          }}
+                          onEditLink={(link) => {
+                            setEditingPortfolioLinkId(link.id);
+                            setIsPortfolioLinksModalOpen(true);
+                          }}
                           onDelete={async () => {
                           if (await showConfirm('Are you sure you want to delete all portfolio links?')) {
                             const candidateId = sessionStorage.getItem('candidateId');
@@ -3420,8 +3428,9 @@ export default function ProfilePage() {
             await refreshProfileData(candidateId);
           setWorkExperienceData(data);
           setIsWorkExperienceModalOpen(false);
+            const wasEditingWorkExp = editingWorkExperienceId;
             setEditingWorkExperienceId(null);
-            showAlert('Work experience updated');
+            showAlert(wasEditingWorkExp ? 'Work experience updated' : 'Work experience saved');
           } catch (error) {
             console.error('❌ Error saving work experience:', error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -3936,8 +3945,9 @@ export default function ProfilePage() {
 
             await refreshProfileData(candidateId);
           setIsProjectModalOpen(false);
+          const wasEditingProject = editingProjectId;
           setEditingProjectId(null);
-          showAlert('Project saved');
+          showAlert(wasEditingProject ? 'Project updated' : 'Project saved');
           } catch (error) {
             console.error('Error saving project:', error);
             showAlert('Error saving project');
@@ -3953,7 +3963,11 @@ export default function ProfilePage() {
 
       <PortfolioLinksModal
         isOpen={isPortfolioLinksModalOpen}
-        onClose={() => setIsPortfolioLinksModalOpen(false)}
+        onClose={() => {
+          setIsPortfolioLinksModalOpen(false);
+          setEditingPortfolioLinkId(null);
+        }}
+        initialEditingLinkId={editingPortfolioLinkId}
         onSave={async (data) => {
           // This is called when closing the modal with all links
           const candidateId = sessionStorage.getItem('candidateId');
@@ -4048,7 +4062,7 @@ export default function ProfilePage() {
 
             // Refresh profile data to get updated links
             await refreshProfileData(candidateId);
-            showAlert('Portfolio link updated');
+            showAlert(editingPortfolioLinkId ? 'Portfolio link updated' : 'Portfolio link saved');
           } catch (error) {
             console.error('Error saving portfolio link:', error);
             showAlert('Error saving portfolio link');
@@ -4131,8 +4145,9 @@ export default function ProfilePage() {
 
             await refreshProfileData(candidateId);
             setIsCertificationModalOpen(false);
+            const wasEditing = editingCertificationId;
             setEditingCertificationId(null);
-            showAlert('Certifications updated');
+            showAlert(wasEditing ? 'Certification updated' : 'Certification saved');
           } catch (error) {
             console.error('Error saving certifications:', error);
             showAlert('Error saving certifications');
@@ -4218,8 +4233,9 @@ export default function ProfilePage() {
 
             await refreshProfileData(candidateId);
             setIsAccomplishmentModalOpen(false);
+            const wasEditingAccomplishment = editingAccomplishmentId;
             setEditingAccomplishmentId(null);
-            showAlert('Accomplishments updated');
+            showAlert(wasEditingAccomplishment ? 'Accomplishment updated' : 'Accomplishment saved');
           } catch (error) {
             console.error('Error saving accomplishments:', error);
             showAlert('Error saving accomplishments');

@@ -4,7 +4,7 @@ import { Inter, Arimo } from "next/font/google";
 import { ToastProvider } from "@/components/common/toast/ToastProvider";
 import GlobalHeader from "@/components/common/GlobalHeader";
 import ApiHealthChecker from "@/components/common/ApiHealthChecker";
-import Footer from "@/components/common/Footer";
+import GlobalFooter from "@/components/common/GlobalFooter";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -37,7 +37,7 @@ export default function RootLayout({
           <main className="min-h-screen">
             {children}
           </main>
-          <Footer />
+          <GlobalFooter />
         </ToastProvider>
       </body>
     </html>

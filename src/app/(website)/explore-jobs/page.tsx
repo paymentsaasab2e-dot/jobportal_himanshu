@@ -277,8 +277,8 @@ const ExploreJobsPageContent = () => {
   const [smartFilterLikelyRespond, setSmartFilterLikelyRespond] = useState(false)
   const [smartFilterRemoteFriendly, setSmartFilterRemoteFriendly] = useState(false)
 
-  const [workMode, setWorkMode] = useState<'Remote' | 'Hybrid' | 'Office' | null>(null)
-  const [experienceYears, setExperienceYears] = useState(0)
+  const [workMode, setWorkMode] = useState<'Remote' | 'Hybrid' | 'On-site' | null>(null)
+  const [experienceYears, setExperienceYears] = useState(20)
   const [salaryRanges, setSalaryRanges] = useState<Record<string, boolean>>({
     '0-3 Lakhs': false,
     '3-6 Lakhs': false,
@@ -356,7 +356,7 @@ const ExploreJobsPageContent = () => {
     setSmartFilterLikelyRespond(false)
     setSmartFilterRemoteFriendly(false)
     setWorkMode(null)
-    setExperienceYears(0)
+    setExperienceYears(20)
     setSalaryRanges({ '0-3 Lakhs': false, '3-6 Lakhs': false, '6-10 Lakhs': false, '10-15 Lakhs': false, '15-25 Lakhs': false, '25-35 Lakhs': false, '35-50 Lakhs': false, '50+ Lakhs': false })
     setMatchScore({ '80%+ Match': false, '70%+ Match': false, '60%+ Match': false })
     setIndustry({ 'IT Services & Consulting': false, 'Software Product': false, 'Recruitment / Staffing': false, 'Miscellaneous': false, 'Banking & Finance': false, 'Healthcare & Pharma': false, 'E-commerce & Retail': false, 'Manufacturing': false, 'Education & Training': false, 'Media & Entertainment': false, 'Telecommunications': false })
@@ -912,19 +912,64 @@ const ExploreJobsPageContent = () => {
         const target = workMode.toLowerCase();
         if (target === 'remote') return mode.includes('remote') || loc.includes('remote');
         if (target === 'hybrid') return mode.includes('hybrid');
-        if (target === 'office') return mode.includes('on-site') || mode.includes('office') || mode.includes('onsite');
+        if (target === 'on-site') return mode.includes('on-site') || mode.includes('office') || mode.includes('onsite');
         return true;
       });
     }
 
     // Experience filter
-    if (experienceYears > 0) {
+    // Logic: experienceYears is the 'Maximum' experience the candidate has.
+    // We show jobs that require up to that amount.
+    // If experienceYears is 20 (max), we treat it as 'Any' and show all jobs.
+    if (experienceYears < 20) {
       jobs = jobs.filter((j) => {
         const expStr = (j.experienceLevel || '').toLowerCase();
+        if (expStr.includes('not specified') || expStr === '-') return true;
+        
         const match = expStr.match(/(\d+)/);
-        if (!match) return true; // include if unknown
+        if (!match) return true; // include if unknown/freshers
+        
         const jobExp = parseInt(match[1], 10);
         return jobExp <= experienceYears;
+      });
+    }
+
+    // Salary range filter
+    const activeSalaryRanges = Object.entries(salaryRanges)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+    
+    if (activeSalaryRanges.length > 0) {
+      const SALARY_RANGE_LIMITS: Record<string, [number, number]> = {
+        '0-3 Lakhs': [0, 300000],
+        '3-6 Lakhs': [300000, 600000],
+        '6-10 Lakhs': [600000, 1000000],
+        '10-15 Lakhs': [1000000, 1500000],
+        '15-25 Lakhs': [1500000, 2500000],
+        '25-35 Lakhs': [2500000, 3500000],
+        '35-50 Lakhs': [3500000, 5000000],
+        '50+ Lakhs': [5000000, Infinity],
+      };
+
+      jobs = jobs.filter((j) => {
+        const salaryStr = (j.salary || '').toLowerCase();
+        // Naive but effective parsing for common formats: "10-15 Lakhs", "12 Lakhs", "$100,000"
+        const numbers = salaryStr.replace(/,/g, '').match(/(\d+(\.\d+)?)/g);
+        if (!numbers) return false;
+
+        let factor = 1;
+        if (salaryStr.includes('lakh')) factor = 100000;
+        else if (salaryStr.includes('crore')) factor = 10000000;
+
+        const vals = numbers.map(n => parseFloat(n) * factor);
+        const minSalary = vals[0];
+        const maxSalary = vals.length > 1 ? vals[1] : (salaryStr.includes('+') ? Infinity : vals[0]);
+
+        return activeSalaryRanges.some(range => {
+          const [limitMin, limitMax] = SALARY_RANGE_LIMITS[range];
+          // Check for overlap between job salary range and filter range
+          return (minSalary < limitMax && maxSalary >= limitMin);
+        });
       });
     }
 
@@ -967,15 +1012,25 @@ const ExploreJobsPageContent = () => {
       );
     }
 
+    // Smart Filter: Likely to Respond (using highlight status or match score as proxy)
+    if (smartFilterLikelyRespond) {
+      jobs = jobs.filter((j) => 
+        j.isHighlighted || 
+        (j.matchScore || 0) > 85
+      );
+    }
+
     return jobs;
   }, [
     jobListings,
     searchQuery,
     smartFilterSkills,
     smartFilterHighMatch,
+    smartFilterLikelyRespond,
     smartFilterRemoteFriendly,
     workMode,
     experienceYears,
+    salaryRanges,
     matchScore,
     industry,
     department,
@@ -990,7 +1045,7 @@ const ExploreJobsPageContent = () => {
       smartFilterLikelyRespond,
       smartFilterRemoteFriendly,
       workMode !== null,
-      experienceYears > 0,
+      experienceYears < 20,
       ...Object.values(salaryRanges),
       ...Object.values(matchScore),
       ...Object.values(industry),
@@ -1032,17 +1087,25 @@ const ExploreJobsPageContent = () => {
     Object.keys(cities).forEach(key => counts.cities[key] = 0)
 
     jobListings.forEach(job => {
-      // Count salary ranges (parse from salary string)
-      const salaryStr = job.salary?.toLowerCase() || ''
-      const salaryNum = parseInt(salaryStr.replace(/[^0-9]/g, ''))
-      if (salaryNum) {
-        if (salaryNum < 300000) counts.salary['0-3 Lakhs']++
-        else if (salaryNum < 600000) counts.salary['3-6 Lakhs']++
-        else if (salaryNum < 1000000) counts.salary['6-10 Lakhs']++
-        else if (salaryNum < 1500000) counts.salary['10-15 Lakhs']++
-        else if (salaryNum < 2500000) counts.salary['15-25 Lakhs']++
-        else if (salaryNum < 3500000) counts.salary['25-35 Lakhs']++
-        else if (salaryNum < 5000000) counts.salary['35-50 Lakhs']++
+      // Count salary ranges
+      const salaryStr = (job.salary || '').toLowerCase();
+      const numbers = salaryStr.replace(/,/g, '').match(/(\d+(\.\d+)?)/g);
+      
+      if (numbers) {
+        let factor = 1;
+        if (salaryStr.includes('lakh')) factor = 100000;
+        else if (salaryStr.includes('crore')) factor = 10000000;
+        
+        const vals = numbers.map(n => parseFloat(n) * factor);
+        const avgSalary = vals.length > 1 ? (vals[0] + vals[1]) / 2 : vals[0];
+
+        if (avgSalary < 300000) counts.salary['0-3 Lakhs']++
+        else if (avgSalary < 600000) counts.salary['3-6 Lakhs']++
+        else if (avgSalary < 1000000) counts.salary['6-10 Lakhs']++
+        else if (avgSalary < 1500000) counts.salary['10-15 Lakhs']++
+        else if (avgSalary < 2500000) counts.salary['15-25 Lakhs']++
+        else if (avgSalary < 3500000) counts.salary['25-35 Lakhs']++
+        else if (avgSalary < 5000000) counts.salary['35-50 Lakhs']++
         else counts.salary['50+ Lakhs']++
       }
 
@@ -1629,7 +1692,7 @@ const ExploreJobsPageContent = () => {
                       <div className="flex flex-wrap gap-2">
                         <Pill label="Remote" active={workMode === 'Remote'} onClick={() => setWorkMode(workMode === 'Remote' ? null : 'Remote')} />
                         <Pill label="Hybrid" active={workMode === 'Hybrid'} onClick={() => setWorkMode(workMode === 'Hybrid' ? null : 'Hybrid')} />
-                        <Pill label="Office" active={workMode === 'Office'} onClick={() => setWorkMode(workMode === 'Office' ? null : 'Office')} />
+                        <Pill label="On-site" active={workMode === 'On-site'} onClick={() => setWorkMode(workMode === 'On-site' ? null : 'On-site')} />
                       </div>
                     </div>
 
@@ -1637,19 +1700,26 @@ const ExploreJobsPageContent = () => {
                     <div className="space-y-3">
                       <SectionHeader title="Experience" open={experienceOpen} onToggle={() => setExperienceOpen((v) => !v)} />
                       {experienceOpen ? (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-xs text-gray-500 font-medium">
-                            <span>0 Yrs</span>
-                            <span>Any</span>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[13px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                              {experienceYears === 20 ? 'Any Experience' : `${experienceYears} Yrs Max`}
+                            </span>
                           </div>
-                          <input
-                            type="range"
-                            min={0}
-                            max={20}
-                            value={experienceYears}
-                            onChange={(e) => setExperienceYears(Number(e.target.value))}
-                            className="w-full accent-blue-600"
-                          />
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-[11px] text-gray-400 font-bold uppercase tracking-wider">
+                              <span>0 Yrs</span>
+                              <span>Any</span>
+                            </div>
+                            <input
+                              type="range"
+                              min={0}
+                              max={20}
+                              value={experienceYears}
+                              onChange={(e) => setExperienceYears(Number(e.target.value))}
+                              className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                            />
+                          </div>
                         </div>
                       ) : null}
                     </div>
@@ -2124,67 +2194,66 @@ const ExploreJobsPageContent = () => {
                                 style={{ boxShadow: "0 16px 36px -18px rgba(40, 168, 225, 0.28)" }}
                               >
                                 <div className="overflow-hidden rounded-[23px] bg-white/95 backdrop-blur-xl">
-                                  <div className="grid gap-0 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
-                                    <div className="relative border-b border-slate-100 bg-[linear-gradient(180deg,rgba(40,168,225,0.12),rgba(40,168,225,0.04))] px-6 py-8 sm:px-8 lg:border-b-0 lg:border-r">
-                                      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(40,168,225,0.20),transparent_72%)]" />
+                                  <div className="grid gap-0 lg:grid-cols-[35%_65%]">
+                                    <div className="relative border-b border-slate-100 bg-[linear-gradient(180deg,rgba(40,168,225,0.12),rgba(40,168,225,0.04))] px-6 py-3 sm:px-8 lg:border-b-0 lg:border-r">
+                                      <div className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-[radial-gradient(circle_at_top,rgba(40,168,225,0.20),transparent_72%)]" />
 
-                                      <div className="relative flex flex-col items-center gap-6">
+                                      <div className="relative flex flex-col items-center gap-2.5">
                                         {/* 1. Partial Match Tag - Centered */}
                                         <div className="flex justify-center">
-                                          <div className={`inline-flex rounded-full border px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] shadow-sm ${getConfidenceBadgeClasses(selectedJobConfidenceTag)}`}>
+                                          <div className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] shadow-sm ${getConfidenceBadgeClasses(selectedJobConfidenceTag)}`}>
                                             {selectedJobConfidenceTag}
                                           </div>
                                         </div>
 
                                         {/* 2. Description - Below Tag, Centered */}
                                         <div className="flex justify-center">
-                                          <p className="max-w-[280px] text-center text-[13px] font-medium leading-relaxed text-slate-500">
-                                            Your strongest overlap comes from matching core profile signals, role context, and prior experience depth.
+                                          <p className="max-w-[280px] text-center text-[12px] font-medium leading-relaxed text-slate-500">
+                                            Your strongest overlap comes from matching core profile signals.
                                           </p>
                                         </div>
 
                                         {/* 3. Market Alignment Tag - Centered */}
-                                        <div className="mt-2 text-center">
+                                        <div className="mt-1 text-center">
                                           <div className="inline-flex rounded-full border border-[rgba(40,168,225,0.20)] bg-white/80 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#28A8E1]">
                                             Market alignment
                                           </div>
                                         </div>
 
                                         {/* 4. Circle Graph - Centered & Larger */}
-                                        <div className="relative mx-auto h-36 w-36">
-                                          <svg className="h-36 w-36 -rotate-90" viewBox="0 0 120 120">
-                                            <circle cx="60" cy="60" r="46" stroke="currentColor" strokeWidth="10" fill="transparent" className="text-slate-100" />
+                                        <div className="relative mx-auto h-24 w-24">
+                                          <svg className="h-24 w-24 -rotate-90" viewBox="0 0 120 120">
+                                            <circle cx="60" cy="60" r="50" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-100" />
                                             <circle
                                               cx="60"
                                               cy="60"
-                                              r="46"
+                                              r="50"
                                               stroke="currentColor"
-                                              strokeWidth="10"
+                                              strokeWidth="12"
                                               fill="transparent"
-                                              strokeDasharray={289}
-                                              strokeDashoffset={289 - (289 * selectedJobMatchValue) / 100}
+                                              strokeDasharray={314}
+                                              strokeDashoffset={314 - (314 * selectedJobMatchValue) / 100}
                                               strokeLinecap="round"
                                               className="text-[#28A8E1]"
                                             />
                                           </svg>
                                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span className="text-[32px] font-bold tracking-tight text-slate-950 leading-none">{selectedJobMatchValue}%</span>
-                                            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 mt-1">Match</span>
-                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-300 mt-1">AI FIT</span>
+                                            <span className="text-[24px] font-bold tracking-tight text-slate-950 leading-none">{selectedJobMatchValue}%</span>
+                                            <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500 mt-0.5">Match</span>
                                           </div>
                                         </div>
 
                                         {/* 5. Button - Centered */}
                                         <button
                                           onClick={() => router.push('/lms/resume-builder/editor')}
-                                          className="mt-4 relative inline-flex h-fit w-full items-center justify-center rounded-xl bg-[#28A8E1] px-4 py-4 text-[13px] font-bold text-white shadow-[0_14px_28px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-[#28A8DF] active:scale-[0.99]"
+                                          className="mt-2 relative inline-flex h-fit w-full items-center justify-center rounded-xl bg-[#28A8E1] px-4 py-2.5 text-[12px] font-bold text-white shadow-[0_10px_20px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF] active:scale-[0.99]"
                                         >
                                           Optimize My CV
                                         </button>
                                       </div>
                                     </div>
 
-                                    <div className="space-y-5 px-6 py-7 sm:px-7">
+                                    <div className="space-y-3 px-6 py-4 sm:px-7">
                                       <div className="flex flex-wrap items-center gap-3">
                                         <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(40,168,225,0.16)] bg-[rgba(40,168,225,0.08)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#28A8E1]">
                                           <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
@@ -2203,14 +2272,14 @@ const ExploreJobsPageContent = () => {
                                       </p>
 
                                       <div className="grid gap-4 xl:grid-cols-2">
-                                        <div className="rounded-[22px] border border-emerald-100 bg-emerald-50/60 p-4">
-                                          <div className="flex items-center gap-2">
-                                            <CheckCircle2 className="h-4 w-4 text-emerald-600" strokeWidth={2.2} />
-                                            <h5 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Where You Align</h5>
-                                          </div>
-                                          <p className="mt-2 text-[12px] font-medium leading-5 text-slate-500">
-                                            Skills already reflected in your profile and likely to strengthen your shortlist ranking.
-                                          </p>
+                                          <div className="rounded-[20px] border border-emerald-100 bg-emerald-50/60 p-3">
+                                            <div className="flex items-center gap-2">
+                                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.2} />
+                                              <h5 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Where You Align</h5>
+                                            </div>
+                                            <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500">
+                                              Profile signals that likely strengthen your shortlist ranking.
+                                            </p>
                                           <div className="mt-4 flex flex-wrap gap-2">
                                             {selectedJobMatchedSkills.map((skill, index) => (
                                               <span
@@ -2223,14 +2292,14 @@ const ExploreJobsPageContent = () => {
                                           </div>
                                         </div>
 
-                                        <div className="rounded-[22px] border border-[rgba(252,150,32,0.18)] bg-[rgba(252,150,32,0.08)] p-4">
-                                          <div className="flex items-center gap-2">
-                                            <AlertTriangle className="h-4 w-4 text-[#FC9620]" strokeWidth={2.2} />
-                                            <h5 className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#d97706]">Strengthen Next</h5>
-                                          </div>
-                                          <p className="mt-2 text-[12px] font-medium leading-5 text-slate-500">
-                                            Focus areas worth tightening before interviews to improve alignment and confidence.
-                                          </p>
+                                          <div className="rounded-[20px] border border-[rgba(252,150,32,0.18)] bg-[rgba(252,150,32,0.08)] p-3">
+                                            <div className="flex items-center gap-2">
+                                              <AlertTriangle className="h-3.5 w-3.5 text-[#FC9620]" strokeWidth={2.2} />
+                                              <h5 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#d97706]">Strengthen Next</h5>
+                                            </div>
+                                            <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500">
+                                              Focus areas worth tightening to improve alignment.
+                                            </p>
                                           <div className="mt-4 flex flex-wrap gap-2">
                                             {selectedJobMissingSkills.map((skill, index) => (
                                               <span

@@ -7,6 +7,8 @@ import {
   PreviewEntryShell,
   PreviewMetaItem,
 } from './PreviewPrimitives';
+import { useState } from 'react';
+import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
 
 type Entry = EducationEntryData & { documents?: unknown[] };
 
@@ -30,6 +32,41 @@ export function EducationEntryPreview({
 }: Props) {
   const docCount = entry.documents?.length ?? 0;
   const yearRange = `${entry.startYear || '—'} – ${entry.currentlyStudying ? 'Present' : entry.endYear || '—'}`;
+
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    url: '',
+    name: '',
+  });
+
+  const handlePreview = (url: string, name: string) => {
+    setPreviewModal({
+      isOpen: true,
+      url,
+      name,
+    });
+  };
+
+  const handleDownload = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      link.target = "_blank";
+      link.click();
+    }
+  };
 
   return (
     <PreviewEntryShell accent="blue">
@@ -81,6 +118,37 @@ export function EducationEntryPreview({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <PreviewDocCount count={docCount} />
+            {docCount === 1 && entry.documents?.[0] && (
+              <div className="flex items-center gap-2 ml-1">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePreview(resolveDocHref(entry.documents![0]), getDocumentName(entry.documents![0]));
+                  }}
+                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="View Certificate"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(resolveDocHref(entry.documents![0]), getDocumentName(entry.documents![0]));
+                  }}
+                  className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                  title="Download Certificate"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -136,10 +204,9 @@ export function EducationEntryPreview({
                   >
                     <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
                     <div className="flex items-center gap-3 shrink-0 ml-2">
-                      <a
-                        href={resolveDocHref(doc)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => handlePreview(resolveDocHref(doc), getDocumentName(doc))}
                         className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Document"
                       >
@@ -147,17 +214,17 @@ export function EducationEntryPreview({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                      </a>
-                      <a
-                        href={resolveDocHref(doc)}
-                        download={getDocumentName(doc)}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(resolveDocHref(doc), getDocumentName(doc))}
                         className="text-orange-600 hover:text-orange-700 transition-colors"
                         title="Download Document"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                      </a>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -166,6 +233,13 @@ export function EducationEntryPreview({
           ) : null}
         </div>
       ) : null}
+
+      <DocumentViewerModal
+        isOpen={previewModal.isOpen}
+        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
+        documentUrl={previewModal.url}
+        documentName={previewModal.name}
+      />
     </PreviewEntryShell>
   );
 }

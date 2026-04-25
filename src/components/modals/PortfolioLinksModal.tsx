@@ -9,6 +9,7 @@ interface PortfolioLinksModalProps {
   onSave: (data: PortfolioLinksData) => void;
   onAddLink?: (link: PortfolioLink) => void; // Callback to save individual link immediately
   initialData?: PortfolioLinksData;
+  initialEditingLinkId?: string | null;
 }
 
 export interface PortfolioLink {
@@ -120,6 +121,7 @@ export default function PortfolioLinksModal({
   onSave,
   onAddLink,
   initialData,
+  initialEditingLinkId,
 }: PortfolioLinksModalProps) {
   const [links, setLinks] = useState<PortfolioLink[]>(initialData?.links || []);
   const [linkType, setLinkType] = useState('');
@@ -135,8 +137,21 @@ export default function PortfolioLinksModal({
     } else {
       setLinks([]);
     }
-    // Reset form when modal opens
+    // Reset form or set initial edit state when modal opens
     if (isOpen) {
+      if (initialEditingLinkId && initialData?.links) {
+        const linkToEdit = initialData.links.find(l => l.id === initialEditingLinkId);
+        if (linkToEdit) {
+          setLinkType(linkToEdit.linkType);
+          setUrl(linkToEdit.url);
+          setTitle(linkToEdit.title || '');
+          setDescription(linkToEdit.description || '');
+          setEditingLinkId(linkToEdit.id);
+          setUrlError('');
+          return;
+        }
+      }
+      
       setLinkType('');
       setUrl('');
       setTitle('');
@@ -144,7 +159,7 @@ export default function PortfolioLinksModal({
       setEditingLinkId(null);
       setUrlError('');
     }
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, initialEditingLinkId]);
 
   const handleUrlChange = (value: string) => {
     setUrl(value);
@@ -216,12 +231,13 @@ export default function PortfolioLinksModal({
       }
     }
 
-    // Reset form
+    // Reset form and close drawer
     setLinkType('');
     setUrl('');
     setTitle('');
     setDescription('');
     setUrlError('');
+    onClose();
   };
 
   const handleEditLink = (link: PortfolioLink) => {
@@ -252,7 +268,7 @@ export default function PortfolioLinksModal({
     <ProfileDrawer
       isOpen={isOpen}
       onClose={onClose}
-      title="Add Portfolio Link"
+      title={editingLinkId ? "Edit Portfolio Link" : "Add Portfolio Link"}
       widthClassName="w-full md:w-[50vw] md:max-w-[50vw]"
       footer={(
         <div className="flex justify-end gap-3">
@@ -344,20 +360,10 @@ export default function PortfolioLinksModal({
                 />
               </div>
 
-              {/* Cancel Edit Button (only shown when editing) */}
-              {editingLinkId && (
-                <div>
-                  <button
-                    onClick={handleCancelEdit}
-                    className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 text-sm font-medium hover:bg-gray-50"
-                  >
-                    Cancel Edit
-                  </button>
-                </div>
-              )}
+
 
               {/* Existing Links */}
-              {links.length > 0 && (
+              {!editingLinkId && links.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Existing Links</h3>
                   <div className="space-y-3">

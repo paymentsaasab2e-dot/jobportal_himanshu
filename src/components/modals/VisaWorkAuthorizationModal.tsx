@@ -171,7 +171,7 @@ export default function VisaWorkAuthorizationModal({
     };
 
     setVisaEntries([...visaEntries, newEntry]);
-    
+
     // Reset form for next entry
     setSelectedDestination('');
     setRequiresVisa('');
@@ -228,7 +228,7 @@ export default function VisaWorkAuthorizationModal({
 
   const handleFileSelect = (section: 'expected', files: FileList | null) => {
     if (!files) return;
-    
+
     const newDocuments: VisaDocument[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -419,7 +419,7 @@ export default function VisaWorkAuthorizationModal({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Upload Visa/Work Permit Document
               </label>
-              
+
               {/* Drag and Drop Area */}
               <div
                 onDragEnter={(e) => handleDragEnter(sectionId, e)}
@@ -558,413 +558,413 @@ export default function VisaWorkAuthorizationModal({
         </div>
       )}
     >
-            <div className="space-y-6">
-              {/* Select Countries */}
+      <div className="space-y-6">
+        {/* Select Countries */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Select Countries
+          </label>
+          <select
+            value={selectedDestination}
+            onChange={(e) => {
+              setSelectedDestination(e.target.value);
+              setRequiresVisa('');
+            }}
+            className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!selectedDestination ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
+          >
+            <option value="">Select a Country...</option>
+            {COUNTRIES.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.name}
+              </option>
+            ))}
+          </select>
+          {!selectedDestination && (
+            <p className="mt-1 text-xs text-amber-600">Country selection is required</p>
+          )}
+          <p className="mt-1 text-xs text-gray-500">
+            Select all countries where you are legally authorized to work.
+          </p>
+        </div>
+
+        {/* Yes/No Options - Show when country is selected */}
+        {selectedDestination && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Do you require a visa for this country?
+            </label>
+            <div className={`flex gap-6 p-2 rounded-lg ${!requiresVisa ? 'bg-amber-50 border border-amber-200' : ''}`}>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="requiresVisa"
+                  value="Yes"
+                  checked={requiresVisa === 'Yes'}
+                  onChange={(e) => setRequiresVisa(e.target.value as 'Yes')}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Yes</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="requiresVisa"
+                  value="No"
+                  checked={requiresVisa === 'No'}
+                  onChange={(e) => setRequiresVisa(e.target.value as 'No')}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">No</span>
+              </label>
+            </div>
+            {!requiresVisa && (
+              <p className="mt-1 text-xs text-amber-600">Please select an option</p>
+            )}
+          </div>
+        )}
+
+        {/* Visa Details Form - Show when Yes is selected */}
+        {requiresVisa === 'Yes' && (
+          <div className="space-y-4">
+            {/* Row 1: Visa Type and Visa Status */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Countries
+                  Visa Type <span className="text-amber-600">*</span>
                 </label>
                 <select
-                  value={selectedDestination}
-                  onChange={(e) => {
-                    setSelectedDestination(e.target.value);
-                    setRequiresVisa('');
-                  }}
-                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!selectedDestination ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
+                  value={visaDetailsExpected?.visaType || ''}
+                  onChange={(e) => handleVisaDetailChange('expected', 'visaType', e.target.value)}
+                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.visaType ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
                 >
-                  <option value="">Select a Country...</option>
-                  {COUNTRIES.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {country.name}
-                    </option>
+                  <option value="">Select Visa Type</option>
+                  {VISA_TYPES.map((type) => (
+                    <option key={type} value={type}>{type}</option>
                   ))}
                 </select>
-                {!selectedDestination && (
-                  <p className="mt-1 text-xs text-amber-600">Country selection is required</p>
+                {!visaDetailsExpected?.visaType && (
+                  <p className="mt-1 text-[10px] text-amber-600">Required</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Visa Status <span className="text-amber-600">*</span>
+                </label>
+                <select
+                  value={visaDetailsExpected?.visaStatus || 'Active'}
+                  onChange={(e) => handleVisaDetailChange('expected', 'visaStatus', e.target.value)}
+                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.visaStatus ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
+                >
+                  {VISA_STATUSES.map((status) => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+                {!visaDetailsExpected?.visaStatus && (
+                  <p className="mt-1 text-[10px] text-amber-600">Required</p>
+                )}
+              </div>
+            </div>
+
+            {/* Row 2: Visa Expiry Date and Work Permit Number */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Visa Expiry Date <span className="text-amber-600">*</span>
+                </label>
+                <div className="relative">
+                  <svg
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9095A1] pointer-events-none"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <input
+                    type="date"
+                    value={visaDetailsExpected?.visaExpiryDate || ''}
+                    onChange={(e) => handleVisaDetailChange('expected', 'visaExpiryDate', e.target.value)}
+                    className={`w-full px-4 py-2 pl-10 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.visaExpiryDate ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
+                  />
+                </div>
+                {!visaDetailsExpected?.visaExpiryDate && (
+                  <p className="mt-1 text-xs text-amber-600">Expiry date is required</p>
                 )}
                 <p className="mt-1 text-xs text-gray-500">
-                  Select all countries where you are legally authorized to work.
+                  This helps employers understand your visa timeline.
                 </p>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Work Permit Number <span className="text-amber-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={visaDetailsExpected?.itemFamilyNumber || ''}
+                  onChange={(e) => handleVisaDetailChange('expected', 'itemFamilyNumber', e.target.value)}
+                  placeholder="Enter work permit number"
+                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.itemFamilyNumber ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
+                />
+                {!visaDetailsExpected?.itemFamilyNumber && (
+                  <p className="mt-1 text-xs text-amber-600">Work permit number is required</p>
+                )}
+              </div>
+            </div>
 
-              {/* Yes/No Options - Show when country is selected */}
-              {selectedDestination && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Do you require a visa for this country?
-                  </label>
-                  <div className={`flex gap-6 p-2 rounded-lg ${!requiresVisa ? 'bg-amber-50 border border-amber-200' : ''}`}>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="requiresVisa"
-                        value="Yes"
-                        checked={requiresVisa === 'Yes'}
-                        onChange={(e) => setRequiresVisa(e.target.value as 'Yes')}
-                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700">Yes</span>
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="requiresVisa"
-                        value="No"
-                        checked={requiresVisa === 'No'}
-                        onChange={(e) => setRequiresVisa(e.target.value as 'No')}
-                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700">No</span>
-                    </label>
-                  </div>
-                  {!requiresVisa && (
-                    <p className="mt-1 text-xs text-amber-600">Please select an option</p>
+            {/* Row 3: Upload Visa / Work Permit Document */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Upload Visa / Work Permit Document <span className="text-amber-600">*</span>
+              </label>
+              <input
+                ref={(el) => { fileInputRefs.current['expected'] = el; }}
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg"
+                onChange={(e) => handleFileInputChange('expected', e)}
+                className="hidden"
+              />
+              {(!visaDetailsExpected?.documents || visaDetailsExpected.documents.length === 0) ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRefs.current['expected']?.click()}
+                    className={`w-full px-4 py-3 border-2 border-dashed rounded-lg flex items-center justify-center gap-2 ${(!visaDetailsExpected?.documents || visaDetailsExpected.documents.length === 0) ? 'border-red-300 bg-red-50 hover:bg-red-100' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'} text-gray-600`}
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    Choose file
+                  </button>
+                  {(!visaDetailsExpected?.documents || visaDetailsExpected.documents.length === 0) && (
+                    <p className="mt-1 text-xs text-amber-600">Supporting document is required</p>
                   )}
-                </div>
-              )}
-
-              {/* Visa Details Form - Show when Yes is selected */}
-              {requiresVisa === 'Yes' && (
-                <div className="space-y-4">
-                  {/* Row 1: Visa Type and Visa Status */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Visa Type <span className="text-amber-600">*</span>
-                      </label>
-                      <select
-                        value={visaDetailsExpected?.visaType || ''}
-                        onChange={(e) => handleVisaDetailChange('expected', 'visaType', e.target.value)}
-                        className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.visaType ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
-                      >
-                        <option value="">Select Visa Type</option>
-                        {VISA_TYPES.map((type) => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
-                      </select>
-                      {!visaDetailsExpected?.visaType && (
-                        <p className="mt-1 text-[10px] text-amber-600">Required</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Visa Status <span className="text-amber-600">*</span>
-                      </label>
-                      <select
-                        value={visaDetailsExpected?.visaStatus || 'Active'}
-                        onChange={(e) => handleVisaDetailChange('expected', 'visaStatus', e.target.value)}
-                        className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.visaStatus ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
-                      >
-                        {VISA_STATUSES.map((status) => (
-                          <option key={status} value={status}>{status}</option>
-                        ))}
-                      </select>
-                      {!visaDetailsExpected?.visaStatus && (
-                        <p className="mt-1 text-[10px] text-amber-600">Required</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Row 2: Visa Expiry Date and Work Permit Number */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Visa Expiry Date <span className="text-amber-600">*</span>
-                      </label>
-                      <div className="relative">
+                </>
+              ) : (
+                <div className="space-y-2">
+                  {visaDetailsExpected.documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+                      <div className="flex items-center gap-3">
                         <svg
-                          className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9095A1] pointer-events-none"
+                          className="w-5 h-5 text-[#9095A1]"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
-                        <input
-                          type="date"
-                          value={visaDetailsExpected?.visaExpiryDate || ''}
-                          onChange={(e) => handleVisaDetailChange('expected', 'visaExpiryDate', e.target.value)}
-                          className={`w-full px-4 py-2 pl-10 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.visaExpiryDate ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
-                        />
-                      </div>
-                      {!visaDetailsExpected?.visaExpiryDate && (
-                        <p className="mt-1 text-xs text-amber-600">Expiry date is required</p>
-                      )}
-                      <p className="mt-1 text-xs text-gray-500">
-                        This helps employers understand your visa timeline.
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Work Permit Number <span className="text-amber-600">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={visaDetailsExpected?.itemFamilyNumber || ''}
-                        onChange={(e) => handleVisaDetailChange('expected', 'itemFamilyNumber', e.target.value)}
-                        placeholder="Enter work permit number"
-                        className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.itemFamilyNumber ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
-                      />
-                      {!visaDetailsExpected?.itemFamilyNumber && (
-                        <p className="mt-1 text-xs text-amber-600">Work permit number is required</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Row 3: Upload Visa / Work Permit Document */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Upload Visa / Work Permit Document <span className="text-amber-600">*</span>
-                    </label>
-                    <input
-                      ref={(el) => { fileInputRefs.current['expected'] = el; }}
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      onChange={(e) => handleFileInputChange('expected', e)}
-                      className="hidden"
-                    />
-                    {(!visaDetailsExpected?.documents || visaDetailsExpected.documents.length === 0) ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => fileInputRefs.current['expected']?.click()}
-                          className={`w-full px-4 py-3 border-2 border-dashed rounded-lg flex items-center justify-center gap-2 ${(!visaDetailsExpected?.documents || visaDetailsExpected.documents.length === 0) ? 'border-red-300 bg-red-50 hover:bg-red-100' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'} text-gray-600`}
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                          </svg>
-                          Choose file
-                        </button>
-                        {(!visaDetailsExpected?.documents || visaDetailsExpected.documents.length === 0) && (
-                          <p className="mt-1 text-xs text-amber-600">Supporting document is required</p>
-                        )}
-                      </>
-                    ) : (
-                      <div className="space-y-2">
-                        {visaDetailsExpected.documents.map((doc) => (
-                          <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
-                            <div className="flex items-center gap-3">
-                              <svg
-                                className="w-5 h-5 text-[#9095A1]"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                              </svg>
-                              <div>
-                                <p className="text-sm text-gray-900">{doc.name}</p>
-                                {doc.size && (
-                                  <p className="text-xs text-gray-500">{formatFileSize(doc.size)}</p>
-                                )}
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => handleRemoveFile('expected', doc.id)}
-                              className="text-[#9095A1] hover:text-amber-600"
-                              title="Delete"
-                            >
-                              <svg
-                                width="18"
-                                height="18"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <line x1="18" y1="6" x2="6" y2="18" />
-                                <line x1="6" y1="6" x2="18" y2="18" />
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <p className="mt-1 text-xs text-gray-500">
-                      Accepted: PDF, JPG, PNG. Max 5MB.
-                    </p>
-                  </div>
-
-                </div>
-              )}
-
-              {/* Added Visa Entries List */}
-              {visaEntries.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900">Added Visa Entries</h3>
-                  {visaEntries.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="border border-gray-200 rounded-lg p-4 bg-white"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h4 className="text-sm font-semibold text-gray-900">
-                            {entry.visaDetails.visaType} - {entry.countryName}
-                          </h4>
-                          {entry.visaDetails.visaExpiryDate && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Expires: {formatDateRange(entry.visaDetails.visaExpiryDate)}
-                            </p>
+                        <div>
+                          <p className="text-sm text-gray-900">{doc.name}</p>
+                          {doc.size && (
+                            <p className="text-xs text-gray-500">{formatFileSize(doc.size)}</p>
                           )}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleRemoveVisaEntry(entry.id)}
-                            className="text-amber-600 hover:text-amber-700 p-1"
-                            title="Delete"
-                          >
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 16 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M12 4L4 12M4 4L12 12"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => toggleExpandEntry(entry.id)}
-                            className="text-gray-500 hover:text-gray-700 p-1"
-                            title="Expand"
-                          >
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 16 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                              className={`transition-transform ${expandedEntries[entry.id] ? 'rotate-180' : ''}`}
-                            >
-                              <path
-                                d="M4 6L8 10L12 6"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          </button>
-                        </div>
                       </div>
-                      {expandedEntries[entry.id] && (
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          <div className="space-y-2">
-                            <div>
-                              <span className="text-xs text-gray-500">Country:</span>
-                              <p className="text-sm text-gray-900">{entry.countryName}</p>
-                            </div>
-                            <div>
-                              <span className="text-xs text-gray-500">Visa Type:</span>
-                              <p className="text-sm text-gray-900">{entry.visaDetails.visaType}</p>
-                            </div>
-                            <div>
-                              <span className="text-xs text-gray-500">Visa Status:</span>
-                              <p className="text-sm text-gray-900">{entry.visaDetails.visaStatus}</p>
-                            </div>
-                            {entry.visaDetails.itemFamilyNumber && (
-                              <div>
-                                <span className="text-xs text-gray-500">Work Permit Number:</span>
-                                <p className="text-sm text-gray-900">{entry.visaDetails.itemFamilyNumber}</p>
-                              </div>
-                            )}
-                            {entry.visaDetails.visaExpiryDate && (
-                              <div>
-                                <span className="text-xs text-gray-500">Visa Expiry Date:</span>
-                                <p className="text-sm text-gray-900">
-                                  {formatDateRange(entry.visaDetails.visaExpiryDate)}
-                                </p>
-                              </div>
-                            )}
-                            {entry.visaDetails.documents && entry.visaDetails.documents.length > 0 && (
-                              <div>
-                                <span className="text-xs text-gray-500">Documents:</span>
-                                <div className="mt-1 space-y-1">
-                                  {entry.visaDetails.documents.map((doc) => (
-                                    <p key={doc.id} className="text-sm text-gray-900">
-                                      {doc.name}
-                                    </p>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                      <button
+                        onClick={() => handleRemoveFile('expected', doc.id)}
+                        className="text-[#9095A1] hover:text-amber-600"
+                        title="Delete"
+                      >
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
                     </div>
                   ))}
                 </div>
               )}
+              <p className="mt-1 text-xs text-gray-500">
+                Accepted: PDF, JPG, PNG. Max 5MB.
+              </p>
+            </div>
 
-              {/* Visa/Workpermit Required - Show only when No is selected */}
-              {requiresVisa === 'No' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Visa/Workpermit Required?
-                  </label>
-                  <div className="space-y-2">
-                    {VISA_WORKPERMIT_OPTIONS.map((option) => (
-                      <label key={option} className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="visaWorkpermit"
-                          value={option}
-                          checked={visaWorkpermitRequired === option}
-                          onChange={(e) => setVisaWorkpermitRequired(e.target.value)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-700">{option}</span>
-                      </label>
-                    ))}
+          </div>
+        )}
+
+        {/* Added Visa Entries List */}
+        {visaEntries.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-900">Added Visa Entries</h3>
+            {visaEntries.map((entry) => (
+              <div
+                key={entry.id}
+                className="border border-gray-200 rounded-lg p-4 bg-white"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-gray-900">
+                      {entry.visaDetails.visaType} - {entry.countryName}
+                    </h4>
+                    {entry.visaDetails.visaExpiryDate && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Expires: {formatDateRange(entry.visaDetails.visaExpiryDate)}
+                      </p>
+                    )}
                   </div>
-                  <div className="mt-2 flex items-start gap-2">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="mt-0.5 shrink-0">
-                      <g clipPath="url(#clip0_3_14286)">
-                        <path d="M14.0289 8.00086C14.0289 4.67058 11.3292 1.97086 7.99891 1.97086C4.66863 1.97086 1.96891 4.67058 1.96891 8.00086C1.96891 11.3312 4.66863 14.0309 7.99891 14.0309C11.3292 14.0309 14.0289 11.3312 14.0289 8.00086ZM15.3689 8.00086C15.3689 12.0712 12.0692 15.3709 7.99891 15.3709C3.92857 15.3709 0.628906 12.0712 0.628906 8.00086C0.628906 3.93052 3.92857 0.630859 7.99891 0.630859C12.0692 0.630859 15.3689 3.93052 15.3689 8.00086Z" fill="#4B5563"/>
-                        <path d="M7.32812 10.6703L7.32812 7.99031C7.32812 7.62027 7.62808 7.32031 7.99813 7.32031C8.36817 7.32031 8.66813 7.62027 8.66813 7.99031V10.6703C8.66813 11.0404 8.36817 11.3403 7.99813 11.3403C7.62808 11.3403 7.32812 11.0404 7.32812 10.6703Z" fill="#4B5563"/>
-                        <path d="M8.00469 4.66016L8.07337 4.66343C8.41118 4.69775 8.67469 4.98326 8.67469 5.33016C8.67469 5.67706 8.41118 5.96256 8.07337 5.99689L8.00469 6.00016H7.99813C7.62808 6.00016 7.32812 5.70018 7.32812 5.33016C7.32812 4.96013 7.62808 4.66016 7.99813 4.66016H8.00469Z" fill="#4B5563"/>
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_3_14286">
-                          <rect width="16" height="16" fill="white"/>
-                        </clipPath>
-                      </defs>
-                    </svg>
-                    <p className="text-xs text-gray-500">
-                      Some selected locations may require company-sponsored visas depending on role and country.
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleRemoveVisaEntry(entry.id)}
+                      className="text-amber-600 hover:text-amber-700 p-1"
+                      title="Delete"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M12 4L4 12M4 4L12 12"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => toggleExpandEntry(entry.id)}
+                      className="text-gray-500 hover:text-gray-700 p-1"
+                      title="Expand"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className={`transition-transform ${expandedEntries[entry.id] ? 'rotate-180' : ''}`}
+                      >
+                        <path
+                          d="M4 6L8 10L12 6"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-              )}
-
-              {/* Additional Notes (Optional) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Additional Notes (Optional)
-                </label>
-                <textarea
-                  value={additionalRemarks}
-                  onChange={(e) => setAdditionalRemarks(e.target.value)}
-                  placeholder="Add any further information about your visa or work authorization."
-                  rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                />
+                {expandedEntries[entry.id] && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-xs text-gray-500">Country:</span>
+                        <p className="text-sm text-gray-900">{entry.countryName}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-500">Visa Type:</span>
+                        <p className="text-sm text-gray-900">{entry.visaDetails.visaType}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-500">Visa Status:</span>
+                        <p className="text-sm text-gray-900">{entry.visaDetails.visaStatus}</p>
+                      </div>
+                      {entry.visaDetails.itemFamilyNumber && (
+                        <div>
+                          <span className="text-xs text-gray-500">Work Permit Number:</span>
+                          <p className="text-sm text-gray-900">{entry.visaDetails.itemFamilyNumber}</p>
+                        </div>
+                      )}
+                      {entry.visaDetails.visaExpiryDate && (
+                        <div>
+                          <span className="text-xs text-gray-500">Visa Expiry Date:</span>
+                          <p className="text-sm text-gray-900">
+                            {formatDateRange(entry.visaDetails.visaExpiryDate)}
+                          </p>
+                        </div>
+                      )}
+                      {entry.visaDetails.documents && entry.visaDetails.documents.length > 0 && (
+                        <div>
+                          <span className="text-xs text-gray-500">Documents:</span>
+                          <div className="mt-1 space-y-1">
+                            {entry.visaDetails.documents.map((doc) => (
+                              <p key={doc.id} className="text-sm text-gray-900">
+                                {doc.name}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
+            ))}
+          </div>
+        )}
+
+        {/* Visa/Workpermit Required - Show only when No is selected */}
+        {requiresVisa === 'No' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Visa/Workpermit Required?
+            </label>
+            <div className="space-y-2">
+              {VISA_WORKPERMIT_OPTIONS.map((option) => (
+                <label key={option} className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="visaWorkpermit"
+                    value={option}
+                    checked={visaWorkpermitRequired === option}
+                    onChange={(e) => setVisaWorkpermitRequired(e.target.value)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">{option}</span>
+                </label>
+              ))}
             </div>
+            <div className="mt-2 flex items-start gap-2">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="mt-0.5 shrink-0">
+                <g clipPath="url(#clip0_3_14286)">
+                  <path d="M14.0289 8.00086C14.0289 4.67058 11.3292 1.97086 7.99891 1.97086C4.66863 1.97086 1.96891 4.67058 1.96891 8.00086C1.96891 11.3312 4.66863 14.0309 7.99891 14.0309C11.3292 14.0309 14.0289 11.3312 14.0289 8.00086ZM15.3689 8.00086C15.3689 12.0712 12.0692 15.3709 7.99891 15.3709C3.92857 15.3709 0.628906 12.0712 0.628906 8.00086C0.628906 3.93052 3.92857 0.630859 7.99891 0.630859C12.0692 0.630859 15.3689 3.93052 15.3689 8.00086Z" fill="#4B5563" />
+                  <path d="M7.32812 10.6703L7.32812 7.99031C7.32812 7.62027 7.62808 7.32031 7.99813 7.32031C8.36817 7.32031 8.66813 7.62027 8.66813 7.99031V10.6703C8.66813 11.0404 8.36817 11.3403 7.99813 11.3403C7.62808 11.3403 7.32812 11.0404 7.32812 10.6703Z" fill="#4B5563" />
+                  <path d="M8.00469 4.66016L8.07337 4.66343C8.41118 4.69775 8.67469 4.98326 8.67469 5.33016C8.67469 5.67706 8.41118 5.96256 8.07337 5.99689L8.00469 6.00016H7.99813C7.62808 6.00016 7.32812 5.70018 7.32812 5.33016C7.32812 4.96013 7.62808 4.66016 7.99813 4.66016H8.00469Z" fill="#4B5563" />
+                </g>
+                <defs>
+                  <clipPath id="clip0_3_14286">
+                    <rect width="16" height="16" fill="white" />
+                  </clipPath>
+                </defs>
+              </svg>
+              <p className="text-xs text-gray-500">
+                Some selected locations may require company-sponsored visas depending on role and country.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Additional Notes (Optional) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Additional Notes (Optional)
+          </label>
+          <textarea
+            value={additionalRemarks}
+            onChange={(e) => setAdditionalRemarks(e.target.value)}
+            placeholder="Add any further information about your visa or work authorization."
+            rows={4}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+          />
+        </div>
+      </div>
 
     </ProfileDrawer>
   );

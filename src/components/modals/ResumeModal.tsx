@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
+import DocumentViewerModal from './DocumentViewerModal';
 
 interface ResumeModalProps {
   isOpen: boolean;
@@ -50,6 +51,13 @@ export default function ResumeModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
+
+  // Preview Modal state
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    url: '',
+    name: '',
+  });
 
   useEffect(() => {
     if (initialData) {
@@ -127,13 +135,51 @@ export default function ResumeModal({
   };
 
   const handlePreview = () => {
+    let url = '';
     if (resumeFile) {
-      const url = URL.createObjectURL(resumeFile);
-      window.open(url, '_blank');
+      url = URL.createObjectURL(resumeFile);
     } else if (uploadedResume?.url) {
-      window.open(resolveDocumentUrl(uploadedResume.url), '_blank');
+      url = resolveDocumentUrl(uploadedResume.url);
+    }
+
+    if (url) {
+      setPreviewModal({
+        isOpen: true,
+        url,
+        name: uploadedResume?.name || 'Resume',
+      });
     } else if (uploadedResume) {
       alert('Preview not available since the file URL was not provided.');
+    }
+  };
+
+  const handleDownload = async () => {
+    let url = '';
+    if (resumeFile) {
+      url = URL.createObjectURL(resumeFile);
+    } else if (uploadedResume?.url) {
+      url = resolveDocumentUrl(uploadedResume.url);
+    }
+
+    if (!url) return;
+
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = uploadedResume?.name || 'resume';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = uploadedResume?.name || 'resume';
+      link.target = "_blank";
+      link.click();
     }
   };
 
@@ -319,6 +365,7 @@ export default function ResumeModal({
                       {(resumeFile || uploadedResume?.url) && (
                         <>
                           <button
+                            type="button"
                             onClick={handlePreview}
                             className="text-blue-600 hover:text-blue-700 transition-colors"
                             title="View Resume"
@@ -328,16 +375,16 @@ export default function ResumeModal({
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
                           </button>
-                          <a
-                            href={resumeFile ? URL.createObjectURL(resumeFile) : resolveDocumentUrl(uploadedResume?.url)}
-                            download={uploadedResume?.name || 'resume'}
+                          <button
+                            type="button"
+                            onClick={handleDownload}
                             className="text-orange-600 hover:text-orange-700 transition-colors"
                             title="Download Resume"
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                          </a>
+                          </button>
                         </>
                       )}
                       <button
@@ -363,6 +410,13 @@ export default function ResumeModal({
                 </div>
               )}
             </div>
+
+            <DocumentViewerModal
+              isOpen={previewModal.isOpen}
+              onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
+              documentUrl={previewModal.url}
+              documentName={previewModal.name}
+            />
     </ProfileDrawer>
   );
 }

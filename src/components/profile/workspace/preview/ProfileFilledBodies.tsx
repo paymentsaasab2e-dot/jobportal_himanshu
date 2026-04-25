@@ -857,12 +857,14 @@ export function ProfilePortfolioLinksFilled({
   isExpanded,
   onToggleExpand,
   onEdit,
+  onEditLink,
   onDelete,
 }: {
   data: PortfolioLinksData;
   isExpanded: boolean;
   onToggleExpand: () => void;
   onEdit: () => void;
+  onEditLink: (link: PortfolioLink) => void;
   onDelete: () => void;
 }) {
   const visible = isExpanded ? data.links : data.links.slice(0, 4);
@@ -898,44 +900,45 @@ export function ProfilePortfolioLinksFilled({
           (() => {
             const typeLabel = (link.linkType || '').trim().toLowerCase();
             const titleLabel = (link.title || '').trim().toLowerCase();
-            const primaryText =
-              titleLabel && titleLabel !== typeLabel ? (link.title || '') : (link.url || '—');
-            const shouldShowUrlLine =
-              Boolean(link.url) &&
-              primaryText.trim().toLowerCase() !== (link.url || '').trim().toLowerCase();
-
             return (
               <li
                 key={link.id || index}
-                className="flex gap-3 rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditLink(link);
+                }}
+                className="flex gap-4 rounded-xl border border-gray-100 bg-gray-50/60 p-4 cursor-pointer hover:bg-gray-100 transition-all hover:shadow-sm"
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600 shadow-sm ring-1 ring-gray-100">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                   </svg>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-gray-400">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {link.linkType || 'Link'}
                   </p>
-                  <p className="truncate text-sm font-semibold text-gray-900">
-                    {primaryText}
-                  </p>
-                  {link.description ? (
-                    <p className="mt-0.5 line-clamp-1 text-xs text-gray-500">
+                  {link.title && (
+                    <p className="truncate text-base font-bold text-gray-900">
+                      {link.title}
+                    </p>
+                  )}
+                  {link.description && (
+                    <p className="text-sm text-gray-600 line-clamp-2">
                       {link.description}
                     </p>
-                  ) : null}
-                  {link.url && shouldShowUrlLine ? (
+                  )}
+                  {link.url && (
                     <a
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-1 inline-block text-xs font-medium text-blue-700 hover:text-blue-800 hover:underline"
+                      className="mt-2 block text-sm font-bold !text-gray-700 hover:text-blue-600 hover:underline break-all !opacity-100"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {truncateUrl(link.url)}
+                      {link.url}
                     </a>
-                  ) : null}
+                  )}
                 </div>
               </li>
             );

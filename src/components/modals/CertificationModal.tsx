@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
+import DocumentViewerModal from './DocumentViewerModal';
 
 interface CertificationModalProps {
   isOpen: boolean;
@@ -83,6 +84,13 @@ export default function CertificationModal({
     issueDate: '',
     expiryDate: '',
     credentialUrl: '',
+  });
+
+  // Preview Modal state
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    url: '',
+    name: '',
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -268,6 +276,53 @@ export default function CertificationModal({
 
   const handleRemoveFile = (docId: string) => {
     setDocuments(documents.filter(doc => doc.id !== docId));
+  };
+
+  const handlePreviewDocument = (doc: CertificationDocument) => {
+    let url = '';
+    if (doc.url) {
+      url = resolveDocumentUrl(doc.url);
+    } else if (doc.file) {
+      url = URL.createObjectURL(doc.file);
+    }
+
+    if (url) {
+      setPreviewModal({
+        isOpen: true,
+        url: url,
+        name: doc.name,
+      });
+    }
+  };
+
+  const handleDownloadFile = async (doc: CertificationDocument) => {
+    let url = '';
+    if (doc.url) {
+      url = resolveDocumentUrl(doc.url);
+    } else if (doc.file) {
+      url = URL.createObjectURL(doc.file);
+    }
+
+    if (!url) return;
+
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = doc.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.name;
+      link.target = "_blank";
+      link.click();
+    }
   };
 
   const handleDragEnter = (e: React.DragEvent) => {
@@ -542,12 +597,11 @@ export default function CertificationModal({
                               </svg>
                               <span className="text-sm text-gray-700 truncate">{doc.name}</span>
                                   <div className="flex items-center gap-3 shrink-0 ml-2">
-                                    {doc.url && (
+                                    {doc.url || doc.file ? (
                                       <>
-                                        <a
-                                          href={resolveDocumentUrl(doc.url)}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
+                                        <button
+                                          type="button"
+                                          onClick={() => handlePreviewDocument(doc)}
                                           className="text-blue-600 hover:text-blue-700 transition-colors"
                                           title="View Document"
                                         >
@@ -555,19 +609,19 @@ export default function CertificationModal({
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                           </svg>
-                                        </a>
-                                        <a
-                                          href={resolveDocumentUrl(doc.url)}
-                                          download={doc.name}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDownloadFile(doc)}
                                           className="text-orange-600 hover:text-orange-700 transition-colors"
                                           title="Download Document"
                                         >
                                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                           </svg>
-                                        </a>
+                                        </button>
                                       </>
-                                    )}
+                                    ) : null}
                                   </div>
                                 </div>
                             <button
@@ -733,6 +787,12 @@ export default function CertificationModal({
 
             </div>
 
+            <DocumentViewerModal
+              isOpen={previewModal.isOpen}
+              onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
+              documentUrl={previewModal.url}
+              documentName={previewModal.name}
+            />
     </ProfileDrawer>
   );
 }
