@@ -65,7 +65,6 @@ export default function InterviewDetailsPage() {
   if (!interview) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: PAGE_BG }}>
-        <Header />
         <main className="w-full grow overflow-x-hidden">
           <div className="mx-auto max-w-[1320px] px-6 lg:px-8 py-16 text-center">
             <h1 className="text-2xl font-bold text-gray-900">Interview not found</h1>
@@ -96,9 +95,8 @@ export default function InterviewDetailsPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: PAGE_BG }}>
-      <Header />
       <main className="w-full grow overflow-x-hidden">
-        <div className="mx-auto max-w-[1320px] px-6 lg:px-8 py-6 sm:py-8 lg:py-10 space-y-6">
+        <div className="mx-auto max-w-[1320px] px-6 lg:px-8 pb-6 sm:pb-8 lg:py-10 pt-2 sm:pt-4 lg:pt-6 space-y-6">
           <button
             type="button"
             onClick={() => router.back()}

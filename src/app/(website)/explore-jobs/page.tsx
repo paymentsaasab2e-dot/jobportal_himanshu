@@ -1,7 +1,7 @@
 'use client';
 import { Suspense, useMemo, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Header from '@/components/common/Header';
+
 import Image from 'next/image';
 import ApplicationSuccessModal from '@/components/modals/ApplicationSuccessModal';
 import DashboardContainer from '@/components/layout/DashboardContainer';
@@ -1566,7 +1566,25 @@ const ExploreJobsPageContent = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-4">
+                          <button
+                            onClick={() => router.back()}
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
+                            title="Go Back"
+                          >
+                            <svg
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="m15 18-6-6 6-6" />
+                            </svg>
+                          </button>
                           <h1 className="text-[2rem] font-semibold tracking-tight text-slate-950 sm:text-[2.25rem]">
                             Explore Jobs
                           </h1>
@@ -2209,7 +2227,7 @@ const ExploreJobsPageContent = () => {
                                         {/* 2. Description - Below Tag, Centered */}
                                         <div className="flex justify-center">
                                           <p className="max-w-[280px] text-center text-[12px] font-medium leading-relaxed text-slate-500">
-                                            Your strongest overlap comes from matching core profile signals.
+                                            Your strongest overlap comes from matching core profile health metrics.
                                           </p>
                                         </div>
 
@@ -2278,7 +2296,7 @@ const ExploreJobsPageContent = () => {
                                               <h5 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Where You Align</h5>
                                             </div>
                                             <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500">
-                                              Profile signals that likely strengthen your shortlist ranking.
+                                              Profile health metrics that likely strengthen your shortlist ranking.
                                             </p>
                                           <div className="mt-4 flex flex-wrap gap-2">
                                             {selectedJobMatchedSkills.map((skill, index) => (

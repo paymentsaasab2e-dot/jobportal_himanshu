@@ -185,7 +185,7 @@ export default function ArcticTemplate({ data }: Props) {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  wrapper:    { background: "#ffffff", fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif", fontSize: 12, color: DARK, borderRadius: 8, overflow: "hidden", border: "1px solid #e8e8f0" },
+  wrapper:    { background: "#ffffff", fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif", fontSize: 12, color: DARK, overflow: "hidden", minHeight: 1123 },
   header:     { background: DARK, padding: "26px 30px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 },
   name:       { fontSize: 24, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" },
   jobTitle:   { fontSize: 10, color: "#7b7baa", marginTop: 2, letterSpacing: "1.5px", textTransform: "uppercase" as const },

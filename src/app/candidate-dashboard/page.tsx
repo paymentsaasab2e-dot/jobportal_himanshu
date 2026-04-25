@@ -94,7 +94,7 @@ function createFallbackCourses(
       level: "Intermediate",
       rating: 4.9,
       imageUrl: "/lms/course-covers/premium-resume-positioning-lab.webp.png",
-      reasonLabel: "Fills a profile signal gap",
+      reasonLabel: "Fills a profile health gap",
     },
     {
       id: "skill-gap-sprint",

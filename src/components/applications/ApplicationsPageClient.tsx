@@ -19,7 +19,7 @@ import {
   Video,
 } from 'lucide-react';
 
-import Header from '@/components/common/Header';
+
 import DashboardPanel from '@/components/dashboard/DashboardPanel';
 import { showSuccessToast } from '@/components/common/toast/toast';
 import type { DashboardData, DashboardJob } from '@/components/dashboard/dashboard-types';
@@ -1348,7 +1348,6 @@ export default function ApplicationsPageClient() {
   if (candidateMissing) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: PAGE_BG }}>
-        <Header />
         <main className="w-full grow overflow-x-hidden">
           <div className="mx-auto max-w-[1320px] px-6 py-14 lg:px-8">
             <DashboardPanel className="px-6 py-10 text-center sm:px-10">
@@ -1378,9 +1377,8 @@ export default function ApplicationsPageClient() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: PAGE_BG }}>
-      <Header />
 
-      <main className="w-full grow overflow-x-hidden -mt-6 sm:-mt-8 lg:-mt-10">
+      <main className="w-full grow overflow-x-hidden pt-2 sm:pt-4 lg:pt-6">
         <div className="mx-auto max-w-[1180px] px-4 pt-0 pb-2 sm:px-5 sm:pb-3 lg:px-6 lg:pb-4">
           <div className="space-y-1.5">
             <DashboardPanel className="relative overflow-hidden px-4 py-1.5 sm:px-5 sm:py-2 lg:px-6 lg:py-3">
@@ -1394,6 +1392,25 @@ export default function ApplicationsPageClient() {
                   </div>
 
                   <div className="space-y-2">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => router.back()}
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
+                      title="Go Back"
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m15 18-6-6 6-6" />
+                      </svg>
+                    </button>
                     <h1 className="text-[1.8rem] font-semibold tracking-tight text-slate-950 sm:text-[2.1rem]">
                       {activeSection === 'applications'
                         ? 'My Applications'
@@ -1401,6 +1418,7 @@ export default function ApplicationsPageClient() {
                         ? 'Interview Tracker'
                         : 'Saved Jobs'}
                     </h1>
+                  </div>
                     <p className="max-w-2xl text-[13px] font-medium leading-6 text-slate-600 sm:text-sm">
                       {activeSection === 'applications'
                         ? 'Track every role, understand its current stage, and move quickly on the applications that need attention.'

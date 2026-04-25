@@ -176,7 +176,7 @@ function Section({ title, children, divider }: { title: string; children: React.
 }
 
 const s: Record<string, React.CSSProperties> = {
-  wrapper:    { display: "flex", minHeight: 900, fontFamily: "'Helvetica Neue', Arial, sans-serif", fontSize: 12, background: "#0f0f0f", color: "#e8e0d0", borderRadius: 8, overflow: "hidden" },
+  wrapper:    { display: "flex", minHeight: 1123, fontFamily: "'Helvetica Neue', Arial, sans-serif", fontSize: 12, background: "#0f0f0f", color: "#e8e0d0", overflow: "hidden" },
   sidebar:    { width: 240, flexShrink: 0, background: "#1a1612", padding: "32px 22px", display: "flex", flexDirection: "column", gap: 22, borderRight: "1px solid #2e2920" },
   main:       { flex: 1, padding: "32px 28px" },
   avatar:     { width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#c9a84c,#8a6820)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700, color: "#1a1612", marginBottom: 10 },

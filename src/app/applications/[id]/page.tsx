@@ -282,9 +282,8 @@ export default function ApplicationStatusPage() {
           'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)',
       }}
     >
-      <Header />
 
-      <main className="mx-auto max-w-[1320px] px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+      <main className="mx-auto max-w-[1320px] px-6 lg:px-8 pb-6 sm:pb-8 lg:py-10 pt-2 sm:pt-4 lg:pt-6">
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm font-medium"

@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, Loader2 } from 'lucide-react';
+import { Bell, Loader2, RefreshCw, ExternalLink, CheckCheck, Settings } from 'lucide-react';
 import { fetchNotifications, type Notification } from '@/lib/notifications';
 
 const FILTERS = ['All', 'Jobs', 'Applications', 'Interviews', 'Courses', 'System'] as const;
@@ -106,6 +106,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const candidateId = typeof window !== 'undefined' ? sessionStorage.getItem('candidateId') || '' : '';
 
@@ -157,6 +158,14 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
     setVisibleCount(PAGE_SIZE);
   }, [activeFilter]);
 
+  const firstNotificationId = notifications[0]?.id;
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [firstNotificationId, activeFilter]);
+
   const visibleNotifications = filteredNotifications.slice(0, visibleCount);
   const canLoadMore = visibleCount < filteredNotifications.length;
 
@@ -189,13 +198,36 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
             <div className="sticky top-0 z-10 border-b border-slate-200 bg-white px-6 pt-6 pb-4">
               <div className="flex items-center justify-between gap-4">
                 <h3 className="text-2xl font-bold text-slate-900">Notifications</h3>
-                <button
-                  type="button"
-                  onClick={markAllAsRead}
-                  className="text-sm font-medium text-sky-600 transition-colors hover:text-sky-700"
-                >
-                  Mark all as read
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={loadNotifications}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-sky-600"
+                    title="Refresh"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onNavigate('/settings#section-notifications');
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-sky-600"
+                    title="Settings"
+                  >
+                    <Settings className="h-4 w-4" />
+                  </button>
+                  <div className="mx-1 h-4 w-[1px] bg-slate-200"></div>
+                  <button
+                    type="button"
+                    onClick={markAllAsRead}
+                    className="flex items-center gap-1.5 text-sm font-medium text-sky-600 transition-colors hover:text-sky-700"
+                  >
+                    <CheckCheck className="h-4 w-4" />
+                    Mark all as read
+                  </button>
+                </div>
               </div>
               <div className="mt-4 flex gap-5 overflow-x-auto pb-1">
                 {FILTERS.map((filter) => {
@@ -215,7 +247,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-5">
+            <div className="flex-1 overflow-y-auto px-6 py-5" ref={scrollContainerRef}>
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 text-sky-600 animate-spin" />

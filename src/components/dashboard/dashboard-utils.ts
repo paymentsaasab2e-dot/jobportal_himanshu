@@ -38,7 +38,7 @@ export function getDynamicGreeting(name: string, totalMatchedJobs = 0) {
     return {
       eyebrow,
       heading: `${DAY_MESSAGES.afternoon}, ${name}`,
-      subheading: "Keep the momentum going with sharper matches, faster actions, and cleaner profile signals.",
+      subheading: "Keep the momentum going with sharper matches, faster actions, and stronger profile health.",
     };
   }
 

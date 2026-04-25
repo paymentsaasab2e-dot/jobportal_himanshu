@@ -174,6 +174,13 @@ export async function updateResumeDraft(payload: any) {
   const data = await res.json(); return data.data;
 }
 
+export async function syncResumeToCareerPath() {
+  const res = await lmsFetch(`${LMS_API_BASE}/resume/sync-career-path`, { method: 'POST' });
+  if (!res) return null;
+  if (!res.ok) throw new Error('Failed to sync resume to career path');
+  const data = await res.json(); return data.data;
+}
+
 export async function generateResumeSummary(headline: string) {
   const res = await lmsFetch(`${LMS_API_BASE}/resume/generate-summary`, { method: 'POST', body: JSON.stringify({ headline }) });
   if (!res) return null;

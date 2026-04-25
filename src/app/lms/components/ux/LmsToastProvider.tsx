@@ -15,10 +15,11 @@ export function useLmsToast() {
 
   return useMemo(() => ({
     push: toast.push,
+    dismiss: toast.dismiss,
     success: toast.success,
     error: toast.error,
     warning: toast.warning,
     info: toast.info,
-  }), [toast.push, toast.success, toast.error, toast.warning, toast.info]);
+  }), [toast.push, toast.dismiss, toast.success, toast.error, toast.warning, toast.info]);
 }
 

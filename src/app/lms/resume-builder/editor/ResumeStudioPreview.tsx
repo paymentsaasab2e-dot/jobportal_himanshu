@@ -131,7 +131,7 @@ export function ResumeDocumentPaper({
       id={contentId}
       ref={paperRef}
       style={style}
-      className={`mx-auto min-h-[960px] w-full max-w-[840px] bg-white px-7 py-8 text-slate-900 shadow-none sm:px-10 sm:py-10 ${fontClass} ${className}`}
+      className={`mx-auto min-h-[1123px] w-[840px] bg-white px-7 py-8 text-slate-900 shadow-none sm:px-10 sm:py-10 ${fontClass} ${className}`}
     >
       <header className={headerClass}>
         <h1

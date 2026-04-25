@@ -18,7 +18,8 @@ import {
   analyzeResumeDraft, 
   startMission,
   fetchLmsDashboard,
-  setLmsGoal
+  setLmsGoal,
+  syncResumeToCareerPath
 } from '../api/client';
 
 export type LmsPlannedItemType = 'course' | 'quiz' | 'event' | 'topic' | 'note' | 'resume';
@@ -661,6 +662,7 @@ type LmsStateApi = {
   resetResumeDraft: () => void;
   markResumeSaved: () => void;
   syncResumeDraftToBackend: () => Promise<void>;
+  syncResumeToCareerPath: () => Promise<void>;
   generateResumeSummaryWithAi: (headline: string) => Promise<void>;
   analyzeResumeWithAi: () => Promise<void>;
   careerStart: () => Promise<void>;
@@ -707,7 +709,7 @@ export function LmsStateProvider({ children }: { children: ReactNode }) {
                updatedAtLabel: val.lastSavedAt ? `Last saved ${new Date(val.lastSavedAt).toLocaleDateString()}` : 'Not saved yet',
                sections: {
                  basics: val.basics || initialResumeDraft.sections.basics,
-                 summary: val.basics?.summary || initialResumeDraft.sections.summary,
+                 summary: val.summary || val.basics?.summary || initialResumeDraft.sections.summary,
                  skills: Array.isArray(val.skills) ? val.skills.join(', ') : (typeof val.skills === 'string' ? val.skills : ''),
                  experience: Array.isArray(val.experience) ? val.experience : [],
                  education: Array.isArray(val.education) ? val.education : []
@@ -733,6 +735,7 @@ export function LmsStateProvider({ children }: { children: ReactNode }) {
        const payload = {
          templateId: template || 'modern',
          basics: sections.basics || {},
+          summary: sections.summary || '',
          skills: sections.skills ? sections.skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
          experience: sections.experience || [],
          education: sections.education || [],
@@ -746,6 +749,15 @@ export function LmsStateProvider({ children }: { children: ReactNode }) {
        throw err;
      }
   }, [state.resumeDraft.template, state.resumeDraft.sections]);
+
+  const syncResumeToCareerPathAction = useCallback(async () => {
+    try {
+      await syncResumeToCareerPath();
+    } catch (err) {
+      console.error('Failed to sync resume to career path', err);
+      throw err;
+    }
+  }, []);
 
   const generateResumeSummaryWithAi = useCallback(async (headline: string) => {
     try {
@@ -935,6 +947,7 @@ export function LmsStateProvider({ children }: { children: ReactNode }) {
       resetResumeDraft,
       markResumeSaved,
       syncResumeDraftToBackend,
+      syncResumeToCareerPath: syncResumeToCareerPathAction,
       generateResumeSummaryWithAi,
       analyzeResumeWithAi,
       careerStart,
@@ -964,6 +977,7 @@ export function LmsStateProvider({ children }: { children: ReactNode }) {
       resetResumeDraft,
       markResumeSaved,
       syncResumeDraftToBackend,
+      syncResumeToCareerPathAction,
       generateResumeSummaryWithAi,
       analyzeResumeWithAi,
       careerStart,

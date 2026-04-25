@@ -1,12 +1,13 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
-import Header from '@/components/common/Header';
 import ProfileDrawer from '@/components/ui/ProfileDrawer';
 import SettingsCard from '@/components/settings/SettingsCard';
 import { User, Bell, Shield, SlidersHorizontal, Briefcase, AlertTriangle } from 'lucide-react';
 import { showSuccessToast, showErrorToast } from '@/components/common/toast/toast';
 import { API_BASE_URL } from '@/lib/api-base';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SettingsData {
   account: {
@@ -19,6 +20,7 @@ interface SettingsData {
   notifications: {
     emailNotifications: boolean;
     smsNotifications: boolean;
+    whatsappNotifications: boolean;
     jobAlerts: boolean;
   };
   privacy: {
@@ -38,6 +40,7 @@ interface SettingsData {
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
@@ -45,6 +48,11 @@ export default function SettingsPage() {
   const [isDangerOpen, setIsDangerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Danger Zone Modals
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [logoutAllDevices, setLogoutAllDevices] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Account state (read-only from profile)
   const [email, setEmail] = useState('');
@@ -56,6 +64,7 @@ export default function SettingsPage() {
   // Notifications state
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [smsNotifications, setSmsNotifications] = useState(false);
+  const [whatsappNotifications, setWhatsappNotifications] = useState(false);
   const [jobAlerts, setJobAlerts] = useState(true);
 
   // Privacy state
@@ -128,30 +137,30 @@ export default function SettingsPage() {
         setJobPreferenceDefaults(data.careerPreferences?.preferredJobTitle || 'Not set');
       }
 
-      // Fetch other settings from settings API (commented out temporarily for debugging)
-      // const settingsResponse = await fetch(`${API_BASE_URL}/settings/${candidateId}`);
-      // const settingsResult = await settingsResponse.json();
+      // Fetch other settings from settings API
+      const settingsResponse = await fetch(`${API_BASE_URL}/settings/${candidateId}`);
+      const settingsResult = await settingsResponse.json();
 
-      // if (settingsResult.success && settingsResult.data) {
-      //   const data: SettingsData = settingsResult.data;
-      //   console.log('Settings data from API:', data);
-      //   console.log('Settings account:', data.account);
-      //   
-      //   // Notifications
-      //   setEmailNotifications(data.notifications?.emailNotifications ?? true);
-      //   setSmsNotifications(data.notifications?.smsNotifications ?? false);
-      //   setJobAlerts(data.notifications?.jobAlerts ?? true);
-      //   
-      //   // Privacy
-      //   setProfileVisibility(data.privacy?.profileVisibility || '');
-      //   setDataSharing(data.privacy?.dataSharing ?? false);
-      //   setLoginSessions(`${data.privacy?.activeSessions || 0} active session${(data.privacy?.activeSessions || 0) !== 1 ? 's' : ''}`);
-      //   
-      //   // Preferences
-      //   setLanguage(data.preferences?.language || '');
-      //   setTimezone(data.preferences?.timezone || '');
-      //   setTheme(data.preferences?.theme || '');
-      // }
+      if (settingsResult.success && settingsResult.data) {
+        const settingsData: SettingsData = settingsResult.data;
+        console.log('Settings data from API:', settingsData);
+        
+        // Set notifications
+        setEmailNotifications(settingsData.notifications.emailNotifications ?? true);
+        setSmsNotifications(settingsData.notifications.smsNotifications ?? false);
+        setWhatsappNotifications(settingsData.notifications.whatsappNotifications ?? false);
+        setJobAlerts(settingsData.notifications.jobAlerts ?? true);
+        
+        // Privacy
+        setProfileVisibility(settingsData.privacy?.profileVisibility || '');
+        setDataSharing(settingsData.privacy?.dataSharing ?? false);
+        setLoginSessions(`${settingsData.privacy?.activeSessions || 0} active session${(settingsData.privacy?.activeSessions || 0) !== 1 ? 's' : ''}`);
+        
+        // Preferences
+        setLanguage(settingsData.preferences?.language || '');
+        setTimezone(settingsData.preferences?.timezone || '');
+        setTheme(settingsData.preferences?.theme || '');
+      }
     } catch (error) {
       console.error('Error fetching settings:', error);
       showErrorToast('Failed to load settings');
@@ -164,6 +173,34 @@ export default function SettingsPage() {
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
+
+  const handleScrollToSection = useCallback((id: string) => {
+    setActiveSection(id as any);
+    const element = document.getElementById(`section-${id}`);
+    if (element) {
+      // Offset for sticky header if any, otherwise just scroll
+      const offset = 80;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.scrollY - offset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
+  // Handle hash navigation on mount
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#section-')) {
+      const id = hash.replace('#section-', '');
+      // Slight delay to ensure render is complete before scrolling
+      setTimeout(() => {
+        handleScrollToSection(id);
+      }, 100);
+    }
+  }, [handleScrollToSection]);
 
   // Debug: log when email/phone change
   useEffect(() => {
@@ -179,30 +216,49 @@ export default function SettingsPage() {
   }, [profileData]);
 
   // Save notification settings
-  const saveNotificationSettings = async () => {
+  const updateNotificationSetting = async (key: 'emailNotifications' | 'smsNotifications' | 'whatsappNotifications' | 'jobAlerts', value: boolean) => {
     const candidateId = getCandidateId();
     if (!candidateId) return;
 
-    setSaving(true);
+    // optimistic update
+    if (key === 'emailNotifications') setEmailNotifications(value);
+    if (key === 'smsNotifications') setSmsNotifications(value);
+    if (key === 'whatsappNotifications') setWhatsappNotifications(value);
+    if (key === 'jobAlerts') setJobAlerts(value);
+
     try {
+      const payload = {
+        emailNotifications: key === 'emailNotifications' ? value : emailNotifications,
+        smsNotifications: key === 'smsNotifications' ? value : smsNotifications,
+        whatsappNotifications: key === 'whatsappNotifications' ? value : whatsappNotifications,
+        jobAlerts: key === 'jobAlerts' ? value : jobAlerts,
+      };
+      
       const response = await fetch(`${API_BASE_URL}/settings/notifications/${candidateId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emailNotifications, smsNotifications, jobAlerts }),
+        body: JSON.stringify(payload),
       });
       const result = await response.json();
 
       if (result.success) {
         showSuccessToast('Notification preferences updated');
-        setIsNotificationsOpen(false);
       } else {
         showErrorToast(result.message || 'Failed to update notifications');
+        // revert
+        if (key === 'emailNotifications') setEmailNotifications(!value);
+        if (key === 'smsNotifications') setSmsNotifications(!value);
+        if (key === 'whatsappNotifications') setWhatsappNotifications(!value);
+        if (key === 'jobAlerts') setJobAlerts(!value);
       }
     } catch (error) {
       console.error('Error saving notifications:', error);
       showErrorToast('Failed to update notifications');
-    } finally {
-      setSaving(false);
+      // revert
+      if (key === 'emailNotifications') setEmailNotifications(!value);
+      if (key === 'smsNotifications') setSmsNotifications(!value);
+      if (key === 'whatsappNotifications') setWhatsappNotifications(!value);
+      if (key === 'jobAlerts') setJobAlerts(!value);
     }
   };
 
@@ -231,6 +287,38 @@ export default function SettingsPage() {
       showErrorToast('Failed to update privacy');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const updatePrivacySetting = async (key: 'dataSharing', value: boolean) => {
+    const candidateId = getCandidateId();
+    if (!candidateId) return;
+
+    if (key === 'dataSharing') setDataSharing(value);
+
+    try {
+      const payload = {
+        profileVisibility,
+        dataSharing: key === 'dataSharing' ? value : dataSharing,
+      };
+      
+      const response = await fetch(`${API_BASE_URL}/settings/privacy/${candidateId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        showSuccessToast('Privacy settings updated');
+      } else {
+        showErrorToast(result.message || 'Failed to update privacy');
+        if (key === 'dataSharing') setDataSharing(!value);
+      }
+    } catch (error) {
+      console.error('Error saving privacy:', error);
+      showErrorToast('Failed to update privacy');
+      if (key === 'dataSharing') setDataSharing(!value);
     }
   };
 
@@ -290,37 +378,33 @@ export default function SettingsPage() {
     }
   };
 
-  // Logout all sessions
-  const handleLogoutAll = async () => {
-    const candidateId = getCandidateId();
-    if (!candidateId) return;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/settings/logout-all/${candidateId}`, {
-        method: 'POST',
-      });
-      const result = await response.json();
-
-      if (result.success) {
-        showSuccessToast('Logged out from all sessions');
-        setLoginSessions('0 active sessions');
-      } else {
-        showErrorToast(result.message || 'Failed to logout');
+  // Unified logout function
+  const confirmLogout = async () => {
+    if (logoutAllDevices) {
+      const candidateId = getCandidateId();
+      if (candidateId) {
+        try {
+          await fetch(`${API_BASE_URL}/settings/logout-all/${candidateId}`, {
+            method: 'POST',
+          });
+        } catch (error) {
+          console.error('Error logging out of all devices:', error);
+        }
       }
-    } catch (error) {
-      console.error('Error logging out:', error);
-      showErrorToast('Failed to logout');
     }
+    
+    // Normal logout actions
+    showSuccessToast(logoutAllDevices ? 'Logged out from all devices' : 'Logged out successfully');
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('candidateId');
+    window.location.href = '/login';
   };
 
   // Delete account
   const handleDeleteAccount = async () => {
     const candidateId = getCandidateId();
     if (!candidateId) return;
-
-    if (!confirm('Are you sure you want to delete your account? This action is permanent and cannot be undone.')) {
-      return;
-    }
 
     try {
       const response = await fetch(`${API_BASE_URL}/settings/account/${candidateId}`, {
@@ -348,23 +432,44 @@ export default function SettingsPage() {
     showSuccessToast(message);
   };
 
+
+
   const sectionNavItems = [
-    { id: 'account', label: 'Account', icon: User, onClick: () => setActiveSection('account') },
-    { id: 'notifications', label: 'Notifications', icon: Bell, onClick: () => { setActiveSection('notifications'); setIsNotificationsOpen(true); } },
-    { id: 'privacy', label: 'Privacy & Security', icon: Shield, onClick: () => { setActiveSection('privacy'); setIsPrivacyOpen(true); } },
-    { id: 'preferences', label: 'Preferences', icon: SlidersHorizontal, onClick: () => { setActiveSection('preferences'); setIsPreferencesOpen(true); } },
-    { id: 'application', label: 'Application', icon: Briefcase, onClick: () => { setActiveSection('application'); setIsApplicationOpen(true); } },
-    { id: 'danger', label: 'Danger Zone', icon: AlertTriangle, onClick: () => { setActiveSection('danger'); setIsDangerOpen(true); } },
+    { id: 'account', label: 'Account', icon: User, onClick: () => handleScrollToSection('account') },
+    { id: 'notifications', label: 'Notifications', icon: Bell, onClick: () => handleScrollToSection('notifications') },
+    { id: 'privacy', label: 'Privacy & Security', icon: Shield, onClick: () => handleScrollToSection('privacy') },
+    { id: 'preferences', label: 'Preferences', icon: SlidersHorizontal, onClick: () => handleScrollToSection('preferences') },
+    { id: 'application', label: 'Application', icon: Briefcase, onClick: () => handleScrollToSection('application') },
+    { id: 'danger', label: 'Danger Zone', icon: AlertTriangle, onClick: () => handleScrollToSection('danger') },
   ] as const;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
 
-      <main className="max-w-6xl mx-auto px-6 py-6 space-y-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
-          <p className="text-sm text-gray-500">Manage your account, preferences, privacy, and application defaults.</p>
+      <main className="max-w-6xl mx-auto px-6 pt-2 pb-6 space-y-6">
+        <div className="flex items-start gap-4">
+          <button
+            onClick={() => router.back()}
+            className="mt-1 flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
+            title="Go Back"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
+            <p className="text-sm text-gray-500">Manage your account, preferences, privacy, and application defaults.</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
@@ -394,119 +499,125 @@ export default function SettingsPage() {
 
           <div className="space-y-6">
             {/* Profile Data Card - Shows raw profile from backend */}
-            {profileData && (
-              <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
-                <div className="mb-4 flex items-center gap-2">
-                  <User className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-base font-semibold text-gray-900">Profile Information</h3>
+            <div id="section-account" className="space-y-6">
+              {profileData && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
+                  <div className="mb-4 flex items-center gap-2">
+                    <User className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-base font-semibold text-gray-900">Profile Information</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-sm"><span className="font-medium text-gray-700">Full Name:</span> <span className="text-gray-900">{profileData.fullName || '—'}</span></p>
+                    <p className="text-sm"><span className="font-medium text-gray-700">Email:</span> <span className="text-gray-900">{profileData.email || '—'}</span></p>
+                    <p className="text-sm"><span className="font-medium text-gray-700">Phone:</span> <span className="text-gray-900">{profileData.phoneNumber || '—'}</span></p>
+                    <p className="text-sm"><span className="font-medium text-gray-700">City:</span> <span className="text-gray-900">{profileData.city || '—'}</span></p>
+                    <p className="text-sm"><span className="font-medium text-gray-700">Country:</span> <span className="text-gray-900">{profileData.country || '—'}</span></p>
+                  </div>
+                  {/* Debug: Show raw data */}
+                  <details className="mt-4">
+                    <summary className="text-xs text-gray-500 cursor-pointer">Debug: Raw Data</summary>
+                    <pre className="mt-2 text-xs text-gray-600 overflow-auto">{JSON.stringify(profileData, null, 2)}</pre>
+                  </details>
                 </div>
-                <div className="space-y-3">
-                  <p className="text-sm"><span className="font-medium text-gray-700">Full Name:</span> <span className="text-gray-900">{profileData.fullName || '—'}</span></p>
-                  <p className="text-sm"><span className="font-medium text-gray-700">Email:</span> <span className="text-gray-900">{profileData.email || '—'}</span></p>
-                  <p className="text-sm"><span className="font-medium text-gray-700">Phone:</span> <span className="text-gray-900">{profileData.phoneNumber || '—'}</span></p>
-                  <p className="text-sm"><span className="font-medium text-gray-700">City:</span> <span className="text-gray-900">{profileData.city || '—'}</span></p>
-                  <p className="text-sm"><span className="font-medium text-gray-700">Country:</span> <span className="text-gray-900">{profileData.country || '—'}</span></p>
+              )}
+
+              <SettingsCard
+                title="Account Settings"
+                description="Your core account details and login information."
+                icon={<User className="w-5 h-5" />}
+                active={activeSection === 'account'}
+              >
+                <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Email:</span> {email || <span className="text-gray-400 italic">Not provided</span>}</p>
+                <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Phone:</span> {phone || <span className="text-gray-400 italic">Not provided</span>}</p>
+                <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Account Status:</span> {accountStatus || 'Active'}</p>
+              </SettingsCard>
+            </div>
+
+            <div id="section-notifications">
+              <SettingsCard
+                title="Notification Preferences"
+                description="Control how and where you receive updates."
+                icon={<Bell className="w-5 h-5" />}
+                active={activeSection === 'notifications'}
+              >
+                <ToggleRow label="Email Notifications" enabled={emailNotifications} onToggle={() => updateNotificationSetting('emailNotifications', !emailNotifications)} />
+                <ToggleRow label="SMS Notifications" enabled={smsNotifications} onToggle={() => updateNotificationSetting('smsNotifications', !smsNotifications)} />
+                <ToggleRow label="WhatsApp Notifications" enabled={whatsappNotifications} onToggle={() => updateNotificationSetting('whatsappNotifications', !whatsappNotifications)} />
+                <ToggleRow label="Job Alerts" enabled={jobAlerts} onToggle={() => updateNotificationSetting('jobAlerts', !jobAlerts)} />
+              </SettingsCard>
+            </div>
+
+            <div id="section-privacy">
+              <SettingsCard
+                title="Privacy & Security"
+                description="Control profile visibility, sharing, and security visibility."
+                icon={<Shield className="w-5 h-5" />}
+                active={activeSection === 'privacy'}
+                onEdit={() => { setActiveSection('privacy'); setIsPrivacyOpen(true); }}
+              >
+                <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Profile Visibility:</span> {profileVisibility}</p>
+                <ToggleRow label="Data Sharing" enabled={dataSharing} onToggle={() => updatePrivacySetting('dataSharing', !dataSharing)} />
+                <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Login Sessions:</span> {loginSessions}</p>
+              </SettingsCard>
+            </div>
+
+            <div id="section-preferences">
+              <SettingsCard
+                title="Preferences"
+                description="Set language, timezone, and theme behavior."
+                icon={<SlidersHorizontal className="w-5 h-5" />}
+                active={activeSection === 'preferences'}
+                onEdit={() => { setActiveSection('preferences'); setIsPreferencesOpen(true); }}
+              >
+                <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Language:</span> {language}</p>
+                <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Timezone:</span> {timezone}</p>
+                <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Theme:</span> {theme}</p>
+              </SettingsCard>
+            </div>
+
+            <div id="section-application">
+              <SettingsCard
+                title="Application Settings"
+                description="Set your default resume and default job preference profile."
+                icon={<Briefcase className="w-5 h-5" />}
+                active={activeSection === 'application'}
+                onEdit={() => { setActiveSection('application'); setIsApplicationOpen(true); }}
+              >
+                <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Default Resume:</span> {defaultResume}</p>
+                <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Job Preference Defaults:</span> {jobPreferenceDefaults}</p>
+              </SettingsCard>
+            </div>
+
+            <div id="section-danger">
+              <SettingsCard
+                title="Danger Zone"
+                description="High-impact actions related to session and account lifecycle."
+                icon={<AlertTriangle className="w-5 h-5 text-red-600" />}
+                active={activeSection === 'danger'}
+              >
+                <div className="flex flex-col sm:flex-row gap-4 mt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsLogoutModalOpen(true)} 
+                    className="flex-1 sm:flex-none h-10 px-6 rounded-lg border border-red-200 bg-white text-sm font-medium text-red-600 hover:bg-red-50 transition-colors shadow-sm"
+                  >
+                    Logout
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setIsDeleteModalOpen(true)} 
+                    className="flex-1 sm:flex-none h-10 px-6 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 transition-colors shadow-sm"
+                  >
+                    Delete Account
+                  </button>
                 </div>
-                {/* Debug: Show raw data */}
-                <details className="mt-4">
-                  <summary className="text-xs text-gray-500 cursor-pointer">Debug: Raw Data</summary>
-                  <pre className="mt-2 text-xs text-gray-600 overflow-auto">{JSON.stringify(profileData, null, 2)}</pre>
-                </details>
-              </div>
-            )}
-
-            <SettingsCard
-              title="Account Settings"
-              description="Your core account details and login information."
-              icon={<User className="w-5 h-5" />}
-              active={activeSection === 'account'}
-            >
-              <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Email:</span> {email || <span className="text-gray-400 italic">Not provided</span>}</p>
-              <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Phone:</span> {phone || <span className="text-gray-400 italic">Not provided</span>}</p>
-              <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Account Status:</span> {accountStatus || 'Active'}</p>
-            </SettingsCard>
-
-            <SettingsCard
-              title="Notification Preferences"
-              description="Control how and where you receive updates."
-              icon={<Bell className="w-5 h-5" />}
-              active={activeSection === 'notifications'}
-              onEdit={() => { setActiveSection('notifications'); setIsNotificationsOpen(true); }}
-            >
-              <ToggleRow label="Email Notifications" enabled={emailNotifications} onToggle={() => setEmailNotifications((v) => !v)} />
-              <ToggleRow label="SMS Notifications" enabled={smsNotifications} onToggle={() => setSmsNotifications((v) => !v)} />
-              <ToggleRow label="Job Alerts" enabled={jobAlerts} onToggle={() => setJobAlerts((v) => !v)} />
-            </SettingsCard>
-
-            <SettingsCard
-              title="Privacy & Security"
-              description="Control profile visibility, sharing, and security visibility."
-              icon={<Shield className="w-5 h-5" />}
-              active={activeSection === 'privacy'}
-              onEdit={() => { setActiveSection('privacy'); setIsPrivacyOpen(true); }}
-            >
-              <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Profile Visibility:</span> {profileVisibility}</p>
-              <ToggleRow label="Data Sharing" enabled={dataSharing} onToggle={() => setDataSharing((v) => !v)} />
-              <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Login Sessions:</span> {loginSessions}</p>
-            </SettingsCard>
-
-            <SettingsCard
-              title="Preferences"
-              description="Set language, timezone, and theme behavior."
-              icon={<SlidersHorizontal className="w-5 h-5" />}
-              active={activeSection === 'preferences'}
-              onEdit={() => { setActiveSection('preferences'); setIsPreferencesOpen(true); }}
-            >
-              <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Language:</span> {language}</p>
-              <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Timezone:</span> {timezone}</p>
-              <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Theme:</span> {theme}</p>
-            </SettingsCard>
-
-            <SettingsCard
-              title="Application Settings"
-              description="Set your default resume and default job preference profile."
-              icon={<Briefcase className="w-5 h-5" />}
-              active={activeSection === 'application'}
-              onEdit={() => { setActiveSection('application'); setIsApplicationOpen(true); }}
-            >
-              <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Default Resume:</span> {defaultResume}</p>
-              <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Job Preference Defaults:</span> {jobPreferenceDefaults}</p>
-            </SettingsCard>
-
-            <SettingsCard
-              title="Danger Zone"
-              description="High-impact actions related to session and account lifecycle."
-              icon={<AlertTriangle className="w-5 h-5 text-red-600" />}
-              active={activeSection === 'danger'}
-              onEdit={() => { setActiveSection('danger'); setIsDangerOpen(true); }}
-            >
-              <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-                <p className="text-sm text-red-600 font-medium">Logout from this device.</p>
-                <p className="text-sm text-red-600 font-semibold hover:underline mt-1">Delete account permanently.</p>
-              </div>
-            </SettingsCard>
+              </SettingsCard>
+            </div>
           </div>
         </div>
       </main>
 
-      <ProfileDrawer
-        isOpen={isNotificationsOpen}
-        onClose={() => setIsNotificationsOpen(false)}
-        title="Edit Notification Preferences"
-        widthClassName="w-full md:w-[520px]"
-        footer={(
-          <div className="flex justify-end gap-3">
-            <button onClick={() => setIsNotificationsOpen(false)} className="h-10 px-5 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-            <button onClick={saveNotificationSettings} disabled={saving} className="h-10 px-5 rounded-lg bg-orange-500 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50">{saving ? 'Saving...' : 'Save Changes'}</button>
-          </div>
-        )}
-      >
-        <div className="space-y-4">
-          <ToggleRow label="Email Notifications" enabled={emailNotifications} onToggle={() => setEmailNotifications((v) => !v)} />
-          <ToggleRow label="SMS Notifications" enabled={smsNotifications} onToggle={() => setSmsNotifications((v) => !v)} />
-          <ToggleRow label="Job Alerts" enabled={jobAlerts} onToggle={() => setJobAlerts((v) => !v)} />
-        </div>
-      </ProfileDrawer>
+
 
       <ProfileDrawer
         isOpen={isPrivacyOpen}
@@ -564,31 +675,102 @@ export default function SettingsPage() {
         </div>
       </ProfileDrawer>
 
-      <ProfileDrawer
-        isOpen={isDangerOpen}
-        onClose={() => setIsDangerOpen(false)}
-        title="Danger Zone"
-        widthClassName="w-full md:w-[520px]"
-        footer={(
-          <div className="flex justify-end gap-3">
-            <button onClick={() => setIsDangerOpen(false)} className="h-10 px-5 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-            <button onClick={() => setIsDangerOpen(false)} className="h-10 px-5 rounded-lg bg-orange-500 text-sm font-medium text-white hover:bg-orange-600">Save Changes</button>
+      {/* Logout Confirmation Modal */}
+      <AnimatePresence>
+        {isLogoutModalOpen && (
+          <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
+              onClick={() => setIsLogoutModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+            >
+              <div className="mb-2 flex items-center gap-3 text-red-600">
+                <AlertTriangle className="h-6 w-6" />
+                <h3 className="text-lg font-semibold text-gray-900">Confirm Logout</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-6">Are you sure you want to log out of your account?</p>
+              
+              <label className="flex items-center gap-3 mb-6 cursor-pointer p-3 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={logoutAllDevices} 
+                  onChange={(e) => setLogoutAllDevices(e.target.checked)}
+                  className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                />
+                <span className="text-sm font-medium text-gray-800">Log out from all devices</span>
+              </label>
+
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => setIsLogoutModalOpen(false)} 
+                  className="h-10 px-5 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmLogout} 
+                  className="h-10 px-5 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+                >
+                  Confirm Logout
+                </button>
+              </div>
+            </motion.div>
           </div>
         )}
-      >
-        <div className="space-y-4">
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <p className="text-sm font-medium text-gray-900">Logout All Sessions</p>
-            <p className="text-xs text-gray-500 mt-1">End all active sessions across all devices.</p>
-            <button type="button" onClick={handleLogoutAll} className="mt-3 h-10 px-5 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">Logout All</button>
+      </AnimatePresence>
+      {/* Delete Account Confirmation Modal */}
+      <AnimatePresence>
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
+              onClick={() => setIsDeleteModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+            >
+              <div className="mb-2 flex items-center gap-3 text-red-600">
+                <AlertTriangle className="h-6 w-6" />
+                <h3 className="text-lg font-semibold text-gray-900">Delete Account</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-2">Are you absolutely sure you want to delete your account?</p>
+              <p className="text-sm font-medium text-red-600 mb-6 bg-red-50 p-3 rounded-lg border border-red-100">This action is permanent and cannot be undone.</p>
+
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => setIsDeleteModalOpen(false)} 
+                  className="h-10 px-5 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => {
+                    setIsDeleteModalOpen(false);
+                    handleDeleteAccount();
+                  }} 
+                  className="h-10 px-5 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+                >
+                  Delete Permanently
+                </button>
+              </div>
+            </motion.div>
           </div>
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-            <p className="text-sm font-medium text-red-700">Delete Account</p>
-            <p className="text-xs text-red-600 mt-1">This action is permanent and cannot be undone.</p>
-            <button type="button" onClick={handleDeleteAccount} className="mt-3 h-10 px-5 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700">Delete Account</button>
-          </div>
-        </div>
-      </ProfileDrawer>
+        )}
+      </AnimatePresence>
 
     </div>
   );
@@ -609,11 +791,13 @@ function ToggleRow({
       <button
         type="button"
         onClick={onToggle}
-        className={`relative h-6 w-10 rounded-full transition-colors ${enabled ? 'bg-blue-500' : 'bg-gray-300'}`}
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${enabled ? 'bg-blue-500' : 'bg-gray-200'}`}
         aria-pressed={enabled}
       >
+        <span className="sr-only">Toggle {label}</span>
         <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${enabled ? 'translate-x-[18px]' : 'translate-x-0.5'}`}
+          aria-hidden="true"
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${enabled ? 'translate-x-5' : 'translate-x-0'}`}
         />
       </button>
     </div>

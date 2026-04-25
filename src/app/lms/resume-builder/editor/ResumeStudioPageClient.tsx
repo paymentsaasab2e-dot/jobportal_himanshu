@@ -74,6 +74,7 @@ export function ResumeStudioPageClient() {
     syncResumeDraftToBackend,
     generateResumeSummaryWithAi,
     analyzeResumeWithAi,
+    syncResumeToCareerPath,
   } = useLmsState();
 
   const template = search.get('template');
@@ -580,18 +581,62 @@ export function ResumeStudioPageClient() {
   const handleExportPdf = async () => {
     setIsExportingPdf(true);
     try {
-      const blob = await exportResumePdf(resumeHtml);
+      let finalHtml = '';
+
+      // If in studio mode, we prioritize the HTML from the actual preview DOM
+      if (editorMode === 'studio') {
+        const previewElement = document.getElementById('resume-preview') || 
+                               document.getElementById('resume-preview-expanded') ||
+                               document.querySelector('[id*="resume-preview"]');
+        
+        if (previewElement) {
+          // Clone the preview to prepare it for PDF export (remove scaling/UI hacks)
+          const clone = previewElement.cloneNode(true) as HTMLElement;
+          clone.style.transform = 'none';
+          clone.style.transformOrigin = 'unset';
+          clone.style.width = '100%';
+          clone.style.maxWidth = 'none';
+          clone.style.margin = '0';
+          clone.style.padding = '0';
+          clone.style.boxShadow = 'none';
+          
+          finalHtml = clone.outerHTML;
+        }
+      }
+
+      // Fallback to the rich-text state if studio capture failed or if in AI mode
+      if (!finalHtml || finalHtml.includes('Start editing your resume...')) {
+        finalHtml = resumeHtml;
+      }
+
+      if (!finalHtml || finalHtml.trim().length < 50 || finalHtml.includes('Start editing your resume...')) {
+        toast.push({ 
+          title: 'Content not found', 
+          message: 'We could not capture the resume content. Please ensure you have added some details and try again.', 
+          tone: 'warning' 
+        });
+        setIsExportingPdf(false);
+        return;
+      }
+
+      const blob = await exportResumePdf(finalHtml);
       if (blob) {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Resume_${sections.basics.name.replace(/\s+/g, '_')}.pdf`;
+        const fileName = sections.basics.name 
+          ? `Resume_${sections.basics.name.replace(/\s+/g, '_')}.pdf`
+          : 'My_Resume.pdf';
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+        toast.push({ title: 'Export complete', message: 'Your PDF has been generated successfully.', tone: 'success' });
       }
     } catch (err) {
-      toast.push({ title: 'Export failed', message: 'Could not generate PDF.', tone: 'warning' });
+      console.error('PDF Export Error:', err);
+      toast.push({ title: 'Export failed', message: 'Could not generate PDF. Please try again later.', tone: 'error' });
     } finally {
       setIsExportingPdf(false);
     }
@@ -607,30 +652,39 @@ export function ResumeStudioPageClient() {
   };
 
   const handleSaveDraft = async () => {
+    const toastId = `save-${Date.now()}`;
+    const minDelay = new Promise(resolve => setTimeout(resolve, 1000));
     try {
-      toast.push({ title: 'Saving draft...', message: 'Syncing with secure cloud storage.', tone: 'info' });
-      await syncResumeDraftToBackend();
+      toast.push({ id: toastId, title: 'Saving draft...', message: 'Syncing with secure cloud storage.', tone: 'info' });
+      await Promise.all([syncResumeDraftToBackend(), minDelay]);
+      toast.dismiss(toastId);
       toast.push({ title: 'Draft Secure', message: 'All current sections and layout choices are now synced.', tone: 'success' });
     } catch (err) {
+      toast.dismiss(toastId);
       toast.push({ title: 'Save failed', message: 'Could not reach backend to save your draft.', tone: 'warning' });
     }
   };
 
   const handleSyncResume = async () => {
+    const toastId = `sync-${Date.now()}`;
+    const minDelay = new Promise(resolve => setTimeout(resolve, 1000));
     try {
-      toast.push({ title: 'Saving draft...', message: 'Syncing with secure cloud storage.', tone: 'info' });
-      await syncResumeDraftToBackend();
+      toast.push({ id: toastId, title: 'Saving draft...', message: 'Syncing with secure cloud storage.', tone: 'info' });
+      await Promise.all([syncResumeDraftToBackend(), minDelay]);
+      toast.dismiss(toastId);
       toast.push({
         title: 'Draft saved',
         message: 'Your resume studio state was preserved in the database.',
-        tone: 'success',
+        tone: 'success'
       });
+      await syncResumeToCareerPath();
     } catch (err: any) {
+      toast.dismiss(toastId);
       const errorMessage = err?.message || 'Could not sync with backend. Local changes are still active.';
       toast.push({
         title: 'Save failed',
         message: errorMessage,
-        tone: 'warning',
+        tone: 'error'
       });
     }
   };
@@ -694,14 +748,14 @@ export function ResumeStudioPageClient() {
         <section className="hide-on-print overflow-hidden rounded-[2rem] border border-sky-100 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(240,249,255,0.92),rgba(255,255,255,0.98))] p-6 shadow-[0_22px_48px_-28px_rgba(40,168,225,0.35)] sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
-              <Link
-                href="/lms/courses"
+              <button
+                onClick={() => router.back()}
                 style={{ color: '#000000', opacity: 1 }}
                 className="inline-flex items-center gap-2 text-sm font-black transition-colors hover:text-sky-600"
               >
                 <ArrowLeft className="h-4 w-4" style={{ color: '#000000' }} strokeWidth={2.8} />
                 Back
-              </Link>
+              </button>
 
               <div className="mt-4 space-y-3">
                 <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/85 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-sky-800">
@@ -786,19 +840,8 @@ export function ResumeStudioPageClient() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {/* 
               {editorMode === 'studio' ? (
                 <>
-                  <LmsCtaButton 
-                    variant="secondary" 
-                    leftIcon={<RotateCcw className="h-4 w-4" strokeWidth={2} />} 
-                    onClick={() => {
-                       toast.push({ title: 'Syncing...', message: 'Restoring data from your original profile.', tone: 'info' });
-                       window.location.reload(); 
-                    }}
-                  >
-                    Sync Profile
-                  </LmsCtaButton>
                   <LmsCtaButton variant="secondary" leftIcon={<Eye className="h-4 w-4" strokeWidth={2} />} onClick={handlePreviewAction}>
                     {showPreview ? 'Hide preview' : 'View layout'}
                   </LmsCtaButton>
@@ -829,7 +872,6 @@ export function ResumeStudioPageClient() {
                   </LmsCtaButton>
                 </>
               )}
-              */}
             </div>
           </div>
         </section>

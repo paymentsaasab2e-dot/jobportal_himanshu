@@ -22,6 +22,7 @@ type ToastItem = Required<Pick<ToastPayload, 'id' | 'title'>> &
 
 type ToastApi = {
   push: (toast: ToastPayload) => void;
+  dismiss: (id: string) => void;
   success: (title: string, message?: string, duration?: number) => void;
   error: (title: string, message?: string, duration?: number) => void;
   warning: (title: string, message?: string, duration?: number) => void;
@@ -175,12 +176,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const api = useMemo<ToastApi>(
     () => ({
       push,
+      dismiss: removeToast,
       success: (title, message, duration) => push({ title, message, duration, tone: 'success' }),
       error: (title, message, duration) => push({ title, message, duration, tone: 'error' }),
       warning: (title, message, duration) => push({ title, message, duration, tone: 'warning' }),
       info: (title, message, duration) => push({ title, message, duration, tone: 'info' }),
     }),
-    [push]
+    [push, removeToast]
   );
 
   return (

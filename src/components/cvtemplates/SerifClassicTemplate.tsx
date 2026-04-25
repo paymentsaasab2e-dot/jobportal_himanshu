@@ -189,7 +189,7 @@ function Divider() {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  wrapper:     { background: "#fdfbf7", fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 11, color: "#2c2416", borderRadius: 8, overflow: "hidden", padding: "36px 42px", border: "1px solid #e8e2d8" },
+  wrapper:     { background: "#fdfbf7", fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 11, color: "#2c2416", overflow: "hidden", padding: "36px 42px", minHeight: 1123 },
   header:      { textAlign: "center", borderBottom: "2px solid #2c2416", paddingBottom: 18, marginBottom: 20 },
   name:        { fontSize: 30, fontWeight: 600, letterSpacing: "3px", textTransform: "uppercase" as const, color: "#2c2416", lineHeight: 1.1 },
   jobTitle:    { fontSize: 13, fontStyle: "italic" as const, color: "#8a7a60", marginTop: 4, letterSpacing: "1px" },

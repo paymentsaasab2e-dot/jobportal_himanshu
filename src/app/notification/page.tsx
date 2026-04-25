@@ -186,14 +186,33 @@ export default function NotificationPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={() => router.back()}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
+            title="Go Back"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
             {unreadCount > 0 && (
               <p className="text-sm text-gray-500 mt-1">{unreadCount} unread</p>
             )}
           </div>
           <div className="flex items-center gap-3">
+
             {usingMockData && (
               <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
                 Offline Mode

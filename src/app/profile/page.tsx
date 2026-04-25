@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import Header from '../../components/common/Header';
+
 import { ProfilePageShell } from '@/components/profile/layout';
 import {
   WorkspaceSectionCard,
@@ -801,8 +801,35 @@ export default function ProfilePage() {
   }, []);
 
   // Recalculate completeness whenever relevant data changes
+  const fetchAndUpdateCompleteness = async () => {
+    const candidateId = sessionStorage.getItem('candidateId');
+    if (!candidateId) {
+      calculateProfileCompleteness();
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/profile/completeness/${candidateId}`);
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setProfileCompleteness({
+            percentage: result.data.percentage,
+            completedSections: result.data.completedSections || [],
+            missingSections: result.data.missingSections || [],
+          });
+          return;
+        }
+      }
+      calculateProfileCompleteness();
+    } catch (error) {
+      console.error('Error fetching profile completeness:', error);
+      calculateProfileCompleteness();
+    }
+  };
+
   useEffect(() => {
-    calculateProfileCompleteness();
+    fetchAndUpdateCompleteness();
   }, [
     basicInfoData,
     summaryText,

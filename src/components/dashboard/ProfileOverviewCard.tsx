@@ -167,7 +167,7 @@ export default function ProfileOverviewCard({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
-                Profile signal
+                Profile health
               </p>
               <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <p className="text-lg font-semibold tracking-tight text-slate-950">
