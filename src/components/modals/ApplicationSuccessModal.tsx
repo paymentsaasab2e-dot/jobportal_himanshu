@@ -25,17 +25,11 @@ export default function ApplicationSuccessModal({
 
   const handleTrackApplication = () => {
     onClose();
-    // Navigate to the specific application status page
-    // Priority: use applicationId if provided, otherwise use jobId
+    // Navigate to the specific application status page using the real applicationId
     if (applicationId) {
-      // If application already exists, navigate to its tracking page
       router.push(`/applications/${applicationId}`);
-    } else if (jobId !== undefined && jobId !== null) {
-      // Otherwise, use jobId to create/navigate to application tracking page
-      const id = String(jobId);
-      router.push(`/applications/${id}`);
     } else {
-      // Fallback to applications list if no ID is provided
+      // Fallback to applications list if no applicationId is available
       router.push('/applications');
     }
   };

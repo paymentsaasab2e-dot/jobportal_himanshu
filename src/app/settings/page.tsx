@@ -440,7 +440,7 @@ export default function SettingsPage() {
     { id: 'privacy', label: 'Privacy & Security', icon: Shield, onClick: () => handleScrollToSection('privacy') },
     { id: 'preferences', label: 'Preferences', icon: SlidersHorizontal, onClick: () => handleScrollToSection('preferences') },
     { id: 'application', label: 'Application', icon: Briefcase, onClick: () => handleScrollToSection('application') },
-    { id: 'danger', label: 'Danger Zone', icon: AlertTriangle, onClick: () => handleScrollToSection('danger') },
+    { id: 'danger', label: 'Account Controls', icon: AlertTriangle, onClick: () => handleScrollToSection('danger') },
   ] as const;
 
   return (
@@ -498,9 +498,9 @@ export default function SettingsPage() {
           </aside>
 
           <div className="space-y-6">
-            {/* Profile Data Card - Shows raw profile from backend */}
+            {/* Profile Data Card - Shows raw profile from backend (Hidden by request) */}
             <div id="section-account" className="space-y-6">
-              {profileData && (
+              {/* {profileData && (
                 <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
                   <div className="mb-4 flex items-center gap-2">
                     <User className="w-5 h-5 text-blue-600" />
@@ -513,13 +513,12 @@ export default function SettingsPage() {
                     <p className="text-sm"><span className="font-medium text-gray-700">City:</span> <span className="text-gray-900">{profileData.city || '—'}</span></p>
                     <p className="text-sm"><span className="font-medium text-gray-700">Country:</span> <span className="text-gray-900">{profileData.country || '—'}</span></p>
                   </div>
-                  {/* Debug: Show raw data */}
                   <details className="mt-4">
                     <summary className="text-xs text-gray-500 cursor-pointer">Debug: Raw Data</summary>
                     <pre className="mt-2 text-xs text-gray-600 overflow-auto">{JSON.stringify(profileData, null, 2)}</pre>
                   </details>
                 </div>
-              )}
+              )} */}
 
               <SettingsCard
                 title="Account Settings"
@@ -590,7 +589,7 @@ export default function SettingsPage() {
 
             <div id="section-danger">
               <SettingsCard
-                title="Danger Zone"
+                title="Account Controls"
                 description="High-impact actions related to session and account lifecycle."
                 icon={<AlertTriangle className="w-5 h-5 text-red-600" />}
                 active={activeSection === 'danger'}

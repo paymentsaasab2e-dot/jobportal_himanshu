@@ -858,14 +858,14 @@ export function ProfilePortfolioLinksFilled({
   onToggleExpand,
   onEdit,
   onEditLink,
-  onDelete,
+  onDeleteLink,
 }: {
   data: PortfolioLinksData;
   isExpanded: boolean;
   onToggleExpand: () => void;
   onEdit: () => void;
   onEditLink: (link: PortfolioLink) => void;
-  onDelete: () => void;
+  onDeleteLink: (link: PortfolioLink) => void;
 }) {
   const visible = isExpanded ? data.links : data.links.slice(0, 4);
   const hidden = data.links.length - visible.length;
@@ -878,21 +878,6 @@ export function ProfilePortfolioLinksFilled({
             {data.links.length} links
           </p>
           <p className="text-xs text-gray-500">Portfolio & professional URLs</p>
-        </div>
-        <div className="flex gap-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-            aria-label="Delete portfolio links"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
         </div>
       </div>
       <ul className="space-y-2">
@@ -939,6 +924,21 @@ export function ProfilePortfolioLinksFilled({
                       {link.url}
                     </a>
                   )}
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteLink(link);
+                    }}
+                    className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50 h-max"
+                    aria-label="Delete portfolio link"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
               </li>
             );

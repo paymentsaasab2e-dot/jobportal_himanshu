@@ -169,7 +169,7 @@ const INTERVIEW_STATUS_META: Record<InterviewItem['status'], string> = {
   Cancelled: 'bg-rose-100 text-rose-800 ring-1 ring-rose-200/80',
 };
 
-const PIPELINE_LABELS = ['Applied', 'Review', 'Interview', 'Outcome'] as const;
+const PIPELINE_LABELS = ['Applied', 'Review', 'Shortlisted', 'Interview', 'Outcome'] as const;
 
 const COMPANY_THEMES = [
   'from-[#28A8E1] to-[#28A8DF]',
@@ -362,22 +362,13 @@ function getApplicationScoreLabel(matchScore: number | null | undefined) {
 }
 
 function getApplicationPipelineIndex(status: string) {
-  switch (status) {
-    case 'Submitted':
-      return 0;
-    case 'Under Review':
-    case 'Shortlisted':
-    case 'Assessment':
-      return 1;
-    case 'Interview':
-      return 2;
-    case 'Final Decision':
-    case 'Selected':
-    case 'Rejected':
-      return 3;
-    default:
-      return 0;
-  }
+  const s = status.toLowerCase();
+  if (s === 'submitted' || s === 'applied') return 0;
+  if (s === 'under review') return 1;
+  if (s === 'shortlisted' || s === 'assessment') return 2;
+  if (s === 'interview') return 3;
+  if (s === 'final decision' || s === 'selected' || s === 'rejected') return 4;
+  return 0;
 }
 
 function getApplicationAction(
@@ -1134,7 +1125,7 @@ export default function ApplicationsPageClient() {
     );
     const statusMeta = getApplicationStatusMeta(application.status);
     const pipelineIndex = getApplicationPipelineIndex(application.status);
-    const progressWidth = ['18%', '48%', '76%', '100%'][pipelineIndex] ?? '18%';
+    const progressWidth = ['12%', '32%', '56%', '78%', '100%'][pipelineIndex] ?? '12%';
     const action = getApplicationAction(application, matchingInterview, formatInterviewDateTime);
 
     return (
@@ -1177,7 +1168,7 @@ export default function ApplicationsPageClient() {
                 Progress
               </p>
               <p className="text-[11px] font-semibold text-slate-600">
-                {PIPELINE_LABELS[pipelineIndex]}
+                {application.status}
               </p>
             </div>
 
@@ -1188,7 +1179,7 @@ export default function ApplicationsPageClient() {
               />
             </div>
 
-            <div className="mt-3 grid grid-cols-4 gap-1">
+            <div className="mt-3 grid grid-cols-5 gap-1">
               {PIPELINE_LABELS.map((label, index) => {
                 const active = pipelineIndex >= index;
                 return (

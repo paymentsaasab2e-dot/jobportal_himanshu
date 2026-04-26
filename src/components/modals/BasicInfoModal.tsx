@@ -65,7 +65,7 @@ export default function BasicInfoModal({
   const [lastNameValue, setLastNameValue] = useState(initialData?.lastName || '');
   const [emailValue, setEmailValue] = useState(initialData?.email || '');
   const [phoneValue, setPhoneValue] = useState(initialData?.phone || '');
-  const [phoneCode, setPhoneCode] = useState(initialData?.phoneCode || '+237 (Cameroon)');
+  const [phoneCode, setPhoneCode] = useState(initialData?.phoneCode || '+91 (India)');
   const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
   const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
   const [genderValue, setGenderValue] = useState(initialData?.gender || '');
@@ -123,7 +123,7 @@ export default function BasicInfoModal({
       setLastNameValue(initialData.lastName || '');
       setEmailValue(initialData.email || '');
       setPhoneValue(initialData.phone || '');
-      setPhoneCode(initialData.phoneCode || '+237 (Cameroon)');
+      setPhoneCode(initialData.phoneCode || '+91 (India)');
       setGenderValue(initialData.gender || '');
       setDobValue(initialData.dob || '');
       setCountryValue(initialData.country || '');
@@ -137,7 +137,7 @@ export default function BasicInfoModal({
       setLastNameValue('');
       setEmailValue('');
       setPhoneValue('');
-      setPhoneCode('+237 (Cameroon)');
+      setPhoneCode('+91 (India)');
       setGenderValue('');
       setDobValue('');
       setCountryValue('');
@@ -174,7 +174,8 @@ export default function BasicInfoModal({
     } else {
       const expectedLength = selectedPhoneCodeOption.phoneLength;
       const digitsOnly = payload.phone.replace(/\D/g, '');
-      if (digitsOnly.length !== expectedLength) {
+      // Only validate length if phoneLength is defined and > 0
+      if (expectedLength && expectedLength > 0 && digitsOnly.length > 0 && digitsOnly.length !== expectedLength) {
         nextErrors.phone = `Phone number must be exactly ${expectedLength} digits for ${selectedPhoneCodeOption.name}.`;
       }
     }
@@ -574,8 +575,7 @@ export default function BasicInfoModal({
               </button>
               <button
                 onClick={handleSave}
-                disabled={!isFormValid}
-                className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors"
               >
                 Save Changes
               </button>

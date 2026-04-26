@@ -184,6 +184,7 @@ export default function ProfilePage() {
   const [isAccomplishmentModalOpen, setIsAccomplishmentModalOpen] = useState(false);
   const [isCareerPreferencesModalOpen, setIsCareerPreferencesModalOpen] = useState(false);
   const [isVisaWorkAuthorizationModalOpen, setIsVisaWorkAuthorizationModalOpen] = useState(false);
+  const [visaModalMode, setVisaModalMode] = useState<'add' | 'edit'>('edit');
   const [isVaccinationModalOpen, setIsVaccinationModalOpen] = useState(false);
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
   const [careerPreferencesSuccessMessage, setCareerPreferencesSuccessMessage] = useState('');
@@ -247,6 +248,9 @@ export default function ProfilePage() {
 
   // Internship card collapse/expand state
   const [expandedInternshipId, setExpandedInternshipId] = useState<string | null>(null);
+
+  // Visa edit state - track which entry is being edited
+  const [editingVisaEntryId, setEditingVisaEntryId] = useState<string | null>(null);
 
   // Gap explanation card collapse/expand state
   const [expandedGapExplanationId, setExpandedGapExplanationId] = useState<string | null>(null);
@@ -867,7 +871,7 @@ export default function ProfilePage() {
       },
       'Portfolio Links': () => setIsPortfolioLinksModalOpen(true),
       'Career Preferences': () => setIsCareerPreferencesModalOpen(true),
-      'Visa & Work Authorization': () => setIsVisaWorkAuthorizationModalOpen(true),
+      'Visa & Work Authorization': () => { setVisaModalMode('add'); setIsVisaWorkAuthorizationModalOpen(true); },
       'Vaccination': () => setIsVaccinationModalOpen(true),
       'Resume': () => setIsResumeModalOpen(true),
     };
@@ -1037,6 +1041,8 @@ export default function ProfilePage() {
     } else if (category === 'PREFERENCES' && itemName === 'Career Preferences') {
       setIsCareerPreferencesModalOpen(true);
     } else if (category === 'GLOBAL ELIGIBILITY' && itemName === 'Visa & Work Authorization') {
+      setVisaModalMode('edit');
+      setEditingVisaEntryId(null);
       setIsVisaWorkAuthorizationModalOpen(true);
     } else if (category === 'GLOBAL ELIGIBILITY' && itemName === 'Vaccination') {
       setVaccinationData(undefined);
@@ -1094,6 +1100,8 @@ export default function ProfilePage() {
     } else if (category === 'PREFERENCES' && itemName === 'Career Preferences') {
       setIsCareerPreferencesModalOpen(true);
     } else if (category === 'GLOBAL ELIGIBILITY' && itemName === 'Visa & Work Authorization') {
+      setVisaModalMode('add');
+      setEditingVisaEntryId(null);
       setIsVisaWorkAuthorizationModalOpen(true);
     } else if (category === 'GLOBAL ELIGIBILITY' && itemName === 'Vaccination') {
       setIsVaccinationModalOpen(true);
@@ -1629,7 +1637,7 @@ export default function ProfilePage() {
                                   setIsWorkExperienceModalOpen(true);
                                 }}
                                 onDelete={async () => {
-                                if (await showConfirm(`Are you sure you want to delete this work experience: ${entry.jobTitle} at ${entry.companyName}?`)) {
+                                if (await showConfirm(`Are you sure you want to delete this work experience "${entry.jobTitle} at ${entry.companyName}"?`)) {
                                   const candidateId = sessionStorage.getItem('candidateId');
                                   if (!candidateId) {
                                     showAlert('Candidate ID not found. Please refresh the page.');
@@ -1734,7 +1742,7 @@ export default function ProfilePage() {
                               onDelete={async () => {
                               if (
                                 await showConfirm(
-                                  `Are you sure you want to delete this internship: ${internshipItem.internshipTitle} at ${internshipItem.companyName}?`,
+                                  `Are you sure you want to delete this internship "${internshipItem.internshipTitle} at ${internshipItem.companyName}"?`,
                                 )
                               ) {
                                 const candidateId = sessionStorage.getItem('candidateId');
@@ -1845,7 +1853,7 @@ export default function ProfilePage() {
                                 setIsGapExplanationModalOpen(true);
                               }}
                               onDelete={async () => {
-                              if (await showConfirm('Are you sure you want to delete this gap explanation?')) {
+                              if (await showConfirm(`Are you sure you want to delete this gap explanation "${gapItem.reasonForGap}"?`)) {
                                 const candidateId = sessionStorage.getItem('candidateId');
                                 if (!candidateId) {
                                   showAlert('Candidate ID not found. Please refresh the page.');
@@ -1960,7 +1968,7 @@ export default function ProfilePage() {
                                   setIsEducationModalOpen(true);
                                 }}
                                 onDelete={async () => {
-                                if (await showConfirm(`Are you sure you want to delete this education: ${entry.degreeProgram} at ${entry.institutionName}?`)) {
+                                if (await showConfirm(`Are you sure you want to delete this education "${entry.degreeProgram} at ${entry.institutionName}"?`)) {
                                   const candidateId = sessionStorage.getItem('candidateId');
                                   if (!candidateId) {
                                     showAlert('Candidate ID not found. Please refresh the page.');
@@ -2064,7 +2072,7 @@ export default function ProfilePage() {
                               onDelete={async () => {
                               if (
                                 await showConfirm(
-                                  'Are you sure you want to delete this academic achievement?',
+                                  `Are you sure you want to delete this academic achievement "${achievementItem.achievementTitle}"?`
                                 )
                               ) {
                                 const candidateId = sessionStorage.getItem('candidateId');
@@ -2179,7 +2187,7 @@ export default function ProfilePage() {
                                 setIsCompetitiveExamsModalOpen(true);
                               }}
                               onDelete={async () => {
-                              if (await showConfirm('Are you sure you want to delete this competitive exam?')) {
+                              if (await showConfirm(`Are you sure you want to delete this competitive exam "${exam.examName}"?`)) {
                                 const candidateId = sessionStorage.getItem('candidateId');
                                 if (!candidateId) {
                                   showAlert('Candidate ID not found.');
@@ -2474,7 +2482,7 @@ export default function ProfilePage() {
                                 setIsProjectModalOpen(true);
                               }}
                               onDelete={async () => {
-                              if (await showConfirm('Are you sure you want to delete this project?')) {
+                              if (await showConfirm(`Are you sure you want to delete this project "${projectItem.projectTitle}"?`)) {
                                 const candidateId = sessionStorage.getItem('candidateId');
                                 if (!candidateId) {
                                   showAlert('Candidate ID not found.');
@@ -2576,8 +2584,8 @@ export default function ProfilePage() {
                             setEditingPortfolioLinkId(link.id);
                             setIsPortfolioLinksModalOpen(true);
                           }}
-                          onDelete={async () => {
-                          if (await showConfirm('Are you sure you want to delete all portfolio links?')) {
+                          onDeleteLink={async (link) => {
+                          if (await showConfirm(`Are you sure you want to delete this portfolio link "${link.title || link.url}"?`)) {
                             const candidateId = sessionStorage.getItem('candidateId');
                             if (!candidateId) {
                               showAlert('Candidate ID not found.');
@@ -2585,23 +2593,26 @@ export default function ProfilePage() {
                             }
                             try {
                               const response = await fetch(
-                                `${API_BASE_URL}/profile/portfolio-links/${candidateId}`,
+                                `${API_BASE_URL}/profile/portfolio-links/${candidateId}?entryId=${link.id}`,
                                 {
                                   method: 'DELETE',
                                   headers: { 'Content-Type': 'application/json' },
                                 },
                               );
-                              if (!response.ok) throw new Error('Failed to delete portfolio links');
-                              // Optimistically clear from UI immediately
-                              setPortfolioLinksData(undefined);
+                              if (!response.ok) throw new Error('Failed to delete portfolio link');
+                              // Optimistically update UI
+                              setPortfolioLinksData(prev => {
+                                if (!prev || !prev.links) return prev;
+                                return { ...prev, links: prev.links.filter(l => l.id !== link.id) };
+                              });
                               await refreshProfileData(candidateId);
-                              showAlert('Portfolio links deleted successfully');
+                              showAlert('Portfolio link deleted successfully');
                             } catch (error) {
-                              console.error('Error deleting portfolio links:', error);
+                              console.error('Error deleting portfolio link:', error);
                               showAlert(
                                 error instanceof Error
                                   ? error.message
-                                  : 'Error deleting portfolio links',
+                                  : 'Error deleting portfolio link',
                               );
                             }
                           }
@@ -2683,7 +2694,7 @@ export default function ProfilePage() {
                                   setIsCertificationModalOpen(true);
                                 }}
                                 onDelete={async () => {
-                                if (await showConfirm('Are you sure you want to delete this certification?')) {
+                                if (await showConfirm(`Are you sure you want to delete this certification "${cert.certificationName}"?`)) {
                                   const candidateId = sessionStorage.getItem('candidateId');
                                   if (!candidateId) {
                                     showAlert('Candidate ID not found.');
@@ -2792,7 +2803,7 @@ export default function ProfilePage() {
                                   setIsAccomplishmentModalOpen(true);
                                 }}
                                 onDelete={async () => {
-                                if (await showConfirm('Are you sure you want to delete this accomplishment?')) {
+                                if (await showConfirm(`Are you sure you want to delete this accomplishment "${acc.title}"?`)) {
                                   const candidateId = sessionStorage.getItem('candidateId');
                                   if (!candidateId) {
                                     showAlert('Candidate ID not found.');
@@ -2951,65 +2962,134 @@ export default function ProfilePage() {
                   addEmphasized={!visaWorkAuthorizationData}
                 >
                   <div>
-                    {visaWorkAuthorizationData ? (
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={(event) =>
-                          handleEditableCardClick(event, () => {
-                            setIsVisaWorkAuthorizationModalOpen(true);
-                          })
-                        }
-                        onKeyDown={(event) =>
-                          handleEditableCardKeyDown(event, () => {
-                            setIsVisaWorkAuthorizationModalOpen(true);
-                          })
-                        }
-                        className="cursor-pointer"
-                      >
-                        <ProfileVisaFilled
-                          data={visaWorkAuthorizationData}
-                          isExpanded={isVisaCardExpanded}
-                          onToggleExpand={() => openDetailsModal('Visa & Work Authorization Details', visaWorkAuthorizationData)}
-                          onEdit={() => setIsVisaWorkAuthorizationModalOpen(true)}
-                          onDelete={async () => {
-                          if (
-                            await showConfirm(
-                              'Are you sure you want to delete your visa & work authorization information?',
-                            )
-                          ) {
-                            const candidateId = sessionStorage.getItem('candidateId');
-                            if (!candidateId) {
-                              showAlert('Candidate ID not found.');
-                              return;
+                    {visaWorkAuthorizationData && (visaWorkAuthorizationData.selectedDestination || (visaWorkAuthorizationData.visaEntries && visaWorkAuthorizationData.visaEntries.length > 0)) ? (
+                      <div className="space-y-4">
+                        {/* Top-level entry */}
+                        {visaWorkAuthorizationData.selectedDestination && (
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={(event) =>
+                              handleEditableCardClick(event, () => {
+                                setVisaModalMode('edit');
+                                setEditingVisaEntryId(null);
+                                setIsVisaWorkAuthorizationModalOpen(true);
+                              })
                             }
-                            try {
-                              const response = await fetch(
-                                `${API_BASE_URL}/profile/visa-work-authorization/${candidateId}`,
-                                {
-                                  method: 'DELETE',
-                                  headers: { 'Content-Type': 'application/json' },
-                                },
-                              );
-                              if (!response.ok)
-                                throw new Error('Failed to delete visa work authorization');
-                              // Optimistically clear from UI immediately
-                              setVisaWorkAuthorizationData(undefined);
-                              await refreshProfileData(candidateId);
-                              showAlert('Visa & work authorization deleted successfully');
-                            } catch (error) {
-                              console.error('Error deleting visa work authorization:', error);
-                              showAlert(
-                                error instanceof Error
-                                  ? error.message
-                                  : 'Error deleting visa work authorization',
-                              );
+                            onKeyDown={(event) =>
+                              handleEditableCardKeyDown(event, () => {
+                                setVisaModalMode('edit');
+                                setEditingVisaEntryId(null);
+                                setIsVisaWorkAuthorizationModalOpen(true);
+                              })
                             }
-                          }
-                          }}
-                          getDocumentName={getDocumentName}
-                          getApiDocumentHref={getApiDocumentHref}
-                        />
+                            className="cursor-pointer"
+                          >
+                            <ProfileVisaFilled
+                              data={{
+                                ...visaWorkAuthorizationData,
+                                visaEntries: [] // Hide nested entries for this card
+                              }}
+                              isExpanded={isVisaCardExpanded}
+                              onToggleExpand={() => openDetailsModal('Visa & Work Authorization Details', visaWorkAuthorizationData)}
+                              onEdit={() => { setVisaModalMode('edit'); setEditingVisaEntryId(null); setIsVisaWorkAuthorizationModalOpen(true); }}
+                              onDelete={async () => {
+                                const countryName = visaWorkAuthorizationData.selectedDestination;
+                                if (
+                                  await showConfirm(
+                                    `Are you sure you want to delete your visa entry for "${countryName}"?`,
+                                  )
+                                ) {
+                                  const candidateId = sessionStorage.getItem('candidateId');
+                                  if (!candidateId) return;
+                                  try {
+                                    const response = await fetch(
+                                      `${API_BASE_URL}/profile/visa-work-authorization/${candidateId}?entryId=top-level`,
+                                      { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
+                                    );
+                                    if (!response.ok) throw new Error('Failed to delete visa work authorization');
+                                    await refreshProfileData(candidateId);
+                                    showAlert('Visa & work authorization deleted successfully');
+                                  } catch (error) {
+                                    console.error('Error deleting visa work authorization:', error);
+                                    showAlert(error instanceof Error ? error.message : 'Error deleting visa work authorization');
+                                  }
+                                }
+                              }}
+                              getDocumentName={getDocumentName}
+                              getApiDocumentHref={getApiDocumentHref}
+                            />
+                          </div>
+                        )}
+
+                        {/* Nested entries */}
+                        {visaWorkAuthorizationData.visaEntries?.map((entry) => (
+                          <div
+                            key={entry.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={(event) =>
+                              handleEditableCardClick(event, () => {
+                                setVisaModalMode('edit');
+                                setEditingVisaEntryId(entry.id);
+                                setIsVisaWorkAuthorizationModalOpen(true);
+                              })
+                            }
+                            onKeyDown={(event) =>
+                              handleEditableCardKeyDown(event, () => {
+                                setVisaModalMode('edit');
+                                setEditingVisaEntryId(entry.id);
+                                setIsVisaWorkAuthorizationModalOpen(true);
+                              })
+                            }
+                            className="cursor-pointer"
+                          >
+                            <ProfileVisaFilled
+                              data={{
+                                selectedDestination: entry.country,
+                                openForAll: false,
+                                visaWorkpermitRequired: '',
+                                additionalRemarks: entry.additionalRemarks || '',
+                                visaDetailsExpected: entry.visaDetails,
+                                visaEntries: []
+                              }}
+                              isExpanded={isVisaCardExpanded}
+                              onToggleExpand={() => openDetailsModal('Visa & Work Authorization Details', {
+                                selectedDestination: entry.country,
+                                openForAll: false,
+                                visaWorkpermitRequired: '',
+                                additionalRemarks: entry.additionalRemarks || '',
+                                visaDetailsExpected: entry.visaDetails,
+                                visaEntries: []
+                              })}
+                              onEdit={() => { setVisaModalMode('edit'); setEditingVisaEntryId(entry.id); setIsVisaWorkAuthorizationModalOpen(true); }}
+                              onDelete={async () => {
+                                if (
+                                  await showConfirm(
+                                    `Are you sure you want to delete your visa entry for "${entry.countryName || entry.country}"?`,
+                                  )
+                                ) {
+                                  const candidateId = sessionStorage.getItem('candidateId');
+                                  if (!candidateId) return;
+                                  try {
+                                    const response = await fetch(
+                                      `${API_BASE_URL}/profile/visa-work-authorization/${candidateId}?entryId=${entry.id}`,
+                                      { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
+                                    );
+                                    if (!response.ok) throw new Error('Failed to delete visa work authorization entry');
+                                    await refreshProfileData(candidateId);
+                                    showAlert('Visa entry deleted successfully');
+                                  } catch (error) {
+                                    console.error('Error deleting visa entry:', error);
+                                    showAlert(error instanceof Error ? error.message : 'Error deleting visa entry');
+                                  }
+                                }
+                              }}
+                              getDocumentName={getDocumentName}
+                              getApiDocumentHref={getApiDocumentHref}
+                            />
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <div className="text-center py-12">
@@ -4307,6 +4387,8 @@ export default function ProfilePage() {
       <VisaWorkAuthorizationModal
         isOpen={isVisaWorkAuthorizationModalOpen}
         onClose={() => setIsVisaWorkAuthorizationModalOpen(false)}
+        mode={visaModalMode}
+        editingEntryId={editingVisaEntryId}
         onSave={async (data) => {
           const candidateId = sessionStorage.getItem('candidateId');
           if (!candidateId) return;

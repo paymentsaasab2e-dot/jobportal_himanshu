@@ -790,12 +790,14 @@ const ExploreJobsPageContent = () => {
         if (lower.includes('already applied')) {
           const fallbackTitle = selectedJob.title || 'Job'
           const fallbackCompany = selectedJob.company || 'Company'
+          const existingApplicationId = asString(result?.data?.applicationId) || undefined
           handleCloseModal();
           setAppliedJobSummary({
             jobTitle: fallbackTitle,
             company: fallbackCompany,
             appliedDate: formatDate(new Date()),
             jobId: selectedJobId,
+            applicationId: existingApplicationId,
           });
           setIsSuccessModalOpen(true);
           loadJobListings();

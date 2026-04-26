@@ -8,7 +8,10 @@ interface VisaWorkAuthorizationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: VisaWorkAuthorizationData) => void;
+  onSave: (data: VisaWorkAuthorizationData) => void;
   initialData?: VisaWorkAuthorizationData;
+  mode?: 'add' | 'edit';
+  editingEntryId?: string | null;
 }
 
 export interface VisaDocument {
@@ -33,6 +36,7 @@ export interface VisaEntry {
   country: string;
   countryName: string;
   visaDetails: VisaDetailsSection;
+  additionalRemarks?: string;
 }
 
 export interface VisaWorkAuthorizationData {
@@ -106,6 +110,8 @@ export default function VisaWorkAuthorizationModal({
   onClose,
   onSave,
   initialData,
+  mode = 'edit',
+  editingEntryId = null,
 }: VisaWorkAuthorizationModalProps) {
   const [selectedDestination, setSelectedDestination] = useState(initialData?.selectedDestination || '');
   const [requiresVisa, setRequiresVisa] = useState<'Yes' | 'No' | ''>('');
@@ -126,19 +132,56 @@ export default function VisaWorkAuthorizationModal({
 
   useEffect(() => {
     if (initialData) {
-      setSelectedDestination(initialData.selectedDestination || '');
-      setVisaDetailsExpected(initialData.visaDetailsExpected || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] });
-      setVisaWorkpermitRequired(initialData.visaWorkpermitRequired || '');
-      setOpenForAll(initialData.openForAll || false);
-      setAdditionalRemarks(initialData.additionalRemarks || '');
-      setVisaEntries(initialData.visaEntries || []);
-      if (initialData.visaDetailsExpected?.visaType) {
-        setRequiresVisa('Yes');
+      if (mode === 'add' && initialData.selectedDestination) {
+        // Move current form into visaEntries
+        const countryName = COUNTRIES.find(c => c.code === initialData.selectedDestination)?.name || initialData.selectedDestination;
+        const newEntry: VisaEntry = {
+          id: Date.now().toString(),
+          country: initialData.selectedDestination,
+          countryName,
+          visaDetails: initialData.visaDetailsExpected || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] },
+          additionalRemarks: initialData.additionalRemarks,
+        };
+        setVisaEntries([...(initialData.visaEntries || []), newEntry]);
+        
+        // Clear current form
+        setSelectedDestination('');
+        setRequiresVisa('');
+        setVisaDetailsExpected({ id: 'expected', visaType: '', visaStatus: 'Active', documents: [] });
+        setVisaWorkpermitRequired(initialData.visaWorkpermitRequired || '');
+        setOpenForAll(initialData.openForAll || false);
+        setAdditionalRemarks(initialData.additionalRemarks || '');
+      } else if (mode === 'edit' && editingEntryId) {
+        const entryToEdit = initialData.visaEntries?.find(e => e.id === editingEntryId);
+        if (entryToEdit) {
+          setSelectedDestination(entryToEdit.country || '');
+          setVisaDetailsExpected(entryToEdit.visaDetails || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] });
+          setVisaWorkpermitRequired('');
+          setOpenForAll(false);
+          setAdditionalRemarks(entryToEdit.additionalRemarks || '');
+          // Keep all other entries intact
+          setVisaEntries(initialData.visaEntries || []);
+          if (entryToEdit.visaDetails?.visaType) {
+            setRequiresVisa('Yes');
+          }
+        }
+      } else {
+        setSelectedDestination(initialData.selectedDestination || '');
+        setVisaDetailsExpected(initialData.visaDetailsExpected || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] });
+        setVisaWorkpermitRequired(initialData.visaWorkpermitRequired || '');
+        setOpenForAll(initialData.openForAll || false);
+        setAdditionalRemarks(initialData.additionalRemarks || '');
+        setVisaEntries(initialData.visaEntries || []);
+        if (initialData.visaDetailsExpected?.visaType) {
+          setRequiresVisa('Yes');
+        } else if (initialData.visaWorkpermitRequired) {
+          setRequiresVisa('No');
+        }
       }
     } else {
       resetForm();
     }
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, mode, editingEntryId]);
 
   const resetForm = () => {
     setSelectedDestination('');
@@ -265,11 +308,16 @@ export default function VisaWorkAuthorizationModal({
     }
   };
 
-  const handleRemoveFile = (section: 'expected', documentId: string) => {
-    setVisaDetailsExpected({
-      ...visaDetailsExpected!,
-      documents: visaDetailsExpected?.documents.filter((doc: VisaDocument) => doc.id !== documentId) || []
-    });
+  const handleRemoveFile = (sectionId: string, documentId: string) => {
+    if (sectionId === 'expected') {
+      setVisaDetailsExpected(prev => prev ? {
+        ...prev,
+        documents: prev.documents.filter((doc: any) => {
+          const id = typeof doc === 'string' ? doc : doc.id;
+          return id !== documentId;
+        })
+      } : prev);
+    }
   };
 
   const handleDragEnter = (section: 'expected', e: React.DragEvent) => {
@@ -300,15 +348,42 @@ export default function VisaWorkAuthorizationModal({
   };
 
   const handleSave = () => {
-    onSave({
-      selectedDestination,
-      visaDetailsInitial: undefined,
-      visaDetailsExpected,
-      visaWorkpermitRequired,
-      openForAll,
-      additionalRemarks,
-      visaEntries,
-    });
+    if (editingEntryId) {
+      // Update specific entry in visaEntries
+      const countryName = COUNTRIES.find(c => c.code === selectedDestination)?.name || selectedDestination;
+      const updatedEntries = visaEntries.map(entry => {
+        if (entry.id === editingEntryId) {
+          return {
+            ...entry,
+            country: selectedDestination,
+            countryName,
+            visaDetails: visaDetailsExpected!,
+            additionalRemarks: additionalRemarks,
+          };
+        }
+        return entry;
+      });
+      
+      onSave({
+        selectedDestination: initialData?.selectedDestination || '',
+        visaDetailsInitial: initialData?.visaDetailsInitial,
+        visaDetailsExpected: initialData?.visaDetailsExpected,
+        visaWorkpermitRequired: initialData?.visaWorkpermitRequired || '',
+        openForAll: initialData?.openForAll || false,
+        additionalRemarks: additionalRemarks,
+        visaEntries: updatedEntries,
+      });
+    } else {
+      onSave({
+        selectedDestination,
+        visaDetailsInitial: undefined,
+        visaDetailsExpected,
+        visaWorkpermitRequired,
+        openForAll,
+        additionalRemarks,
+        visaEntries,
+      });
+    }
     onClose();
   };
 
@@ -467,63 +542,68 @@ export default function VisaWorkAuthorizationModal({
                   <p className="text-sm font-medium text-gray-700">
                     Existing Work Permit/Visa ({sectionData.documents.length} {sectionData.documents.length === 1 ? 'file' : 'files'})
                   </p>
-                  {sectionData.documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
-                      <div className="flex items-center gap-3">
-                        <svg
-                          className="w-5 h-5 text-[#9095A1]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                        <div>
-                          <p className="text-sm text-gray-900">{doc.name}</p>
-                          {doc.size && (
-                            <p className="text-xs text-gray-500">{formatFileSize(doc.size)}</p>
+                  {sectionData.documents.map((doc: any, index: number) => {
+                    const docId = typeof doc === 'string' ? doc : doc.id || index.toString();
+                    const docName = typeof doc === 'string' ? doc.split('/').pop() || doc : doc.name;
+                    const docUrl = typeof doc === 'string' ? doc : doc.url;
+                    return (
+                      <div key={docId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+                        <div className="flex items-center gap-3">
+                          <svg
+                            className="w-5 h-5 text-[#9095A1]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-gray-900 truncate" title={docName}>{docName}</p>
+                            {typeof doc !== 'string' && doc.size && (
+                              <p className="text-xs text-gray-500">{formatFileSize(doc.size)}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0 ml-2">
+                          {docUrl && (
+                            <>
+                              <a
+                                href={resolveDocumentUrl(docUrl)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-700 transition-colors"
+                                title="View Document"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </a>
+                              <a
+                                href={resolveDocumentUrl(docUrl)}
+                                download={docName}
+                                className="text-orange-600 hover:text-orange-700 transition-colors"
+                                title="Download Document"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                              </a>
+                            </>
                           )}
+                          <button
+                            onClick={() => handleRemoveFile(sectionId, docId)}
+                            className="p-1 text-amber-600 hover:text-amber-700 hover:bg-red-50 rounded transition-colors"
+                            aria-label="Remove file"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0 ml-2">
-                        {doc.url && (
-                          <>
-                            <a
-                              href={resolveDocumentUrl(doc.url)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-700 transition-colors"
-                              title="View Document"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                            </a>
-                            <a
-                              href={resolveDocumentUrl(doc.url)}
-                              download={doc.name}
-                              className="text-orange-600 hover:text-orange-700 transition-colors"
-                              title="Download Document"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                              </svg>
-                            </a>
-                          </>
-                        )}
-                        <button
-                          onClick={() => handleRemoveFile(sectionId, doc.id)}
-                          className="p-1 text-amber-600 hover:text-amber-700 hover:bg-red-50 rounded transition-colors"
-                          aria-label="Remove file"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -550,7 +630,7 @@ export default function VisaWorkAuthorizationModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={!(isFormComplete || visaEntries.length > 0)}
+            disabled={!isFormComplete}
             className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Save Visa & Work Authorization
@@ -746,45 +826,49 @@ export default function VisaWorkAuthorizationModal({
                 </>
               ) : (
                 <div className="space-y-2">
-                  {visaDetailsExpected.documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
-                      <div className="flex items-center gap-3">
-                        <svg
-                          className="w-5 h-5 text-[#9095A1]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                        <div>
-                          <p className="text-sm text-gray-900">{doc.name}</p>
-                          {doc.size && (
-                            <p className="text-xs text-gray-500">{formatFileSize(doc.size)}</p>
-                          )}
+                  {visaDetailsExpected.documents.map((doc: any, index: number) => {
+                    const docId = typeof doc === 'string' ? doc : doc.id || index.toString();
+                    const docName = typeof doc === 'string' ? doc.split('/').pop() || doc : doc.name;
+                    return (
+                      <div key={docId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
+                        <div className="flex items-center gap-3">
+                          <svg
+                            className="w-5 h-5 text-[#9095A1]"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-gray-900 truncate" title={docName}>{docName}</p>
+                            {typeof doc !== 'string' && doc.size && (
+                              <p className="text-xs text-gray-500">{formatFileSize(doc.size)}</p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <button
-                        onClick={() => handleRemoveFile('expected', doc.id)}
-                        className="text-[#9095A1] hover:text-amber-600"
-                        title="Delete"
-                      >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                        <button
+                          onClick={() => handleRemoveFile('expected', typeof doc === 'string' ? doc : doc.id)}
+                          className="text-[#9095A1] hover:text-amber-600"
+                          title="Delete"
                         >
-                          <line x1="18" y1="6" x2="6" y2="18" />
-                          <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               <p className="mt-1 text-xs text-gray-500">
@@ -795,120 +879,7 @@ export default function VisaWorkAuthorizationModal({
           </div>
         )}
 
-        {/* Added Visa Entries List */}
-        {visaEntries.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-900">Added Visa Entries</h3>
-            {visaEntries.map((entry) => (
-              <div
-                key={entry.id}
-                className="border border-gray-200 rounded-lg p-4 bg-white"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-gray-900">
-                      {entry.visaDetails.visaType} - {entry.countryName}
-                    </h4>
-                    {entry.visaDetails.visaExpiryDate && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Expires: {formatDateRange(entry.visaDetails.visaExpiryDate)}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleRemoveVisaEntry(entry.id)}
-                      className="text-amber-600 hover:text-amber-700 p-1"
-                      title="Delete"
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M12 4L4 12M4 4L12 12"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => toggleExpandEntry(entry.id)}
-                      className="text-gray-500 hover:text-gray-700 p-1"
-                      title="Expand"
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        className={`transition-transform ${expandedEntries[entry.id] ? 'rotate-180' : ''}`}
-                      >
-                        <path
-                          d="M4 6L8 10L12 6"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                {expandedEntries[entry.id] && (
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <div className="space-y-2">
-                      <div>
-                        <span className="text-xs text-gray-500">Country:</span>
-                        <p className="text-sm text-gray-900">{entry.countryName}</p>
-                      </div>
-                      <div>
-                        <span className="text-xs text-gray-500">Visa Type:</span>
-                        <p className="text-sm text-gray-900">{entry.visaDetails.visaType}</p>
-                      </div>
-                      <div>
-                        <span className="text-xs text-gray-500">Visa Status:</span>
-                        <p className="text-sm text-gray-900">{entry.visaDetails.visaStatus}</p>
-                      </div>
-                      {entry.visaDetails.itemFamilyNumber && (
-                        <div>
-                          <span className="text-xs text-gray-500">Work Permit Number:</span>
-                          <p className="text-sm text-gray-900">{entry.visaDetails.itemFamilyNumber}</p>
-                        </div>
-                      )}
-                      {entry.visaDetails.visaExpiryDate && (
-                        <div>
-                          <span className="text-xs text-gray-500">Visa Expiry Date:</span>
-                          <p className="text-sm text-gray-900">
-                            {formatDateRange(entry.visaDetails.visaExpiryDate)}
-                          </p>
-                        </div>
-                      )}
-                      {entry.visaDetails.documents && entry.visaDetails.documents.length > 0 && (
-                        <div>
-                          <span className="text-xs text-gray-500">Documents:</span>
-                          <div className="mt-1 space-y-1">
-                            {entry.visaDetails.documents.map((doc) => (
-                              <p key={doc.id} className="text-sm text-gray-900">
-                                {doc.name}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Added Visa Entries List Hidden as per user request */}
 
         {/* Visa/Workpermit Required - Show only when No is selected */}
         {requiresVisa === 'No' && (
