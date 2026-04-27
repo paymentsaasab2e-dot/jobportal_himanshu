@@ -468,6 +468,7 @@ export default function ProfilePage() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`,
         },
       }).catch((fetchError) => {
         console.error('❌ Network error fetching profile:', fetchError);
@@ -769,6 +770,7 @@ export default function ProfilePage() {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`,
           },
         });
 
@@ -777,6 +779,7 @@ export default function ProfilePage() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`,
             },
             body: JSON.stringify({ candidateId }),
           });
@@ -785,6 +788,7 @@ export default function ProfilePage() {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`,
             },
           });
         }
@@ -1117,6 +1121,7 @@ export default function ProfilePage() {
 
   const {
     tabsBarRef,
+    scrollContainerRef,
     activeTabId: activeWorkspaceTab,
     scrollToTabGroup: scrollToWorkspaceTab,
     scrollPaddingStyle,
@@ -1223,7 +1228,7 @@ export default function ProfilePage() {
     const n = [basicInfoData?.firstName, basicInfoData?.lastName]
       .filter(Boolean)
       .join(' ');
-    return n || 'Your profile';
+    return n || '';
   }, [basicInfoData?.firstName, basicInfoData?.lastName]);
 
   const profileRoleLine = useMemo(() => {
@@ -1325,6 +1330,7 @@ export default function ProfilePage() {
 
   return (
     <ProfilePageShell>
+      <>
 
       <main className="mx-auto max-w-[1180px] px-4 pt-0 pb-7 sm:px-5 sm:pt-0 sm:pb-8 lg:px-6">
         {careerPreferencesSuccessMessage && (
@@ -1375,33 +1381,9 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-        {/* Main Title Area & Back Button */}
-        <div className="mb-6 flex items-start gap-3">
-          <button
-            onClick={() => router.back()}
-            className="mt-6 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
-            title="Go Back"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-          </button>
-          <div className="pl-1 pt-6">
-            <h1 className="mb-0.5 text-3xl font-bold text-gray-900">Your Profile</h1>
-            <p className="text-gray-500">View and update all sections of your SAASA profile.</p>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start lg:gap-4 xl:grid-cols-[256px_minmax(0,1fr)]">
+
+        <div className="pt-4 grid grid-cols-1 gap-6 lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start lg:gap-4 xl:grid-cols-[256px_minmax(0,1fr)]">
           <ProfileWorkspaceRail
             identity={{
               initials: profileInitials,
@@ -1427,14 +1409,18 @@ export default function ProfilePage() {
             }
             onImprove={openFirstMissingModal}
           />
-          <div className="min-w-0" style={scrollPaddingStyle}>
+          <div className="flex flex-col min-w-0 h-[750px] lg:h-[820px]">
             <ProfileWorkspaceTabs
               ref={tabsBarRef}
               tabs={workspaceTabs}
               activeId={activeWorkspaceTab}
               onSelect={scrollToWorkspaceTab}
             />
-            <div className="space-y-4">
+            <div 
+              ref={scrollContainerRef}
+              className="relative flex-1 overflow-y-auto pr-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            >
+              <div className="space-y-4 pb-10 pt-2">
               <section
                 id="personal-details"
                 className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-4"
@@ -3197,9 +3183,10 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
+    </main>
 
-      <ProfileDrawer
+    <ProfileDrawer
         isOpen={detailModal.isOpen}
         onClose={() => setDetailModal({ isOpen: false, title: '', data: null })}
         title={detailModal.title || 'View Details'}
@@ -4645,6 +4632,7 @@ export default function ProfilePage() {
         initialData={resumeData}
       />
 
+      </>
     </ProfilePageShell>
   );
 }

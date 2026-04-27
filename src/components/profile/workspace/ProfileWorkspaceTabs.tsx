@@ -19,9 +19,9 @@ export const ProfileWorkspaceTabs = forwardRef<HTMLDivElement, ProfileWorkspaceT
   return (
     <div
       ref={ref}
-      className="sticky top-[calc(var(--app-header-height,92px)+8px)] z-40 -mx-1 mb-4 pb-0"
+      className="-mx-1 mb-4 pb-0"
     >
-      <div className="flex gap-1.5 overflow-x-auto pb-2 pt-0.5 scrollbar-thin">
+      <div className="flex gap-1.5 overflow-x-auto pb-2 pt-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {tabs.map((t) => {
           const active = activeId === t.id;
           return (

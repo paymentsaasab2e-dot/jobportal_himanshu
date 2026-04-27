@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from '@/components/auth/AuthContext';
 
 import { API_BASE_URL } from '@/lib/api-base';
 import { showSuccessToast } from '@/components/common/toast/toast';
@@ -26,6 +27,7 @@ interface Education {
 }
 
 export default function PersonalDetailsPage() {
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [fullNameFocused, setFullNameFocused] = useState(false);
   const [fullNameValue, setFullNameValue] = useState("");
@@ -367,12 +369,12 @@ export default function PersonalDetailsPage() {
     };
 
     fetchProfileData();
-  }, [router]);
+  }, [router, user]);
 
   // Fetch dashboard data for profile photo and user info
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      const candidateId = sessionStorage.getItem("candidateId");
+    const fetchPersonalDetails = async () => {
+      const candidateId = user?.id;
       if (!candidateId) return;
 
       try {
@@ -417,8 +419,8 @@ export default function PersonalDetailsPage() {
       }
     };
 
-    fetchDashboardData();
-  }, []);
+    fetchPersonalDetails();
+  }, [user]);
 
   // Scroll to top when switching forms
   useEffect(() => {
@@ -429,7 +431,8 @@ export default function PersonalDetailsPage() {
 
   // Handle profile photo upload
   const handlePhotoUpload = async (file: File) => {
-    const candidateId = sessionStorage.getItem("candidateId");
+    if (authLoading) return;
+    const candidateId = user?.id;
     if (!candidateId) {
       console.error("No candidate ID found");
       alert("Please log in to upload profile photo");
@@ -790,7 +793,7 @@ export default function PersonalDetailsPage() {
 
   // Save profile data to backend
   const saveProfileData = async (formSection?: string) => {
-    const candidateId = sessionStorage.getItem("candidateId");
+    const candidateId = user?.id;
     if (!candidateId) {
       console.error("No candidate ID found");
       return;

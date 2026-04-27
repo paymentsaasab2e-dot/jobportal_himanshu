@@ -171,8 +171,8 @@ function SearchJobsContent() {
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-semibold text-slate-600">
-              <div className="flex items-center gap-2"><Search className="h-4 w-4 text-sky-500" /> Query: <span className="text-slate-900">{searchQuery || 'All jobs'}</span></div>
-              <div className="mt-1 flex items-center gap-2"><MapPin className="h-4 w-4 text-sky-500" /> Location: <span className="text-slate-900">{locationQuery || 'All locations'}</span></div>
+              <div className="flex items-center gap-2"><Search className="h-4 w-4 text-sky-500 shrink-0" /><span className="text-slate-900">{searchQuery || 'All jobs'}</span></div>
+              <div className="mt-1 flex items-center gap-2"><MapPin className="h-4 w-4 text-sky-500 shrink-0" /><span className="text-slate-900">{locationQuery || 'All locations'}</span></div>
             </div>
           </div>
 

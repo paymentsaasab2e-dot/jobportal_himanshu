@@ -8,6 +8,7 @@ import { User, Bell, Shield, SlidersHorizontal, Briefcase, AlertTriangle } from 
 import { showSuccessToast, showErrorToast } from '@/components/common/toast/toast';
 import { API_BASE_URL } from '@/lib/api-base';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/components/auth/AuthContext';
 
 interface SettingsData {
   account: {
@@ -40,6 +41,7 @@ interface SettingsData {
 }
 
 export default function SettingsPage() {
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const router = useRouter();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
@@ -82,11 +84,10 @@ export default function SettingsPage() {
   const [jobPreferenceDefaults, setJobPreferenceDefaults] = useState('Not set');
   const [activeSection, setActiveSection] = useState<'account' | 'notifications' | 'privacy' | 'preferences' | 'application' | 'danger'>('account');
 
-  // Get candidate ID from sessionStorage (same as profile page)
+  // Get candidate ID from AuthContext
   const getCandidateId = useCallback(() => {
-    if (typeof window === 'undefined') return null;
-    return sessionStorage.getItem('candidateId');
-  }, []);
+    return user?.id || localStorage.getItem('candidateId') || sessionStorage.getItem('candidateId');
+  }, [user]);
 
   // Fetch settings from backend
   const fetchSettings = useCallback(async () => {
@@ -99,7 +100,11 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       // Fetch account data from profile API directly
-      const profileResponse = await fetch(`${API_BASE_URL}/profile/${candidateId}`);
+      const profileResponse = await fetch(`${API_BASE_URL}/profile/${candidateId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
       const profileResult = await profileResponse.json();
 
       if (profileResult.success && profileResult.data) {
@@ -169,10 +174,16 @@ export default function SettingsPage() {
     }
   }, [getCandidateId]);
 
-  // Load settings on mount
+  // Load settings on mount and when auth state is ready
   useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+    if (!authLoading) {
+      if (!isAuthenticated) {
+        router.push('/whatsapp');
+        return;
+      }
+      fetchSettings();
+    }
+  }, [fetchSettings, authLoading, isAuthenticated, router]);
 
   const handleScrollToSection = useCallback((id: string) => {
     setActiveSection(id as any);
@@ -236,7 +247,10 @@ export default function SettingsPage() {
       
       const response = await fetch(`${API_BASE_URL}/settings/notifications/${candidateId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    },
         body: JSON.stringify(payload),
       });
       const result = await response.json();
@@ -271,7 +285,10 @@ export default function SettingsPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/settings/privacy/${candidateId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    },
         body: JSON.stringify({ profileVisibility, dataSharing }),
       });
       const result = await response.json();
@@ -304,7 +321,10 @@ export default function SettingsPage() {
       
       const response = await fetch(`${API_BASE_URL}/settings/privacy/${candidateId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    },
         body: JSON.stringify(payload),
       });
       const result = await response.json();
@@ -331,7 +351,10 @@ export default function SettingsPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/settings/preferences/${candidateId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    },
         body: JSON.stringify({ language, timezone, theme }),
       });
       const result = await response.json();
@@ -359,7 +382,10 @@ export default function SettingsPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/settings/application/${candidateId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    },
         body: JSON.stringify({ jobPreferenceDefaults }),
       });
       const result = await response.json();
@@ -380,25 +406,13 @@ export default function SettingsPage() {
 
   // Unified logout function
   const confirmLogout = async () => {
-    if (logoutAllDevices) {
-      const candidateId = getCandidateId();
-      if (candidateId) {
-        try {
-          await fetch(`${API_BASE_URL}/settings/logout-all/${candidateId}`, {
-            method: 'POST',
-          });
-        } catch (error) {
-          console.error('Error logging out of all devices:', error);
-        }
-      }
+    setLoading(true);
+    try {
+      await logout(logoutAllDevices);
+    } finally {
+      setIsLogoutModalOpen(false);
+      setLoading(false);
     }
-    
-    // Normal logout actions
-    showSuccessToast(logoutAllDevices ? 'Logged out from all devices' : 'Logged out successfully');
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    sessionStorage.removeItem('candidateId');
-    window.location.href = '/login';
   };
 
   // Delete account
@@ -406,24 +420,35 @@ export default function SettingsPage() {
     const candidateId = getCandidateId();
     if (!candidateId) return;
 
+    setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/settings/account/${candidateId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
       const result = await response.json();
 
       if (result.success) {
         showSuccessToast('Account deleted successfully');
-        // Clear local storage and redirect to login
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        window.location.href = '/login';
+        
+        // Thorough cleanup
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1500);
       } else {
         showErrorToast(result.message || 'Failed to delete account');
       }
     } catch (error) {
       console.error('Error deleting account:', error);
       showErrorToast('Failed to delete account');
+    } finally {
+      setIsDeleteModalOpen(false);
+      setLoading(false);
     }
   };
 
@@ -598,16 +623,18 @@ export default function SettingsPage() {
                   <button 
                     type="button" 
                     onClick={() => setIsLogoutModalOpen(true)} 
-                    className="flex-1 sm:flex-none h-10 px-6 rounded-lg border border-red-200 bg-white text-sm font-medium text-red-600 hover:bg-red-50 transition-colors shadow-sm"
+                    disabled={loading}
+                    className="flex-1 sm:flex-none h-10 px-6 rounded-lg border border-red-200 bg-white text-sm font-medium text-red-600 hover:bg-red-50 transition-colors shadow-sm disabled:opacity-50"
                   >
                     Logout
                   </button>
                   <button 
                     type="button" 
                     onClick={() => setIsDeleteModalOpen(true)} 
-                    className="flex-1 sm:flex-none h-10 px-6 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 transition-colors shadow-sm"
+                    disabled={loading}
+                    className="flex-1 sm:flex-none h-10 px-6 rounded-lg bg-red-600 text-sm font-medium text-white hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50"
                   >
-                    Delete Account
+                    {loading ? 'Processing...' : 'Delete Account'}
                   </button>
                 </div>
               </SettingsCard>

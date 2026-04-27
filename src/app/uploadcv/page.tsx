@@ -3,13 +3,15 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, Sparkles, AlertCircle, FileText, UploadCloud, FileUp, Phone } from "lucide-react";
+import { ArrowRight, Sparkles, FileText, UploadCloud, Phone } from "lucide-react";
+import { useAuth } from '@/components/auth/AuthContext';
 
 import { API_BASE_URL } from '@/lib/api-base';
 
 export default function UploadCV() {
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [candidateId, setCandidateId] = useState("");
+  const [candidateId, setCandidateId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -18,15 +20,14 @@ export default function UploadCV() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Get candidate ID from sessionStorage
-    const storedCandidateId = sessionStorage.getItem("candidateId");
-    if (storedCandidateId) {
-      setCandidateId(storedCandidateId);
-    } else {
-      // If no candidate ID, redirect to WhatsApp verification
-      router.push("/whatsapp");
+    if (!authLoading) {
+      if (!isAuthenticated) {
+        router.push("/whatsapp");
+        return;
+      }
+      setCandidateId(user?.id || null);
     }
-  }, [router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

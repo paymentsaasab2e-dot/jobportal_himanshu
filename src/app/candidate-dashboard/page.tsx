@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth/AuthContext";
 import { BookMarked, BriefcaseBusiness, Gauge, Rocket, Target } from "lucide-react";
 import AiLoadingScreen from "@/components/common/AiLoadingScreen";
 import ProfileCompletionDrawer from "@/components/profile/ProfileCompletionDrawer";
@@ -188,6 +189,7 @@ function mapJobRecord(job: Record<string, unknown>, fallbackId: string): Dashboa
 }
 
 export default function CandidateDashboardPage() {
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const jobMatchesRef = useRef<HTMLDivElement>(null);
   const matchesHighlightTimeoutRef = useRef<number | null>(null);
@@ -199,7 +201,7 @@ export default function CandidateDashboardPage() {
   const [jobsLoading, setJobsLoading] = useState(true);
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
-  const [backendMatchedJobsCount, setBackendMatchedJobsCount] = useState(0);
+
   const [isMatchesBadgeHighlighted, setIsMatchesBadgeHighlighted] = useState(false);
   const [activeFilters, setActiveFilters] = useState<JobFilterKey[]>([
     "highestMatch",
@@ -216,13 +218,14 @@ export default function CandidateDashboardPage() {
   }, []);
 
   useEffect(() => {
-    const id = sessionStorage.getItem("candidateId");
-    setCandidateId(id);
-    if (!id) {
-      setLoading(false);
-      setJobsLoading(false);
+    if (!authLoading) {
+      setCandidateId(user?.id || null);
+      if (!isAuthenticated) {
+        setLoading(false);
+        setJobsLoading(false);
+      }
     }
-  }, []);
+  }, [authLoading, isAuthenticated, user]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setCoursesLoading(false), 360);
@@ -255,8 +258,8 @@ export default function CandidateDashboardPage() {
   const refreshProfileCompleteness = useCallback(
     async (id?: string) => {
       const resolvedCandidateId =
-        id || candidateId || sessionStorage.getItem("candidateId");
-
+        id || candidateId || user?.id;
+ 
       if (!resolvedCandidateId) return null;
 
       try {
@@ -268,11 +271,11 @@ export default function CandidateDashboardPage() {
         return null;
       }
     },
-    [candidateId]
+    [candidateId, user?.id]
   );
 
   const fetchDashboardData = useCallback(async (id?: string) => {
-    const targetId = id || candidateId || sessionStorage.getItem("candidateId");
+    const targetId = id || candidateId || user?.id;
     if (!targetId) return;
 
     setLoading(true);
@@ -297,7 +300,7 @@ export default function CandidateDashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [candidateId]);
+  }, [candidateId, user?.id]);
 
   useEffect(() => {
     if (!candidateId) return;
@@ -413,9 +416,8 @@ export default function CandidateDashboardPage() {
           : [];
 
         if (!cancelled) {
-          setBackendMatchedJobsCount(rawJobs.length);
+          // Count logic removed
         }
-
         const phase2Jobs = await fetchPhase2PublicJobs();
         const mergedRawJobs = [...rawJobs];
         const existingIds = new Set(
@@ -444,7 +446,7 @@ export default function CandidateDashboardPage() {
       } catch (error) {
         console.error("Error fetching jobs:", error);
         if (!cancelled) {
-          setBackendMatchedJobsCount(0);
+
           setJobs([]);
         }
       } finally {
@@ -497,8 +499,8 @@ export default function CandidateDashboardPage() {
 
   const handlePhotoUpload = async (file: File) => {
     const resolvedCandidateId =
-      candidateId || sessionStorage.getItem("candidateId");
-
+      candidateId || user?.id;
+ 
     if (!resolvedCandidateId) return;
 
     if (!file.type.startsWith("image/")) {
@@ -680,7 +682,7 @@ export default function CandidateDashboardPage() {
     dashboardData?.profile || 
     (profileCompletionDetails ? { fullName: "Candidate" } as any : null)
   );
-  const greeting = getDynamicGreeting(dashboardName, backendMatchedJobsCount);
+  const greeting = getDynamicGreeting(dashboardName, filteredJobMatches.length);
 
   const heroStats: DashboardHeroStat[] = [
     {

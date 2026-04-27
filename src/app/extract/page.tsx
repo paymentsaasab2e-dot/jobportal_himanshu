@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from '@/components/auth/AuthContext';
 import { CheckCircle2, Sparkles, User, Briefcase, GraduationCap } from "lucide-react";
 
 import { API_BASE_URL } from '@/lib/api-base';
@@ -10,6 +11,7 @@ import { showSuccessToast } from '@/components/common/toast/toast';
 import AiLoadingScreen from "@/components/common/AiLoadingScreen";
 
 export default function ExtractPage() {
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Starting CV analysis...");
@@ -28,14 +30,19 @@ export default function ExtractPage() {
   };
 
   useEffect(() => {
-    // Get candidate ID from sessionStorage
-    const storedCandidateId = sessionStorage.getItem("candidateId");
-    if (!storedCandidateId) {
+    if (authLoading) return;
+    
+    // Get candidate ID from AuthContext or Storage
+    const resolvedCandidateId = user?.id || localStorage.getItem("candidateId") || sessionStorage.getItem("candidateId");
+    
+    if (!resolvedCandidateId && !authLoading) {
       // If no candidate ID, redirect back to upload
       router.push("/uploadcv");
       return;
     }
-    setCandidateId(storedCandidateId);
+    setCandidateId(resolvedCandidateId);
+    
+    const storedCandidateId = resolvedCandidateId; // For internal use in this effect
 
     // Status messages that cycle during processing
     const statusMessages = [

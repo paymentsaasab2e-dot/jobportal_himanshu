@@ -35,7 +35,7 @@ export function ProfileSidebarIdentity({
 }: ProfileSidebarIdentityProps) {
   const pct = Math.min(100, Math.max(0, Math.round(Number(percentage) || 0)));
   const displayName =
-    [firstName, lastName].filter(Boolean).join(' ') || 'Your profile';
+    [firstName, lastName].filter(Boolean).join(' ') || '';
   const location = formatLocation(city, country);
   const roleLine = targetRole?.trim() || employment?.trim() || '';
   const atsDisplay =

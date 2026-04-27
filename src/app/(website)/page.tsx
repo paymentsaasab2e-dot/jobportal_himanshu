@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth/AuthContext";
 import { API_BASE_URL, getApiBaseUrl } from "@/lib/api-base";
 import {
   Search, MapPin, ChevronRight, PlayCircle, Star, ArrowRight, CheckCircle2,
@@ -60,6 +61,42 @@ const getSuggestionLabel = (suggestion: any) =>
   suggestion?.value ||
   suggestion?.query ||
   "";
+
+/**
+ * Returns a numeric match score. Higher = better match.
+ * 3 = label starts with query (exact prefix)
+ * 2 = a word inside label starts with query
+ * 1 = label contains query anywhere
+ * 0 = no match (exclude)
+ */
+const scoreMatch = (label: string, query: string): number => {
+  if (!query || !label) return 0;
+  const l = label.toLowerCase();
+  const q = query.toLowerCase().trim();
+  if (!q) return 0;
+  if (l.startsWith(q)) return 3;
+  // Check if any word inside the label starts with the query
+  if (l.split(/[\s,\/\-_]+/).some(w => w.startsWith(q))) return 2;
+  if (l.includes(q)) return 1;
+  return 0;
+};
+
+/**
+ * Highlights the matched portion of `label` with a <mark>.
+ * Returns an array of spans safe for React rendering.
+ */
+const HighlightMatch = ({ label, query }: { label: string; query: string }) => {
+  if (!query.trim()) return <>{label}</>;
+  const idx = label.toLowerCase().indexOf(query.toLowerCase().trim());
+  if (idx === -1) return <>{label}</>;
+  return (
+    <>
+      {label.slice(0, idx)}
+      <span className="font-black text-sky-600">{label.slice(idx, idx + query.trim().length)}</span>
+      {label.slice(idx + query.trim().length)}
+    </>
+  );
+};
 
 const buildSearchJobsUrl = (title: string, location: string) => {
   const params = new URLSearchParams();
@@ -160,6 +197,7 @@ function AuthInterceptModal({
 // 3. MAIN PAGE COMPONENT
 // ----------------------------------------------------------------------
 export default function LandingPage() {
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
   const [jobs, setJobs] = useState<JobListing[]>([
     { id: '1', title: 'Senior Research Scientist', company: 'Pfizer', location: 'Mumbai, IN', workStyle: 'Hybrid', type: 'Full-time', salary: '$140k - $175k/yr', match: '94% Match', timeAgo: '2h ago', experience: 'Senior level', logo: 'https://logo.clearbit.com/pfizer.com' },
@@ -188,7 +226,6 @@ export default function LandingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    setIsLoggedIn(!!sessionStorage.getItem("candidateId"));
     loadJobs();
   }, []);
 
@@ -202,12 +239,21 @@ export default function LandingPage() {
           if (res.ok) {
             const result = await res.json();
             const rawSuggestions = Array.isArray(result.data) ? result.data : [];
-            const dbOnlySuggestions = rawSuggestions.filter((item: any) => {
-              if (!item) return false;
-              if (item.isAiSuggestion || item.isAi) return false;
-              const label = getSuggestionLabel(item);
-              return Boolean(String(label || '').trim());
-            });
+            const dbOnlySuggestions = rawSuggestions
+              .filter((item: any) => {
+                if (!item) return false;
+                if (item.isAiSuggestion || item.isAi) return false;
+                const label = getSuggestionLabel(item);
+                if (!String(label || '').trim()) return false;
+                // Only keep suggestions that actually match the typed characters
+                return scoreMatch(String(label), heroSearch.title) > 0;
+              })
+              .sort((a: any, b: any) => {
+                const scoreA = scoreMatch(String(getSuggestionLabel(a)), heroSearch.title);
+                const scoreB = scoreMatch(String(getSuggestionLabel(b)), heroSearch.title);
+                return scoreB - scoreA; // highest score first
+              })
+              .slice(0, 8); // cap at 8 suggestions
             setSuggestions(dbOnlySuggestions);
             setShowSuggestions(dbOnlySuggestions.length > 0);
           }
@@ -235,12 +281,20 @@ export default function LandingPage() {
           if (res.ok) {
             const result = await res.json();
             const rawLocationSuggestions = Array.isArray(result.data) ? result.data : [];
-            const dbOnlyLocationSuggestions = rawLocationSuggestions.filter((item: any) => {
-              if (!item) return false;
-              if (item.isAiSuggestion || item.isAi) return false;
-              const label = getSuggestionLabel(item);
-              return Boolean(String(label || '').trim());
-            });
+            const dbOnlyLocationSuggestions = rawLocationSuggestions
+              .filter((item: any) => {
+                if (!item) return false;
+                if (item.isAiSuggestion || item.isAi) return false;
+                const label = getSuggestionLabel(item);
+                if (!String(label || '').trim()) return false;
+                return scoreMatch(String(label), heroSearch.location) > 0;
+              })
+              .sort((a: any, b: any) => {
+                const scoreA = scoreMatch(String(getSuggestionLabel(a)), heroSearch.location);
+                const scoreB = scoreMatch(String(getSuggestionLabel(b)), heroSearch.location);
+                return scoreB - scoreA;
+              })
+              .slice(0, 6);
             setLocSuggestions(dbOnlyLocationSuggestions);
             setShowLocSuggestions(dbOnlyLocationSuggestions.length > 0);
           }
@@ -290,7 +344,7 @@ export default function LandingPage() {
   };
 
   const triggerGatedAction = (title: string, description: string, redirectUrl: string) => {
-    if (isLoggedIn) {
+    if (isAuthenticated) {
       router.push(redirectUrl);
     } else {
       setAuthConfig({ title, description, redirectUrl });
@@ -558,14 +612,17 @@ export default function LandingPage() {
                                       applyTitleSuggestion(suggestionLabel);
                                     }
                                   }}
-                                  className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-colors text-left"
+                                  className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-colors text-left group/item"
                                 >
-                                  <div className="flex-1 pr-4">
-                                    <p className="font-bold text-slate-900 text-[16px] leading-tight">{getSuggestionLabel(s)}</p>
+                                  <div className="flex-1 pr-4 min-w-0">
+                                    <p className="font-bold text-slate-900 text-[15px] leading-tight truncate">
+                                      <HighlightMatch label={getSuggestionLabel(s)} query={heroSearch.title} />
+                                    </p>
                                     {s.company && (
-                                      <p className="mt-1 text-sm text-slate-500">{s.company}</p>
+                                      <p className="mt-0.5 text-xs text-slate-400 truncate">{s.company}</p>
                                     )}
                                   </div>
+                                  <Search className="w-3.5 h-3.5 text-slate-300 group-hover/item:text-sky-500 transition-colors shrink-0" />
                                 </button>
                               ))}
                             </div>
@@ -614,10 +671,13 @@ export default function LandingPage() {
                                       applyLocationSuggestion(suggestionLabel);
                                     }
                                   }}
-                                  className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-colors text-left"
+                                  className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 rounded-xl transition-colors text-left group/loc"
                                 >
-                                  <div className="flex-1 pr-4">
-                                    <p className="font-bold text-slate-900 leading-tight">{getSuggestionLabel(s)}</p>
+                                  <div className="flex-1 pr-4 min-w-0 flex items-center gap-2.5">
+                                    <MapPin className="w-3.5 h-3.5 text-slate-300 group-hover/loc:text-sky-500 transition-colors shrink-0" />
+                                    <p className="font-bold text-slate-900 text-[14px] leading-tight truncate">
+                                      <HighlightMatch label={getSuggestionLabel(s)} query={heroSearch.location} />
+                                    </p>
                                   </div>
                                 </button>
                               ))}

@@ -7,8 +7,10 @@ import { ShieldCheck, ArrowRight, AlertCircle, Phone, Mail } from "lucide-react"
 
 import { API_BASE_URL } from '@/lib/api-base';
 import { showSuccessToast } from '@/components/common/toast/toast';
+import { useAuth } from '@/components/auth/AuthContext';
 
 export default function VerifyOTP() {
+  const { login } = useAuth();
   const router = useRouter();
   const [otp, setOtp] = useState("");
   const [timer, setTimer] = useState(29);
@@ -132,13 +134,9 @@ export default function VerifyOTP() {
         throw new Error(data.message || "Invalid OTP. Please try again.");
       }
 
-      // Store candidate ID and token in sessionStorage for future use
-      if (data.data.candidateId) {
-        sessionStorage.setItem("candidateId", data.data.candidateId);
-      }
-      if (data.data.token) {
-        sessionStorage.setItem("token", data.data.token);
-        localStorage.setItem("token", data.data.token); // Store in localStorage too if needed globally
+      // Use the centralized login function from AuthContext
+      if (data.data.token && data.data.candidateId) {
+        login(data.data.token, data.data.candidateId);
       }
 
       // Clear OTP-related session data

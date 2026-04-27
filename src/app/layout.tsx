@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Inter, Arimo } from "next/font/google";
 import { ToastProvider } from "@/components/common/toast/ToastProvider";
+import { AuthProvider } from "@/components/auth/AuthContext";
+import { InactivityGuard } from "@/components/auth/InactivityGuard";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import GlobalHeader from "@/components/common/GlobalHeader";
 import ApiHealthChecker from "@/components/common/ApiHealthChecker";
 import GlobalFooter from "@/components/common/GlobalFooter";
@@ -33,11 +36,17 @@ export default function RootLayout({
       <body className="antialiased">
         <ApiHealthChecker />
         <ToastProvider>
-          <GlobalHeader />
-          <main className="min-h-screen">
-            {children}
-          </main>
-          <GlobalFooter />
+          <AuthProvider>
+            <InactivityGuard>
+              <AuthGuard>
+                <GlobalHeader />
+                <main className="min-h-screen">
+                  {children}
+                </main>
+                <GlobalFooter />
+              </AuthGuard>
+            </InactivityGuard>
+          </AuthProvider>
         </ToastProvider>
       </body>
     </html>

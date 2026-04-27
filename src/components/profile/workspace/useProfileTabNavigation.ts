@@ -24,30 +24,25 @@ export type ProfileSectionGroup = {
  */
 export function useProfileTabNavigation(sectionGroups: readonly ProfileSectionGroup[]) {
   const tabsBarRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [scrollPadPx, setScrollPadPx] = useState(160);
   const tabGroupIds = useMemo(
     () => sectionGroups.map((g) => g.id),
     [sectionGroups],
   );
   const [activeTabId, setActiveTabId] = useState<string>(tabGroupIds[0] ?? '');
-  const sectionToGroupRef = useRef<Map<string, string>>(new Map());
-  const orderedSectionIdsRef = useRef<string[]>([]);
-
-  useEffect(() => {
-    const sectionToGroup = new Map<string, string>();
-    const orderedSectionIds: string[] = [];
+  // Map sections to groups and maintain order for detection logic
+  const { sectionToGroup, orderedSectionIds } = useMemo(() => {
+    const s2g = new Map<string, string>();
+    const ids: string[] = [];
     sectionGroups.forEach((group) => {
       group.sections.forEach((sectionId) => {
-        sectionToGroup.set(sectionId, group.id);
-        orderedSectionIds.push(sectionId);
+        s2g.set(sectionId, group.id);
+        ids.push(sectionId);
       });
     });
-    sectionToGroupRef.current = sectionToGroup;
-    orderedSectionIdsRef.current = orderedSectionIds;
-    if (tabGroupIds.length > 0) {
-      setActiveTabId((prev) => prev || tabGroupIds[0]);
-    }
-  }, [sectionGroups, tabGroupIds]);
+    return { sectionToGroup: s2g, orderedSectionIds: ids };
+  }, [sectionGroups]);
 
   useLayoutEffect(() => {
     const el = tabsBarRef.current;
@@ -56,88 +51,78 @@ export function useProfileTabNavigation(sectionGroups: readonly ProfileSectionGr
     }
     const ro = new ResizeObserver(() => {
       const h = el.getBoundingClientRect().height;
-      setScrollPadPx(Math.round(NAVBAR_ESTIMATE_PX + h + 12));
+      setScrollPadPx(Math.round(h + 12)); // No navbar estimate needed for internal scroll
     });
     ro.observe(el);
     const h = el.getBoundingClientRect().height;
-    setScrollPadPx(Math.round(NAVBAR_ESTIMATE_PX + h + 12));
+    setScrollPadPx(Math.round(h + 12));
     return () => ro.disconnect();
   }, []);
 
   const scrollToTabGroup = useCallback(
     (id: string) => {
-      const targetGroup = sectionGroups.find((group) => group.id === id);
-      const firstSectionId = targetGroup?.sections?.[0];
-      if (!firstSectionId) return;
-      const node = document.getElementById(firstSectionId);
-      if (!node) return;
+      const container = scrollContainerRef.current;
+      const groupEl = document.getElementById(id);
+      if (!container || !groupEl) return;
+      
       setActiveTabId(id);
-      const top = node.getBoundingClientRect().top + window.scrollY - scrollPadPx;
-      window.scrollTo({
-        top: Math.max(0, top),
+      const containerTop = container.getBoundingClientRect().top;
+      const groupTop = groupEl.getBoundingClientRect().top;
+      const scrollOffset = groupTop - containerTop + container.scrollTop - 2; // Exact alignment
+
+      container.scrollTo({
+        top: Math.max(0, scrollOffset),
         behavior: 'smooth',
       });
     },
-    [scrollPadPx, sectionGroups],
+    [sectionGroups],
   );
 
   useEffect(() => {
-    const orderedSectionIds = orderedSectionIdsRef.current;
-    if (orderedSectionIds.length === 0 || tabGroupIds.length === 0) return;
+    const container = scrollContainerRef.current;
+    if (!container || sectionGroups.length === 0) return;
 
     const resolveActiveGroup = () => {
-      // Slight forward buffer so tab switches when next subsection is just under sticky tabs.
-      const activationBufferPx = 48;
-      const y = window.scrollY + scrollPadPx + activationBufferPx;
-      let currentSectionId = orderedSectionIds[0];
-      for (const sectionId of orderedSectionIds) {
-        const el = document.getElementById(sectionId);
-        if (!el) continue;
-        const top = el.getBoundingClientRect().top + window.scrollY;
-        if (top <= y) currentSectionId = sectionId;
+      const scrollTop = container.scrollTop;
+      const activationPoint = scrollTop + 140; // Detection threshold from top
+      
+      let activeGroupId = sectionGroups[0].id;
+
+      // Find the last section that has reached the activation point
+      for (const group of sectionGroups) {
+        const el = document.getElementById(group.id);
+        if (el) {
+          // offsetTop is relative to the "relative" container we just set
+          if (el.offsetTop <= activationPoint) {
+            activeGroupId = group.id;
+          } else {
+            break;
+          }
+        }
       }
-      const groupId = sectionToGroupRef.current.get(currentSectionId) ?? tabGroupIds[0];
-      setActiveTabId((prev) => (prev === groupId ? prev : groupId));
+      
+      setActiveTabId((prev) => (prev === activeGroupId ? prev : activeGroupId));
     };
 
-    const observedElements = orderedSectionIds
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => Boolean(el));
-
-    resolveActiveGroup();
-
-    const observer = new IntersectionObserver(
-      () => resolveActiveGroup(),
-      {
-        root: null,
-        rootMargin: `-${Math.max(120, scrollPadPx)}px 0px -55% 0px`,
-        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
-      },
-    );
-
-    let ticking = false;
     const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        ticking = false;
-        resolveActiveGroup();
-      });
+      resolveActiveGroup();
     };
 
-    observedElements.forEach((el) => observer.observe(el));
-    window.addEventListener('scroll', onScroll, { passive: true });
+    container.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', resolveActiveGroup);
 
+    // Initial check
+    resolveActiveGroup();
+
     return () => {
-      observer.disconnect();
-      window.removeEventListener('scroll', onScroll);
+      container.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', resolveActiveGroup);
     };
-  }, [tabGroupIds, scrollPadPx]);
+  }, [sectionGroups, sectionToGroup, orderedSectionIds]);
 
   return {
     tabsBarRef,
+    scrollContainerRef,
     activeTabId,
     scrollToTabGroup,
     scrollPadPx,

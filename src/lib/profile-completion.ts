@@ -70,6 +70,7 @@ export async function fetchProfileCompleteness(
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem('token')}`,
       },
     }
   );
@@ -97,6 +98,7 @@ export async function askProfileQuestion(params: {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem('token')}`,
     },
     body: JSON.stringify(params),
   });
@@ -122,6 +124,7 @@ export async function extractProfileData<T>(params: {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem('token')}`,
     },
     body: JSON.stringify(params),
   });
@@ -142,7 +145,10 @@ export async function extractProfileData<T>(params: {
 async function saveBasicInformation(candidateId: string, data: Record<string, unknown>) {
   return fetch(`${API_BASE_URL}/profile/personal-info/${candidateId}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem('token')}`
+    },
     body: JSON.stringify(data),
   });
 }
@@ -150,7 +156,10 @@ async function saveBasicInformation(candidateId: string, data: Record<string, un
 async function saveSummary(candidateId: string, data: Record<string, unknown>) {
   return fetch(`${API_BASE_URL}/profile/summary/${candidateId}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem('token')}`
+    },
     body: JSON.stringify(data),
   });
 }
@@ -158,7 +167,10 @@ async function saveSummary(candidateId: string, data: Record<string, unknown>) {
 async function saveEducation(candidateId: string, data: Record<string, unknown>) {
   return fetch(`${API_BASE_URL}/profile/education/${candidateId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem('token')}`
+    },
     body: JSON.stringify(data),
   });
 }
@@ -166,7 +178,10 @@ async function saveEducation(candidateId: string, data: Record<string, unknown>)
 async function saveSkills(candidateId: string, data: Record<string, unknown>) {
   return fetch(`${API_BASE_URL}/profile/skills/${candidateId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem('token')}`
+    },
     body: JSON.stringify(data),
   });
 }
@@ -174,7 +189,10 @@ async function saveSkills(candidateId: string, data: Record<string, unknown>) {
 async function saveLanguages(candidateId: string, data: Record<string, unknown>) {
   return fetch(`${API_BASE_URL}/profile/languages/${candidateId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem('token')}`
+    },
     body: JSON.stringify(data),
   });
 }
@@ -182,7 +200,10 @@ async function saveLanguages(candidateId: string, data: Record<string, unknown>)
 async function saveProject(candidateId: string, data: Record<string, unknown>) {
   return fetch(`${API_BASE_URL}/profile/project/${candidateId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem('token')}`
+    },
     body: JSON.stringify(data),
   });
 }
@@ -190,7 +211,10 @@ async function saveProject(candidateId: string, data: Record<string, unknown>) {
 async function savePortfolioLinks(candidateId: string, data: Record<string, unknown>) {
   return fetch(`${API_BASE_URL}/profile/portfolio-links/${candidateId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem('token')}`
+    },
     body: JSON.stringify(data),
   });
 }
@@ -198,7 +222,10 @@ async function savePortfolioLinks(candidateId: string, data: Record<string, unkn
 async function saveCareerPreferences(candidateId: string, data: Record<string, unknown>) {
   return fetch(`${API_BASE_URL}/profile/career-preferences/${candidateId}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem('token')}`
+    },
     body: JSON.stringify(data),
   });
 }
@@ -206,7 +233,10 @@ async function saveCareerPreferences(candidateId: string, data: Record<string, u
 async function saveVisaAuthorization(candidateId: string, data: Record<string, unknown>) {
   return fetch(`${API_BASE_URL}/profile/visa-work-authorization/${candidateId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem('token')}`
+    },
     body: JSON.stringify(data),
   });
 }
@@ -214,7 +244,10 @@ async function saveVisaAuthorization(candidateId: string, data: Record<string, u
 async function saveVaccination(candidateId: string, data: Record<string, unknown>) {
   return fetch(`${API_BASE_URL}/profile/vaccination/${candidateId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem('token')}`
+    },
     body: JSON.stringify(data),
   });
 }
@@ -225,6 +258,9 @@ async function saveResume(candidateId: string, file: File) {
 
   return fetch(`${API_BASE_URL}/profile/resume/upload/${candidateId}`, {
     method: "POST",
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem('token')}`
+    },
     body: formData,
   });
 }

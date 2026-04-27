@@ -14,6 +14,7 @@ import type { VisaWorkAuthorizationData } from '@/components/modals/VisaWorkAuth
 import type { VaccinationData } from '@/components/modals/VaccinationModal';
 import type { AcademicAchievementData } from '@/components/modals/AcademicAchievementModal';
 import type { CompetitiveExamsData } from '@/components/modals/CompetitiveExamsModal';
+import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
 import {
   PreviewChip,
   PreviewChipRow,
@@ -125,6 +126,41 @@ export function ProfileResumeFilled({
   onReplace: () => void;
   onEdit: () => void;
 }) {
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    url: '',
+    name: '',
+  });
+
+  const handlePreview = (url: string, name: string) => {
+    setPreviewModal({
+      isOpen: true,
+      url,
+      name,
+    });
+  };
+
+  const handleDownload = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      link.target = "_blank";
+      link.click();
+    }
+  };
+
   const displayName =
     resumeData.fileName ||
     resumeData.fileUrl?.split('/').pop() ||
@@ -166,15 +202,48 @@ export function ProfileResumeFilled({
           </div>
         </div>
         <div className="min-w-0 flex-1 space-y-2">
-          <div>
-            <p className="text-sm font-semibold text-gray-900">{displayName}</p>
-            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
-              {uploaded ? <span>Uploaded {uploaded}</span> : null}
-              {ext ? <span>{ext}</span> : null}
-              {resumeData.fileSize != null ? (
-                <span>{(resumeData.fileSize / 1024).toFixed(1)} KB</span>
-              ) : null}
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{displayName}</p>
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+                {uploaded ? <span>Uploaded {uploaded}</span> : null}
+                {ext ? <span>{ext}</span> : null}
+                {resumeData.fileSize != null ? (
+                  <span>{(resumeData.fileSize / 1024).toFixed(1)} KB</span>
+                ) : null}
+              </div>
             </div>
+            {resumeData.fileUrl && (
+              <div className="flex items-center gap-1.5 ml-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePreview(resumeData.fileUrl!, displayName);
+                  }}
+                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="View Resume"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(resumeData.fileUrl!, displayName);
+                  }}
+                  className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                  title="Download Resume"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
           <p className="text-xs text-gray-500">
             ATS-style readiness score — upload or refresh to improve matching.
@@ -197,6 +266,12 @@ export function ProfileResumeFilled({
           </div>
         </div>
       </div>
+      <DocumentViewerModal
+        isOpen={previewModal.isOpen}
+        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
+        documentUrl={previewModal.url}
+        documentName={previewModal.name}
+      />
     </div>
   );
 }
@@ -230,6 +305,41 @@ export function ProfileInternshipFilled({
   getDocumentName: (doc: unknown) => string;
   resolveDocHref: (doc: unknown) => string;
 }) {
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    url: '',
+    name: '',
+  });
+
+  const handlePreview = (url: string, name: string) => {
+    setPreviewModal({
+      isOpen: true,
+      url,
+      name,
+    });
+  };
+
+  const handleDownload = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      link.target = "_blank";
+      link.click();
+    }
+  };
+
   const docCount = data.documents?.length ?? 0;
   const snippet = textSnippet(
     [data.responsibilities, data.learnings].filter(Boolean).join(' · '),
@@ -288,6 +398,37 @@ export function ProfileInternshipFilled({
           ) : null}
           <div className="flex flex-wrap items-center gap-2">
             <PreviewDocCount count={docCount} />
+            {docCount === 1 && data.documents?.[0] && (
+              <div className="flex items-center gap-2 ml-1">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePreview(resolveDocHref(data.documents![0]), getDocumentName(data.documents![0]));
+                  }}
+                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="View Certificate"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(resolveDocHref(data.documents![0]), getDocumentName(data.documents![0]));
+                  }}
+                  className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                  title="Download Certificate"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -347,10 +488,9 @@ export function ProfileInternshipFilled({
                   >
                     <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
                     <div className="flex items-center gap-3 shrink-0 ml-2">
-                      <a
-                        href={resolveDocHref(doc)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => handlePreview(resolveDocHref(doc), getDocumentName(doc))}
                         className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Document"
                       >
@@ -358,17 +498,17 @@ export function ProfileInternshipFilled({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                      </a>
-                      <a
-                        href={resolveDocHref(doc)}
-                        download={getDocumentName(doc)}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(resolveDocHref(doc), getDocumentName(doc))}
                         className="text-orange-600 hover:text-orange-700 transition-colors"
                         title="Download Document"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                      </a>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -377,6 +517,12 @@ export function ProfileInternshipFilled({
           ) : null}
         </div>
       ) : null}
+      <DocumentViewerModal
+        isOpen={previewModal.isOpen}
+        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
+        documentUrl={previewModal.url}
+        documentName={previewModal.name}
+      />
     </PreviewEntryShell>
   );
 }
@@ -590,8 +736,44 @@ export function ProfileLanguagesFilled({
   data: LanguagesData;
   onDelete: () => void;
   getDocumentName: (doc: unknown) => string;
+  getDocumentName: (doc: unknown) => string;
   getApiDocumentHref: (doc: unknown) => string;
 }) {
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    url: '',
+    name: '',
+  });
+
+  const handlePreview = (url: string, name: string) => {
+    setPreviewModal({
+      isOpen: true,
+      url,
+      name,
+    });
+  };
+
+  const handleDownload = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      link.target = "_blank";
+      link.click();
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-3">
@@ -637,10 +819,9 @@ export function ProfileLanguagesFilled({
               </div>
               {lang.documents && lang.documents.length > 0 ? (
                 <div className="flex shrink-0 items-center gap-2">
-                  <a
-                    href={getApiDocumentHref(lang.documents[0])}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => handlePreview(getApiDocumentHref(lang.documents![0]), getDocumentName(lang.documents![0]))}
                     className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 transition-colors"
                     title="View Proof"
                   >
@@ -648,12 +829,12 @@ export function ProfileLanguagesFilled({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
-                    View ({lang.documents.length})
-                  </a>
+                    View
+                  </button>
                   <span className="text-gray-300">|</span>
-                  <a
-                    href={getApiDocumentHref(lang.documents[0])}
-                    download={getDocumentName(lang.documents[0])}
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(getApiDocumentHref(lang.documents![0]), getDocumentName(lang.documents![0]))}
                     className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-600 hover:text-orange-700 transition-colors"
                     title="Download Proof"
                   >
@@ -661,13 +842,19 @@ export function ProfileLanguagesFilled({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                     DL
-                  </a>
+                  </button>
                 </div>
               ) : null}
             </div>
           </div>
         ))}
       </div>
+      <DocumentViewerModal
+        isOpen={previewModal.isOpen}
+        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
+        documentUrl={previewModal.url}
+        documentName={previewModal.name}
+      />
     </div>
   );
 }
@@ -687,8 +874,44 @@ export function ProfileProjectFilled({
   onEdit: () => void;
   onDelete: () => void;
   getDocumentName: (doc: unknown) => string;
+  getDocumentName: (doc: unknown) => string;
   getApiDocumentHref: (doc: unknown) => string;
 }) {
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    url: '',
+    name: '',
+  });
+
+  const handlePreview = (url: string, name: string) => {
+    setPreviewModal({
+      isOpen: true,
+      url,
+      name,
+    });
+  };
+
+  const handleDownload = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      link.target = "_blank";
+      link.click();
+    }
+  };
+
   const snippet = textSnippet(
     [data.projectDescription, data.projectOutcome].filter(Boolean).join(' · '),
     220,
@@ -812,10 +1035,9 @@ export function ProfileProjectFilled({
                   >
                     <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
                     <div className="flex items-center gap-3 shrink-0 ml-2">
-                      <a
-                        href={getApiDocumentHref(doc)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => handlePreview(getApiDocumentHref(doc), getDocumentName(doc))}
                         className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Document"
                       >
@@ -823,17 +1045,17 @@ export function ProfileProjectFilled({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                      </a>
-                      <a
-                        href={getApiDocumentHref(doc)}
-                        download={getDocumentName(doc)}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(getApiDocumentHref(doc), getDocumentName(doc))}
                         className="text-orange-600 hover:text-orange-700 transition-colors"
                         title="Download Document"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                      </a>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -842,6 +1064,12 @@ export function ProfileProjectFilled({
           ) : null}
         </div>
       ) : null}
+      <DocumentViewerModal
+        isOpen={previewModal.isOpen}
+        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
+        documentUrl={previewModal.url}
+        documentName={previewModal.name}
+      />
     </PreviewEntryShell>
   );
 }
@@ -1179,6 +1407,41 @@ export function ProfileVisaFilled({
   getDocumentName: (doc: unknown) => string;
   getApiDocumentHref: (doc: unknown) => string;
 }) {
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    url: '',
+    name: '',
+  });
+
+  const handlePreview = (url: string, name: string) => {
+    setPreviewModal({
+      isOpen: true,
+      url,
+      name,
+    });
+  };
+
+  const handleDownload = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      link.target = "_blank";
+      link.click();
+    }
+  };
+
   const docCount = countVisaDocs(data);
   const dest =
     data.openForAll || !data.selectedDestination
@@ -1279,10 +1542,9 @@ export function ProfileVisaFilled({
                 >
                   <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
                   <div className="flex items-center gap-3 shrink-0 ml-2">
-                    <a
-                      href={getApiDocumentHref(doc)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => handlePreview(getApiDocumentHref(doc), getDocumentName(doc))}
                       className="text-blue-600 hover:text-blue-700 transition-colors"
                       title="View Document"
                     >
@@ -1290,17 +1552,17 @@ export function ProfileVisaFilled({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
-                    </a>
-                    <a
-                      href={getApiDocumentHref(doc)}
-                      download={getDocumentName(doc)}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(getApiDocumentHref(doc), getDocumentName(doc))}
                       className="text-orange-600 hover:text-orange-700 transition-colors"
                       title="Download Document"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                       </svg>
-                    </a>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -1324,10 +1586,9 @@ export function ProfileVisaFilled({
               >
                 <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
                 <div className="flex items-center gap-3 shrink-0 ml-2">
-                  <a
-                    href={getApiDocumentHref(doc)}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => handlePreview(getApiDocumentHref(doc), getDocumentName(doc))}
                     className="text-blue-600 hover:text-blue-700 transition-colors"
                     title="View Document"
                   >
@@ -1335,17 +1596,17 @@ export function ProfileVisaFilled({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
-                  </a>
-                  <a
-                    href={getApiDocumentHref(doc)}
-                    download={getDocumentName(doc)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(getApiDocumentHref(doc), getDocumentName(doc))}
                     className="text-orange-600 hover:text-orange-700 transition-colors"
                     title="Download Document"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                  </a>
+                  </button>
                 </div>
               </div>
               ))}
@@ -1353,6 +1614,12 @@ export function ProfileVisaFilled({
           ))}
         </div>
       ) : null}
+      <DocumentViewerModal
+        isOpen={previewModal.isOpen}
+        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
+        documentUrl={previewModal.url}
+        documentName={previewModal.name}
+      />
     </PreviewEntryShell>
   );
 }
@@ -1374,6 +1641,41 @@ export function ProfileVaccinationFilled({
   certificateHref?: string;
   certificateLabel?: string;
 }) {
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    url: '',
+    name: '',
+  });
+
+  const handlePreview = (url: string, name: string) => {
+    setPreviewModal({
+      isOpen: true,
+      url,
+      name,
+    });
+  };
+
+  const handleDownload = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      link.target = "_blank";
+      link.click();
+    }
+  };
+
   const hasCert = Boolean(data.certificate);
   const validity =
     data.validityMonth || data.validityYear
@@ -1401,11 +1703,10 @@ export function ProfileVaccinationFilled({
                 hasCert ? (
                   certificateHref ? (
                     <div className="mt-1 flex items-center gap-3">
-                      <a
-                        href={certificateHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
+                      <button
+                        type="button"
+                        onClick={() => handlePreview(certificateHref, certificateLabel || 'VaccinationCertificate')}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Certificate"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1413,19 +1714,19 @@ export function ProfileVaccinationFilled({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                         View
-                      </a>
+                      </button>
                       <span className="text-gray-300">|</span>
-                      <a
-                        href={certificateHref}
-                        download={certificateLabel || 'VaccinationCertificate'}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700"
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(certificateHref, certificateLabel || 'VaccinationCertificate')}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700 transition-colors"
                         title="Download Certificate"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
                         Download
-                      </a>
+                      </button>
                     </div>
                   ) : (
                     <PreviewChip tone="green">Uploaded</PreviewChip>
@@ -1458,6 +1759,12 @@ export function ProfileVaccinationFilled({
           Compliance summary only — edit the form to update medical records.
         </div>
       ) : null}
+      <DocumentViewerModal
+        isOpen={previewModal.isOpen}
+        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
+        documentUrl={previewModal.url}
+        documentName={previewModal.name}
+      />
     </PreviewEntryShell>
   );
 }
@@ -1479,6 +1786,41 @@ export function ProfileAcademicAchievementFilled({
   getDocumentName: (doc: unknown) => string;
   resolveDocHref: (doc: unknown) => string;
 }) {
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    url: '',
+    name: '',
+  });
+
+  const handlePreview = (url: string, name: string) => {
+    setPreviewModal({
+      isOpen: true,
+      url,
+      name,
+    });
+  };
+
+  const handleDownload = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      link.target = "_blank";
+      link.click();
+    }
+  };
+
   const docCount = data.documents?.length ?? 0;
   const snip = textSnippet(data.description, 180);
 
@@ -1509,6 +1851,37 @@ export function ProfileAcademicAchievementFilled({
           ) : null}
           <div className="flex flex-wrap items-center gap-2">
             <PreviewDocCount count={docCount} />
+            {docCount === 1 && data.documents?.[0] && (
+              <div className="flex items-center gap-2 ml-1">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePreview(resolveDocHref(data.documents![0]), getDocumentName(data.documents![0]));
+                  }}
+                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="View Certificate"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(resolveDocHref(data.documents![0]), getDocumentName(data.documents![0]));
+                  }}
+                  className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                  title="Download Certificate"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -1550,10 +1923,9 @@ export function ProfileAcademicAchievementFilled({
                   >
                     <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
                     <div className="flex items-center gap-3 shrink-0 ml-2">
-                      <a
-                        href={resolveDocHref(doc)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => handlePreview(resolveDocHref(doc), getDocumentName(doc))}
                         className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Document"
                       >
@@ -1561,17 +1933,17 @@ export function ProfileAcademicAchievementFilled({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                      </a>
-                      <a
-                        href={resolveDocHref(doc)}
-                        download={getDocumentName(doc)}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(resolveDocHref(doc), getDocumentName(doc))}
                         className="text-orange-600 hover:text-orange-700 transition-colors"
                         title="Download Document"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                      </a>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -1580,6 +1952,12 @@ export function ProfileAcademicAchievementFilled({
           ) : null}
         </div>
       ) : null}
+      <DocumentViewerModal
+        isOpen={previewModal.isOpen}
+        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
+        documentUrl={previewModal.url}
+        documentName={previewModal.name}
+      />
     </PreviewEntryShell>
   );
 }
@@ -1601,6 +1979,41 @@ export function ProfileCompetitiveExamFilled({
   getDocumentName: (doc: unknown) => string;
   resolveDocHref: (doc: unknown) => string;
 }) {
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    url: '',
+    name: '',
+  });
+
+  const handlePreview = (url: string, name: string) => {
+    setPreviewModal({
+      isOpen: true,
+      url,
+      name,
+    });
+  };
+
+  const handleDownload = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      link.target = "_blank";
+      link.click();
+    }
+  };
+
   const docCount = data.documents?.length ?? 0;
 
   return (
@@ -1631,6 +2044,37 @@ export function ProfileCompetitiveExamFilled({
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <PreviewDocCount count={docCount} />
+            {docCount === 1 && data.documents?.[0] && (
+              <div className="flex items-center gap-2 ml-1">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePreview(resolveDocHref(data.documents![0]), getDocumentName(data.documents![0]));
+                  }}
+                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="View Certificate"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(resolveDocHref(data.documents![0]), getDocumentName(data.documents![0]));
+                  }}
+                  className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                  title="Download Certificate"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -1673,10 +2117,9 @@ export function ProfileCompetitiveExamFilled({
                   >
                     <span className="truncate flex-1 font-medium">{getDocumentName(doc)}</span>
                     <div className="flex items-center gap-3 shrink-0 ml-2">
-                      <a
-                        href={resolveDocHref(doc)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => handlePreview(resolveDocHref(doc), getDocumentName(doc))}
                         className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Document"
                       >
@@ -1684,17 +2127,17 @@ export function ProfileCompetitiveExamFilled({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                      </a>
-                      <a
-                        href={resolveDocHref(doc)}
-                        download={getDocumentName(doc)}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(resolveDocHref(doc), getDocumentName(doc))}
                         className="text-orange-600 hover:text-orange-700 transition-colors"
                         title="Download Document"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                      </a>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -1703,6 +2146,12 @@ export function ProfileCompetitiveExamFilled({
           ) : null}
         </div>
       ) : null}
+      <DocumentViewerModal
+        isOpen={previewModal.isOpen}
+        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
+        documentUrl={previewModal.url}
+        documentName={previewModal.name}
+      />
     </PreviewEntryShell>
   );
 }

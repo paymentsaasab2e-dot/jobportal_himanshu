@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 
 import { API_BASE_URL, getApiBaseUrl } from '@/lib/api-base';
+import { useAuth } from '@/components/auth/AuthContext';
 import NotificationPanel from '@/components/common/NotificationPanel';
 import ProfilePanel from '@/components/common/ProfilePanel';
 import GlobalAIAssistant from '@/components/common/GlobalAIAssistant';
@@ -36,15 +37,14 @@ async function fetchWithRetry(
 }
 
 export default function Header({ showNav = true }: { showNav?: boolean }) {
+    const { user, isAuthenticated: isLoggedIn, logout } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
     const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-    const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
-    const [userName, setUserName] = useState<string>('');
-    const [userEmail, setUserEmail] = useState<string>('');
+    
+    // Fallback to local state for specific completion logic if needed
     const [profileCompletion, setProfileCompletion] = useState<number | null>(null);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const isActive = useCallback(
         (path: string) => {
             if (path === '/candidate-dashboard') {
@@ -71,79 +71,25 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
     /** Reserves document flow space equal to the fixed header so page content is not hidden underneath. */
     const [headerSpacerPx, setHeaderSpacerPx] = useState(96);
 
-    // Fetch profile data (photo, name, email)
+    // Minimal effect to fetch profile completion if not provided by context
     useEffect(() => {
-        const fetchProfileData = async () => {
-            const candidateId = sessionStorage.getItem("candidateId");
-            if (!candidateId) {
-                setIsLoggedIn(false);
-                return;
-            }
-            setIsLoggedIn(true);
-
-            // Try to load from cache first for instant UI response
-            const cachedProfile = sessionStorage.getItem(`profile_${candidateId}`);
-            if (cachedProfile) {
-                try {
-                    const profile = JSON.parse(cachedProfile);
-                    if (profile.fullName) setUserName(profile.fullName.split(' ')[0]);
-                    if (profile.email) setUserEmail(profile.email);
-                    if (profile.profileCompleteness) setProfileCompletion(profile.profileCompleteness);
-                    if (profile.profilePhotoUrl) setProfilePhotoUrl(profile.profilePhotoUrl);
-                } catch (e) {
-                    console.error("Error parsing cached profile:", e);
-                }
-            }
-
+        if (!isLoggedIn || !user?.id) return;
+        
+        const fetchCompletion = async () => {
             try {
-                const response = await fetchWithRetry(`${getApiBaseUrl()}/cv/dashboard/${candidateId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-
+                const response = await fetch(`${getApiBaseUrl()}/cv/dashboard/${user.id}`);
                 if (response.ok) {
                     const result = await response.json();
-                    if (result.success && result.data?.profile) {
-                        const profile = result.data.profile;
-                        
-                        // Save to cache
-                        sessionStorage.setItem(`profile_${candidateId}`, JSON.stringify(profile));
-
-                        // Update state
-                        if (profile.fullName) {
-                            const firstName = profile.fullName.split(' ')[0];
-                            setUserName(firstName);
-                        }
-                        if (profile.email) setUserEmail(profile.email);
-                        if (typeof profile.profileCompleteness === 'number') {
-                            setProfileCompletion(profile.profileCompleteness);
-                        }
-
-                        if (profile.profilePhotoUrl) {
-                            const photoUrl = profile.profilePhotoUrl;
-                            if (photoUrl && photoUrl.trim() !== '') {
-                                let imageSrc: string;
-                                if (photoUrl.startsWith('data:') || photoUrl.startsWith('http')) {
-                                    imageSrc = photoUrl;
-                                } else {
-                                    const baseUrl = getApiBaseUrl().replace('/api', '');
-                                    const cleanPath = photoUrl.startsWith('/') ? photoUrl : `/${photoUrl}`;
-                                    imageSrc = `${baseUrl}${cleanPath}`;
-                                }
-                                setProfilePhotoUrl(imageSrc);
-                            }
-                        }
+                    if (result.success && result.data?.profile?.profileCompleteness) {
+                        setProfileCompletion(result.data.profile.profileCompleteness);
                     }
                 }
-            } catch (error) {
-                console.error("Error fetching profile data:", error);
+            } catch (e) {
+                console.error("Header: Error fetching completion:", e);
             }
         };
-
-        fetchProfileData();
-    }, []);
+        fetchCompletion();
+    }, [isLoggedIn, user?.id]);
 
     useEffect(() => {
         const el = headerShellRef.current;
@@ -531,7 +477,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                 </div>
 
                                 {/* Profile trigger */}
-                                {profilePhotoUrl ? (
+                                {user?.profilePhotoUrl ? (
                                     <div className="relative profile-button">
                                         <button
                                             type="button"
@@ -542,7 +488,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                             className="profile-button h-8 w-8 cursor-pointer overflow-hidden rounded-full bg-slate-300"
                                         >
                                             <Image
-                                                src={profilePhotoUrl}
+                                                src={user.profilePhotoUrl}
                                                 alt="User avatar"
                                                 width={32}
                                                 height={32}
@@ -561,7 +507,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                             }}
                                             className="profile-button h-8 w-8 cursor-pointer overflow-hidden rounded-full bg-slate-300 flex items-center justify-center text-xs font-semibold text-slate-600"
                                         >
-                                            {userName ? userName.charAt(0).toUpperCase() : 'U'}
+                                            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                                         </button>
                                     </div>
                                 )}
@@ -615,9 +561,9 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                     router.push(path);
                     setIsProfileModalOpen(false);
                 }}
-                profilePhotoUrl={profilePhotoUrl}
-                userName={userName}
-                userEmail={userEmail}
+                profilePhotoUrl={user?.profilePhotoUrl || null}
+                userName={user?.name || ''}
+                userEmail={user?.email || ''}
                 profileCompletion={profileCompletion}
             />
             {isLoggedIn && !isLandingPage && <GlobalAIAssistant />}

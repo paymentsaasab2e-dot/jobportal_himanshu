@@ -33,7 +33,6 @@ const secondaryActions: Item[] = [
 ];
 
 const systemActions: Item[] = [
-  { label: 'Notification Preferences', path: '/notification', icon: 'notifications' },
   { label: 'Settings', path: '/settings', icon: 'settings' },
 ];
 

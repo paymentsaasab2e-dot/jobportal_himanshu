@@ -20,6 +20,7 @@ export function getDashboardName(profile?: DashboardData["profile"] | null) {
 }
 
 function getMatchesEyebrow(totalMatchedJobs: number) {
+  if (totalMatchedJobs === 1) return `1 fresh match today`;
   return `${totalMatchedJobs} fresh matches today`;
 }
 
