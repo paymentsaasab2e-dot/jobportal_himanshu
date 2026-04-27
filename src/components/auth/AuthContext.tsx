@@ -161,7 +161,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (isLoading) return;
 
-    const isPublicAuthRoute = ['/whatsapp', '/whatsapp/verify', '/uploadcv'].includes(pathname);
+    // Only redirect away from the phone-entry page.
+    // /whatsapp/verify manages its own post-login navigation — do NOT interfere.
+    // /uploadcv is intentionally accessible post-login for new users.
+    const isPublicAuthRoute = pathname === '/whatsapp';
     const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
     
     if (!token && !isPublicRoute) {

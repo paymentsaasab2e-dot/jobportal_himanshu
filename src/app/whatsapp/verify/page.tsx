@@ -149,12 +149,19 @@ export default function VerifyOTP() {
       // Returning users (number already in DB / onboarded before): go straight to dashboard — no CV step
       const skipCv = data.data.skipCvUpload === true;
       const postLoginRedirect = sessionStorage.getItem("postLoginRedirect");
+
       showSuccessToast("Login successful", "Your account has been verified.");
-      if (postLoginRedirect) {
+
+      if (!skipCv) {
+        // New user — always collect their CV first regardless of any stored redirect
+        router.push("/uploadcv");
+      } else if (postLoginRedirect) {
+        // Returning user who came from a gated link — send them there
         sessionStorage.removeItem("postLoginRedirect");
         router.push(postLoginRedirect);
       } else {
-        router.push(skipCv ? "/candidate-dashboard" : "/uploadcv");
+        // Returning user — go to dashboard
+        router.push("/candidate-dashboard");
       }
     } catch (err: any) {
       setError(err.message || "Verification failed. Please try again.");
