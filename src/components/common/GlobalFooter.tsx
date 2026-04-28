@@ -9,7 +9,8 @@ export default function GlobalFooter() {
     // Pages that should hide the global footer
     const hideFooterPaths = [
         '/whatsapp',
-        '/whatsapp/verify'
+        '/whatsapp/verify',
+        '/help'
     ];
     
     const shouldHide = hideFooterPaths.some(path => pathname === path || pathname.startsWith(path + '/'));

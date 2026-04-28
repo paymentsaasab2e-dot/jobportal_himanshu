@@ -76,7 +76,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#fcfcfd] text-[#111827] font-inter overflow-x-hidden pt-0">
+    <div className="relative min-h-screen bg-[#fcfcfd] text-[#111827] font-inter overflow-x-hidden pt-20">
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       <div className="hero-bg-glow"></div>
 
