@@ -42,7 +42,9 @@ const PUBLIC_ROUTES = [
   '/searchjobs',
   '/ats-check',
   '/courses',
-  '/explore-jobs'
+  '/explore-jobs',
+  '/aboutus',
+  '/contact'
 ];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

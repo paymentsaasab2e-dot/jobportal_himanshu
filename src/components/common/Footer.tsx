@@ -30,18 +30,18 @@ const footerLinks: FooterLinkGroup[] = [
   {
     title: "Company",
     items: [
-      { href: "#", label: "About Us" },
+      { href: "/aboutus", label: "About Us" },
       { href: "/employers", label: "For Employers" },
       { href: "/help", label: "Help Center" },
-      { href: "#", label: "Contact" },
+      { href: "/contact", label: "Contact" },
     ],
   },
   {
     title: "Legal",
     items: [
-      { href: "/privacypolicy", label: "Privacy Policy", external: true },
-      { href: "/terms", label: "Terms of Service", external: true },
-      { href: "/trust-safety", label: "Trust & Safety", external: true },
+      { href: "/privacypolicy", label: "Privacy Policy" },
+      { href: "/terms", label: "Terms of Service" },
+      { href: "/trust-safety", label: "Trust & Safety" },
     ],
   },
 ];

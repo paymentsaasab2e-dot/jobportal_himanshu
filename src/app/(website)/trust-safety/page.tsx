@@ -1,11 +1,11 @@
 "use client";
 
-import Footer from "../_components/Footer";
+
 
 export default function TrustSafetyPage() {
   return (
     <div className="min-h-screen bg-[#F8FBFD] text-slate-800">
-      <section className="mx-auto max-w-[980px] px-6 pb-20 pt-12">
+      <section className="mx-auto max-w-[980px] px-6 pb-20 pt-32">
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm sm:p-10">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-sky-600">
             Platform
@@ -83,7 +83,7 @@ export default function TrustSafetyPage() {
           </div>
         </div>
       </section>
-      <Footer />
+
     </div>
   );
 }

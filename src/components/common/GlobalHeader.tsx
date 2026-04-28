@@ -18,7 +18,12 @@ export default function GlobalHeader() {
         '/services', 
         '/ats-check', 
         '/executive-services',
-        '/courses'
+        '/courses',
+        '/privacypolicy',
+        '/terms',
+        '/trust-safety',
+        '/aboutus',
+        '/contact'
     ];
     const shouldHide = hideHeaderPaths.some(path => pathname === path || pathname.startsWith(path + '/'));
 

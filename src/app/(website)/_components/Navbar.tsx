@@ -32,13 +32,17 @@ export default function WebsiteNavbar() {
     pathname === l.href || 
     (l.categories && l.categories.some(c => c.links.some(s => s.href === pathname)))
   );
-  const currentIndex = activeIndex === -1 ? 0 : activeIndex;
+  const currentIndex = activeIndex; // Remove the default to 0
+  const hasActiveTab = currentIndex !== -1;
 
   // Update pill position whenever active tab or layout changes
   const updatePill = () => {
     const el = linkRefs.current[currentIndex];
     const container = navRef.current;
-    if (!el || !container) return;
+    if (!hasActiveTab || !el || !container) {
+      setIsReady(false);
+      return;
+    }
     const containerRect = container.getBoundingClientRect();
     const elRect = el.getBoundingClientRect();
     setPillStyle({
@@ -88,7 +92,7 @@ export default function WebsiteNavbar() {
         {/* Desktop Nav with Sliding Pill */}
         <div ref={navRef} className="hidden md:flex items-center relative">
           {/* Sliding black pill — absolutely positioned inside nav container */}
-          {isReady && (
+          {isReady && hasActiveTab && (
             <div
               className="absolute top-0 bottom-0 rounded-full bg-slate-900 shadow-lg pointer-events-none"
               style={{
