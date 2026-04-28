@@ -22,6 +22,8 @@ import { LmsCtaButton } from '../../components/ux/LmsCtaButton';
 import { LmsStatusBadge } from '../../components/ux/LmsStatusBadge';
 import { useLmsToast } from '../../components/ux/LmsToastProvider';
 import CVEditor from '@/components/cveditor/CVEditor';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { 
   fetchResumeHtml, 
   saveResumeHtml, 
@@ -581,62 +583,61 @@ export function ResumeStudioPageClient() {
   const handleExportPdf = async () => {
     setIsExportingPdf(true);
     try {
-      let finalHtml = '';
-
-      // If in studio mode, we prioritize the HTML from the actual preview DOM
-      if (editorMode === 'studio') {
-        const previewElement = document.getElementById('resume-preview') || 
-                               document.getElementById('resume-preview-expanded') ||
-                               document.querySelector('[id*="resume-preview"]');
-        
-        if (previewElement) {
-          // Clone the preview to prepare it for PDF export (remove scaling/UI hacks)
-          const clone = previewElement.cloneNode(true) as HTMLElement;
-          clone.style.transform = 'none';
-          clone.style.transformOrigin = 'unset';
-          clone.style.width = '100%';
-          clone.style.maxWidth = 'none';
-          clone.style.margin = '0';
-          clone.style.padding = '0';
-          clone.style.boxShadow = 'none';
-          
-          finalHtml = clone.outerHTML;
-        }
-      }
-
-      // Fallback to the rich-text state if studio capture failed or if in AI mode
-      if (!finalHtml || finalHtml.includes('Start editing your resume...')) {
-        finalHtml = resumeHtml;
-      }
-
-      if (!finalHtml || finalHtml.trim().length < 50 || finalHtml.includes('Start editing your resume...')) {
+      const previewElement = document.getElementById('resume-preview') || 
+                             document.getElementById('resume-preview-expanded') ||
+                             document.querySelector('[id*="resume-preview"]');
+      
+      if (!previewElement) {
         toast.push({ 
-          title: 'Content not found', 
-          message: 'We could not capture the resume content. Please ensure you have added some details and try again.', 
+          title: 'Preview not found', 
+          message: 'We could not locate the resume preview to generate your PDF.', 
           tone: 'warning' 
         });
         setIsExportingPdf(false);
         return;
       }
 
-      const blob = await exportResumePdf(finalHtml);
-      if (blob) {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const fileName = sections.basics.name 
-          ? `Resume_${sections.basics.name.replace(/\s+/g, '_')}.pdf`
-          : 'My_Resume.pdf';
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        toast.push({ title: 'Export complete', message: 'Your PDF has been generated successfully.', tone: 'success' });
-      }
-    } catch (err) {
-      console.error('PDF Export Error:', err);
-      toast.push({ title: 'Export failed', message: 'Could not generate PDF. Please try again later.', tone: 'error' });
+      // Hide elements that shouldn't be in the PDF (like specific editor markers if any)
+      const canvas = await html2canvas(previewElement as HTMLElement, {
+        scale: 2, // Higher quality
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: previewElement.scrollWidth,
+        windowHeight: previewElement.scrollHeight
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      const fileName = sections.basics.name 
+        ? `Resume_${sections.basics.name.replace(/\s+/g, '_')}.pdf`
+        : 'My_Resume.pdf';
+        
+      pdf.save(fileName);
+      
+      toast.push({ 
+        title: 'Export complete', 
+        message: 'Your PDF has been generated successfully on your device.', 
+        tone: 'success' 
+      });
+    } catch (err: any) {
+      console.error('❌ [Resume Studio] Client-side PDF Export Failure:', err);
+      toast.push({ 
+        title: 'Export failed', 
+        message: 'Could not generate PDF locally. Please try again or use the Print option.', 
+        tone: 'error' 
+      });
     } finally {
       setIsExportingPdf(false);
     }

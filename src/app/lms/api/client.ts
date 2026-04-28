@@ -267,6 +267,15 @@ export async function exportResumePdf(resumeHtml: string) {
     body: JSON.stringify({ candidateId, resume_html: resumeHtml })
   });
 
-  if (!res.ok) throw new Error('Failed to export PDF');
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    const errorMessage = errorData.message || errorData.error || 'Failed to export PDF';
+    console.error('❌ [PDF Export] Backend returned error:', {
+      status: res.status,
+      statusText: res.statusText,
+      errorData
+    });
+    throw new Error(errorMessage);
+  }
   return await res.blob();
 }
