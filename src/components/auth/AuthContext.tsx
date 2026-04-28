@@ -26,7 +26,24 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/', '/whatsapp', '/whatsapp/verify', '/login', '/signup'];
+const PUBLIC_ROUTES = [
+  '/', 
+  '/whatsapp', 
+  '/whatsapp/verify', 
+  '/login', 
+  '/signup',
+  '/privacypolicy',
+  '/terms',
+  '/trust-safety',
+  '/help',
+  '/services',
+  '/employers',
+  '/aicveditor',
+  '/searchjobs',
+  '/ats-check',
+  '/courses',
+  '/explore-jobs'
+];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -165,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // /whatsapp/verify manages its own post-login navigation — do NOT interfere.
     // /uploadcv is intentionally accessible post-login for new users.
     const isPublicAuthRoute = pathname === '/whatsapp';
-    const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+    const isPublicRoute = PUBLIC_ROUTES.some(path => pathname === path || (path !== '/' && pathname.startsWith(path + '/')));
     
     if (!token && !isPublicRoute) {
       console.log('AuthContext: Protecting route, redirecting to login');
