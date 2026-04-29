@@ -21,6 +21,7 @@ import {
 // Use backend1 directly (it shares the same MongoDB as backendphase2).
 import { API_BASE_URL } from '@/lib/api-base';
 import { showInfoToast, showSuccessToast } from '@/components/common/toast/toast';
+import { GlobalLoader } from '@/components/auth/GlobalLoader';
 const PAGE_BG =
   'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)';
 const SAVED_JOBS_STORAGE_PREFIX = 'dashboardSavedJobs';
@@ -242,6 +243,12 @@ const ExploreJobsPageContent = () => {
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null)
   const [jobListings, setJobListings] = useState<JobListing[]>([])
   const [loading, setLoading] = useState(true)
+  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500)
+    return () => clearTimeout(timer)
+  }, [])
   const [viewMode, setViewMode] = useState<'grid' | 'detail'>('grid')
   const [displayMode, setDisplayMode] = useState<'grid' | 'list'>('grid')
   const [isScreeningModalOpen, setIsScreeningModalOpen] = useState(false)
@@ -1546,6 +1553,10 @@ const ExploreJobsPageContent = () => {
       </div>
     );
   };
+
+  if (loading || !minLoadingTimeFinished) {
+    return <GlobalLoader />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: PAGE_BG }}>

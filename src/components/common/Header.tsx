@@ -45,6 +45,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
     
     // Fallback to local state for specific completion logic if needed
     const [profileCompletion, setProfileCompletion] = useState<number | null>(null);
+    const [dashboardUser, setDashboardUser] = useState<{ name: string; email: string; photoUrl?: string | null } | null>(null);
     const isActive = useCallback(
         (path: string) => {
             if (path === '/candidate-dashboard') {
@@ -80,8 +81,18 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                 const response = await fetch(`${getApiBaseUrl()}/cv/dashboard/${user.id}`);
                 if (response.ok) {
                     const result = await response.json();
-                    if (result.success && result.data?.profile?.profileCompleteness) {
-                        setProfileCompletion(result.data.profile.profileCompleteness);
+                    if (result.success && result.data?.profile) {
+                        const { profile } = result.data;
+                        if (profile.profileCompleteness) {
+                            setProfileCompletion(profile.profileCompleteness);
+                        }
+                        if (profile.fullName || profile.email || profile.profilePhotoUrl) {
+                            setDashboardUser({
+                                name: profile.fullName || '',
+                                email: profile.email || '',
+                                photoUrl: profile.profilePhotoUrl || null
+                            });
+                        }
                     }
                 }
             } catch (e) {
@@ -477,7 +488,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                 </div>
 
                                 {/* Profile trigger */}
-                                {user?.profilePhotoUrl ? (
+                                {dashboardUser?.photoUrl || user?.profilePhotoUrl ? (
                                     <div className="relative profile-button">
                                         <button
                                             type="button"
@@ -485,10 +496,10 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                                 setIsProfileModalOpen(!isProfileModalOpen);
                                                 setIsNotificationsModalOpen(false);
                                             }}
-                                            className="profile-button h-8 w-8 cursor-pointer overflow-hidden rounded-full bg-slate-300"
+                                            className="profile-button h-8 w-8 cursor-pointer overflow-hidden rounded-full bg-slate-200 border border-slate-100"
                                         >
                                             <Image
-                                                src={user.profilePhotoUrl}
+                                                src={dashboardUser?.photoUrl || user?.profilePhotoUrl || ''}
                                                 alt="User avatar"
                                                 width={32}
                                                 height={32}
@@ -505,9 +516,9 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                                 setIsProfileModalOpen(!isProfileModalOpen);
                                                 setIsNotificationsModalOpen(false);
                                             }}
-                                            className="profile-button h-8 w-8 cursor-pointer overflow-hidden rounded-full bg-slate-300 flex items-center justify-center text-xs font-semibold text-slate-600"
+                                            className="profile-button h-9 w-9 cursor-pointer overflow-hidden rounded-full bg-[#D6E2ED] flex items-center justify-center text-[15px] font-bold text-[#4A5E73] transition-transform active:scale-95"
                                         >
-                                            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                                            {(dashboardUser?.name || user?.name || 'User').trim().charAt(0).toUpperCase()}
                                         </button>
                                     </div>
                                 )}
@@ -561,9 +572,9 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                     router.push(path);
                     setIsProfileModalOpen(false);
                 }}
-                profilePhotoUrl={user?.profilePhotoUrl || null}
-                userName={user?.name || ''}
-                userEmail={user?.email || ''}
+                profilePhotoUrl={dashboardUser?.photoUrl || user?.profilePhotoUrl || null}
+                userName={dashboardUser?.name || user?.name || ''}
+                userEmail={dashboardUser?.email || user?.email || ''}
                 profileCompletion={profileCompletion}
             />
             {isLoggedIn && !isLandingPage && <GlobalAIAssistant />}

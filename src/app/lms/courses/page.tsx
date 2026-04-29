@@ -15,6 +15,7 @@ import { LmsEmptyState } from '../components/states/LmsEmptyState';
 import { LmsSkeleton } from '../components/states/LmsSkeleton';
 import { courseStatusFromPct, parseDurationToMinutes } from './course-utils';
 import { fetchCourses, toggleSaveCourse } from '../api/client';
+import { GlobalLoader } from '@/components/auth/GlobalLoader';
 
 const ICON_MAP: Record<string, typeof Code2> = {
   code2: Code2,
@@ -118,6 +119,12 @@ function LmsCoursesPageContent() {
 
   const [backendCourses, setBackendCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Fetch courses from backend
   useEffect(() => {
@@ -233,6 +240,10 @@ function LmsCoursesPageContent() {
       // Revert optimistic
       setBackendCourses(prev => prev.map(c => c.id === courseId ? { ...c, isSaved: currentlySaved } : c));
     }
+  }
+
+  if (loading || !minLoadingTimeFinished) {
+    return <GlobalLoader />;
   }
 
   return (

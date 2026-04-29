@@ -9,6 +9,7 @@ import { showSuccessToast, showErrorToast } from '@/components/common/toast/toas
 import { API_BASE_URL } from '@/lib/api-base';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
+import { GlobalLoader } from '@/components/auth/GlobalLoader';
 
 interface SettingsData {
   account: {
@@ -50,6 +51,12 @@ export default function SettingsPage() {
   const [isDangerOpen, setIsDangerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Danger Zone Modals
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -467,6 +474,10 @@ export default function SettingsPage() {
     { id: 'application', label: 'Application', icon: Briefcase, onClick: () => handleScrollToSection('application') },
     { id: 'danger', label: 'Account Controls', icon: AlertTriangle, onClick: () => handleScrollToSection('danger') },
   ] as const;
+
+  if (!minLoadingTimeFinished) {
+    return <GlobalLoader />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/common/Header';
 import CVEditor from '@/components/cveditor/CVEditor';
+import { GlobalLoader } from '@/components/auth/GlobalLoader';
 
 import { API_BASE_URL } from '@/lib/api-base';
 const getErrorMessage = (error: unknown) =>
@@ -15,6 +16,12 @@ export default function CVEditorPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Load resume HTML on mount
   useEffect(() => {
@@ -193,15 +200,8 @@ export default function CVEditorPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading CV editor...</p>
-        </div>
-      </div>
-    );
+  if (isLoading || !minLoadingTimeFinished) {
+    return <GlobalLoader />;
   }
 
   return (

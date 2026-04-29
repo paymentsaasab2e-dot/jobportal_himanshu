@@ -8,7 +8,7 @@ import { CheckCircle2, Sparkles, User, Briefcase, GraduationCap } from "lucide-r
 
 import { API_BASE_URL } from '@/lib/api-base';
 import { showSuccessToast } from '@/components/common/toast/toast';
-import AiLoadingScreen from "@/components/common/AiLoadingScreen";
+import HryantraLoader from "@/components/loader/CV Parsing Loader Final";
 
 export default function ExtractPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -168,7 +168,7 @@ export default function ExtractPage() {
   }, [router, isProcessing]);
 
   if (isProcessing || !minExtractTimerFinished) {
-    return <AiLoadingScreen message="Analyzing CV..." />;
+    return <HryantraLoader />;
   }
 
   return (

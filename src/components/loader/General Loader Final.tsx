@@ -1,10 +1,8 @@
-'use client';
-
 import { useEffect, useRef } from "react";
 
 type Theme = "light" | "dark";
 
-interface GlobalLoaderProps {
+interface HryantraLoaderProps {
   theme?: Theme;
 }
 
@@ -164,8 +162,8 @@ function HOrbitCanvas({ size = 160, theme = "light" }: { size?: number; theme?: 
       animId = requestAnimationFrame(animate);
     };
 
-    const animateId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animateId);
+    animate();
+    return () => cancelAnimationFrame(animId);
   }, [size, theme]);
 
   return (
@@ -182,35 +180,21 @@ function HOrbitCanvas({ size = 160, theme = "light" }: { size?: number; theme?: 
   );
 }
 
-export const GlobalLoader: React.FC<GlobalLoaderProps> = ({ theme = "light" }) => {
+export default function HryantraLoader({ theme = "light" }: HryantraLoaderProps) {
   const bg = theme === "light" ? "#f0f4f8" : "#090C15";
 
   return (
     <div
-      className="fixed inset-0 z-[100000] flex items-center justify-center"
       style={{
+        width: "100vw",
+        height: "100vh",
         background: bg,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
-      <div className="flex flex-col items-center">
-        <HOrbitCanvas size={160} theme={theme} />
-        <div className="mt-8 text-center">
-          <p className={`text-[12px] font-black uppercase tracking-[0.3em] mb-1 ${
-            theme === 'light' ? 'text-slate-400' : 'text-slate-500'
-          }`}>
-            HRYANTRA AI Engine
-          </p>
-          <div className="flex gap-1 justify-center">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="w-1.5 h-1.5 bg-[#2596be] rounded-full animate-pulse"
-                style={{ animationDelay: `${i * 0.2}s` }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
+      <HOrbitCanvas size={160} theme={theme} />
     </div>
   );
-};
+}

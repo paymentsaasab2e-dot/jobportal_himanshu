@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthContext";
 import { BookMarked, BriefcaseBusiness, Gauge, Rocket, Target } from "lucide-react";
-import AiLoadingScreen from "@/components/common/AiLoadingScreen";
+import { GlobalLoader } from "@/components/auth/GlobalLoader";
 import ProfileCompletionDrawer from "@/components/profile/ProfileCompletionDrawer";
 import { showSuccessToast } from "@/components/common/toast/toast";
 import ApplicationPipelineCard from "@/components/dashboard/ApplicationPipelineCard";
@@ -718,7 +718,7 @@ export default function CandidateDashboardPage() {
   ];
 
   if (loading || jobsLoading || !minLoadingTimeFinished) {
-    return <AiLoadingScreen message="HRYantra AI" />;
+    return <GlobalLoader />;
   }
 
   if (!candidateId) {

@@ -24,6 +24,7 @@ import DashboardPanel from '@/components/dashboard/DashboardPanel';
 import { showSuccessToast } from '@/components/common/toast/toast';
 import type { DashboardData, DashboardJob } from '@/components/dashboard/dashboard-types';
 import { API_BASE_URL } from '@/lib/profile-completion';
+import { GlobalLoader } from '@/components/auth/GlobalLoader';
 
 type ApplicationStatus =
   | 'Under Review'
@@ -602,6 +603,12 @@ export default function ApplicationsPageClient() {
 
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
   const [candidateMissing, setCandidateMissing] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [savedJobsLoading, setSavedJobsLoading] = useState(true);
@@ -1364,6 +1371,10 @@ export default function ApplicationsPageClient() {
         </main>
       </div>
     );
+  }
+
+  if (loading || !minLoadingTimeFinished) {
+    return <GlobalLoader />;
   }
 
   return (

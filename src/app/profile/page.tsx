@@ -12,7 +12,7 @@ import {
   type WorkspaceTabItem,
   type ProfileAlert,
 } from '@/components/profile/workspace';
-import AiLoadingScreen from '@/components/common/AiLoadingScreen';
+import { GlobalLoader } from '@/components/auth/GlobalLoader';
 import type { ProfileSectionGroup } from '@/components/profile/workspace/useProfileTabNavigation';
 import {
   WorkExperienceEntryCard,
@@ -1325,7 +1325,7 @@ export default function ProfilePage() {
   }, [careerPreferencesSuccessMessage]);
 
   if (isLoadingProfile || !minLoadingTimeFinished) {
-    return <AiLoadingScreen message="HRYantra AI" />;
+    return <GlobalLoader />;
   }
 
   return (

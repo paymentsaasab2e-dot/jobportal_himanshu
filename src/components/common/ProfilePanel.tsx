@@ -94,8 +94,8 @@ function Icon({ icon }: Pick<Item, 'icon'>) {
     case 'settings':
       return (
         <svg className={shared} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
           <circle cx="12" cy="12" r="3" />
-          <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3m15.364 6.364l-4.243-4.243m-4.242 0l-4.243 4.243m8.485 0l-4.243-4.243m-4.242 0l-4.243 4.243" />
         </svg>
       );
     case 'help':
@@ -176,11 +176,16 @@ export default function ProfilePanel({
                   ) : null}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-lg font-semibold text-slate-900">{userName || 'User'}</h3>
-                  <p className="truncate text-sm text-slate-500">{userEmail || 'No email'}</p>
-                  <span className="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-                    Job Seeker
-                  </span>
+                  <h3 className="truncate text-lg font-bold text-slate-900 tracking-tight">{userName || 'User'}</h3>
+                  <p className="truncate text-sm font-medium text-slate-500">{userEmail || 'No email'}</p>
+                  <div className="mt-2.5 flex items-center gap-1.5">
+                    <span className="inline-flex items-center rounded-full bg-sky-50 px-2.5 py-0.5 text-[11px] font-bold text-sky-700 border border-sky-100 uppercase tracking-wider">
+                      Job Seeker
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-100 uppercase tracking-wider">
+                      Verified
+                    </span>
+                  </div>
                 </div>
               </div>
 

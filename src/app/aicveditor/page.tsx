@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/common/Header';
 import ResumeTemplate, { ResumeJSON } from '@/components/resume/ResumeTemplate';
+import { GlobalLoader } from '@/components/auth/GlobalLoader';
 
 import { API_BASE_URL } from '@/lib/api-base';
 
@@ -26,7 +27,13 @@ export default function AICVEditorPage() {
   const [editingIndex, setEditingIndex] = useState<{ section: string; index: number } | null>(null);
   const [aiImproving, setAiImproving] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
   const resumePreviewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Load resume data on mount
   useEffect(() => {
@@ -300,15 +307,8 @@ export default function AICVEditorPage() {
     updateResume({ custom_sections: current });
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading resume...</p>
-        </div>
-      </div>
-    );
+  if (isLoading || !minLoadingTimeFinished) {
+    return <GlobalLoader />;
   }
 
   return (

@@ -12,6 +12,7 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import { LMS_CARD_INTERACTIVE, LMS_SECTION_TITLE, LMS_PAGE_SUBTITLE } from './constants';
+import { GlobalLoader } from '@/components/auth/GlobalLoader';
 import { LmsProgressBar } from './components/LmsProgressBar';
 import {
   AISectionHeading,
@@ -80,7 +81,13 @@ export default function LmsDashboardPage() {
   const toast = useLmsToast();
   const { state, registerEvent, unregisterEvent, addPlannedItem, setLastActiveCourseId, fetchDashboard } = useLmsState();
   const dashboardData = state.dashboardData;
-  const isLoading = !state.isHydrated || !dashboardData;
+  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
+  const isLoading = !state.isHydrated || !dashboardData || !minLoadingTimeFinished;
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (state.isHydrated && !dashboardData) {
@@ -201,20 +208,7 @@ export default function LmsDashboardPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="space-y-8 pb-10">
-        <div className="min-w-0">
-          <div className="h-10 w-48 animate-pulse rounded-lg bg-gray-200" />
-          <div className="mt-2 h-4 w-96 animate-pulse rounded-lg bg-gray-100" />
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 animate-pulse rounded-2xl bg-gray-100" />
-          ))}
-        </div>
-        <div className="h-64 animate-pulse rounded-2xl bg-gray-50" />
-      </div>
-    );
+    return <GlobalLoader />;
   }
 
   return (

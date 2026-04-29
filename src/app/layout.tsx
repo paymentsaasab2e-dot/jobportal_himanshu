@@ -8,6 +8,7 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import GlobalHeader from "@/components/common/GlobalHeader";
 import ApiHealthChecker from "@/components/common/ApiHealthChecker";
 import GlobalFooter from "@/components/common/GlobalFooter";
+import { NavigationLoader } from "@/components/common/NavigationLoader";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({
           <AuthProvider>
             <InactivityGuard>
               <AuthGuard>
+                <NavigationLoader />
                 <GlobalHeader />
                 <main className="min-h-screen">
                   {children}
