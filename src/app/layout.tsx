@@ -23,8 +23,15 @@ const arimo = Arimo({
 });
 
 export const metadata: Metadata = {
-  title: "HRYANTRA B2E",
+  title: {
+    default: "HRYANTRA B2E",
+    template: "%s | HR YANTRA",
+  },
   description: "AI-powered career dashboard and learning platform",
+  icons: {
+    icon: "/ai2yantra.png",
+    apple: "/ai2yantra.png",
+  },
 };
 
 export default function RootLayout({

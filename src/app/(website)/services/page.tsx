@@ -499,7 +499,7 @@ export default function Home() {
                 </div>
               </div>
               
-              <Link href="/whatsapp" className="inline-flex items-center gap-2 font-semibold text-gray-900 mt-6 relative z-10 group/cta text-base">
+              <Link href="/lms/courses" className="inline-flex items-center gap-2 font-semibold text-gray-900 mt-6 relative z-10 group/cta text-base">
                 Try Resume Builder <span className="bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center group-hover/cta:bg-accent-primary group-hover/cta:text-white transition-colors duration-300"><i className="fa-solid fa-arrow-right text-[10px]"></i></span>
               </Link>
             </div>
@@ -528,7 +528,7 @@ export default function Home() {
                 </div>
               </div>
               
-              <Link href="/whatsapp" className="inline-flex items-center gap-2 font-semibold text-gray-900 mt-6 relative z-10 group/cta text-base">
+              <Link href="/lms/courses" className="inline-flex items-center gap-2 font-semibold text-gray-900 mt-6 relative z-10 group/cta text-base">
                 Start Mock Interview <span className="bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center group-hover/cta:bg-accent-secondary group-hover/cta:text-white transition-colors duration-300"><i className="fa-solid fa-arrow-right text-[10px]"></i></span>
               </Link>
             </div>
@@ -557,7 +557,7 @@ export default function Home() {
                 </div>
               </div>
               
-              <Link href="/whatsapp" className="inline-flex items-center gap-2 font-semibold text-gray-900 mt-6 relative z-10 group/cta text-base">
+              <Link href="/lms/courses" className="inline-flex items-center gap-2 font-semibold text-gray-900 mt-6 relative z-10 group/cta text-base">
                 Test Your Skills <span className="bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center group-hover/cta:bg-accent-primary group-hover/cta:text-white transition-colors duration-300"><i className="fa-solid fa-arrow-right text-[10px]"></i></span>
               </Link>
             </div>
@@ -591,7 +591,7 @@ export default function Home() {
                 </div>
               </div>
               
-              <Link href="/whatsapp" className="inline-flex items-center gap-2 font-semibold text-gray-900 mt-6 relative z-10 group/cta text-base">
+              <Link href="/lms/courses" className="inline-flex items-center gap-2 font-semibold text-gray-900 mt-6 relative z-10 group/cta text-base">
                 Explore Courses <span className="bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center group-hover/cta:bg-accent-secondary group-hover/cta:text-white transition-colors duration-300"><i className="fa-solid fa-arrow-right text-[10px]"></i></span>
               </Link>
             </div>

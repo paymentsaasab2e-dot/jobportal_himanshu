@@ -60,7 +60,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const pathname = usePathname();
 
   const logout = useCallback(async (logoutAll: boolean = false) => {
-    console.log('AuthContext: Logout called. Global:', logoutAll);
     const candidateId = localStorage.getItem('candidateId') || sessionStorage.getItem('candidateId');
     
     if (logoutAll && candidateId) {
@@ -72,7 +71,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         });
       } catch (error) {
-        console.error('Error logging out of all devices:', error);
       }
     }
 
@@ -92,10 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
     const candidateId = localStorage.getItem('candidateId') || sessionStorage.getItem('candidateId');
 
-    console.log(`AuthContext: Refreshing user. Token present: ${!!storedToken}, CandidateId: ${candidateId}`);
-
     if (!storedToken || !candidateId) {
-      console.log('AuthContext: No session found in storage.');
       setIsLoading(false);
       setToken(null);
       return;
@@ -124,21 +119,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name: [personalInfo.firstName, personalInfo.lastName].filter(Boolean).join(' ') || 'User',
             profilePhotoUrl: personalInfo.profilePhotoUrl || null
           });
-          console.log('AuthContext: Profile sync successful.');
         }
       } else if (response.status === 401) {
-        console.warn('AuthContext: Token rejected by server (401).');
         logout();
       }
     } catch (error) {
-      console.error('AuthContext: Profile fetch failed:', error);
     } finally {
       setIsLoading(false);
     }
   }, [logout, token]);
 
   const login = useCallback((newToken: string, candidateId: string, userData?: any) => {
-    console.log('AuthContext: Login called for', candidateId);
     localStorage.setItem('token', newToken);
     localStorage.setItem('candidateId', candidateId);
     sessionStorage.setItem('token', newToken);
@@ -154,13 +145,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Initial session check & Cross-tab sync
   useEffect(() => {
-    console.log('AuthContext: Initial mount, checking session...');
     refreshUser();
 
     // Sync logout across tabs
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'token' && !e.newValue) {
-        console.log('AuthContext: Logout detected in another tab');
         setToken(null);
         setUser(null);
         // The Auth Guard effect (line 145) will handle the redirection
@@ -173,7 +162,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Debug state changes
   useEffect(() => {
-    console.log(`AuthContext: State updated - isAuthenticated: ${!!token}, isLoading: ${isLoading}`);
   }, [token, isLoading]);
 
   // Auth Guard Logic
@@ -187,10 +175,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const isPublicRoute = PUBLIC_ROUTES.some(path => pathname === path || (path !== '/' && pathname.startsWith(path + '/')));
     
     if (!token && !isPublicRoute) {
-      console.log('AuthContext: Protecting route, redirecting to login');
       router.push('/whatsapp');
     } else if (token && isPublicAuthRoute) {
-      console.log('AuthContext: Already logged in, redirecting to dashboard');
       router.push('/candidate-dashboard');
     }
   }, [token, isLoading, pathname, router]);

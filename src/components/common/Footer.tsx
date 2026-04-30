@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import { Facebook, Instagram, Linkedin, X } from "lucide-react";
 
 const currentYear = new Date().getFullYear();
 
@@ -48,25 +48,25 @@ const footerLinks: FooterLinkGroup[] = [
 
 const socialLinks = [
   {
-    href: "#",
+    href: "https://www.linkedin.com/company/hryantra/",
     label: "LinkedIn",
     icon: Linkedin,
     hover: "hover:text-[var(--brand-primary)] hover:border-[rgba(40,168,225,0.22)] hover:bg-[var(--brand-primary-soft)]",
   },
   {
-    href: "#",
-    label: "Twitter",
-    icon: Twitter,
+    href: "https://x.com/HRyantra",
+    label: "X",
+    icon: X,
     hover: "hover:text-[var(--brand-secondary)] hover:border-[rgba(40,168,223,0.22)] hover:bg-[var(--brand-secondary-soft)]",
   },
   {
-    href: "#",
+    href: "https://www.instagram.com/hryantra/",
     label: "Instagram",
     icon: Instagram,
     hover: "hover:text-[var(--brand-accent)] hover:border-[rgba(252,150,32,0.22)] hover:bg-[var(--brand-accent-soft)]",
   },
   {
-    href: "#",
+    href: "https://www.facebook.com/profile.php?id=61576691802751",
     label: "Facebook",
     icon: Facebook,
     hover: "hover:text-[var(--brand-primary)] hover:border-[rgba(40,168,225,0.22)] hover:bg-[var(--brand-primary-soft)]",
@@ -100,6 +100,8 @@ export default function Footer() {
                   key={label}
                   href={href}
                   aria-label={label}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={`flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-all ${hover}`}
                 >
                   <Icon className="h-4 w-4" />

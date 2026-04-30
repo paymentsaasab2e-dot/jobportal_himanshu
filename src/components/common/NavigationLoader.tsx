@@ -31,8 +31,8 @@ export function NavigationLoader() {
 
       if (!isInternal) return;
 
-      // Don't show loader if navigating to the same page
-      if (href === pathname) return;
+      // Don't show loader if navigating to the same page or to the extract page
+      if (href === pathname || href === '/extract' || href.startsWith('/extract/')) return;
 
       // Start loader
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -76,6 +76,6 @@ export function NavigationLoader() {
     };
   }, []);
 
-  if (!isNavigating) return null;
+  if (!isNavigating || pathname === '/extract' || pathname?.startsWith('/extract/')) return null;
   return <GlobalLoader />;
 }

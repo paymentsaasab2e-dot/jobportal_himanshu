@@ -844,6 +844,7 @@ function HeroSection() {
                       width={36} 
                       height={36} 
                       className={`object-contain transition-all ${searchMode === 'ai' ? 'brightness-0 invert' : 'brightness-0'}`} 
+                      style={{ width: '36px', height: '36px' }}
                     />
                   </button>
                </div>
@@ -857,6 +858,7 @@ function HeroSection() {
                         width={40} 
                         height={40} 
                         className="object-contain brightness-0 invert" 
+                        style={{ width: '40px', height: '40px' }}
                       />
                     </>
                   ) : (

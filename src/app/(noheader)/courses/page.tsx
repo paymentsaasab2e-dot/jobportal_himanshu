@@ -213,6 +213,53 @@ export default function CoursesPage() {
     },
   ];
 
+  const filteredCourses = courses.filter(course => {
+    // Search query
+    const matchesSearch = !searchQuery || 
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      course.description.toLowerCase().includes(searchQuery.toLowerCase());
+      
+    // Skill Level
+    const matchesSkill = skillLevel === 'all' || course.skillLevel?.toLowerCase() === skillLevel.toLowerCase();
+    
+    // Provider
+    const matchesProvider = provider === 'all' || course.provider.toLowerCase().includes(provider.toLowerCase());
+    
+    // Price
+    let matchesPrice = true;
+    if (price === 'free') matchesPrice = course.price.toLowerCase() === 'free';
+    else if (price === 'paid') matchesPrice = course.price.toLowerCase() !== 'free';
+    
+    // Duration
+    let matchesDuration = true;
+    if (duration !== 'all') {
+      const weeksMatch = course.duration.match(/(\d+)/);
+      if (weeksMatch) {
+        const weeks = parseInt(weeksMatch[1], 10);
+        if (duration === 'short') matchesDuration = weeks <= 4;
+        else if (duration === 'medium') matchesDuration = weeks >= 5 && weeks <= 8;
+        else if (duration === 'long') matchesDuration = weeks >= 9;
+      }
+    }
+    
+    return matchesSearch && matchesSkill && matchesProvider && matchesPrice && matchesDuration;
+  }).sort((a, b) => {
+    if (sortBy === 'price') {
+      const priceA = a.price.toLowerCase() === 'free' ? 0 : parseFloat(a.price.replace(/[^0-9.]/g, ''));
+      const priceB = b.price.toLowerCase() === 'free' ? 0 : parseFloat(b.price.replace(/[^0-9.]/g, ''));
+      return priceA - priceB;
+    }
+    if (sortBy === 'duration') {
+      const durationA = parseInt(a.duration.match(/(\d+)/)?.[1] || '0', 10);
+      const durationB = parseInt(b.duration.match(/(\d+)/)?.[1] || '0', 10);
+      return durationA - durationB;
+    }
+    if (sortBy === 'newest') {
+      return b.id - a.id;
+    }
+    return 0; // relevance
+  });
+
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #fde9d4, #fafbfb, #bddffb)" }}>
       <Navbar />
@@ -280,7 +327,7 @@ export default function CoursesPage() {
                 placeholder="Search courses..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-black"
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '14px',
@@ -495,9 +542,10 @@ export default function CoursesPage() {
         </div>
 
         {/* Course Cards Grid */}
-        <div className="flex flex-wrap gap-6 mb-8 justify-center lg:justify-start">
-          {courses.map((course) => (
-            <div
+        {filteredCourses.length > 0 ? (
+          <div className="flex flex-wrap gap-6 mb-8 justify-center lg:justify-start">
+            {filteredCourses.map((course) => (
+              <div
               key={course.id}
               className="overflow-hidden transition-all duration-300 flex flex-col border-2 border-gray-200 hover:border-[#28A8DF] group"
               style={{
@@ -724,6 +772,11 @@ export default function CoursesPage() {
             </div>
           ))}
         </div>
+        ) : (
+          <div className="flex justify-center items-center py-20 w-full mb-8">
+            <p className="text-gray-500 text-lg font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>No courses found matching your criteria.</p>
+          </div>
+        )}
 
         {/* Explore All Courses Button */}
         <div className="flex justify-center mb-8">

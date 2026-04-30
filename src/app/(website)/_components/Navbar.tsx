@@ -20,6 +20,7 @@ export default function WebsiteNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const employersLoginHref = "https://employers.hryantra.com/login?redirect=%2Fleads";
   const isEmployersPage = pathname === "/employers" || pathname.startsWith("/employers/");
+  const isServicesPage = pathname === "/services" || pathname.startsWith("/services/");
   const loginSignupHref = isEmployersPage ? employersLoginHref : "/whatsapp";
 
   // Sliding pill state
@@ -77,17 +78,19 @@ export default function WebsiteNavbar() {
       <div className="mx-auto flex max-w-[1180px] items-center justify-between px-4 sm:px-5 lg:px-6">
 
         {/* Logo */}
-        <Link href="/" className="relative flex items-center group">
-          <div className="relative h-9 w-32">
-            <Image
-              src="/SAASA%20Logo.png"
-              alt="SAASA B2E"
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
-        </Link>
+        <div className="flex-1">
+          <Link href="/" className="relative flex items-center group w-fit">
+            <div className="relative h-9 w-32">
+              <Image
+                src="/SAASA%20Logo.png"
+                alt="SAASA B2E"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+          </Link>
+        </div>
 
         {/* Desktop Nav with Sliding Pill */}
         <div ref={navRef} className="hidden md:flex items-center relative">
@@ -157,13 +160,17 @@ export default function WebsiteNavbar() {
         </div>
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-4">
-          <Link
-            href={loginSignupHref}
-            className="border-2 border-black !text-black px-6 py-2 rounded-full text-[15px] font-bold hover:bg-black hover:!text-white transition-all"
-          >
-            Login/Signup
-          </Link>
+        <div className="flex-1 hidden md:flex justify-end">
+          {!isServicesPage && (
+            <div className="flex items-center gap-4">
+              <Link
+                href={loginSignupHref}
+                className="border-2 border-black !text-black px-6 py-2 rounded-full text-[15px] font-bold hover:bg-black hover:!text-white transition-all"
+              >
+                Login
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Mobile Toggle */}
@@ -211,15 +218,17 @@ export default function WebsiteNavbar() {
             </div>
           ))}
           <div className="h-px bg-slate-100 my-2" />
-          <div className="flex flex-col gap-3 mt-2">
-            <Link
-              href={loginSignupHref}
-              className="border-2 border-black !text-black text-center py-4 rounded-[18px] font-bold text-lg hover:bg-black hover:!text-white transition-all"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Login/Signup
-            </Link>
-          </div>
+          {!isServicesPage && (
+            <div className="flex flex-col gap-3 mt-2">
+              <Link
+                href={loginSignupHref}
+                className="border-2 border-black !text-black text-center py-4 rounded-[18px] font-bold text-lg hover:bg-black hover:!text-white transition-all"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Login
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </nav>
