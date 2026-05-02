@@ -12,15 +12,14 @@ export default function WebsiteSiteLayout({
 }) {
   const pathname = usePathname();
   const { isAuthenticated, user } = useAuth();
-  const isExploreJobs = pathname?.includes("/explore-jobs");
-  const isServicesPage = pathname === "/services";
+  const isEmployersPage = pathname === "/employers";
 
   return (
     <div className="flex flex-col min-h-screen selection:bg-[#28A8DF] selection:text-white">
-      {isServicesPage && isAuthenticated && user ? (
+      {isAuthenticated && user && !isEmployersPage ? (
         <Header />
       ) : (
-        !isExploreJobs && <Navbar />
+        <Navbar />
       )}
       <main className="flex-1">
         {children}

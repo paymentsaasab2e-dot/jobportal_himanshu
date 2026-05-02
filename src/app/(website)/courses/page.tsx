@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Navbar from '@/app/(website)/_components/Navbar';
 
 interface Course {
   id: number;
@@ -262,8 +261,7 @@ export default function CoursesPage() {
 
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #fde9d4, #fafbfb, #bddffb)" }}>
-      <Navbar />
-      <main className="mx-auto max-w-[1180px] px-4 py-8 sm:px-5 lg:px-6 pt-24">
+      <main className="mx-auto max-w-[1180px] px-4 py-8 sm:px-5 lg:px-6 pt-32">
         {/* Title Section */}
         <div className="mb-8">
           <h1

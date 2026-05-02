@@ -24,8 +24,8 @@ const arimo = Arimo({
 
 export const metadata: Metadata = {
   title: {
-    default: "HRYANTRA B2E",
-    template: "%s | HR YANTRA",
+    default: "HR Yantra",
+    template: "%s | HR Yantra",
   },
   description: "AI-powered career dashboard and learning platform",
   icons: {

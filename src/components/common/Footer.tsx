@@ -2,7 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Facebook, Instagram, Linkedin, X } from "lucide-react";
+
+import { useAuth } from "@/components/auth/AuthContext";
 
 const currentYear = new Date().getFullYear();
 
@@ -16,35 +19,6 @@ interface FooterLinkGroup {
   title: string;
   items: FooterLinkItem[];
 }
-
-const footerLinks: FooterLinkGroup[] = [
-  {
-    title: "Platform",
-    items: [
-      { href: "/", label: "Find Jobs" },
-      { href: "/courses", label: "Courses & LMS" },
-      { href: "/services", label: "Expert Services" },
-
-    ],
-  },
-  {
-    title: "Company",
-    items: [
-      { href: "/aboutus", label: "About Us" },
-      { href: "/employers", label: "For Employers" },
-      { href: "/help", label: "Help Center" },
-      { href: "/contact", label: "Contact" },
-    ],
-  },
-  {
-    title: "Legal",
-    items: [
-      { href: "/privacypolicy", label: "Privacy Policy" },
-      { href: "/terms", label: "Terms of Service" },
-      { href: "/trust-safety", label: "Trust & Safety" },
-    ],
-  },
-];
 
 const socialLinks = [
   {
@@ -74,6 +48,48 @@ const socialLinks = [
 ];
 
 export default function Footer() {
+  const { isAuthenticated: isLoggedIn } = useAuth();
+  const pathname = usePathname();
+  const isLandingPage = pathname === "/";
+  const isEmployersPage = pathname === "/employers";
+
+  const platformLinks = (isLoggedIn && !isLandingPage && !isEmployersPage) ? [
+    { href: "/candidate-dashboard", label: "Dashboard" },
+    { href: "/explore-jobs", label: "Jobs" },
+    { href: "/applications", label: "Applications" },
+    { href: "/lms/courses", label: "LMS" },
+    { href: "/profile", label: "Profile" },
+    { href: "/services", label: "Services" },
+  ] : [
+    { href: "/", label: "Find Jobs" },
+    { href: "/courses", label: "Courses & LMS" },
+    { href: "/services", label: "Expert Services" },
+  ];
+
+  const footerLinks: FooterLinkGroup[] = [
+    {
+      title: "Platform",
+      items: platformLinks,
+    },
+    {
+      title: "Company",
+      items: [
+        { href: "/aboutus", label: "About Us" },
+        { href: "/employers", label: "For Employers" },
+        { href: "/help", label: "Help Center" },
+        { href: "/contact", label: "Contact" },
+      ],
+    },
+    {
+      title: "Legal",
+      items: [
+        { href: "/privacypolicy", label: "Privacy Policy" },
+        { href: "/terms", label: "Terms of Service" },
+        { href: "/trust-safety", label: "Trust & Safety" },
+      ],
+    },
+  ];
+
   return (
     <footer className="bg-transparent font-sans text-slate-600">
       <div className="mx-auto max-w-[1240px] px-6 py-10">
@@ -145,3 +161,4 @@ export default function Footer() {
     </footer>
   );
 }
+

@@ -24,6 +24,7 @@ export default function GlobalHeader() {
         '/trust-safety',
         '/aboutus',
         '/contact',
+        '/explore-jobs',
         '/help'
     ];
     const shouldHide = hideHeaderPaths.some(path => pathname === path || pathname.startsWith(path + '/'));

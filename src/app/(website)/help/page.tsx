@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import WebsiteNavbar from '@/app/(website)/_components/Navbar';
-import Footer from '@/components/common/Footer';
 import { 
   ChevronDown, 
   Search, 
@@ -121,8 +119,7 @@ export default function HelpPage() {
   })).filter(cat => cat.questions.length > 0);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans">
-      <WebsiteNavbar />
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans pt-20">
       
       {/* Hero Section */}
       <section className="bg-white border-b border-slate-200 pt-32 pb-16">
@@ -255,7 +252,8 @@ export default function HelpPage() {
               </div>
               <a 
                 href="mailto:support@hryantra.com"
-                className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-[15px] hover:bg-slate-100 transition-all w-full sm:w-auto text-center"
+                className="bg-white px-8 py-4 rounded-2xl font-black text-[15px] hover:bg-slate-100 transition-all w-full sm:w-auto text-center shadow-md"
+                style={{ color: '#000000' }}
               >
                 Contact Us
               </a>
@@ -263,8 +261,6 @@ export default function HelpPage() {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 }
