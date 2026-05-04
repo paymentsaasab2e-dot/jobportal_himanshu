@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Always fetch fresh job data (Phase 1 explore-jobs must reflect Phase 2 CRM edits).
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Local Next dev: forward to your machine’s API. Production / Vercel: set BACKEND_INTERNAL_URL or use hosted default.
 const HOSTED_BACKEND_BASE = 'https://api1.hryantra.com/api';
 const LOCAL_BACKEND_BASE = 'http://localhost:5000/api';
@@ -24,6 +28,12 @@ const buildTargetUrl = (req: NextRequest, pathParts: string[]) => {
   return `${backendBase}/${pathname}${query}`;
 };
 
+/** Tenant DB name for Phase 2 public job feed (same DB where CRM creates/edits jobs). */
+const PHASE2_PUBLIC_FEED_TENANT_DB =
+  process.env.PHASE2_PUBLIC_FEED_TENANT_DB?.trim() ||
+  process.env.PHASE2_TENANT_DB_NAME?.trim() ||
+  '';
+
 async function proxyRequest(req: NextRequest, pathParts: string[]) {
   const targetUrl = buildTargetUrl(req, pathParts);
 
@@ -32,6 +42,15 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
   headers.delete('origin');
   // Let upstream return uncompressed payload to avoid decode mismatches.
   headers.delete('accept-encoding');
+
+  // Public feed is anonymous on Phase 2; strip caller JWT so tenant middleware does not
+  // pick the wrong DB from a candidate token. Prefer explicit tenant header + env.
+  if (pathParts[0] === 'phase2-public-jobs') {
+    headers.delete('authorization');
+    if (PHASE2_PUBLIC_FEED_TENANT_DB) {
+      headers.set('x-tenant-db-name', PHASE2_PUBLIC_FEED_TENANT_DB);
+    }
+  }
 
   const method = req.method.toUpperCase();
   const hasBody = !['GET', 'HEAD'].includes(method);

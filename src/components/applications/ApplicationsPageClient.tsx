@@ -43,6 +43,9 @@ interface Application {
   status: ApplicationStatus | string;
   appliedDate: string;
   matchScore: number;
+  /** Set when CRM schedules an interview (Phase 2) and backend syncs portal application timeline. */
+  interviewScheduledAt?: string | null;
+  interviewJoinUrl?: string | null;
 }
 
 interface InterviewItem {
@@ -438,7 +441,7 @@ function getApplicationAction(
 function CompanyMark({ company }: { company: string }) {
   return (
     <div
-      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br ${getCompanyTheme(
+      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-linear-to-br ${getCompanyTheme(
         company
       )} text-[13px] font-semibold uppercase tracking-[0.08em] text-white shadow-[0_14px_28px_rgba(15,23,42,0.14)]`}
     >
@@ -469,7 +472,7 @@ function MetricTile({
             {value}
           </p>
         </div>
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--brand-primary-soft) text-(--brand-primary)">
           <Icon className="h-4 w-4" strokeWidth={2.1} />
         </span>
       </div>
@@ -620,7 +623,13 @@ export default function ApplicationsPageClient() {
 
   useEffect(() => {
     const resolvedCandidateId =
-      typeof window !== 'undefined' ? sessionStorage.getItem('candidateId') : null;
+      typeof window !== 'undefined'
+        ? sessionStorage.getItem('candidateId') || localStorage.getItem('candidateId')
+        : null;
+
+    if (typeof window !== 'undefined' && resolvedCandidateId && !sessionStorage.getItem('candidateId')) {
+      sessionStorage.setItem('candidateId', resolvedCandidateId);
+    }
 
     setCandidateId(resolvedCandidateId);
 
@@ -685,6 +694,31 @@ export default function ApplicationsPageClient() {
       cancelled = true;
     };
   }, [candidateId]);
+
+  useEffect(() => {
+    const derived: InterviewItem[] = applications
+      .filter(
+        (app) =>
+          app.status === 'Interview' || Boolean(app.interviewScheduledAt)
+      )
+      .map((app) => {
+        const when =
+          app.interviewScheduledAt && !Number.isNaN(Date.parse(app.interviewScheduledAt))
+            ? app.interviewScheduledAt
+            : `${app.appliedDate}T12:00:00.000Z`;
+        const joinUrl = app.interviewJoinUrl?.trim() || undefined;
+        return {
+          id: app.id,
+          jobTitle: app.jobTitle,
+          company: app.company,
+          interviewDateTime: when,
+          interviewType: joinUrl ? ('online' as const) : ('walk-in' as const),
+          status: 'Scheduled' as const,
+          joinUrl,
+        };
+      });
+    setInterviews(derived);
+  }, [applications]);
 
   useEffect(() => {
     if (!candidateId) return;
@@ -1155,7 +1189,7 @@ export default function ApplicationsPageClient() {
               <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${statusMeta.chip}`}>
                 {application.status}
               </span>
-              <span className="rounded-full bg-[var(--brand-accent-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--brand-accent)]">
+              <span className="rounded-full bg-(--brand-accent-soft) px-2.5 py-1 text-[11px] font-semibold text-(--brand-accent)">
                 {getApplicationScoreLabel(application.matchScore)}
               </span>
             </div>
@@ -1231,7 +1265,7 @@ export default function ApplicationsPageClient() {
                 onClick={() => {
                   window.open(matchingInterview.joinUrl, '_blank', 'noopener,noreferrer');
                 }}
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[rgba(40,168,225,0.22)] bg-white px-3 py-2 text-[12px] font-semibold text-[var(--brand-primary)] transition-all duration-200 hover:bg-[var(--brand-primary-soft)]"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[rgba(40,168,225,0.22)] bg-white px-3 py-2 text-[12px] font-semibold text-(--brand-primary) transition-all duration-200 hover:bg-(--brand-primary-soft)"
               >
                 Join interview
                 <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -1280,7 +1314,7 @@ export default function ApplicationsPageClient() {
               </div>
             </div>
 
-            <span className="rounded-full bg-[var(--brand-accent-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--brand-accent)]">
+            <span className="rounded-full bg-(--brand-accent-soft) px-2.5 py-1 text-[11px] font-semibold text-(--brand-accent)">
               {matchLabel}
             </span>
           </div>
@@ -1314,7 +1348,7 @@ export default function ApplicationsPageClient() {
               </span>
             ) : null}
             {job.visaSponsorship ? (
-              <span className="inline-flex rounded-full bg-[var(--brand-primary-soft)] px-2.5 py-1 text-[var(--brand-primary)]">
+              <span className="inline-flex rounded-full bg-(--brand-primary-soft) px-2.5 py-1 text-(--brand-primary)">
                 Visa friendly
               </span>
             ) : null}
@@ -1324,7 +1358,7 @@ export default function ApplicationsPageClient() {
             <button
               type="button"
               onClick={() => handleToggleSavedJob(job.id)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
             >
               Remove saved
               <BookmarkCheck className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -1349,7 +1383,7 @@ export default function ApplicationsPageClient() {
         <main className="w-full grow overflow-x-hidden">
           <div className="mx-auto max-w-[1320px] px-6 py-14 lg:px-8">
             <DashboardPanel className="px-6 py-10 text-center sm:px-10">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-(--brand-primary-soft) text-(--brand-primary)">
                 <BriefcaseBusiness className="h-7 w-7" strokeWidth={2.2} />
               </div>
               <h1 className="mt-5 text-3xl font-semibold tracking-tight text-slate-950">
@@ -1388,7 +1422,7 @@ export default function ApplicationsPageClient() {
 
               <div className="relative flex flex-col gap-1 xl:flex-row xl:items-start xl:justify-between">
                 <div className="max-w-2xl space-y-1">
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary-soft)] bg-white/72 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-primary)] shadow-sm">
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-(--brand-primary-soft) bg-white/72 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-primary) shadow-sm">
                     <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
                     Application command center
                   </div>
@@ -1465,7 +1499,7 @@ export default function ApplicationsPageClient() {
                   <div className="flex min-w-0 items-start gap-3">
                     <CompanyMark company={featuredApplication.company} />
                     <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-accent)]">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-accent)">
                         Needs attention
                       </p>
                       <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
@@ -1498,7 +1532,7 @@ export default function ApplicationsPageClient() {
               <DashboardPanel className="px-4 py-2 sm:px-5 sm:py-2">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0 space-y-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-accent)]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-accent)">
                       Upcoming interview
                     </p>
                     <h2 className="text-lg font-semibold tracking-tight text-slate-950">
@@ -1528,7 +1562,7 @@ export default function ApplicationsPageClient() {
                         onClick={() =>
                           window.open(featuredInterview.joinUrl, '_blank', 'noopener,noreferrer')
                         }
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[rgba(40,168,225,0.22)] bg-white px-4 py-2 text-[12px] font-semibold text-[var(--brand-primary)] transition-all duration-200 hover:bg-[var(--brand-primary-soft)]"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[rgba(40,168,225,0.22)] bg-white px-4 py-2 text-[12px] font-semibold text-(--brand-primary) transition-all duration-200 hover:bg-(--brand-primary-soft)"
                       >
                         Join interview
                         <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -1553,7 +1587,7 @@ export default function ApplicationsPageClient() {
                   <div className="flex min-w-0 items-start gap-3">
                     <CompanyMark company={featuredSavedJob.company} />
                     <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-accent)]">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-accent)">
                         Saved spotlight
                       </p>
                       <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
@@ -1569,7 +1603,7 @@ export default function ApplicationsPageClient() {
                   </div>
 
                   <div className="flex flex-col gap-3 lg:max-w-[420px] lg:items-end">
-                    <p className="rounded-full bg-[var(--brand-accent-soft)] px-3 py-1 text-[11px] font-semibold text-[var(--brand-accent)]">
+                    <p className="rounded-full bg-(--brand-accent-soft) px-3 py-1 text-[11px] font-semibold text-(--brand-accent)">
                       {featuredSavedJob.matchScore != null && featuredSavedJob.matchScore > 0
                         ? `${Math.round(featuredSavedJob.matchScore)}% match`
                         : 'Saved for later'}
@@ -1637,7 +1671,7 @@ export default function ApplicationsPageClient() {
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-2 text-[12px] font-medium text-slate-500">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--brand-primary)]">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-(--brand-primary-soft) px-2.5 py-1 text-[11px] font-semibold text-(--brand-primary)">
                       {activeSection === 'applications'
                         ? `${filteredApplications.length} applications`
                         : activeSection === 'interviews'
@@ -1660,7 +1694,7 @@ export default function ApplicationsPageClient() {
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
                     >
                       Clear filters
                       <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -1684,7 +1718,7 @@ export default function ApplicationsPageClient() {
                       <button
                         type="button"
                         onClick={handleLoadMore}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
                       >
                         Load more applications
                         <ChevronRight className="h-4 w-4" strokeWidth={2.1} />
@@ -1848,7 +1882,7 @@ export default function ApplicationsPageClient() {
                         <button
                           type="button"
                           onClick={() => router.push(`/interviews/${interview.id}`)}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[12px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[12px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
                         >
                           View details
                           <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.1} />

@@ -29,8 +29,9 @@ export const metadata: Metadata = {
   },
   description: "AI-powered career dashboard and learning platform",
   icons: {
-    icon: "/ai2yantra.png",
-    apple: "/ai2yantra.png",
+    icon: "/fs.png",
+    shortcut: "/fs.png",
+    apple: "/fs.png",
   },
 };
 

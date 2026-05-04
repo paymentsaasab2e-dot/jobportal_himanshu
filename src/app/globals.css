@@ -32,6 +32,9 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
   --font-mono: var(--font-geist-mono);
+  /* Modal stacking (canonical z-100 / z-101 utilities) */
+  --z-100: 100;
+  --z-101: 101;
 }
 
 @media (prefers-color-scheme: dark) {

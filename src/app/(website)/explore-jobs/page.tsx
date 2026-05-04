@@ -18,7 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-// Use backend1 directly (it shares the same MongoDB as backendphase2).
+// Jobs list comes from backend1 (job portal DB). CRM creates/updates mirror into that DB from Phase 2.
 import { API_BASE_URL } from '@/lib/api-base';
 import { showInfoToast, showSuccessToast } from '@/components/common/toast/toast';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
@@ -149,6 +149,79 @@ function isValidMongoObjectId(value: unknown) {
   return MONGODB_OBJECT_ID_REGEX.test(String(value || '').trim())
 }
 
+/** Employment enums sometimes leak into experience fields — ignore them for display. */
+const JOB_TYPE_ENUM = /^(FULL_TIME|PART_TIME|CONTRACT|INTERNSHIP|FREELANCE)$/i
+
+function firstTruthyString(...vals: unknown[]): string {
+  for (const v of vals) {
+    if (v == null || v === undefined) continue
+    const s = String(v).trim()
+    if (s) return s
+  }
+  return ''
+}
+
+function stripHtmlLite(raw: string): string {
+  return raw.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function formatExperienceLabel(raw: string): string {
+  const t = raw.trim()
+  if (!t) return 'Not specified'
+  if (JOB_TYPE_ENUM.test(t)) return 'Not specified'
+  if (/year|yrs/i.test(t)) return t.replace(/\s+/g, ' ')
+  const range = /^(\d+)\s*[-–]\s*(\d+)$/.exec(t)
+  if (range) return `${range[1]}–${range[2]} yrs`
+  if (/^\d+$/.test(t)) return `${t}+ yrs`
+  return t
+}
+
+function extractYearsRangeFromText(text: string): string | null {
+  if (!text) return null
+  const m =
+    text.match(/(\d+)\s*[-–]\s*(\d+)\s*(?:years?|yrs?\.?)/i) ||
+    text.match(/(\d+)\s+to\s+(\d+)\s+(?:years?|yrs?\.?)/i)
+  if (m) return `${m[1]}–${m[2]} yrs`
+  const plus = text.match(/(?:^|[.\s])(\d+)\s*\+\s*(?:years?|yrs?)/i)
+  if (plus) return `${plus[1]}+ yrs`
+  return null
+}
+
+/**
+ * Phase 2 CRM saves `experienceRequired` (e.g. "2-5"). Backend1 job list maps DB → `experienceLevel` only.
+ * Read all known keys so explore-jobs shows min/max after edits from Phase 2.
+ */
+function resolveExperienceLevel(job: Record<string, any>): string {
+  const ordered = [
+    job.experienceRequired,
+    job.experienceLevel,
+    job.experience,
+    job.requiredExperience,
+    job.normalizedJobProfile?.requiredExperienceLevel,
+  ]
+
+  for (const c of ordered) {
+    const s = firstTruthyString(c)
+    if (!s) continue
+    const formatted = formatExperienceLabel(s)
+    if (formatted !== 'Not specified') return formatted
+  }
+
+  const overview = firstTruthyString(job.overview)
+  if (overview) {
+    const fromOverview = extractYearsRangeFromText(overview)
+    if (fromOverview) return fromOverview
+  }
+
+  const desc = typeof job.description === 'string' ? job.description : ''
+  if (desc) {
+    const fromDesc = extractYearsRangeFromText(stripHtmlLite(desc))
+    if (fromDesc) return fromDesc
+  }
+
+  return 'Not specified'
+}
+
 function buildApiBaseCandidates(primaryBase: string) {
   const bases = new Set<string>()
   const normalizedPrimary = String(primaryBase || '').trim().replace(/\/$/, '')
@@ -173,22 +246,6 @@ function extractJobsFromResponse(result: any): any[] {
   if (Array.isArray(result?.jobs)) return result.jobs
   if (Array.isArray(result?.items)) return result.items
   return []
-}
-
-async function fetchPhase2PublicJobs(): Promise<any[]> {
-  try {
-    const response = await fetch('/api/proxy/phase2-public-jobs?limit=500', { method: 'GET' })
-    const result = await response.json()
-
-    if (!response.ok || !result?.success || !Array.isArray(result?.data)) {
-      return []
-    }
-
-    return result.data
-  } catch (error) {
-    console.error('Error fetching Phase 2 public jobs:', error)
-    return []
-  }
 }
 
 function getConfidenceBadgeClasses(confidenceTag?: string) {
@@ -435,18 +492,51 @@ const ExploreJobsPageContent = () => {
   };
 
   const formatSalary = (min: number | null, max: number | null, currency: string | null, type: string | null, amount?: string | null): string => {
-    if (amount) return amount;
-    if (!min && !max) return 'Salary not specified';
-    const currencySymbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : currency || '$';
-    const typeLabel = type === 'ANNUAL' ? '/year' : type === 'MONTHLY' ? '/month' : type === 'HOURLY' ? '/hour' : '';
-    
-    if (min && max) {
-      return `${currencySymbol}${min.toLocaleString()} - ${currencySymbol}${max.toLocaleString()}${typeLabel}`;
+    const typeLabel = type === 'ANNUAL' ? '/year' : type === 'MONTHLY' ? '/month' : type === 'HOURLY' ? '/hour' : ''
+    const cur = asString(currency)
+    const toFinite = (v: unknown): number | null => {
+      if (v === null || v === undefined) return null
+      const n = typeof v === 'number' ? v : Number(v)
+      return Number.isFinite(n) ? n : null
     }
-    if (min) {
-      return `${currencySymbol}${min.toLocaleString()}+${typeLabel}`;
+    const nMin = toFinite(min)
+    const nMax = toFinite(max)
+    const amountStr = asString(amount)
+
+    // Single amount (e.g. Phase 2 JSON salary: { amount, currency: "Rupees (₹ - India)" }) — always show currency when present
+    if (amountStr) {
+      if (cur) return `${amountStr} · ${cur}`
+      return amountStr
     }
-    return `${currencySymbol}${max?.toLocaleString()}${typeLabel}`;
+
+    if (nMin == null && nMax == null) return 'Salary not specified'
+
+    // Short ISO-style codes / symbols → prefix; long labels (Rupees (₹ - India), etc.) → suffix
+    const sym = (() => {
+      if (!cur) return '$'
+      const u = cur.toUpperCase()
+      if (u === 'USD' || cur === '$') return '$'
+      if (u === 'EUR' || cur === '€') return '€'
+      if (u === 'GBP' || cur === '£') return '£'
+      if (u === 'INR') return '₹'
+      if (/₹|rupee/i.test(cur)) return '₹'
+      if (cur.length <= 4 && /^[A-Z$€£₹]{1,4}$/i.test(cur)) return cur
+      return null
+    })()
+
+    if (sym) {
+      if (nMin != null && nMax != null) {
+        return `${sym}${nMin.toLocaleString()} – ${sym}${nMax.toLocaleString()}${typeLabel}`
+      }
+      if (nMin != null) return `${sym}${nMin.toLocaleString()}+${typeLabel}`
+      return `${sym}${nMax!.toLocaleString()}${typeLabel}`
+    }
+
+    if (nMin != null && nMax != null) {
+      return `${nMin.toLocaleString()} – ${nMax.toLocaleString()} ${cur}${typeLabel}`.trim()
+    }
+    if (nMin != null) return `${nMin.toLocaleString()}+ ${cur}${typeLabel}`.trim()
+    return `${nMax!.toLocaleString()} ${cur}${typeLabel}`.trim()
   };
 
   const formatDate = (date: Date | string): string => {
@@ -472,7 +562,7 @@ const ExploreJobsPageContent = () => {
           try {
             const personalizedResponse = await fetch(
               `${base}/jobs/personalized?candidateId=${encodeURIComponent(candidateId)}`,
-              { method: 'GET' }
+              { method: 'GET', cache: 'no-store' }
             );
             if (personalizedResponse.ok) {
               const personalizedResult = await personalizedResponse.json();
@@ -490,7 +580,10 @@ const ExploreJobsPageContent = () => {
         }
 
         try {
-          const generalResponse = await fetch(`${base}/jobs?limit=500`, { method: 'GET' });
+          const generalResponse = await fetch(`${base}/jobs?limit=500`, {
+            method: 'GET',
+            cache: 'no-store',
+          });
           if (!generalResponse.ok) {
             continue;
           }
@@ -512,25 +605,10 @@ const ExploreJobsPageContent = () => {
       }
 
       setIsPersonalized(usingPersonalized);
-      const phase2Jobs = await fetchPhase2PublicJobs();
-      const mergedJobs = [...rawJobs];
-      const existingIds = new Set(
-        rawJobs
-          .filter((job: any) => job && typeof job === 'object')
-          .map((job: any) => String(job.id || job._id || job.jobId || ''))
-          .filter(Boolean)
-      );
 
-      phase2Jobs.forEach((job: any) => {
-        const jobId = String(job?.id || job?._id || '')
-        if (!jobId || existingIds.has(jobId)) return
-        existingIds.add(jobId)
-        mergedJobs.push(job)
-      })
-
-      if (result.success && Array.isArray(mergedJobs)) {
+      if (result.success && Array.isArray(rawJobs)) {
         // Transform API response to JobListing format
-        const transformedJobs: JobListing[] = mergedJobs
+        const transformedJobs: JobListing[] = rawJobs
         .map((job: any) => {
           const rawDescriptionText =
             asString(job.description) ||
@@ -643,12 +721,7 @@ const ExploreJobsPageContent = () => {
               asString(job.companyOverview) ||
               parsedText.summary ||
               `We are a leading company in the ${job.industry || job.department || 'technology'} industry.`,
-            experienceLevel:
-              job.experienceRequired ||
-              job.experienceLevel ||
-              job.normalizedJobProfile?.requiredExperienceLevel ||
-              job.experience ||
-              'Not specified',
+            experienceLevel: resolveExperienceLevel(job),
             department: job.industry || job.department || undefined,
             workMode: job.workMode || job.normalizedJobProfile?.workMode || 'On-site',
             industry: job.industry || job.department || 'Technology',
@@ -1296,7 +1369,7 @@ const ExploreJobsPageContent = () => {
         } ${isCompact ? 'mb-3' : 'h-full'}`}
       >
         {isSelected ? (
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#28A8E1] via-[#28A8DF] to-[#FC9620]" />
+          <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-[#28A8E1] via-[#28A8DF] to-[#FC9620]" />
         ) : null}
 
         <div className="flex items-start justify-between gap-3">
@@ -1304,7 +1377,7 @@ const ExploreJobsPageContent = () => {
             <JobLogoBadge job={job} compact={isCompact} />
             <div className="min-w-0">
               <p className="truncate text-[12px] font-semibold text-slate-500">{job.company}</p>
-              <h3 className={`mt-0.5 line-clamp-2 font-semibold tracking-tight text-slate-950 ${isCompact ? 'text-[17px] leading-[1.25]' : 'text-[19px]'}`}>
+              <h3 className={`mt-0.5 line-clamp-2 font-semibold tracking-tight text-slate-950 ${isCompact ? 'text-[17px] leading-tight' : 'text-[19px]'}`}>
                 {job.title}
               </h3>
             </div>
@@ -1334,7 +1407,7 @@ const ExploreJobsPageContent = () => {
         </div>
 
         {/* Meta line (Location • Salary • Type) */}
-        <div className="hidden mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-medium text-slate-500">
+        <div className="mt-3 hidden text-[13px] font-medium text-slate-500">
           <span
             className={`wrap-break-word transition-colors duration-500 ${isCompact ? (isSelected ? 'text-gray-400' : 'text-gray-500') : 'text-gray-500 group-hover:text-gray-300'}`}
             style={{ fontSize: isCompact ? "11px" : "12px" }}
@@ -1358,7 +1431,7 @@ const ExploreJobsPageContent = () => {
         </div>
 
         {/* Skills Tags */}
-        <div className={`hidden flex flex-wrap gap-1.5 ${isCompact ? 'mb-1.5' : 'mb-2'}`}>
+        <div className={`hidden ${isCompact ? 'mb-1.5' : 'mb-2'}`}>
           {job.skills.slice(0, isCompact ? 3 : 4).map((skill, index) => (
             <span
               key={index}
@@ -1477,7 +1550,7 @@ const ExploreJobsPageContent = () => {
 
         </div>
 
-        <div className={`hidden mt-4 flex flex-wrap items-center justify-between gap-3 ${isCompact ? '' : 'mt-auto'}`}>
+        <div className={`mt-4 hidden ${isCompact ? '' : 'mt-auto'}`}>
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center rounded-full bg-[rgba(40,168,225,0.10)] px-3 py-1 text-[11px] font-semibold text-[#28A8E1]">
               {isPersonalized ? `AI Fit ${job.match}` : job.match}
@@ -1636,7 +1709,7 @@ const ExploreJobsPageContent = () => {
                   </div>
                 </DashboardPanel>
 
-                <div className="hidden flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="hidden">
                   <div className="min-w-0">
                     <div className="flex items-center gap-3">
                       <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">Explore Jobs</h1>
@@ -2109,7 +2182,13 @@ const ExploreJobsPageContent = () => {
                               <div className="min-w-0">
                                 <h1 className="wrap-break-word text-[clamp(22px,2.4vw,32px)] font-semibold tracking-tight text-slate-950">{selectedJob.title}</h1>
                                 <p className="mt-1 wrap-break-word text-[15px] font-medium text-slate-500">{selectedJob.company} • {selectedJob.location}</p>
-                                <p className="mt-2 wrap-break-word text-[14px] font-medium text-slate-500">{selectedJob.salary} • {selectedJob.experienceLevel} Experience</p>
+                                <p className="mt-2 wrap-break-word text-[14px] font-medium text-slate-500">
+                                  {selectedJob.salary}
+                                  {' • '}
+                                  {selectedJob.experienceLevel === 'Not specified'
+                                    ? 'Experience not specified'
+                                    : selectedJob.experienceLevel}
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -2171,7 +2250,11 @@ const ExploreJobsPageContent = () => {
                             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                               <div>
                                 <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Experience</p>
-                                <p className="mt-1 text-sm font-semibold text-slate-700">{selectedJob.experienceLevel || '-'}</p>
+                                <p className="mt-1 text-sm font-semibold text-slate-700">
+                                  {selectedJob.experienceLevel === 'Not specified'
+                                    ? '—'
+                                    : selectedJob.experienceLevel}
+                                </p>
                               </div>
                               <div>
                                 <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Education</p>
@@ -2221,7 +2304,7 @@ const ExploreJobsPageContent = () => {
                           return (selectedJob.reasoning || selectedJob.matchScore) ? (
                             <section className="mt-8 w-full">
                               <div
-                                className="rounded-3xl p-[1px] bg-gradient-to-br from-[#28A8E1] via-[#28A8DF] to-[#FC9620]"
+                                className="rounded-3xl p-px bg-linear-to-br from-[#28A8E1] via-[#28A8DF] to-[#FC9620]"
                                 style={{ boxShadow: "0 16px 36px -18px rgba(40, 168, 225, 0.28)" }}
                               >
                                 <div className="overflow-hidden rounded-[23px] bg-white/95 backdrop-blur-xl">

@@ -53,27 +53,6 @@ function mergeUnique(items: string[]) {
   return Array.from(new Set(items.filter(Boolean)));
 }
 
-async function fetchPhase2PublicJobs(): Promise<unknown[]> {
-  try {
-    const response = await fetch(`/api/proxy/phase2-public-jobs?limit=120`, {
-      method: "GET",
-    });
-    const result = (await response.json()) as {
-      success?: boolean;
-      data?: unknown;
-    };
-
-    if (!response.ok || !result.success || !Array.isArray(result.data)) {
-      return [];
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error("Error fetching Phase 2 public jobs:", error);
-    return [];
-  }
-}
-
 function createFallbackCourses(
   dashboardData: DashboardData | null,
   jobs: DashboardJob[]
@@ -415,28 +394,7 @@ export default function CandidateDashboardPage() {
           ? (result.data as { jobs?: unknown[] }).jobs || []
           : [];
 
-        if (!cancelled) {
-          // Count logic removed
-        }
-        const phase2Jobs = await fetchPhase2PublicJobs();
-        const mergedRawJobs = [...rawJobs];
-        const existingIds = new Set(
-          rawJobs
-            .filter((job): job is Record<string, unknown> => typeof job === "object" && job !== null)
-            .map((job) => asString(job.id) ?? asString(job._id))
-            .filter((value): value is string => Boolean(value))
-        );
-
-        phase2Jobs.forEach((job) => {
-          if (typeof job !== "object" || job === null) return;
-          const jobRecord = job as Record<string, unknown>;
-          const jobId = asString(jobRecord.id) ?? asString(jobRecord._id);
-          if (jobId && existingIds.has(jobId)) return;
-          if (jobId) existingIds.add(jobId);
-          mergedRawJobs.push(jobRecord);
-        });
-
-        const mappedJobs = mergedRawJobs
+        const mappedJobs = rawJobs
           .filter((job): job is Record<string, unknown> => typeof job === "object" && job !== null)
           .map((job, index) => mapJobRecord(job, `job-${index + 1}`));
 
@@ -726,7 +684,7 @@ export default function CandidateDashboardPage() {
       <div className="min-h-screen" style={{ background: PAGE_BG }}>
         <main className="mx-auto max-w-5xl px-6 py-16 sm:px-8">
           <div className="dashboard-surface rounded-[32px] px-8 py-12 text-center shadow-[0_28px_60px_rgba(15,23,42,0.08)]">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-(--brand-primary-soft) text-(--brand-primary)">
               <BriefcaseBusiness className="h-7 w-7" strokeWidth={2.2} />
             </div>
             <h1 className="mt-6 text-3xl font-bold tracking-tight text-slate-950">
@@ -739,7 +697,7 @@ export default function CandidateDashboardPage() {
             <button
               type="button"
               onClick={() => router.push("/whatsapp/verify")}
-              className="mt-8 inline-flex items-center justify-center rounded-full bg-[var(--brand-primary)] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-[var(--brand-primary-strong)]"
+              className="mt-8 inline-flex items-center justify-center rounded-full bg-(--brand-primary) px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-(--brand-primary-strong)"
             >
               Continue with WhatsApp
             </button>

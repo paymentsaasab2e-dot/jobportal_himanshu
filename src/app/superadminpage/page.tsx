@@ -1,10 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import { Sidenav } from "@/components/layout/Sidenav";
-
-import { API_BASE_URL } from '@/lib/api-base';
+import { useState, useEffect, useCallback } from "react";
+import { API_BASE_URL } from "@/lib/api-base";
 
 interface Candidate {
   id: string;
@@ -15,6 +12,7 @@ interface Candidate {
   countryCode: string;
   isVerified: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 interface CandidateDetail {
@@ -33,28 +31,72 @@ interface CandidateDetail {
   certifications: any[];
 }
 
+type JobRow = {
+  id: string;
+  title: string;
+  company: string | null;
+  companyId: string | null;
+  /** When set, deleting removes the mirrored row from Phase 2 CRM */
+  sourceTenantDbName?: string | null;
+  location: string | null;
+  openings: number;
+  experienceLevel: string | null;
+  employmentType: string | null;
+  type?: string;
+  workMode: string | null;
+  industry: string | null;
+  aboutRole: string | null;
+  overview: string | null;
+  description: string | null;
+  keyResponsibilities: string[];
+  education: string | null;
+  benefits: string[];
+  hiringManager: string | null;
+  priority: string | null;
+  visaSponsorship: boolean;
+  postedAt: string | null;
+  skills: string[];
+  preferredSkills: string[];
+  salary?: { amount?: string; currency?: string; min?: number; max?: number };
+};
+
 export default function SuperAdminPage() {
+  const [activeTab, setActiveTab] = useState<"candidates" | "jobs">("candidates");
+
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  const [jobs, setJobs] = useState<JobRow[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [jobPage, setJobPage] = useState(1);
+  const [jobTotalPages, setJobTotalPages] = useState(1);
+  const [jobTotal, setJobTotal] = useState(0);
+
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateDetail | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(new Set());
+  const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set());
+  const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
+  const [bulkDeletingCandidates, setBulkDeletingCandidates] = useState(false);
+  const [bulkDeletingJobs, setBulkDeletingJobs] = useState(false);
 
-  const limit = 10;
+  const candidateLimit = 50;
+  const jobLimit = 100;
 
-  // Fetch candidates
   const fetchCandidates = async (page: number = 1) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/candidates?page=${page}&limit=${limit}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/candidates?page=${page}&limit=${candidateLimit}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
       if (response.ok) {
         const result = await response.json();
@@ -74,18 +116,59 @@ export default function SuperAdminPage() {
     }
   };
 
+  const fetchJobs = useCallback(async (page: number = 1) => {
+    try {
+      setJobsLoading(true);
+      const response = await fetch(
+        `${API_BASE_URL}/jobs?page=${page}&limit=${jobLimit}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setJobs(result.data.jobs ?? []);
+          const p = result.data.pagination;
+          if (p) {
+            setJobTotal(p.total ?? 0);
+            setJobTotalPages(p.totalPages ?? 1);
+            setJobPage(p.page ?? page);
+          }
+        }
+      } else {
+        console.error("Failed to fetch jobs");
+      }
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+    } finally {
+      setJobsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchCandidates(1);
   }, []);
 
-  // Fetch candidate details
+  useEffect(() => {
+    setSelectedCandidateIds(new Set());
+    setSelectedJobIds(new Set());
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "jobs") {
+      fetchJobs(jobPage);
+    }
+  }, [activeTab, jobPage, fetchJobs]);
+
   const fetchCandidateDetails = async (id: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/candidates/${id}`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
 
       if (response.ok) {
@@ -103,7 +186,6 @@ export default function SuperAdminPage() {
     }
   };
 
-  // Delete candidate
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this candidate?")) {
       return;
@@ -113,17 +195,19 @@ export default function SuperAdminPage() {
       setDeletingId(id);
       const response = await fetch(`${API_BASE_URL}/candidates/${id}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
 
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          // Remove from list
-          setCandidates(candidates.filter((c) => c.id !== id));
-          setTotalCount(totalCount - 1);
+          setCandidates((prev) => prev.filter((c) => c.id !== id));
+          setTotalCount((c) => Math.max(0, c - 1));
+          setSelectedCandidateIds((prev) => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          });
           alert("Candidate deleted successfully");
         }
       } else {
@@ -138,279 +222,957 @@ export default function SuperAdminPage() {
     }
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+  const toggleCandidateSelected = (id: string) => {
+    setSelectedCandidateIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
   };
 
-  return (
-    <Sidenav>
-      <div className="p-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Candidates Management</h2>
-          <p className="text-gray-600">Total Candidates: <span className="font-semibold text-gray-800">{totalCount}</span></p>
-        </div>
+  const toggleAllCandidatesOnPage = () => {
+    if (candidates.length === 0) return;
+    const allSelected = candidates.every((c) => selectedCandidateIds.has(c.id));
+    setSelectedCandidateIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        candidates.forEach((c) => next.delete(c.id));
+      } else {
+        candidates.forEach((c) => next.add(c.id));
+      }
+      return next;
+    });
+  };
 
-        {/* Table */}
-        {loading ? (
-          <div className="flex justify-center items-center h-64 bg-white rounded-lg">
-            <div className="text-gray-500">Loading candidates...</div>
+  const bulkDeleteCandidatesHandler = async () => {
+    const ids = Array.from(selectedCandidateIds);
+    if (ids.length === 0) {
+      alert("Select at least one candidate.");
+      return;
+    }
+    if (
+      !confirm(
+        `Delete ${ids.length} candidate(s) from the portal database? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setBulkDeletingCandidates(true);
+      const response = await fetch(`${API_BASE_URL}/candidates/bulk-delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.ok && result.success) {
+        setSelectedCandidateIds(new Set());
+        await fetchCandidates(currentPage);
+        alert(result.message || "Candidates deleted");
+      } else {
+        alert(result.message || "Bulk delete failed");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Bulk delete failed");
+    } finally {
+      setBulkDeletingCandidates(false);
+    }
+  };
+
+  const toggleJobSelected = (id: string) => {
+    setSelectedJobIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllJobsOnPage = () => {
+    if (jobs.length === 0) return;
+    const allSelected = jobs.every((j) => selectedJobIds.has(j.id));
+    setSelectedJobIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        jobs.forEach((j) => next.delete(j.id));
+      } else {
+        jobs.forEach((j) => next.add(j.id));
+      }
+      return next;
+    });
+  };
+
+  const handleDeleteJob = async (jobId: string) => {
+    if (
+      !confirm(
+        "Delete this job from the portal and Phase 2 CRM (when linked)? This cannot be undone."
+      )
+    ) {
+      return;
+    }
+    try {
+      setDeletingJobId(jobId);
+      const response = await fetch(`${API_BASE_URL}/jobs/${jobId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.ok && result.success) {
+        setJobs((prev) => prev.filter((j) => j.id !== jobId));
+        setJobTotal((t) => Math.max(0, t - 1));
+        setSelectedJobIds((prev) => {
+          const next = new Set(prev);
+          next.delete(jobId);
+          return next;
+        });
+        alert("Job deleted successfully");
+      } else {
+        alert(result.message || "Failed to delete job");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error deleting job");
+    } finally {
+      setDeletingJobId(null);
+    }
+  };
+
+  const bulkDeleteJobsHandler = async () => {
+    const ids = Array.from(selectedJobIds);
+    if (ids.length === 0) {
+      alert("Select at least one job.");
+      return;
+    }
+    if (
+      !confirm(
+        `Delete ${ids.length} job(s) from the portal and Phase 2 CRM (when linked)? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setBulkDeletingJobs(true);
+      const response = await fetch(`${API_BASE_URL}/jobs/bulk-delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.ok && result.success) {
+        setSelectedJobIds(new Set());
+        await fetchJobs(jobPage);
+        alert(result.message || "Jobs deleted");
+      } else {
+        alert(result.message || "Bulk delete failed");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Bulk delete failed");
+    } finally {
+      setBulkDeletingJobs(false);
+    }
+  };
+
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return "N/A";
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const truncate = (value: string | null | undefined, max: number) => {
+    if (value == null || value === "") return "—";
+    const s = String(value);
+    return s.length <= max ? s : `${s.slice(0, max)}…`;
+  };
+
+  const formatSalary = (job: JobRow) => {
+    const s = job.salary;
+    if (s && typeof s === "object") {
+      if (s.amount) return `${s.amount}${s.currency ? ` ${s.currency}` : ""}`;
+      if (s.min != null || s.max != null)
+        return [s.min, s.max].filter((x) => x != null).join(" – ");
+    }
+    return "—";
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-100">
+      <header className="border-b border-slate-200 bg-white shadow-sm">
+        <div className="mx-auto max-w-[1920px] px-4 py-4 sm:px-6 lg:px-8">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+            Super admin
+          </h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Browse all candidates and jobs from the job portal database.
+          </p>
+          <div className="mt-4 flex gap-2 border-b border-transparent">
+            <button
+              type="button"
+              onClick={() => setActiveTab("candidates")}
+              className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === "candidates"
+                  ? "bg-slate-900 text-white"
+                  : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+              }`}
+            >
+              Candidates
+              {!loading && (
+                <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-xs">
+                  {totalCount}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("jobs")}
+              className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === "jobs"
+                  ? "bg-slate-900 text-white"
+                  : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+              }`}
+            >
+              Jobs
+              {activeTab === "jobs" && !jobsLoading && (
+                <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-xs">
+                  {jobTotal}
+                </span>
+              )}
+            </button>
           </div>
-        ) : candidates.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-500">No candidates found</p>
-          </div>
-        ) : (
-          <>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        CANDIDATE ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        FULL NAME
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        EMAIL
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        PHONE NUMBER
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        CREATED DATE
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        ACTIONS
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {candidates.map((candidate) => (
-                      <tr key={candidate.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
-                          {candidate.id.substring(0, 12)}...
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {candidate.fullName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {candidate.email}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {candidate.phoneNumber || candidate.whatsappNumber || "N/A"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {formatDate(candidate.createdAt)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => fetchCandidateDetails(candidate.id)}
-                              className="px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-xs font-medium"
-                            >
-                              View
-                            </button>
-                            <button
-                              onClick={() => handleDelete(candidate.id)}
-                              disabled={deletingId === candidate.id}
-                              className="px-4 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {deletingId === candidate.id ? "Deleting..." : "Delete"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-[1920px] px-4 py-6 sm:px-6 lg:px-8">
+        {activeTab === "candidates" && (
+          <section aria-label="Candidates table">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-slate-600">
+                Total:{" "}
+                <span className="font-semibold text-slate-900">{totalCount}</span>{" "}
+                candidates
+                {selectedCandidateIds.size > 0 && (
+                  <span className="ml-2 font-medium text-slate-800">
+                    ({selectedCandidateIds.size} selected)
+                  </span>
+                )}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={bulkDeleteCandidatesHandler}
+                  disabled={
+                    bulkDeletingCandidates || selectedCandidateIds.size === 0
+                  }
+                  className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {bulkDeletingCandidates
+                    ? "Deleting…"
+                    : `Delete selected (${selectedCandidateIds.size})`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fetchCandidates(currentPage)}
+                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  Refresh
+                </button>
               </div>
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  Showing page {currentPage} of {totalPages}
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => fetchCandidates(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => fetchCandidates(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
+            {loading ? (
+              <div className="flex h-64 items-center justify-center rounded-lg border border-slate-200 bg-white">
+                <p className="text-slate-500">Loading candidates…</p>
               </div>
-            )}
-          </>
-        )}
-      </div>
+            ) : candidates.length === 0 ? (
+              <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
+                No candidates found
+              </div>
+            ) : (
+              <>
+                <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="sticky left-0 z-10 w-10 bg-slate-50 px-2 py-2">
+                            <input
+                              type="checkbox"
+                              aria-label="Select all on this page"
+                              checked={
+                                candidates.length > 0 &&
+                                candidates.every((c) =>
+                                  selectedCandidateIds.has(c.id)
+                                )
+                              }
+                              onChange={toggleAllCandidatesOnPage}
+                              className="rounded border-slate-300"
+                            />
+                          </th>
+                          <th className="bg-slate-50 px-3 py-2 pl-4 font-semibold text-slate-700">
+                            ID
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Full name
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Email
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Phone
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            WhatsApp
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Country code
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Verified
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Created
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Updated
+                          </th>
+                          <th className="sticky right-0 z-10 bg-slate-50 px-3 py-2 font-semibold text-slate-700">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        {candidates.map((candidate) => (
+                          <tr
+                            key={candidate.id}
+                            className="hover:bg-slate-50/80"
+                          >
+                            <td className="sticky left-0 z-0 w-10 bg-white px-2 py-2 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]">
+                              <input
+                                type="checkbox"
+                                aria-label={`Select ${candidate.fullName}`}
+                                checked={selectedCandidateIds.has(candidate.id)}
+                                onChange={() =>
+                                  toggleCandidateSelected(candidate.id)
+                                }
+                                className="rounded border-slate-300"
+                              />
+                            </td>
+                            <td
+                              className="max-w-[140px] bg-white px-3 py-2 pl-4 font-mono text-xs text-slate-800"
+                              title={candidate.id}
+                            >
+                              {truncate(candidate.id, 14)}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 font-medium text-slate-900">
+                              {candidate.fullName}
+                            </td>
+                            <td className="max-w-[220px] px-3 py-2 text-slate-700">
+                              <span className="break-all" title={candidate.email}>
+                                {candidate.email}
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {candidate.phoneNumber || "—"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {candidate.whatsappNumber || "—"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {candidate.countryCode || "—"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2">
+                              {candidate.isVerified ? (
+                                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                                  Yes
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                                  No
+                                </span>
+                              )}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {formatDate(candidate.createdAt)}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {formatDate(candidate.updatedAt)}
+                            </td>
+                            <td className="sticky right-0 z-0 bg-white px-3 py-2 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.06)]">
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => fetchCandidateDetails(candidate.id)}
+                                  className="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                                >
+                                  View
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(candidate.id)}
+                                  disabled={deletingId === candidate.id}
+                                  className="rounded-md bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                                >
+                                  {deletingId === candidate.id
+                                    ? "…"
+                                    : "Delete"}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
 
-      {/* Candidate Detail Modal */}
+                {totalPages > 1 && (
+                  <div className="mt-4 flex items-center justify-between">
+                    <p className="text-sm text-slate-600">
+                      Page {currentPage} of {totalPages}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fetchCandidates(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm disabled:opacity-50"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => fetchCandidates(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm disabled:opacity-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        )}
+
+        {activeTab === "jobs" && (
+          <section aria-label="Jobs table">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-slate-600">
+                Total:{" "}
+                <span className="font-semibold text-slate-900">{jobTotal}</span>{" "}
+                jobs
+                {selectedJobIds.size > 0 && (
+                  <span className="ml-2 font-medium text-slate-800">
+                    ({selectedJobIds.size} selected)
+                  </span>
+                )}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={bulkDeleteJobsHandler}
+                  disabled={bulkDeletingJobs || selectedJobIds.size === 0}
+                  className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {bulkDeletingJobs
+                    ? "Deleting…"
+                    : `Delete selected (${selectedJobIds.size})`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fetchJobs(jobPage)}
+                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  Refresh
+                </button>
+              </div>
+            </div>
+
+            {jobsLoading ? (
+              <div className="flex h-64 items-center justify-center rounded-lg border border-slate-200 bg-white">
+                <p className="text-slate-500">Loading jobs…</p>
+              </div>
+            ) : jobs.length === 0 ? (
+              <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
+                No jobs found
+              </div>
+            ) : (
+              <>
+                <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-[1320px] w-full divide-y divide-slate-200 text-left text-sm">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="w-10 px-2 py-2">
+                            <input
+                              type="checkbox"
+                              aria-label="Select all jobs on this page"
+                              checked={
+                                jobs.length > 0 &&
+                                jobs.every((j) => selectedJobIds.has(j.id))
+                              }
+                              onChange={toggleAllJobsOnPage}
+                              className="rounded border-slate-300"
+                            />
+                          </th>
+                          <th className="bg-slate-50 px-3 py-2 font-semibold text-slate-700">
+                            Job ID
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Title
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Company
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Location
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Openings
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Type
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Work mode
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Experience
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Industry
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Salary
+                          </th>
+                          <th className="min-w-[200px] px-3 py-2 font-semibold text-slate-700">
+                            Skills
+                          </th>
+                          <th className="min-w-[200px] px-3 py-2 font-semibold text-slate-700">
+                            Preferred skills
+                          </th>
+                          <th className="min-w-[220px] px-3 py-2 font-semibold text-slate-700">
+                            Overview
+                          </th>
+                          <th className="min-w-[220px] px-3 py-2 font-semibold text-slate-700">
+                            Key responsibilities
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Benefits
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Hiring mgr
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Priority
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Visa
+                          </th>
+                          <th className="px-3 py-2 font-semibold text-slate-700">
+                            Posted
+                          </th>
+                          <th className="min-w-[100px] px-3 py-2 font-semibold text-slate-700">
+                            CRM tenant
+                          </th>
+                          <th className="sticky right-0 z-10 min-w-[120px] bg-slate-50 px-3 py-2 font-semibold text-slate-700">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {jobs.map((job) => (
+                          <tr key={job.id} className="hover:bg-slate-50/80">
+                            <td className="w-10 px-2 py-2">
+                              <input
+                                type="checkbox"
+                                aria-label={`Select job ${job.title}`}
+                                checked={selectedJobIds.has(job.id)}
+                                onChange={() => toggleJobSelected(job.id)}
+                                className="rounded border-slate-300"
+                              />
+                            </td>
+                            <td
+                              className="max-w-[120px] bg-white px-3 py-2 font-mono text-xs text-slate-800"
+                              title={job.id}
+                            >
+                              {truncate(job.id, 12)}
+                            </td>
+                            <td className="max-w-[180px] px-3 py-2 font-medium text-slate-900">
+                              <span title={job.title}>{truncate(job.title, 80)}</span>
+                            </td>
+                            <td className="max-w-[160px] px-3 py-2 text-slate-700">
+                              {truncate(job.company, 40)}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {job.location || "—"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {job.openings ?? "—"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {job.employmentType || job.type || "—"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {job.workMode || "—"}
+                            </td>
+                            <td className="max-w-[120px] px-3 py-2 text-slate-600">
+                              {truncate(job.experienceLevel, 24)}
+                            </td>
+                            <td className="max-w-[140px] px-3 py-2 text-slate-600">
+                              {truncate(job.industry, 32)}
+                            </td>
+                            <td className="max-w-[140px] px-3 py-2 text-slate-600">
+                              {formatSalary(job)}
+                            </td>
+                            <td className="max-w-[240px] px-3 py-2 text-xs text-slate-600">
+                              <span
+                                title={(job.skills || []).join(", ")}
+                                className="line-clamp-3"
+                              >
+                                {(job.skills || []).join(", ") || "—"}
+                              </span>
+                            </td>
+                            <td className="max-w-[240px] px-3 py-2 text-xs text-slate-600">
+                              <span
+                                title={(job.preferredSkills || []).join(", ")}
+                                className="line-clamp-3"
+                              >
+                                {(job.preferredSkills || []).join(", ") || "—"}
+                              </span>
+                            </td>
+                            <td className="max-w-[260px] px-3 py-2 text-xs text-slate-600">
+                              <span
+                                title={job.overview || job.aboutRole || ""}
+                                className="line-clamp-4 whitespace-pre-wrap"
+                              >
+                                {truncate(
+                                  job.overview || job.aboutRole || "",
+                                  400
+                                )}
+                              </span>
+                            </td>
+                            <td className="max-w-[260px] px-3 py-2 text-xs text-slate-600">
+                              <span
+                                title={(job.keyResponsibilities || []).join(
+                                  "; "
+                                )}
+                                className="line-clamp-4"
+                              >
+                                {(job.keyResponsibilities || []).join("; ") ||
+                                  "—"}
+                              </span>
+                            </td>
+                            <td className="max-w-[180px] px-3 py-2 text-xs text-slate-600">
+                              <span
+                                title={(job.benefits || []).join(", ")}
+                                className="line-clamp-3"
+                              >
+                                {(job.benefits || []).join(", ") || "—"}
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {job.hiringManager || "—"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {job.priority || "—"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {job.visaSponsorship ? "Yes" : "No"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2 text-slate-600">
+                              {formatDate(job.postedAt)}
+                            </td>
+                            <td
+                              className="max-w-[120px] px-3 py-2 font-mono text-xs text-slate-600"
+                              title={job.sourceTenantDbName || ""}
+                            >
+                              {job.sourceTenantDbName
+                                ? truncate(job.sourceTenantDbName, 16)
+                                : "—"}
+                            </td>
+                            <td className="sticky right-0 z-0 bg-white px-3 py-2 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.06)]">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteJob(job.id)}
+                                disabled={deletingJobId === job.id}
+                                className="rounded-md bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                              >
+                                {deletingJobId === job.id ? "…" : "Delete"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {jobTotalPages > 1 && (
+                  <div className="mt-4 flex items-center justify-between">
+                    <p className="text-sm text-slate-600">
+                      Page {jobPage} of {jobTotalPages}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setJobPage((p) => Math.max(1, p - 1))}
+                        disabled={jobPage === 1}
+                        className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm disabled:opacity-50"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setJobPage((p) => Math.min(jobTotalPages, p + 1))
+                        }
+                        disabled={jobPage === jobTotalPages}
+                        className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm disabled:opacity-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        )}
+      </main>
+
       {showDetailModal && selectedCandidate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-              <h3 className="text-xl font-bold text-gray-800">Candidate Details</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white shadow-xl">
+            <div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
+              <h3 className="text-xl font-bold text-gray-800">
+                Candidate details
+              </h3>
               <button
+                type="button"
                 onClick={() => {
                   setShowDetailModal(false);
                   setSelectedCandidate(null);
                 }}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
+                className="text-2xl text-gray-500 hover:text-gray-700"
               >
                 ×
               </button>
             </div>
             <div className="p-6">
-              {/* Summary */}
               {selectedCandidate.summary && (
                 <div className="mb-6">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-2 underline decoration-blue-200">Executive Summary</h4>
-                  <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded-xl leading-relaxed italic border border-gray-100">
-                    "{selectedCandidate.summary.summaryText}"
+                  <h4 className="mb-2 text-lg font-semibold text-gray-800 underline decoration-blue-200">
+                    Executive summary
+                  </h4>
+                  <p className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm italic leading-relaxed text-gray-700">
+                    &ldquo;{selectedCandidate.summary.summaryText}&rdquo;
                   </p>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Left Column */}
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 <div>
-                  {/* Personal Information */}
                   {selectedCandidate.personalInformation && (
-                    <div className="mb-8 bg-blue-50/30 p-5 rounded-2xl border border-blue-100">
-                      <h4 className="text-sm font-bold text-blue-800 uppercase tracking-widest mb-4">Personal Profile</h4>
+                    <div className="mb-8 rounded-2xl border border-blue-100 bg-blue-50/30 p-5">
+                      <h4 className="mb-4 text-sm font-bold uppercase tracking-widest text-blue-800">
+                        Personal profile
+                      </h4>
                       <div className="space-y-3 text-[13px]">
                         <div className="flex justify-between border-b border-blue-100/50 pb-1.5">
-                          <span className="text-gray-500">Full Name</span>
-                          <span className="text-gray-900 font-semibold">{selectedCandidate.personalInformation.fullName || "N/A"}</span>
+                          <span className="text-gray-500">Full name</span>
+                          <span className="font-semibold text-gray-900">
+                            {selectedCandidate.personalInformation.fullName ||
+                              "N/A"}
+                          </span>
                         </div>
                         <div className="flex justify-between border-b border-blue-100/50 pb-1.5">
                           <span className="text-gray-500">Email</span>
-                          <span className="text-gray-900 font-medium">{selectedCandidate.personalInformation.email || "N/A"}</span>
+                          <span className="font-medium text-gray-900">
+                            {selectedCandidate.personalInformation.email ||
+                              "N/A"}
+                          </span>
                         </div>
                         <div className="flex justify-between border-b border-blue-100/50 pb-1.5">
                           <span className="text-gray-500">WhatsApp</span>
-                          <span className="text-gray-900 font-medium">({selectedCandidate.countryCode}) {selectedCandidate.whatsappNumber || "N/A"}</span>
+                          <span className="font-medium text-gray-900">
+                            ({selectedCandidate.countryCode}){" "}
+                            {selectedCandidate.whatsappNumber || "N/A"}
+                          </span>
                         </div>
                         <div className="flex justify-between border-b border-blue-100/50 pb-1.5">
                           <span className="text-gray-500">Gender</span>
-                          <span className="text-gray-900">{selectedCandidate.personalInformation.gender || "N/A"}</span>
+                          <span className="text-gray-900">
+                            {selectedCandidate.personalInformation.gender ||
+                              "N/A"}
+                          </span>
                         </div>
                         <div className="flex justify-between border-b border-blue-100/50 pb-1.5">
                           <span className="text-gray-500">DOB</span>
-                          <span className="text-gray-900">{formatDate(selectedCandidate.personalInformation.dateOfBirth)}</span>
+                          <span className="text-gray-900">
+                            {formatDate(
+                              selectedCandidate.personalInformation
+                                .dateOfBirth
+                            )}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-500">Location</span>
-                          <span className="text-gray-900">{selectedCandidate.personalInformation.city}, {selectedCandidate.personalInformation.country}</span>
+                          <span className="text-gray-900">
+                            {selectedCandidate.personalInformation.city},{" "}
+                            {selectedCandidate.personalInformation.country}
+                          </span>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Education */}
-                  {selectedCandidate.education && selectedCandidate.education.length > 0 && (
-                    <div className="mb-8">
-                      <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xs">🎓</span>
-                        Education
-                      </h4>
-                      <div className="space-y-4">
-                        {selectedCandidate.education.map((edu: any, index: number) => (
-                          <div key={index} className="relative pl-6 border-l-2 border-blue-200">
-                            <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-blue-500" />
-                            <div className="font-bold text-gray-900 text-sm">{edu.degree}</div>
-                            <div className="text-xs font-semibold text-blue-600">{edu.institution}</div>
-                            <div className="text-[11px] text-gray-500 mt-1">
-                              {edu.startYear} - {edu.endYear || "Present"} | {edu.specialization}
-                            </div>
-                          </div>
-                        ))}
+                  {selectedCandidate.education &&
+                    selectedCandidate.education.length > 0 && (
+                      <div className="mb-8">
+                        <h4 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-800">
+                          Education
+                        </h4>
+                        <div className="space-y-4">
+                          {selectedCandidate.education.map(
+                            (edu: any, index: number) => (
+                              <div
+                                key={index}
+                                className="relative border-l-2 border-blue-200 pl-6"
+                              >
+                                <div className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full bg-blue-500" />
+                                <div className="text-sm font-bold text-gray-900">
+                                  {edu.degree}
+                                </div>
+                                <div className="text-xs font-semibold text-blue-600">
+                                  {edu.institution}
+                                </div>
+                                <div className="mt-1 text-[11px] text-gray-500">
+                                  {edu.startYear} - {edu.endYear || "Present"} |{" "}
+                                  {edu.specialization}
+                                </div>
+                              </div>
+                            )
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Skills */}
-                  {selectedCandidate.skills && selectedCandidate.skills.length > 0 && (
-                    <div className="mb-8">
-                      <h4 className="text-lg font-bold text-gray-800 mb-4">Core Skills</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedCandidate.skills.map((skill: any, index: number) => (
-                          <span key={index} className="px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold">
-                            {skill.skillName} <span className="text-slate-400 font-normal">({skill.proficiency})</span>
-                          </span>
-                        ))}
+                  {selectedCandidate.skills &&
+                    selectedCandidate.skills.length > 0 && (
+                      <div className="mb-8">
+                        <h4 className="mb-4 text-lg font-bold text-gray-800">
+                          Core skills
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedCandidate.skills.map(
+                            (skill: any, index: number) => (
+                              <span
+                                key={index}
+                                className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700"
+                              >
+                                {skill.skillName}{" "}
+                                <span className="font-normal text-slate-400">
+                                  ({skill.proficiency})
+                                </span>
+                              </span>
+                            )
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
 
-                {/* Right Column */}
                 <div>
-                  {/* WORK EXPERIENCE */}
-                  {selectedCandidate.workExperience && selectedCandidate.workExperience.length > 0 && (
-                    <div className="mb-8">
-                      <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">💼</span>
-                        Work History
-                      </h4>
-                      <div className="space-y-5">
-                        {selectedCandidate.workExperience.map((exp: any, index: number) => (
-                          <div key={index} className="bg-white border border-gray-100 p-4 rounded-xl shadow-sm hover:border-emerald-200 transition-colors">
-                            <div className="flex justify-between items-start mb-1">
-                              <div className="font-bold text-gray-900">{exp.jobTitle}</div>
-                              <span className="text-[10px] font-black uppercase tracking-tighter text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                                {exp.employmentType}
-                              </span>
-                            </div>
-                            <div className="text-xs font-bold text-slate-500 mb-2">{exp.company} • {exp.workLocation}</div>
-                            <div className="text-[11px] font-medium text-gray-400 mb-3">
-                              {formatDate(exp.startDate)} — {exp.endDate ? formatDate(exp.endDate) : "Present"}
-                            </div>
-                            {exp.responsibilities && (
-                              <p className="text-[13px] text-gray-600 leading-relaxed line-clamp-3">{exp.responsibilities}</p>
-                            )}
-                          </div>
-                        ))}
+                  {selectedCandidate.workExperience &&
+                    selectedCandidate.workExperience.length > 0 && (
+                      <div className="mb-8">
+                        <h4 className="mb-4 text-lg font-bold text-gray-800">
+                          Work history
+                        </h4>
+                        <div className="space-y-5">
+                          {selectedCandidate.workExperience.map(
+                            (exp: any, index: number) => (
+                              <div
+                                key={index}
+                                className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+                              >
+                                <div className="mb-1 flex items-start justify-between">
+                                  <div className="font-bold text-gray-900">
+                                    {exp.jobTitle}
+                                  </div>
+                                  <span className="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter text-emerald-600">
+                                    {exp.employmentType}
+                                  </span>
+                                </div>
+                                <div className="mb-2 text-xs font-bold text-slate-500">
+                                  {exp.company} • {exp.workLocation}
+                                </div>
+                                <div className="mb-3 text-[11px] font-medium text-gray-400">
+                                  {formatDate(exp.startDate)} —{" "}
+                                  {exp.endDate
+                                    ? formatDate(exp.endDate)
+                                    : "Present"}
+                                </div>
+                                {exp.responsibilities && (
+                                  <p className="line-clamp-3 text-[13px] leading-relaxed text-gray-600">
+                                    {exp.responsibilities}
+                                  </p>
+                                )}
+                              </div>
+                            )
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Career Preferences */}
                   {selectedCandidate.careerPreferences && (
-                    <div className="mb-8 bg-violet-50/50 p-5 rounded-2xl border border-violet-100">
-                      <h4 className="text-sm font-bold text-violet-800 uppercase tracking-widest mb-4">Future Preferences</h4>
+                    <div className="mb-8 rounded-2xl border border-violet-100 bg-violet-50/50 p-5">
+                      <h4 className="mb-4 text-sm font-bold uppercase tracking-widest text-violet-800">
+                        Future preferences
+                      </h4>
                       <div className="space-y-3 text-[13px]">
                         <div className="flex flex-col gap-1 border-b border-violet-100/50 pb-2">
-                          <span className="text-violet-400 font-bold text-[10px] uppercase">Roles</span>
-                          <span className="text-gray-900 font-semibold">{(selectedCandidate.careerPreferences.preferredRoles || []).join(", ") || "N/A"}</span>
+                          <span className="text-[10px] font-bold uppercase text-violet-400">
+                            Roles
+                          </span>
+                          <span className="font-semibold text-gray-900">
+                            {(selectedCandidate.careerPreferences
+                              .preferredRoles || []
+                            ).join(", ") || "N/A"}
+                          </span>
                         </div>
                         <div className="flex flex-col gap-1 border-b border-violet-100/50 pb-2">
-                          <span className="text-violet-400 font-bold text-[10px] uppercase">Locations</span>
-                          <span className="text-gray-900 font-medium">{(selectedCandidate.careerPreferences.preferredLocations || []).join(", ") || "N/A"}</span>
+                          <span className="text-[10px] font-bold uppercase text-violet-400">
+                            Locations
+                          </span>
+                          <span className="font-medium text-gray-900">
+                            {(selectedCandidate.careerPreferences
+                              .preferredLocations || []
+                            ).join(", ") || "N/A"}
+                          </span>
                         </div>
                         <div className="flex justify-between pt-1">
-                          <span className="text-violet-500 font-bold">Expectation</span>
-                          <span className="text-gray-900 font-black">{selectedCandidate.careerPreferences.preferredSalary} {selectedCandidate.careerPreferences.preferredCurrency}</span>
+                          <span className="font-bold text-violet-500">
+                            Expectation
+                          </span>
+                          <span className="font-black text-gray-900">
+                            {selectedCandidate.careerPreferences.preferredSalary}{" "}
+                            {
+                              selectedCandidate.careerPreferences
+                                .preferredCurrency
+                            }
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -418,49 +1180,73 @@ export default function SuperAdminPage() {
                 </div>
               </div>
 
-              {/* Extra Sections (Projects, Certs, CV Scores) */}
-              <div className="mt-4 pt-8 border-t border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center">
-                   <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">CV Score</div>
-                   <div className="text-4xl font-black text-blue-600">{selectedCandidate.cvAnalysis?.cvScore || "0"}%</div>
-                   <div className="mt-2 text-[11px] font-bold text-slate-500">ATS Readiness: {selectedCandidate.cvAnalysis?.atsScore || "N/A"}%</div>
-                </div>
-                
-                <div className="md:col-span-2 bg-gray-50/30 p-5 rounded-2xl border border-dashed border-gray-200">
-                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">AI Suggestions</h4>
-                   <div className="text-sm text-gray-600 leading-normal italic">
-                     {Array.isArray(selectedCandidate.cvAnalysis?.suggestions) 
-                       ? selectedCandidate.cvAnalysis.suggestions.slice(0, 3).map((s: string, i: number) => (
-                           <p key={i} className="mb-1">• {s}</p>
-                         ))
-                       : typeof selectedCandidate.cvAnalysis?.suggestions === 'string'
-                         ? selectedCandidate.cvAnalysis.suggestions.substring(0, 200) + (selectedCandidate.cvAnalysis.suggestions.length > 200 ? "..." : "")
-                         : "No specific AI insights generated yet."
-                     }
-                   </div>
-                </div>
-
-              </div>
-
-              {/* Languages */}
-              {selectedCandidate.languages && selectedCandidate.languages.length > 0 && (
-                <div className="mt-8 border-t pt-6">
-                  <h4 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-tighter">Communication</h4>
-                  <div className="flex flex-wrap gap-4">
-                    {selectedCandidate.languages.map((lang: any, index: number) => (
-                      <div key={index} className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-900">{lang.name}</span>
-                        <span className="text-[11px] text-slate-400 font-bold uppercase">{lang.proficiency}</span>
-                      </div>
-                    ))}
+              <div className="mt-4 grid grid-cols-1 gap-6 border-t border-gray-100 pt-8 md:grid-cols-3">
+                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5 text-center">
+                  <div className="mb-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    CV score
+                  </div>
+                  <div className="text-4xl font-black text-blue-600">
+                    {selectedCandidate.cvAnalysis?.cvScore || "0"}%
+                  </div>
+                  <div className="mt-2 text-[11px] font-bold text-slate-500">
+                    ATS: {selectedCandidate.cvAnalysis?.atsScore || "N/A"}%
                   </div>
                 </div>
-              )}
+
+                <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/30 p-5 md:col-span-2">
+                  <h4 className="mb-3 text-xs font-bold uppercase tracking-widest text-gray-400">
+                    AI suggestions
+                  </h4>
+                  <div className="text-sm italic leading-normal text-gray-600">
+                    {Array.isArray(selectedCandidate.cvAnalysis?.suggestions)
+                      ? selectedCandidate.cvAnalysis.suggestions
+                          .slice(0, 3)
+                          .map((s: string, i: number) => (
+                            <p key={i} className="mb-1">
+                              • {s}
+                            </p>
+                          ))
+                      : typeof selectedCandidate.cvAnalysis?.suggestions ===
+                          "string"
+                        ? selectedCandidate.cvAnalysis.suggestions.substring(
+                            0,
+                            200
+                          ) +
+                          (selectedCandidate.cvAnalysis.suggestions.length >
+                          200
+                            ? "..."
+                            : "")
+                        : "No AI insights yet."}
+                  </div>
+                </div>
+              </div>
+
+              {selectedCandidate.languages &&
+                selectedCandidate.languages.length > 0 && (
+                  <div className="mt-8 border-t pt-6">
+                    <h4 className="mb-4 text-sm font-bold uppercase tracking-tighter text-gray-800">
+                      Languages
+                    </h4>
+                    <div className="flex flex-wrap gap-4">
+                      {selectedCandidate.languages.map(
+                        (lang: any, index: number) => (
+                          <div key={index} className="flex flex-col">
+                            <span className="text-sm font-bold text-slate-900">
+                              {lang.name}
+                            </span>
+                            <span className="text-[11px] font-bold uppercase text-slate-400">
+                              {lang.proficiency}
+                            </span>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
             </div>
           </div>
         </div>
       )}
-    </Sidenav>
-
+    </div>
   );
 }
