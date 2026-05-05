@@ -227,17 +227,20 @@ function parseInterviewDescriptionClient(description: string | null | undefined)
   if (!description || typeof description !== 'string') {
     return {
       roundLabel: null as string | null,
+      typeFromLine: null as string | null,
       format: null as string | null,
       meetingLink: null as string | null,
       location: null as string | null,
     };
   }
   const roundMatch = description.match(/Recruiter scheduled\s+([^.]+)\./i);
+  const typeLineMatch = description.match(/^\s*type\s*:\s*(.+)$/im);
   const formatMatch = description.match(/Format:\s*([^.]+)\./i);
   const linkMatch = description.match(/Meeting link:\s*(https?:\/\/\S+)/i);
   const locationMatch = description.match(/Location:\s*(.+?)(?:\.(?:\s|$)|$)/im);
   return {
     roundLabel: roundMatch ? roundMatch[1].trim() : null,
+    typeFromLine: typeLineMatch ? typeLineMatch[1].trim() : null,
     format: formatMatch ? formatMatch[1].trim() : null,
     meetingLink: linkMatch ? linkMatch[1] : null,
     location: locationMatch ? locationMatch[1].trim() : null,
@@ -249,10 +252,12 @@ function buildInterviewDetailsFromTimelineRow(
 ): InterviewDetailsPayload {
   const parsed = parseInterviewDescriptionClient(row.description);
   const at = new Date(row.occurredAt);
+  const titleTrim = String(row.title || '').trim();
+  const titleIsGeneric = /^interview$/i.test(titleTrim);
   return {
     timelineTitle: row.title || 'Interview',
     scheduledAt: Number.isNaN(at.getTime()) ? row.occurredAt : at.toISOString(),
-    roundLabel: parsed.roundLabel,
+    roundLabel: parsed.roundLabel || parsed.typeFromLine || (!titleIsGeneric ? titleTrim : null),
     format: parsed.format,
     meetingLink: parsed.meetingLink,
     location: parsed.location,
@@ -263,6 +268,100 @@ function buildInterviewDetailsFromTimelineRow(
 function isInterviewTimelineRow(row: { status: string; title: string }) {
   const blob = `${row.status} ${row.title}`.toLowerCase();
   return blob.includes('interview');
+}
+
+/** Pipeline pill names that represent an interview step (CRM may use "Interview", "Interviewing", etc.). */
+function isInterviewPipelineStageName(stage: string) {
+  const n = normalizeStage(stage);
+  return n.includes('interview') || n === 'interviewing';
+}
+
+/** 0-based count: which interview-style step this pill is (first Interview pill → 0, second → 1). */
+function interviewPipelineStepIndex(flow: string[], pillIndex: number): number {
+  let k = 0;
+  for (let i = 0; i <= pillIndex; i++) {
+    if (!isInterviewPipelineStageName(flow[i])) continue;
+    if (i === pillIndex) return k;
+    k += 1;
+  }
+  return 0;
+}
+
+const INTERVIEW_KIND_DISPLAY: Record<string, string> = {
+  PHONE: 'Phone screening',
+  VIDEO: 'Video interview',
+  IN_PERSON: 'In-person interview',
+  TECHNICAL_TEST: 'Technical test',
+  ASSESSMENT: 'Assessment',
+  GROUP_DISCUSSION: 'Group discussion',
+  ONSITE: 'On-site interview',
+  TECHNICAL: 'Technical round',
+  FINAL: 'Final interview',
+  SCREENING: 'HR screening',
+  HR_SCREENING: 'HR screening',
+};
+
+function humanizeInterviewKind(raw: string): string {
+  const s = raw.trim().replace(/\s+/g, ' ');
+  if (!s) return s;
+  const upper = s.replace(/[\s-]+/g, '_').toUpperCase();
+  if (INTERVIEW_KIND_DISPLAY[upper]) return INTERVIEW_KIND_DISPLAY[upper];
+  const collapsed = upper.replace(/_/g, '');
+  const hit = Object.keys(INTERVIEW_KIND_DISPLAY).find((k) => k.replace(/_/g, '') === collapsed);
+  if (hit) return INTERVIEW_KIND_DISPLAY[hit];
+  const token = upper.replace(/^TYPE_?/i, '');
+  if (/^[A-Z][A-Z0-9_]+$/.test(token))
+    return token
+      .split('_')
+      .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
+      .join(' ');
+  return s;
+}
+
+/** True if label is useless for "what kind of interview" (avoid "— Type (Interview)"). */
+function isGenericInterviewTypeLabel(label: string): boolean {
+  const n = normalizeStage(label);
+  if (!n) return true;
+  if (n === 'interview' || n === 'interviewing') return true;
+  if (/^interview\s*progress\b/.test(n)) return true;
+  /** e.g. "Round 3" alone (no context); keep "Round 2 of 4" when no type exists */
+  if (/^round\s+\d+$/i.test(label.trim())) return true;
+  return false;
+}
+
+function resolveInterviewTypeLabel(round: InterviewRoundPayload | null | undefined): string | null {
+  if (!round) return null;
+  const fromNotes = round.notes ? parseInterviewDescriptionClient(round.notes).typeFromLine : null;
+  const candidates = [
+    round.roundLabel?.trim(),
+    fromNotes,
+    round.format?.trim(),
+    round.timelineTitle?.trim(),
+  ].filter(Boolean) as string[];
+
+  for (const c of candidates) {
+    const human = humanizeInterviewKind(c);
+    const pick = human || c;
+    if (!isGenericInterviewTypeLabel(pick)) return pick;
+  }
+  return null;
+}
+
+/**
+ * e.g. `Interviewing — HR screening`, `Interview — Technical round` (matches portal / CRM type labels).
+ */
+function formatPipelineStagePillLabel(
+  stage: string,
+  pillIndex: number,
+  flow: string[],
+  rounds: InterviewRoundPayload[]
+): string {
+  if (!isInterviewPipelineStageName(stage)) return stage;
+  const stepIdx = interviewPipelineStepIndex(flow, pillIndex);
+  const round = rounds[stepIdx] ?? rounds[rounds.length - 1];
+  const typeLabel = resolveInterviewTypeLabel(round ?? null);
+  if (!typeLabel) return stage;
+  return `${stage} — ${typeLabel}`;
 }
 
 function isRejectedTimelineRow(row: { status: string; title: string }) {
@@ -507,6 +606,23 @@ export default function ApplicationStatusPage() {
     };
   }, [application, showInterviewDetailsButton]);
 
+  const currentPipelineStageLabel = useMemo(() => {
+    if (!application) return '';
+    const base = stagePresentation.title;
+    const code = String(application.statusCode || '').trim().toUpperCase();
+    const inInterview =
+      code === 'INTERVIEW' ||
+      normalizeStage(base).includes('interview') ||
+      normalizeStage(application.pipelineStage || '').includes('interview') ||
+      normalizeStage(application.status || '').includes('interview');
+    if (!inInterview || interviewRoundsStack.length === 0) return base;
+    const activeRound =
+      interviewRoundsStack[interviewRoundsStack.length - 1] ?? interviewRoundsStack[0];
+    const typeLabel = resolveInterviewTypeLabel(activeRound);
+    if (!typeLabel) return base;
+    return `${base} — ${typeLabel}`;
+  }, [application, stagePresentation, interviewRoundsStack]);
+
   useEffect(() => {
     if (!interviewModalOpen && !rejectionModalOpen && !withdrawConfirmOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -641,24 +757,31 @@ export default function ApplicationStatusPage() {
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600">
                       Current stage:{' '}
-                      <span className="font-semibold text-gray-900">{stagePresentation.title}</span>
+                      <span className="font-semibold text-gray-900">{currentPipelineStageLabel}</span>
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
                       {pipelineStageFlow.map((stage, index) => {
+                        const pillLabel = formatPipelineStagePillLabel(
+                          stage,
+                          index,
+                          pipelineStageFlow,
+                          interviewRoundsStack
+                        );
                         const isCompleted = currentPipelineIndex >= 0 && index <= currentPipelineIndex;
                         const isCurrent = currentPipelineIndex === index;
                         return (
                           <div key={`${stage}-${index}`} className="flex items-center gap-2">
                             <span
-                              className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                              className={`rounded-2xl border px-3 py-2 text-xs font-semibold text-left whitespace-normal leading-snug max-w-[min(100%,18rem)] sm:max-w-88 ${
                                 isCurrent
                                   ? 'bg-blue-100 text-blue-700 border-blue-200'
                                   : isCompleted
                                     ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
                                     : 'bg-gray-50 text-gray-500 border-gray-200'
                               }`}
+                              title={pillLabel}
                             >
-                              {stage}
+                              {pillLabel}
                             </span>
                             {index < pipelineStageFlow.length - 1 ? (
                               <span className="text-gray-300 text-xs">→</span>

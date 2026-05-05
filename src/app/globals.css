@@ -5,9 +5,14 @@
   --foreground: #0f172a;
   /* Set at runtime by Header (ResizeObserver); fallback for first paint / pages without Header */
   --app-header-height: 5.75rem;
+  /* Self-hosted via @fontsource (layout.tsx); stacks fall back if fonts fail to load */
+  --font-inter-fallback: "Inter", ui-sans-serif, system-ui, "Segoe UI", -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  --font-arimo-fallback: "Arimo", ui-sans-serif, system-ui, "Segoe UI", -apple-system, BlinkMacSystemFont,
+    sans-serif;
   /* Fonts: Inter for headings, Arimo for body */
-  --font-heading: var(--font-inter), "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: var(--font-arimo), "Arimo", "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: var(--font-inter-fallback);
+  --font-body: var(--font-arimo-fallback);
   --font-plus-jakarta: "Inter", "Segoe UI", sans-serif;
   --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   --brand-primary: #28A8E1;

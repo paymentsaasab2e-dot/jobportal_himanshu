@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Inter, Arimo } from "next/font/google";
+/* Self-hosted fonts — no request to fonts.googleapis.com (works offline / blocked networks) */
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/inter/700.css";
+import "@fontsource/arimo/400.css";
+import "@fontsource/arimo/700.css";
 import { ToastProvider } from "@/components/common/toast/ToastProvider";
 import { AuthProvider } from "@/components/auth/AuthContext";
 import { InactivityGuard } from "@/components/auth/InactivityGuard";
@@ -9,18 +15,6 @@ import GlobalHeader from "@/components/common/GlobalHeader";
 import ApiHealthChecker from "@/components/common/ApiHealthChecker";
 import GlobalFooter from "@/components/common/GlobalFooter";
 import { NavigationLoader } from "@/components/common/NavigationLoader";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const arimo = Arimo({
-  subsets: ["latin"],
-  variable: "--font-arimo",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -41,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${arimo.variable}`}>
+    <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
         <ApiHealthChecker />
         <ToastProvider>
