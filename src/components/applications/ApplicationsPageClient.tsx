@@ -1095,11 +1095,7 @@ export default function ApplicationsPageClient() {
     if (filteredApplications.length === 0) return null;
 
     const interviewBackedApplication = filteredApplications.find((application) =>
-      interviews.some(
-        (interview) =>
-          interview.jobTitle.toLowerCase() === application.jobTitle.toLowerCase() ||
-          interview.company.toLowerCase() === application.company.toLowerCase()
-      )
+      interviews.some((interview) => interview.id === application.id)
     );
 
     if (interviewBackedApplication) return interviewBackedApplication;
@@ -1159,11 +1155,14 @@ export default function ApplicationsPageClient() {
   };
 
   const renderApplicationCard = (application: Application) => {
-    const matchingInterview = interviews.find(
-      (interview) =>
-        interview.jobTitle.toLowerCase() === application.jobTitle.toLowerCase() ||
-        interview.company.toLowerCase() === application.company.toLowerCase()
-    );
+    /**
+     * Match by application id only. Interviews are derived from applications, so each row's
+     * `id` is the source `application.id`. Matching by job title / company also pulled in
+     * interviews from a *different* application at the same company, which made the "Next
+     * action" pill say "interview scheduled" for an application whose real backend status was
+     * still "Under Review", visibly desyncing the chip and progress bar.
+     */
+    const matchingInterview = interviews.find((interview) => interview.id === application.id);
     const statusMeta = getApplicationStatusMeta(application.status);
     const pipelineIndex = getApplicationPipelineIndex(application.status);
     const progressWidth = ['12%', '32%', '56%', '78%', '100%'][pipelineIndex] ?? '12%';
@@ -1365,7 +1364,9 @@ export default function ApplicationsPageClient() {
             </button>
             <button
               type="button"
-              onClick={() => router.push('/explore-jobs')}
+              onClick={() =>
+                router.push(`/explore-jobs?job=${encodeURIComponent(job.id)}`)
+              }
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
             >
               Apply now
@@ -1610,7 +1611,11 @@ export default function ApplicationsPageClient() {
                     </p>
                     <button
                       type="button"
-                      onClick={() => router.push('/explore-jobs')}
+                      onClick={() =>
+                        router.push(
+                          `/explore-jobs?job=${encodeURIComponent(featuredSavedJob.id)}`,
+                        )
+                      }
                       className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-4 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
                     >
                       Open jobs board

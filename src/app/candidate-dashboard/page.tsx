@@ -118,7 +118,12 @@ function mapJobRecord(job: Record<string, unknown>, fallbackId: string): Dashboa
       asString((clientValue as { companyName?: unknown }).companyName) ?? companyName;
   }
 
+  const appFormLogo = asString(job.applicationFormLogo);
+  const customListingImage =
+    appFormLogo && /^https?:\/\//i.test(appFormLogo.trim()) ? appFormLogo.trim() : null;
+
   const companyLogo =
+    customListingImage ??
     asString(job.companyLogo) ??
     asString(job.logo) ??
     (companyValue && typeof companyValue === "object"
@@ -367,36 +372,88 @@ export default function CandidateDashboardPage() {
       setJobsLoading(true);
 
       try {
-        let response = await fetch(
-          `${API_BASE_URL}/jobs/personalized?candidateId=${candidateId}`,
-          { method: "GET" }
-        );
-        let result = (await response.json()) as {
-          success?: boolean;
-          data?: unknown;
-        };
-
-        if (!response.ok || !result.success) {
-          response = await fetch(`${API_BASE_URL}/jobs?limit=80`, { method: "GET" });
-          result = (await response.json()) as {
+        /**
+         * Always pull the full /jobs list so a newly added role appears on the dashboard
+         * even when the AI matcher (qualifiesForPersonalizedMatch) hasn't yet scored it
+         * highly enough to keep it in /jobs/personalized. Personalized matches, when
+         * available, are placed first and their scores overlay onto the general row.
+         */
+        const generalResponse = await fetch(`${API_BASE_URL}/jobs?limit=200`, {
+          method: "GET",
+        });
+        let generalRawJobs: unknown[] = [];
+        if (generalResponse.ok) {
+          const generalResult = (await generalResponse.json()) as {
             success?: boolean;
             data?: { jobs?: unknown[] } | unknown[];
           };
+          if (generalResult?.success !== false) {
+            generalRawJobs = Array.isArray(generalResult.data)
+              ? generalResult.data
+              : Array.isArray((generalResult.data as { jobs?: unknown[] } | undefined)?.jobs)
+              ? (generalResult.data as { jobs?: unknown[] }).jobs || []
+              : [];
+          }
         }
 
-        if (!response.ok || !result.success) {
-          throw new Error("Failed to load jobs");
+        let personalizedRawJobs: unknown[] = [];
+        try {
+          const personalizedResponse = await fetch(
+            `${API_BASE_URL}/jobs/personalized?candidateId=${candidateId}`,
+            { method: "GET" }
+          );
+          if (personalizedResponse.ok) {
+            const personalizedResult = (await personalizedResponse.json()) as {
+              success?: boolean;
+              data?: unknown;
+            };
+            if (personalizedResult?.success !== false) {
+              personalizedRawJobs = Array.isArray(personalizedResult.data)
+                ? personalizedResult.data
+                : Array.isArray((personalizedResult.data as { jobs?: unknown[] } | undefined)?.jobs)
+                ? (personalizedResult.data as { jobs?: unknown[] }).jobs || []
+                : [];
+            }
+          }
+        } catch (personalizedError) {
+          console.warn("Personalized jobs fetch failed, falling back to general", personalizedError);
         }
 
-        const rawJobs = Array.isArray(result.data)
-          ? result.data
-          : Array.isArray((result.data as { jobs?: unknown[] } | undefined)?.jobs)
-          ? (result.data as { jobs?: unknown[] }).jobs || []
-          : [];
+        const idOf = (job: unknown): string => {
+          if (!job || typeof job !== "object") return "";
+          const j = job as Record<string, unknown>;
+          return String(j.id ?? j._id ?? j.jobId ?? "");
+        };
 
-        const mappedJobs = rawJobs
-          .filter((job): job is Record<string, unknown> => typeof job === "object" && job !== null)
-          .map((job, index) => mapJobRecord(job, `job-${index + 1}`));
+        const personalizedById = new Map<string, Record<string, unknown>>();
+        for (const job of personalizedRawJobs) {
+          const id = idOf(job);
+          if (id && job && typeof job === "object") {
+            personalizedById.set(id, job as Record<string, unknown>);
+          }
+        }
+
+        const merged: Record<string, unknown>[] = [];
+        const seen = new Set<string>();
+        for (const job of personalizedRawJobs) {
+          const id = idOf(job);
+          if (!id || seen.has(id)) continue;
+          seen.add(id);
+          if (job && typeof job === "object") merged.push(job as Record<string, unknown>);
+        }
+        for (const job of generalRawJobs) {
+          const id = idOf(job);
+          if (!id || seen.has(id) || !job || typeof job !== "object") continue;
+          seen.add(id);
+          const personalizedMatch = personalizedById.get(id);
+          merged.push(
+            personalizedMatch
+              ? { ...(job as Record<string, unknown>), ...personalizedMatch }
+              : (job as Record<string, unknown>)
+          );
+        }
+
+        const mappedJobs = merged.map((job, index) => mapJobRecord(job, `job-${index + 1}`));
 
         if (!cancelled) {
           setJobs(mappedJobs);
@@ -404,7 +461,6 @@ export default function CandidateDashboardPage() {
       } catch (error) {
         console.error("Error fetching jobs:", error);
         if (!cancelled) {
-
           setJobs([]);
         }
       } finally {
@@ -754,7 +810,11 @@ export default function CandidateDashboardPage() {
                   isBadgeHighlighted={isMatchesBadgeHighlighted}
                   onToggleFilter={handleToggleFilter}
                   onToggleSave={handleToggleSaveJob}
-                  onApply={() => router.push("/explore-jobs")}
+                  onApply={(jobId) =>
+                    router.push(
+                      `/explore-jobs?job=${encodeURIComponent(jobId)}`,
+                    )
+                  }
                   onViewAll={() => router.push("/explore-jobs")}
                 />
               </div>

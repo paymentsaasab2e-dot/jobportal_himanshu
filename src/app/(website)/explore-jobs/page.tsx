@@ -70,6 +70,72 @@ interface JobListing {
   hiringRecommendation?: string
   breakdown?: any
   normalizedJobProfile?: any
+  applicationFormEnabled?: boolean
+  screeningQuestions?: PortalScreeningQuestion[]
+}
+
+type PortalScreeningType = 'short_text' | 'yes_no' | 'single_choice' | 'slider'
+
+interface PortalScreeningQuestion {
+  id: string
+  type: PortalScreeningType
+  label: string
+  required?: boolean
+  options?: string[]
+  min?: number
+  max?: number
+  step?: number
+  minLabel?: string
+  maxLabel?: string
+}
+
+function parsePortalScreeningQuestion(
+  raw: unknown,
+  fallbackId: string
+): PortalScreeningQuestion | null {
+  if (!raw) return null
+  if (typeof raw === 'object' && raw !== null) {
+    const obj = raw as Record<string, unknown>
+    const label = typeof obj.label === 'string' ? obj.label.trim() : ''
+    if (!label) return null
+    const type = (typeof obj.type === 'string' ? obj.type : 'short_text') as PortalScreeningType
+    const allowed: PortalScreeningType[] = ['short_text', 'yes_no', 'single_choice', 'slider']
+    return {
+      id: typeof obj.id === 'string' && obj.id ? obj.id : fallbackId,
+      type: allowed.includes(type) ? type : 'short_text',
+      label,
+      required: !!obj.required,
+      options: Array.isArray(obj.options) ? obj.options.map((o) => String(o)).filter(Boolean) : undefined,
+      min: typeof obj.min === 'number' ? obj.min : undefined,
+      max: typeof obj.max === 'number' ? obj.max : undefined,
+      step: typeof obj.step === 'number' ? obj.step : undefined,
+      minLabel: typeof obj.minLabel === 'string' ? obj.minLabel : undefined,
+      maxLabel: typeof obj.maxLabel === 'string' ? obj.maxLabel : undefined,
+    }
+  }
+  const text = String(raw).trim()
+  if (!text) return null
+  if (text.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(text)
+      if (parsed && typeof parsed === 'object' && typeof parsed.label === 'string') {
+        return parsePortalScreeningQuestion(parsed, fallbackId)
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+  return { id: fallbackId, type: 'short_text', label: text }
+}
+
+function parsePortalScreeningQuestionList(raw: unknown): PortalScreeningQuestion[] {
+  if (!Array.isArray(raw)) return []
+  const out: PortalScreeningQuestion[] = []
+  raw.forEach((entry, idx) => {
+    const parsed = parsePortalScreeningQuestion(entry, `q_${idx}`)
+    if (parsed) out.push(parsed)
+  })
+  return out
 }
 
 interface AppliedJobSummary {
@@ -82,6 +148,39 @@ interface AppliedJobSummary {
 
 function asString(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null
+}
+
+function normalizeWorkModeValue(value: unknown): 'remote' | 'hybrid' | 'onsite' | '' {
+  const normalized = String(value || '')
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (!normalized) return ''
+  if (normalized.includes('remote') || normalized.includes('work from home') || normalized === 'wfh') {
+    return 'remote'
+  }
+  if (normalized.includes('hybrid')) return 'hybrid'
+  if (
+    normalized.includes('on site') ||
+    normalized.includes('onsite') ||
+    normalized.includes('office') ||
+    normalized === 'on premise' ||
+    normalized === 'on premises'
+  ) {
+    return 'onsite'
+  }
+  return ''
+}
+
+function formatWorkModeLabel(value: unknown) {
+  const key = normalizeWorkModeValue(value)
+  if (key === 'remote') return 'Remote'
+  if (key === 'hybrid') return 'Hybrid'
+  if (key === 'onsite') return 'On-site'
+  const fallback = asString(value)
+  return fallback ? fallback.replace(/_/g, ' ') : 'On-site'
 }
 
 function resolveCompanyName(job: Record<string, any>) {
@@ -98,8 +197,14 @@ function resolveCompanyName(job: Record<string, any>) {
 }
 
 function resolveCompanyLogo(job: Record<string, any>) {
+  const customJobImage =
+    typeof job.applicationFormLogo === 'string' && /^https?:\/\//i.test(job.applicationFormLogo.trim())
+      ? job.applicationFormLogo.trim()
+      : null
+
   if (typeof job.company === 'object' && job.company !== null) {
     return (
+      customJobImage ||
       asString(job.company.logoUrl) ||
       asString(job.company.logo) ||
       asString(job.client?.logo) ||
@@ -110,6 +215,7 @@ function resolveCompanyLogo(job: Record<string, any>) {
   }
 
   return (
+    customJobImage ||
     asString(job.logo) ||
     asString(job.companyLogo) ||
     asString(job.client?.logo) ||
@@ -237,6 +343,38 @@ function buildApiBaseCandidates(primaryBase: string) {
   return Array.from(bases)
 }
 
+/** Full job detail (includes screening questions). List/personalized payloads are sometimes stale or stripped. */
+async function fetchJobDetailForApply(
+  jobId: string,
+  primaryApiBase: string,
+): Promise<{
+  applicationFormQuestions?: unknown
+  applicationFormEnabled?: boolean
+} | null> {
+  const id = String(jobId || '').trim()
+  if (!id) return null
+  const bases = buildApiBaseCandidates(primaryApiBase)
+  for (const base of bases) {
+    try {
+      const res = await fetch(`${base}/jobs/${encodeURIComponent(id)}`, {
+        method: 'GET',
+        cache: 'no-store',
+      })
+      if (!res.ok) continue
+      const json = (await res.json().catch(() => null)) as {
+        success?: boolean
+        data?: { applicationFormQuestions?: unknown; applicationFormEnabled?: boolean }
+      }
+      if (json?.success && json?.data && typeof json.data === 'object') {
+        return json.data
+      }
+    } catch {
+      /* next base */
+    }
+  }
+  return null
+}
+
 function extractJobsFromResponse(result: any): any[] {
   if (!result) return []
   if (Array.isArray(result)) return result
@@ -313,13 +451,27 @@ const ExploreJobsPageContent = () => {
   const [appliedJobSummary, setAppliedJobSummary] = useState<AppliedJobSummary | null>(null)
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set())
   const [savedJobIds, setSavedJobIds] = useState<string[]>([])
+  const [applyPreflightLoading, setApplyPreflightLoading] = useState(false)
 
-  // Screening form states
-  const [experienceAnswer, setExperienceAnswer] = useState<string | null>('yes')
-  const [nightShiftFocused, setNightShiftFocused] = useState(false)
-  const [nightShiftValue, setNightShiftValue] = useState('')
-  const [excelProficiency, setExcelProficiency] = useState(0) // 0 = Beginner, 100 = Expert
-  const [joiningAvailability, setJoiningAvailability] = useState<string | null>(null)
+  // Dynamic screening form state — keyed by question id
+  const [screeningAnswers, setScreeningAnswers] = useState<Record<string, string | number | null>>({})
+  const activeScreeningQuestions: PortalScreeningQuestion[] = useMemo(() => {
+    return Array.isArray(selectedJob?.screeningQuestions) ? selectedJob!.screeningQuestions! : []
+  }, [selectedJob])
+  const setScreeningAnswer = (questionId: string, value: string | number | null) => {
+    setScreeningAnswers((prev) => ({ ...prev, [questionId]: value }))
+  }
+  const buildDefaultScreeningAnswers = (questions: PortalScreeningQuestion[]) => {
+    const out: Record<string, string | number | null> = {}
+    questions.forEach((q) => {
+      if (q.type === 'slider') {
+        out[q.id] = typeof q.min === 'number' ? q.min : 0
+      } else {
+        out[q.id] = ''
+      }
+    })
+    return out
+  }
 
   // Filters UI state (local only)
   const [smartFiltersOpen, setSmartFiltersOpen] = useState(true)
@@ -395,6 +547,18 @@ const ExploreJobsPageContent = () => {
       setSearchQuery(combined)
     }
   }, [searchParams])
+
+  // Deep link from candidate dashboard (Apply): /explore-jobs?job=<id> → same detail layout as clicking a card.
+  useEffect(() => {
+    if (loading) return
+    const jobId = searchParams.get('job')?.trim()
+    if (!jobId || jobListings.length === 0) return
+    if (selectedJob?.id === jobId && viewMode === 'detail') return
+    const job = jobListings.find((j) => String(j.id) === jobId)
+    if (!job) return
+    setSelectedJob(job)
+    setViewMode('detail')
+  }, [loading, jobListings, searchParams, selectedJob?.id, viewMode])
   const [cities, setCities] = useState<Record<string, boolean>>({
     'Navi Mumbai': false,
     'Panvel': false,
@@ -556,8 +720,58 @@ const ExploreJobsPageContent = () => {
       let result: any = null;
       let rawJobs: any[] = [];
       let usingPersonalized = false;
+      const issues: string[] = []
 
+      const parseErrorBody = async (response: Response) => {
+        const text = await response.text().catch(() => '')
+        const slice = text.slice(0, 400)
+        try {
+          const j = JSON.parse(text) as { hint?: string; message?: string; error?: string }
+          const line = [j.hint, j.message, j.error].filter(Boolean).join(' — ')
+          return line || slice
+        } catch {
+          return slice
+        }
+      }
+
+      /**
+       * Always fetch the **full** /jobs list. If the candidate is signed in, also fetch
+       * the AI-personalized matches and overlay their scores onto the matching general
+       * rows. We never replace the general list with the personalized list — otherwise a
+       * brand-new role that doesn't yet meet AI thresholds would never reach the user
+       * even though it exists in the catalog (this regression came up after the matcher
+       * started filtering with `qualifiesForPersonalizedMatch`).
+       */
       for (const base of apiBases) {
+        let generalJobs: any[] = [];
+        let generalSucceeded = false;
+
+        try {
+          const generalResponse = await fetch(`${base}/jobs?limit=500`, {
+            method: 'GET',
+            cache: 'no-store',
+          });
+          if (!generalResponse.ok) {
+            const detail = await parseErrorBody(generalResponse)
+            issues.push(`${base}/jobs?limit=500 → HTTP ${generalResponse.status}: ${detail}`)
+          } else {
+            const generalResult = await generalResponse.json();
+            const generalParsed = extractJobsFromResponse(generalResult);
+            if (generalResult?.success !== false) {
+              result = generalResult;
+              generalJobs = generalParsed;
+              generalSucceeded = true;
+            } else {
+              issues.push(`${base}/jobs?limit=500 → success=false: ${JSON.stringify(generalResult).slice(0, 200)}`)
+            }
+          }
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error)
+          issues.push(`${base}/jobs → ${msg}`)
+          console.warn(`General jobs fetch failed for ${base}`, error);
+        }
+
+        let personalizedJobs: any[] = [];
         if (candidateId) {
           try {
             const personalizedResponse = await fetch(
@@ -566,42 +780,58 @@ const ExploreJobsPageContent = () => {
             );
             if (personalizedResponse.ok) {
               const personalizedResult = await personalizedResponse.json();
-              const personalizedJobs = extractJobsFromResponse(personalizedResult);
-              if (personalizedResult?.success !== false && personalizedJobs.length > 0) {
-                result = personalizedResult;
-                rawJobs = personalizedJobs;
-                usingPersonalized = true;
-                break;
+              const personalizedParsed = extractJobsFromResponse(personalizedResult);
+              if (personalizedResult?.success !== false && personalizedParsed.length > 0) {
+                personalizedJobs = personalizedParsed;
               }
+            } else {
+              const detail = await parseErrorBody(personalizedResponse)
+              issues.push(`${base}/jobs/personalized → HTTP ${personalizedResponse.status}: ${detail}`)
             }
           } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error)
+            issues.push(`${base}/jobs/personalized → ${msg}`)
             console.warn(`Personalized jobs fetch failed for ${base}`, error);
           }
         }
 
-        try {
-          const generalResponse = await fetch(`${base}/jobs?limit=500`, {
-            method: 'GET',
-            cache: 'no-store',
-          });
-          if (!generalResponse.ok) {
-            continue;
+        if (generalSucceeded) {
+          // Index personalized matches by job id so we can overlay their richer scoring fields.
+          const personalizedById = new Map<string, any>();
+          for (const item of personalizedJobs) {
+            const id = String(item?.id || item?._id || item?.jobId || '');
+            if (id) personalizedById.set(id, item);
           }
-          const generalResult = await generalResponse.json();
-          const generalJobs = extractJobsFromResponse(generalResult);
-          if (generalResult?.success !== false) {
-            result = generalResult;
-            rawJobs = generalJobs;
-            usingPersonalized = false;
-            break;
+
+          const merged: any[] = [];
+          const seen = new Set<string>();
+          // Show personalized matches at the top first so AI-recommended roles still lead the page.
+          for (const job of personalizedJobs) {
+            const id = String(job?.id || job?._id || job?.jobId || '');
+            if (!id || seen.has(id)) continue;
+            seen.add(id);
+            merged.push(job);
           }
-        } catch (error) {
-          console.warn(`General jobs fetch failed for ${base}`, error);
+          // Append every other job from the general listing so newly added roles are never hidden.
+          for (const job of generalJobs) {
+            const id = String(job?.id || job?._id || job?.jobId || '');
+            if (!id || seen.has(id)) continue;
+            seen.add(id);
+            const personalizedMatch = personalizedById.get(id);
+            merged.push(personalizedMatch ? { ...job, ...personalizedMatch } : job);
+          }
+
+          rawJobs = merged;
+          usingPersonalized = personalizedJobs.length > 0;
+          break;
         }
       }
 
       if (!result) {
-        throw new Error(`Failed to connect to any local API base (${apiBases.join(', ')})`);
+        throw new Error(
+          `Could not load jobs from any API base (${apiBases.join(', ')}).\n` +
+            (issues.length ? issues.join('\n') : 'No responses (is backend1 running on port 5000?)')
+        );
       }
 
       setIsPersonalized(usingPersonalized);
@@ -619,7 +849,9 @@ const ExploreJobsPageContent = () => {
           const parsedText = parseStructuredJobText(rawDescriptionText)
 
           const matchScoreFromApi =
-            typeof job.finalScore === 'number'
+            typeof job.matchScore === 'number'
+              ? job.matchScore
+              : typeof job.finalScore === 'number'
               ? job.finalScore
               : typeof job.aiScore === 'number'
               ? job.aiScore
@@ -634,10 +866,8 @@ const ExploreJobsPageContent = () => {
             typeof matchScoreFromApi === 'number' && Number.isFinite(matchScoreFromApi)
               ? Math.max(0, Math.min(100, Math.round(matchScoreFromApi)))
               : undefined;
-          const matchScore =
-            typeof safeRoundedScore === 'number'
-              ? safeRoundedScore
-              : Math.floor(Math.random() * 21) + 75;
+          const hasRealMatchScore = typeof safeRoundedScore === 'number';
+          const matchScore = hasRealMatchScore ? (safeRoundedScore as number) : 0;
           
           const jobId = asString(job.id) || asString(job._id) || asString(job.jobId) || '';
           if (!jobId) {
@@ -701,14 +931,14 @@ const ExploreJobsPageContent = () => {
             ),
             type: resolvedType,
             skills: Array.isArray(job.skills) ? job.skills : (job.matchedSkills || []),
-            match: `${matchScore}% Match`,
-            matchScore: matchScore,
+            match: hasRealMatchScore ? `${matchScore}% Match` : 'Not scored yet',
+            matchScore: hasRealMatchScore ? matchScore : undefined,
             normalizedScore:
               typeof job.normalizedScore === 'number'
                 ? job.normalizedScore
-                : matchScore,
+                : (hasRealMatchScore ? matchScore : undefined),
             timeAgo: formatTimeAgo(job.postedDate || job.postedAt || job.createdAt || new Date()),
-            isHighlighted: matchScore >= 85,
+            isHighlighted: hasRealMatchScore && matchScore >= 85,
             description: resolvedDescription,
             responsibilities: resolvedResponsibilities,
             requiredSkills: resolvedRequiredSkills,
@@ -723,7 +953,12 @@ const ExploreJobsPageContent = () => {
               `We are a leading company in the ${job.industry || job.department || 'technology'} industry.`,
             experienceLevel: resolveExperienceLevel(job),
             department: job.industry || job.department || undefined,
-            workMode: job.workMode || job.normalizedJobProfile?.workMode || 'On-site',
+            workMode: formatWorkModeLabel(
+              job.jobLocationType ||
+                job.workMode ||
+                job.normalizedJobProfile?.workMode ||
+                (resolvedLocation.toLowerCase().includes('remote') ? 'Remote' : 'On-site')
+            ),
             industry: job.industry || job.department || 'Technology',
             visaAvailability: job.visaSponsorship || job.visaSponsorship === true ? 'Available' : 'Not Available',
             applicantCount: `${Math.floor(Math.random() * 200) + 20}+`,
@@ -752,7 +987,9 @@ const ExploreJobsPageContent = () => {
             transferableSkills: job.transferableSkills,
             hiringRecommendation: job.hiringRecommendation,
             breakdown: job.breakdown,
-            normalizedJobProfile: job.normalizedJobProfile
+            normalizedJobProfile: job.normalizedJobProfile,
+            applicationFormEnabled: !!job.applicationFormEnabled,
+            screeningQuestions: parsePortalScreeningQuestionList(job.applicationFormQuestions),
           };
         })
         .filter((job) => job !== null) as JobListing[];
@@ -807,20 +1044,96 @@ const ExploreJobsPageContent = () => {
     setSelectedJob(job)
   }
 
-  const handleApplyNow = () => {
+  const handleApplyNow = async () => {
+    if (!selectedJob) return
+    const selectedJobId = String(selectedJob.id || '').trim()
+    let questions = Array.isArray(selectedJob.screeningQuestions) ? selectedJob.screeningQuestions : []
+
+    // List/personalized responses often omit or stale `applicationFormQuestions` — always refresh from GET /jobs/:id before skipping the modal.
+    if (questions.length === 0) {
+      setApplyPreflightLoading(true)
+      try {
+        const detail = await fetchJobDetailForApply(selectedJobId, String(API_BASE_URL))
+        if (detail?.applicationFormQuestions != null) {
+          const parsed = parsePortalScreeningQuestionList(detail.applicationFormQuestions)
+          if (parsed.length > 0) {
+            questions = parsed
+            setSelectedJob((prev) =>
+              prev && String(prev.id) === selectedJobId
+                ? {
+                    ...prev,
+                    screeningQuestions: parsed,
+                    applicationFormEnabled: !!detail.applicationFormEnabled,
+                  }
+                : prev,
+            )
+          }
+        }
+      } finally {
+        setApplyPreflightLoading(false)
+      }
+    }
+
+    if (questions.length === 0) {
+      void submitApplication({})
+      return
+    }
+    setScreeningAnswers(buildDefaultScreeningAnswers(questions))
     setIsScreeningModalOpen(true)
   }
 
   const handleCloseModal = () => {
     setIsScreeningModalOpen(false)
-    setExperienceAnswer('yes')
-    setNightShiftValue('')
-    setNightShiftFocused(false)
-    setExcelProficiency(0)
-    setJoiningAvailability(null)
+    setScreeningAnswers({})
   }
 
-  const handleSubmitScreening = async () => {
+  const validateScreeningAnswers = (questions: PortalScreeningQuestion[]): string | null => {
+    for (const q of questions) {
+      if (!q.required) continue
+      const value = screeningAnswers[q.id]
+      if (q.type === 'slider') {
+        if (typeof value !== 'number' || Number.isNaN(value)) return `Please answer: ${q.label}`
+        continue
+      }
+      if (q.type === 'yes_no') {
+        if (value !== 'yes' && value !== 'no') return `Please answer: ${q.label}`
+        continue
+      }
+      if (q.type === 'single_choice') {
+        const v = typeof value === 'string' ? value.trim() : ''
+        if (!v) return `Please answer: ${q.label}`
+        const opts = (q.options || []).map((o) => String(o).trim()).filter(Boolean)
+        if (opts.length > 0 && !opts.includes(v)) return `Please choose a valid option for: ${q.label}`
+        continue
+      }
+      if (typeof value !== 'string' || !value.trim()) {
+        return `Please answer: ${q.label}`
+      }
+    }
+    return null
+  }
+
+  /**
+   * Build the payload sent to the backend. Each entry is keyed by question id and
+   * carries label/type metadata so the CRM-side application detail can render
+   * the answers without needing to refetch the job.
+   */
+  const buildScreeningAnswersPayload = (questions: PortalScreeningQuestion[]) => {
+    const payload: Record<string, { label: string; type: PortalScreeningType; value: string | number | null }> = {}
+    questions.forEach((q) => {
+      const raw = screeningAnswers[q.id]
+      payload[q.id] = {
+        label: q.label,
+        type: q.type,
+        value: raw === undefined ? null : raw,
+      }
+    })
+    return payload
+  }
+
+  const submitApplication = async (
+    answersPayload: Record<string, { label: string; type: PortalScreeningType; value: string | number | null }> | Record<string, never>,
+  ) => {
     const candidateId = sessionStorage.getItem('candidateId');
     if (!candidateId) {
       alert('Please log in to apply for jobs');
@@ -838,31 +1151,85 @@ const ExploreJobsPageContent = () => {
       return;
     }
 
+    const payloadKeyCount = Object.keys(answersPayload || {}).length
+    let resolvedQuestions =
+      Array.isArray(selectedJob.screeningQuestions) && selectedJob.screeningQuestions.length > 0
+        ? selectedJob.screeningQuestions
+        : []
+
+    if (resolvedQuestions.length === 0 && payloadKeyCount === 0) {
+      const detail = await fetchJobDetailForApply(selectedJobId, String(API_BASE_URL))
+      if (detail?.applicationFormQuestions != null) {
+        const parsed = parsePortalScreeningQuestionList(detail.applicationFormQuestions)
+        if (parsed.length > 0) {
+          resolvedQuestions = parsed
+          setSelectedJob((prev) =>
+            prev && String(prev.id) === selectedJobId
+              ? {
+                  ...prev,
+                  screeningQuestions: parsed,
+                  applicationFormEnabled: !!detail.applicationFormEnabled,
+                }
+              : prev,
+          )
+          setScreeningAnswers(buildDefaultScreeningAnswers(parsed))
+          setIsScreeningModalOpen(true)
+          showInfoToast('Almost there', 'Please complete the screening questions before you submit.')
+          return
+        }
+      }
+    }
+
+    if (resolvedQuestions.length > 0 && payloadKeyCount === 0) {
+      setScreeningAnswers(buildDefaultScreeningAnswers(resolvedQuestions))
+      setIsScreeningModalOpen(true)
+      showInfoToast('Almost there', 'Please complete the screening questions before you submit.')
+      return
+    }
+
+    if (resolvedQuestions.length > 0) {
+      const validationErr = validateScreeningAnswers(resolvedQuestions)
+      if (validationErr) {
+        showInfoToast('Missing answer', validationErr)
+        setIsScreeningModalOpen(true)
+        return
+      }
+    }
+
     try {
-      const screeningAnswers = {
-      experience: experienceAnswer,
-      nightShift: nightShiftValue,
-      excelProficiency,
-        joiningAvailability,
-      };
+      let response: Response
+      try {
+        response = await fetch(`${API_BASE_URL}/applications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            candidateId,
+            jobId: selectedJobId,
+            screeningAnswers: answersPayload,
+          }),
+        })
+      } catch (networkErr) {
+        const hint = `Network error calling ${String(API_BASE_URL)}/applications — is backend1 running (e.g. port 5000) and CORS allowing this origin?`
+        console.error(hint, networkErr)
+        showInfoToast('Cannot reach server', hint)
+        return
+      }
 
-      const response = await fetch(`${API_BASE_URL}/applications`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          candidateId,
-          jobId: selectedJobId,
-          screeningAnswers,
-        }),
-      });
-
-      const result = await response.json();
+      const rawText = await response.text().catch(() => '')
+      let result: Record<string, unknown> = {}
+      if (rawText) {
+        try {
+          result = JSON.parse(rawText) as Record<string, unknown>
+        } catch {
+          result = { message: rawText.slice(0, 200) }
+        }
+      }
 
       if (!response.ok) {
         const message =
-          typeof result?.message === 'string' ? result.message : 'Failed to submit application';
+          typeof result?.message === 'string' ? result.message : `Failed to submit application (HTTP ${response.status})`;
         const lower = message.toLowerCase();
 
         // Backend can return a non-200 when the candidate already applied.
@@ -870,7 +1237,7 @@ const ExploreJobsPageContent = () => {
         if (lower.includes('already applied')) {
           const fallbackTitle = selectedJob.title || 'Job'
           const fallbackCompany = selectedJob.company || 'Company'
-          const existingApplicationId = asString(result?.data?.applicationId) || undefined
+          const existingApplicationId = asString((result?.data as Record<string, unknown> | undefined)?.applicationId) || undefined
           handleCloseModal();
           setAppliedJobSummary({
             jobTitle: fallbackTitle,
@@ -891,13 +1258,14 @@ const ExploreJobsPageContent = () => {
       }
 
       if (result.success) {
+        const data = result?.data as Record<string, unknown> | undefined
         const appliedAtDate =
-          result?.data?.appliedAt ? formatDate(new Date(result.data.appliedAt)) : formatDate(new Date())
-        const backendJob = result?.data?.job
+          data?.appliedAt ? formatDate(new Date(String(data.appliedAt))) : formatDate(new Date())
+        const backendJob = data?.job as Record<string, unknown> | undefined
         const modalJobTitle = asString(backendJob?.title) || selectedJob.title || 'Job'
         const modalCompany = asString(backendJob?.company) || selectedJob.company || 'Company'
         const modalJobId = asString(backendJob?.id) || selectedJobId
-        const modalApplicationId = asString(result?.data?.applicationId) || undefined
+        const modalApplicationId = asString(data?.applicationId) || undefined
 
         handleCloseModal();
         setAppliedJobSummary({
@@ -913,12 +1281,26 @@ const ExploreJobsPageContent = () => {
         checkAppliedJobs();
         showSuccessToast('Application submitted successfully');
       } else {
-        alert(result.message || 'Failed to submit application');
+        alert(typeof result.message === 'string' ? result.message : 'Failed to submit application');
       }
     } catch (error) {
       console.error('Error submitting application:', error);
-      alert(error instanceof Error ? error.message : 'Failed to submit application. Please try again.');
+      showInfoToast(
+        'Application error',
+        error instanceof Error ? error.message : 'Failed to submit application. Please try again.',
+      );
     }
+  }
+
+  const handleSubmitScreening = async () => {
+    const questions = activeScreeningQuestions
+    const validationError = validateScreeningAnswers(questions)
+    if (validationError) {
+      showInfoToast('Missing answer', validationError)
+      return
+    }
+    const payload = buildScreeningAnswersPayload(questions)
+    await submitApplication(payload)
   }
 
   const handleCloseSuccessModal = () => {
@@ -981,7 +1363,7 @@ const ExploreJobsPageContent = () => {
     }
     if (smartFilterRemoteFriendly) {
       jobs = jobs.filter((j) =>
-        j.workMode?.toLowerCase().includes('remote') ||
+        normalizeWorkModeValue(j.workMode) === 'remote' ||
         j.location?.toLowerCase().includes('remote')
       );
     }
@@ -989,12 +1371,12 @@ const ExploreJobsPageContent = () => {
     // Work mode filter
     if (workMode) {
       jobs = jobs.filter((j) => {
-        const mode = (j.workMode || '').toLowerCase();
         const loc = (j.location || '').toLowerCase();
-        const target = workMode.toLowerCase();
-        if (target === 'remote') return mode.includes('remote') || loc.includes('remote');
-        if (target === 'hybrid') return mode.includes('hybrid');
-        if (target === 'on-site') return mode.includes('on-site') || mode.includes('office') || mode.includes('onsite');
+        const mode = normalizeWorkModeValue(j.workMode);
+        const target = normalizeWorkModeValue(workMode);
+        if (target === 'remote') return mode === 'remote' || loc.includes('remote');
+        if (target === 'hybrid') return mode === 'hybrid';
+        if (target === 'onsite') return mode === 'onsite';
         return true;
       });
     }
@@ -1210,7 +1592,7 @@ const ExploreJobsPageContent = () => {
       // Count cities
       const jobLoc = (job.location || '').toLowerCase()
       Object.keys(cities).forEach(key => {
-        if (jobLoc.includes(key.toLowerCase()) || (key === 'Remote' && job.workMode?.toLowerCase().includes('remote'))) {
+        if (jobLoc.includes(key.toLowerCase()) || (key === 'Remote' && normalizeWorkModeValue(job.workMode) === 'remote')) {
           counts.cities[key]++
         }
       })
@@ -2193,8 +2575,13 @@ const ExploreJobsPageContent = () => {
                             </div>
                           </div>
                           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 shrink-0">
-                            <button onClick={handleApplyNow} className="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#28A8E1] px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_14px_28px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-[#28A8DF]">
-                              Apply Now
+                            <button
+                              type="button"
+                              disabled={applyPreflightLoading}
+                              onClick={() => void handleApplyNow()}
+                              className="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#28A8E1] px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_14px_28px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-[#28A8DF] disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {applyPreflightLoading ? 'Loading…' : 'Apply Now'}
                             </button>
                             <button onClick={() => handleSaveJob(selectedJob)} className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[rgba(40,168,225,0.24)] bg-white px-4 py-2.5 text-[13px] font-semibold text-[#28A8E1] transition-all duration-200 hover:bg-[rgba(40,168,225,0.08)]">
                               {isSavedJob(selectedJob.id) ? 'Saved' : 'Save Job'}
@@ -2476,109 +2863,124 @@ const ExploreJobsPageContent = () => {
                 <p className="text-sm text-gray-600 mb-2">These quick questions help us understand if you are a good fit for the role</p>
               </div>
 
-              {/* Questions */}
+              {/* Questions (dynamic, configured by recruiter) */}
               <div className="px-6 pt-2 pb-6 space-y-8">
-                {/* Question 1: Experience */}
-                <div>
-                  <label className="block text-base font-medium text-gray-900 mb-3">
-                    Do you have at least 2 years of experience for this role?
-                  </label>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setExperienceAnswer('yes')}
-                      className={`px-6 py-2.5 rounded-lg border-2 transition-colors ${experienceAnswer === 'yes'
-                        ? 'border-blue-500 bg-blue-50 text-blue-600 font-medium'
-                        : 'border-blue-200 bg-white text-gray-900 hover:border-blue-300'
-                        }`}
-                    >
-                      Yes
-                    </button>
-                    <button
-                      onClick={() => setExperienceAnswer('no')}
-                      className={`px-6 py-2.5 rounded-lg border-2 transition-colors ${experienceAnswer === 'no'
-                        ? 'border-blue-500 bg-blue-50 text-blue-600 font-medium'
-                        : 'border-blue-200 bg-white text-gray-900 hover:border-blue-300'
-                        }`}
-                    >
-                      No
-                    </button>
-                  </div>
-                </div>
+                {activeScreeningQuestions.length === 0 ? (
+                  <p className="text-sm text-gray-600 italic">No screening questions configured.</p>
+                ) : (
+                  activeScreeningQuestions.map((question) => {
+                    const value = screeningAnswers[question.id]
+                    if (question.type === 'yes_no') {
+                      return (
+                        <div key={question.id}>
+                          <label className="block text-base font-medium text-gray-900 mb-3">
+                            {question.label}
+                            {question.required ? <span className="ml-1 text-red-500">*</span> : null}
+                          </label>
+                          <div className="flex gap-3">
+                            {['yes', 'no'].map((opt) => (
+                              <button
+                                key={opt}
+                                onClick={() => setScreeningAnswer(question.id, opt)}
+                                className={`px-6 py-2.5 rounded-lg border-2 transition-colors capitalize ${
+                                  value === opt
+                                    ? 'border-blue-500 bg-blue-50 text-blue-600 font-medium'
+                                    : 'border-blue-200 bg-white text-gray-900 hover:border-blue-300'
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    }
 
-                {/* Question 2: Night Shift */}
-                <div>
-                  <label className="block text-base font-medium text-gray-900 mb-3">
-                    Are you willing to work in Night Shift?
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={nightShiftValue}
-                      onChange={(e) => setNightShiftValue(e.target.value)}
-                      onFocus={() => setNightShiftFocused(true)}
-                      onBlur={() => setNightShiftFocused(false)}
-                      className={`w-full px-4 py-2.5 rounded-lg border-2 appearance-none bg-white text-gray-900 ${nightShiftFocused ? 'border-blue-500' : 'border-blue-200'
-                        } focus:outline-none focus:ring-2 focus:ring-blue-200`}
-                    >
-                      <option value="">Select an option</option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                      <option value="maybe">Maybe</option>
-                    </select>
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
+                    if (question.type === 'single_choice') {
+                      const options = Array.isArray(question.options) ? question.options : []
+                      return (
+                        <div key={question.id}>
+                          <label className="block text-base font-medium text-gray-900 mb-3">
+                            {question.label}
+                            {question.required ? <span className="ml-1 text-red-500">*</span> : null}
+                          </label>
+                          <div className="grid grid-cols-2 gap-3">
+                            {options.map((option, idx) => (
+                              <button
+                                key={`${question.id}-${idx}`}
+                                onClick={() => setScreeningAnswer(question.id, option)}
+                                className={`px-4 py-2.5 rounded-lg border-2 transition-colors ${
+                                  value === option
+                                    ? 'border-blue-500 bg-blue-50 text-blue-600 font-medium'
+                                    : 'border-blue-200 bg-white text-gray-900 hover:border-blue-300'
+                                }`}
+                              >
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    }
 
-                {/* Question 3: Excel Proficiency */}
-                <div>
-                  <label className="block text-base font-medium text-gray-900 mb-3">
-                    Rate your proficiency in Excel
-                  </label>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">Beginner</span>
-                      <span className="text-sm text-gray-600">Expert</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={excelProficiency}
-                      onChange={(e) => setExcelProficiency(Number(e.target.value))}
-                      className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                      style={{
-                        background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${excelProficiency}%, #e0e7ff ${excelProficiency}%, #e0e7ff 100%)`
-                      }}
-                    />
-                    <p className="text-sm text-blue-600 font-medium">
-                      Current selection: {getProficiencyLabel(excelProficiency)}
-                    </p>
-                  </div>
-                </div>
+                    if (question.type === 'slider') {
+                      const min = typeof question.min === 'number' ? question.min : 0
+                      const max = typeof question.max === 'number' ? question.max : 100
+                      const step = typeof question.step === 'number' && question.step > 0 ? question.step : 1
+                      const minLabel = question.minLabel || 'Beginner'
+                      const maxLabel = question.maxLabel || 'Expert'
+                      const numericValue =
+                        typeof value === 'number' ? value : typeof value === 'string' ? Number(value) || min : min
+                      const range = max - min || 1
+                      const fillPercent = Math.max(0, Math.min(100, ((numericValue - min) / range) * 100))
+                      return (
+                        <div key={question.id}>
+                          <label className="block text-base font-medium text-gray-900 mb-3">
+                            {question.label}
+                            {question.required ? <span className="ml-1 text-red-500">*</span> : null}
+                          </label>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm text-gray-600">{minLabel}</span>
+                              <span className="text-sm text-gray-600">{maxLabel}</span>
+                            </div>
+                            <input
+                              type="range"
+                              min={min}
+                              max={max}
+                              step={step}
+                              value={numericValue}
+                              onChange={(e) => setScreeningAnswer(question.id, Number(e.target.value))}
+                              className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                              style={{
+                                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${fillPercent}%, #e0e7ff ${fillPercent}%, #e0e7ff 100%)`,
+                              }}
+                            />
+                            <p className="text-sm text-blue-600 font-medium">
+                              Current selection: {numericValue} ({getProficiencyLabel(fillPercent)})
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    }
 
-                {/* Question 4: Joining Availability */}
-                <div>
-                  <label className="block text-base font-medium text-gray-900 mb-3">
-                    How soon can you join?
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {['Immediate', '15 Days', '30 Days', '60 Days'].map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => setJoiningAvailability(option)}
-                        className={`px-4 py-2.5 rounded-lg border-2 transition-colors ${joiningAvailability === option
-                          ? 'border-blue-500 bg-blue-50 text-blue-600 font-medium'
-                          : 'border-blue-200 bg-white text-gray-900 hover:border-blue-300'
-                          }`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                    return (
+                      <div key={question.id}>
+                        <label className="block text-base font-medium text-gray-900 mb-3">
+                          {question.label}
+                          {question.required ? <span className="ml-1 text-red-500">*</span> : null}
+                        </label>
+                        <input
+                          type="text"
+                          value={typeof value === 'string' ? value : ''}
+                          onChange={(e) => setScreeningAnswer(question.id, e.target.value)}
+                          placeholder="Type your answer"
+                          className="w-full px-4 py-2.5 rounded-lg border-2 border-blue-200 bg-white text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                        />
+                      </div>
+                    )
+                  })
+                )}
               </div>
 
               {/* Footer */}
