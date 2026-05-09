@@ -12,11 +12,33 @@ export default function WebsiteSiteLayout({
 }) {
   const pathname = usePathname();
   const { isAuthenticated, user } = useAuth();
-  const isEmployersPage = pathname === "/employers";
+
+  // Pages under (website) that must always show the marketing Navbar
+  // (the same one used on /employers) — regardless of auth state. Without
+  // this, an authenticated user landing on `/` would get the old Header
+  // ("Explore Jobs / Courses / Services / For Employers / Log In / Sign Up")
+  // overlapping the marketing nav.
+  const marketingNavbarPaths = new Set<string>([
+    "/",
+    "/employers",
+    "/services",
+    "/aboutus",
+    "/contact",
+    "/privacypolicy",
+    "/terms",
+    "/trust-safety",
+    "/help",
+    "/ats-check",
+  ]);
+
+  const usesMarketingNavbar =
+    marketingNavbarPaths.has(pathname) ||
+    pathname.startsWith("/employers/") ||
+    pathname.startsWith("/services/");
 
   return (
     <div className="flex flex-col min-h-screen selection:bg-[#28A8DF] selection:text-white">
-      {isAuthenticated && user && !isEmployersPage ? (
+      {isAuthenticated && user && !usesMarketingNavbar ? (
         <Header />
       ) : (
         <Navbar />
