@@ -11,6 +11,10 @@ import {
 
 import DashboardPanel from "./DashboardPanel";
 import type { DashboardData } from "./dashboard-types";
+import {
+  getProfileDisplayFullName,
+  isPortalPlaceholderFullName,
+} from "./dashboard-utils";
 
 interface ProfileOverviewCardProps {
   profile: DashboardData["profile"] | null;
@@ -59,6 +63,21 @@ function getProfileInitials(fullName?: string | null) {
   return initials || "UP";
 }
 
+function getAvatarInitials(
+  profile: ProfileOverviewCardProps["profile"],
+  displayFullName: string
+) {
+  const raw = profile?.fullName?.trim() || "";
+  if (raw && !isPortalPlaceholderFullName(raw)) {
+    return getProfileInitials(raw);
+  }
+  const digits = String(profile?.whatsappNumber || "").replace(/\D/g, "");
+  if (digits.length >= 2) {
+    return digits.slice(-2).toUpperCase();
+  }
+  return getProfileInitials(displayFullName);
+}
+
 export default function ProfileOverviewCard({
   profile,
   topSkills,
@@ -75,9 +94,13 @@ export default function ProfileOverviewCard({
     () => resolveProfileImage(profile?.profilePhotoUrl, apiBaseUrl),
     [apiBaseUrl, profile?.profilePhotoUrl]
   );
+  const displayFullName = useMemo(
+    () => getProfileDisplayFullName(profile),
+    [profile]
+  );
   const profileInitials = useMemo(
-    () => getProfileInitials(profile?.fullName),
-    [profile?.fullName]
+    () => getAvatarInitials(profile, displayFullName),
+    [profile, displayFullName]
   );
 
   const visibleMissingSections = missingSections.slice(0, 3);
@@ -139,7 +162,7 @@ export default function ProfileOverviewCard({
           <div className="min-w-0 space-y-1.5">
             <div>
               <p className="text-lg font-semibold tracking-tight text-slate-950">
-                {profile?.fullName || "Candidate"}
+                {displayFullName}
               </p>
               
             </div>

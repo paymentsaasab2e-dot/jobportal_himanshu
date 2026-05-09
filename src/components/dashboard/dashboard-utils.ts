@@ -7,9 +7,67 @@ const DAY_MESSAGES = {
   night: "Let's find your next role",
 } as const;
 
+/** Bootstrap / legacy labels — must not drive greetings like "Good evening, New". */
+export function isPortalPlaceholderFullName(name?: string | null): boolean {
+  const t = String(name ?? "")
+    .trim()
+    .toLowerCase();
+  if (!t) return true;
+  return (
+    t === "new candidate" ||
+    t === "user" ||
+    t === "candidate" ||
+    t === "member" ||
+    t === "job seeker"
+  );
+}
+
+/** Display name for `/profile` API shape (AuthContext) — same placeholder rules as the dashboard card. */
+export function getAuthContextDisplayName(profile: {
+  personalInfo?: {
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
+  } | null;
+  whatsappNumber?: string | null;
+  countryCode?: string | null;
+}): string {
+  const pi = profile.personalInfo || {};
+  const combined = [pi.firstName, pi.middleName, pi.lastName]
+    .filter((part) => part && String(part).trim())
+    .map((part) => String(part).trim())
+    .join(" ")
+    .trim();
+  if (combined && !isPortalPlaceholderFullName(combined)) return combined;
+
+  const digits = String(profile.whatsappNumber || "").replace(/\D/g, "");
+  if (digits.length >= 4) {
+    return `Account · ${digits.slice(-4)}`;
+  }
+
+  return "Candidate";
+}
+
+/** Full line under the avatar (never show "New Candidate" when we only know WhatsApp). */
+export function getProfileDisplayFullName(
+  profile?: DashboardData["profile"] | null
+): string {
+  const raw = profile?.fullName?.trim() || "";
+  if (raw && !isPortalPlaceholderFullName(raw)) return raw;
+
+  const digits = String(profile?.whatsappNumber || "").replace(/\D/g, "");
+  if (digits.length >= 4) {
+    return `Account · ${digits.slice(-4)}`;
+  }
+
+  return "Complete your profile";
+}
+
 export function getDashboardName(profile?: DashboardData["profile"] | null) {
   const fullName = profile?.fullName?.trim();
-  if (fullName) return fullName.split(/\s+/)[0] ?? "there";
+  if (fullName && !isPortalPlaceholderFullName(fullName)) {
+    return fullName.split(/\s+/)[0] ?? "there";
+  }
 
   const whatsappNumber = profile?.whatsappNumber?.replace(/\D/g, "");
   if (whatsappNumber && whatsappNumber.length >= 4) {

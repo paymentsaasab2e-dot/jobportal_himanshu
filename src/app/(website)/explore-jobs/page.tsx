@@ -21,6 +21,7 @@ import {
 // Jobs list comes from backend1 (job portal DB). CRM creates/updates mirror into that DB from Phase 2.
 import { API_BASE_URL } from '@/lib/api-base';
 import { showInfoToast, showSuccessToast } from '@/components/common/toast/toast';
+import { notifyBellRefresh } from '@/lib/notifications';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 const PAGE_BG =
   'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)';
@@ -1280,6 +1281,8 @@ const ExploreJobsPageContent = () => {
         loadJobListings();
         checkAppliedJobs();
         showSuccessToast('Application submitted successfully');
+        // Backend already persists an "Application submitted" Notification — just nudge the bell to refresh.
+        notifyBellRefresh();
       } else {
         alert(typeof result.message === 'string' ? result.message : 'Failed to submit application');
       }

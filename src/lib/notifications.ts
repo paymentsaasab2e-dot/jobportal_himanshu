@@ -105,3 +105,71 @@ export async function getUnreadNotificationCount(candidateId: string): Promise<{
 
   return result;
 }
+
+export interface CreateNotificationInput {
+  type?: NotificationType;
+  title: string;
+  description?: string;
+  actionButton?: string | null;
+  actionPath?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Custom event the rest of the app listens to so the bell badge can refresh
+ * the moment a new notification is recorded — without any prop drilling.
+ */
+export const NOTIFICATIONS_UPDATED_EVENT = 'saasa:notifications-updated';
+
+function emitNotificationsUpdated() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(NOTIFICATIONS_UPDATED_EVENT));
+}
+
+/**
+ * Fire-and-forget signal used after server-side actions that already persist
+ * a notification (e.g. POST /applications). Lets the bell badge + panel
+ * refresh without a second write. Safe to call on the client.
+ */
+export function notifyBellRefresh() {
+  emitNotificationsUpdated();
+}
+
+/**
+ * Records a notification for the current candidate. Silently no-ops when
+ * candidateId is missing (e.g. logged-out flows) and on network errors so
+ * it can be safely fire-and-forget at any toast call site.
+ */
+export async function recordCandidateNotification(
+  candidateId: string | null | undefined,
+  payload: CreateNotificationInput
+): Promise<void> {
+  if (!candidateId || !payload?.title) return;
+
+  try {
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('token') || sessionStorage.getItem('token')
+        : null;
+
+    await fetch(`${API_BASE_URL}/notifications/${candidateId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        type: payload.type || 'system',
+        title: payload.title,
+        description: payload.description || '',
+        actionButton: payload.actionButton || null,
+        actionPath: payload.actionPath || null,
+        metadata: payload.metadata || {},
+      }),
+    });
+
+    emitNotificationsUpdated();
+  } catch {
+    // Bell is a side channel; never fail the calling UI flow because of it.
+  }
+}

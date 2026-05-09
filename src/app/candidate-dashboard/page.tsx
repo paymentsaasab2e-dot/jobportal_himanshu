@@ -27,6 +27,7 @@ import {
   fetchProfileCompleteness,
   type ProfileCompletenessResponse,
 } from "@/lib/profile-completion";
+import { recordCandidateNotification } from "@/lib/notifications";
 
 const PAGE_BG =
   "radial-gradient(circle at top left, rgba(40,168,225,0.13), transparent 28%), radial-gradient(circle at 85% 12%, rgba(40,168,223,0.1), transparent 16%), radial-gradient(circle at 18% 82%, rgba(252,150,32,0.08), transparent 18%), linear-gradient(180deg, #f5fafd 0%, #f8fcff 44%, #fcfdff 100%)";
@@ -203,7 +204,12 @@ export default function CandidateDashboardPage() {
 
   useEffect(() => {
     if (!authLoading) {
-      setCandidateId(user?.id || null);
+      const idFromUser = user?.id || null;
+      const idFromStorage =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('candidateId') || sessionStorage.getItem('candidateId')
+          : null;
+      setCandidateId(idFromUser || idFromStorage);
       if (!isAuthenticated) {
         setLoading(false);
         setJobsLoading(false);
@@ -568,6 +574,11 @@ export default function CandidateDashboardPage() {
       }
 
       showSuccessToast("Profile photo updated");
+      void recordCandidateNotification(candidateId, {
+        type: 'system',
+        title: 'Profile photo updated',
+        description: 'Your new profile photo is now live across recruiters.',
+      });
     } catch (error) {
       console.error("Error uploading profile photo:", error);
       alert(error instanceof Error ? error.message : "Profile photo upload failed.");

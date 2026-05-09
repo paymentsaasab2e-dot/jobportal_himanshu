@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bell, Loader2, RefreshCw, ExternalLink, CheckCheck, Settings } from 'lucide-react';
-import { fetchNotifications, type Notification } from '@/lib/notifications';
+import {
+  fetchNotifications,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+  NOTIFICATIONS_UPDATED_EVENT,
+  type Notification,
+} from '@/lib/notifications';
 
 const FILTERS = ['All', 'Jobs', 'Applications', 'Interviews', 'Courses', 'System'] as const;
 
@@ -108,7 +114,12 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
   const [error, setError] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const candidateId = typeof window !== 'undefined' ? sessionStorage.getItem('candidateId') || '' : '';
+  const candidateId =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('candidateId') ||
+        sessionStorage.getItem('candidateId') ||
+        ''
+      : '';
 
   const loadNotifications = useCallback(async () => {
     if (!candidateId) return;
@@ -135,14 +146,21 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
 
   useEffect(() => {
     if (!isOpen) return;
-    
+
     loadNotifications();
-    
+
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
+    const handleUpdated = () => {
+      loadNotifications();
+    };
     document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
+    window.addEventListener(NOTIFICATIONS_UPDATED_EVENT, handleUpdated);
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      window.removeEventListener(NOTIFICATIONS_UPDATED_EVENT, handleUpdated);
+    };
   }, [isOpen, onClose, loadNotifications]);
 
   const filteredNotifications = useMemo(() => {
@@ -169,9 +187,34 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
   const visibleNotifications = filteredNotifications.slice(0, visibleCount);
   const canLoadMore = visibleCount < filteredNotifications.length;
 
-  const markAllAsRead = () => {
+  const markAllAsRead = useCallback(async () => {
+    if (!candidateId) return;
     setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
-  };
+    try {
+      await markAllNotificationsAsRead(candidateId);
+      window.dispatchEvent(new Event(NOTIFICATIONS_UPDATED_EVENT));
+    } catch (e) {
+      console.warn('mark-all-read failed', e);
+    }
+  }, [candidateId]);
+
+  const handleNotificationClick = useCallback(
+    async (notification: Notification) => {
+      if (!candidateId || notification.isRead) return;
+      setNotifications((prev) =>
+        prev.map((item) =>
+          item.id === notification.id ? { ...item, isRead: true } : item
+        )
+      );
+      try {
+        await markNotificationAsRead(candidateId, notification.id);
+        window.dispatchEvent(new Event(NOTIFICATIONS_UPDATED_EVENT));
+      } catch (e) {
+        console.warn('mark-as-read failed', e);
+      }
+    },
+    [candidateId]
+  );
 
   return (
     <AnimatePresence>
@@ -277,7 +320,8 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
                             transition={{ duration: 0.22, delay: index * 0.03 }}
-                            className={`relative rounded-xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                            onClick={() => handleNotificationClick(notification)}
+                            className={`relative rounded-xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer ${
                               notification.isRead
                                 ? 'border-slate-200 bg-white'
                                 : 'border-sky-100 bg-sky-50/55'
@@ -301,7 +345,11 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
                                 {notification.actionButton && notification.actionPath && (
                                   <button
                                     type="button"
-                                    onClick={() => onNavigate(notification.actionPath)}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handleNotificationClick(notification);
+                                      onNavigate(notification.actionPath as string);
+                                    }}
                                     className="mt-3.5 rounded-md bg-sky-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700"
                                   >
                                     {notification.actionButton}

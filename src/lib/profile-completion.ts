@@ -64,28 +64,43 @@ export interface ChatMessage {
 export async function fetchProfileCompleteness(
   candidateId: string
 ): Promise<ProfileCompletenessResponse> {
-  const response = await fetchWithRetry(
-    `${API_BASE_URL}/profile/completeness/${candidateId}`,
-    {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const url = `${API_BASE_URL}/profile/completeness/${candidateId}`;
+
+  let lastMessage = "Failed to fetch profile completeness";
+
+  for (let attempt = 0; attempt <= 2; attempt++) {
+    const response = await fetchWithRetry(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem('token')}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
+    });
+
+    const result = (await response.json()) as {
+      success: boolean;
+      message?: string;
+      data?: ProfileCompletenessResponse;
+    };
+
+    if (response.ok && result.success && result.data) {
+      return result.data;
     }
-  );
 
-  const result = (await response.json()) as {
-    success: boolean;
-    message?: string;
-    data?: ProfileCompletenessResponse;
-  };
+    lastMessage = result.message || lastMessage;
+    const retryable =
+      response.status >= 500 ||
+      /write conflict|deadlock|retry your transaction/i.test(lastMessage);
 
-  if (!response.ok || !result.success || !result.data) {
-    throw new Error(result.message || "Failed to fetch profile completeness");
+    if (!retryable || attempt === 2) {
+      throw new Error(lastMessage);
+    }
+
+    await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
   }
 
-  return result.data;
+  throw new Error(lastMessage);
 }
 
 export async function askProfileQuestion(params: {

@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api-base';
-import { showSuccessToast, showErrorToast } from '@/components/common/toast/toast';
+import { showSuccessToast } from '@/components/common/toast/toast';
+import { getAuthContextDisplayName } from '@/components/dashboard/dashboard-utils';
 
 interface User {
   id: string;
@@ -46,6 +47,16 @@ const PUBLIC_ROUTES = [
   '/aboutus',
   '/contact'
 ];
+
+function buildPlaceholderUser(candidateId: string): User {
+  return {
+    id: candidateId,
+    whatsappNumber: '',
+    email: '',
+    name: 'Candidate',
+    profilePhotoUrl: null,
+  };
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -116,12 +127,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: candidateId,
             whatsappNumber: profile.whatsappNumber || '',
             email: personalInfo.email || '',
-            name: [personalInfo.firstName, personalInfo.lastName].filter(Boolean).join(' ') || 'User',
+            name: getAuthContextDisplayName(profile),
             profilePhotoUrl: personalInfo.profilePhotoUrl || null
           });
         }
       } else if (response.status === 401) {
-        logout();
+        // Brief wait + one retry: session row may lag the JWT by a few ms on cold DB.
+        await new Promise((r) => setTimeout(r, 400));
+        const retry = await fetch(`${API_BASE_URL}/profile/${candidateId}`, {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        });
+        if (retry.ok) {
+          const result = await retry.json();
+          if (result.success && result.data) {
+            const profile = result.data;
+            const personalInfo = profile.personalInfo || {};
+            setUser({
+              id: candidateId,
+              whatsappNumber: profile.whatsappNumber || '',
+              email: personalInfo.email || '',
+              name: [personalInfo.firstName, personalInfo.lastName].filter(Boolean).join(' ') || 'User',
+              profilePhotoUrl: personalInfo.profilePhotoUrl || null,
+            });
+          }
+        } else {
+          logout();
+        }
       }
     } catch (error) {
     } finally {
@@ -134,13 +165,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('candidateId', candidateId);
     sessionStorage.setItem('token', newToken);
     sessionStorage.setItem('candidateId', candidateId);
-    
+
     setToken(newToken);
-    if (userData) {
-      setUser(userData);
+    // Always set a user row immediately so gated pages (e.g. candidate-dashboard)
+    // can read `user.id` as `candidateId` before /profile returns. If we only
+    // waited for refreshUser(), a 401 during grace (or any delay) left
+    // `user` null while `token` existed — the dashboard never got a
+    // candidateId, never cleared `loading`, and showed an infinite loader.
+    if (userData && typeof userData === 'object' && userData.id) {
+      setUser({
+        id: String(userData.id),
+        whatsappNumber: String(userData.whatsappNumber || ''),
+        email: userData.email,
+        name: userData.name || 'User',
+        profilePhotoUrl: userData.profilePhotoUrl ?? null,
+      });
     } else {
-      refreshUser();
+      setUser(buildPlaceholderUser(candidateId));
     }
+    setIsLoading(false);
+    // Defer profile fetch to the next macrotask so navigation from /whatsapp/verify
+    // can settle first (closer to pre–package.json behaviour, fewer 401 races on cold Prisma).
+    setTimeout(() => {
+      void refreshUser();
+    }, 0);
   }, [refreshUser]);
 
   // Initial session check & Cross-tab sync

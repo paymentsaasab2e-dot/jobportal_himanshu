@@ -7,6 +7,11 @@ import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 
 import { API_BASE_URL, getApiBaseUrl } from '@/lib/api-base';
 import { useAuth } from '@/components/auth/AuthContext';
+import { getProfileDisplayFullName } from '@/components/dashboard/dashboard-utils';
+import {
+  getUnreadNotificationCount,
+  NOTIFICATIONS_UPDATED_EVENT,
+} from '@/lib/notifications';
 import NotificationPanel from '@/components/common/NotificationPanel';
 import ProfilePanel from '@/components/common/ProfilePanel';
 import GlobalAIAssistant from '@/components/common/GlobalAIAssistant';
@@ -46,6 +51,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
     // Fallback to local state for specific completion logic if needed
     const [profileCompletion, setProfileCompletion] = useState<number | null>(null);
     const [dashboardUser, setDashboardUser] = useState<{ name: string; email: string; photoUrl?: string | null } | null>(null);
+    const [unreadCount, setUnreadCount] = useState<number>(0);
     const isActive = useCallback(
         (path: string) => {
             if (path === '/candidate-dashboard') {
@@ -72,6 +78,36 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
     /** Reserves document flow space equal to the fixed header so page content is not hidden underneath. */
     const [headerSpacerPx, setHeaderSpacerPx] = useState(96);
 
+    // Bell badge: keep the unread count in sync with the DB and refresh whenever
+    // a record is created/marked-read elsewhere via the global event.
+    useEffect(() => {
+        if (!isLoggedIn || !user?.id) {
+            setUnreadCount(0);
+            return;
+        }
+
+        let cancelled = false;
+        const refresh = async () => {
+            try {
+                const r = await getUnreadNotificationCount(user.id);
+                if (!cancelled) setUnreadCount(r.count || 0);
+            } catch {
+                /* silent — bell badge is non-critical */
+            }
+        };
+
+        refresh();
+        const onUpdated = () => refresh();
+        window.addEventListener(NOTIFICATIONS_UPDATED_EVENT, onUpdated);
+        const interval = window.setInterval(refresh, 60_000);
+
+        return () => {
+            cancelled = true;
+            window.removeEventListener(NOTIFICATIONS_UPDATED_EVENT, onUpdated);
+            window.clearInterval(interval);
+        };
+    }, [isLoggedIn, user?.id]);
+
     // Minimal effect to fetch profile completion if not provided by context
     useEffect(() => {
         if (!isLoggedIn || !user?.id) return;
@@ -83,16 +119,14 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                     const result = await response.json();
                     if (result.success && result.data?.profile) {
                         const { profile } = result.data;
-                        if (profile.profileCompleteness) {
+                        if (profile.profileCompleteness != null) {
                             setProfileCompletion(profile.profileCompleteness);
                         }
-                        if (profile.fullName || profile.email || profile.profilePhotoUrl) {
-                            setDashboardUser({
-                                name: profile.fullName || '',
-                                email: profile.email || '',
-                                photoUrl: profile.profilePhotoUrl || null
-                            });
-                        }
+                        setDashboardUser({
+                            name: getProfileDisplayFullName(profile),
+                            email: profile.email || '',
+                            photoUrl: profile.profilePhotoUrl || null,
+                        });
                     }
                 }
             } catch (e) {
@@ -469,6 +503,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                             setIsProfileModalOpen(false);
                                         }}
                                         className="relative p-2 text-slate-600 hover:text-slate-800 transition-colors"
+                                        aria-label={`Notifications${unreadCount ? ` — ${unreadCount} unread` : ''}`}
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
@@ -484,6 +519,11 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                             <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
                                             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                                         </svg>
+                                        {unreadCount > 0 ? (
+                                            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-[18px] text-white text-center shadow-[0_4px_10px_rgba(244,63,94,0.35)]">
+                                                {unreadCount > 99 ? '99+' : unreadCount}
+                                            </span>
+                                        ) : null}
                                     </button>
                                 </div>
 
