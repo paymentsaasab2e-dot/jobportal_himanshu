@@ -1,6 +1,7 @@
 'use client';
 
 import type { EducationData as EducationEntryData } from '@/components/modals/EducationModal';
+import { formatStoredGradeForDisplay } from '@/components/modals/EducationModal';
 import {
   PreviewChip,
   PreviewDocCount,
@@ -105,8 +106,8 @@ export function EducationEntryPreview({
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
             {entry.grade ? (
               <span>
-                <span className="text-gray-400">Grade: </span>
-                {entry.grade}
+                <span className="text-gray-400">Result: </span>
+                {formatStoredGradeForDisplay(entry.grade)}
               </span>
             ) : null}
             {entry.courseDuration ? (
@@ -185,7 +186,10 @@ export function EducationEntryPreview({
             value={entry.fieldOfStudy || '—'}
           />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <PreviewMetaItem label="Grade / GPA" value={entry.grade || '—'} />
+            <PreviewMetaItem
+              label="Grade / Percentage / GPA"
+              value={entry.grade ? formatStoredGradeForDisplay(entry.grade) : '—'}
+            />
             <PreviewMetaItem
               label="Course duration"
               value={entry.courseDuration || '—'}

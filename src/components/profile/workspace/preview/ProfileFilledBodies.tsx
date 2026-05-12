@@ -8,13 +8,14 @@ import type { GapExplanationData } from '@/components/modals/GapExplanationModal
 import type { SkillsData } from '@/components/modals/SkillsModal';
 import type { LanguagesData } from '@/components/modals/LanguagesModal';
 import type { ProjectData } from '@/components/modals/ProjectModal';
-import type { PortfolioLinksData } from '@/components/modals/PortfolioLinksModal';
-import type { CareerPreferencesData } from '@/components/modals/CareerPreferencesModal';
+import type { PortfolioLinksData, PortfolioLink } from '@/components/modals/PortfolioLinksModal';
+import { type CareerPreferencesData, parsePreferenceList } from '@/components/modals/CareerPreferencesModal';
 import type { VisaWorkAuthorizationData } from '@/components/modals/VisaWorkAuthorizationModal';
 import type { VaccinationData } from '@/components/modals/VaccinationModal';
 import type { AcademicAchievementData } from '@/components/modals/AcademicAchievementModal';
 import type { CompetitiveExamsData } from '@/components/modals/CompetitiveExamsModal';
 import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
+import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
 import {
   PreviewChip,
   PreviewChipRow,
@@ -119,12 +120,10 @@ export function ProfileResumeFilled({
   resumeData,
   scorePercent,
   onReplace,
-  onEdit,
 }: {
   resumeData: ResumeViewData;
   scorePercent: number;
   onReplace: () => void;
-  onEdit: () => void;
 }) {
   const [previewModal, setPreviewModal] = useState({
     isOpen: false,
@@ -255,13 +254,6 @@ export function ProfileResumeFilled({
               className="rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-orange-600"
             >
               Replace
-            </button>
-            <button
-              type="button"
-              onClick={onEdit}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
-            >
-              Edit / view details
             </button>
           </div>
         </div>
@@ -1095,15 +1087,16 @@ export function ProfilePortfolioLinksFilled({
   onEditLink: (link: PortfolioLink) => void;
   onDeleteLink: (link: PortfolioLink) => void;
 }) {
-  const visible = isExpanded ? data.links : data.links.slice(0, 4);
-  const hidden = data.links.length - visible.length;
+  const links = filterPortfolioLinksForProfileDisplay(data.links);
+  const visible = isExpanded ? links : links.slice(0, 4);
+  const hidden = links.length - visible.length;
 
   return (
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-gray-900">
-            {data.links.length} links
+            {links.length} links
           </p>
           <p className="text-xs text-gray-500">Portfolio & professional URLs</p>
         </div>
@@ -1173,10 +1166,13 @@ export function ProfilePortfolioLinksFilled({
           })()
         ))}
       </ul>
-      {data.links.length > 4 ? (
+      {links.length > 4 ? (
         <button
           type="button"
-          onClick={onToggleExpand}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand();
+          }}
           className="text-xs font-semibold text-gray-600 hover:text-gray-900"
         >
           {isExpanded ? 'Show fewer' : `Show all (${hidden} more)`}
@@ -1233,16 +1229,46 @@ export function ProfileCareerPreferencesFilled({
               ))}
             </PreviewChipRow>
           ) : null}
-          <PreviewMetaGrid>
-            <PreviewMetaItem
-              label="Industry"
-              value={data.preferredIndustry || '—'}
-            />
-            <PreviewMetaItem
-              label="Functional area"
-              value={data.functionalArea || '—'}
-            />
-          </PreviewMetaGrid>
+          {(() => {
+            const industries =
+              data.preferredIndustries && data.preferredIndustries.length > 0
+                ? data.preferredIndustries
+                : parsePreferenceList(data.preferredIndustry as unknown);
+            const areas =
+              data.functionalAreas && data.functionalAreas.length > 0
+                ? data.functionalAreas
+                : parsePreferenceList(data.functionalArea as unknown);
+            if (industries.length === 0 && areas.length === 0) {
+              return (
+                <PreviewMetaGrid>
+                  <PreviewMetaItem label="Industry" value="—" />
+                  <PreviewMetaItem label="Functional area" value="—" />
+                </PreviewMetaGrid>
+              );
+            }
+            return (
+              <>
+                {industries.length > 0 ? (
+                  <PreviewChipRow label="Industry">
+                    {industries.map((ind, i) => (
+                      <PreviewChip key={`ind-${i}`} tone="blue">
+                        {ind}
+                      </PreviewChip>
+                    ))}
+                  </PreviewChipRow>
+                ) : null}
+                {areas.length > 0 ? (
+                  <PreviewChipRow label="Functional area">
+                    {areas.map((a, i) => (
+                      <PreviewChip key={`fa-${i}`} tone="purple">
+                        {a}
+                      </PreviewChip>
+                    ))}
+                  </PreviewChipRow>
+                ) : null}
+              </>
+            );
+          })()}
           {data.jobTypes && data.jobTypes.length > 0 ? (
             <PreviewChipRow label="Job types">
               {data.jobTypes.map((j, i) => (

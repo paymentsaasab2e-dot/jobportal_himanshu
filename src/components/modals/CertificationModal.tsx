@@ -234,8 +234,7 @@ export default function CertificationModal({
     Boolean(
       certificationName.trim() &&
       issuingOrganization.trim() &&
-      issueDate.trim() &&
-      documents.length > 0
+      issueDate.trim()
     ) &&
     (!credentialUrl.trim() || isValidUrl(credentialUrl)) &&
     (doesNotExpire || !expiryDate.trim() || expiryDate >= issueDate);
@@ -426,9 +425,6 @@ export default function CertificationModal({
       }
     } else if (certifications.length === 0 || !isCertificationFormReady) {
       validateForm();
-      if (documents.length === 0) {
-          alert('Please upload at least one certification document.');
-      }
       return;
     }
 
@@ -556,16 +552,16 @@ export default function CertificationModal({
                       className={`w-full px-4 py-6 border-2 border-dashed rounded-lg transition-colors ${
                         dragActive
                           ? 'border-blue-500 bg-blue-50'
-                          : (documents.length === 0 ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-blue-300 bg-blue-50 hover:bg-blue-100')
+                          : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50'
                       }`}
                     >
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className={`w-full flex flex-col items-center justify-center gap-2 ${documents.length === 0 ? 'text-amber-600' : 'text-blue-600'}`}
+                        className="w-full flex flex-col items-center justify-center gap-2 text-blue-600"
                       >
                         <svg
-                          className={`w-8 h-8 ${documents.length === 0 ? 'text-amber-600' : 'text-blue-600'}`}
+                          className="w-8 h-8 text-blue-600"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -573,12 +569,9 @@ export default function CertificationModal({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <span className="text-sm font-medium">Click to upload or drag and drop</span>
-                        <span className={`text-xs ${documents.length === 0 ? 'text-amber-600' : 'text-gray-500'}`}>PDF, PNG, JPG (Max 5MB per file)</span>
+                        <span className="text-xs text-gray-500">PDF, PNG, JPG (Max 5MB per file)</span>
                       </button>
                     </div>
-                    {documents.length === 0 && (
-                      <p className="mt-1 text-xs text-amber-600">Certification document is required</p>
-                    )}
                     {documents.length > 0 && (
                       <div className="mt-3 space-y-2">
                         {documents.map((doc) => (

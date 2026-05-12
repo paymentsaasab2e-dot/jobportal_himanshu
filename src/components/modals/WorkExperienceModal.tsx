@@ -47,6 +47,75 @@ export interface WorkExperienceData {
   workExperiences: WorkExperienceEntry[];
 }
 
+const TURNOVER_CURRENCIES = [
+  'INR',
+  'USD',
+  'EUR',
+  'GBP',
+  'AED',
+  'SGD',
+  'AUD',
+  'CAD',
+  'JPY',
+  'CNY',
+  'CHF',
+  'HKD',
+  'NZD',
+  'ZAR',
+  'SAR',
+  'MYR',
+  'THB',
+  'TRY',
+  'BRL',
+  'MXN',
+  'KRW',
+  'SEK',
+  'NOK',
+  'DKK',
+  'PLN',
+  'IDR',
+  'PHP',
+  'PKR',
+  'BDT',
+  'QAR',
+  'OMR',
+  'KWD',
+  'BHD',
+  'ILS',
+  'NGN',
+] as const;
+
+function formatStoredTurnover(currency: string, amount: string): string {
+  const a = amount.trim();
+  if (!a) return '';
+  return `${currency.trim().toUpperCase()} ${a}`.trim();
+}
+
+function parseStoredTurnover(stored: string): { currency: string; amount: string } {
+  const raw = (stored || '').trim();
+  if (!raw) return { currency: 'INR', amount: '' };
+
+  const legacyLabels: Record<string, string> = {
+    '0-10': '0-10 Crores',
+    '10-50': '10-50 Crores',
+    '50-100': '50-100 Crores',
+    '100+': '100+ Crores',
+  };
+  if (legacyLabels[raw]) {
+    return { currency: 'INR', amount: legacyLabels[raw] };
+  }
+
+  const codes = new Set<string>(TURNOVER_CURRENCIES as unknown as string[]);
+  const parts = raw.split(/\s+/);
+  const head = parts[0]?.toUpperCase() ?? '';
+  if (codes.has(head)) {
+    const rest = parts.slice(1).join(' ').trim();
+    return { currency: head, amount: rest };
+  }
+
+  return { currency: 'INR', amount: raw };
+}
+
 export default function WorkExperienceModal({
   isOpen,
   onClose,
@@ -65,7 +134,8 @@ export default function WorkExperienceModal({
   const [workLocation, setWorkLocation] = useState('');
   const [workMode, setWorkMode] = useState('');
   const [companyProfile, setCompanyProfile] = useState('');
-  const [companyTurnover, setCompanyTurnover] = useState('');
+  const [companyTurnoverCurrency, setCompanyTurnoverCurrency] = useState('INR');
+  const [companyTurnoverAmount, setCompanyTurnoverAmount] = useState('');
   const [keyResponsibilities, setKeyResponsibilities] = useState('');
   const [achievements, setAchievements] = useState('');
   const [workSkillsInput, setWorkSkillsInput] = useState('');
@@ -101,7 +171,9 @@ export default function WorkExperienceModal({
     setWorkLocation(entry.workLocation || '');
     setWorkMode(entry.workMode || '');
     setCompanyProfile(entry.companyProfile || '');
-    setCompanyTurnover(entry.companyTurnover || '');
+    const parsed = parseStoredTurnover(entry.companyTurnover || '');
+    setCompanyTurnoverCurrency(parsed.currency);
+    setCompanyTurnoverAmount(parsed.amount);
     setKeyResponsibilities(entry.keyResponsibilities || '');
     setAchievements(entry.achievements || '');
     setWorkSkills(entry.workSkills || []);
@@ -163,7 +235,8 @@ export default function WorkExperienceModal({
     setWorkLocation('');
     setWorkMode('');
     setCompanyProfile('');
-    setCompanyTurnover('');
+    setCompanyTurnoverCurrency('INR');
+    setCompanyTurnoverAmount('');
     setKeyResponsibilities('');
     setAchievements('');
     setWorkSkillsInput('');
@@ -214,7 +287,7 @@ export default function WorkExperienceModal({
       workLocation,
       workMode,
       companyProfile,
-      companyTurnover,
+      companyTurnover: formatStoredTurnover(companyTurnoverCurrency, companyTurnoverAmount),
       keyResponsibilities,
       achievements,
       workSkills,
@@ -590,7 +663,6 @@ export default function WorkExperienceModal({
     if (!String(numberOfReportees || '').trim()) missingFields.push('Number of Reportees');
 
     if (!workSkills.length) missingFields.push('Skills Used');
-    if (!documents.length) missingFields.push('Documents');
 
     if (!startDate) missingFields.push('Start Date');
     if (!currentlyWorkHere && !endDate) missingFields.push('End Year');
@@ -599,7 +671,9 @@ export default function WorkExperienceModal({
     if (!workMode) missingFields.push('Work Mode');
 
     if (!String(companyProfile || '').trim()) missingFields.push('Company Profile');
-    if (!companyTurnover) missingFields.push('Company Turnover');
+    if (!formatStoredTurnover(companyTurnoverCurrency, companyTurnoverAmount).trim()) {
+      missingFields.push('Company Turnover');
+    }
 
     if (!String(keyResponsibilities || '').trim()) missingFields.push('Key Responsibilities');
     if (!String(achievements || '').trim()) missingFields.push('Achievements');
@@ -621,7 +695,7 @@ export default function WorkExperienceModal({
       workLocation.trim() ||
       workMode ||
       companyProfile.trim() ||
-      companyTurnover ||
+      formatStoredTurnover(companyTurnoverCurrency, companyTurnoverAmount).trim() ||
       keyResponsibilities.trim() ||
       achievements.trim() ||
       workSkillsInput.trim() ||
@@ -664,7 +738,7 @@ export default function WorkExperienceModal({
           workLocation,
           workMode,
           companyProfile,
-          companyTurnover,
+          companyTurnover: formatStoredTurnover(companyTurnoverCurrency, companyTurnoverAmount),
           keyResponsibilities,
           achievements,
           workSkills,
@@ -686,7 +760,7 @@ export default function WorkExperienceModal({
           workLocation,
           workMode,
           companyProfile,
-          companyTurnover,
+          companyTurnover: formatStoredTurnover(companyTurnoverCurrency, companyTurnoverAmount),
           keyResponsibilities,
           achievements,
           workSkills,
@@ -999,21 +1073,33 @@ export default function WorkExperienceModal({
                     <p className="mt-1 text-xs text-amber-600">Company profile is required</p>
                   )}
                 </div>
-                <div className="space-y-2">
+                <div className="col-span-2 space-y-2">
                   <label className="block text-sm font-medium text-gray-700">Company Turnover <span className="text-amber-600">*</span></label>
-                  <select
-                    value={companyTurnover}
-                    onChange={(e) => setCompanyTurnover(e.target.value)}
-                    className={`${selectClassName} ${!companyTurnover && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
-                  >
-                    <option value="">Select Turnover</option>
-                    <option value="0-10">0-10 Crores</option>
-                    <option value="10-50">10-50 Crores</option>
-                    <option value="50-100">50-100 Crores</option>
-                    <option value="100+">100+ Crores</option>
-                  </select>
-                  {!companyTurnover && (
-                    <p className="mt-1 text-xs text-amber-600">Company turnover is required</p>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(7rem,8.75rem)_1fr]">
+                    <select
+                      value={companyTurnoverCurrency}
+                      onChange={(e) => setCompanyTurnoverCurrency(e.target.value)}
+                      className={selectClassName}
+                      aria-label="Turnover currency"
+                    >
+                      {TURNOVER_CURRENCIES.map((code) => (
+                        <option key={code} value={code}>
+                          {code}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={companyTurnoverAmount}
+                      onChange={(e) => setCompanyTurnoverAmount(e.target.value)}
+                      placeholder="e.g. 50 Cr, 1.2M, 25000000"
+                      className={`${inputClassName} ${!companyTurnoverAmount.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                      aria-label="Company turnover amount"
+                    />
+                  </div>
+                  {!companyTurnoverAmount.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Enter company turnover amount</p>
                   )}
                 </div>
               </div>
@@ -1107,8 +1193,8 @@ export default function WorkExperienceModal({
 
                 <div className="col-span-2 space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Upload Your Work Experience Certificates/Documents
-                    <span className="text-amber-600"> *</span>
+                    Upload Your Work Experience Certificates/Documents{' '}
+                    <span className="text-gray-500 text-xs font-normal">(Optional)</span>
                   </label>
               
               {/* Hidden file input */}

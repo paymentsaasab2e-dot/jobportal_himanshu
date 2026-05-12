@@ -152,7 +152,6 @@ export default function AcademicAchievementModal({
   if (!yearReceived) missingRequiredFields.push('Year Received');
   if (!String(categoryType || '').trim()) missingRequiredFields.push('Category / Type');
   if (!String(description || '').trim()) missingRequiredFields.push('Description');
-  if (documents.length === 0) missingRequiredFields.push('Achievement Certificates/Documents');
 
   const isFormValid = missingRequiredFields.length === 0;
 
@@ -326,7 +325,8 @@ export default function AcademicAchievementModal({
         {/* Upload Documents */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Upload Your Academic Achievements Certificates/Documents <span className="text-amber-600">*</span>
+            Upload Your Academic Achievements Certificates/Documents{' '}
+            <span className="text-gray-500 text-xs font-normal">(Optional)</span>
           </label>
 
           {/* Hidden file input */}
@@ -348,9 +348,7 @@ export default function AcademicAchievementModal({
             onClick={() => fileInputRef.current?.click()}
             className={`w-full px-4 py-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${dragActive
                 ? 'border-blue-500 bg-blue-50'
-                : documents.length === 0
-                  ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500'
-                  : 'border-gray-300 hover:border-blue-500 hover:bg-gray-50'
+                : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50'
               }`}
           >
             <div className="flex flex-col items-center justify-center gap-2">
@@ -363,21 +361,18 @@ export default function AcademicAchievementModal({
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className={documents.length === 0 ? 'text-amber-600' : 'text-gray-400'}
+                className="text-gray-400"
               >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              <p className={`text-sm text-center ${documents.length === 0 ? 'text-amber-600' : 'text-gray-600'}`}>
-                <span className={documents.length === 0 ? 'text-amber-700 font-medium' : 'text-blue-600 font-medium'}>Click to upload</span> or drag and drop
+              <p className="text-sm text-center text-gray-600">
+                <span className="font-medium text-blue-600">Click to upload</span> or drag and drop
               </p>
-              <p className={`text-xs ${documents.length === 0 ? 'text-amber-600' : 'text-gray-500'}`}>PDF, PNG, JPG (Max 5MB per file)</p>
+              <p className="text-xs text-gray-500">PDF, PNG, JPG (Max 5MB per file)</p>
             </div>
           </div>
-          {documents.length === 0 && (
-            <p className="mt-1 text-xs text-amber-600">At least one document is required</p>
-          )}
 
           {/* Display uploaded files */}
           {documents.length > 0 && (

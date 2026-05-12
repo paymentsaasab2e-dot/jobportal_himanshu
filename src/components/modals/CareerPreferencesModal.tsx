@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, KeyboardEvent } from 'react';
+import { useState, useEffect, useRef, KeyboardEvent } from 'react';
+import type { RefObject } from 'react';
 import Image from 'next/image';
+import { CalendarDays } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/api-base';
 import ProfileDrawer from '../ui/ProfileDrawer';
 
@@ -14,8 +16,14 @@ interface CareerPreferencesModalProps {
 
 export interface CareerPreferencesData {
   preferredJobTitles: string[];
-  preferredIndustry: string;
-  functionalArea: string;
+  /** Multiple industries (also mirrored into `preferredIndustry` for legacy APIs). */
+  preferredIndustries: string[];
+  /** Multiple functional areas (also mirrored into `functionalArea`). */
+  functionalAreas: string[];
+  /** Semicolon-separated mirror of `preferredIndustries` for legacy DB/API. */
+  preferredIndustry?: string;
+  /** Semicolon-separated mirror of `functionalAreas`. */
+  functionalArea?: string;
   jobTypes: string[];
   workModes: string[];
   preferredLocations: string[];
@@ -40,8 +48,10 @@ const INDUSTRIES = [
   'Telecommunications',
   'Energy',
   'Transportation',
-  'Other'
-];
+  'Other',
+] as const;
+
+const INDUSTRIES_PRESET = INDUSTRIES.filter((i) => i !== 'Other');
 
 const FUNCTIONAL_AREAS = [
   'Engineering',
@@ -55,8 +65,17 @@ const FUNCTIONAL_AREAS = [
   'Data Science',
   'Customer Support',
   'Business Development',
-  'Other'
-];
+  'Other',
+] as const;
+
+const FUNCTIONAL_AREAS_PRESET = FUNCTIONAL_AREAS.filter((a) => a !== 'Other');
+
+/** Display `YYYY-MM-DD` as DD-MM-YYYY without timezone shift. */
+function formatIsoDateForDisplay(ymd: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((ymd || '').trim());
+  if (!m) return ymd;
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
 
 const JOB_TYPES = ['Full-time', 'Contract', 'Part-time', 'Freelance', 'Internship'];
 
@@ -72,15 +91,25 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'INR', 'AED', 'CAD', 'AUD', 'SGD', 'JPY
 
 const SALARY_FREQUENCIES = ['Annually', 'Monthly', 'Hourly'];
 
-const AVAILABILITY_OPTIONS = [
-  'Immediately',
-  '15 days',
-  '30 days',
-  '45 days',
-  '60 days',
-  '90 days',
-  'Negotiable'
-];
+/** Load saved `availabilityToStart`: `YYYY-MM-DD — note`, pure ISO date, or free text. */
+function parseAvailabilityManual(saved: string | undefined): { date: string; text: string } {
+  const s = (saved || '').trim();
+  if (!s) return { date: '', text: '' };
+  const combined = /^(\d{4}-\d{2}-\d{2})\s*—\s*(.+)$/.exec(s);
+  if (combined) return { date: combined[1], text: combined[2].trim() };
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return { date: s, text: '' };
+  return { date: '', text: s };
+}
+
+/** Save: text if present; else calendar date; both → `YYYY-MM-DD — note`. */
+function mergeAvailabilityManual(date: string, text: string): string {
+  const t = text.trim();
+  const d = date.trim();
+  if (t && d) return `${d} — ${t}`;
+  if (t) return t;
+  if (d) return d;
+  return '';
+}
 
 const NOTICE_PERIOD_OPTIONS = [
   '15 days',
@@ -88,8 +117,40 @@ const NOTICE_PERIOD_OPTIONS = [
   '45 days',
   '60 days',
   '90 days',
-  'Negotiable'
+  'Negotiable',
 ];
+
+export function parsePreferenceList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return [...new Set(value.map(String).map((s) => s.trim()).filter(Boolean))];
+  }
+  const s = typeof value === 'string' ? value.trim() : '';
+  if (!s) return [];
+  return [...new Set(s.split(/[,;|]\s*/).map((x) => x.trim()).filter(Boolean))];
+}
+
+export function normalizeCareerPreferencesFromApi(raw: unknown): CareerPreferencesData | undefined {
+  if (raw === null || raw === undefined || typeof raw !== 'object') return undefined;
+  const r = raw as Record<string, unknown>;
+  const preferredIndustries = parsePreferenceList(r.preferredIndustries ?? r.preferredIndustry);
+  const functionalAreas = parsePreferenceList(r.functionalAreas ?? r.functionalArea);
+  return {
+    preferredJobTitles: Array.isArray(r.preferredJobTitles) ? r.preferredJobTitles.map(String) : [],
+    preferredIndustries,
+    functionalAreas,
+    preferredIndustry: preferredIndustries.length ? preferredIndustries.join('; ') : undefined,
+    functionalArea: functionalAreas.length ? functionalAreas.join('; ') : undefined,
+    jobTypes: Array.isArray(r.jobTypes) ? r.jobTypes.map(String) : [],
+    workModes: Array.isArray(r.workModes) ? r.workModes.map(String) : [],
+    preferredLocations: Array.isArray(r.preferredLocations) ? r.preferredLocations.map(String) : [],
+    relocationPreference: String(r.relocationPreference ?? ''),
+    salaryCurrency: String(r.salaryCurrency ?? 'USD'),
+    salaryAmount: String(r.salaryAmount ?? ''),
+    salaryFrequency: String(r.salaryFrequency ?? 'Annually'),
+    availabilityToStart: String(r.availabilityToStart ?? ''),
+    noticePeriod: r.noticePeriod ? String(r.noticePeriod) : undefined,
+  };
+}
 
 export default function CareerPreferencesModal({
   isOpen,
@@ -101,8 +162,14 @@ export default function CareerPreferencesModal({
     initialData?.preferredJobTitles || []
   );
   const [jobTitleInput, setJobTitleInput] = useState('');
-  const [preferredIndustry, setPreferredIndustry] = useState(initialData?.preferredIndustry || '');
-  const [functionalArea, setFunctionalArea] = useState(initialData?.functionalArea || '');
+  const [preferredIndustries, setPreferredIndustries] = useState<string[]>(
+    () => parsePreferenceList(initialData?.preferredIndustries ?? initialData?.preferredIndustry),
+  );
+  const [functionalAreas, setFunctionalAreas] = useState<string[]>(
+    () => parsePreferenceList(initialData?.functionalAreas ?? initialData?.functionalArea),
+  );
+  const [industryCustomInput, setIndustryCustomInput] = useState('');
+  const [functionalAreaCustomInput, setFunctionalAreaCustomInput] = useState('');
   const [jobTypes, setJobTypes] = useState<string[]>(initialData?.jobTypes || []);
   const [workModes, setWorkModes] = useState<string[]>(initialData?.workModes || []);
   const [preferredLocations, setPreferredLocations] = useState<string[]>(
@@ -115,10 +182,14 @@ export default function CareerPreferencesModal({
   const [salaryCurrency, setSalaryCurrency] = useState(initialData?.salaryCurrency || 'USD');
   const [salaryAmount, setSalaryAmount] = useState(initialData?.salaryAmount || '');
   const [salaryFrequency, setSalaryFrequency] = useState(initialData?.salaryFrequency || 'Annually');
-  const [availabilityToStart, setAvailabilityToStart] = useState(
-    initialData?.availabilityToStart || ''
+  const [availabilityDate, setAvailabilityDate] = useState(() =>
+    parseAvailabilityManual(initialData?.availabilityToStart).date,
+  );
+  const [availabilityText, setAvailabilityText] = useState(() =>
+    parseAvailabilityManual(initialData?.availabilityToStart).text,
   );
   const [noticePeriod, setNoticePeriod] = useState(initialData?.noticePeriod || '');
+  const availabilityDateInputRef = useRef<HTMLInputElement>(null);
   const [aiSuggestedJobTitles, setAiSuggestedJobTitles] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [suggestionError, setSuggestionError] = useState('');
@@ -126,8 +197,12 @@ export default function CareerPreferencesModal({
   useEffect(() => {
     if (initialData) {
       setPreferredJobTitles(initialData.preferredJobTitles || []);
-      setPreferredIndustry(initialData.preferredIndustry || '');
-      setFunctionalArea(initialData.functionalArea || '');
+      setPreferredIndustries(
+        parsePreferenceList(initialData.preferredIndustries ?? initialData.preferredIndustry),
+      );
+      setFunctionalAreas(parsePreferenceList(initialData.functionalAreas ?? initialData.functionalArea));
+      setIndustryCustomInput('');
+      setFunctionalAreaCustomInput('');
       setJobTypes(initialData.jobTypes || []);
       setWorkModes(initialData.workModes || []);
       setPreferredLocations(initialData.preferredLocations || []);
@@ -135,7 +210,9 @@ export default function CareerPreferencesModal({
       setSalaryCurrency(initialData.salaryCurrency || 'USD');
       setSalaryAmount(initialData.salaryAmount || '');
       setSalaryFrequency(initialData.salaryFrequency || 'Annually');
-      setAvailabilityToStart(initialData.availabilityToStart || '');
+      const av = parseAvailabilityManual(initialData.availabilityToStart);
+      setAvailabilityDate(av.date);
+      setAvailabilityText(av.text);
       setNoticePeriod(initialData.noticePeriod || '');
     } else {
       resetForm();
@@ -145,8 +222,10 @@ export default function CareerPreferencesModal({
   const resetForm = () => {
     setPreferredJobTitles([]);
     setJobTitleInput('');
-    setPreferredIndustry('');
-    setFunctionalArea('');
+    setPreferredIndustries([]);
+    setFunctionalAreas([]);
+    setIndustryCustomInput('');
+    setFunctionalAreaCustomInput('');
     setJobTypes([]);
     setWorkModes([]);
     setPreferredLocations([]);
@@ -155,10 +234,20 @@ export default function CareerPreferencesModal({
     setSalaryCurrency('USD');
     setSalaryAmount('');
     setSalaryFrequency('Annually');
-    setAvailabilityToStart('');
+    setAvailabilityDate('');
+    setAvailabilityText('');
     setNoticePeriod('');
     setAiSuggestedJobTitles([]);
     setSuggestionError('');
+  };
+
+  const openAvailabilityDatePicker = (inputRef: RefObject<HTMLInputElement | null>) => {
+    const input = inputRef.current;
+    if (!input || input.disabled) return;
+    input.focus();
+    if (typeof input.showPicker === 'function') {
+      input.showPicker();
+    }
   };
 
   useEffect(() => {
@@ -273,10 +362,48 @@ export default function CareerPreferencesModal({
     setPreferredLocations(preferredLocations.filter(l => l !== location));
   };
 
+  const togglePreferredIndustry = (name: string) => {
+    setPreferredIndustries((prev) =>
+      prev.includes(name) ? prev.filter((x) => x !== name) : [...prev, name],
+    );
+  };
+
+  const addCustomIndustry = () => {
+    const v = industryCustomInput.trim();
+    if (!v) return;
+    const lower = v.toLowerCase();
+    if (preferredIndustries.some((x) => x.toLowerCase() === lower)) return;
+    setPreferredIndustries([...preferredIndustries, v]);
+    setIndustryCustomInput('');
+  };
+
+  const removePreferredIndustry = (name: string) => {
+    setPreferredIndustries((prev) => prev.filter((x) => x !== name));
+  };
+
+  const toggleFunctionalArea = (name: string) => {
+    setFunctionalAreas((prev) =>
+      prev.includes(name) ? prev.filter((x) => x !== name) : [...prev, name],
+    );
+  };
+
+  const addCustomFunctionalArea = () => {
+    const v = functionalAreaCustomInput.trim();
+    if (!v) return;
+    const lower = v.toLowerCase();
+    if (functionalAreas.some((x) => x.toLowerCase() === lower)) return;
+    setFunctionalAreas([...functionalAreas, v]);
+    setFunctionalAreaCustomInput('');
+  };
+
+  const removeFunctionalArea = (name: string) => {
+    setFunctionalAreas((prev) => prev.filter((x) => x !== name));
+  };
+
   const missingRequiredFields: string[] = [];
   if (preferredJobTitles.length === 0) missingRequiredFields.push('Preferred Job Titles');
-  if (!preferredIndustry.trim()) missingRequiredFields.push('Preferred Industry');
-  if (!functionalArea.trim()) missingRequiredFields.push('Functional Area');
+  if (preferredIndustries.length === 0) missingRequiredFields.push('Preferred Industry');
+  if (functionalAreas.length === 0) missingRequiredFields.push('Functional Area');
   if (jobTypes.length === 0) missingRequiredFields.push('Job Types');
   if (workModes.length === 0) missingRequiredFields.push('Work Modes');
 
@@ -285,8 +412,10 @@ export default function CareerPreferencesModal({
   const handleSave = () => {
     onSave({
       preferredJobTitles,
-      preferredIndustry,
-      functionalArea,
+      preferredIndustries,
+      functionalAreas,
+      preferredIndustry: preferredIndustries.length ? preferredIndustries.join('; ') : undefined,
+      functionalArea: functionalAreas.length ? functionalAreas.join('; ') : undefined,
       jobTypes,
       workModes,
       preferredLocations,
@@ -294,7 +423,7 @@ export default function CareerPreferencesModal({
       salaryCurrency,
       salaryAmount,
       salaryFrequency,
-      availabilityToStart,
+      availabilityToStart: mergeAvailabilityManual(availabilityDate, availabilityText),
       noticePeriod,
     });
     onClose();
@@ -426,43 +555,153 @@ export default function CareerPreferencesModal({
                     </div>
                   </div>
 
-                  {/* Preferred Industry and Functional Area */}
+                  {/* Preferred Industries and Functional Areas (multi-select) */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Preferred Industry
                       </label>
-                      <select
-                        value={preferredIndustry}
-                        onChange={(e) => setPreferredIndustry(e.target.value)}
-                        className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!preferredIndustry.trim() ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
-                      >
-                        <option value="">Select Industry</option>
-                        {INDUSTRIES.map((industry) => (
-                          <option key={industry} value={industry}>{industry}</option>
-                        ))}
-                      </select>
-                      {!preferredIndustry.trim() && (
-                        <p className="mt-1 text-xs text-amber-600">Industry is required</p>
+                      <p className="mb-2 text-xs text-gray-500">Select all that apply. Add other industries below.</p>
+                      {preferredIndustries.length > 0 && (
+                        <div className="mb-2 flex flex-wrap gap-2">
+                          {preferredIndustries.map((ind) => (
+                            <span
+                              key={ind}
+                              className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-sm text-gray-900"
+                            >
+                              {ind}
+                              <button
+                                type="button"
+                                onClick={() => removePreferredIndustry(ind)}
+                                className="text-[#9095A1] hover:text-gray-600"
+                                aria-label={`Remove ${ind}`}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <line x1="18" y1="6" x2="6" y2="18" />
+                                  <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                              </button>
+                            </span>
+                          ))}
+                        </div>
                       )}
+                      <div
+                        className={`max-h-44 space-y-2 overflow-y-auto rounded-lg border p-3 ${
+                          preferredIndustries.length === 0
+                            ? 'border-amber-200 bg-amber-50/50'
+                            : 'border-gray-200 bg-white'
+                        }`}
+                      >
+                        {INDUSTRIES_PRESET.map((industry) => (
+                          <label key={industry} className="flex cursor-pointer items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={preferredIndustries.includes(industry)}
+                              onChange={() => togglePreferredIndustry(industry)}
+                              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700">{industry}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {preferredIndustries.length === 0 && (
+                        <p className="mt-1 text-xs text-amber-600">Select at least one industry</p>
+                      )}
+                      <div className="mt-3 flex gap-2">
+                        <input
+                          type="text"
+                          value={industryCustomInput}
+                          onChange={(e) => setIndustryCustomInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addCustomIndustry();
+                            }
+                          }}
+                          placeholder="Other industry — type and press Enter or Add"
+                          className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={addCustomIndustry}
+                          className="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                        >
+                          Add
+                        </button>
+                      </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Functional Area / Department
                       </label>
-                      <select
-                        value={functionalArea}
-                        onChange={(e) => setFunctionalArea(e.target.value)}
-                        className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!functionalArea.trim() ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
-                      >
-                        <option value="">Select Functional Area</option>
-                        {FUNCTIONAL_AREAS.map((area) => (
-                          <option key={area} value={area}>{area}</option>
-                        ))}
-                      </select>
-                      {!functionalArea.trim() && (
-                        <p className="mt-1 text-xs text-amber-600">Functional area is required</p>
+                      <p className="mb-2 text-xs text-gray-500">Select all that apply. Add other areas below.</p>
+                      {functionalAreas.length > 0 && (
+                        <div className="mb-2 flex flex-wrap gap-2">
+                          {functionalAreas.map((area) => (
+                            <span
+                              key={area}
+                              className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-sm text-gray-900"
+                            >
+                              {area}
+                              <button
+                                type="button"
+                                onClick={() => removeFunctionalArea(area)}
+                                className="text-[#9095A1] hover:text-gray-600"
+                                aria-label={`Remove ${area}`}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <line x1="18" y1="6" x2="6" y2="18" />
+                                  <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                              </button>
+                            </span>
+                          ))}
+                        </div>
                       )}
+                      <div
+                        className={`max-h-44 space-y-2 overflow-y-auto rounded-lg border p-3 ${
+                          functionalAreas.length === 0
+                            ? 'border-amber-200 bg-amber-50/50'
+                            : 'border-gray-200 bg-white'
+                        }`}
+                      >
+                        {FUNCTIONAL_AREAS_PRESET.map((area) => (
+                          <label key={area} className="flex cursor-pointer items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={functionalAreas.includes(area)}
+                              onChange={() => toggleFunctionalArea(area)}
+                              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700">{area}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {functionalAreas.length === 0 && (
+                        <p className="mt-1 text-xs text-amber-600">Select at least one functional area</p>
+                      )}
+                      <div className="mt-3 flex gap-2">
+                        <input
+                          type="text"
+                          value={functionalAreaCustomInput}
+                          onChange={(e) => setFunctionalAreaCustomInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addCustomFunctionalArea();
+                            }
+                          }}
+                          placeholder="Other area — type and press Enter or Add"
+                          className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={addCustomFunctionalArea}
+                          className="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                        >
+                          Add
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -629,20 +868,76 @@ export default function CareerPreferencesModal({
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">SECTION 5 — AVAILABILITY</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Availability to Start
                     </label>
-                    <select
-                      value={availabilityToStart}
-                      onChange={(e) => setAvailabilityToStart(e.target.value)}
-                      className="w-full px-4 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select Availability</option>
-                      {AVAILABILITY_OPTIONS.map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
+                    <p className="mb-3 text-xs text-gray-500">
+                      Choose a calendar date and/or type when you can start (e.g. Immediately, 30 days, after notice
+                      period). No preset list — your text and date are saved as entered.
+                    </p>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-600">
+                          Earliest start date <span className="text-gray-400">(optional)</span>
+                        </label>
+                        <div className="relative max-w-xs">
+                          <button
+                            type="button"
+                            onClick={() => openAvailabilityDatePicker(availabilityDateInputRef)}
+                            aria-label="Open calendar to choose earliest start date"
+                            className="flex w-full items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-left text-sm text-gray-900 shadow-sm transition hover:border-blue-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <span className={availabilityDate ? 'text-gray-900' : 'text-gray-500'}>
+                              {availabilityDate
+                                ? formatIsoDateForDisplay(availabilityDate)
+                                : 'Select date from calendar'}
+                            </span>
+                            <CalendarDays
+                              className="h-5 w-5 shrink-0 text-[#28A8E1]"
+                              strokeWidth={2}
+                              aria-hidden
+                            />
+                          </button>
+                          <input
+                            ref={availabilityDateInputRef}
+                            type="date"
+                            value={availabilityDate}
+                            onChange={(e) => {
+                              setAvailabilityDate(e.target.value);
+                              e.currentTarget.blur();
+                            }}
+                            tabIndex={-1}
+                            className="pointer-events-none absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                            aria-hidden="true"
+                          />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Tap the field or calendar icon to open the date picker.
+                        </p>
+                        {availabilityDate ? (
+                          <button
+                            type="button"
+                            onClick={() => setAvailabilityDate('')}
+                            className="mt-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+                          >
+                            Clear date
+                          </button>
+                        ) : null}
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-600">
+                          Describe availability <span className="text-gray-400">(optional)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={availabilityText}
+                          onChange={(e) => setAvailabilityText(e.target.value)}
+                          placeholder="e.g. Immediately, 15 / 30 / 90 days, from 1 June 2026, negotiable…"
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
+import { ALL_COUNTRY_CODES } from '@/lib/country-codes';
 
 interface VisaWorkAuthorizationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: VisaWorkAuthorizationData) => void;
   onSave: (data: VisaWorkAuthorizationData) => void;
   initialData?: VisaWorkAuthorizationData;
   mode?: 'add' | 'edit';
@@ -49,23 +49,22 @@ export interface VisaWorkAuthorizationData {
   visaEntries?: VisaEntry[];
 }
 
-const COUNTRIES = [
-  { code: 'IN', name: 'India' },
-  { code: 'US', name: 'United States' },
-  { code: 'CA', name: 'Canada' },
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'AU', name: 'Australia' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'FR', name: 'France' },
-  { code: 'AE', name: 'United Arab Emirates' },
-  { code: 'SG', name: 'Singapore' },
-  { code: 'JP', name: 'Japan' },
-  { code: 'CN', name: 'China' },
-  { code: 'BR', name: 'Brazil' },
-  { code: 'MX', name: 'Mexico' },
-  { code: 'ZA', name: 'South Africa' },
-  { code: 'NZ', name: 'New Zealand' },
-];
+function getCountryMeta(codeOrName: string) {
+  const t = codeOrName.trim();
+  if (!t) return undefined;
+  const byCode = ALL_COUNTRY_CODES.find((c) => c.code === t);
+  if (byCode) return byCode;
+  return ALL_COUNTRY_CODES.find((c) => c.name.toLowerCase() === t.toLowerCase());
+}
+
+/** Prefer ISO2 code for storage; accept legacy full country name. */
+function normalizeCountryCode(codeOrName: string): string {
+  return getCountryMeta(codeOrName)?.code ?? codeOrName.trim();
+}
+
+function countryDisplayName(codeOrName: string): string {
+  return getCountryMeta(codeOrName)?.name ?? codeOrName.trim();
+}
 
 const VISA_TYPES = [
   'Citizen / Permanent Resident',
@@ -113,7 +112,9 @@ export default function VisaWorkAuthorizationModal({
   mode = 'edit',
   editingEntryId = null,
 }: VisaWorkAuthorizationModalProps) {
-  const [selectedDestination, setSelectedDestination] = useState(initialData?.selectedDestination || '');
+  const [selectedDestination, setSelectedDestination] = useState(() =>
+    normalizeCountryCode(initialData?.selectedDestination || ''),
+  );
   const [requiresVisa, setRequiresVisa] = useState<'Yes' | 'No' | ''>('');
   const [visaDetailsExpected, setVisaDetailsExpected] = useState<VisaDetailsSection | undefined>(
     initialData?.visaDetailsExpected || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] }
@@ -129,15 +130,57 @@ export default function VisaWorkAuthorizationModal({
 
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const dragCounter = useRef<{ [key: string]: number }>({ expected: 0 });
+  const countryComboboxRef = useRef<HTMLDivElement>(null);
+  const countrySearchInputRef = useRef<HTMLInputElement>(null);
+  const [countrySearchQuery, setCountrySearchQuery] = useState('');
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+
+  const filteredCountries = useMemo(() => {
+    const raw = countrySearchQuery.trim();
+    const q = raw.toLowerCase().replace(/\s+/g, ' ');
+    if (!q) return ALL_COUNTRY_CODES;
+    const qDial = raw.replace(/\s/g, '').toLowerCase();
+    return ALL_COUNTRY_CODES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.code.toLowerCase().includes(q) ||
+        c.dialCode.replace(/\s/g, '').toLowerCase().includes(qDial)
+    );
+  }, [countrySearchQuery]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setCountrySearchQuery('');
+      setIsCountryDropdownOpen(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isCountryDropdownOpen) return;
+    const onDocMouseDown = (e: MouseEvent) => {
+      if (countryComboboxRef.current && !countryComboboxRef.current.contains(e.target as Node)) {
+        setIsCountryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, [isCountryDropdownOpen]);
+
+  useEffect(() => {
+    if (isCountryDropdownOpen) {
+      requestAnimationFrame(() => countrySearchInputRef.current?.focus());
+    }
+  }, [isCountryDropdownOpen]);
 
   useEffect(() => {
     if (initialData) {
       if (mode === 'add' && initialData.selectedDestination) {
         // Move current form into visaEntries
-        const countryName = COUNTRIES.find(c => c.code === initialData.selectedDestination)?.name || initialData.selectedDestination;
+        const destCode = normalizeCountryCode(initialData.selectedDestination);
+        const countryName = countryDisplayName(initialData.selectedDestination);
         const newEntry: VisaEntry = {
           id: Date.now().toString(),
-          country: initialData.selectedDestination,
+          country: destCode,
           countryName,
           visaDetails: initialData.visaDetailsExpected || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] },
           additionalRemarks: initialData.additionalRemarks,
@@ -154,7 +197,7 @@ export default function VisaWorkAuthorizationModal({
       } else if (mode === 'edit' && editingEntryId) {
         const entryToEdit = initialData.visaEntries?.find(e => e.id === editingEntryId);
         if (entryToEdit) {
-          setSelectedDestination(entryToEdit.country || '');
+          setSelectedDestination(normalizeCountryCode(entryToEdit.country || ''));
           setVisaDetailsExpected(entryToEdit.visaDetails || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] });
           setVisaWorkpermitRequired('');
           setOpenForAll(false);
@@ -166,7 +209,7 @@ export default function VisaWorkAuthorizationModal({
           }
         }
       } else {
-        setSelectedDestination(initialData.selectedDestination || '');
+        setSelectedDestination(normalizeCountryCode(initialData.selectedDestination || ''));
         setVisaDetailsExpected(initialData.visaDetailsExpected || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] });
         setVisaWorkpermitRequired(initialData.visaWorkpermitRequired || '');
         setOpenForAll(initialData.openForAll || false);
@@ -193,6 +236,8 @@ export default function VisaWorkAuthorizationModal({
     setVisaEntries([]);
     setExpandedEntries({});
     setExpandedSections({ expected: true });
+    setCountrySearchQuery('');
+    setIsCountryDropdownOpen(false);
   };
 
   const handleAddVisaEntry = () => {
@@ -205,10 +250,11 @@ export default function VisaWorkAuthorizationModal({
       return;
     }
 
-    const countryName = COUNTRIES.find(c => c.code === selectedDestination)?.name || selectedDestination;
+    const code = normalizeCountryCode(selectedDestination);
+    const countryName = countryDisplayName(selectedDestination);
     const newEntry: VisaEntry = {
       id: Date.now().toString(),
-      country: selectedDestination,
+      country: code,
       countryName,
       visaDetails: { ...visaDetailsExpected }
     };
@@ -249,9 +295,7 @@ export default function VisaWorkAuthorizationModal({
       visaDetailsExpected?.visaType &&
       visaDetailsExpected?.visaStatus &&
       visaDetailsExpected?.visaExpiryDate &&
-      visaDetailsExpected?.itemFamilyNumber &&
-      visaDetailsExpected?.documents &&
-      visaDetailsExpected.documents.length > 0) ||
+      visaDetailsExpected?.itemFamilyNumber) ||
     (requiresVisa === 'No' && visaWorkpermitRequired)
   );
 
@@ -350,12 +394,13 @@ export default function VisaWorkAuthorizationModal({
   const handleSave = () => {
     if (editingEntryId) {
       // Update specific entry in visaEntries
-      const countryName = COUNTRIES.find(c => c.code === selectedDestination)?.name || selectedDestination;
+      const code = normalizeCountryCode(selectedDestination);
+      const countryName = countryDisplayName(selectedDestination);
       const updatedEntries = visaEntries.map(entry => {
         if (entry.id === editingEntryId) {
           return {
             ...entry,
-            country: selectedDestination,
+            country: code,
             countryName,
             visaDetails: visaDetailsExpected!,
             additionalRemarks: additionalRemarks,
@@ -375,7 +420,7 @@ export default function VisaWorkAuthorizationModal({
       });
     } else {
       onSave({
-        selectedDestination,
+        selectedDestination: normalizeCountryCode(selectedDestination),
         visaDetailsInitial: undefined,
         visaDetailsExpected,
         visaWorkpermitRequired,
@@ -388,6 +433,8 @@ export default function VisaWorkAuthorizationModal({
   };
 
   if (!isOpen) return null;
+
+  const selectedCountryMeta = getCountryMeta(selectedDestination);
 
   const renderVisaDetailsSection = (section: VisaDetailsSection | undefined, sectionId: 'expected', title: string) => {
     const isExpanded = expandedSections[sectionId] !== false;
@@ -618,7 +665,7 @@ export default function VisaWorkAuthorizationModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Visa & Work Authorization"
-      subtitle="Tell us where you are going to work and upload supporting documents."
+      subtitle="Tell us where you are going to work. Supporting documents are optional."
       widthClassName="w-full md:w-[50vw] md:max-w-[50vw]"
       footer={(
         <div className="flex justify-end gap-3">
@@ -639,31 +686,98 @@ export default function VisaWorkAuthorizationModal({
       )}
     >
       <div className="space-y-6">
-        {/* Select Countries */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        {/* Select Countries — full list with search */}
+        <div ref={countryComboboxRef}>
+          <label className="block text-sm font-medium text-gray-700 mb-2" id="visa-country-label">
             Select Countries
           </label>
-          <select
-            value={selectedDestination}
-            onChange={(e) => {
-              setSelectedDestination(e.target.value);
-              setRequiresVisa('');
-            }}
-            className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!selectedDestination ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
-          >
-            <option value="">Select a Country...</option>
-            {COUNTRIES.map((country) => (
-              <option key={country.code} value={country.code}>
-                {country.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <button
+              type="button"
+              aria-expanded={isCountryDropdownOpen}
+              aria-haspopup="listbox"
+              aria-labelledby="visa-country-label"
+              aria-label={
+                selectedCountryMeta
+                  ? `Selected country: ${selectedCountryMeta.name}`
+                  : selectedDestination
+                    ? `Selected: ${countryDisplayName(selectedDestination)}`
+                    : 'Choose country'
+              }
+              onClick={() => setIsCountryDropdownOpen((prev) => !prev)}
+              className={`flex h-11 w-full items-center justify-between gap-2 rounded-lg border px-4 text-left text-gray-900 shadow-sm transition hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                !selectedDestination ? 'border-amber-200 bg-amber-50/50' : 'border-gray-300 bg-white'
+              }`}
+            >
+              <span className="flex min-w-0 flex-1 items-center">
+                {selectedCountryMeta ? (
+                  <span className="truncate text-sm font-medium">{selectedCountryMeta.name}</span>
+                ) : selectedDestination ? (
+                  <span className="truncate text-sm text-gray-800">
+                    {countryDisplayName(selectedDestination)}
+                  </span>
+                ) : (
+                  <span className="text-sm text-gray-500">Search or choose a country…</span>
+                )}
+              </span>
+              <span className="shrink-0 text-xs text-gray-400" aria-hidden>
+                {isCountryDropdownOpen ? '▲' : '▼'}
+              </span>
+            </button>
+
+            {isCountryDropdownOpen && (
+              <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-[60] flex max-h-[min(360px,55vh)] flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                <div className="shrink-0 border-b border-gray-100 bg-white p-2">
+                  <input
+                    ref={countrySearchInputRef}
+                    type="search"
+                    autoComplete="off"
+                    value={countrySearchQuery}
+                    onChange={(e) => setCountrySearchQuery(e.target.value)}
+                    placeholder="Search by country name, ISO code, or dial code…"
+                    className="h-10 w-full rounded-md border border-gray-200 px-3 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="mt-1.5 px-0.5 text-[11px] text-gray-500">
+                    {filteredCountries.length === ALL_COUNTRY_CODES.length
+                      ? `Showing all ${ALL_COUNTRY_CODES.length} countries`
+                      : `${filteredCountries.length} match${filteredCountries.length === 1 ? '' : 'es'}`}
+                  </p>
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto py-1" role="listbox" aria-label="Countries">
+                  {filteredCountries.length === 0 ? (
+                    <div className="px-3 py-6 text-center text-sm text-gray-500">
+                      No country found. Try another search.
+                    </div>
+                  ) : (
+                    filteredCountries.map((country) => (
+                      <button
+                        key={country.code}
+                        type="button"
+                        role="option"
+                        aria-selected={selectedDestination === country.code}
+                        onClick={() => {
+                          setSelectedDestination(country.code);
+                          setRequiresVisa('');
+                          setIsCountryDropdownOpen(false);
+                          setCountrySearchQuery('');
+                        }}
+                        className={`w-full truncate px-3 py-2 text-left text-sm font-medium hover:bg-gray-50 ${
+                          selectedDestination === country.code ? 'bg-blue-50 text-blue-900' : 'text-gray-800'
+                        }`}
+                      >
+                        {country.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           {!selectedDestination && (
             <p className="mt-1 text-xs text-amber-600">Country selection is required</p>
           )}
           <p className="mt-1 text-xs text-gray-500">
-            Select all countries where you are legally authorized to work.
+            Full world list — use search to filter quickly. Pick where you are legally authorized to work.
           </p>
         </div>
 
@@ -794,7 +908,8 @@ export default function VisaWorkAuthorizationModal({
             {/* Row 3: Upload Visa / Work Permit Document */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Upload Visa / Work Permit Document <span className="text-amber-600">*</span>
+                Upload Visa / Work Permit Document{' '}
+                <span className="text-gray-500 text-xs font-normal">(Optional)</span>
               </label>
               <input
                 ref={(el) => { fileInputRefs.current['expected'] = el; }}
@@ -808,7 +923,7 @@ export default function VisaWorkAuthorizationModal({
                   <button
                     type="button"
                     onClick={() => fileInputRefs.current['expected']?.click()}
-                    className={`w-full px-4 py-3 border-2 border-dashed rounded-lg flex items-center justify-center gap-2 ${(!visaDetailsExpected?.documents || visaDetailsExpected.documents.length === 0) ? 'border-red-300 bg-red-50 hover:bg-red-100' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'} text-gray-600`}
+                    className="w-full px-4 py-3 border-2 border-dashed border-gray-300 bg-gray-50 rounded-lg flex items-center justify-center gap-2 hover:border-blue-400 hover:bg-blue-50 text-gray-600"
                   >
                     <svg
                       className="w-5 h-5"
@@ -820,9 +935,6 @@ export default function VisaWorkAuthorizationModal({
                     </svg>
                     Choose file
                   </button>
-                  {(!visaDetailsExpected?.documents || visaDetailsExpected.documents.length === 0) && (
-                    <p className="mt-1 text-xs text-amber-600">Supporting document is required</p>
-                  )}
                 </>
               ) : (
                 <div className="space-y-2">

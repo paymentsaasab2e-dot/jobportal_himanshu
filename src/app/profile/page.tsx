@@ -91,11 +91,15 @@ import ProjectModal, { ProjectData } from '../../components/modals/ProjectModal'
 import PortfolioLinksModal, { PortfolioLinksData } from '../../components/modals/PortfolioLinksModal';
 import CertificationModal, { CertificationsData } from '../../components/modals/CertificationModal';
 import AccomplishmentModal, { AccomplishmentsData } from '../../components/modals/AccomplishmentModal';
-import CareerPreferencesModal, { CareerPreferencesData } from '../../components/modals/CareerPreferencesModal';
+import CareerPreferencesModal, {
+  CareerPreferencesData,
+  normalizeCareerPreferencesFromApi,
+} from '../../components/modals/CareerPreferencesModal';
 import VisaWorkAuthorizationModal, { VisaWorkAuthorizationData } from '../../components/modals/VisaWorkAuthorizationModal';
 import VaccinationModal, { VaccinationData } from '../../components/modals/VaccinationModal';
 import ResumeModal, { ResumeData as BaseResumeData } from '../../components/modals/ResumeModal';
 import { API_BASE_URL } from '@/lib/api-base';
+import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
 import ProfileDrawer from '../../components/ui/ProfileDrawer';
 
 // Extended ResumeData interface for profile page
@@ -270,6 +274,19 @@ export default function ProfilePage() {
   const [isVaccinationCardExpanded, setIsVaccinationCardExpanded] = useState<boolean>(false);
   const [isResumeCardExpanded, setIsResumeCardExpanded] = useState<boolean>(false);
   const [isPortfolioLinksCardExpanded, setIsPortfolioLinksCardExpanded] = useState<boolean>(false);
+
+  const visiblePortfolioLinks = useMemo(
+    () => filterPortfolioLinksForProfileDisplay(portfolioLinksData?.links),
+    [portfolioLinksData],
+  );
+  const hasVisiblePortfolioLinks = visiblePortfolioLinks.length > 0;
+
+  useEffect(() => {
+    if (visiblePortfolioLinks.length <= 4) {
+      setIsPortfolioLinksCardExpanded(false);
+    }
+  }, [visiblePortfolioLinks.length]);
+
   const [popupState, setPopupState] = useState<PopupState>(DEFAULT_POPUP_STATE);
   const [detailModal, setDetailModal] = useState<DetailModalState>({
     isOpen: false,
@@ -709,7 +726,11 @@ export default function ProfilePage() {
     // Preserve existing accomplishmentsData if not in response
 
     if (profileData.careerPreferences !== undefined) {
-      setCareerPreferencesData(profileData.careerPreferences || undefined);
+      setCareerPreferencesData(
+        profileData.careerPreferences
+          ? normalizeCareerPreferencesFromApi(profileData.careerPreferences)
+          : undefined,
+      );
     }
     // Preserve existing careerPreferencesData if not in response
 
@@ -905,7 +926,7 @@ export default function ProfilePage() {
       { key: 'skills', name: 'Skills', check: () => skillsData && skillsData.skills && skillsData.skills.length > 0 },
       { key: 'languages', name: 'Languages', check: () => languagesData && languagesData.languages && languagesData.languages.length > 0 },
       { key: 'projects', name: 'Projects', check: () => projectData.length > 0 },
-      { key: 'portfolioLinks', name: 'Portfolio Links', check: () => portfolioLinksData && portfolioLinksData.links && portfolioLinksData.links.length > 0 },
+      { key: 'portfolioLinks', name: 'Portfolio Links', check: () => hasVisiblePortfolioLinks },
       { key: 'careerPreferences', name: 'Career Preferences', check: () => careerPreferencesData !== undefined && careerPreferencesData !== null },
       { key: 'visaAuthorization', name: 'Visa & Work Authorization', check: () => visaWorkAuthorizationData !== undefined && visaWorkAuthorizationData !== null },
       { key: 'vaccination', name: 'Vaccination', check: () => vaccinationData !== undefined && vaccinationData !== null },
@@ -1501,7 +1522,6 @@ export default function ProfilePage() {
                           0
                         }
                         onReplace={() => setIsResumeModalOpen(true)}
-                        onEdit={() => setIsResumeModalOpen(true)}
                       />
                     </div>
                   ) : (
@@ -2527,20 +2547,12 @@ export default function ProfilePage() {
                   onAdd={() =>
                     handleAddClick('PROJECTS', 'Portfolio Links')
                   }
-                  showEdit={Boolean(
-                    portfolioLinksData?.links &&
-                      portfolioLinksData.links.length > 0,
-                  )}
+                  showEdit={hasVisiblePortfolioLinks}
                   showAdd
-                  addEmphasized={
-                    !(
-                      portfolioLinksData?.links &&
-                      portfolioLinksData.links.length > 0
-                    )
-                  }
+                  addEmphasized={!hasVisiblePortfolioLinks}
                 >
                   <div>
-                    {portfolioLinksData && portfolioLinksData.links && portfolioLinksData.links.length > 0 ? (
+                    {portfolioLinksData && hasVisiblePortfolioLinks ? (
                       <div
                         role="button"
                         tabIndex={0}
@@ -2559,9 +2571,14 @@ export default function ProfilePage() {
                         className="cursor-pointer"
                       >
                         <ProfilePortfolioLinksFilled
-                          data={portfolioLinksData}
+                          data={{
+                            ...portfolioLinksData,
+                            links: visiblePortfolioLinks,
+                          }}
                           isExpanded={isPortfolioLinksCardExpanded}
-                          onToggleExpand={() => openDetailsModal('Portfolio Links Details', portfolioLinksData)}
+                          onToggleExpand={() =>
+                            setIsPortfolioLinksCardExpanded((prev) => !prev)
+                          }
                           onEdit={() => {
                             setEditingPortfolioLinkId(null);
                             setIsPortfolioLinksModalOpen(true);

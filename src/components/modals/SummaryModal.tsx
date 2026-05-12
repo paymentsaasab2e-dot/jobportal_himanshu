@@ -90,9 +90,7 @@ export default function SummaryModal({
         </div>
       )}
     >
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-              {/* Left */}
-              <div className="space-y-6 lg:col-span-8">
+            <div className="space-y-6">
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-gray-700">
                     Professional Summary <span className="text-amber-600">*</span>
@@ -107,20 +105,16 @@ export default function SummaryModal({
                       fontFamily: 'Inter, sans-serif',
                     }}
                   />
-                  {!summaryText.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Summary text is required</p>
-                  )}
-                  <p className="text-right text-xs text-gray-400">
-                    {summaryText.length} / 500 characters
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Tip: Keep it concise and impact-driven (3–5 lines)
-                  </p>
-                  {!summaryText.trim() && (
-                    <p className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-500">
-                      Start writing your professional summary or use AI
+                  <div className="mt-1 flex min-h-[1.25rem] items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      {!summaryText.trim() ? (
+                        <p className="text-xs text-amber-600">Summary text is required</p>
+                      ) : null}
+                    </div>
+                    <p className="shrink-0 text-xs text-gray-400 tabular-nums">
+                      {summaryText.length} / 500 characters
                     </p>
-                  )}
+                  </div>
                 </div>
 
                 <div className="space-y-3 rounded-xl border border-blue-100 bg-blue-50 p-4">
@@ -146,38 +140,6 @@ export default function SummaryModal({
                     )}
                   </button>
                 </div>
-              </div>
-
-              {/* Right */}
-              <div className="space-y-6 lg:col-span-4">
-                <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                  <h3 className="text-sm font-semibold text-gray-900">Writing Guide</h3>
-                  <div className="space-y-2">
-                    {[
-                      'Role / expertise',
-                      'Years of experience',
-                      'Core skills',
-                      'Industry focus',
-                      'Achievements',
-                    ].map((item) => (
-                      <div
-                        key={item}
-                        className="flex items-start gap-2 rounded-lg bg-white px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
-                      >
-                        <span className="mt-0.5 text-blue-600">✔</span>
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2 rounded-xl border border-gray-200 bg-white p-4">
-                  <h4 className="text-sm font-semibold text-gray-900">Example</h4>
-                  <p className="text-xs italic text-gray-500">
-                    Frontend Developer with 2+ years experience in React, TypeScript, and modern UI systems, delivering performant web apps and improving user engagement through accessible, responsive design.
-                  </p>
-                </div>
-              </div>
             </div>
     </ProfileDrawer>
   );

@@ -1,3 +1,5 @@
+import { formatStoredGradeForDisplay } from '@/components/modals/EducationModal';
+
 interface Education {
   degree: string;
   institution: string;
@@ -26,7 +28,7 @@ export default function ResumeEducation({ educations }: ResumeEducationProps) {
           )}
           <p className="text-sm text-gray-500">{edu.start_year} - {edu.end_year}</p>
           {edu.grade && (
-            <p className="text-sm text-gray-500">Grade: {edu.grade}</p>
+            <p className="text-sm text-gray-500">Result: {formatStoredGradeForDisplay(edu.grade)}</p>
           )}
         </div>
       ))}

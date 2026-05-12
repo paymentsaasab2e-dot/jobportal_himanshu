@@ -29,10 +29,62 @@ export interface EducationData {
   startYear: string;
   endYear: string;
   currentlyStudying: boolean;
+  /** Encoded as `percentage|85`, `gpa|3.5`, or `grade|A+` (legacy plain numbers treated as percentage). */
   grade: string;
   modeOfStudy: string;
   courseDuration: string;
   documents?: EducationDocument[];
+}
+
+export type EducationGradeMetricType = 'percentage' | 'gpa' | 'grade';
+
+export function decodeStoredGrade(stored: string): { type: EducationGradeMetricType; value: string } {
+  const s = (stored || '').trim();
+  if (!s) return { type: 'percentage', value: '' };
+  const m = /^(percentage|gpa|grade)\|(.*)$/i.exec(s);
+  if (m) {
+    const t = m[1].toLowerCase() as EducationGradeMetricType;
+    return { type: t, value: m[2] };
+  }
+  if (/^\d+(\.\d+)?$/.test(s)) return { type: 'percentage', value: s };
+  return { type: 'grade', value: s };
+}
+
+export function formatStoredGradeForDisplay(stored: string): string {
+  const { type, value } = decodeStoredGrade(stored);
+  const v = value.trim();
+  if (!v) return '';
+  if (type === 'percentage') return `${v}%`;
+  if (type === 'gpa') return `GPA ${v}`;
+  return v;
+}
+
+function encodeStoredGrade(type: EducationGradeMetricType, value: string): string {
+  const v = value.trim();
+  if (!v) return '';
+  return `${type}|${v}`;
+}
+
+function getGradeValidationError(type: EducationGradeMetricType, value: string): string | null {
+  const v = value.trim();
+  if (!v) return null;
+  if (type === 'percentage') {
+    if (!/^\d{1,3}(\.\d{1,2})?$/.test(v)) return 'Enter a valid percentage (e.g. 72 or 85.5).';
+    const n = Number(v);
+    if (Number.isNaN(n) || n < 0 || n > 100) return 'Percentage must be between 0 and 100.';
+    return null;
+  }
+  if (type === 'gpa') {
+    if (!/^\d+(\.\d{1,2})?$/.test(v)) return 'Enter a valid GPA (e.g. 3.5 or 8.25).';
+    const n = Number(v);
+    if (Number.isNaN(n) || n <= 0 || n > 10) return 'GPA must be greater than 0 and at most 10.';
+    return null;
+  }
+  if (v.length > 50) return 'Grade must be at most 50 characters.';
+  if (!/^[\sA-Za-z0-9+\-./(),'"]+$/.test(v)) {
+    return 'Use letters, numbers, and common grade symbols only.';
+  }
+  return null;
 }
 
 export default function EducationModal({
@@ -48,7 +100,8 @@ export default function EducationModal({
   const [startYear, setStartYear] = useState(initialData?.startYear || '');
   const [endYear, setEndYear] = useState(initialData?.endYear || '');
   const [currentlyStudying, setCurrentlyStudying] = useState(initialData?.currentlyStudying || false);
-  const [grade, setGrade] = useState(initialData?.grade || '');
+  const [gradeMetricType, setGradeMetricType] = useState<EducationGradeMetricType>('percentage');
+  const [gradeInput, setGradeInput] = useState('');
   const [modeOfStudy, setModeOfStudy] = useState(initialData?.modeOfStudy || '');
   const [courseDuration, setCourseDuration] = useState(initialData?.courseDuration || '');
   const [documents, setDocuments] = useState<EducationDocument[]>(initialData?.documents || []);
@@ -74,7 +127,9 @@ export default function EducationModal({
       setStartYear(initialData.startYear || '');
       setEndYear(initialData.endYear || '');
       setCurrentlyStudying(initialData.currentlyStudying || false);
-      setGrade(initialData.grade || '');
+      const g = decodeStoredGrade(initialData.grade || '');
+      setGradeMetricType(g.type);
+      setGradeInput(g.value);
       setModeOfStudy(initialData.modeOfStudy || '');
       setCourseDuration(initialData.courseDuration || '');
       
@@ -114,7 +169,8 @@ export default function EducationModal({
       setStartYear('');
       setEndYear('');
       setCurrentlyStudying(false);
-      setGrade('');
+      setGradeMetricType('percentage');
+      setGradeInput('');
       setModeOfStudy('');
       setCourseDuration('');
       setDocuments([]);
@@ -278,12 +334,14 @@ export default function EducationModal({
   if (!startYear) missingRequiredFields.push('Start Year');
   if (!currentlyStudying && !endYear) missingRequiredFields.push('End Year');
   
-  if (!String(grade || '').trim()) missingRequiredFields.push('Grade / Percentage / GPA');
+  if (!String(gradeInput || '').trim()) missingRequiredFields.push('Grade / Percentage / GPA');
   if (!String(modeOfStudy || '').trim()) missingRequiredFields.push('Mode of Study');
   if (!String(courseDuration || '').trim()) missingRequiredFields.push('Course Duration');
-  if (documents.length === 0) missingRequiredFields.push('Education Certificates/Documents');
 
-  const isGradeNumeric = /^\d+(\.\d{1,2})?$/.test(String(grade || '').trim());
+  const gradeFormatError =
+    String(gradeInput || '').trim().length > 0
+      ? getGradeValidationError(gradeMetricType, gradeInput)
+      : null;
   const isCourseDurationNumeric = /^\d+(\.\d{1,2})?$/.test(String(courseDuration || '').trim());
 
   const hasDateOrderError =
@@ -293,7 +351,7 @@ export default function EducationModal({
     parseInt(endYear) < parseInt(startYear);
 
   const hasNumericError =
-    (String(grade || '').trim().length > 0 && !isGradeNumeric) ||
+    Boolean(gradeFormatError) ||
     (String(courseDuration || '').trim().length > 0 && !isCourseDurationNumeric);
 
   const validationErrors: string[] = [];
@@ -304,7 +362,12 @@ export default function EducationModal({
     validationErrors.push('End Year cannot be earlier than Start Year');
   }
   if (hasNumericError) {
-    validationErrors.push('Please enter valid numeric values for Grade and Course Duration (e.g., 85.5 or 4)');
+    const parts: string[] = [];
+    if (gradeFormatError) parts.push(gradeFormatError);
+    if (String(courseDuration || '').trim().length > 0 && !isCourseDurationNumeric) {
+      parts.push('Enter a valid number for course duration (up to 2 decimals).');
+    }
+    validationErrors.push(parts.join(' '));
   }
 
   const isFormValid =
@@ -327,7 +390,7 @@ export default function EducationModal({
       startYear,
       endYear,
       currentlyStudying,
-      grade,
+      grade: encodeStoredGrade(gradeMetricType, gradeInput),
       modeOfStudy,
       courseDuration,
       documents: documents.length > 0 ? documents : undefined,
@@ -517,25 +580,41 @@ export default function EducationModal({
                 
                 {/* Grade / Percentage / GPA */}
                 <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Grade / Percentage / GPA <span className="text-amber-600">*</span>
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    inputMode="decimal"
-                    value={grade}
-                    onChange={(e) => setGrade(e.target.value)}
-                    placeholder="e.g., 8.2 or 78 or 3.5"
-                    className={`${inputClassName} ${(!grade.trim() || (grade.trim().length > 0 && !isGradeNumeric)) && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
-                  />
-                  {!grade.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Grade is required</p>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(10.5rem,12rem)_1fr]">
+                    <select
+                      value={gradeMetricType}
+                      onChange={(e) => setGradeMetricType(e.target.value as EducationGradeMetricType)}
+                      className={selectClassName}
+                      aria-label="Result type: grade, percentage, or GPA"
+                    >
+                      <option value="percentage">Percentage</option>
+                      <option value="gpa">GPA</option>
+                      <option value="grade">Grade</option>
+                    </select>
+                    <input
+                      type="text"
+                      inputMode={gradeMetricType === 'grade' ? 'text' : 'decimal'}
+                      value={gradeInput}
+                      onChange={(e) => setGradeInput(e.target.value)}
+                      placeholder={
+                        gradeMetricType === 'percentage'
+                          ? 'e.g. 72 or 85.5'
+                          : gradeMetricType === 'gpa'
+                            ? 'e.g. 3.5 or 8.25'
+                            : 'e.g. A+, First Class'
+                      }
+                      className={`${inputClassName} ${(!gradeInput.trim() || gradeFormatError) && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    />
+                  </div>
+                  {!gradeInput.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Enter your result value</p>
                   )}
-                  {grade.trim().length > 0 && !isGradeNumeric && (
-                    <p className="mt-1 text-xs text-red-600">Enter a valid number (up to 2 decimals).</p>
-                  )}
+                  {gradeInput.trim().length > 0 && gradeFormatError ? (
+                    <p className="mt-1 text-xs text-red-600">{gradeFormatError}</p>
+                  ) : null}
                 </div>
 
                 {/* Mode of Study */}
@@ -586,7 +665,8 @@ export default function EducationModal({
               {/* Upload Documents */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Your Education Certificates/Documents <span className="text-amber-600">*</span>
+                  Upload Your Education Certificates/Documents{' '}
+                  <span className="text-gray-500 text-xs font-normal">(Optional)</span>
                 </label>
                 
                 {/* Hidden file input */}
@@ -609,9 +689,7 @@ export default function EducationModal({
                   className={`w-full px-4 py-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
                     dragActive
                       ? 'border-blue-500 bg-blue-50'
-                      : documents.length === 0
-                      ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500'
-                      : 'border-gray-300 hover:border-blue-500 hover:bg-gray-50'
+                      : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50'
                   }`}
                 >
                   <div className="flex flex-col items-center justify-center gap-2">
@@ -624,21 +702,18 @@ export default function EducationModal({
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className={documents.length === 0 ? 'text-red-400' : 'text-gray-400'}
+                      className="text-gray-400"
                     >
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                       <polyline points="17 8 12 3 7 8" />
                       <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
-                    <p className={`text-sm text-center ${documents.length === 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                      <span className={documents.length === 0 ? 'text-amber-700 font-medium' : 'text-blue-600 font-medium'}>Click to upload</span> or drag and drop
+                    <p className="text-sm text-center text-gray-600">
+                      <span className="font-medium text-blue-600">Click to upload</span> or drag and drop
                     </p>
-                    <p className={`text-xs ${documents.length === 0 ? 'text-amber-600' : 'text-gray-500'}`}>PDF, PNG, JPG (Max 5MB per file)</p>
+                    <p className="text-xs text-gray-500">PDF, PNG, JPG (Max 5MB per file)</p>
                   </div>
                 </div>
-                {documents.length === 0 && (
-                  <p className="mt-1 text-xs text-amber-600">At least one document is required</p>
-                )}
 
                 {/* Display uploaded files */}
                 {documents.length > 0 && (
@@ -725,7 +800,7 @@ export default function EducationModal({
                 )}
               </div>
 
-              {(missingRequiredFields.length > 0 || hasDateOrderError) && (
+              {(missingRequiredFields.length > 0 || hasDateOrderError || hasNumericError) && (
                 <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2">
                   <p className="text-xs font-medium text-amber-700">
                     {missingRequiredFields.length > 0
@@ -735,6 +810,18 @@ export default function EducationModal({
                   {hasDateOrderError && (
                     <p className="mt-1 text-xs font-medium text-amber-700">
                       End Year cannot be before Start Year.
+                    </p>
+                  )}
+                  {hasNumericError && (
+                    <p className="mt-1 text-xs font-medium text-amber-700">
+                      {[
+                        gradeFormatError,
+                        String(courseDuration || '').trim().length > 0 && !isCourseDurationNumeric
+                          ? 'Course duration must be a valid number (up to 2 decimals).'
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                     </p>
                   )}
                 </div>

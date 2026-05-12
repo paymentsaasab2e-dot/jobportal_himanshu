@@ -237,7 +237,6 @@ export default function InternshipModal({
     if (!String(responsibilities || '').trim()) missingFields.push('Responsibilities / Tasks Performed');
     if (!String(learnings || '').trim()) missingFields.push('Learnings or Outcomes');
     if (skills.length === 0) missingFields.push('Skills Applied');
-    if (documents.length === 0) missingFields.push('Internship Certificates/Documents');
 
     return missingFields;
   };
@@ -264,7 +263,7 @@ export default function InternshipModal({
       responsibilities: responsibilities.trim(),
       learnings: learnings.trim(),
       skills,
-      documents,
+      documents: documents.length > 0 ? documents : undefined,
     });
     onClose();
   };
@@ -649,7 +648,8 @@ export default function InternshipModal({
         {/* Upload Documents Section */}
         <div className="space-y-4">
           <h3 className="text-base font-semibold text-gray-900">
-            Upload Your Internship Certificates/Documents <span className="text-amber-600">*</span>
+            Upload Your Internship Certificates/Documents{' '}
+            <span className="text-gray-500 text-sm font-normal">(Optional)</span>
           </h3>
 
           {/* File Input (Hidden) */}
@@ -671,12 +671,12 @@ export default function InternshipModal({
             onClick={() => fileInputRef.current?.click()}
             className={`w-full px-4 py-6 border-2 border-dashed rounded-lg transition-colors cursor-pointer ${dragActive
                 ? 'border-blue-500 bg-blue-50'
-                : (documents.length === 0 ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300 hover:border-blue-500 hover:bg-gray-50')
+                : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50'
               }`}
           >
             <div className="flex flex-col items-center justify-center gap-2">
               <svg
-                className={`w-8 h-8 ${documents.length === 0 ? 'text-amber-600' : 'text-gray-400'}`}
+                className="w-8 h-8 text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -688,15 +688,12 @@ export default function InternshipModal({
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
               </svg>
-              <p className={`text-sm text-center ${documents.length === 0 ? 'text-amber-600' : 'text-gray-600'}`}>
-                <span className={`${documents.length === 0 ? 'text-amber-700' : 'text-blue-600'} font-medium`}>Click to upload</span> or drag and drop
+              <p className="text-sm text-center text-gray-600">
+                <span className="font-medium text-blue-600">Click to upload</span> or drag and drop
               </p>
-              <p className={`text-xs ${documents.length === 0 ? 'text-amber-600' : 'text-gray-500'}`}>PDF, PNG, JPG (Max 5MB per file)</p>
+              <p className="text-xs text-gray-500">PDF, PNG, JPG (Max 5MB per file)</p>
             </div>
           </div>
-          {documents.length === 0 && (
-            <p className="mt-1 text-xs text-amber-600">Internship certificate is required</p>
-          )}
 
           {/* Uploaded Files List */}
           {documents.length > 0 && (

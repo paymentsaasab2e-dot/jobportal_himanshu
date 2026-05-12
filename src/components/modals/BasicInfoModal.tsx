@@ -1,12 +1,133 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import {
   ALL_COUNTRY_CODES,
   countryCodeToFlag,
   formatPhoneCodeLabel,
 } from '@/lib/country-codes';
+
+function isValidCalendarYmd(year: number, month: number, day: number) {
+  const dt = new Date(year, month - 1, day);
+  return dt.getFullYear() === year && dt.getMonth() === month - 1 && dt.getDate() === day;
+}
+
+/** Strict DD/MM/YYYY → ISO YYYY-MM-DD */
+function parseDdMmYyyyToIso(s: string): string | null {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s.trim());
+  if (!m) return null;
+  const day = Number(m[1]);
+  const month = Number(m[2]);
+  const year = Number(m[3]);
+  if (!isValidCalendarYmd(year, month, day)) return null;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function isoToDdMmYyyy(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (!m) return '';
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+function formatDobDigitsAsDdMmYyyy(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function dateToIsoYmd(d: Date): string {
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${mo}-${day}`;
+}
+
+// --- Nominatim (OpenStreetMap) city autocomplete --------------------------------
+
+type NominatimAddress = {
+  city?: string;
+  town?: string;
+  village?: string;
+  county?: string;
+  state?: string;
+  region?: string;
+  country?: string;
+};
+
+type NominatimPlace = {
+  display_name: string;
+  address?: NominatimAddress;
+};
+
+const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+
+function extractLocality(addr: NominatimAddress | undefined, displayName: string): string {
+  if (!addr) return displayName.split(',')[0]?.trim() || '';
+  const raw =
+    (addr.city || addr.town || addr.village || addr.county || '').trim();
+  if (raw) return raw;
+  return displayName.split(',')[0]?.trim() || '';
+}
+
+function formatPlaceSuggestionLine(place: NominatimPlace): string {
+  const addr = place.address;
+  const locality = extractLocality(addr, place.display_name);
+  const state = addr?.state || addr?.region;
+  const country = addr?.country;
+  const parts = [locality, state, country].filter(Boolean);
+  if (parts.length >= 2) return parts.join(', ');
+  const bits = place.display_name
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  return bits.join(', ');
+}
+
+function resolveCountryToSelectValue(raw: string | undefined): string {
+  if (!raw?.trim()) return '';
+  const n = raw.trim();
+  const lower = n.toLowerCase();
+  const aliases: Record<string, string> = {
+    'united states of america': 'United States',
+    usa: 'United States',
+    'russian federation': 'Russia',
+    czechia: 'Czech Republic',
+    'türkiye': 'Turkey',
+    turkiye: 'Turkey',
+    'great britain': 'United Kingdom',
+    uk: 'United Kingdom',
+    england: 'United Kingdom',
+    scotland: 'United Kingdom',
+    wales: 'United Kingdom',
+  };
+  const mapped = aliases[lower];
+  const candidate = mapped || n;
+  const cLower = candidate.toLowerCase();
+  const exact = ALL_COUNTRY_CODES.find((c) => c.name.toLowerCase() === cLower);
+  if (exact) return exact.name;
+  const contains = ALL_COUNTRY_CODES.find(
+    (c) => cLower.includes(c.name.toLowerCase()) || c.name.toLowerCase().includes(cLower)
+  );
+  return contains?.name || '';
+}
+
+async function fetchNominatimPlaces(query: string, signal: AbortSignal): Promise<NominatimPlace[]> {
+  const url = `${NOMINATIM_URL}?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=8`;
+  const res = await fetch(url, {
+    signal,
+    headers: {
+      Accept: 'application/json',
+      'Accept-Language': 'en',
+      'User-Agent': 'JobPortalBasicInfoModal/1.0 (CRM; contact: local)',
+    },
+  });
+  if (!res.ok) throw new Error(`Nominatim ${res.status}`);
+  const data = (await res.json()) as NominatimPlace[];
+  return Array.isArray(data) ? data : [];
+}
 
 interface BasicInfoModalProps {
   isOpen: boolean;
@@ -23,6 +144,7 @@ export interface BasicInfoData {
   phone: string;
   phoneCode: string;
   gender: string;
+  /** ISO YYYY-MM-DD for API; modal shows a single DD/MM/YYYY field */
   dob: string;
   country: string;
   city: string;
@@ -46,13 +168,6 @@ export default function BasicInfoModal({
   onSave,
   initialData,
 }: BasicInfoModalProps) {
-  const formatDateForInput = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   const getMaxDobDate = () => {
     const now = new Date();
     const maxDob = new Date(now);
@@ -69,15 +184,26 @@ export default function BasicInfoModal({
   const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
   const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
   const [genderValue, setGenderValue] = useState(initialData?.gender || '');
-  const [dobValue, setDobValue] = useState(initialData?.dob || '');
+  const [dobDisplay, setDobDisplay] = useState('');
   const [countryValue, setCountryValue] = useState(initialData?.country || '');
   const [cityValue, setCityValue] = useState(initialData?.city || '');
   const [employmentValue, setEmploymentValue] = useState(initialData?.employment || '');
   const [passportNumberValue, setPassportNumberValue] = useState(initialData?.passportNumber || '');
   const [errors, setErrors] = useState<Partial<Record<BasicInfoFieldKey, string>>>({});
-  const dateInputRef = useRef<HTMLInputElement>(null);
   const phoneCodeRef = useRef<HTMLDivElement>(null);
-  const maxDobInputValue = useMemo(() => formatDateForInput(getMaxDobDate()), []);
+  const hiddenDobPickerRef = useRef<HTMLInputElement>(null);
+  const cityAutocompleteRef = useRef<HTMLDivElement>(null);
+  const cityAbortRef = useRef<AbortController | null>(null);
+  const citySuggestOpenRef = useRef(false);
+
+  const [citySuggestions, setCitySuggestions] = useState<NominatimPlace[]>([]);
+  const [citySuggestLoading, setCitySuggestLoading] = useState(false);
+  const [citySuggestError, setCitySuggestError] = useState<string | null>(null);
+  const [citySuggestOpen, setCitySuggestOpen] = useState(false);
+  const [cityHighlight, setCityHighlight] = useState(-1);
+
+  const maxDob = useMemo(() => getMaxDobDate(), []);
+  const maxDobIso = useMemo(() => dateToIsoYmd(maxDob), [maxDob]);
 
   const selectedPhoneCodeOption = useMemo(() => {
     const directMatch = ALL_COUNTRY_CODES.find((item) => formatPhoneCodeLabel(item) === phoneCode);
@@ -125,11 +251,17 @@ export default function BasicInfoModal({
       setPhoneValue(initialData.phone || '');
       setPhoneCode(initialData.phoneCode || '+91 (India)');
       setGenderValue(initialData.gender || '');
-      setDobValue(initialData.dob || '');
+      setDobDisplay(initialData.dob ? isoToDdMmYyyy(initialData.dob) : '');
       setCountryValue(initialData.country || '');
       setCityValue(initialData.city || '');
       setEmploymentValue(initialData.employment || '');
       setPassportNumberValue(initialData.passportNumber || '');
+      setCitySuggestOpen(false);
+      setCitySuggestions([]);
+      setCitySuggestError(null);
+      setCityHighlight(-1);
+      setCitySuggestLoading(false);
+      cityAbortRef.current?.abort();
     } else {
       // Clear all fields for "Add" mode
       setFirstNameValue('');
@@ -139,13 +271,109 @@ export default function BasicInfoModal({
       setPhoneValue('');
       setPhoneCode('+91 (India)');
       setGenderValue('');
-      setDobValue('');
+      setDobDisplay('');
       setCountryValue('');
       setCityValue('');
       setEmploymentValue('');
       setPassportNumberValue('');
+      setCitySuggestOpen(false);
+      setCitySuggestions([]);
+      setCitySuggestError(null);
+      setCityHighlight(-1);
+      setCitySuggestLoading(false);
+      cityAbortRef.current?.abort();
     }
   }, [initialData, isOpen]);
+
+  const applyCitySuggestion = useCallback((place: NominatimPlace) => {
+    const addr = place.address;
+    const locality = extractLocality(addr, place.display_name);
+    const countrySelect = resolveCountryToSelectValue(addr?.country);
+    setCityValue(locality);
+    if (countrySelect) setCountryValue(countrySelect);
+    setCitySuggestOpen(false);
+    setCitySuggestions([]);
+    setCityHighlight(-1);
+    setCitySuggestError(null);
+  }, []);
+
+  useEffect(() => {
+    citySuggestOpenRef.current = citySuggestOpen;
+  }, [citySuggestOpen]);
+
+  useEffect(() => {
+    if (!citySuggestOpen) return;
+    const handleDown = (event: MouseEvent) => {
+      if (cityAutocompleteRef.current && !cityAutocompleteRef.current.contains(event.target as Node)) {
+        setCitySuggestOpen(false);
+        setCityHighlight(-1);
+      }
+    };
+    document.addEventListener('mousedown', handleDown);
+    return () => document.removeEventListener('mousedown', handleDown);
+  }, [citySuggestOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      cityAbortRef.current?.abort();
+      setCitySuggestLoading(false);
+      setCitySuggestOpen(false);
+      setCitySuggestError(null);
+      setCityHighlight(-1);
+      setCitySuggestions([]);
+      return;
+    }
+
+    const q = cityValue.trim();
+    if (q.length < 2) {
+      cityAbortRef.current?.abort();
+      setCitySuggestLoading(false);
+      setCitySuggestOpen(false);
+      setCitySuggestError(null);
+      setCityHighlight(-1);
+      setCitySuggestions([]);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      cityAbortRef.current?.abort();
+      const ac = new AbortController();
+      cityAbortRef.current = ac;
+      setCitySuggestError(null);
+      setCitySuggestLoading(true);
+      setCitySuggestOpen(true);
+      setCityHighlight(-1);
+      setCitySuggestions([]);
+
+      void (async () => {
+        try {
+          const list = await fetchNominatimPlaces(q, ac.signal);
+          if (ac.signal.aborted) return;
+          setCitySuggestions(list);
+          setCityHighlight(-1);
+        } catch (err) {
+          if ((err as Error).name === 'AbortError') return;
+          if (!ac.signal.aborted) {
+            setCitySuggestions([]);
+            setCitySuggestError('Could not load suggestions.');
+          }
+        } finally {
+          if (!ac.signal.aborted) setCitySuggestLoading(false);
+        }
+      })();
+    }, 500);
+
+    return () => {
+      window.clearTimeout(timer);
+      cityAbortRef.current?.abort();
+    };
+  }, [cityValue, isOpen]);
+
+  useEffect(() => {
+    if (cityHighlight < 0 || !cityAutocompleteRef.current) return;
+    const node = cityAutocompleteRef.current.querySelector(`[data-city-suggest-index="${cityHighlight}"]`);
+    node?.scrollIntoView({ block: 'nearest' });
+  }, [cityHighlight]);
 
   const getTrimmed = (value: string) => value.trim();
 
@@ -157,7 +385,7 @@ export default function BasicInfoModal({
     phone: getTrimmed(phoneValue),
     phoneCode: getTrimmed(phoneCode),
     gender: getTrimmed(genderValue),
-    dob: dobValue,
+    dob: parseDdMmYyyyToIso(dobDisplay) || '',
     country: getTrimmed(countryValue),
     city: getTrimmed(cityValue),
     employment: getTrimmed(employmentValue),
@@ -180,10 +408,23 @@ export default function BasicInfoModal({
       }
     }
     if (!payload.gender) nextErrors.gender = 'Gender is required.';
-    if (!payload.dob) {
+    if (!dobDisplay.trim()) {
       nextErrors.dob = 'Date of birth is required.';
-    } else if (payload.dob > maxDobInputValue) {
-      nextErrors.dob = 'Candidate must be at least 18 years old.';
+    } else {
+      const iso = parseDdMmYyyyToIso(dobDisplay.trim());
+      if (!iso) {
+        nextErrors.dob = 'Enter a valid date as DD/MM/YYYY (e.g. 15/03/1998).';
+      } else {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+        if (!m) {
+          nextErrors.dob = 'Enter a valid date as DD/MM/YYYY.';
+        } else {
+          const birth = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+          if (birth > maxDob) {
+            nextErrors.dob = 'Candidate must be at least 18 years old.';
+          }
+        }
+      }
     }
     if (!payload.city) nextErrors.city = 'City is required.';
     if (!payload.country) nextErrors.country = 'Country is required.';
@@ -202,11 +443,12 @@ export default function BasicInfoModal({
     phoneValue,
     phoneCode,
     genderValue,
-    dobValue,
+    dobDisplay,
     countryValue,
     cityValue,
     employmentValue,
     passportNumberValue,
+    maxDob,
   ]);
 
   useEffect(() => {
@@ -235,7 +477,15 @@ export default function BasicInfoModal({
     setErrors({});
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        if (citySuggestOpenRef.current) {
+          event.preventDefault();
+          setCitySuggestOpen(false);
+          setCityHighlight(-1);
+          return;
+        }
+        onClose();
+      }
     };
 
     // Scroll Lock
@@ -467,25 +717,47 @@ export default function BasicInfoModal({
                     <label className="text-xs font-medium text-gray-500">Date of Birth *</label>
                     <div className="relative">
                       <div
-                        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 cursor-pointer"
-                        onClick={() => dateInputRef.current?.showPicker()}
+                        className="absolute left-3 top-1/2 z-10 -translate-y-1/2 cursor-pointer"
+                        onClick={() => hiddenDobPickerRef.current?.showPicker?.()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            hiddenDobPickerRef.current?.showPicker?.();
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Open date picker"
                       >
                         <Image
                           src="/calendar_icon.png"
-                          alt="Calendar"
+                          alt="Open calendar"
                           width={16}
                           height={16}
                           className="h-4 w-4"
                         />
                       </div>
                       <input
-                        ref={dateInputRef}
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="bday"
+                        placeholder="DD/MM/YYYY"
+                        value={dobDisplay}
+                        onChange={(e) => setDobDisplay(formatDobDigitsAsDdMmYyyy(e.target.value))}
+                        className={`h-11 w-full rounded-lg border px-3 pl-10 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${(!dobDisplay.trim() || errors.dob) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
+                      />
+                      <input
+                        ref={hiddenDobPickerRef}
                         type="date"
-                        value={dobValue}
-                        max={maxDobInputValue}
-                        onChange={(e) => setDobValue(e.target.value)}
-                        onClick={() => dateInputRef.current?.showPicker()}
-                        className={`h-11 w-full rounded-lg px-3 pl-10 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none [color-scheme:light] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full ${(!dobValue || errors.dob) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
+                        className="pointer-events-none absolute left-0 top-0 h-0 w-0 opacity-0"
+                        tabIndex={-1}
+                        aria-hidden
+                        max={maxDobIso}
+                        value={parseDdMmYyyyToIso(dobDisplay.trim()) || ''}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v) setDobDisplay(isoToDdMmYyyy(v));
+                        }}
                       />
                     </div>
                     {errors.dob && <p className="text-xs text-red-600">{errors.dob}</p>}
@@ -501,13 +773,74 @@ export default function BasicInfoModal({
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-gray-500">Current City *</label>
-                    <input
-                      type="text"
-                      value={cityValue}
-                      onChange={(e) => setCityValue(e.target.value)}
-                      className={`h-11 w-full rounded-lg bg-white px-3 text-black font-medium shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${(!cityValue.trim() || errors.city) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
-                      placeholder="Enter current city"
-                    />
+                    <div className="relative" ref={cityAutocompleteRef}>
+                      <input
+                        type="text"
+                        value={cityValue}
+                        autoComplete="off"
+                        onChange={(e) => setCityValue(e.target.value)}
+                        onFocus={() => {
+                          if (citySuggestions.length > 0 || citySuggestLoading || citySuggestError) {
+                            setCitySuggestOpen(true);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'ArrowDown') {
+                            if (!citySuggestOpen && citySuggestions.length > 0) {
+                              setCitySuggestOpen(true);
+                            }
+                            if (citySuggestOpen && citySuggestions.length > 0) {
+                              e.preventDefault();
+                              setCityHighlight((i) => Math.min(i + 1, citySuggestions.length - 1));
+                            }
+                          } else if (e.key === 'ArrowUp') {
+                            if (citySuggestOpen && citySuggestions.length > 0) {
+                              e.preventDefault();
+                              setCityHighlight((i) => Math.max(i - 1, 0));
+                            }
+                          } else if (e.key === 'Enter') {
+                            if (citySuggestOpen && cityHighlight >= 0 && citySuggestions[cityHighlight]) {
+                              e.preventDefault();
+                              applyCitySuggestion(citySuggestions[cityHighlight]);
+                            }
+                          } else if (e.key === 'Escape' && citySuggestOpen) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setCitySuggestOpen(false);
+                            setCityHighlight(-1);
+                          }
+                        }}
+                        className={`h-11 w-full rounded-lg border bg-white px-3 text-black font-medium shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${(!cityValue.trim() || errors.city) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
+                        placeholder="Enter current city"
+                      />
+                      {citySuggestOpen ? (
+                        <div className="absolute top-[calc(100%+6px)] left-0 z-50 max-h-[min(280px,50vh)] w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-2 shadow-lg">
+                          {citySuggestLoading ? (
+                            <div className="px-3 py-2 text-sm text-gray-500">Searching…</div>
+                          ) : citySuggestError ? (
+                            <div className="px-3 py-2 text-sm text-red-600">{citySuggestError}</div>
+                          ) : citySuggestions.length === 0 ? (
+                            <div className="px-3 py-2 text-sm text-gray-500">No places found</div>
+                          ) : (
+                            citySuggestions.map((place, idx) => (
+                              <button
+                                key={`${place.display_name}-${idx}`}
+                                type="button"
+                                data-city-suggest-index={idx}
+                                onMouseEnter={() => setCityHighlight(idx)}
+                                onMouseDown={(ev) => {
+                                  ev.preventDefault();
+                                  applyCitySuggestion(place);
+                                }}
+                                className={`w-full px-3 py-2 text-left text-sm font-medium text-black hover:bg-gray-50 ${cityHighlight === idx ? 'bg-gray-50' : ''}`}
+                              >
+                                {formatPlaceSuggestionLine(place)}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
                     {errors.city && <p className="text-xs text-red-600">{errors.city}</p>}
                   </div>
                   <div className="space-y-1.5">
