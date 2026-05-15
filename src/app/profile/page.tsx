@@ -740,7 +740,21 @@ export default function ProfilePage() {
     // Preserve existing visaWorkAuthorizationData if not in response
 
     if (profileData.vaccination !== undefined) {
-      setVaccinationData(profileData.vaccination || undefined);
+      const v = profileData.vaccination;
+      const docUrls = Array.isArray(v.documents) && v.documents.length
+        ? v.documents
+        : v.certificate
+          ? [v.certificate]
+          : [];
+      setVaccinationData({
+        ...v,
+        documents: docUrls.map((url: string, i: number) => ({
+          id: `vac-doc-${i}`,
+          name: getDocumentName(url),
+          url,
+        })),
+        certificate: v.certificate || docUrls[0],
+      });
     }
     // Preserve existing vaccinationData if not in response
 
@@ -4507,32 +4521,37 @@ export default function ProfilePage() {
           if (!candidateId) return;
 
           try {
-            // Upload certificate if it's a File object
-            let certificateUrl = null;
-            if (data.certificate) {
-              if (data.certificate instanceof File) {
+            let documentUrls: string[] = [];
+            if (data.documents && data.documents.length > 0) {
+              const filesToUpload = data.documents.filter((doc) => doc.file instanceof File);
+              if (filesToUpload.length > 0) {
                 const formData = new FormData();
-                formData.append('documents', data.certificate);
-
-                const uploadResponse = await fetch(`${API_BASE_URL}/profile/vaccination/documents/${candidateId}`, {
-                  method: 'POST',
-                  body: formData,
+                filesToUpload.forEach((doc) => {
+                  if (doc.file instanceof File) formData.append('documents', doc.file);
                 });
-
-                if (!uploadResponse.ok) {
-                  throw new Error('Failed to upload certificate');
-                }
-
+                const uploadResponse = await fetch(
+                  `${API_BASE_URL}/profile/vaccination/documents/${candidateId}`,
+                  { method: 'POST', body: formData },
+                );
+                if (!uploadResponse.ok) throw new Error('Failed to upload vaccination documents');
                 const uploadResult = await uploadResponse.json();
-                certificateUrl = uploadResult.files[0]; // Get the first uploaded file URL
-              } else if (typeof data.certificate === 'string') {
-                certificateUrl = data.certificate;
+                const uploaded = Array.isArray(uploadResult.files) ? uploadResult.files : [];
+                documentUrls = [...uploaded];
               }
+              const existingUrls = data.documents
+                .filter((doc) => doc.url && !doc.file)
+                .map((doc) => doc.url!)
+                .filter(Boolean);
+              documentUrls = [...documentUrls, ...existingUrls];
             }
 
             const payload = {
-              ...data,
-              certificate: certificateUrl,
+              vaccineType: data.vaccineType,
+              lastVaccinationDate: data.lastVaccinationDate,
+              validityMonth: data.validityMonth,
+              validityYear: data.validityYear,
+              documents: documentUrls,
+              certificate: documentUrls[0] || undefined,
             };
 
             const response = await fetch(`${API_BASE_URL}/profile/vaccination/${candidateId}`, {

@@ -16,6 +16,8 @@ import type { AcademicAchievementData } from '@/components/modals/AcademicAchiev
 import type { CompetitiveExamsData } from '@/components/modals/CompetitiveExamsModal';
 import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
 import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
+import { formatDobDisplay } from '@/lib/format-dob';
+import { formatVaccinationValidity } from '@/lib/format-vaccination-validity';
 import {
   PreviewChip,
   PreviewChipRow,
@@ -98,7 +100,10 @@ export function ProfileBasicInfoFilled({ data }: { data: BasicInfoData }) {
           <PreviewMetaItem label="WhatsApp No" value={data.whatsappNumber} />
         )}
         <PreviewMetaItem label="Gender" value={data.gender || '—'} />
-        <PreviewMetaItem label="Date of birth" value={data.dob || '—'} />
+        <PreviewMetaItem
+          label="Date of birth"
+          value={formatDobDisplay(data.dob) || '—'}
+        />
         <PreviewMetaItem label="City" value={data.city || '—'} />
         <PreviewMetaItem label="Country" value={data.country || '—'} />
       </PreviewMetaGrid>
@@ -1702,11 +1707,14 @@ export function ProfileVaccinationFilled({
     }
   };
 
-  const hasCert = Boolean(data.certificate);
-  const validity =
-    data.validityMonth || data.validityYear
-      ? `${data.validityMonth || '—'} / ${data.validityYear || '—'}`
-      : '—';
+  const vaccinationDocs =
+    data.documents?.filter((d) => d.url).length
+      ? data.documents!.filter((d) => d.url)
+      : data.certificate
+        ? [{ id: 'cert', name: certificateLabel || 'Certificate', url: typeof data.certificate === 'string' ? data.certificate : undefined }]
+        : [];
+  const hasCert = vaccinationDocs.length > 0;
+  const validity = formatVaccinationValidity(data.validityMonth, data.validityYear);
 
   return (
     <PreviewEntryShell accent="green">
@@ -1724,39 +1732,36 @@ export function ProfileVaccinationFilled({
             />
             <PreviewMetaItem label="Valid through" value={validity} />
             <PreviewMetaItem
-              label="Certificate"
+              label={vaccinationDocs.length > 1 ? 'Certificates' : 'Certificate'}
               value={
                 hasCert ? (
-                  certificateHref ? (
-                    <div className="mt-1 flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handlePreview(certificateHref, certificateLabel || 'VaccinationCertificate')}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
-                        title="View Certificate"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        View
-                      </button>
-                      <span className="text-gray-300">|</span>
-                      <button
-                        type="button"
-                        onClick={() => handleDownload(certificateHref, certificateLabel || 'VaccinationCertificate')}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700 transition-colors"
-                        title="Download Certificate"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Download
-                      </button>
-                    </div>
-                  ) : (
-                    <PreviewChip tone="green">Uploaded</PreviewChip>
-                  )
+                  <div className="mt-1 space-y-1">
+                    {vaccinationDocs.map((doc, idx) => {
+                      const href = doc.url || certificateHref;
+                      if (!href) return <PreviewChip key={doc.id || idx} tone="green">Uploaded</PreviewChip>;
+                      return (
+                        <div key={doc.id || idx} className="flex flex-wrap items-center gap-2">
+                          <span className="max-w-[140px] truncate text-xs text-gray-600" title={doc.name}>
+                            {doc.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handlePreview(href, doc.name || 'Certificate')}
+                            className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                          >
+                            View
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(href, doc.name || 'Certificate')}
+                            className="text-xs font-medium text-orange-600 hover:text-orange-700"
+                          >
+                            Download
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <PreviewChip tone="neutral">Not uploaded</PreviewChip>
                 )

@@ -915,29 +915,29 @@ export default function VisaWorkAuthorizationModal({
                 ref={(el) => { fileInputRefs.current['expected'] = el; }}
                 type="file"
                 accept=".pdf,.png,.jpg,.jpeg"
+                multiple
                 onChange={(e) => handleFileInputChange('expected', e)}
                 className="hidden"
               />
-              {(!visaDetailsExpected?.documents || visaDetailsExpected.documents.length === 0) ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRefs.current['expected']?.click()}
-                    className="w-full px-4 py-3 border-2 border-dashed border-gray-300 bg-gray-50 rounded-lg flex items-center justify-center gap-2 hover:border-blue-400 hover:bg-blue-50 text-gray-600"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    Choose file
-                  </button>
-                </>
-              ) : (
-                <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => fileInputRefs.current['expected']?.click()}
+                className="w-full px-4 py-3 border-2 border-dashed border-gray-300 bg-gray-50 rounded-lg flex items-center justify-center gap-2 hover:border-blue-400 hover:bg-blue-50 text-gray-600"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                {visaDetailsExpected?.documents?.length
+                  ? 'Add more documents'
+                  : 'Choose files'}
+              </button>
+              {visaDetailsExpected?.documents && visaDetailsExpected.documents.length > 0 ? (
+                <div className="mt-3 space-y-2">
                   {visaDetailsExpected.documents.map((doc: any, index: number) => {
                     const docId = typeof doc === 'string' ? doc : doc.id || index.toString();
                     const docName = typeof doc === 'string' ? doc.split('/').pop() || doc : doc.name;
@@ -982,7 +982,7 @@ export default function VisaWorkAuthorizationModal({
                     );
                   })}
                 </div>
-              )}
+              ) : null}
               <p className="mt-1 text-xs text-gray-500">
                 Accepted: PDF, JPG, PNG. Max 5MB.
               </p>
