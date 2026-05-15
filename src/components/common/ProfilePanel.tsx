@@ -1,8 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useAuth } from '@/components/auth/AuthContext';
 
 type Item = {
   label: string;
@@ -126,6 +127,25 @@ function DrawerItem({ item, onNavigate }: { item: Item; onNavigate: (path: strin
   );
 }
 
+function LogoutIcon() {
+  return (
+    <svg
+      className="h-4 w-4 text-rose-600"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
 export default function ProfilePanel({
   isOpen,
   onClose,
@@ -135,6 +155,20 @@ export default function ProfilePanel({
   userEmail,
   profileCompletion,
 }: Props) {
+  const { logout, isAuthenticated } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    onClose();
+    try {
+      await logout();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   useEffect(() => {
     if (!isOpen) return;
     const handleEsc = (event: KeyboardEvent) => {
@@ -233,6 +267,24 @@ export default function ProfilePanel({
                 ))}
               </div>
             </div>
+
+            {isAuthenticated ? (
+              <div className="shrink-0 border-t border-slate-200 px-4 py-4">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="flex h-12 w-full items-center gap-3 rounded-lg px-3 text-left transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-rose-50">
+                    <LogoutIcon />
+                  </span>
+                  <span className="text-sm font-medium text-rose-700">
+                    {isLoggingOut ? 'Logging out…' : 'Log out'}
+                  </span>
+                </button>
+              </div>
+            ) : null}
           </motion.aside>
         </div>
       )}

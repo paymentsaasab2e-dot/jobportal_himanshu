@@ -1,4 +1,5 @@
 import type { DashboardData, DashboardJob } from "./dashboard-types";
+import { formatCompactSalarySafe } from "@/lib/format-salary";
 
 const DAY_MESSAGES = {
   morning: "Good morning",
@@ -122,22 +123,7 @@ export function formatCompactSalary(
   currency?: string | null,
   amount?: string | null
 ) {
-  if (amount) return amount;
-  if (!min && !max) return "Salary not specified";
-
-  const formatter = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency || "USD",
-    maximumFractionDigits: 0,
-    notation: "compact",
-  });
-
-  if (min && max) {
-    return `${formatter.format(min)} - ${formatter.format(max)}`;
-  }
-
-  if (min) return `${formatter.format(min)}+`;
-  return formatter.format(max || 0);
+  return formatCompactSalarySafe(min, max, currency, amount);
 }
 
 export function formatJobMeta(job: DashboardJob) {

@@ -223,14 +223,23 @@ function formatSavedJobMeta(job: SavedJobRecord) {
   return parts.length > 0 ? parts.join(' • ') : 'Details available on the jobs board';
 }
 
-function formatCompactMoney(value: number, currency = 'USD') {
+function formatCompactMoney(value: number, currency?: string | null) {
   const formatter = new Intl.NumberFormat('en-US', {
     notation: 'compact',
     maximumFractionDigits: 1,
   });
-
   const formattedValue = formatter.format(value);
-  return currency === 'USD' ? `$${formattedValue}` : `${currency} ${formattedValue}`;
+  const sym =
+    !currency || currency === 'USD'
+      ? '$'
+      : currency.length <= 4 && /^[A-Z$€£₹]{1,4}$/i.test(currency)
+        ? currency === 'INR'
+          ? '₹'
+          : currency
+        : null;
+  if (sym) return `${sym}${formattedValue}`;
+  if (/₹|rupee/i.test(currency || '')) return `₹${formattedValue}`;
+  return currency ? `${formattedValue} ${currency}` : `$${formattedValue}`;
 }
 
 function formatSavedSalary(job: SavedJobRecord) {

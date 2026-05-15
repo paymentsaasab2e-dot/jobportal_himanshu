@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import { ProfileDocumentsUpload } from '../profile/ProfileDocumentsUpload';
+import { normalizeProfileDocuments, type ProfileDocumentItem } from '@/lib/profile-documents';
 
 interface LanguagesModalProps {
   isOpen: boolean;
@@ -437,6 +439,25 @@ export default function LanguagesModal({
                   </tbody>
                 </table>
               </div>
+
+              {languages.length > 0 ? (
+                <div className="space-y-6 border-t border-gray-100 pt-6">
+                  <h3 className="text-sm font-semibold text-gray-900">Language certificates (optional)</h3>
+                  <p className="text-xs text-gray-500">
+                    Add one or more supporting documents per language. You can upload more when editing.
+                  </p>
+                  {languages.map((language, index) => (
+                    <ProfileDocumentsUpload
+                      key={`${language.name}-${index}`}
+                      label={`Documents for ${language.name || 'language'}`}
+                      documents={normalizeProfileDocuments(languageDocuments[index] || language.documents)}
+                      onChange={(docs: ProfileDocumentItem[]) => {
+                        setLanguageDocuments((prev) => ({ ...prev, [index]: docs }));
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : null}
 
             </div>
 
