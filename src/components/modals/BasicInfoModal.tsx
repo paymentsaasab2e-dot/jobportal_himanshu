@@ -8,6 +8,8 @@ import {
   formatPhoneCodeLabel,
 } from '@/lib/country-codes';
 import { profileCancelBtnClass, profileFieldClass, profileSaveBtnClass } from '@/lib/profile-modal-ui';
+import { resolveSignupPhoneFields } from '@/lib/phone-utils';
+import { useAuth } from '@/components/auth/AuthContext';
 
 function isValidCalendarYmd(year: number, month: number, day: number) {
   const dt = new Date(year, month - 1, day);
@@ -152,6 +154,7 @@ export interface BasicInfoData {
   employment: string;
   passportNumber?: string;
   whatsappNumber?: string;
+  countryCode?: string;
 }
 
 type BasicInfoFieldKey =
@@ -169,6 +172,8 @@ export default function BasicInfoModal({
   onSave,
   initialData,
 }: BasicInfoModalProps) {
+  const { user } = useAuth();
+
   const getMaxDobDate = () => {
     const now = new Date();
     const maxDob = new Date(now);
@@ -242,6 +247,20 @@ export default function BasicInfoModal({
     });
   }, [phoneCodeSearch]);
 
+  const applyPhoneFields = useCallback(
+    (data?: BasicInfoData) => {
+      const { localPhone, phoneCodeLabel } = resolveSignupPhoneFields({
+        phone: data?.phone,
+        phoneCode: data?.phoneCode,
+        whatsappNumber: user?.whatsappNumber || data?.whatsappNumber,
+        countryCode: data?.countryCode,
+      });
+      setPhoneValue(localPhone);
+      setPhoneCode(phoneCodeLabel);
+    },
+    [user?.whatsappNumber],
+  );
+
   // Update values when initialData changes
   useEffect(() => {
     if (initialData) {
@@ -249,8 +268,7 @@ export default function BasicInfoModal({
       setMiddleNameValue(initialData.middleName || '');
       setLastNameValue(initialData.lastName || '');
       setEmailValue(initialData.email || '');
-      setPhoneValue(initialData.phone || '');
-      setPhoneCode(initialData.phoneCode || '+91 (India)');
+      applyPhoneFields(initialData);
       setGenderValue(initialData.gender || '');
       setDobDisplay(initialData.dob ? isoToDdMmYyyy(initialData.dob) : '');
       setCountryValue(initialData.country || '');
@@ -264,13 +282,10 @@ export default function BasicInfoModal({
       setCitySuggestLoading(false);
       cityAbortRef.current?.abort();
     } else {
-      // Clear all fields for "Add" mode
       setFirstNameValue('');
       setMiddleNameValue('');
       setLastNameValue('');
       setEmailValue('');
-      setPhoneValue('');
-      setPhoneCode('+91 (India)');
       setGenderValue('');
       setDobDisplay('');
       setCountryValue('');
@@ -283,8 +298,11 @@ export default function BasicInfoModal({
       setCityHighlight(-1);
       setCitySuggestLoading(false);
       cityAbortRef.current?.abort();
+      applyPhoneFields(
+        user?.whatsappNumber ? { whatsappNumber: user.whatsappNumber } : undefined,
+      );
     }
-  }, [initialData, isOpen]);
+  }, [initialData, applyPhoneFields, user?.whatsappNumber]);
 
   const applyCitySuggestion = useCallback((place: NominatimPlace) => {
     const addr = place.address;

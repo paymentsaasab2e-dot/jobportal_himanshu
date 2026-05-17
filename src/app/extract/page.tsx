@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from '@/components/auth/AuthContext';
 import { CheckCircle2, Sparkles, User, Briefcase, GraduationCap } from "lucide-react";
@@ -12,40 +12,58 @@ import { recordCandidateNotification } from '@/lib/notifications';
 import HryantraLoader from "@/components/loader/CV Parsing Loader Final";
 
 export default function ExtractPage() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Starting CV analysis...");
-  const [candidateId, setCandidateId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
   const [minExtractTimerFinished, setMinExtractTimerFinished] = useState(false);
   const completionToastShownRef = useRef(false);
+  /** False after unmount — blocks redirects/timeouts that outlive this page */
+  const isPageActiveRef = useRef(true);
+  const isProcessingRef = useRef(true);
 
   useEffect(() => {
     const timer = setTimeout(() => setMinExtractTimerFinished(true), 3000);
     return () => clearTimeout(timer);
   }, []);
 
-  const redirectToDashboard = () => {
+  const redirectToDashboard = useCallback(() => {
+    if (!isPageActiveRef.current) return;
     router.push("/candidate-dashboard");
-  };
+  }, [router]);
 
   useEffect(() => {
     if (authLoading) return;
-    
-    // Get candidate ID from AuthContext or Storage
-    const resolvedCandidateId = user?.id || localStorage.getItem("candidateId") || sessionStorage.getItem("candidateId");
-    
-    if (!resolvedCandidateId && !authLoading) {
-      // If no candidate ID, redirect back to upload
-      router.push("/uploadcv");
-      return;
-    }
-    setCandidateId(resolvedCandidateId);
-    
-    const storedCandidateId = resolvedCandidateId; // For internal use in this effect
 
-    // Status messages that cycle during processing
+    isPageActiveRef.current = true;
+    isProcessingRef.current = true;
+    completionToastShownRef.current = false;
+
+    const pendingTimeouts: ReturnType<typeof setTimeout>[] = [];
+    const scheduleTimeout = (fn: () => void, delay: number) => {
+      const id = setTimeout(() => {
+        if (!isPageActiveRef.current) return;
+        fn();
+      }, delay);
+      pendingTimeouts.push(id);
+    };
+
+    const resolvedCandidateId =
+      user?.id ||
+      localStorage.getItem("candidateId") ||
+      sessionStorage.getItem("candidateId");
+
+    if (!resolvedCandidateId) {
+      router.push("/uploadcv");
+      return () => {
+        isPageActiveRef.current = false;
+        pendingTimeouts.forEach(clearTimeout);
+      };
+    }
+
+    const storedCandidateId = resolvedCandidateId;
+
     const statusMessages = [
       "Parsing PDF document...",
       "Extracting text from CV...",
@@ -61,119 +79,117 @@ export default function ExtractPage() {
 
     let statusIndex = 0;
     let progressValue = 0;
-    let statusInterval: NodeJS.Timeout;
-    let progressInterval: NodeJS.Timeout;
-    let checkStatusInterval: NodeJS.Timeout;
+    let statusInterval: ReturnType<typeof setInterval> | undefined;
+    let progressInterval: ReturnType<typeof setInterval> | undefined;
+    let checkStatusInterval: ReturnType<typeof setInterval> | undefined;
 
-    // Update status messages
+    const clearPolling = () => {
+      if (statusInterval) clearInterval(statusInterval);
+      if (progressInterval) clearInterval(progressInterval);
+      if (checkStatusInterval) clearInterval(checkStatusInterval);
+      statusInterval = undefined;
+      progressInterval = undefined;
+      checkStatusInterval = undefined;
+    };
+
+    const finishProcessing = (statusMessage: string, redirect: () => void) => {
+      if (!isPageActiveRef.current || !isProcessingRef.current) return;
+
+      isProcessingRef.current = false;
+      setIsProcessing(false);
+      setProgress(100);
+      setStatus(statusMessage);
+      clearPolling();
+      sessionStorage.removeItem("uploadStatus");
+      sessionStorage.removeItem("uploadError");
+      scheduleTimeout(redirect, 1500);
+    };
+
     statusInterval = setInterval(() => {
+      if (!isPageActiveRef.current) return;
       if (statusIndex < statusMessages.length - 1) {
-        statusIndex++;
+        statusIndex += 1;
         setStatus(statusMessages[statusIndex]);
       }
     }, 3000);
 
-    // Simulate progress (will be overridden by actual completion)
     progressInterval = setInterval(() => {
-      if (progressValue < 90 && isProcessing) {
+      if (!isPageActiveRef.current) return;
+      if (progressValue < 90 && isProcessingRef.current) {
         progressValue += 1;
         setProgress(progressValue);
       }
     }, 200);
 
-    // Check backend status periodically
     const checkProcessingStatus = async () => {
-      if (!storedCandidateId) return;
+      if (!isPageActiveRef.current || !storedCandidateId) return;
 
       try {
-        // Check if resume exists and is processed
         const response = await fetch(`${API_BASE_URL}/cv/status/${storedCandidateId}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.processed && data.aiAnalyzed) {
-            // Processing complete
-            setIsProcessing(false);
-            setProgress(100);
-            setStatus("CV analysis complete! Redirecting to dashboard...");
-            if (!completionToastShownRef.current) {
-              completionToastShownRef.current = true;
-              showSuccessToast("Resume uploaded", "Your profile has been analyzed successfully.");
-              void recordCandidateNotification(storedCandidateId, {
-                type: 'system',
-                title: 'Resume uploaded',
-                description: 'Your CV has been analyzed and your profile is ready.',
-                actionButton: 'View profile',
-                actionPath: '/profile',
-              });
-            }
-            clearInterval(statusInterval);
-            clearInterval(progressInterval);
-            clearInterval(checkStatusInterval);
-            
-            // Clear upload status from sessionStorage
-            sessionStorage.removeItem("uploadStatus");
-            sessionStorage.removeItem("uploadError");
-            
-            // Redirect to dashboard after a short delay
-            setTimeout(() => {
-              redirectToDashboard();
-            }, 1500);
-          } else if (data.hasResume && !data.aiAnalyzed) {
-            // Resume exists but not yet analyzed - still processing
-            setStatus("Processing CV with AI...");
+        if (!response.ok || !isPageActiveRef.current) return;
+
+        const data = await response.json();
+        if (data.processed && data.aiAnalyzed) {
+          if (!completionToastShownRef.current) {
+            completionToastShownRef.current = true;
+            showSuccessToast("Resume uploaded", "Your profile has been analyzed successfully.");
+            void recordCandidateNotification(storedCandidateId, {
+              type: 'system',
+              title: 'Resume uploaded',
+              description: 'Your CV has been analyzed and your profile is ready.',
+              actionButton: 'View profile',
+              actionPath: '/profile',
+            });
           }
+          finishProcessing(
+            "CV analysis complete! Redirecting to dashboard...",
+            redirectToDashboard,
+          );
+        } else if (data.hasResume && !data.aiAnalyzed) {
+          setStatus("Processing CV with AI...");
         }
-      } catch (error) {
-        // If status check fails, check for upload error
+      } catch {
+        if (!isPageActiveRef.current) return;
+
         const uploadError = sessionStorage.getItem("uploadError");
         if (uploadError) {
-          // Upload failed
+          isProcessingRef.current = false;
           setIsProcessing(false);
           setStatus("Upload failed. Please try again.");
-          clearInterval(statusInterval);
-          clearInterval(progressInterval);
-          clearInterval(checkStatusInterval);
-          
-          setTimeout(() => {
+          clearPolling();
+          scheduleTimeout(() => {
+            if (!isPageActiveRef.current) return;
             router.push("/uploadcv");
           }, 3000);
-          return;
         }
-        // Otherwise continue checking
       }
     };
 
-    // Check status every 2 seconds
     checkStatusInterval = setInterval(checkProcessingStatus, 2000);
-    // Initial check after 1 second (give upload time to start)
-    setTimeout(checkProcessingStatus, 1000);
-    
-    // Fallback: After 60 seconds, redirect anyway (in case of issues)
-    setTimeout(() => {
-      if (isProcessing) {
-        setIsProcessing(false);
-        setProgress(100);
-        setStatus("Processing complete! Redirecting to dashboard...");
+    scheduleTimeout(() => void checkProcessingStatus(), 1000);
+
+    // Only force-complete when the user is still in the post-upload flow on this page
+    const awaitingFreshUpload = sessionStorage.getItem("uploadStatus") === "processing";
+    if (awaitingFreshUpload) {
+      scheduleTimeout(() => {
+        if (!isPageActiveRef.current || !isProcessingRef.current) return;
         if (!completionToastShownRef.current) {
           completionToastShownRef.current = true;
           showSuccessToast("Resume uploaded", "Your profile has been analyzed successfully.");
         }
-        clearInterval(statusInterval);
-        clearInterval(progressInterval);
-        clearInterval(checkStatusInterval);
-        
-        setTimeout(() => {
-          redirectToDashboard();
-        }, 1500);
-      }
-    }, 60000);
+        finishProcessing(
+          "Processing complete! Redirecting to dashboard...",
+          redirectToDashboard,
+        );
+      }, 60000);
+    }
 
     return () => {
-      clearInterval(statusInterval);
-      clearInterval(progressInterval);
-      clearInterval(checkStatusInterval);
+      isPageActiveRef.current = false;
+      pendingTimeouts.forEach(clearTimeout);
+      clearPolling();
     };
-  }, [router, isProcessing]);
+  }, [authLoading, user?.id, router, redirectToDashboard]);
 
   if (isProcessing || !minExtractTimerFinished) {
     return <HryantraLoader />;
@@ -214,9 +230,7 @@ export default function ExtractPage() {
               </div>
             ) : (
               <div className="relative flex items-center justify-center">
-                {/* Outer pulsing ring */}
                 <div className="absolute inset-0 w-24 h-24 bg-sky-100 rounded-full animate-ping opacity-75 mx-auto" style={{ top: '-8px' }}></div>
-                {/* Inner spinner box */}
                 <div className="w-20 h-20 bg-sky-50 rounded-[24px] flex items-center justify-center shadow-sm border border-sky-100 relative z-10">
                   <Sparkles className="w-8 h-8 text-sky-500 animate-pulse" />
                 </div>
@@ -230,7 +244,6 @@ export default function ExtractPage() {
             </h1>
           </div>
 
-          {/* Enhanced Progress Bar */}
           <div className="mb-8 w-full">
             <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden shadow-inner flex">
               <div 
@@ -244,7 +257,6 @@ export default function ExtractPage() {
             </div>
           </div>
 
-          {/* Dynamic Status Display */}
           <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-center gap-3">
             {!isProcessing ? (
                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
@@ -256,7 +268,6 @@ export default function ExtractPage() {
             </p>
           </div>
 
-          {/* Supportive feature icons appearing during extraction */}
           <div className={`mt-8 flex justify-center gap-6 opacity-40 transition-opacity duration-1000 ${progress > 30 ? 'opacity-100' : ''}`}>
              <User className={`w-5 h-5 transition-colors duration-500 ${progress > 45 ? 'text-sky-500' : 'text-slate-300'}`} />
              <Briefcase className={`w-5 h-5 transition-colors duration-500 ${progress > 60 ? 'text-sky-500' : 'text-slate-300'}`} />

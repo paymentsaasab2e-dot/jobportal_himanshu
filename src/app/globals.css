@@ -203,6 +203,8 @@ input[type="range"]::-moz-range-thumb {
   --profile-color-text: #111827;
   --profile-color-label: #64748b;
   --profile-color-muted: #94a3b8;
+  --profile-color-placeholder: var(--profile-color-muted);
+  --profile-color-alert: #d97706;
   --profile-color-border: #e2e8f0;
   --profile-color-section: #64748b;
   --profile-color-cancel: #334155;
@@ -262,7 +264,8 @@ input[type="range"]::-moz-range-thumb {
 .profile-modal-typography input::placeholder,
 .profile-modal-typography textarea::placeholder {
   font-size: 0.8125rem;
-  color: #94a3b8;
+  color: var(--profile-color-placeholder);
+  opacity: 1;
 }
 
 .profile-modal-typography .profile-modal-helper {
@@ -271,6 +274,27 @@ input[type="range"]::-moz-range-thumb {
   font-weight: 400;
   line-height: 1.45;
   color: var(--profile-color-label);
+}
+
+/* Validation / required hints — keep orange (not overridden by label slate) */
+.profile-modal-typography .text-amber-600,
+.profile-modal-typography .text-amber-500,
+.profile-modal-typography .text-orange-600,
+.profile-modal-typography .text-orange-500,
+.profile-modal-typography .profile-modal-helper.text-amber-600,
+.profile-modal-typography p.text-amber-600,
+.profile-modal-typography .text-xs.text-amber-600 {
+  color: var(--profile-color-alert) !important;
+}
+
+.profile-modal-typography .text-red-600,
+.profile-modal-typography .profile-modal-helper.text-red-600 {
+  color: #dc2626 !important;
+}
+
+.profile-modal-typography label .text-amber-600,
+.profile-modal-typography label .text-amber-500 {
+  color: var(--profile-color-alert) !important;
 }
 
 .profile-modal-typography .profile-modal-btn {
@@ -484,9 +508,45 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .profile-modal-chrome input::placeholder,
-.profile-modal-chrome textarea::placeholder {
-  color: var(--profile-color-muted) !important;
+.profile-modal-chrome textarea::placeholder,
+.profile-modal-typography input::placeholder,
+.profile-modal-typography textarea::placeholder {
+  color: var(--profile-color-placeholder) !important;
+  -webkit-text-fill-color: var(--profile-color-placeholder) !important;
   opacity: 1 !important;
+}
+
+/* WebKit: dark text-fill on inputs — light grey when placeholder is visible */
+.profile-modal-chrome input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):placeholder-shown,
+.profile-modal-chrome textarea:placeholder-shown {
+  color: var(--profile-color-placeholder) !important;
+  -webkit-text-fill-color: var(--profile-color-placeholder) !important;
+}
+
+.profile-modal-chrome input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not(:placeholder-shown),
+.profile-modal-chrome textarea:not(:placeholder-shown) {
+  color: var(--profile-color-text) !important;
+  -webkit-text-fill-color: var(--profile-color-text) !important;
+}
+
+/* Empty select / dropdown prompt — same muted slate as field placeholders */
+.profile-modal-chrome select:invalid {
+  color: var(--profile-color-placeholder) !important;
+  -webkit-text-fill-color: var(--profile-color-placeholder);
+}
+
+.profile-modal-chrome select option[value=""] {
+  color: var(--profile-color-placeholder);
+}
+
+/* Invalid / required field highlight (amber wash) */
+.profile-modal-typography input.border-amber-200,
+.profile-modal-typography select.border-amber-200,
+.profile-modal-typography textarea.border-amber-200,
+.profile-modal-typography .border-amber-200.profile-modal-field,
+.profile-modal-typography .border-amber-200.profile-modal-textarea {
+  border-color: #fcd34d !important;
+  background-color: rgb(255 251 235 / 0.5) !important;
 }
 
 .profile-modal-chrome select option {
