@@ -1,7 +1,7 @@
 /** Shared compact field styles for profile drawers (Basic Information scale). */
 
 export const profileFieldBase =
-  'profile-modal-field w-full text-gray-900 shadow-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25';
+  'profile-modal-field w-full text-gray-900 shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25';
 
 export const profileFieldOk =
   'border-slate-200 bg-white hover:border-slate-300';
