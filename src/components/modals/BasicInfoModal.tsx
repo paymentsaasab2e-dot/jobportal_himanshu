@@ -7,6 +7,7 @@ import {
   countryCodeToFlag,
   formatPhoneCodeLabel,
 } from '@/lib/country-codes';
+import { profileCancelBtnClass, profileFieldClass, profileSaveBtnClass } from '@/lib/profile-modal-ui';
 
 function isValidCalendarYmd(year: number, month: number, day: number) {
   const dt = new Date(year, month - 1, day);
@@ -516,12 +517,12 @@ export default function BasicInfoModal({
 
         {/* Drawer */}
         <div
-          className="modal-placeholder-black fixed top-0 right-0 z-[10000] flex h-full w-full max-w-[520px] flex-col border-l border-gray-200 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.2)] transform transition-all duration-300 ease-out translate-x-0"
+          className="profile-modal-typography profile-modal-chrome fixed top-0 right-0 z-[10000] flex h-full w-full max-w-[520px] flex-col border-l border-gray-200 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.2)] transform transition-all duration-300 ease-out translate-x-0"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-5">
-            <h2 className="text-xl font-semibold text-gray-900">
+          <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-5 py-4">
+            <h2 className="profile-modal-title">
               {initialData ? 'Edit Basic Information' : 'Add Basic Information'}
             </h2>
             <button
@@ -545,45 +546,45 @@ export default function BasicInfoModal({
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto px-6 py-6">
-            <div className="space-y-8">
+          <div className="profile-modal-scroll min-h-0 flex-1 overflow-y-auto px-5 py-5">
+            <div className="flex flex-col">
               {/* Section 1 */}
-              <section className="space-y-4">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+              <section className="profile-modal-section">
+                <h3 className="profile-modal-section-title">
                   Personal Details
                 </h3>
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-500">First Name *</label>
+                <div className="profile-modal-form-grid profile-modal-form-grid--split">
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">First Name *</label>
                     <input
                       type="text"
                       value={firstNameValue}
                       onChange={(e) => setFirstNameValue(e.target.value)}
-                      className={`h-11 w-full rounded-lg px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${(!firstNameValue.trim() || errors.firstName) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
+                      className={profileFieldClass(!firstNameValue.trim() || Boolean(errors.firstName))}
                       placeholder="Enter first name"
                     />
                     {!firstNameValue.trim() && (
-                      <p className="mt-1 text-xs text-amber-600">First name is required</p>
+                      <p className="profile-modal-helper mt-1 text-amber-600">First name is required</p>
                     )}
-                    {errors.firstName && <p className="text-xs text-red-600">{errors.firstName}</p>}
+                    {errors.firstName && <p className="profile-modal-helper text-red-600">{errors.firstName}</p>}
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-500">Middle Name</label>
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">Middle Name</label>
                     <input
                       type="text"
                       value={middleNameValue}
                       onChange={(e) => setMiddleNameValue(e.target.value)}
-                      className="h-11 w-full rounded-lg border border-gray-200 px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none"
+                      className={profileFieldClass()}
                       placeholder="Enter middle name"
                     />
                   </div>
-                  <div className="space-y-1.5 md:col-span-2">
-                    <label className="text-xs font-medium text-gray-500">Last Name</label>
+                  <div className="profile-modal-field-group profile-modal-form-grid__full">
+                    <label className="profile-modal-label">Last Name</label>
                     <input
                       type="text"
                       value={lastNameValue}
                       onChange={(e) => setLastNameValue(e.target.value)}
-                      className="h-11 w-full rounded-lg border border-gray-200 px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none"
+                      className={profileFieldClass()}
                       placeholder="Enter last name"
                     />
                   </div>
@@ -591,41 +592,45 @@ export default function BasicInfoModal({
               </section>
 
               {/* Section 2 */}
-              <section className="space-y-4 border-t border-gray-200 pt-6">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+              <section className="profile-modal-section">
+                <h3 className="profile-modal-section-title">
                   Contact Information
                 </h3>
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <div className="space-y-1.5 md:col-span-2">
-                    <label className="text-xs font-medium text-gray-500">Email Address *</label>
+                <div className="profile-modal-form-grid profile-modal-form-grid--split">
+                  <div className="profile-modal-field-group profile-modal-form-grid__full">
+                    <label className="profile-modal-label">Email Address *</label>
                     <div className="relative">
                       <input
                         type="email"
                         value={emailValue}
                         onChange={(e) => setEmailValue(e.target.value)}
-                        className={`h-11 w-full rounded-lg px-3 pr-24 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${(!emailValue.trim() || errors.email) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
+                        className={profileFieldClass(!emailValue.trim() || Boolean(errors.email))}
                         placeholder="Enter email address"
                       />
                     </div>
                     {!emailValue.trim() && (
-                      <p className="mt-1 text-xs text-amber-600">Email address is required</p>
+                      <p className="profile-modal-helper mt-1 text-amber-600">Email address is required</p>
                     )}
-                    {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
+                    {errors.email && <p className="profile-modal-helper text-red-600">{errors.email}</p>}
                   </div>
-                  <div className="space-y-1.5 md:col-span-2">
-                    <label className="text-xs font-medium text-gray-500">Phone Number *</label>
-                    <div className="grid grid-cols-[140px_1fr] gap-2">
-                      <div className="relative" ref={phoneCodeRef}>
+                  <div className="profile-modal-field-group profile-modal-form-grid__full">
+                    <label className="profile-modal-label">Phone Number *</label>
+                    <div className="profile-modal-phone-row">
+                      <div className="relative min-w-0" ref={phoneCodeRef}>
                         <button
                           type="button"
                           onClick={() => setIsPhoneCodeOpen((prev) => !prev)}
-                          className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-left text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none flex items-center justify-between"
+                          className="profile-modal-phone-code-btn shadow-sm transition-colors hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
                         >
-                          <span className="flex items-center gap-2 min-w-0">
-                            <span className="text-base">{countryCodeToFlag(selectedPhoneCodeOption.code)}</span>
-                            <span className="truncate text-sm">{selectedPhoneCodeOption.dialCode}</span>
+                          <span className="flex min-w-0 items-center gap-1.5">
+                            <span className="shrink-0 text-sm leading-none">
+                              {countryCodeToFlag(selectedPhoneCodeOption.code)}
+                            </span>
+                            <span className="truncate font-medium">{selectedPhoneCodeOption.dialCode}</span>
                           </span>
-                          <span className="text-xs text-gray-400">▼</span>
+                          <span className="shrink-0 text-[10px] text-slate-400" aria-hidden>
+                            ▼
+                          </span>
                         </button>
 
                         {isPhoneCodeOpen && (
@@ -636,7 +641,7 @@ export default function BasicInfoModal({
                                 value={phoneCodeSearch}
                                 onChange={(e) => setPhoneCodeSearch(e.target.value)}
                                 placeholder="Search country / code"
-                                className="h-9 w-full rounded-md border border-gray-200 px-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                                className={profileFieldClass()}
                               />
                             </div>
                             {filteredPhoneCodes.map((item) => (
@@ -653,12 +658,12 @@ export default function BasicInfoModal({
                                 className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2"
                               >
                                 <span className="text-base">{countryCodeToFlag(item.code)}</span>
-                                <span className="font-semibold text-sm w-14">{item.dialCode}</span>
-                                <span className="text-sm text-gray-600 truncate">{item.name}</span>
+                                <span className="w-14 font-semibold">{item.dialCode}</span>
+                                <span className="truncate text-slate-600">{item.name}</span>
                               </button>
                             ))}
                             {filteredPhoneCodes.length === 0 && (
-                              <div className="px-3 py-2 text-sm text-gray-500">No country found</div>
+                              <div className="profile-modal-helper px-3 py-2 text-slate-500">No country found</div>
                             )}
                           </div>
                         )}
@@ -672,19 +677,19 @@ export default function BasicInfoModal({
                           setPhoneValue(digitsOnly.slice(0, maxLength));
                         }}
                         maxLength={selectedPhoneCodeOption.phoneLength}
-                        className={`h-11 w-full rounded-lg px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${(!phoneValue.trim() || errors.phone) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
+                        className={profileFieldClass(!phoneValue.trim() || Boolean(errors.phone))}
                         placeholder={`${selectedPhoneCodeOption.phoneLength} digits`}
                       />
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="profile-modal-phone-meta">
                       {errors.phone ? (
-                        <p className="text-xs text-red-600">{errors.phone}</p>
+                        <p className="profile-modal-helper text-red-600">{errors.phone}</p>
                       ) : (
-                        <p className="text-xs text-gray-400">
+                        <p className="profile-modal-helper text-slate-500">
                           {selectedPhoneCodeOption.name}: {selectedPhoneCodeOption.phoneLength} digits required
                         </p>
                       )}
-                      <p className={`text-xs ${phoneValue.replace(/\D/g, '').length === selectedPhoneCodeOption.phoneLength ? 'text-green-500' : 'text-gray-400'}`}>
+                      <p className={`profile-modal-helper ${phoneValue.replace(/\D/g, '').length === selectedPhoneCodeOption.phoneLength ? 'text-green-600' : 'text-slate-500'}`}>
                         {phoneValue.replace(/\D/g, '').length}/{selectedPhoneCodeOption.phoneLength}
                       </p>
                     </div>
@@ -693,17 +698,17 @@ export default function BasicInfoModal({
               </section>
 
               {/* Section 3 */}
-              <section className="space-y-4 border-t border-gray-200 pt-6">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+              <section className="profile-modal-section">
+                <h3 className="profile-modal-section-title">
                   Basic Details
                 </h3>
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-500">Gender *</label>
+                <div className="profile-modal-form-grid profile-modal-form-grid--split">
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">Gender *</label>
                     <select
                       value={genderValue}
                       onChange={(e) => setGenderValue(e.target.value)}
-                      className={`h-11 w-full rounded-lg bg-white px-3 text-black font-medium shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none appearance-none ${(!genderValue || errors.gender) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
+                      className={`${profileFieldClass(!genderValue || Boolean(errors.gender))} appearance-none`}
                     >
                       <option value="">Select Gender</option>
                       <option>Male</option>
@@ -711,10 +716,10 @@ export default function BasicInfoModal({
                       <option>Other</option>
                       <option>Prefer not to say</option>
                     </select>
-                    {errors.gender && <p className="text-xs text-red-600">{errors.gender}</p>}
+                    {errors.gender && <p className="profile-modal-helper text-red-600">{errors.gender}</p>}
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-500">Date of Birth *</label>
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">Date of Birth *</label>
                     <div className="relative">
                       <div
                         className="absolute left-3 top-1/2 z-10 -translate-y-1/2 cursor-pointer"
@@ -744,7 +749,7 @@ export default function BasicInfoModal({
                         placeholder="DD/MM/YYYY"
                         value={dobDisplay}
                         onChange={(e) => setDobDisplay(formatDobDigitsAsDdMmYyyy(e.target.value))}
-                        className={`h-11 w-full rounded-lg border px-3 pl-10 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${(!dobDisplay.trim() || errors.dob) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
+                        className={`${profileFieldClass(!dobDisplay.trim() || Boolean(errors.dob))} !pl-10`}
                       />
                       <input
                         ref={hiddenDobPickerRef}
@@ -760,19 +765,19 @@ export default function BasicInfoModal({
                         }}
                       />
                     </div>
-                    {errors.dob && <p className="text-xs text-red-600">{errors.dob}</p>}
+                    {errors.dob && <p className="profile-modal-helper text-red-600">{errors.dob}</p>}
                   </div>
                 </div>
               </section>
 
               {/* Section 4 */}
-              <section className="space-y-4 border-t border-gray-200 pt-6">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+              <section className="profile-modal-section">
+                <h3 className="profile-modal-section-title">
                   Location
                 </h3>
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-500">Current City *</label>
+                <div className="profile-modal-form-grid profile-modal-form-grid--split">
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">Current City *</label>
                     <div className="relative" ref={cityAutocompleteRef}>
                       <input
                         type="text"
@@ -810,17 +815,17 @@ export default function BasicInfoModal({
                             setCityHighlight(-1);
                           }
                         }}
-                        className={`h-11 w-full rounded-lg border bg-white px-3 text-black font-medium shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none ${(!cityValue.trim() || errors.city) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
+                        className={profileFieldClass(!cityValue.trim() || Boolean(errors.city))}
                         placeholder="Enter current city"
                       />
                       {citySuggestOpen ? (
                         <div className="absolute top-[calc(100%+6px)] left-0 z-50 max-h-[min(280px,50vh)] w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-2 shadow-lg">
                           {citySuggestLoading ? (
-                            <div className="px-3 py-2 text-sm text-gray-500">Searching…</div>
+                            <div className="profile-modal-helper px-3 py-2 text-slate-500">Searching…</div>
                           ) : citySuggestError ? (
-                            <div className="px-3 py-2 text-sm text-red-600">{citySuggestError}</div>
+                            <div className="profile-modal-helper px-3 py-2 text-red-600">{citySuggestError}</div>
                           ) : citySuggestions.length === 0 ? (
-                            <div className="px-3 py-2 text-sm text-gray-500">No places found</div>
+                            <div className="profile-modal-helper px-3 py-2 text-slate-500">No places found</div>
                           ) : (
                             citySuggestions.map((place, idx) => (
                               <button
@@ -832,7 +837,7 @@ export default function BasicInfoModal({
                                   ev.preventDefault();
                                   applyCitySuggestion(place);
                                 }}
-                                className={`w-full px-3 py-2 text-left text-sm font-medium text-black hover:bg-gray-50 ${cityHighlight === idx ? 'bg-gray-50' : ''}`}
+                                className={`w-full px-3 py-2 text-left text-gray-900 hover:bg-gray-50 ${cityHighlight === idx ? 'bg-gray-50' : ''}`}
                               >
                                 {formatPlaceSuggestionLine(place)}
                               </button>
@@ -841,14 +846,14 @@ export default function BasicInfoModal({
                         </div>
                       ) : null}
                     </div>
-                    {errors.city && <p className="text-xs text-red-600">{errors.city}</p>}
+                    {errors.city && <p className="profile-modal-helper text-red-600">{errors.city}</p>}
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-500">Current Country *</label>
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">Current Country *</label>
                     <select
                       value={countryValue}
                       onChange={(e) => setCountryValue(e.target.value)}
-                      className={`h-11 w-full rounded-lg bg-white px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none appearance-none ${(!countryValue || errors.country) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-200'}`}
+                      className={`${profileFieldClass(!countryValue || Boolean(errors.country))} appearance-none`}
                     >
                       <option value="">Select Country</option>
                       {ALL_COUNTRY_CODES.map((country) => (
@@ -857,23 +862,23 @@ export default function BasicInfoModal({
                         </option>
                       ))}
                     </select>
-                    {errors.country && <p className="text-xs text-red-600">{errors.country}</p>}
+                    {errors.country && <p className="profile-modal-helper text-red-600">{errors.country}</p>}
                   </div>
                 </div>
               </section>
 
               {/* Section 5 */}
-              <section className="space-y-4 border-t border-gray-200 pt-6">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+              <section className="profile-modal-section">
+                <h3 className="profile-modal-section-title">
                   Professional Status
                 </h3>
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-500">Employment Status</label>
+                <div className="profile-modal-form-grid profile-modal-form-grid--split">
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">Employment Status</label>
                     <select
                       value={employmentValue}
                       onChange={(e) => setEmploymentValue(e.target.value)}
-                      className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-black font-medium shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
+                      className={`${profileFieldClass()} appearance-none`}
                     >
                       <option value="">Select Status</option>
                       <option>Employed</option>
@@ -882,13 +887,13 @@ export default function BasicInfoModal({
                       <option>Student</option>
                     </select>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-500">Passport Number</label>
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">Passport Number</label>
                     <input
                       type="text"
                       value={passportNumberValue}
                       onChange={(e) => setPassportNumberValue(e.target.value)}
-                      className="h-11 w-full rounded-lg border border-gray-200 px-3 text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none"
+                      className={profileFieldClass()}
                       placeholder="Enter passport number"
                     />
                   </div>
@@ -898,18 +903,12 @@ export default function BasicInfoModal({
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 z-10 border-t border-gray-200 bg-white px-6 py-4">
+          <div className="sticky bottom-0 z-10 shrink-0 border-t border-gray-200 bg-white px-5 py-3.5">
             <div className="flex justify-end gap-3">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 text-sm font-medium hover:bg-gray-50"
-              >
+              <button type="button" onClick={onClose} className={profileCancelBtnClass}>
                 Cancel
               </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors"
-              >
+              <button type="button" onClick={handleSave} className={profileSaveBtnClass}>
                 Save Changes
               </button>
             </div>

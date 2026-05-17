@@ -20,6 +20,13 @@ import {
 
 // Jobs list comes from backend1 (job portal DB). CRM creates/updates mirror into that DB from Phase 2.
 import { API_BASE_URL } from '@/lib/api-base';
+import {
+  isSalaryFilterActive,
+  jobMatchesSalaryFilter,
+  parseSalaryFilterInput,
+  SALARY_FILTER_CURRENCIES,
+  toFiniteNumber,
+} from '@/lib/job-salary-filter';
 import { showInfoToast, showSuccessToast } from '@/components/common/toast/toast';
 import { notifyBellRefresh } from '@/lib/notifications';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
@@ -34,6 +41,9 @@ interface JobListing {
   logo: string
   location: string
   salary: string
+  salaryMin?: number | null
+  salaryMax?: number | null
+  salaryCurrency?: string | null
   type: string
   skills: string[]
   match: string
@@ -484,7 +494,6 @@ const ExploreJobsPageContent = () => {
   const [citiesOpen, setCitiesOpen] = useState(true)
 
   // View More expand states
-  const [showMoreSalary, setShowMoreSalary] = useState(false)
   const [showMoreIndustry, setShowMoreIndustry] = useState(false)
   const [showMoreDepartment, setShowMoreDepartment] = useState(false)
   const [showMoreCities, setShowMoreCities] = useState(false)
@@ -496,16 +505,9 @@ const ExploreJobsPageContent = () => {
 
   const [workMode, setWorkMode] = useState<'Remote' | 'Hybrid' | 'On-site' | null>(null)
   const [experienceYears, setExperienceYears] = useState(20)
-  const [salaryRanges, setSalaryRanges] = useState<Record<string, boolean>>({
-    '0-3 Lakhs': false,
-    '3-6 Lakhs': false,
-    '6-10 Lakhs': false,
-    '10-15 Lakhs': false,
-    '15-25 Lakhs': false,
-    '25-35 Lakhs': false,
-    '35-50 Lakhs': false,
-    '50+ Lakhs': false,
-  })
+  const [salaryFilterCurrency, setSalaryFilterCurrency] = useState<string>('INR')
+  const [salaryFilterMin, setSalaryFilterMin] = useState('')
+  const [salaryFilterMax, setSalaryFilterMax] = useState('')
   const [matchScore, setMatchScore] = useState<Record<string, boolean>>({
     '80%+ Match': false,
     '70%+ Match': false,
@@ -586,12 +588,13 @@ const ExploreJobsPageContent = () => {
     setSmartFilterRemoteFriendly(false)
     setWorkMode(null)
     setExperienceYears(20)
-    setSalaryRanges({ '0-3 Lakhs': false, '3-6 Lakhs': false, '6-10 Lakhs': false, '10-15 Lakhs': false, '15-25 Lakhs': false, '25-35 Lakhs': false, '35-50 Lakhs': false, '50+ Lakhs': false })
+    setSalaryFilterCurrency('INR')
+    setSalaryFilterMin('')
+    setSalaryFilterMax('')
     setMatchScore({ '80%+ Match': false, '70%+ Match': false, '60%+ Match': false })
     setIndustry({ 'IT Services & Consulting': false, 'Software Product': false, 'Recruitment / Staffing': false, 'Miscellaneous': false, 'Banking & Finance': false, 'Healthcare & Pharma': false, 'E-commerce & Retail': false, 'Manufacturing': false, 'Education & Training': false, 'Media & Entertainment': false, 'Telecommunications': false })
     setDepartment({ 'Engineering - Software': false, 'Data Science & Analytics': false, 'UX, Design & Architecture': false, 'IT & Information Security': false, 'Sales & Business Development': false, 'Marketing & Communications': false, 'Human Resources': false, 'Finance & Accounting': false, 'Operations & Logistics': false, 'Customer Support': false, 'Product Management': false, 'Quality Assurance': false })
     setCities({ 'Navi Mumbai': false, 'Panvel': false, 'Mumbai': false, 'Bengaluru': false, 'Hyderabad': false, 'Chennai': false, 'Pune': false, 'Delhi': false, 'Gurgaon': false, 'Noida': false, 'Kolkata': false, 'Ahmedabad': false, 'Jaipur': false, 'Chandigarh': false, 'Remote': false })
-    setShowMoreSalary(false)
     setShowMoreIndustry(false)
     setShowMoreDepartment(false)
     setShowMoreCities(false)
@@ -923,6 +926,12 @@ const ExploreJobsPageContent = () => {
             company: companyName,
             logo: resolveCompanyLogo(job),
             location: resolvedLocation,
+            salaryMin: toFiniteNumber(job.salary?.min ?? job.salaryMin),
+            salaryMax: toFiniteNumber(job.salary?.max ?? job.salaryMax),
+            salaryCurrency:
+              asString(job.salary?.currency ?? job.salaryCurrency) ||
+              asString(job.currency) ||
+              null,
             salary: formatSalary(
               job.salary?.min ?? job.salaryMin, 
               job.salary?.max ?? job.salaryMax, 
@@ -1401,43 +1410,23 @@ const ExploreJobsPageContent = () => {
       });
     }
 
-    // Salary range filter
-    const activeSalaryRanges = Object.entries(salaryRanges)
-      .filter(([, v]) => v)
-      .map(([k]) => k);
-    
-    if (activeSalaryRanges.length > 0) {
-      const SALARY_RANGE_LIMITS: Record<string, [number, number]> = {
-        '0-3 Lakhs': [0, 300000],
-        '3-6 Lakhs': [300000, 600000],
-        '6-10 Lakhs': [600000, 1000000],
-        '10-15 Lakhs': [1000000, 1500000],
-        '15-25 Lakhs': [1500000, 2500000],
-        '25-35 Lakhs': [2500000, 3500000],
-        '35-50 Lakhs': [3500000, 5000000],
-        '50+ Lakhs': [5000000, Infinity],
-      };
+    // Salary filter (currency + min/max)
+    if (isSalaryFilterActive(salaryFilterMin, salaryFilterMax)) {
+      const filterMin = parseSalaryFilterInput(salaryFilterMin);
+      const filterMax = parseSalaryFilterInput(salaryFilterMax);
 
-      jobs = jobs.filter((j) => {
-        const salaryStr = (j.salary || '').toLowerCase();
-        // Naive but effective parsing for common formats: "10-15 Lakhs", "12 Lakhs", "$100,000"
-        const numbers = salaryStr.replace(/,/g, '').match(/(\d+(\.\d+)?)/g);
-        if (!numbers) return false;
-
-        let factor = 1;
-        if (salaryStr.includes('lakh')) factor = 100000;
-        else if (salaryStr.includes('crore')) factor = 10000000;
-
-        const vals = numbers.map(n => parseFloat(n) * factor);
-        const minSalary = vals[0];
-        const maxSalary = vals.length > 1 ? vals[1] : (salaryStr.includes('+') ? Infinity : vals[0]);
-
-        return activeSalaryRanges.some(range => {
-          const [limitMin, limitMax] = SALARY_RANGE_LIMITS[range];
-          // Check for overlap between job salary range and filter range
-          return (minSalary < limitMax && maxSalary >= limitMin);
-        });
-      });
+      if (
+        (salaryFilterMin.trim() && filterMin === null) ||
+        (salaryFilterMax.trim() && filterMax === null)
+      ) {
+        jobs = [];
+      } else if (filterMin != null && filterMax != null && filterMin > filterMax) {
+        jobs = [];
+      } else {
+        jobs = jobs.filter((j) =>
+          jobMatchesSalaryFilter(j, salaryFilterCurrency, filterMin, filterMax),
+        );
+      }
     }
 
     // Match score filter
@@ -1497,7 +1486,9 @@ const ExploreJobsPageContent = () => {
     smartFilterRemoteFriendly,
     workMode,
     experienceYears,
-    salaryRanges,
+    salaryFilterCurrency,
+    salaryFilterMin,
+    salaryFilterMax,
     matchScore,
     industry,
     department,
@@ -1513,7 +1504,7 @@ const ExploreJobsPageContent = () => {
       smartFilterRemoteFriendly,
       workMode !== null,
       experienceYears < 20,
-      ...Object.values(salaryRanges),
+      isSalaryFilterActive(salaryFilterMin, salaryFilterMax),
       ...Object.values(matchScore),
       ...Object.values(industry),
       ...Object.values(department),
@@ -1525,7 +1516,8 @@ const ExploreJobsPageContent = () => {
     experienceYears,
     industry,
     matchScore,
-    salaryRanges,
+    salaryFilterMin,
+    salaryFilterMax,
     smartFilterHighMatch,
     smartFilterLikelyRespond,
     smartFilterRemoteFriendly,
@@ -1541,41 +1533,17 @@ const ExploreJobsPageContent = () => {
   // Dynamic filter counts based on actual job data
   const filterCounts = useMemo(() => {
     const counts = {
-      salary: {} as Record<string, number>,
       industry: {} as Record<string, number>,
       department: {} as Record<string, number>,
       cities: {} as Record<string, number>,
     }
 
     // Initialize counts
-    Object.keys(salaryRanges).forEach(key => counts.salary[key] = 0)
     Object.keys(industry).forEach(key => counts.industry[key] = 0)
     Object.keys(department).forEach(key => counts.department[key] = 0)
     Object.keys(cities).forEach(key => counts.cities[key] = 0)
 
     jobListings.forEach(job => {
-      // Count salary ranges
-      const salaryStr = (job.salary || '').toLowerCase();
-      const numbers = salaryStr.replace(/,/g, '').match(/(\d+(\.\d+)?)/g);
-      
-      if (numbers) {
-        let factor = 1;
-        if (salaryStr.includes('lakh')) factor = 100000;
-        else if (salaryStr.includes('crore')) factor = 10000000;
-        
-        const vals = numbers.map(n => parseFloat(n) * factor);
-        const avgSalary = vals.length > 1 ? (vals[0] + vals[1]) / 2 : vals[0];
-
-        if (avgSalary < 300000) counts.salary['0-3 Lakhs']++
-        else if (avgSalary < 600000) counts.salary['3-6 Lakhs']++
-        else if (avgSalary < 1000000) counts.salary['6-10 Lakhs']++
-        else if (avgSalary < 1500000) counts.salary['10-15 Lakhs']++
-        else if (avgSalary < 2500000) counts.salary['15-25 Lakhs']++
-        else if (avgSalary < 3500000) counts.salary['25-35 Lakhs']++
-        else if (avgSalary < 5000000) counts.salary['35-50 Lakhs']++
-        else counts.salary['50+ Lakhs']++
-      }
-
       // Count industries
       const jobIndustry = (job.industry || '').toLowerCase()
       Object.keys(industry).forEach(key => {
@@ -1602,7 +1570,7 @@ const ExploreJobsPageContent = () => {
     })
 
     return counts
-  }, [jobListings, salaryRanges, industry, department, cities])
+  }, [jobListings, industry, department, cities])
 
   const selectedJobMatchValue = selectedJob
     ? parseMatchPercentage(selectedJob.match, selectedJob.matchScore)
@@ -2218,30 +2186,58 @@ const ExploreJobsPageContent = () => {
                       <SectionHeader title="Salary" open={salaryOpen} onToggle={() => setSalaryOpen((v) => !v)} />
                       {salaryOpen ? (
                         <div className="space-y-3">
-                          {Object.entries(salaryRanges)
-                            .slice(0, showMoreSalary ? undefined : 4)
-                            .map(([label, checked]) => (
-                            <label key={label} className="flex items-center justify-between gap-3">
-                              <span className="flex items-center gap-3">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={(e) => setSalaryRanges((prev) => ({ ...prev, [label]: e.target.checked }))}
-                                  className="h-4 w-4"
-                                />
-                                <span className="text-sm text-gray-700">{label}</span>
-                              </span>
-                              <span className="text-xs text-gray-500">{filterCounts.salary[label] || 0}</span>
-                            </label>
-                          ))}
-                          {Object.keys(salaryRanges).length > 4 && (
-                            <button 
-                              type="button" 
-                              onClick={() => setShowMoreSalary(!showMoreSalary)}
-                              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-gray-500">Currency</label>
+                            <select
+                              value={salaryFilterCurrency}
+                              onChange={(e) => setSalaryFilterCurrency(e.target.value)}
+                              className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                              {showMoreSalary ? 'View Less' : 'View More'}
-                            </button>
+                              {SALARY_FILTER_CURRENCIES.map((currency) => (
+                                <option key={currency} value={currency}>
+                                  {currency}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500">Min salary</label>
+                              <input
+                                type="number"
+                                min={0}
+                                step={1}
+                                inputMode="numeric"
+                                value={salaryFilterMin}
+                                onChange={(e) => setSalaryFilterMin(e.target.value)}
+                                placeholder="Min"
+                                className="h-10 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-500">Max salary</label>
+                              <input
+                                type="number"
+                                min={0}
+                                step={1}
+                                inputMode="numeric"
+                                value={salaryFilterMax}
+                                onChange={(e) => setSalaryFilterMax(e.target.value)}
+                                placeholder="Max"
+                                className="h-10 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            Enter amounts in {salaryFilterCurrency}. Leave min or max empty for no limit.
+                          </p>
+                          {salaryFilterMin.trim() &&
+                            salaryFilterMax.trim() &&
+                            parseSalaryFilterInput(salaryFilterMin) != null &&
+                            parseSalaryFilterInput(salaryFilterMax) != null &&
+                            (parseSalaryFilterInput(salaryFilterMin) ?? 0) >
+                              (parseSalaryFilterInput(salaryFilterMax) ?? 0) && (
+                            <p className="text-xs text-red-600">Min cannot be greater than max.</p>
                           )}
                         </div>
                       ) : null}

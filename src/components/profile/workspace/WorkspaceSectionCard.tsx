@@ -43,7 +43,7 @@ export function WorkspaceSectionCard({
               aria-hidden
             />
           ) : null}
-          <h3 className="truncate text-sm font-semibold text-gray-900 sm:text-base">
+          <h3 className="profile-page-section-title truncate">
             {title}
           </h3>
         </div>

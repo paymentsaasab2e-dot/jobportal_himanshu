@@ -6,6 +6,7 @@ import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import type { RefObject } from 'react';
 import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
+import { profileFieldClass, profileSectionTitleClass, profileTextareaClass } from '@/lib/profile-modal-ui';
 
 interface WorkExperienceModalProps {
   isOpen: boolean;
@@ -801,14 +802,10 @@ export default function WorkExperienceModal({
 
   if (!isOpen) return null;
 
-  const inputClassName =
-    'h-11 w-full rounded-lg border border-gray-200 px-4 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
-  const selectClassName =
-    'h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
-  const textareaClassName =
-    'min-h-[100px] w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 resize-none';
-  const sectionTitleClassName =
-    'text-sm font-semibold uppercase tracking-wide text-gray-500';
+  const inputClassName = profileFieldClass();
+  const selectClassName = `${profileFieldClass()} appearance-none bg-white`;
+  const textareaClassName = `${profileTextareaClass} min-h-[100px]`;
+  const sectionTitleClassName = profileSectionTitleClass;
 
   return (
     <>

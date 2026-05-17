@@ -1418,7 +1418,7 @@ export default function ProfilePage() {
         )}
 
 
-        <div className="pt-4 grid grid-cols-1 gap-6 lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start lg:gap-4 xl:grid-cols-[256px_minmax(0,1fr)]">
+        <div className="profile-page-typography pt-4 grid grid-cols-1 gap-6 lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start lg:gap-4 xl:grid-cols-[256px_minmax(0,1fr)]">
           <ProfileWorkspaceRail
             identity={{
               initials: profileInitials,
@@ -1444,7 +1444,7 @@ export default function ProfilePage() {
             }
             onImprove={openFirstMissingModal}
           />
-          <div className="flex flex-col min-w-0 h-[750px] lg:h-[820px]">
+          <div className="flex min-w-0 h-[750px] flex-col lg:h-[820px]">
             <ProfileWorkspaceTabs
               ref={tabsBarRef}
               tabs={workspaceTabs}
@@ -1453,7 +1453,7 @@ export default function ProfilePage() {
             />
             <div 
               ref={scrollContainerRef}
-              className="relative flex-1 overflow-y-auto pr-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              className="profile-modal-scroll relative min-h-0 flex-1 overflow-y-auto pr-2"
             >
               <div className="space-y-4 pb-10 pt-2">
               <section
@@ -1495,7 +1495,7 @@ export default function ProfilePage() {
                       <ProfileBasicInfoFilled data={basicInfoData} />
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">
+                    <p className="profile-page-empty">
                       Add your name, contact, and location to get started.
                     </p>
                   )}
@@ -3223,8 +3223,8 @@ export default function ProfilePage() {
         title={detailModal.title || 'View Details'}
         widthClassName="w-full md:w-[50vw] md:max-w-[50vw]"
       >
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <pre className="max-h-[65vh] overflow-auto whitespace-pre-wrap break-words text-xs leading-6 text-slate-700">
+        <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-4">
+          <pre className="profile-view-details max-h-[65vh] overflow-auto">
             {JSON.stringify(detailModal.data, null, 2)}
           </pre>
         </div>

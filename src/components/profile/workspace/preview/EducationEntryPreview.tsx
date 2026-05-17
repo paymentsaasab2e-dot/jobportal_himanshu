@@ -1,7 +1,11 @@
 'use client';
 
 import type { EducationData as EducationEntryData } from '@/components/modals/EducationModal';
-import { formatStoredGradeForDisplay } from '@/components/modals/EducationModal';
+import {
+  formatCourseDurationDisplay,
+  formatEducationPeriod,
+  formatStoredGradeForDisplay,
+} from '@/components/modals/EducationModal';
 import {
   PreviewChip,
   PreviewDocCount,
@@ -32,7 +36,13 @@ export function EducationEntryPreview({
   resolveDocHref,
 }: Props) {
   const docCount = entry.documents?.length ?? 0;
-  const yearRange = `${entry.startYear || '—'} – ${entry.currentlyStudying ? 'Present' : entry.endYear || '—'}`;
+  const yearRange = formatEducationPeriod(
+    entry.startYear || '',
+    entry.startMonth || '',
+    entry.endYear || '',
+    entry.endMonth || '',
+    entry.currentlyStudying || false,
+  );
 
   const [previewModal, setPreviewModal] = useState({
     isOpen: false,
@@ -113,7 +123,7 @@ export function EducationEntryPreview({
             {entry.courseDuration ? (
               <span>
                 <span className="text-gray-400">Duration: </span>
-                {entry.courseDuration}
+                {formatCourseDurationDisplay(entry.courseDuration)}
               </span>
             ) : null}
           </div>
@@ -192,7 +202,11 @@ export function EducationEntryPreview({
             />
             <PreviewMetaItem
               label="Course duration"
-              value={entry.courseDuration || '—'}
+              value={
+                entry.courseDuration
+                  ? formatCourseDurationDisplay(entry.courseDuration)
+                  : '—'
+              }
             />
           </div>
           {docCount > 0 ? (

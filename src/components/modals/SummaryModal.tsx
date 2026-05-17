@@ -2,6 +2,13 @@
 
 import { useState } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import { API_BASE_URL } from '@/lib/api-base';
+import {
+  profileCancelBtnClass,
+  profileLabelClass,
+  profileSaveBtnClass,
+  profileTextareaClass,
+} from '@/lib/profile-modal-ui';
 
 interface SummaryModalProps {
   isOpen: boolean;
@@ -10,8 +17,6 @@ interface SummaryModalProps {
   onSummaryChange: (text: string) => void;
   onSave: () => void;
 }
-
-import { API_BASE_URL } from '@/lib/api-base';
 
 export default function SummaryModal({
   isOpen,
@@ -74,16 +79,14 @@ export default function SummaryModal({
       widthClassName="w-full md:w-[50vw] md:max-w-[50vw]"
       footer={(
         <div className="flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-          >
+          <button type="button" onClick={onClose} className={profileCancelBtnClass}>
             Cancel
           </button>
           <button
+            type="button"
             onClick={onSave}
             disabled={!summaryText.trim()}
-            className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={profileSaveBtnClass}
           >
             Save Summary
           </button>
@@ -92,26 +95,23 @@ export default function SummaryModal({
     >
             <div className="space-y-6">
                 <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className={`${profileLabelClass} mb-1.5`}>
                     Professional Summary <span className="text-amber-600">*</span>
                   </label>
                   <textarea
                     value={summaryText}
                     onChange={(e) => onSummaryChange(e.target.value)}
                     rows={8}
-                    className={`min-h-[180px] w-full resize-none rounded-xl border px-4 py-3 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!summaryText.trim() ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-200'}`}
+                    className={`${profileTextareaClass} min-h-[180px] ${!summaryText.trim() ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500/25' : ''}`}
                     placeholder="Briefly describe your experience, key skills, and achievements..."
-                    style={{
-                      fontFamily: 'Inter, sans-serif',
-                    }}
                   />
                   <div className="mt-1 flex min-h-[1.25rem] items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       {!summaryText.trim() ? (
-                        <p className="text-xs text-amber-600">Summary text is required</p>
+                        <p className="profile-modal-helper text-amber-600">Summary text is required</p>
                       ) : null}
                     </div>
-                    <p className="shrink-0 text-xs text-gray-400 tabular-nums">
+                    <p className="profile-modal-helper shrink-0 text-slate-400 tabular-nums">
                       {summaryText.length} / 500 characters
                     </p>
                   </div>

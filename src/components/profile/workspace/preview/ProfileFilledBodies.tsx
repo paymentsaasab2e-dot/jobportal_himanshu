@@ -71,14 +71,12 @@ export function ProfileBasicInfoFilled({ data }: { data: BasicInfoData }) {
     : (cleanPhoneCode && data.phone ? `${cleanPhoneCode} ${data.phone}` : data.phone || '—');
 
   return (
-    <div className="space-y-4">
+    <div className="profile-basic-info-display space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
-            Full name
-          </p>
+          <p className="profile-page-label">Full name</p>
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-lg font-bold text-gray-900">{fullName(data)}</p>
+            <p className="profile-page-value">{fullName(data)}</p>
             {data.whatsappNumber && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-0.5 text-[11px] font-bold text-green-700 shadow-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
@@ -109,12 +107,8 @@ export function ProfileBasicInfoFilled({ data }: { data: BasicInfoData }) {
       </PreviewMetaGrid>
       {data.passportNumber ? (
         <div className="rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
-            Passport
-          </p>
-          <p className="mt-0.5 font-mono text-sm text-gray-800">
-            {data.passportNumber}
-          </p>
+          <p className="profile-page-label">Passport</p>
+          <p className="profile-page-value mt-0.5 font-mono">{data.passportNumber}</p>
         </div>
       ) : null}
     </div>

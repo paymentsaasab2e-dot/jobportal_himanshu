@@ -8,7 +8,14 @@ import { useAuth } from '@/components/auth/AuthContext';
 type Item = {
   label: string;
   path: string;
-  icon: 'user' | 'edit' | 'applications' | 'assessments' | 'saved' | 'lms' | 'notifications' | 'settings' | 'help';
+  icon:
+    | 'courses'
+    | 'aiCv'
+    | 'interview'
+    | 'quizzes'
+    | 'events'
+    | 'settings'
+    | 'help';
 };
 
 type Props = {
@@ -21,75 +28,57 @@ type Props = {
   profileCompletion?: number | null;
 };
 
-const primaryActions: Item[] = [
-  { label: 'View Profile', path: '/profile', icon: 'user' },
-  { label: 'Edit CV', path: '/lms/resume-builder/editor', icon: 'edit' },
-  { label: 'My Applications', path: '/applications', icon: 'applications' },
-];
-
-const secondaryActions: Item[] = [
-  { label: 'Assessments', path: '/lms/quizzes', icon: 'assessments' },
-  { label: 'Saved Jobs', path: '/explore-jobs', icon: 'saved' },
-  { label: 'LMS', path: '/lms/courses', icon: 'lms' },
-];
-
-const systemActions: Item[] = [
-  { label: 'Settings', path: '/settings', icon: 'settings' },
-];
-
-const footerActions: Item[] = [
+const drawerMenuActions: Item[] = [
+  { label: 'Courses', path: '/lms/courses', icon: 'courses' },
+  { label: 'AI CV Editor', path: '/aicveditor', icon: 'aiCv' },
+  { label: 'Interview Prep', path: '/lms/interview-prep', icon: 'interview' },
+  { label: 'Quizzes', path: '/lms/quizzes', icon: 'quizzes' },
+  { label: 'Events', path: '/lms/events', icon: 'events' },
   { label: 'Help & Support', path: '/help', icon: 'help' },
+  { label: 'Settings', path: '/settings', icon: 'settings' },
 ];
 
 function Icon({ icon }: Pick<Item, 'icon'>) {
   const shared = 'h-4 w-4 text-slate-600';
   switch (icon) {
-    case 'user':
-      return (
-        <svg className={shared} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      );
-    case 'edit':
-      return (
-        <svg className={shared} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-        </svg>
-      );
-    case 'applications':
-      return (
-        <svg className={shared} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-        </svg>
-      );
-    case 'assessments':
-      return (
-        <svg className={shared} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 11l3 3L22 4" />
-          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-        </svg>
-      );
-    case 'saved':
-      return (
-        <svg className={shared} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-        </svg>
-      );
-    case 'lms':
+    case 'courses':
       return (
         <svg className={shared} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
         </svg>
       );
-    case 'notifications':
+    case 'aiCv':
       return (
         <svg className={shared} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" />
+          <path d="M5 19h14" />
+          <path d="M8 16h8" />
+        </svg>
+      );
+    case 'interview':
+      return (
+        <svg className={shared} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+          <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
+          <path d="M12 19v4" />
+          <path d="M8 23h8" />
+        </svg>
+      );
+    case 'quizzes':
+      return (
+        <svg className={shared} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 11l3 3L22 4" />
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
+      );
+    case 'events':
+      return (
+        <svg className={shared} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
         </svg>
       );
     case 'settings':
@@ -236,33 +225,9 @@ export default function ProfilePanel({
               ) : null}
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-4">
-              <div className="space-y-1">
-                {primaryActions.map((item) => (
-                  <DrawerItem key={item.label} item={item} onNavigate={onNavigate} />
-                ))}
-              </div>
-
-              <div className="my-4 border-t border-slate-200" />
-
-              <div className="space-y-1">
-                {secondaryActions.map((item) => (
-                  <DrawerItem key={item.label} item={item} onNavigate={onNavigate} />
-                ))}
-              </div>
-
-              <div className="my-4 border-t border-slate-200" />
-
-              <div className="space-y-1">
-                {systemActions.map((item) => (
-                  <DrawerItem key={item.label} item={item} onNavigate={onNavigate} />
-                ))}
-              </div>
-
-              <div className="my-4 border-t border-slate-200" />
-
+            <div className="profile-modal-scroll min-h-0 flex-1 overflow-y-auto px-4 py-4">
               <div className="space-y-1 pb-4">
-                {footerActions.map((item) => (
+                {drawerMenuActions.map((item) => (
                   <DrawerItem key={item.label} item={item} onNavigate={onNavigate} />
                 ))}
               </div>
