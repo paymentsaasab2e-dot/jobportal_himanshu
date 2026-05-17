@@ -3565,10 +3565,20 @@ export default function ProfilePage() {
               }
             }
 
-            // Refresh profile data to get latest from database
-            await refreshProfileData(candidateId);
-          setWorkExperienceData(data);
-          setIsWorkExperienceModalOpen(false);
+            // Refresh full profile so all work experience entries show (modal may only pass one when editing)
+            const profileData = await refreshProfileData(candidateId);
+            if (!profileData) {
+              setWorkExperienceData((prev) => {
+                const merged = new Map(
+                  (prev?.workExperiences ?? []).map((entry) => [entry.id, entry]),
+                );
+                for (const exp of data.workExperiences) {
+                  merged.set(exp.id, exp);
+                }
+                return { workExperiences: Array.from(merged.values()) };
+              });
+            }
+            setIsWorkExperienceModalOpen(false);
             const wasEditingWorkExp = editingWorkExperienceId;
             setEditingWorkExperienceId(null);
             showAlert(wasEditingWorkExp ? 'Work experience updated' : 'Work experience saved');
