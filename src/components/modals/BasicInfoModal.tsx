@@ -644,8 +644,10 @@ export default function BasicInfoModal({
               {initialData ? 'Edit Basic Information' : 'Add Basic Information'}
             </h2>
             <button
+              type="button"
               onClick={onClose}
-              className="text-[#9095A1] hover:text-gray-600"
+              className="profile-modal-close-btn"
+              aria-label="Close"
             >
               <svg
                 width="24"
@@ -741,12 +743,14 @@ export default function BasicInfoModal({
                           className="profile-modal-phone-code-btn shadow-sm transition-colors hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
                         >
                           <span className="flex min-w-0 items-center gap-1.5">
-                            <span className="shrink-0 text-sm leading-none">
+                            <span className="shrink-0 text-base leading-none" aria-hidden>
                               {countryCodeToFlag(selectedPhoneCodeOption.code)}
                             </span>
-                            <span className="truncate font-medium">{selectedPhoneCodeOption.dialCode}</span>
+                            <span className="profile-modal-phone-code-display truncate">
+                              {selectedPhoneCodeOption.dialCode}
+                            </span>
                           </span>
-                          <span className="shrink-0 text-[10px] text-slate-400" aria-hidden>
+                          <span className="profile-modal-chevron-hint shrink-0" aria-hidden>
                             ▼
                           </span>
                         </button>
@@ -772,11 +776,13 @@ export default function BasicInfoModal({
                                   setPhoneCodeSearch('');
                                   setPhoneValue('');
                                 }}
-                                className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2"
+                                className="profile-modal-dropdown-item flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-gray-50"
                               >
-                                <span className="text-base">{countryCodeToFlag(item.code)}</span>
-                                <span className="w-14 font-semibold">{item.dialCode}</span>
-                                <span className="truncate text-slate-600">{item.name}</span>
+                                <span className="text-base leading-none" aria-hidden>
+                                  {countryCodeToFlag(item.code)}
+                                </span>
+                                <span className="profile-modal-dropdown-dial w-14">{item.dialCode}</span>
+                                <span className="profile-modal-dropdown-muted truncate">{item.name}</span>
                               </button>
                             ))}
                             {filteredPhoneCodes.length === 0 && (
@@ -987,7 +993,7 @@ export default function BasicInfoModal({
                                 onMouseEnter={() => setCityHighlight(idx)}
                                 onMouseDown={(ev) => ev.preventDefault()}
                                 onClick={() => applyCitySuggestion(place)}
-                                className={`w-full px-3 py-2 text-left text-gray-900 hover:bg-gray-50 ${cityHighlight === idx ? 'bg-gray-50' : ''}`}
+                                className={`profile-modal-dropdown-item w-full px-3 py-2 text-left hover:bg-gray-50 ${cityHighlight === idx ? 'bg-gray-50' : ''}`}
                               >
                                 {formatPlaceSuggestionLine(place, false)}
                               </button>
@@ -1040,7 +1046,7 @@ export default function BasicInfoModal({
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 z-10 shrink-0 border-t border-gray-200 bg-white px-5 py-3.5">
+          <div className="profile-modal-footer sticky bottom-0 z-10 shrink-0 border-t border-gray-200 bg-white px-5 py-3.5">
             <div className="flex justify-end gap-3">
               <button type="button" onClick={onClose} className={profileCancelBtnClass}>
                 Cancel

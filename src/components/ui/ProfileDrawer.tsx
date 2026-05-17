@@ -162,7 +162,7 @@ export default function ProfileDrawer({
 
                     onClick={onClose}
 
-                    className="text-[#9095A1] transition-colors hover:text-gray-600"
+                    className="profile-modal-close-btn shrink-0"
 
                     aria-label="Close"
 
@@ -192,7 +192,7 @@ export default function ProfileDrawer({
 
               {footer ? (
 
-                <div className="sticky bottom-0 shrink-0 border-t border-gray-200 bg-white px-5 py-3.5">
+                <div className="profile-modal-footer sticky bottom-0 shrink-0 border-t border-gray-200 bg-white px-5 py-3.5">
 
                   {footer}
 
