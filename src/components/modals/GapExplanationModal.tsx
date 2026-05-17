@@ -89,9 +89,11 @@ export default function GapExplanationModal({
     hasPreferredSupport
   );
 
+  const MAX_GAP_SKILLS = 30;
+
   const addSkill = () => {
     const skill = skillsInput.trim();
-    if (!skill) return;
+    if (!skill || selectedSkills.length >= MAX_GAP_SKILLS) return;
     if (selectedSkills.some((existing) => existing.toLowerCase() === skill.toLowerCase())) {
       setSkillsInput('');
       return;
@@ -249,10 +251,10 @@ export default function GapExplanationModal({
 
             {/* Skills You Continued During the Gap */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="mb-1 block text-xs font-medium text-gray-700">
                 Skills You Continued During the Gap
               </label>
-              <div className="profile-modal-icon-field">
+              <div className="flex gap-1.5">
                 <input
                   type="text"
                   value={skillsInput}
@@ -263,25 +265,24 @@ export default function GapExplanationModal({
                       addSkill();
                     }
                   }}
-                  placeholder="Add relevant skills (e.g., Communication, Excel, Coding, Sales)"
-                  className={`${profileFieldClass(selectedSkills.length === 0)} pr-10`}
+                  placeholder="Type a skill and press Enter..."
+                  className={`${profileFieldClass(selectedSkills.length === 0)} min-w-0 flex-1`}
                 />
                 <button
                   type="button"
                   onClick={addSkill}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#9095A1] hover:text-gray-600"
+                  disabled={!skillsInput.trim() || selectedSkills.length >= MAX_GAP_SKILLS}
+                  className="profile-modal-btn h-[2.25rem] shrink-0 rounded-lg bg-blue-600 px-3 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
+                  Add
                 </button>
               </div>
               {selectedSkills.length === 0 && (
-                <p className="mt-1 text-xs text-amber-600">At least one skill is required</p>
+                <p className="mt-0.5 text-[11px] text-amber-600">At least one skill is required</p>
               )}
+              <p className="mt-0.5 text-[11px] text-gray-500">Allow up to ~30 skills</p>
               {selectedSkills.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
+                <div className="mt-2 flex flex-wrap gap-2">
                   {selectedSkills.map((skill, index) => (
                     <span
                       key={index}

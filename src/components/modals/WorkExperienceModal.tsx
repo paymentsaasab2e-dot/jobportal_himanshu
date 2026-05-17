@@ -206,21 +206,38 @@ export default function WorkExperienceModal({
     }
   };
 
+  // Initialize form only when the drawer opens or the edited entry changes — not on
+  // every parent re-render (e.g. after picking a file), which used to wipe in-progress fields.
+  const sessionInitKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (initialData && initialData.workExperiences) {
-      setWorkExperiences(initialData.workExperiences || []);
-      
-      // If there's only one entry, populate the form fields for editing
-      if (initialData.workExperiences.length === 1) {
-        populateFormFromEntry(initialData.workExperiences[0]);
+    if (!isOpen) {
+      sessionInitKeyRef.current = null;
+      return;
+    }
+
+    const experiences = initialData?.workExperiences;
+    const singleEntry = experiences?.length === 1 ? experiences[0] : null;
+    const initKey = singleEntry?.id
+      ? `edit:${singleEntry.id}`
+      : `add:${experiences?.length ?? 0}`;
+
+    if (sessionInitKeyRef.current === initKey) {
+      return;
+    }
+    sessionInitKeyRef.current = initKey;
+
+    if (experiences && experiences.length > 0) {
+      setWorkExperiences(experiences);
+      if (experiences.length === 1) {
+        populateFormFromEntry(experiences[0]);
       } else {
-        // If multiple entries, clear form fields
         clearFormFields();
       }
     } else {
       resetForm();
     }
-  }, [initialData, isOpen]);
+  }, [isOpen, initialData?.workExperiences?.length, initialData?.workExperiences?.[0]?.id]);
 
   const clearFormFields = () => {
     setJobTitle('');
@@ -501,6 +518,10 @@ export default function WorkExperienceModal({
   };
 
   // File upload handlers
+  const handleReporteesChange = (value: string) => {
+    setNumberOfReportees(value.replace(/\D/g, ''));
+  };
+
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
     
@@ -526,7 +547,7 @@ export default function WorkExperienceModal({
       });
     }
 
-    setDocuments([...documents, ...newDocuments]);
+    setDocuments((prev) => [...prev, ...newDocuments]);
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -538,7 +559,7 @@ export default function WorkExperienceModal({
   };
 
   const handleRemoveFile = (documentId: string) => {
-    setDocuments(documents.filter(doc => doc.id !== documentId));
+    setDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
   };
 
   const [previewModal, setPreviewModal] = useState({
@@ -907,9 +928,21 @@ export default function WorkExperienceModal({
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">Number of Reportees <span className="text-amber-600">*</span></label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={numberOfReportees}
-                    onChange={(e) => setNumberOfReportees(e.target.value)}
+                    onChange={(e) => handleReporteesChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pasted = e.clipboardData.getData('text');
+                      handleReporteesChange(pasted);
+                    }}
                     placeholder="e.g., 5"
                     className={`${inputClassName} ${!numberOfReportees.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
                   />
