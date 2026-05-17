@@ -5,6 +5,7 @@ import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import { profileFieldClass, profileTextareaClass } from '@/lib/profile-modal-ui';
+import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
 
 interface ProjectModalProps {
   isOpen: boolean;
@@ -79,7 +80,7 @@ export default function ProjectModal({
         if (typeof doc === 'string') {
           return {
             id: `doc-${index}-${Date.now()}`,
-            name: doc.split('/').pop() || 'Document',
+            name: getProfileDocumentDisplayName(doc),
             url: doc,
           };
         }
@@ -621,7 +622,7 @@ export default function ProjectModal({
                       )}
                     </div>
                     <div className="flex items-center gap-3 shrink-0 ml-2">
-                      {doc.url && (
+                      {isStoredProfileDocument(doc) && (
                         <>
                           <a
                             href={resolveDocumentUrl(doc.url)}

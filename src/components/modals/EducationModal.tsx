@@ -5,12 +5,14 @@ import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import DocumentViewerModal from './DocumentViewerModal';
 import { profileFieldClass, profileTextareaClass } from '@/lib/profile-modal-ui';
+import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
 
 interface EducationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: EducationData) => void;
   initialData?: EducationData;
+  editingEducationId?: string | null;
 }
 
 export interface EducationDocument {
@@ -184,11 +186,37 @@ function getGradeValidationError(type: EducationGradeMetricType, value: string):
   return null;
 }
 
+function normalizeEducationDocuments(
+  docs?: Array<string | EducationDocument>,
+): EducationDocument[] {
+  if (!docs?.length) return [];
+  return docs.map((doc, index) => {
+    if (typeof doc === 'string') {
+      return {
+        id: `doc-${index}-${doc.slice(-8)}`,
+        url: doc,
+        name: getProfileDocumentDisplayName(doc),
+      };
+    }
+    if (doc && typeof doc === 'object') {
+      return {
+        id: doc.id || `doc-${index}-${Date.now()}`,
+        file: doc.file,
+        name: doc.name || getProfileDocumentDisplayName(doc.url || doc.name || ''),
+        url: doc.url,
+        size: doc.size,
+      };
+    }
+    return { id: `doc-${index}`, name: 'Document' };
+  });
+}
+
 export default function EducationModal({
   isOpen,
   onClose,
   onSave,
   initialData,
+  editingEducationId,
 }: EducationModalProps) {
   const [educationLevel, setEducationLevel] = useState(initialData?.educationLevel || '');
   const [degreeProgram, setDegreeProgram] = useState(initialData?.degreeProgram || '');
@@ -216,82 +244,79 @@ export default function EducationModal({
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sessionInitKeyRef = useRef<string | null>(null);
 
-  // Update values when initialData changes
-  useEffect(() => {
-    if (initialData) {
-      setEducationLevel(initialData.educationLevel || '');
-      setDegreeProgram(initialData.degreeProgram || '');
-      setInstitutionName(initialData.institutionName || '');
-      setFieldOfStudy(initialData.fieldOfStudy || '');
-      setStartYear(initialData.startYear || '');
-      setStartMonth(initialData.startMonth || '');
-      setEndYear(initialData.endYear || '');
-      setEndMonth(initialData.endMonth || '');
-      setCurrentlyStudying(initialData.currentlyStudying || false);
-      const g = decodeStoredGrade(initialData.grade || '');
-      setGradeMetricType(g.type);
-      setGradeInput(g.value);
-      setModeOfStudy(initialData.modeOfStudy || '');
-      const computedDuration = computeCourseDurationFromDates(
-        initialData.startYear || '',
-        initialData.startMonth || '',
-        initialData.endYear || '',
-        initialData.endMonth || '',
-        initialData.currentlyStudying || false,
-      );
-      const savedDuration = String(initialData.courseDuration || '').trim();
-      setCourseDuration(savedDuration || computedDuration || '');
-      setDurationManuallyEdited(
-        Boolean(savedDuration && savedDuration !== computedDuration),
-      );
-      
-      // Normalize documents to ensure they all have unique IDs
-      const normalizedDocuments: EducationDocument[] = (initialData.documents || []).map((doc, index) => {
-        if (typeof doc === 'string') {
-          // If it's a string (URL from database), convert to object
-          return {
-            id: `doc-${Date.now()}-${index}`,
-            url: doc,
-            name: doc.split('/').pop() || 'Document',
-          };
-        } else if (doc && typeof doc === 'object') {
-          // If it's already an object, ensure it has an id
-          return {
-            id: doc.id || `doc-${Date.now()}-${index}`,
-            file: doc.file,
-            name: doc.name || 'Document',
-            url: doc.url,
-            size: doc.size,
-          };
-        } else {
-          // Fallback for any other type
-          return {
-            id: `doc-${Date.now()}-${index}`,
-            name: 'Document',
-          };
-        }
-      });
-      setDocuments(normalizedDocuments);
-    } else {
-      // Clear all fields for "Add" mode
-      setEducationLevel('');
-      setDegreeProgram('');
-      setInstitutionName('');
-      setFieldOfStudy('');
-      setStartYear('');
-      setStartMonth('');
-      setEndYear('');
-      setEndMonth('');
-      setCurrentlyStudying(false);
-      setGradeMetricType('percentage');
-      setGradeInput('');
-      setModeOfStudy('');
-      setCourseDuration('');
-      setDurationManuallyEdited(false);
-      setDocuments([]);
+  const resetForm = () => {
+    setEducationLevel('');
+    setDegreeProgram('');
+    setInstitutionName('');
+    setFieldOfStudy('');
+    setStartYear('');
+    setStartMonth('');
+    setEndYear('');
+    setEndMonth('');
+    setCurrentlyStudying(false);
+    setGradeMetricType('percentage');
+    setGradeInput('');
+    setModeOfStudy('');
+    setCourseDuration('');
+    setDurationManuallyEdited(false);
+    setDocuments([]);
+    setDateError('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
-  }, [initialData, isOpen]);
+  };
+
+  const populateFormFromEducation = (data: EducationData) => {
+    setEducationLevel(data.educationLevel || '');
+    setDegreeProgram(data.degreeProgram || '');
+    setInstitutionName(data.institutionName || '');
+    setFieldOfStudy(data.fieldOfStudy || '');
+    setStartYear(data.startYear || '');
+    setStartMonth(data.startMonth || '');
+    setEndYear(data.endYear || '');
+    setEndMonth(data.endMonth || '');
+    setCurrentlyStudying(data.currentlyStudying || false);
+    const g = decodeStoredGrade(data.grade || '');
+    setGradeMetricType(g.type);
+    setGradeInput(g.value);
+    setModeOfStudy(data.modeOfStudy || '');
+    const computedDuration = computeCourseDurationFromDates(
+      data.startYear || '',
+      data.startMonth || '',
+      data.endYear || '',
+      data.endMonth || '',
+      data.currentlyStudying || false,
+    );
+    const savedDuration = String(data.courseDuration || '').trim();
+    setCourseDuration(savedDuration || computedDuration || '');
+    setDurationManuallyEdited(Boolean(savedDuration && savedDuration !== computedDuration));
+    setDocuments(normalizeEducationDocuments(data.documents));
+    setDateError('');
+  };
+
+  // Initialize only when the drawer opens or the edited entry changes —
+  // not on every parent re-render (which used to wipe fields after file upload).
+  useEffect(() => {
+    if (!isOpen) {
+      sessionInitKeyRef.current = null;
+      return;
+    }
+
+    const initKey = editingEducationId ? `edit:${editingEducationId}` : 'add';
+    if (sessionInitKeyRef.current === initKey) {
+      return;
+    }
+    sessionInitKeyRef.current = initKey;
+
+    if (!editingEducationId || !initialData) {
+      resetForm();
+      return;
+    }
+
+    populateFormFromEducation(initialData);
+  }, [isOpen, editingEducationId, initialData?.id]);
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
@@ -575,7 +600,7 @@ export default function EducationModal({
     }
 
     onSave({
-      id: initialData?.id,
+      id: initialData?.id ?? editingEducationId ?? undefined,
       educationLevel,
       degreeProgram,
       institutionName,
@@ -603,7 +628,7 @@ export default function EducationModal({
     <ProfileDrawer
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData?.id ? 'Edit Education' : 'Add Education'}
+      title={editingEducationId ? 'Edit Education' : 'Add Education'}
       widthClassName="w-full md:w-[50vw] md:max-w-[50vw]"
       footer={(
         <div className="flex justify-end gap-3">
@@ -1035,7 +1060,7 @@ export default function EducationModal({
                           )}
                         </div>
                         <div className="flex items-center gap-3 shrink-0 ml-2">
-                          {(doc.url || doc.file) && (
+                          {isStoredProfileDocument(doc) && (
                             <>
                               <button
                                 type="button"

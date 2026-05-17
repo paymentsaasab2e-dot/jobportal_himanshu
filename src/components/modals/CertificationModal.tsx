@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import DocumentViewerModal from './DocumentViewerModal';
+import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
 
 interface CertificationModalProps {
   isOpen: boolean;
@@ -39,15 +40,27 @@ export interface CertificationsData {
   certifications: Certification[];
 }
 
+function normalizeCredentialUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  if (!/^https?:\/\//i.test(trimmed)) {
+    return `https://${trimmed}`;
+  }
+  return trimmed;
+}
+
 const isValidUrl = (url: string): boolean => {
-  if (!url.trim()) return true; // Optional field
+  if (!url.trim()) return true;
   try {
-    const urlObj = new URL(url);
-    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    const urlObj = new URL(normalizeCredentialUrl(url));
+    if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') return false;
+    return Boolean(urlObj.hostname && urlObj.hostname.includes('.'));
   } catch {
     return false;
   }
 };
+
+const CREDENTIAL_URL_ERROR = 'Enter a valid link (e.g. https://example.com/certificate).';
 
 const formatDateForDisplay = (dateString: string): string => {
   if (!dateString) return '';
@@ -55,6 +68,31 @@ const formatDateForDisplay = (dateString: string): string => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${months[date.getMonth()]} ${date.getFullYear()}`;
 };
+
+function normalizeCertificationDocuments(
+  docs?: Array<string | CertificationDocument>,
+): CertificationDocument[] {
+  if (!docs?.length) return [];
+  return docs.map((doc, index) => {
+    if (typeof doc === 'string') {
+      return {
+        id: `doc-${index}-${doc.slice(-8)}`,
+        url: doc,
+        name: getProfileDocumentDisplayName(doc),
+      };
+    }
+    if (doc && typeof doc === 'object') {
+      return {
+        id: doc.id || `doc-${index}-${Date.now()}`,
+        file: doc.file,
+        name: doc.name || getProfileDocumentDisplayName(doc.url || doc.name || ''),
+        url: doc.url,
+        size: doc.size,
+      };
+    }
+    return { id: `doc-${index}`, name: 'Document' };
+  });
+}
 
 export default function CertificationModal({
   isOpen,
@@ -94,82 +132,7 @@ export default function CertificationModal({
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (initialData) {
-      setCertifications(initialData.certifications || []);
-    } else {
-      setCertifications([]);
-    }
-    if (!isOpen) return;
-
-    // Prefill form when opening in edit mode from profile card.
-    if (editingCertificationId) {
-      const certToEdit =
-        initialData?.certifications?.find((c) => c.id === editingCertificationId) ||
-        initialData?.certifications?.[0];
-      if (certToEdit) {
-        setCertificationName(certToEdit.certificationName || '');
-        setIssuingOrganization(certToEdit.issuingOrganization || '');
-        setIssueDate(certToEdit.issueDate || '');
-        setExpiryDate(certToEdit.expiryDate || '');
-        setDoesNotExpire(Boolean(certToEdit.doesNotExpire));
-        setCredentialId(certToEdit.credentialId || '');
-        setCredentialUrl(certToEdit.credentialUrl || '');
-        setDescription(certToEdit.description || '');
-        setEditingCertId(certToEdit.id || null);
-        setCertificateFile(certToEdit.certificateFile instanceof File ? certToEdit.certificateFile : null);
-        setDocuments(certToEdit.documents || []);
-        setErrors({
-          certificationName: '',
-          issuingOrganization: '',
-          issueDate: '',
-          expiryDate: '',
-          credentialUrl: '',
-        });
-        return;
-      }
-    }
-
-    // Add mode (or fallback): clear form.
-    resetForm();
-  }, [initialData, isOpen, editingCertificationId]);
-
-  // Normalize documents when editing
-  useEffect(() => {
-    if (editingCertId && certifications.length > 0) {
-      const cert = certifications.find(c => c.id === editingCertId);
-      if (cert && cert.documents) {
-        const normalizedDocs: CertificationDocument[] = cert.documents.map((doc: string | CertificationDocument, index) => {
-          if (typeof doc === 'string') {
-            return {
-              id: `doc-${Date.now()}-${index}`,
-              url: doc,
-              name: doc.split('/').pop() || 'Document',
-            };
-          } else if (doc && typeof doc === 'object') {
-            return {
-              id: doc.id || `doc-${Date.now()}-${index}`,
-              file: doc.file,
-              name: doc.name || 'Document',
-              url: doc.url,
-              size: doc.size,
-            };
-          } else {
-            return {
-              id: `doc-${Date.now()}-${index}`,
-              name: 'Document',
-            };
-          }
-        });
-        setDocuments(normalizedDocs);
-      } else {
-        setDocuments([]);
-      }
-    } else {
-      setDocuments([]);
-    }
-  }, [editingCertId, certifications]);
+  const sessionInitKeyRef = useRef<string | null>(null);
 
   const resetForm = () => {
     setCertificationName('');
@@ -195,6 +158,60 @@ export default function CertificationModal({
       fileInputRef.current.value = '';
     }
   };
+
+  const populateFormFromCert = (cert: Certification) => {
+    setCertificationName(cert.certificationName || '');
+    setIssuingOrganization(cert.issuingOrganization || '');
+    setIssueDate(cert.issueDate || '');
+    setExpiryDate(cert.expiryDate || '');
+    setDoesNotExpire(Boolean(cert.doesNotExpire));
+    setCredentialId(cert.credentialId || '');
+    setCredentialUrl(cert.credentialUrl || '');
+    setDescription(cert.description || '');
+    setEditingCertId(cert.id || null);
+    setCertificateFile(cert.certificateFile instanceof File ? cert.certificateFile : null);
+    setDocuments(normalizeCertificationDocuments(cert.documents));
+    setErrors({
+      certificationName: '',
+      issuingOrganization: '',
+      issueDate: '',
+      expiryDate: '',
+      credentialUrl: '',
+    });
+  };
+
+  // Initialize only when the drawer opens or the edited certification changes —
+  // not on every parent re-render (which used to wipe fields after file upload).
+  useEffect(() => {
+    if (!isOpen) {
+      sessionInitKeyRef.current = null;
+      return;
+    }
+
+    const initKey = editingCertificationId ? `edit:${editingCertificationId}` : 'add';
+    if (sessionInitKeyRef.current === initKey) {
+      return;
+    }
+    sessionInitKeyRef.current = initKey;
+
+    if (!editingCertificationId) {
+      setCertifications([]);
+      resetForm();
+      return;
+    }
+
+    const certToEdit =
+      initialData?.certifications?.find((c) => c.id === editingCertificationId) ??
+      initialData?.certifications?.[0];
+
+    if (certToEdit) {
+      setCertifications([certToEdit]);
+      populateFormFromCert(certToEdit);
+    } else {
+      setCertifications([]);
+      resetForm();
+    }
+  }, [isOpen, editingCertificationId, initialData?.certifications?.[0]?.id]);
 
   const validateForm = (): boolean => {
     const newErrors = {
@@ -223,21 +240,28 @@ export default function CertificationModal({
       newErrors.expiryDate = 'Expiry Date cannot be earlier than Issue Date.';
     }
     if (credentialUrl.trim() && !isValidUrl(credentialUrl)) {
-      newErrors.credentialUrl = 'Please enter a valid URL format.';
+      newErrors.credentialUrl = CREDENTIAL_URL_ERROR;
     }
 
     setErrors(newErrors);
-    return !Object.values(newErrors).some(error => error !== '');
+    return !Object.values(newErrors).some((error) => error !== '');
   };
 
-  const isCertificationFormReady =
-    Boolean(
-      certificationName.trim() &&
-      issuingOrganization.trim() &&
-      issueDate.trim()
-    ) &&
-    (!credentialUrl.trim() || isValidUrl(credentialUrl)) &&
-    (doesNotExpire || !expiryDate.trim() || expiryDate >= issueDate);
+  const hasRequiredFields = Boolean(
+    certificationName.trim() && issuingOrganization.trim() && issueDate.trim(),
+  );
+
+  const validateCredentialUrlField = (value: string) => {
+    if (!value.trim()) {
+      setErrors((prev) => ({ ...prev, credentialUrl: '' }));
+      return;
+    }
+    if (!isValidUrl(value)) {
+      setErrors((prev) => ({ ...prev, credentialUrl: CREDENTIAL_URL_ERROR }));
+    } else {
+      setErrors((prev) => ({ ...prev, credentialUrl: '' }));
+    }
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -270,11 +294,11 @@ export default function CertificationModal({
       });
     }
     
-    setDocuments([...documents, ...validFiles]);
+    setDocuments((prev) => [...prev, ...validFiles]);
   };
 
   const handleRemoveFile = (docId: string) => {
-    setDocuments(documents.filter(doc => doc.id !== docId));
+    setDocuments((prev) => prev.filter((doc) => doc.id !== docId));
   };
 
   const handlePreviewDocument = (doc: CertificationDocument) => {
@@ -353,14 +377,14 @@ export default function CertificationModal({
   };
 
   const buildCertificationFromForm = (): Certification => ({
-    id: editingCertId || Date.now().toString(),
+    id: editingCertId || editingCertificationId || Date.now().toString(),
     certificationName: certificationName.trim(),
     issuingOrganization: issuingOrganization.trim(),
     issueDate,
     expiryDate: doesNotExpire ? undefined : (expiryDate || undefined),
     doesNotExpire,
     credentialId: credentialId.trim() || undefined,
-    credentialUrl: credentialUrl.trim() || undefined,
+    credentialUrl: credentialUrl.trim() ? normalizeCredentialUrl(credentialUrl) : undefined,
     certificateFile: certificateFile || undefined,
     documents: documents.length > 0 ? documents : undefined,
     description: description.trim() || undefined,
@@ -387,24 +411,7 @@ export default function CertificationModal({
   };
 
   const handleEditCertification = (cert: Certification) => {
-    setCertificationName(cert.certificationName);
-    setIssuingOrganization(cert.issuingOrganization);
-    setIssueDate(cert.issueDate);
-    setExpiryDate(cert.expiryDate || '');
-    setDoesNotExpire(cert.doesNotExpire);
-    setCredentialId(cert.credentialId || '');
-    setCredentialUrl(cert.credentialUrl || '');
-    setDescription(cert.description || '');
-    setEditingCertId(cert.id);
-    setCertificateFile(cert.certificateFile instanceof File ? cert.certificateFile : null);
-    setDocuments(cert.documents || []);
-    setErrors({
-      certificationName: '',
-      issuingOrganization: '',
-      issueDate: '',
-      expiryDate: '',
-      credentialUrl: '',
-    });
+    populateFormFromCert(cert);
   };
 
   const handleDeleteCertification = (certId: string) => {
@@ -412,20 +419,28 @@ export default function CertificationModal({
   };
 
   const handleSave = () => {
-    let certificationsToSave = certifications;
-
-    if (isCertificationFormReady) {
-      const formCertification = buildCertificationFromForm();
-      if (editingCertId) {
-        certificationsToSave = certifications.some((cert) => cert.id === editingCertId)
-          ? certifications.map((cert) => (cert.id === editingCertId ? formCertification : cert))
-          : [...certifications, formCertification];
-      } else {
-        certificationsToSave = [...certifications, formCertification];
-      }
-    } else if (certifications.length === 0 || !isCertificationFormReady) {
+    if (!hasRequiredFields) {
       validateForm();
       return;
+    }
+    if (!validateForm()) {
+      return;
+    }
+
+    const formCertification = buildCertificationFromForm();
+    const activeEditId = editingCertId || editingCertificationId;
+    let certificationsToSave = [...certifications];
+
+    if (activeEditId) {
+      const existingIndex = certificationsToSave.findIndex((cert) => cert.id === activeEditId);
+      const updated = { ...formCertification, id: activeEditId };
+      if (existingIndex >= 0) {
+        certificationsToSave[existingIndex] = updated;
+      } else {
+        certificationsToSave.push(updated);
+      }
+    } else {
+      certificationsToSave.push(formCertification);
     }
 
     onSave({ certifications: certificationsToSave });
@@ -448,14 +463,14 @@ export default function CertificationModal({
           >
             Cancel
           </button>
-          {(certifications.length > 0 || isCertificationFormReady) && (
-            <button
-              onClick={handleSave}
-              className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
-            >
-              Save Certifications
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!hasRequiredFields}
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Save Certification
+          </button>
         </div>
       )}
     >
@@ -590,7 +605,7 @@ export default function CertificationModal({
                               </svg>
                               <span className="text-sm text-gray-700 truncate">{doc.name}</span>
                                   <div className="flex items-center gap-3 shrink-0 ml-2">
-                                    {doc.url || doc.file ? (
+                                    {isStoredProfileDocument(doc) ? (
                                       <>
                                         <button
                                           type="button"
@@ -676,9 +691,19 @@ export default function CertificationModal({
                       type="month"
                       value={expiryDate}
                       onChange={(e) => {
-                        setExpiryDate(e.target.value);
-                        if (errors.expiryDate) {
-                          setErrors({ ...errors, expiryDate: '' });
+                        const value = e.target.value;
+                        setExpiryDate(value);
+                        if (
+                          value &&
+                          issueDate &&
+                          value < issueDate
+                        ) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            expiryDate: 'Expiry Date cannot be earlier than Issue Date.',
+                          }));
+                        } else if (errors.expiryDate) {
+                          setErrors((prev) => ({ ...prev, expiryDate: '' }));
                         }
                       }}
                       disabled={doesNotExpire}
@@ -740,18 +765,12 @@ export default function CertificationModal({
                         value={credentialUrl}
                         onChange={(e) => {
                           setCredentialUrl(e.target.value);
-                          if (errors.credentialUrl) {
-                            setErrors({ ...errors, credentialUrl: '' });
-                          }
+                          validateCredentialUrlField(e.target.value);
                         }}
-                        onBlur={() => {
-                          if (credentialUrl.trim() && !isValidUrl(credentialUrl)) {
-                            setErrors({ ...errors, credentialUrl: 'Please enter a valid URL format.' });
-                          }
-                        }}
+                        onBlur={() => validateCredentialUrlField(credentialUrl)}
                         placeholder="Paste certificate verification link (https://...)"
                         className={`w-full px-4 py-2 pl-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          errors.credentialUrl ? 'border-red-300' : 'border-gray-300'
+                          errors.credentialUrl ? 'border-amber-300 bg-amber-50/50' : 'border-gray-300'
                         }`}
                       />
                     </div>

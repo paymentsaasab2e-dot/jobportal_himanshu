@@ -9,6 +9,7 @@ import {
   profileSelectClassName,
   profileTextareaClass,
 } from '@/lib/profile-modal-ui';
+import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
 
 interface InternshipModalProps {
   isOpen: boolean;
@@ -115,7 +116,7 @@ export default function InternshipModal({
           return {
             id: `doc-${Date.now()}-${index}`,
             url: doc,
-            name: doc.split('/').pop() || 'Document',
+            name: getProfileDocumentDisplayName(doc),
           };
         } else if (doc && typeof doc === 'object') {
           // If it's already an object, ensure it has an id
@@ -679,7 +680,7 @@ export default function InternshipModal({
                       )}
                     </div>
                     <div className="flex items-center gap-3 shrink-0 ml-2">
-                      {doc.url && (
+                      {isStoredProfileDocument(doc) && (
                         <>
                           <a
                             href={resolveDocumentUrl(doc.url)}

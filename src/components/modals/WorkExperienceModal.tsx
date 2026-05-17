@@ -7,13 +7,15 @@ import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
 import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import { profileFieldClass, profileSectionTitleClass, profileTextareaClass } from '@/lib/profile-modal-ui';
+import { isPersistedWorkExperienceId } from '@/lib/work-experience-utils';
+import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
 
 interface WorkExperienceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: WorkExperienceData) => void;
+  onSave: (data: WorkExperienceData) => void | Promise<void>;
   initialData?: WorkExperienceData;
-  onAddEntry?: (entry: WorkExperienceEntry) => Promise<WorkExperienceEntry | null>;
+  editingEntryId?: string | null;
 }
 
 export interface WorkExperienceDocument {
@@ -122,7 +124,7 @@ export default function WorkExperienceModal({
   onClose,
   onSave,
   initialData,
-  onAddEntry,
+  editingEntryId = null,
 }: WorkExperienceModalProps) {
   const [jobTitle, setJobTitle] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -146,7 +148,7 @@ export default function WorkExperienceModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
   const [workExperiences, setWorkExperiences] = useState<WorkExperienceEntry[]>(initialData?.workExperiences || []);
-  const [expandedEntries, setExpandedEntries] = useState<{ [key: string]: boolean }>({});
+  const [isSaving, setIsSaving] = useState(false);
   const [isGapModalOpen, setIsGapModalOpen] = useState(false);
   const [gapInfo, setGapInfo] = useState<{
     gapYears: number;
@@ -184,7 +186,7 @@ export default function WorkExperienceModal({
           return {
             id: `doc-${Date.now()}-${index}`,
             url: doc,
-            name: doc.split('/').pop() || 'Document',
+            name: getProfileDocumentDisplayName(doc),
           };
         } else if (doc && typeof doc === 'object') {
           return {
@@ -216,28 +218,30 @@ export default function WorkExperienceModal({
       return;
     }
 
-    const experiences = initialData?.workExperiences;
-    const singleEntry = experiences?.length === 1 ? experiences[0] : null;
-    const initKey = singleEntry?.id
-      ? `edit:${singleEntry.id}`
-      : `add:${experiences?.length ?? 0}`;
+    const initKey = editingEntryId ? `edit:${editingEntryId}` : 'add';
 
     if (sessionInitKeyRef.current === initKey) {
       return;
     }
     sessionInitKeyRef.current = initKey;
 
-    if (experiences && experiences.length > 0) {
-      setWorkExperiences(experiences);
-      if (experiences.length === 1) {
-        populateFormFromEntry(experiences[0]);
-      } else {
-        clearFormFields();
-      }
+    if (!editingEntryId) {
+      setWorkExperiences([]);
+      clearFormFields();
+      return;
+    }
+
+    const experiences = initialData?.workExperiences;
+    const entryToEdit =
+      experiences?.find((e) => e.id === editingEntryId) ?? experiences?.[0];
+
+    if (entryToEdit) {
+      setWorkExperiences([entryToEdit]);
+      populateFormFromEntry(entryToEdit);
     } else {
       resetForm();
     }
-  }, [isOpen, initialData?.workExperiences?.length, initialData?.workExperiences?.[0]?.id]);
+  }, [isOpen, editingEntryId, initialData?.workExperiences?.[0]?.id]);
 
   const clearFormFields = () => {
     setJobTitle('');
@@ -263,7 +267,6 @@ export default function WorkExperienceModal({
   const resetForm = () => {
     clearFormFields();
     setWorkExperiences([]);
-    setExpandedEntries({});
   };
 
   const handleAddWorkExperience = () => {
@@ -310,27 +313,7 @@ export default function WorkExperienceModal({
       documents: documents.length > 0 ? documents : undefined,
     };
 
-    // If onAddEntry callback is provided, save to database immediately
-    if (onAddEntry) {
-      try {
-        const savedEntry = await onAddEntry(newEntry);
-        if (savedEntry) {
-          // Use the saved entry with database ID
-          setWorkExperiences([...workExperiences, savedEntry]);
-        } else {
-          // If save failed, still add to local state
-          setWorkExperiences([...workExperiences, newEntry]);
-        }
-      } catch (error) {
-        console.error('Error saving work experience entry:', error);
-        alert('Error saving work experience. Entry added locally but not saved to database.');
-        // Still add to local state even if save failed
-        setWorkExperiences([...workExperiences, newEntry]);
-      }
-    } else {
-      // No callback provided, just add to local state (old behavior)
-      setWorkExperiences([...workExperiences, newEntry]);
-    }
+    setWorkExperiences([...workExperiences, newEntry]);
     
     // Clear only the form fields for the next entry
     clearFormFields();
@@ -363,38 +346,6 @@ export default function WorkExperienceModal({
     } else {
       return 'More than 2 years';
     }
-  };
-
-  const handleRemoveWorkExperience = (id: string) => {
-    setWorkExperiences(workExperiences.filter(entry => entry.id !== id));
-  };
-
-  const toggleExpandEntry = (id: string) => {
-    setExpandedEntries({
-      ...expandedEntries,
-      [id]: !expandedEntries[id]
-    });
-  };
-
-  const formatDateRange = (startDate: string, endDate: string, currentlyWorkHere: boolean) => {
-    if (!startDate) return '';
-    const start = new Date(startDate);
-    const day = String(start.getDate()).padStart(2, '0');
-    const month = String(start.getMonth() + 1).padStart(2, '0');
-    const year = start.getFullYear();
-    const startFormatted = `${day}-${month}-${year}`;
-    
-    if (currentlyWorkHere || !endDate) {
-      return `${startFormatted} - Present`;
-    }
-    
-    const end = new Date(endDate);
-    const endDay = String(end.getDate()).padStart(2, '0');
-    const endMonth = String(end.getMonth() + 1).padStart(2, '0');
-    const endYear = end.getFullYear();
-    const endFormatted = `${endDay}-${endMonth}-${endYear}`;
-    
-    return `${startFormatted} - ${endFormatted}`;
   };
 
   const calculateGap = (previousEndDate: string, newStartDate: string) => {
@@ -708,8 +659,6 @@ export default function WorkExperienceModal({
   const canSaveWorkExperience = isFormComplete;
 
   // Helper function to check if an ID is a persisted MongoDB ObjectId
-  const isPersistedId = (value?: string) => Boolean(value && /^[a-f\d]{24}$/i.test(value));
-
   const handleSave = async () => {
     // Check if there's unsaved form data (user filled form but didn't click "Add Work Experience")
     const hasFormData = hasAnyFormData;
@@ -722,83 +671,68 @@ export default function WorkExperienceModal({
     let finalWorkExperiences = [...workExperiences];
     
     if (hasFormData) {
-      // Check if we're editing an existing entry (single entry with persisted ID)
-      const isEditing = workExperiences.length === 1 && isPersistedId(workExperiences[0].id);
-      
-      if (isEditing) {
-        // Update existing entry with form field values
-        const updatedEntry: WorkExperienceEntry = {
-          ...workExperiences[0],
-          jobTitle: jobTitle.trim(),
-          companyName: companyName.trim(),
-          employmentType,
-          industryDomain,
-          numberOfReportees,
-          startDate,
-          endDate,
-          currentlyWorkHere,
-          workLocation,
-          workMode,
-          companyProfile,
-          companyTurnover: formatStoredTurnover(companyTurnoverCurrency, companyTurnoverAmount),
-          keyResponsibilities,
-          achievements,
-          workSkills,
-          documents: documents.length > 0 ? documents : workExperiences[0].documents,
-        };
-        finalWorkExperiences[0] = updatedEntry;
-      } else {
-        // User filled form but didn't add it to the list - create entry and add it
-        const newEntry: WorkExperienceEntry = {
-          id: Date.now().toString(),
-          jobTitle: jobTitle.trim(),
-          companyName: companyName.trim(),
-          employmentType,
-          industryDomain,
-          numberOfReportees,
-          startDate,
-          endDate,
-          currentlyWorkHere,
-          workLocation,
-          workMode,
-          companyProfile,
-          companyTurnover: formatStoredTurnover(companyTurnoverCurrency, companyTurnoverAmount),
-          keyResponsibilities,
-          achievements,
-          workSkills,
-          documents: documents.length > 0 ? documents : undefined,
-        };
+      const formEntry: WorkExperienceEntry = {
+        id: editingEntryId || `temp-${Date.now()}`,
+        jobTitle: jobTitle.trim(),
+        companyName: companyName.trim(),
+        employmentType,
+        industryDomain,
+        numberOfReportees,
+        startDate,
+        endDate,
+        currentlyWorkHere,
+        workLocation,
+        workMode,
+        companyProfile,
+        companyTurnover: formatStoredTurnover(companyTurnoverCurrency, companyTurnoverAmount),
+        keyResponsibilities,
+        achievements,
+        workSkills,
+        documents: documents.length > 0 ? documents : undefined,
+      };
 
-        // If onAddEntry callback is provided, save to database immediately
-        if (onAddEntry) {
-          try {
-            const savedEntry = await onAddEntry(newEntry);
-            if (savedEntry) {
-              finalWorkExperiences.push(savedEntry);
-            } else {
-              finalWorkExperiences.push(newEntry);
-            }
-          } catch (error) {
-            console.error('Error saving work experience entry:', error);
-            // Still add to list even if save failed
-            finalWorkExperiences.push(newEntry);
-          }
+      if (editingEntryId) {
+        const existingIndex = finalWorkExperiences.findIndex((e) => e.id === editingEntryId);
+        const existing = existingIndex >= 0 ? finalWorkExperiences[existingIndex] : null;
+        const updatedEntry: WorkExperienceEntry = {
+          ...existing,
+          ...formEntry,
+          id: editingEntryId,
+          documents: documents.length > 0 ? documents : existing?.documents,
+        };
+        if (existingIndex >= 0) {
+          finalWorkExperiences[existingIndex] = updatedEntry;
         } else {
-          finalWorkExperiences.push(newEntry);
+          finalWorkExperiences.push(updatedEntry);
         }
+      } else {
+        finalWorkExperiences.push(formEntry);
       }
     }
 
-    // Save all work experiences
-    if (finalWorkExperiences.length === 0) {
+    const entriesToPersist = editingEntryId
+      ? finalWorkExperiences.filter((e) => e.id === editingEntryId)
+      : finalWorkExperiences.filter((e) => !isPersistedWorkExperienceId(e.id));
+
+    if (entriesToPersist.length === 0) {
       alert('Please fill all required work experience details before saving.');
       return;
     }
 
-    onSave({
-      workExperiences: finalWorkExperiences,
-    });
-    onClose();
+    setIsSaving(true);
+    try {
+      await onSave({ workExperiences: entriesToPersist });
+      onClose();
+    } catch (error) {
+      console.error('Error saving work experience:', error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Failed to save work experience. Please try again.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -850,10 +784,12 @@ export default function WorkExperienceModal({
             </button>
             {canSaveWorkExperience && (
               <button
-                onClick={handleSave}
-                className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white transition-colors hover:bg-orange-600"
+                type="button"
+                onClick={() => void handleSave()}
+                disabled={isSaving}
+                className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Save Work Experience
+                {isSaving ? 'Saving…' : 'Save Work Experience'}
               </button>
             )}
           </div>
@@ -1253,7 +1189,7 @@ export default function WorkExperienceModal({
                           )}
                         </div>
                         <div className="flex items-center gap-3 shrink-0 ml-2">
-                          {(doc.url || doc.file) && (
+                          {isStoredProfileDocument(doc) && (
                             <>
                               <button
                                 type="button"
@@ -1319,134 +1255,6 @@ export default function WorkExperienceModal({
             )}
 
 
-            {/* SECTION 7: ADDED EXPERIENCE PREVIEW */}
-            {workExperiences.length > 0 && (
-              <section className="space-y-4 border-t pt-6">
-                <h3 className={sectionTitleClassName}>Added Experience Preview</h3>
-                {workExperiences.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="rounded-xl border border-green-100 bg-green-50 p-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="mb-1 text-xs font-medium text-green-700">✔ Successfully added experience</p>
-                        <h4 className="text-sm font-semibold text-gray-900">
-                          {entry.jobTitle} at {entry.companyName}
-                        </h4>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatDateRange(entry.startDate, entry.endDate, entry.currentlyWorkHere)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleRemoveWorkExperience(entry.id)}
-                          className="text-amber-600 hover:text-amber-700 p-1"
-                          title="Delete"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M12 4L4 12M4 4L12 12"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => toggleExpandEntry(entry.id)}
-                          className="text-gray-500 hover:text-gray-700 p-1"
-                          title="Edit"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className={`transition-transform ${expandedEntries[entry.id] ? 'rotate-180' : ''}`}
-                          >
-                            <path
-                              d="M4 6L8 10L12 6"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    {expandedEntries[entry.id] && (
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <div className="space-y-2">
-                          <div>
-                            <span className="text-xs text-gray-500">Job Title:</span>
-                            <p className="text-sm text-gray-900">{entry.jobTitle}</p>
-                          </div>
-                          <div>
-                            <span className="text-xs text-gray-500">Company:</span>
-                            <p className="text-sm text-gray-900">{entry.companyName}</p>
-                          </div>
-                          {entry.employmentType && (
-                            <div>
-                              <span className="text-xs text-gray-500">Employment Type:</span>
-                              <p className="text-sm text-gray-900">{entry.employmentType}</p>
-                            </div>
-                          )}
-                          {entry.workLocation && (
-                            <div>
-                              <span className="text-xs text-gray-500">Location:</span>
-                              <p className="text-sm text-gray-900">{entry.workLocation}</p>
-                            </div>
-                          )}
-                          {entry.workMode && (
-                            <div>
-                              <span className="text-xs text-gray-500">Work Mode:</span>
-                              <p className="text-sm text-gray-900">{entry.workMode}</p>
-                            </div>
-                          )}
-                          {entry.keyResponsibilities && (
-                            <div>
-                              <span className="text-xs text-gray-500">Key Responsibilities:</span>
-                              <p className="text-sm text-gray-900">{entry.keyResponsibilities}</p>
-                            </div>
-                          )}
-                          {entry.achievements && (
-                            <div>
-                              <span className="text-xs text-gray-500">Achievements:</span>
-                              <p className="text-sm text-gray-900">{entry.achievements}</p>
-                            </div>
-                          )}
-                          {entry.workSkills && entry.workSkills.length > 0 && (
-                            <div>
-                              <span className="text-xs text-gray-500">Skills:</span>
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {entry.workSkills.map((skill, index) => (
-                                  <span
-                                    key={index}
-                                    className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs"
-                                  >
-                                    {skill}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </section>
-            )}
               <DocumentViewerModal
                 isOpen={previewModal.isOpen}
                 onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}

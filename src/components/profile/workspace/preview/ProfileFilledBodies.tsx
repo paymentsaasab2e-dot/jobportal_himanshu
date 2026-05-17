@@ -16,6 +16,8 @@ import type { AcademicAchievementData } from '@/components/modals/AcademicAchiev
 import type { CompetitiveExamsData } from '@/components/modals/CompetitiveExamsModal';
 import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
 import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
+import { resolveDocumentUrl } from '@/lib/api-base';
+import { getProfileDocumentDisplayName } from '@/lib/profile-documents';
 import { formatDobDisplay } from '@/lib/format-dob';
 import { formatVaccinationValidity } from '@/lib/format-vaccination-validity';
 import {
@@ -148,10 +150,11 @@ export function ProfileResumeFilled({
     }
   };
 
-  const displayName =
-    resumeData.fileName ||
-    resumeData.fileUrl?.split('/').pop() ||
-    'Resume on file';
+  const displayName = resumeData.fileName
+    ? getProfileDocumentDisplayName(resumeData.fileName)
+    : resumeData.fileUrl
+      ? getProfileDocumentDisplayName(resumeData.fileUrl)
+      : 'Resume on file';
   const uploaded = resumeData.uploadedDate
     ? new Date(resumeData.uploadedDate).toLocaleDateString()
     : null;
@@ -1390,18 +1393,22 @@ export function ProfileCareerPreferencesFilled({
 }
 
 function countVisaDocs(v: VisaWorkAuthorizationData): number {
-  let n = 0;
+  return collectVisaDocuments(v).length;
+}
+
+function collectVisaDocuments(v: VisaWorkAuthorizationData): unknown[] {
+  const docs: unknown[] = [];
   const exp = v.visaDetailsExpected?.documents;
-  if (Array.isArray(exp)) n += exp.length;
+  if (Array.isArray(exp)) docs.push(...exp);
   const init = v.visaDetailsInitial?.documents;
-  if (Array.isArray(init)) n += init.length;
+  if (Array.isArray(init)) docs.push(...init);
   if (Array.isArray(v.visaEntries)) {
     for (const e of v.visaEntries) {
       const d = e?.visaDetails?.documents;
-      if (Array.isArray(d)) n += d.length;
+      if (Array.isArray(d)) docs.push(...d);
     }
   }
-  return n;
+  return docs;
 }
 
 export function ProfileVisaFilled({
@@ -1456,7 +1463,8 @@ export function ProfileVisaFilled({
     }
   };
 
-  const docCount = countVisaDocs(data);
+  const visaDocuments = collectVisaDocuments(data);
+  const docCount = visaDocuments.length;
   const dest =
     data.openForAll || !data.selectedDestination
       ? 'Open for all destinations'
@@ -1503,6 +1511,56 @@ export function ProfileVisaFilled({
           <div className="flex flex-wrap items-center gap-2">
             <PreviewDocCount count={docCount} />
           </div>
+          {!isExpanded && docCount > 0 ? (
+            <div className="space-y-1">
+              {visaDocuments.map((doc, i) => {
+                const name = getDocumentName(doc);
+                const href = getApiDocumentHref(doc);
+                if (!href) return null;
+                return (
+                  <div
+                    key={i}
+                    className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium text-gray-700" title={name}>
+                      {name}
+                    </span>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePreview(href, name);
+                        }}
+                        className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                        title="View document"
+                        aria-label={`View ${name}`}
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(href, name);
+                        }}
+                        className="rounded-lg p-1.5 text-orange-600 transition-colors hover:bg-orange-50 hover:text-orange-700"
+                        title="Download document"
+                        aria-label={`Download ${name}`}
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
         <div className="flex shrink-0 gap-1">
           <button
@@ -1720,27 +1778,58 @@ export function ProfileVaccinationFilled({
                 hasCert ? (
                   <div className="mt-1 space-y-1">
                     {vaccinationDocs.map((doc, idx) => {
-                      const href = doc.url || certificateHref;
-                      if (!href) return <PreviewChip key={doc.id || idx} tone="green">Uploaded</PreviewChip>;
+                      const rawHref = doc.url || certificateHref;
+                      if (!rawHref) {
+                        return (
+                          <PreviewChip key={doc.id || idx} tone="green">
+                            Uploaded
+                          </PreviewChip>
+                        );
+                      }
+                      const href = resolveDocumentUrl(rawHref);
+                      const displayName = getProfileDocumentDisplayName(doc);
                       return (
-                        <div key={doc.id || idx} className="flex flex-wrap items-center gap-2">
-                          <span className="max-w-[140px] truncate text-xs text-gray-600" title={doc.name}>
-                            {doc.name}
+                        <div
+                          key={doc.id || idx}
+                          className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5"
+                        >
+                          <span
+                            className="min-w-0 flex-1 truncate text-xs font-medium text-gray-700"
+                            title={displayName}
+                          >
+                            {displayName}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => handlePreview(href, doc.name || 'Certificate')}
-                            className="text-xs font-medium text-blue-600 hover:text-blue-700"
-                          >
-                            View
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDownload(href, doc.name || 'Certificate')}
-                            className="text-xs font-medium text-orange-600 hover:text-orange-700"
-                          >
-                            Download
-                          </button>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePreview(href, displayName);
+                              }}
+                              className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                              title="View certificate"
+                              aria-label={`View ${displayName}`}
+                            >
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownload(href, displayName);
+                              }}
+                              className="rounded-lg p-1.5 text-orange-600 transition-colors hover:bg-orange-50 hover:text-orange-700"
+                              title="Download certificate"
+                              aria-label={`Download ${displayName}`}
+                            >
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       );
                     })}

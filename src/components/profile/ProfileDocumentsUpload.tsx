@@ -5,6 +5,7 @@ import { resolveDocumentUrl } from '@/lib/api-base';
 import {
   formatProfileDocumentSize,
   getProfileDocumentDisplayName,
+  isStoredProfileDocument,
   type ProfileDocumentItem,
   validateProfileDocumentFile,
 } from '@/lib/profile-documents';
@@ -122,7 +123,7 @@ export function ProfileDocumentsUpload({
           </p>
           {documents.map((doc) => {
             const displayName = getProfileDocumentDisplayName(doc);
-            const href = doc.url ? resolveDocumentUrl(doc.url) : undefined;
+            const href = isStoredProfileDocument(doc) && doc.url ? resolveDocumentUrl(doc.url) : undefined;
             return (
               <div
                 key={doc.id}
@@ -152,25 +153,34 @@ export function ProfileDocumentsUpload({
                     <p className="text-xs text-gray-500">Ready to upload on save</p>
                   ) : null}
                 </div>
-                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                <div className="flex shrink-0 items-center gap-1">
                   {href ? (
                     <>
                       <a
                         href={href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-md px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                        className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
                         onClick={(e) => e.stopPropagation()}
+                        title="View document"
+                        aria-label={`View ${displayName}`}
                       >
-                        View
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
                       </a>
                       <a
                         href={href}
                         download={displayName}
-                        className="rounded-md px-2 py-1 text-xs font-medium text-orange-600 hover:bg-orange-50"
+                        className="rounded-lg p-1.5 text-orange-600 transition-colors hover:bg-orange-50 hover:text-orange-700"
                         onClick={(e) => e.stopPropagation()}
+                        title="Download document"
+                        aria-label={`Download ${displayName}`}
                       >
-                        Download
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
                       </a>
                     </>
                   ) : null}

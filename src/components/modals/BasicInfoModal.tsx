@@ -291,10 +291,11 @@ export default function BasicInfoModal({
 
   const applyPhoneFields = useCallback(
     (data?: BasicInfoData) => {
+      const hasSavedPhone = Boolean(data?.phone?.trim());
       const { localPhone, phoneCodeLabel } = resolveSignupPhoneFields({
         phone: data?.phone,
         phoneCode: data?.phoneCode,
-        whatsappNumber: user?.whatsappNumber || data?.whatsappNumber,
+        whatsappNumber: hasSavedPhone ? undefined : user?.whatsappNumber || data?.whatsappNumber,
         countryCode: data?.countryCode,
       });
       setPhoneValue(localPhone);
@@ -303,8 +304,27 @@ export default function BasicInfoModal({
     [user?.whatsappNumber],
   );
 
-  // Update values when initialData changes
+  const sessionInitKeyRef = useRef<string | null>(null);
+
+  // Update values when drawer opens or saved profile changes — not on unrelated parent re-renders
   useEffect(() => {
+    if (!isOpen) {
+      sessionInitKeyRef.current = null;
+      return;
+    }
+
+    const sessionKey = initialData
+      ? [
+          initialData.phone,
+          initialData.phoneCode,
+          initialData.email,
+          initialData.firstName,
+        ].join('|')
+      : user?.whatsappNumber || 'new';
+
+    if (sessionInitKeyRef.current === sessionKey) return;
+    sessionInitKeyRef.current = sessionKey;
+
     if (initialData) {
       setFirstNameValue(initialData.firstName || '');
       setMiddleNameValue(initialData.middleName || '');
@@ -346,7 +366,7 @@ export default function BasicInfoModal({
         user?.whatsappNumber ? { whatsappNumber: user.whatsappNumber } : undefined,
       );
     }
-  }, [initialData, applyPhoneFields, user?.whatsappNumber]);
+  }, [isOpen, initialData, applyPhoneFields, user?.whatsappNumber]);
 
   useEffect(() => {
     if (!isOpen) return;

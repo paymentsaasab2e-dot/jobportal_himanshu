@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import DocumentViewerModal from './DocumentViewerModal';
+import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
 
 interface AccomplishmentModalProps {
   isOpen: boolean;
@@ -55,6 +56,31 @@ const formatDateForDisplay = (dateString: string): string => {
   return `${months[date.getMonth()]} ${date.getFullYear()}`;
 };
 
+function normalizeAccomplishmentDocuments(
+  docs?: Array<string | AccomplishmentDocument>,
+): AccomplishmentDocument[] {
+  if (!docs?.length) return [];
+  return docs.map((doc, index) => {
+    if (typeof doc === 'string') {
+      return {
+        id: `doc-${index}-${doc.slice(-8)}`,
+        url: doc,
+        name: getProfileDocumentDisplayName(doc),
+      };
+    }
+    if (doc && typeof doc === 'object') {
+      return {
+        id: doc.id || `doc-${index}-${Date.now()}`,
+        file: doc.file,
+        name: doc.name || getProfileDocumentDisplayName(doc.url || doc.name || ''),
+        url: doc.url,
+        size: doc.size,
+      };
+    }
+    return { id: `doc-${index}`, name: 'Document' };
+  });
+}
+
 export default function AccomplishmentModal({
   isOpen,
   onClose,
@@ -88,62 +114,7 @@ export default function AccomplishmentModal({
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const nextAccomplishments = initialData?.accomplishments || [];
-    setAccomplishments(nextAccomplishments);
-
-    if (externalEditingAccomplishmentId) {
-      const accomplishmentToEdit = nextAccomplishments.find(
-        acc => acc.id === externalEditingAccomplishmentId
-      );
-
-      if (accomplishmentToEdit) {
-        setTitle(accomplishmentToEdit.title);
-        setCategory(accomplishmentToEdit.category);
-        setOrganization(accomplishmentToEdit.organization || '');
-        setAchievementDate(accomplishmentToEdit.achievementDate);
-        setDescription(accomplishmentToEdit.description || '');
-        setEditingAccomplishmentId(accomplishmentToEdit.id);
-        setSupportingDocument(
-          accomplishmentToEdit.supportingDocument instanceof File
-            ? accomplishmentToEdit.supportingDocument
-            : null
-        );
-        setDocuments(
-          (accomplishmentToEdit.documents || []).map((doc: string | { id?: string; file?: File; name?: string; url?: string; size?: number }, index) => {
-            if (typeof doc === 'string') {
-              return {
-                id: `doc-${accomplishmentToEdit.id}-${index}`,
-                url: doc,
-                name: doc.split('/').pop() || 'Document',
-              };
-            }
-
-            return {
-              id: doc.id || `doc-${accomplishmentToEdit.id}-${index}`,
-              file: doc.file,
-              name: doc.name || 'Document',
-              url: doc.url,
-              size: doc.size,
-            };
-          })
-        );
-        setErrors({
-          title: '',
-          category: '',
-          achievementDate: '',
-        });
-        return;
-      }
-    }
-
-    resetForm();
-  }, [externalEditingAccomplishmentId, initialData, isOpen]);
+  const sessionInitKeyRef = useRef<string | null>(null);
 
   const resetForm = () => {
     setTitle('');
@@ -164,6 +135,60 @@ export default function AccomplishmentModal({
       fileInputRef.current.value = '';
     }
   };
+
+  const populateFormFromAccomplishment = (acc: Accomplishment) => {
+    setTitle(acc.title);
+    setCategory(acc.category);
+    setOrganization(acc.organization || '');
+    setAchievementDate(acc.achievementDate);
+    setDescription(acc.description || '');
+    setEditingAccomplishmentId(acc.id);
+    setSupportingDocument(
+      acc.supportingDocument instanceof File ? acc.supportingDocument : null,
+    );
+    setDocuments(normalizeAccomplishmentDocuments(acc.documents));
+    setErrors({
+      title: '',
+      category: '',
+      achievementDate: '',
+    });
+  };
+
+  // Initialize only when the drawer opens or the edited entry changes —
+  // not on every parent re-render (which used to wipe fields after file upload).
+  useEffect(() => {
+    if (!isOpen) {
+      sessionInitKeyRef.current = null;
+      return;
+    }
+
+    const initKey = externalEditingAccomplishmentId
+      ? `edit:${externalEditingAccomplishmentId}`
+      : 'add';
+
+    if (sessionInitKeyRef.current === initKey) {
+      return;
+    }
+    sessionInitKeyRef.current = initKey;
+
+    if (!externalEditingAccomplishmentId) {
+      setAccomplishments([]);
+      resetForm();
+      return;
+    }
+
+    const accomplishmentToEdit =
+      initialData?.accomplishments?.find((acc) => acc.id === externalEditingAccomplishmentId) ??
+      initialData?.accomplishments?.[0];
+
+    if (accomplishmentToEdit) {
+      setAccomplishments([accomplishmentToEdit]);
+      populateFormFromAccomplishment(accomplishmentToEdit);
+    } else {
+      setAccomplishments([]);
+      resetForm();
+    }
+  }, [isOpen, externalEditingAccomplishmentId, initialData?.accomplishments?.[0]?.id]);
 
   const validateForm = (): boolean => {
     const newErrors = {
@@ -217,11 +242,11 @@ export default function AccomplishmentModal({
       });
     }
     
-    setDocuments([...documents, ...validFiles]);
+    setDocuments((prev) => [...prev, ...validFiles]);
   };
 
   const handleRemoveFile = (docId: string) => {
-    setDocuments(documents.filter(doc => doc.id !== docId));
+    setDocuments((prev) => prev.filter((doc) => doc.id !== docId));
   };
 
   const handlePreviewDocument = (doc: AccomplishmentDocument) => {
@@ -300,7 +325,7 @@ export default function AccomplishmentModal({
   };
 
   const buildAccomplishmentFromForm = (): Accomplishment => ({
-    id: editingAccomplishmentId || Date.now().toString(),
+    id: editingAccomplishmentId || externalEditingAccomplishmentId || Date.now().toString(),
     title: title.trim(),
     category,
     organization: organization.trim() || undefined,
@@ -327,19 +352,7 @@ export default function AccomplishmentModal({
   );
 
   const handleEditAccomplishment = (acc: Accomplishment) => {
-    setTitle(acc.title);
-    setCategory(acc.category);
-    setOrganization(acc.organization || '');
-    setAchievementDate(acc.achievementDate);
-    setDescription(acc.description || '');
-    setEditingAccomplishmentId(acc.id);
-    setSupportingDocument(acc.supportingDocument instanceof File ? acc.supportingDocument : null);
-    setDocuments(acc.documents || []);
-    setErrors({
-      title: '',
-      category: '',
-      achievementDate: '',
-    });
+    populateFormFromAccomplishment(acc);
   };
 
   const handleDeleteAccomplishment = (accId: string) => {
@@ -372,7 +385,11 @@ export default function AccomplishmentModal({
     <ProfileDrawer
       isOpen={isOpen}
       onClose={onClose}
-      title={editingAccomplishmentId ? 'Edit Accomplishment' : 'Add Accomplishment'}
+      title={
+        editingAccomplishmentId || externalEditingAccomplishmentId
+          ? 'Edit Accomplishment'
+          : 'Add Accomplishment'
+      }
       widthClassName="w-full md:w-[50vw] md:max-w-[50vw]"
       footer={(
         <div className="flex justify-end gap-3">
@@ -569,7 +586,7 @@ export default function AccomplishmentModal({
                           </svg>
                           <span className="text-sm text-gray-700 truncate">{doc.name}</span>
                                   <div className="flex items-center gap-3 shrink-0 ml-2">
-                                    {(doc.url || doc.file) && (
+                                    {isStoredProfileDocument(doc) && (
                                       <>
                                         <button
                                           type="button"
