@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import DocumentViewerModal from './DocumentViewerModal';
+import { profileFieldClass, profileTextareaClass } from '@/lib/profile-modal-ui';
 
 interface EducationModalProps {
   isOpen: boolean;
@@ -27,7 +28,9 @@ export interface EducationData {
   institutionName: string;
   fieldOfStudy: string;
   startYear: string;
+  startMonth: string;
   endYear: string;
+  endMonth: string;
   currentlyStudying: boolean;
   /** Encoded as `percentage|85`, `gpa|3.5`, or `grade|A+` (legacy plain numbers treated as percentage). */
   grade: string;
@@ -65,6 +68,100 @@ function encodeStoredGrade(type: EducationGradeMetricType, value: string): strin
   return `${type}|${v}`;
 }
 
+export const EDUCATION_MONTH_OPTIONS = [
+  { value: '1', label: 'January' },
+  { value: '2', label: 'February' },
+  { value: '3', label: 'March' },
+  { value: '4', label: 'April' },
+  { value: '5', label: 'May' },
+  { value: '6', label: 'June' },
+  { value: '7', label: 'July' },
+  { value: '8', label: 'August' },
+  { value: '9', label: 'September' },
+  { value: '10', label: 'October' },
+  { value: '11', label: 'November' },
+  { value: '12', label: 'December' },
+] as const;
+
+const MONTH_SHORT = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function toMonthIndex(year: string, month: string): number | null {
+  const y = parseInt(String(year || '').trim(), 10);
+  const m = parseInt(String(month || '').trim(), 10);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) return null;
+  return y * 12 + m;
+}
+
+/** Duration in years from start/end month+year (stored as decimal years, e.g. 3.75). */
+export function computeCourseDurationFromDates(
+  startYear: string,
+  startMonth: string,
+  endYear: string,
+  endMonth: string,
+  currentlyStudying: boolean,
+): string {
+  const startIndex = toMonthIndex(startYear, startMonth);
+  if (startIndex === null) return '';
+
+  let endIndex: number | null;
+  if (currentlyStudying) {
+    const now = new Date();
+    endIndex = now.getFullYear() * 12 + (now.getMonth() + 1);
+  } else {
+    endIndex = toMonthIndex(endYear, endMonth);
+  }
+  if (endIndex === null || endIndex < startIndex) return '';
+
+  const totalMonths = Math.max(1, endIndex - startIndex);
+  const years = totalMonths / 12;
+  return String(parseFloat(years.toFixed(2)));
+}
+
+/** @deprecated Use computeCourseDurationFromDates */
+export function computeCourseDurationFromYears(
+  startYear: string,
+  endYear: string,
+  currentlyStudying: boolean,
+): string {
+  return computeCourseDurationFromDates(startYear, '1', endYear, '12', currentlyStudying);
+}
+
+export function formatEducationPeriod(
+  startYear: string,
+  startMonth: string,
+  endYear: string,
+  endMonth: string,
+  currentlyStudying: boolean,
+): string {
+  const sm = parseInt(String(startMonth || '').trim(), 10);
+  const startPart = startYear
+    ? sm >= 1 && sm <= 12
+      ? `${MONTH_SHORT[sm]} ${startYear}`
+      : startYear
+    : '—';
+  if (currentlyStudying) return `${startPart} – Present`;
+  const em = parseInt(String(endMonth || '').trim(), 10);
+  const endPart = endYear
+    ? em >= 1 && em <= 12
+      ? `${MONTH_SHORT[em]} ${endYear}`
+      : endYear
+    : '—';
+  return `${startPart} – ${endPart}`;
+}
+
+export function formatCourseDurationDisplay(stored: string): string {
+  const raw = String(stored || '').trim();
+  if (!raw) return '';
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return raw;
+  if (n < 1) {
+    const months = Math.max(1, Math.round(n * 12));
+    return `${months} ${months === 1 ? 'month' : 'months'}`;
+  }
+  const rounded = parseFloat(n.toFixed(2));
+  return `${rounded} ${rounded === 1 ? 'year' : 'years'}`;
+}
+
 function getGradeValidationError(type: EducationGradeMetricType, value: string): string | null {
   const v = value.trim();
   if (!v) return null;
@@ -98,12 +195,15 @@ export default function EducationModal({
   const [institutionName, setInstitutionName] = useState(initialData?.institutionName || '');
   const [fieldOfStudy, setFieldOfStudy] = useState(initialData?.fieldOfStudy || '');
   const [startYear, setStartYear] = useState(initialData?.startYear || '');
+  const [startMonth, setStartMonth] = useState(initialData?.startMonth || '');
   const [endYear, setEndYear] = useState(initialData?.endYear || '');
+  const [endMonth, setEndMonth] = useState(initialData?.endMonth || '');
   const [currentlyStudying, setCurrentlyStudying] = useState(initialData?.currentlyStudying || false);
   const [gradeMetricType, setGradeMetricType] = useState<EducationGradeMetricType>('percentage');
   const [gradeInput, setGradeInput] = useState('');
   const [modeOfStudy, setModeOfStudy] = useState(initialData?.modeOfStudy || '');
   const [courseDuration, setCourseDuration] = useState(initialData?.courseDuration || '');
+  const [durationManuallyEdited, setDurationManuallyEdited] = useState(false);
   const [documents, setDocuments] = useState<EducationDocument[]>(initialData?.documents || []);
   const [dragActive, setDragActive] = useState(false);
   const [dateError, setDateError] = useState<string>('');
@@ -125,13 +225,26 @@ export default function EducationModal({
       setInstitutionName(initialData.institutionName || '');
       setFieldOfStudy(initialData.fieldOfStudy || '');
       setStartYear(initialData.startYear || '');
+      setStartMonth(initialData.startMonth || '');
       setEndYear(initialData.endYear || '');
+      setEndMonth(initialData.endMonth || '');
       setCurrentlyStudying(initialData.currentlyStudying || false);
       const g = decodeStoredGrade(initialData.grade || '');
       setGradeMetricType(g.type);
       setGradeInput(g.value);
       setModeOfStudy(initialData.modeOfStudy || '');
-      setCourseDuration(initialData.courseDuration || '');
+      const computedDuration = computeCourseDurationFromDates(
+        initialData.startYear || '',
+        initialData.startMonth || '',
+        initialData.endYear || '',
+        initialData.endMonth || '',
+        initialData.currentlyStudying || false,
+      );
+      const savedDuration = String(initialData.courseDuration || '').trim();
+      setCourseDuration(savedDuration || computedDuration || '');
+      setDurationManuallyEdited(
+        Boolean(savedDuration && savedDuration !== computedDuration),
+      );
       
       // Normalize documents to ensure they all have unique IDs
       const normalizedDocuments: EducationDocument[] = (initialData.documents || []).map((doc, index) => {
@@ -167,12 +280,15 @@ export default function EducationModal({
       setInstitutionName('');
       setFieldOfStudy('');
       setStartYear('');
+      setStartMonth('');
       setEndYear('');
+      setEndMonth('');
       setCurrentlyStudying(false);
       setGradeMetricType('percentage');
       setGradeInput('');
       setModeOfStudy('');
       setCourseDuration('');
+      setDurationManuallyEdited(false);
       setDocuments([]);
     }
   }, [initialData, isOpen]);
@@ -291,39 +407,103 @@ export default function EducationModal({
     ? startYearOptions.filter((year) => year >= Number(startYear))
     : startYearOptions;
 
-  const validateYearOrder = (start: string, end: string): string => {
-    if (!start || !end) return '';
-    if (Number(end) < Number(start)) {
-      return 'End year must be after start year';
+  const validateDateOrder = (
+    startY: string,
+    startM: string,
+    endY: string,
+    endM: string,
+  ): string => {
+    const startIndex = toMonthIndex(startY, startM);
+    const endIndex = toMonthIndex(endY, endM);
+    if (startIndex === null || endIndex === null) return '';
+    if (endIndex < startIndex) {
+      return 'End date must be on or after the start date';
     }
     return '';
   };
 
+  const syncCourseDurationFromDates = (
+    startY: string,
+    startM: string,
+    endY: string,
+    endM: string,
+    studying: boolean,
+    force = false,
+  ) => {
+    if (durationManuallyEdited && !force) return;
+    const computed = computeCourseDurationFromDates(startY, startM, endY, endM, studying);
+    if (computed) setCourseDuration(computed);
+  };
+
+  const handleCourseDurationChange = (value: string) => {
+    setDurationManuallyEdited(true);
+    setCourseDuration(value);
+  };
+
+  const handleRecalculateDuration = () => {
+    setDurationManuallyEdited(false);
+    syncCourseDurationFromDates(
+      startYear,
+      startMonth,
+      endYear,
+      endMonth,
+      currentlyStudying,
+      true,
+    );
+  };
+
+  const clearEndDateIfInvalid = (
+    startY: string,
+    startM: string,
+    endY: string,
+    endM: string,
+  ) => {
+    const error = validateDateOrder(startY, startM, endY, endM);
+    if (error) {
+      setEndYear('');
+      setEndMonth('');
+      setDateError(error);
+      return { endY: '', endM: '', error };
+    }
+    setDateError('');
+    return { endY, endM, error: '' };
+  };
+
   const handleStartYearChange = (value: string) => {
     setStartYear(value);
-    setDateError('');
-    // If end year exists and is now invalid, reset it
-    if (endYear && value) {
-      const error = validateYearOrder(value, endYear);
-      if (error) {
-        setEndYear('');
-        setDateError(error);
-      }
-    }
+    const { endY, endM } = clearEndDateIfInvalid(value, startMonth, endYear, endMonth);
+    syncCourseDurationFromDates(value, startMonth, endY, endM, currentlyStudying);
+  };
+
+  const handleStartMonthChange = (value: string) => {
+    setStartMonth(value);
+    const { endY, endM } = clearEndDateIfInvalid(startYear, value, endYear, endMonth);
+    syncCourseDurationFromDates(startYear, value, endY, endM, currentlyStudying);
   };
 
   const handleEndYearChange = (value: string) => {
-    if (startYear && value) {
-      const error = validateYearOrder(startYear, value);
-      setDateError(error);
-      if (!error) {
-        setEndYear(value);
-      }
-    } else {
-      setDateError('');
+    const error = validateDateOrder(startYear, startMonth, value, endMonth);
+    setDateError(error);
+    if (!error) {
       setEndYear(value);
+      syncCourseDurationFromDates(startYear, startMonth, value, endMonth, currentlyStudying);
     }
   };
+
+  const handleEndMonthChange = (value: string) => {
+    const error = validateDateOrder(startYear, startMonth, endYear, value);
+    setDateError(error);
+    if (!error) {
+      setEndMonth(value);
+      syncCourseDurationFromDates(startYear, startMonth, endYear, value, currentlyStudying);
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    syncCourseDurationFromDates(startYear, startMonth, endYear, endMonth, currentlyStudying);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- recalc when date fields change
+  }, [isOpen, startYear, startMonth, endYear, endMonth, currentlyStudying, durationManuallyEdited]);
 
   const missingRequiredFields: string[] = [];
   if (!String(educationLevel || '').trim()) missingRequiredFields.push('Education Level');
@@ -332,41 +512,54 @@ export default function EducationModal({
   if (!String(fieldOfStudy || '').trim()) missingRequiredFields.push('Field of Study / Major');
   
   if (!startYear) missingRequiredFields.push('Start Year');
+  if (!startMonth) missingRequiredFields.push('Start Month');
   if (!currentlyStudying && !endYear) missingRequiredFields.push('End Year');
+  if (!currentlyStudying && !endMonth) missingRequiredFields.push('End Month');
   
   if (!String(gradeInput || '').trim()) missingRequiredFields.push('Grade / Percentage / GPA');
   if (!String(modeOfStudy || '').trim()) missingRequiredFields.push('Mode of Study');
-  if (!String(courseDuration || '').trim()) missingRequiredFields.push('Course Duration');
+
+  const computedDurationPreview = computeCourseDurationFromDates(
+    startYear,
+    startMonth,
+    endYear,
+    endMonth,
+    currentlyStudying,
+  );
+  const effectiveCourseDuration =
+    String(courseDuration || '').trim() || computedDurationPreview;
+
+  if (!effectiveCourseDuration) missingRequiredFields.push('Course Duration');
 
   const gradeFormatError =
     String(gradeInput || '').trim().length > 0
       ? getGradeValidationError(gradeMetricType, gradeInput)
       : null;
-  const isCourseDurationNumeric = /^\d+(\.\d{1,2})?$/.test(String(courseDuration || '').trim());
+  const isCourseDurationNumeric = /^\d+(\.\d{1,2})?$/.test(effectiveCourseDuration);
 
   const hasDateOrderError =
-    !currentlyStudying &&
-    startYear &&
-    endYear &&
-    parseInt(endYear) < parseInt(startYear);
+  !currentlyStudying &&
+  Boolean(
+    validateDateOrder(startYear, startMonth, endYear, endMonth),
+  );
 
   const hasNumericError =
     Boolean(gradeFormatError) ||
-    (String(courseDuration || '').trim().length > 0 && !isCourseDurationNumeric);
+    (effectiveCourseDuration.length > 0 && !isCourseDurationNumeric);
 
   const validationErrors: string[] = [];
   if (missingRequiredFields.length > 0) {
     validationErrors.push(`Missing required fields: ${missingRequiredFields.join(', ')}`);
   }
   if (hasDateOrderError) {
-    validationErrors.push('End Year cannot be earlier than Start Year');
+    validationErrors.push('End date cannot be earlier than start date');
   }
   if (hasNumericError) {
     const parts: string[] = [];
     if (gradeFormatError) parts.push(gradeFormatError);
-    if (String(courseDuration || '').trim().length > 0 && !isCourseDurationNumeric) {
-      parts.push('Enter a valid number for course duration (up to 2 decimals).');
-    }
+        if (effectiveCourseDuration.length > 0 && !isCourseDurationNumeric) {
+          parts.push('Enter a valid course duration in years (up to 2 decimals).');
+        }
     validationErrors.push(parts.join(' '));
   }
 
@@ -388,22 +581,21 @@ export default function EducationModal({
       institutionName,
       fieldOfStudy,
       startYear,
+      startMonth,
       endYear,
+      endMonth,
       currentlyStudying,
       grade: encodeStoredGrade(gradeMetricType, gradeInput),
       modeOfStudy,
-      courseDuration,
+      courseDuration: effectiveCourseDuration,
       documents: documents.length > 0 ? documents : undefined,
     });
     onClose();
   };
 
-  const inputClassName =
-    'h-11 w-full rounded-lg border border-gray-200 px-4 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
-  const selectClassName =
-    'h-11 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300';
-  const textareaClassName =
-    'min-h-[100px] w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-900 transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-gray-300 resize-none';
+  const inputClassName = profileFieldClass();
+  const selectClassName = `${profileFieldClass()} appearance-none bg-white`;
+  const textareaClassName = `${profileTextareaClass} min-h-[100px]`;
 
   if (!isOpen) return null;
 
@@ -411,7 +603,7 @@ export default function EducationModal({
     <ProfileDrawer
       isOpen={isOpen}
       onClose={onClose}
-      title="Add Education"
+      title={initialData?.id ? 'Edit Education' : 'Add Education'}
       widthClassName="w-full md:w-[50vw] md:max-w-[50vw]"
       footer={(
         <div className="flex justify-end gap-3">
@@ -508,46 +700,96 @@ export default function EducationModal({
               </div>
 
               {/* Dates Section */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Start Year <span className="text-amber-600">*</span>
-                  </label>
-                  <select
-                    value={startYear}
-                    onChange={(e) => handleStartYearChange(e.target.value)}
-                    className={`${selectClassName} ${!startYear && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
-                  >
-                    <option value="">Select Start Year</option>
-                    {startYearOptions.map((year) => (
-                      <option key={year} value={year.toString()}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                  {!startYear && (
-                    <p className="mt-1 text-xs text-amber-600">Start year is required</p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    Start date <span className="text-amber-600">*</span>
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Month</label>
+                      <select
+                        value={startMonth}
+                        onChange={(e) => handleStartMonthChange(e.target.value)}
+                        className={`${selectClassName} ${!startMonth && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                      >
+                        <option value="">Select month</option>
+                        {EDUCATION_MONTH_OPTIONS.map((m) => (
+                          <option key={m.value} value={m.value}>
+                            {m.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Year</label>
+                      <select
+                        value={startYear}
+                        onChange={(e) => handleStartYearChange(e.target.value)}
+                        className={`${selectClassName} ${!startYear && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                      >
+                        <option value="">Select year</option>
+                        {startYearOptions.map((year) => (
+                          <option key={year} value={year.toString()}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  {(!startMonth || !startYear) && (
+                    <p className="mt-1 text-xs text-amber-600">Start month and year are required</p>
                   )}
                 </div>
+
                 <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    End Year {!currentlyStudying && <span className="text-amber-600">*</span>}
-                  </label>
-                  <select
-                    value={endYear}
-                    onChange={(e) => handleEndYearChange(e.target.value)}
-                    disabled={currentlyStudying}
-                    className={`${selectClassName} disabled:bg-gray-100 disabled:cursor-not-allowed ${(!currentlyStudying && !endYear) || hasDateOrderError ? 'border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
-                  >
-                    <option value="">Select End Year</option>
-                    {endYearOptions.map((year) => (
-                      <option key={year} value={year.toString()}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                  {!currentlyStudying && !endYear && (
-                    <p className="mt-1 text-xs text-amber-600">End year is required</p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    End date {!currentlyStudying && <span className="text-amber-600">*</span>}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Month</label>
+                      <select
+                        value={endMonth}
+                        onChange={(e) => handleEndMonthChange(e.target.value)}
+                        disabled={currentlyStudying}
+                        className={`${selectClassName} disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                          (!currentlyStudying && !endMonth) || hasDateOrderError
+                            ? 'border-red-500 focus:ring-red-500 bg-red-50'
+                            : ''
+                        }`}
+                      >
+                        <option value="">Select month</option>
+                        {EDUCATION_MONTH_OPTIONS.map((m) => (
+                          <option key={m.value} value={m.value}>
+                            {m.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Year</label>
+                      <select
+                        value={endYear}
+                        onChange={(e) => handleEndYearChange(e.target.value)}
+                        disabled={currentlyStudying}
+                        className={`${selectClassName} disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                          (!currentlyStudying && !endYear) || hasDateOrderError
+                            ? 'border-red-500 focus:ring-red-500 bg-red-50'
+                            : ''
+                        }`}
+                      >
+                        <option value="">Select year</option>
+                        {endYearOptions.map((year) => (
+                          <option key={year} value={year.toString()}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  {!currentlyStudying && (!endMonth || !endYear) && (
+                    <p className="mt-1 text-xs text-amber-600">End month and year are required</p>
                   )}
                 </div>
               </div>
@@ -559,11 +801,20 @@ export default function EducationModal({
                     type="checkbox"
                     checked={currentlyStudying}
                     onChange={(e) => {
-                      setCurrentlyStudying(e.target.checked);
-                      if (e.target.checked) {
+                      const studying = e.target.checked;
+                      setCurrentlyStudying(studying);
+                      if (studying) {
                         setEndYear('');
+                        setEndMonth('');
                         setDateError('');
                       }
+                      syncCourseDurationFromDates(
+                        startYear,
+                        startMonth,
+                        studying ? '' : endYear,
+                        studying ? '' : endMonth,
+                        studying,
+                      );
                     }}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
@@ -638,26 +889,62 @@ export default function EducationModal({
                   )}
                 </div>
 
-                {/* Course Duration */}
+                {/* Course Duration — auto-filled from dates; editable */}
                 <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Course Duration <span className="text-amber-600">*</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Course Duration (years) <span className="text-amber-600">*</span>
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    inputMode="decimal"
-                    value={courseDuration}
-                    onChange={(e) => setCourseDuration(e.target.value)}
-                    placeholder="e.g., 3"
-                    className={`${inputClassName} ${(!courseDuration.trim() || (courseDuration.trim().length > 0 && !isCourseDurationNumeric)) && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
-                  />
-                  {!courseDuration.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Course duration is required</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={courseDuration}
+                      onChange={(e) => handleCourseDurationChange(e.target.value)}
+                      placeholder="e.g. 3.75"
+                      className={`${inputClassName} ${
+                        !effectiveCourseDuration.trim() ||
+                        (effectiveCourseDuration.length > 0 && !isCourseDurationNumeric)
+                          ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'
+                          : ''
+                      }`}
+                    />
+                    {computedDurationPreview &&
+                      durationManuallyEdited &&
+                      courseDuration.trim() !== computedDurationPreview && (
+                      <button
+                        type="button"
+                        onClick={handleRecalculateDuration}
+                        className="shrink-0 rounded-lg border border-blue-200 bg-blue-50 px-3 text-xs font-medium text-blue-700 hover:bg-blue-100"
+                        title="Reset to value calculated from your dates"
+                      >
+                        Use calculated
+                      </button>
+                    )}
+                  </div>
+                  {effectiveCourseDuration && isCourseDurationNumeric ? (
+                    <p className="mt-1 text-xs text-slate-600">
+                      {formatCourseDurationDisplay(effectiveCourseDuration)}
+                      {durationManuallyEdited ? ' (edited)' : ' (from dates)'}
+                    </p>
+                  ) : null}
+                  <p className="mt-1 text-xs text-slate-500">
+                    {currentlyStudying && startYear && startMonth
+                      ? `Auto-filled from ${formatEducationPeriod(startYear, startMonth, '', '', true).split(' – ')[0]} to today. You can edit if needed.`
+                      : startYear && startMonth && endYear && endMonth
+                        ? `Auto-filled from ${formatEducationPeriod(startYear, startMonth, endYear, endMonth, false)}. You can edit if needed.`
+                        : 'Select start and end dates to auto-fill, or enter duration in years manually.'}
+                  </p>
+                  {!effectiveCourseDuration.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">
+                      Set dates or enter course duration in years
+                    </p>
                   )}
-                  {courseDuration.trim().length > 0 && !isCourseDurationNumeric && (
-                    <p className="mt-1 text-xs text-red-600">Enter a valid number (up to 2 decimals).</p>
+                  {effectiveCourseDuration.length > 0 && !isCourseDurationNumeric && (
+                    <p className="mt-1 text-xs text-red-600">
+                      Enter a valid number of years (up to 2 decimals).
+                    </p>
                   )}
                 </div>
               </div>
@@ -809,15 +1096,15 @@ export default function EducationModal({
                   </p>
                   {hasDateOrderError && (
                     <p className="mt-1 text-xs font-medium text-amber-700">
-                      End Year cannot be before Start Year.
+                      End date cannot be before start date.
                     </p>
                   )}
                   {hasNumericError && (
                     <p className="mt-1 text-xs font-medium text-amber-700">
                       {[
                         gradeFormatError,
-                        String(courseDuration || '').trim().length > 0 && !isCourseDurationNumeric
-                          ? 'Course duration must be a valid number (up to 2 decimals).'
+                        effectiveCourseDuration.length > 0 && !isCourseDurationNumeric
+                          ? 'Course duration could not be calculated from the selected years.'
                           : null,
                       ]
                         .filter(Boolean)

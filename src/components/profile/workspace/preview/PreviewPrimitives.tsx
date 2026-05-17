@@ -13,10 +13,10 @@ export function PreviewMetaItem({
 }) {
   return (
     <div className={className}>
-      <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+      <p className="profile-page-label">
         {label}
       </p>
-      <div className="mt-0.5 text-sm font-medium text-gray-900">{value}</div>
+      <div className="profile-page-value mt-0.5">{value}</div>
     </div>
   );
 }
@@ -71,7 +71,7 @@ export function PreviewChipRow({
   return (
     <div className="space-y-1.5">
       {label ? (
-        <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+        <p className="profile-page-label">
           {label}
         </p>
       ) : null}

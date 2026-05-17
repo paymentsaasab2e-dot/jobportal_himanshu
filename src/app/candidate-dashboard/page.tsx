@@ -784,10 +784,6 @@ export default function CandidateDashboardPage() {
             subheading={greeting.subheading}
             stats={heroStats}
             onOpenMatches={handleJumpToMatches}
-            onExploreJobs={() => router.push("/explore-jobs")}
-            onViewApplications={() => router.push("/applications")}
-            onBrowseCourses={() => router.push("/lms/courses")}
-            onEditProfile={() => router.push("/profile")}
           />
 
           <div className="grid items-start gap-3 xl:grid-cols-[minmax(300px,0.82fr)_minmax(0,1.45fr)]">

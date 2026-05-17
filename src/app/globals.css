@@ -192,6 +192,490 @@ input[type="range"]::-moz-range-thumb {
   background: #94a3b8;
 }
 
+/*
+ * Profile modal typography (Inter headings, Arimo body)
+ * SEO-friendly scale — 4 sizes aligned with editor UI rhythm:
+ *   Title 1.25rem (20px) | Section 0.875rem (14px) | Field 0.8125rem (13px) | Helper 0.75rem (12px)
+ */
+/* Basic Information palette — shared by profile modals & /profile workspace */
+.profile-modal-typography,
+.profile-page-typography {
+  --profile-color-text: #111827;
+  --profile-color-label: #64748b;
+  --profile-color-muted: #94a3b8;
+  --profile-color-border: #e2e8f0;
+  --profile-color-section: #64748b;
+  --profile-color-cancel: #334155;
+}
+
+.profile-modal-typography {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--profile-color-text);
+}
+
+.profile-modal-typography h2,
+.profile-modal-typography .profile-modal-title {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: #111827;
+}
+
+.profile-modal-typography h3,
+.profile-modal-typography .profile-modal-section-title {
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.profile-modal-typography label,
+.profile-modal-typography .profile-modal-label {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.profile-modal-typography input:not([type="hidden"]),
+.profile-modal-typography select,
+.profile-modal-typography textarea,
+.profile-modal-typography button:not(.profile-modal-btn) {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.profile-modal-typography select {
+  font-weight: 400;
+}
+
+.profile-modal-typography input::placeholder,
+.profile-modal-typography textarea::placeholder {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+}
+
+.profile-modal-typography .profile-modal-helper {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--profile-color-label);
+}
+
+.profile-modal-typography .profile-modal-btn {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Compact form layout — Basic Information & profile drawers */
+.profile-modal-field {
+  box-sizing: border-box;
+  height: 2.25rem;
+  min-height: 2.25rem;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  border-style: solid;
+  padding-left: 0.875rem;
+  padding-right: 0.625rem;
+}
+
+.profile-modal-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.profile-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.profile-modal-section:not(:first-child) {
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.profile-modal-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.875rem;
+}
+
+@media (min-width: 480px) {
+  .profile-modal-form-grid--split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.profile-modal-form-grid__full {
+  grid-column: 1 / -1;
+}
+
+.profile-modal-phone-row {
+  display: grid;
+  grid-template-columns: minmax(6.75rem, 7.25rem) minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.profile-modal-phone-code-btn {
+  display: flex;
+  height: 2.25rem;
+  min-height: 2.25rem;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  padding: 0 0.625rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  text-align: left;
+}
+
+.profile-modal-phone-meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.375rem;
+}
+
+.profile-modal-phone-meta > *:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-modal-phone-meta > *:last-child {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.profile-modal-textarea {
+  box-sizing: border-box;
+  min-height: 5.5rem;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  border-style: solid;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.profile-modal-drawer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Legacy modal fields — match Basic Information compact scale */
+.profile-modal-typography input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+.profile-modal-typography select:not(.profile-modal-btn) {
+  box-sizing: border-box;
+  height: 2.25rem;
+  min-height: 2.25rem;
+  border-radius: 0.5rem;
+  padding-left: 0.875rem;
+  padding-right: 0.625rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--profile-color-text);
+  border-color: var(--profile-color-border);
+  background-color: #fff;
+}
+
+.profile-modal-typography textarea:not(.profile-modal-textarea) {
+  box-sizing: border-box;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--profile-color-text);
+  border-color: var(--profile-color-border);
+  background-color: #fff;
+}
+
+.profile-modal-typography label:not(:has(input[type="checkbox"])):not(:has(input[type="radio"])) {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.profile-modal-typography h3 {
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.profile-modal-typography section.border-t {
+  padding-top: 1.25rem;
+  border-top-color: #e2e8f0;
+}
+
+.profile-modal-typography .profile-modal-btn,
+.profile-modal-typography footer button.rounded-lg {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Map legacy Tailwind grays → Basic Information palette (edit / add / view drawers) */
+.profile-modal-typography .text-gray-900,
+.profile-modal-typography .text-gray-800 {
+  color: var(--profile-color-text) !important;
+}
+
+.profile-modal-typography .text-gray-700,
+.profile-modal-typography .text-gray-600,
+.profile-modal-typography .text-gray-500,
+.profile-modal-typography p.text-sm.font-medium.text-gray-700,
+.profile-modal-typography p.text-sm.font-semibold.text-gray-700 {
+  color: var(--profile-color-label) !important;
+}
+
+.profile-modal-typography .text-gray-400,
+.profile-modal-typography .text-slate-400,
+.profile-modal-typography .text-slate-500 {
+  color: var(--profile-color-muted) !important;
+}
+
+.profile-modal-typography .text-slate-600,
+.profile-modal-typography .text-slate-700 {
+  color: var(--profile-color-label) !important;
+}
+
+.profile-modal-typography h3.text-lg,
+.profile-modal-typography h4.text-sm.font-semibold.text-gray-900 {
+  color: var(--profile-color-section) !important;
+}
+
+.profile-modal-typography footer button.border-gray-300 {
+  border-color: var(--profile-color-border) !important;
+  color: var(--profile-color-cancel) !important;
+}
+
+/* Input value & placeholder colors (replaces modal-placeholder-black on profile) */
+.profile-modal-chrome input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.profile-modal-chrome select,
+.profile-modal-chrome textarea {
+  color: var(--profile-color-text) !important;
+  -webkit-text-fill-color: var(--profile-color-text);
+}
+
+.profile-modal-chrome input::placeholder,
+.profile-modal-chrome textarea::placeholder {
+  color: var(--profile-color-muted) !important;
+  opacity: 1 !important;
+}
+
+.profile-modal-chrome select option {
+  color: var(--profile-color-text);
+  background-color: #fff;
+}
+
+/* Profile workspace — same type scale & colors as Basic Information */
+.profile-page-typography {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--profile-color-text);
+}
+
+.profile-page-typography .profile-page-section-title {
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  color: #111827;
+}
+
+.profile-page-typography .profile-page-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.profile-page-typography .profile-page-value {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #111827;
+}
+
+/* Basic Information display — match edit modal label & field text */
+.profile-page-typography .profile-basic-info-display .profile-page-label {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--profile-color-label);
+}
+
+.profile-page-typography .profile-basic-info-display .profile-page-value {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--profile-color-text);
+}
+
+.profile-page-typography .profile-page-helper,
+.profile-page-typography .profile-page-empty {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.profile-page-typography .profile-page-tab {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.profile-page-typography p.text-sm.text-gray-500,
+.profile-page-typography p.text-sm.text-slate-500 {
+  font-size: 0.8125rem;
+  color: var(--profile-color-label);
+}
+
+/* Map legacy preview / section grays → Basic Information palette */
+.profile-page-typography .text-gray-900,
+.profile-page-typography .text-gray-800 {
+  color: var(--profile-color-text) !important;
+}
+
+.profile-page-typography .text-gray-700,
+.profile-page-typography .text-gray-600,
+.profile-page-typography .text-gray-500 {
+  color: var(--profile-color-label) !important;
+}
+
+.profile-page-typography .text-gray-400 {
+  color: var(--profile-color-muted) !important;
+}
+
+.profile-page-typography .text-blue-600,
+.profile-page-typography .text-blue-700,
+.profile-page-typography .text-blue-800 {
+  color: var(--profile-color-label) !important;
+}
+
+.profile-page-typography h4.text-base.font-bold,
+.profile-page-typography .text-base.font-bold,
+.profile-page-typography .text-lg.font-bold {
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--profile-color-text) !important;
+}
+
+.profile-page-typography .text-sm.font-semibold.text-gray-900,
+.profile-page-typography p.text-sm.font-semibold {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--profile-color-text) !important;
+}
+
+.profile-page-typography .text-xs {
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.profile-page-typography .text-base {
+  font-size: 0.8125rem;
+}
+
+.profile-page-typography .border-gray-100,
+.profile-page-typography .border-gray-200 {
+  border-color: var(--profile-color-border) !important;
+}
+
+.profile-page-typography .profile-page-tab:not(.border-gray-900) {
+  color: var(--profile-color-label);
+}
+
+.profile-page-typography .profile-page-tab.border-gray-900 {
+  color: #fff;
+}
+
+.profile-page-typography p.text-\[11px\].font-medium.uppercase,
+.profile-page-typography .text-\[11px\].font-medium.uppercase.tracking-wide.text-gray-400 {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--profile-color-muted) !important;
+}
+
+/* View-details drawer body */
+.profile-modal-typography .profile-view-details {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--profile-color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Always-visible scrollbar for profile drawers and main profile panel */
+.profile-modal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
+}
+
+.profile-modal-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.profile-modal-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+
+.profile-modal-scroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 6px;
+  border: 2px solid #f1f5f9;
+}
+
+.profile-modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
 /* Shimmer animation for progress bar */
 @keyframes shimmer {
   0% {
