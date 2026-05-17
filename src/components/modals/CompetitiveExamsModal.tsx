@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
+import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import { profileFieldClass, profileTextareaClass } from '@/lib/profile-modal-ui';
 
 interface CompetitiveExamsModalProps {
@@ -390,22 +391,9 @@ export default function CompetitiveExamsModal({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Valid Until <span className="text-gray-500 text-xs">(Optional)</span>
           </label>
-          <input
-            type="text"
+          <ProfileDatePicker
             value={validUntil}
-            onChange={(e) => setValidUntil(e.target.value)}
-            placeholder="Pick a date"
-            onFocus={(e) => {
-              if (e.target.type !== 'date') {
-                e.target.type = 'date';
-              }
-            }}
-            onBlur={(e) => {
-              if (!e.target.value) {
-                e.target.type = 'text';
-              }
-            }}
-            className={inputClassName}
+            onChange={setValidUntil}
           />
         </div>
 

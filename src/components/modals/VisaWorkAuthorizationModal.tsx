@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
+import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import { ALL_COUNTRY_CODES } from '@/lib/country-codes';
 
 interface VisaWorkAuthorizationModalProps {
@@ -510,11 +511,9 @@ export default function VisaWorkAuthorizationModal({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Visa Expiry Date
                 </label>
-                <input
-                  type="date"
+                <ProfileDatePicker
                   value={sectionData.visaExpiryDate || ''}
-                  onChange={(e) => handleVisaDetailChange(sectionId, 'visaExpiryDate', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(value) => handleVisaDetailChange(sectionId, 'visaExpiryDate', value)}
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   Visa must always be valid for your assignment
@@ -865,22 +864,11 @@ export default function VisaWorkAuthorizationModal({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Visa Expiry Date <span className="text-amber-600">*</span>
                 </label>
-                <div className="relative">
-                  <svg
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9095A1] pointer-events-none"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <input
-                    type="date"
-                    value={visaDetailsExpected?.visaExpiryDate || ''}
-                    onChange={(e) => handleVisaDetailChange('expected', 'visaExpiryDate', e.target.value)}
-                    className={`w-full px-4 py-2 pl-10 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.visaExpiryDate ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
-                  />
-                </div>
+                <ProfileDatePicker
+                  value={visaDetailsExpected?.visaExpiryDate || ''}
+                  onChange={(value) => handleVisaDetailChange('expected', 'visaExpiryDate', value)}
+                  invalid={!visaDetailsExpected?.visaExpiryDate}
+                />
                 {!visaDetailsExpected?.visaExpiryDate && (
                   <p className="mt-1 text-xs text-amber-600">Expiry date is required</p>
                 )}

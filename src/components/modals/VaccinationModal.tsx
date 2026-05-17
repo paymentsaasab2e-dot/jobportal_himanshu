@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import { ProfileDocumentsUpload } from '../profile/ProfileDocumentsUpload';
 import {
   normalizeProfileDocuments,
@@ -131,28 +132,10 @@ export default function VaccinationModal({
           <label className="mb-2 block text-sm font-medium text-gray-700">
             Last Vaccination Date <span className="text-xs font-normal text-gray-500">(Optional)</span>
           </label>
-          <div className="relative">
-            <input
-              type="date"
-              value={lastVaccinationDate}
-              onChange={(e) => setLastVaccinationDate(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-            />
-            <svg
-              className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9095A1]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
+          <ProfileDatePicker
+            value={lastVaccinationDate}
+            onChange={setLastVaccinationDate}
+          />
           <p className="mt-1 text-xs text-gray-500">The date of your last vaccination.</p>
         </div>
 

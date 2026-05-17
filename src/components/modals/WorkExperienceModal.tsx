@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import GapExplanationModal, { GapExplanationData } from './GapExplanationModal';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
-import type { RefObject } from 'react';
 import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
+import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import { profileFieldClass, profileSectionTitleClass, profileTextareaClass } from '@/lib/profile-modal-ui';
 
 interface WorkExperienceModalProps {
@@ -144,8 +144,6 @@ export default function WorkExperienceModal({
   const [documents, setDocuments] = useState<WorkExperienceDocument[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const startDateInputRef = useRef<HTMLInputElement>(null);
-  const endDateInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
   const [workExperiences, setWorkExperiences] = useState<WorkExperienceEntry[]>(initialData?.workExperiences || []);
   const [expandedEntries, setExpandedEntries] = useState<{ [key: string]: boolean }>({});
@@ -382,15 +380,6 @@ export default function WorkExperienceModal({
     return `${startFormatted} - ${endFormatted}`;
   };
 
-  const formatDateForDisplay = (dateString: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
-
   const calculateGap = (previousEndDate: string, newStartDate: string) => {
     if (!previousEndDate || !newStartDate) {
       return null;
@@ -509,15 +498,6 @@ export default function WorkExperienceModal({
     
     // Check for gap when start date is selected
     checkForGapAndShowModal(newStartDate);
-  };
-
-  const openDatePicker = (inputRef: RefObject<HTMLInputElement | null>) => {
-    const input = inputRef.current;
-    if (!input || input.disabled) return;
-    input.focus();
-    if (typeof input.showPicker === 'function') {
-      input.showPicker();
-    }
   };
 
   // File upload handlers
@@ -947,56 +927,26 @@ export default function WorkExperienceModal({
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">Start Date <span className="text-amber-600">*</span></label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => openDatePicker(startDateInputRef)}
-                      className={`${inputClassName} text-left ${startDate ? 'text-gray-900' : 'text-gray-400'} ${!startDate && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
-                    >
-                      {startDate ? formatDateForDisplay(startDate) : 'Select start date'}
-                    </button>
-                    <input
-                      ref={startDateInputRef}
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => {
-                        handleStartDateChange(e.target.value);
-                        e.currentTarget.blur();
-                      }}
-                      tabIndex={-1}
-                      className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
-                      aria-hidden="true"
-                    />
-                  </div>
+                  <ProfileDatePicker
+                    value={startDate}
+                    max={endDate || undefined}
+                    onChange={handleStartDateChange}
+                    invalid={!startDate}
+                  />
                   {!startDate && (
                     <p className="mt-1 text-xs text-amber-600">Start date is required</p>
                   )}
                 </div>
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">End Date {!currentlyWorkHere && <span className="text-amber-600">*</span>}</label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => openDatePicker(endDateInputRef)}
-                      disabled={currentlyWorkHere}
-                      className={`${inputClassName} text-left ${endDate ? 'text-gray-900' : 'text-gray-400'} ${currentlyWorkHere ? 'bg-gray-100' : (!endDate && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500')}`}
-                    >
-                      {currentlyWorkHere ? 'Present' : endDate ? formatDateForDisplay(endDate) : 'Select end date'}
-                    </button>
-                    <input
-                      ref={endDateInputRef}
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => {
-                        setEndDate(e.target.value);
-                        e.currentTarget.blur();
-                      }}
-                      disabled={currentlyWorkHere}
-                      tabIndex={-1}
-                      className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
-                      aria-hidden="true"
-                    />
-                  </div>
+                  <ProfileDatePicker
+                    value={endDate}
+                    min={startDate || undefined}
+                    onChange={setEndDate}
+                    disabled={currentlyWorkHere}
+                    invalid={!currentlyWorkHere && !endDate}
+                    displayValue={currentlyWorkHere ? 'Present' : undefined}
+                  />
                   {!currentlyWorkHere && !endDate && (
                     <p className="mt-1 text-xs text-amber-600">End date is required</p>
                   )}

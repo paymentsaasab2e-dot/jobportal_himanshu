@@ -27,6 +27,8 @@ import {
   fetchProfileCompleteness,
   type ProfileCompletenessResponse,
 } from "@/lib/profile-completion";
+import { getAuthHeaders, getStoredCandidateId, syncAuthStorage } from "@/lib/auth-storage";
+import { useTabVisibilityRefresh } from "@/hooks/useTabVisibilityRefresh";
 import { recordCandidateNotification } from "@/lib/notifications";
 
 const PAGE_BG =
@@ -204,11 +206,9 @@ export default function CandidateDashboardPage() {
 
   useEffect(() => {
     if (!authLoading) {
+      syncAuthStorage();
       const idFromUser = user?.id || null;
-      const idFromStorage =
-        typeof window !== 'undefined'
-          ? localStorage.getItem('candidateId') || sessionStorage.getItem('candidateId')
-          : null;
+      const idFromStorage = getStoredCandidateId();
       setCandidateId(idFromUser || idFromStorage);
       if (!isAuthenticated) {
         setLoading(false);
@@ -272,7 +272,7 @@ export default function CandidateDashboardPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/cv/dashboard/${targetId}`, {
         method: "GET",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
       });
 
       const result = (await response.json()) as {
@@ -297,6 +297,16 @@ export default function CandidateDashboardPage() {
     void refreshProfileCompleteness(candidateId);
     void fetchDashboardData(candidateId);
   }, [candidateId, refreshProfileCompleteness, fetchDashboardData]);
+
+  useTabVisibilityRefresh(() => {
+    if (!isAuthenticated) return;
+    syncAuthStorage();
+    const id = candidateId || user?.id || getStoredCandidateId();
+    if (!id) return;
+    if (!candidateId) setCandidateId(id);
+    void refreshProfileCompleteness(id);
+    void fetchDashboardData(id);
+  }, isAuthenticated);
 
   useEffect(() => {
     if (!candidateId || !profileCompletionDetails) return;
@@ -328,19 +338,19 @@ export default function CandidateDashboardPage() {
       try {
         let response = await fetch(`${API_BASE_URL}/cv-analysis/${candidateId}`, {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: getAuthHeaders(),
         });
 
         if (response.status === 404) {
           await fetch(`${API_BASE_URL}/cv-analysis/analyze`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ candidateId }),
           });
 
           response = await fetch(`${API_BASE_URL}/cv-analysis/${candidateId}`, {
             method: "GET",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
           });
         }
 

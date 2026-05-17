@@ -3,6 +3,12 @@
 import { useState, useRef, useEffect } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
+import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
+import {
+  profileFieldClass,
+  profileSelectClassName,
+  profileTextareaClass,
+} from '@/lib/profile-modal-ui';
 
 interface InternshipModalProps {
   isOpen: boolean;
@@ -309,11 +315,7 @@ export default function InternshipModal({
                 value={internshipTitle}
                 onChange={(e) => setInternshipTitle(e.target.value)}
                 placeholder="e.g., Marketing & Communications Intern"
-                className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!internshipTitle.trim() ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                }}
+                className={`${profileFieldClass(!internshipTitle.trim())}`}
               />
               {!internshipTitle.trim() && (
                 <p className="mt-1 text-xs text-amber-600">Internship title is required</p>
@@ -328,11 +330,7 @@ export default function InternshipModal({
               <select
                 value={internshipType}
                 onChange={(e) => setInternshipType(e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white ${!internshipType ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                }}
+                className={`${profileSelectClassName} ${!internshipType ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''}`}
               >
                 <option value="">Select internship type</option>
                 <option value="full-time">Full-time Internship</option>
@@ -358,11 +356,7 @@ export default function InternshipModal({
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="e.g., SAASA Corp."
-                className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!companyName.trim() ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                }}
+                className={`${profileFieldClass(!companyName.trim())}`}
               />
               {!companyName.trim() && (
                 <p className="mt-1 text-xs text-amber-600">Company name is required</p>
@@ -377,11 +371,7 @@ export default function InternshipModal({
               <select
                 value={domainDepartment}
                 onChange={(e) => setDomainDepartment(e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white ${!domainDepartment ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                }}
+                className={`${profileSelectClassName} ${!domainDepartment ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''}`}
               >
                 <option value="">Select domain / department</option>
                 <option value="marketing">Marketing</option>
@@ -407,27 +397,12 @@ export default function InternshipModal({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Start Date <span className="text-amber-600">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={startDate}
-                  max={endDate || undefined}
-                  onChange={(e) => handleStartDateChange(e.target.value)}
-                  className={`w-full px-4 py-3 pl-10 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!startDate ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '14px',
-                  }}
-                />
-                <svg
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9095A1] pointer-events-none"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
+              <ProfileDatePicker
+                value={startDate}
+                max={endDate || undefined}
+                onChange={handleStartDateChange}
+                invalid={!startDate}
+              />
               {!startDate && (
                 <p className="mt-1 text-xs text-amber-600">Start date is required</p>
               )}
@@ -436,28 +411,14 @@ export default function InternshipModal({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 End Date {!currentlyWorking && <span className="text-amber-600">*</span>}
               </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={endDate}
-                  min={startDate || undefined}
-                  onChange={(e) => handleEndDateChange(e.target.value)}
-                  disabled={currentlyWorking}
-                  className={`w-full px-4 py-3 pl-10 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${!currentlyWorking && !endDate ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : (dateError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300')}`}
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '14px',
-                  }}
-                />
-                <svg
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#9095A1] pointer-events-none"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
+              <ProfileDatePicker
+                value={endDate}
+                min={startDate || undefined}
+                onChange={handleEndDateChange}
+                disabled={currentlyWorking}
+                invalid={!currentlyWorking && !endDate}
+                displayValue={currentlyWorking ? 'Present' : undefined}
+              />
               {!currentlyWorking && !endDate && (
                 <p className="mt-1 text-xs text-amber-600">End date is required</p>
               )}
@@ -496,11 +457,7 @@ export default function InternshipModal({
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="City, Country"
-                className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!location.trim() ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                }}
+                className={profileFieldClass(!location.trim())}
               />
               {!location.trim() && (
                 <p className="mt-1 text-xs text-amber-600">Location is required</p>
@@ -513,11 +470,7 @@ export default function InternshipModal({
               <select
                 value={workMode}
                 onChange={(e) => setWorkMode(e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white ${!workMode ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                }}
+                className={`${profileSelectClassName} ${!workMode ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''}`}
               >
                 <option value="">Select work mode</option>
                 <option value="remote">Remote</option>

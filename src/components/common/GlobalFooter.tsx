@@ -11,6 +11,8 @@ export default function GlobalFooter() {
         '/whatsapp',
         '/whatsapp/verify',
         '/profile',
+        '/extract',
+        '/uploadcv',
     ];
     
     const shouldHide = hideFooterPaths.some(path => pathname === path || pathname.startsWith(path + '/'));

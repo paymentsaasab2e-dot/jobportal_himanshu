@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 import { ProfilePageShell } from '@/components/profile/layout';
 import {
@@ -99,6 +99,8 @@ import VisaWorkAuthorizationModal, { VisaWorkAuthorizationData } from '../../com
 import VaccinationModal, { VaccinationData } from '../../components/modals/VaccinationModal';
 import ResumeModal, { ResumeData as BaseResumeData } from '../../components/modals/ResumeModal';
 import { API_BASE_URL } from '@/lib/api-base';
+import { getAuthHeaders, getStoredCandidateId, syncAuthStorage } from '@/lib/auth-storage';
+import { useTabVisibilityRefresh } from '@/hooks/useTabVisibilityRefresh';
 import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
 import ProfileDrawer from '../../components/ui/ProfileDrawer';
 
@@ -196,14 +198,26 @@ export default function ProfilePage() {
   // Summary form state
   const [summaryText, setSummaryText] = useState('');
 
-  // Loading state
+  // Loading state — skip full-page loader on return visits in the same tab session
+  const PROFILE_SESSION_LOADED_KEY = 'profileInitialLoadDone';
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
+  const [profileSessionReady, setProfileSessionReady] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      sessionStorage.getItem(PROFILE_SESSION_LOADED_KEY) === '1',
+  );
+  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(profileSessionReady);
+  const completenessFetchRef = useRef(0);
 
   useEffect(() => {
+    sessionStorage.removeItem('uploadStatus');
+  }, []);
+
+  useEffect(() => {
+    if (profileSessionReady) return;
     const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [profileSessionReady]);
 
   // Profile completeness state
   const [profileCompleteness, setProfileCompleteness] = useState({
@@ -483,10 +497,7 @@ export default function ProfilePage() {
       
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`,
-        },
+        headers: getAuthHeaders(),
       }).catch((fetchError) => {
         console.error('❌ Network error fetching profile:', fetchError);
         console.error('⚠️ Check if backend server is running at:', API_BASE_URL);
@@ -767,12 +778,24 @@ export default function ProfilePage() {
     }
   };
 
+  const refreshProfileDataRef = useRef(refreshProfileData);
+  refreshProfileDataRef.current = refreshProfileData;
+
+  useTabVisibilityRefresh(() => {
+    syncAuthStorage();
+    const id = getStoredCandidateId();
+    if (id) {
+      void refreshProfileDataRef.current(id);
+    }
+  });
+
   // Fetch and populate profile data on component mount
   useEffect(() => {
     const fetchProfileData = async () => {
-      const candidateId = sessionStorage.getItem('candidateId');
+      syncAuthStorage();
+      const candidateId = getStoredCandidateId();
       if (!candidateId) {
-        console.warn('No candidate ID found in session storage');
+        console.warn('No candidate ID found in auth storage');
         setIsLoadingProfile(false);
         return;
       }
@@ -788,6 +811,9 @@ export default function ProfilePage() {
         console.error('Error fetching profile data:', error);
       } finally {
         setIsLoadingProfile(false);
+        sessionStorage.setItem(PROFILE_SESSION_LOADED_KEY, '1');
+        setProfileSessionReady(true);
+        setMinLoadingTimeFinished(true);
       }
     };
 
@@ -797,34 +823,25 @@ export default function ProfilePage() {
   // Fetch CV Analysis on component mount
   useEffect(() => {
     const fetchCvAnalysis = async () => {
-      const candidateId = sessionStorage.getItem('candidateId');
+      const candidateId = getStoredCandidateId();
       if (!candidateId) return;
 
       try {
         let response = await fetch(`${API_BASE_URL}/cv-analysis/${candidateId}`, {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`,
-          },
+          headers: getAuthHeaders(),
         });
 
         if (response.status === 404) {
           await fetch(`${API_BASE_URL}/cv-analysis/analyze`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`,
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ candidateId }),
           });
 
           response = await fetch(`${API_BASE_URL}/cv-analysis/${candidateId}`, {
             method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`,
-            },
+            headers: getAuthHeaders(),
           });
         }
 
@@ -845,7 +862,7 @@ export default function ProfilePage() {
 
   // Recalculate completeness whenever relevant data changes
   const fetchAndUpdateCompleteness = async () => {
-    const candidateId = sessionStorage.getItem('candidateId');
+    const candidateId = getStoredCandidateId();
     if (!candidateId) {
       calculateProfileCompleteness();
       return;
@@ -872,7 +889,12 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    fetchAndUpdateCompleteness();
+    const requestId = ++completenessFetchRef.current;
+    const timer = window.setTimeout(() => {
+      if (requestId !== completenessFetchRef.current) return;
+      void fetchAndUpdateCompleteness();
+    }, 300);
+    return () => window.clearTimeout(timer);
   }, [
     basicInfoData,
     summaryText,
@@ -1359,7 +1381,7 @@ export default function ProfilePage() {
     return () => window.clearTimeout(timeoutId);
   }, [careerPreferencesSuccessMessage]);
 
-  if (isLoadingProfile || !minLoadingTimeFinished) {
+  if (!profileSessionReady && (isLoadingProfile || !minLoadingTimeFinished)) {
     return <GlobalLoader />;
   }
 
@@ -1436,12 +1458,6 @@ export default function ProfilePage() {
             pendingRows={profileCompleteness.missingSections}
             atsDisplay={atsDisplay}
             aiSuggestions={PROFILE_AI_SUGGESTIONS}
-            promo={
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-white/80 p-3 text-center text-[11px] leading-relaxed text-gray-500">
-                Tip: keep your summary and skills updated — recruiters search on
-                both.
-              </div>
-            }
             onImprove={openFirstMissingModal}
           />
           <div className="flex min-w-0 h-[750px] flex-col lg:h-[820px]">
@@ -1658,7 +1674,7 @@ export default function ProfilePage() {
                                 }}
                                 onDelete={async () => {
                                 if (await showConfirm(`Are you sure you want to delete this work experience "${entry.jobTitle} at ${entry.companyName}"?`)) {
-                                  const candidateId = sessionStorage.getItem('candidateId');
+                                  const candidateId = getStoredCandidateId();
                                   if (!candidateId) {
                                     showAlert('Candidate ID not found. Please refresh the page.');
                                     return;
@@ -1765,7 +1781,7 @@ export default function ProfilePage() {
                                   `Are you sure you want to delete this internship "${internshipItem.internshipTitle} at ${internshipItem.companyName}"?`,
                                 )
                               ) {
-                                const candidateId = sessionStorage.getItem('candidateId');
+                                const candidateId = getStoredCandidateId();
                                 if (!candidateId) {
                                   showAlert('Candidate ID not found. Please refresh the page.');
                                   return;
@@ -1874,7 +1890,7 @@ export default function ProfilePage() {
                               }}
                               onDelete={async () => {
                               if (await showConfirm(`Are you sure you want to delete this gap explanation "${gapItem.reasonForGap}"?`)) {
-                                const candidateId = sessionStorage.getItem('candidateId');
+                                const candidateId = getStoredCandidateId();
                                 if (!candidateId) {
                                   showAlert('Candidate ID not found. Please refresh the page.');
                                   return;
@@ -1989,7 +2005,7 @@ export default function ProfilePage() {
                                 }}
                                 onDelete={async () => {
                                 if (await showConfirm(`Are you sure you want to delete this education "${entry.degreeProgram} at ${entry.institutionName}"?`)) {
-                                  const candidateId = sessionStorage.getItem('candidateId');
+                                  const candidateId = getStoredCandidateId();
                                   if (!candidateId) {
                                     showAlert('Candidate ID not found. Please refresh the page.');
                                     return;
@@ -2095,7 +2111,7 @@ export default function ProfilePage() {
                                   `Are you sure you want to delete this academic achievement "${achievementItem.achievementTitle}"?`
                                 )
                               ) {
-                                const candidateId = sessionStorage.getItem('candidateId');
+                                const candidateId = getStoredCandidateId();
                                 if (!candidateId) {
                                   showAlert('Candidate ID not found.');
                                   return;
@@ -2208,7 +2224,7 @@ export default function ProfilePage() {
                               }}
                               onDelete={async () => {
                               if (await showConfirm(`Are you sure you want to delete this competitive exam "${exam.examName}"?`)) {
-                                const candidateId = sessionStorage.getItem('candidateId');
+                                const candidateId = getStoredCandidateId();
                                 if (!candidateId) {
                                   showAlert('Candidate ID not found.');
                                   return;
@@ -2300,7 +2316,7 @@ export default function ProfilePage() {
                           onEdit={() => setIsSkillsModalOpen(true)}
                           onDelete={async () => {
                           if (await showConfirm('Are you sure you want to delete all skills?')) {
-                            const candidateId = sessionStorage.getItem('candidateId');
+                            const candidateId = getStoredCandidateId();
                             if (!candidateId) {
                               showAlert('Candidate ID not found.');
                               return;
@@ -2402,7 +2418,7 @@ export default function ProfilePage() {
                           onEdit={() => setIsLanguagesModalOpen(true)}
                           onDelete={async () => {
                           if (await showConfirm('Are you sure you want to delete all languages?')) {
-                            const candidateId = sessionStorage.getItem('candidateId');
+                            const candidateId = getStoredCandidateId();
                             if (!candidateId) {
                               showAlert('Candidate ID not found.');
                               return;
@@ -2503,7 +2519,7 @@ export default function ProfilePage() {
                               }}
                               onDelete={async () => {
                               if (await showConfirm(`Are you sure you want to delete this project "${projectItem.projectTitle}"?`)) {
-                                const candidateId = sessionStorage.getItem('candidateId');
+                                const candidateId = getStoredCandidateId();
                                 if (!candidateId) {
                                   showAlert('Candidate ID not found.');
                                   return;
@@ -2603,7 +2619,7 @@ export default function ProfilePage() {
                           }}
                           onDeleteLink={async (link) => {
                           if (await showConfirm(`Are you sure you want to delete this portfolio link "${link.title || link.url}"?`)) {
-                            const candidateId = sessionStorage.getItem('candidateId');
+                            const candidateId = getStoredCandidateId();
                             if (!candidateId) {
                               showAlert('Candidate ID not found.');
                               return;
@@ -2712,7 +2728,7 @@ export default function ProfilePage() {
                                 }}
                                 onDelete={async () => {
                                 if (await showConfirm(`Are you sure you want to delete this certification "${cert.certificationName}"?`)) {
-                                  const candidateId = sessionStorage.getItem('candidateId');
+                                  const candidateId = getStoredCandidateId();
                                   if (!candidateId) {
                                     showAlert('Candidate ID not found.');
                                     return;
@@ -2821,7 +2837,7 @@ export default function ProfilePage() {
                                 }}
                                 onDelete={async () => {
                                 if (await showConfirm(`Are you sure you want to delete this accomplishment "${acc.title}"?`)) {
-                                  const candidateId = sessionStorage.getItem('candidateId');
+                                  const candidateId = getStoredCandidateId();
                                   if (!candidateId) {
                                     showAlert('Candidate ID not found.');
                                     return;
@@ -2917,7 +2933,7 @@ export default function ProfilePage() {
                           onEdit={() => setIsCareerPreferencesModalOpen(true)}
                           onDelete={async () => {
                           if (await showConfirm('Are you sure you want to delete your career preferences?')) {
-                            const candidateId = sessionStorage.getItem('candidateId');
+                            const candidateId = getStoredCandidateId();
                             if (!candidateId) {
                               showAlert('Candidate ID not found.');
                               return;
@@ -3017,7 +3033,7 @@ export default function ProfilePage() {
                                     `Are you sure you want to delete your visa entry for "${countryName}"?`,
                                   )
                                 ) {
-                                  const candidateId = sessionStorage.getItem('candidateId');
+                                  const candidateId = getStoredCandidateId();
                                   if (!candidateId) return;
                                   try {
                                     const response = await fetch(
@@ -3086,7 +3102,7 @@ export default function ProfilePage() {
                                     `Are you sure you want to delete your visa entry for "${entry.countryName || entry.country}"?`,
                                   )
                                 ) {
-                                  const candidateId = sessionStorage.getItem('candidateId');
+                                  const candidateId = getStoredCandidateId();
                                   if (!candidateId) return;
                                   try {
                                     const response = await fetch(
@@ -3161,7 +3177,7 @@ export default function ProfilePage() {
                           onEdit={() => setIsVaccinationModalOpen(true)}
                           onDelete={async () => {
                           if (await showConfirm('Are you sure you want to delete your vaccination information?')) {
-                            const candidateId = sessionStorage.getItem('candidateId');
+                            const candidateId = getStoredCandidateId();
                             if (!candidateId) {
                               showAlert('Candidate ID not found.');
                               return;
@@ -3262,7 +3278,7 @@ export default function ProfilePage() {
         isOpen={isBasicInfoModalOpen}
         onClose={() => setIsBasicInfoModalOpen(false)}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           const previousBasicInfo = basicInfoData;
@@ -3302,7 +3318,7 @@ export default function ProfilePage() {
         summaryText={summaryText}
         onSummaryChange={setSummaryText}
         onSave={async () => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
@@ -3336,7 +3352,7 @@ export default function ProfilePage() {
           setEditingGapExplanationId(null);
         }}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
@@ -3390,7 +3406,7 @@ export default function ProfilePage() {
           return entryToEdit ? { workExperiences: [entryToEdit] } : undefined;
         })() : workExperienceData}
         onAddEntry={async (entry) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return null;
 
           try {
@@ -3460,7 +3476,7 @@ export default function ProfilePage() {
           }
         }}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) {
             showAlert('Candidate ID not found. Please refresh the page.');
             return;
@@ -3573,7 +3589,7 @@ export default function ProfilePage() {
         }}
         mode={internshipModalMode}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
@@ -3657,7 +3673,7 @@ export default function ProfilePage() {
           setEditingEducationId(null);
         }}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (candidateId) {
             try {
               // Upload documents first if any
@@ -3741,7 +3757,7 @@ export default function ProfilePage() {
           setEditingAcademicAchievementId(null);
         }}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
@@ -3830,7 +3846,7 @@ export default function ProfilePage() {
           setEditingCompetitiveExamId(null);
         }}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
@@ -3906,7 +3922,7 @@ export default function ProfilePage() {
         isOpen={isSkillsModalOpen}
         onClose={() => setIsSkillsModalOpen(false)}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (candidateId) {
             try {
               const response = await fetch(`${API_BASE_URL}/profile/skills/${candidateId}`, {
@@ -3938,7 +3954,7 @@ export default function ProfilePage() {
         isOpen={isLanguagesModalOpen}
         onClose={() => setIsLanguagesModalOpen(false)}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (candidateId) {
             try {
               const postWithProxyFallback = async (url: string, options: RequestInit) => {
@@ -4016,7 +4032,7 @@ export default function ProfilePage() {
           setEditingProjectId(null);
         }}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
@@ -4095,7 +4111,7 @@ export default function ProfilePage() {
         initialEditingLinkId={editingPortfolioLinkId}
         onSave={async (data) => {
           // This is called when closing the modal with all links
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
@@ -4142,7 +4158,7 @@ export default function ProfilePage() {
         }}
         onAddLink={async (link) => {
           // Save individual link immediately to database
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
@@ -4204,7 +4220,7 @@ export default function ProfilePage() {
           setEditingCertificationId(null);
         }}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
@@ -4292,7 +4308,7 @@ export default function ProfilePage() {
           setEditingAccomplishmentId(null);
         }}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
@@ -4374,7 +4390,7 @@ export default function ProfilePage() {
         isOpen={isCareerPreferencesModalOpen}
         onClose={() => setIsCareerPreferencesModalOpen(false)}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (candidateId) {
             try {
               const response = await fetch(`${API_BASE_URL}/profile/career-preferences/${candidateId}`, {
@@ -4408,7 +4424,7 @@ export default function ProfilePage() {
         mode={visaModalMode}
         editingEntryId={editingVisaEntryId}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
@@ -4517,7 +4533,7 @@ export default function ProfilePage() {
         isOpen={isVaccinationModalOpen}
         onClose={() => setIsVaccinationModalOpen(false)}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
@@ -4611,7 +4627,7 @@ export default function ProfilePage() {
         isOpen={isResumeModalOpen}
         onClose={() => setIsResumeModalOpen(false)}
         onSave={async (data) => {
-          const candidateId = sessionStorage.getItem('candidateId');
+          const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {

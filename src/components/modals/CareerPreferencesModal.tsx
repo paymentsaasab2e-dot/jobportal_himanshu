@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef, KeyboardEvent } from 'react';
-import type { RefObject } from 'react';
+import { useState, useEffect, KeyboardEvent } from 'react';
 import Image from 'next/image';
-import { CalendarDays } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/api-base';
+import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import { profileFieldClass } from '@/lib/profile-modal-ui';
 
 interface CareerPreferencesModalProps {
   isOpen: boolean;
@@ -70,12 +70,6 @@ const FUNCTIONAL_AREAS = [
 
 const FUNCTIONAL_AREAS_PRESET = FUNCTIONAL_AREAS.filter((a) => a !== 'Other');
 
-/** Display `YYYY-MM-DD` as DD-MM-YYYY without timezone shift. */
-function formatIsoDateForDisplay(ymd: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((ymd || '').trim());
-  if (!m) return ymd;
-  return `${m[3]}-${m[2]}-${m[1]}`;
-}
 
 const JOB_TYPES = ['Full-time', 'Contract', 'Part-time', 'Freelance', 'Internship'];
 
@@ -189,7 +183,6 @@ export default function CareerPreferencesModal({
     parseAvailabilityManual(initialData?.availabilityToStart).text,
   );
   const [noticePeriod, setNoticePeriod] = useState(initialData?.noticePeriod || '');
-  const availabilityDateInputRef = useRef<HTMLInputElement>(null);
   const [aiSuggestedJobTitles, setAiSuggestedJobTitles] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [suggestionError, setSuggestionError] = useState('');
@@ -241,14 +234,6 @@ export default function CareerPreferencesModal({
     setSuggestionError('');
   };
 
-  const openAvailabilityDatePicker = (inputRef: RefObject<HTMLInputElement | null>) => {
-    const input = inputRef.current;
-    if (!input || input.disabled) return;
-    input.focus();
-    if (typeof input.showPicker === 'function') {
-      input.showPicker();
-    }
-  };
 
   useEffect(() => {
     const query = jobTitleInput.trim();
@@ -307,14 +292,24 @@ export default function CareerPreferencesModal({
     };
   }, [jobTitleInput, preferredJobTitles]);
 
+  const addJobTitleFromInput = () => {
+    const title = jobTitleInput.trim();
+    if (!title) return;
+    const alreadyAdded = preferredJobTitles.some(
+      (existing) => existing.toLowerCase() === title.toLowerCase(),
+    );
+    if (!alreadyAdded) {
+      setPreferredJobTitles([...preferredJobTitles, title]);
+    }
+    setJobTitleInput('');
+    setAiSuggestedJobTitles([]);
+    setSuggestionError('');
+  };
+
   const handleAddJobTitle = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && jobTitleInput.trim()) {
+    if (e.key === 'Enter') {
       e.preventDefault();
-      const title = jobTitleInput.trim();
-      if (!preferredJobTitles.includes(title)) {
-        setPreferredJobTitles([...preferredJobTitles, title]);
-      }
-      setJobTitleInput('');
+      addJobTitleFromInput();
     }
   };
 
@@ -495,14 +490,24 @@ export default function CareerPreferencesModal({
                         ))}
                       </div>
                     )}
-                    <input
-                      type="text"
-                      value={jobTitleInput}
-                      onChange={(e) => setJobTitleInput(e.target.value)}
-                      onKeyPress={handleAddJobTitle}
-                      placeholder="e.g., Software Engineer, Marketing Executive…"
-                      className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${preferredJobTitles.length === 0 ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={jobTitleInput}
+                        onChange={(e) => setJobTitleInput(e.target.value)}
+                        onKeyDown={handleAddJobTitle}
+                        placeholder="e.g., Software Engineer, Marketing Executive…"
+                        className={`${profileFieldClass(preferredJobTitles.length === 0)} flex-1 min-w-0`}
+                      />
+                      <button
+                        type="button"
+                        onClick={addJobTitleFromInput}
+                        disabled={!jobTitleInput.trim()}
+                        className="profile-modal-btn h-9 shrink-0 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Add
+                      </button>
+                    </div>
                     {preferredJobTitles.length === 0 && (
                       <p className="mt-1 text-xs text-amber-600">At least one job title is required</p>
                     )}
@@ -881,35 +886,11 @@ export default function CareerPreferencesModal({
                         <label className="mb-1 block text-xs font-medium text-gray-600">
                           Earliest start date <span className="text-gray-400">(optional)</span>
                         </label>
-                        <div className="relative max-w-xs">
-                          <button
-                            type="button"
-                            onClick={() => openAvailabilityDatePicker(availabilityDateInputRef)}
-                            aria-label="Open calendar to choose earliest start date"
-                            className="flex w-full items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-left text-sm text-gray-900 shadow-sm transition hover:border-blue-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            <span className={availabilityDate ? 'text-gray-900' : 'text-gray-500'}>
-                              {availabilityDate
-                                ? formatIsoDateForDisplay(availabilityDate)
-                                : 'Select date from calendar'}
-                            </span>
-                            <CalendarDays
-                              className="h-5 w-5 shrink-0 text-[#28A8E1]"
-                              strokeWidth={2}
-                              aria-hidden
-                            />
-                          </button>
-                          <input
-                            ref={availabilityDateInputRef}
-                            type="date"
+                        <div className="max-w-xs">
+                          <ProfileDatePicker
                             value={availabilityDate}
-                            onChange={(e) => {
-                              setAvailabilityDate(e.target.value);
-                              e.currentTarget.blur();
-                            }}
-                            tabIndex={-1}
-                            className="pointer-events-none absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                            aria-hidden="true"
+                            onChange={setAvailabilityDate}
+                            aria-label="Open calendar to choose earliest start date"
                           />
                         </div>
                         <p className="mt-1 text-xs text-gray-500">
