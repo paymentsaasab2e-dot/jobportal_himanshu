@@ -24,7 +24,10 @@ export function dialCodeToLabel(dialCode: string): string {
   return match ? formatPhoneCodeLabel(match) : dialCode;
 }
 
-/** Prefer WhatsApp signup number over CV-extracted phone for Basic Information. */
+/**
+ * Resolve phone fields for Basic Information.
+ * Saved profile phone wins over signup WhatsApp (user may edit after signup).
+ */
 export function resolveSignupPhoneFields(input: {
   phone?: string;
   phoneCode?: string;
@@ -37,16 +40,21 @@ export function resolveSignupPhoneFields(input: {
     '+91';
 
   let localPhone = '';
-  if (input.whatsappNumber) {
-    localPhone = stripDialCodeFromPhone(input.whatsappNumber, dialCode);
-  }
-  if (!localPhone && input.phone) {
+  if (input.phone?.trim()) {
     localPhone = stripDialCodeFromPhone(input.phone, dialCode);
   }
+  if (!localPhone && input.whatsappNumber) {
+    localPhone = stripDialCodeFromPhone(input.whatsappNumber, dialCode);
+  }
 
-  const stored = input.phoneCode?.trim().split(' ')[0] || '';
+  const storedLabel = input.phoneCode?.trim() || '';
+  const storedDial = storedLabel.split(' ')[0] || '';
   const phoneCodeLabel =
-    stored && stored.startsWith('+') ? stored : dialCode;
+    storedLabel && storedLabel.includes('(')
+      ? storedLabel
+      : storedDial && storedDial.startsWith('+')
+        ? dialCodeToLabel(storedDial)
+        : dialCodeToLabel(dialCode);
 
   return { localPhone, phoneCodeLabel };
 }

@@ -23,7 +23,16 @@ export function isWordResume(resumeUrl?: string | null): boolean {
 }
 
 export function canPreviewResumeInline(resumeUrl?: string | null): boolean {
-  return getResumeExtension(resumeUrl) === 'pdf';
+  const href = String(resumeUrl || '').trim();
+  if (!href) return false;
+  if (getResumeExtension(href) === 'pdf') return true;
+  if (/\.pdf(\?|#|$)/i.test(href)) return true;
+  // Cloudinary/S3 uploads may omit .pdf in the path but still serve PDF bytes
+  if (/cloudinary\.com/i.test(href) && /\/upload\//i.test(href) && !isWordResume(href)) {
+    return true;
+  }
+  if (/amazonaws\.com/i.test(href) && /\.pdf/i.test(href)) return true;
+  return false;
 }
 
 export function canPreviewResumeAsHtml(resumeUrl?: string | null): boolean {

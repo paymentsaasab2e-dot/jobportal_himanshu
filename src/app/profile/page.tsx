@@ -75,7 +75,15 @@ const PROFILE_SECTIONS: ProfileSectionGroup[] = [
 import BasicInfoModal, { BasicInfoData } from '../../components/modals/BasicInfoModal';
 import SummaryModal from '../../components/modals/SummaryModal';
 import GapExplanationModal, { GapExplanationData } from '../../components/modals/GapExplanationModal';
-import WorkExperienceModal, { WorkExperienceData } from '../../components/modals/WorkExperienceModal';
+import WorkExperienceModal, {
+  type WorkExperienceData,
+  type WorkExperienceEntry,
+} from '../../components/modals/WorkExperienceModal';
+import { dedupeWorkExperiences } from '@/lib/work-experience-utils';
+import {
+  persistWorkExperienceEntry,
+  resolveWorkExperiencesToPersist,
+} from '@/lib/work-experience-api';
 import InternshipModal, { InternshipData } from '../../components/modals/InternshipModal';
 import EducationModal, { EducationData as EducationEntryData } from '../../components/modals/EducationModal';
 
@@ -102,6 +110,12 @@ import { API_BASE_URL } from '@/lib/api-base';
 import { getAuthHeaders, getStoredCandidateId, syncAuthStorage } from '@/lib/auth-storage';
 import { useTabVisibilityRefresh } from '@/hooks/useTabVisibilityRefresh';
 import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
+import {
+  extractStoredDocumentUrl,
+  getProfileDocumentDisplayName,
+  normalizeVisaWorkAuthorizationFromApi,
+  profileDocumentsToUrlList,
+} from '@/lib/profile-documents';
 import ProfileDrawer from '../../components/ui/ProfileDrawer';
 
 // Extended ResumeData interface for profile page
@@ -420,14 +434,13 @@ export default function ProfilePage() {
       .join(' ');
   };
 
-  const getDocumentUrl = (doc: any): string =>
-    typeof doc === 'string' ? doc : doc?.url || '';
+  const getDocumentUrl = (doc: unknown): string => extractStoredDocumentUrl(doc);
 
-  const getDocumentName = (doc: any): string => {
-    if (typeof doc === 'string') {
-      return doc.split('/').pop() || 'Document';
+  const getDocumentName = (doc: unknown): string => {
+    if (typeof doc === 'string' || (doc && typeof doc === 'object' && ('name' in doc || 'url' in doc))) {
+      return getProfileDocumentDisplayName(doc as string | { name?: string; url?: string });
     }
-    return doc?.name || doc?.url?.split('/').pop() || 'Document';
+    return getProfileDocumentDisplayName(String(doc ?? ''));
   };
 
   const getApiDocumentHref = (doc: any): string => {
@@ -463,29 +476,20 @@ export default function ProfilePage() {
     visaDetailsInitial: data.visaDetailsInitial
       ? {
           ...data.visaDetailsInitial,
-          documents: data.visaDetailsInitial.documents?.map((doc) => ({
-            ...doc,
-            file: serializeMaybeFile(doc.file),
-          })) || [],
+          documents: profileDocumentsToUrlList(data.visaDetailsInitial.documents),
         }
       : undefined,
     visaDetailsExpected: data.visaDetailsExpected
       ? {
           ...data.visaDetailsExpected,
-          documents: data.visaDetailsExpected.documents?.map((doc) => ({
-            ...doc,
-            file: serializeMaybeFile(doc.file),
-          })) || [],
+          documents: profileDocumentsToUrlList(data.visaDetailsExpected.documents),
         }
       : undefined,
     visaEntries: data.visaEntries?.map((entry) => ({
       ...entry,
       visaDetails: {
         ...entry.visaDetails,
-        documents: entry.visaDetails.documents?.map((doc) => ({
-          ...doc,
-          file: serializeMaybeFile(doc.file),
-        })) || [],
+        documents: profileDocumentsToUrlList(entry.visaDetails.documents),
       },
     })) || [],
   });
@@ -617,7 +621,7 @@ export default function ProfilePage() {
     if (profileData.workExperience !== undefined) {
       if (Array.isArray(profileData.workExperience)) {
         setWorkExperienceData({
-          workExperiences: profileData.workExperience,
+          workExperiences: dedupeWorkExperiences(profileData.workExperience),
         });
       } else {
         setWorkExperienceData(undefined);
@@ -746,7 +750,9 @@ export default function ProfilePage() {
     // Preserve existing careerPreferencesData if not in response
 
     if (profileData.visaWorkAuthorization !== undefined) {
-      setVisaWorkAuthorizationData(profileData.visaWorkAuthorization || undefined);
+      setVisaWorkAuthorizationData(
+        normalizeVisaWorkAuthorizationFromApi(profileData.visaWorkAuthorization) || undefined,
+      );
     }
     // Preserve existing visaWorkAuthorizationData if not in response
 
@@ -922,7 +928,10 @@ export default function ProfilePage() {
     const modalMap: { [key: string]: () => void } = {
       'Basic Information': () => setIsBasicInfoModalOpen(true),
       'Summary': () => setIsSummaryModalOpen(true),
-      'Education': () => setIsEducationModalOpen(true),
+      'Education': () => {
+        setEditingEducationId(null);
+        setIsEducationModalOpen(true);
+      },
       'Skills': () => setIsSkillsModalOpen(true),
       'Languages': () => setIsLanguagesModalOpen(true),
       'Projects': () => {
@@ -1072,6 +1081,7 @@ export default function ProfilePage() {
       setEditingInternshipId(internshipData[internshipData.length - 1]?.id || null);
       setIsInternshipModalOpen(true);
     } else if (category === 'EDUCATION' && itemName === 'Education') {
+      setEditingEducationId(null);
       setIsEducationModalOpen(true);
     } else if (category === 'EDUCATION' && itemName === 'Academic Achievements') {
       setAcademicAchievementModalMode('edit');
@@ -1098,6 +1108,7 @@ export default function ProfilePage() {
     } else if (category === 'CERTIFICATIONS' && itemName === 'Certifications') {
       setIsCertificationModalOpen(true);
     } else if (category === 'CERTIFICATIONS' && itemName === 'Accomplishments') {
+      setEditingAccomplishmentId(null);
       setIsAccomplishmentModalOpen(true);
     } else if (category === 'PREFERENCES' && itemName === 'Career Preferences') {
       setIsCareerPreferencesModalOpen(true);
@@ -1633,7 +1644,7 @@ export default function ProfilePage() {
                   <div>
                     {workExperienceData?.workExperiences?.length ? (
                       <div className="space-y-4">
-                        {workExperienceData.workExperiences.map((entry, index) => {
+                        {dedupeWorkExperiences(workExperienceData.workExperiences).map((entry, index) => {
                           const cardKey = entry.id ?? `work-${index}`;
                           const isExpanded = expandedWorkExperienceCards[cardKey] === true;
                           const toggleCard = () =>
@@ -3396,6 +3407,7 @@ export default function ProfilePage() {
 
       <WorkExperienceModal
         isOpen={isWorkExperienceModalOpen}
+        editingEntryId={editingWorkExperienceId}
         onClose={() => {
           setIsWorkExperienceModalOpen(false);
           setEditingWorkExperienceId(null);
@@ -3404,77 +3416,7 @@ export default function ProfilePage() {
           // If editing a specific entry, pass only that entry
           const entryToEdit = workExperienceData?.workExperiences?.find(e => e.id === editingWorkExperienceId);
           return entryToEdit ? { workExperiences: [entryToEdit] } : undefined;
-        })() : workExperienceData}
-        onAddEntry={async (entry) => {
-          const candidateId = getStoredCandidateId();
-          if (!candidateId) return null;
-
-          try {
-            // Upload documents first if any
-            let documentUrls: string[] = [];
-            if (entry.documents && entry.documents.length > 0) {
-              const filesToUpload = entry.documents.filter(doc => doc.file instanceof File);
-              if (filesToUpload.length > 0) {
-                const formData = new FormData();
-                filesToUpload.forEach(doc => {
-                  if (doc.file instanceof File) {
-                    formData.append('documents', doc.file);
-                  }
-                });
-
-                const uploadResponse = await fetch(`${API_BASE_URL}/profile/work-experience/documents/${candidateId}`, {
-                  method: 'POST',
-                  body: formData,
-                });
-
-                if (uploadResponse.ok) {
-                  const uploadResult = await uploadResponse.json();
-                  documentUrls = uploadResult.data?.documents?.map((d: any) => d.url) || [];
-                } else {
-                  console.warn('Failed to upload documents, continuing without them');
-                }
-              }
-
-              // Include existing URLs (from database)
-              const existingUrls = entry.documents
-                .filter(doc => typeof doc === 'string' || (typeof doc === 'object' && doc.url && !(doc.file instanceof File)))
-                .map(doc => typeof doc === 'string' ? doc : (doc as any).url);
-              documentUrls = [...documentUrls, ...existingUrls];
-            }
-
-            // Save new work experience entry with document URLs
-            const entryToSave = {
-              ...entry,
-              documents: documentUrls,
-            };
-
-            const response = await fetch(`${API_BASE_URL}/profile/work-experience/${candidateId}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(entryToSave),
-            });
-
-            if (!response.ok) {
-              const errorData = await response.json().catch(() => ({}));
-              const errorMessage = errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`;
-              console.error('❌ Work experience save error:', errorMessage, errorData);
-              throw new Error(errorMessage);
-            }
-
-            const result = await response.json();
-            // Return the saved entry with database ID and document URLs
-            return {
-              ...entry,
-              id: result.data?.id || entry.id,
-              documents: documentUrls.map(url => ({ id: Date.now().toString(), url, name: url.split('/').pop() || 'document' })),
-            };
-          } catch (error) {
-            console.error('Error saving work experience entry:', error);
-            throw error;
-          }
-        }}
+        })() : undefined}
         onSave={async (data) => {
           const candidateId = getStoredCandidateId();
           if (!candidateId) {
@@ -3489,103 +3431,43 @@ export default function ProfilePage() {
           }
 
           try {
-            // Save all work experience entries
-            for (const exp of data.workExperiences) {
-              // Upload documents first if any new files
-              let documentUrls: string[] = [];
-              if (exp.documents && exp.documents.length > 0) {
-                const filesToUpload = exp.documents.filter(doc => doc.file instanceof File);
-                if (filesToUpload.length > 0) {
-                  const formData = new FormData();
-                  filesToUpload.forEach(doc => {
-                    if (doc.file instanceof File) {
-                      formData.append('documents', doc.file);
-                    }
-                  });
+            const entriesToSave = resolveWorkExperiencesToPersist(
+              data,
+              editingWorkExperienceId,
+            );
 
-                  const uploadResponse = await fetch(`${API_BASE_URL}/profile/work-experience/documents/${candidateId}`, {
-                    method: 'POST',
-                    body: formData,
-                  });
-
-                  if (uploadResponse.ok) {
-                    const uploadResult = await uploadResponse.json();
-                    documentUrls = uploadResult.data?.documents?.map((d: any) => d.url) || [];
-                  } else {
-                    console.warn('Failed to upload documents, continuing without them');
-                  }
-                }
-
-                // Include existing URLs (from database)
-                const existingUrls = exp.documents
-                  .filter(doc => typeof doc === 'string' || (typeof doc === 'object' && doc.url && !(doc.file instanceof File)))
-                  .map(doc => typeof doc === 'string' ? doc : (doc as any).url);
-                documentUrls = [...documentUrls, ...existingUrls];
-              }
-
-              const expToSave = {
-                ...exp,
-                documents: documentUrls,
-              };
-
-              if (isPersistedId(exp.id)) {
-                // Update existing entry
-                const response = await fetch(`${API_BASE_URL}/profile/work-experience/${exp.id}`, {
-                  method: 'PUT',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(expToSave),
-                });
-
-                if (!response.ok) {
-                  const errorData = await response.json().catch(() => ({}));
-                  throw new Error(errorData.message || 'Failed to update work experience');
-                }
-              } else {
-                // Create new entry (in case it wasn't saved via onAddEntry)
-                const response = await fetch(`${API_BASE_URL}/profile/work-experience/${candidateId}`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(expToSave),
-                });
-
-                if (!response.ok) {
-                  const errorData = await response.json().catch(() => ({}));
-                  throw new Error(errorData.message || 'Failed to save work experience');
-                }
-
-                // Update the entry ID with the database ID
-                const result = await response.json();
-                if (result.data?.id) {
-                  exp.id = result.data.id;
-                }
-              }
+            if (entriesToSave.length === 0) {
+              throw new Error(
+                'No work experience to save. Complete the form and try again.',
+              );
             }
 
-            // Refresh full profile so all work experience entries show (modal may only pass one when editing)
+            const savedEntries: WorkExperienceEntry[] = [];
+            for (const exp of entriesToSave) {
+              savedEntries.push(await persistWorkExperienceEntry(candidateId, exp));
+            }
+
             const profileData = await refreshProfileData(candidateId);
             if (!profileData) {
-              setWorkExperienceData((prev) => {
-                const merged = new Map(
-                  (prev?.workExperiences ?? []).map((entry) => [entry.id, entry]),
-                );
-                for (const exp of data.workExperiences) {
-                  merged.set(exp.id, exp);
-                }
-                return { workExperiences: Array.from(merged.values()) };
-              });
+              setWorkExperienceData((prev) => ({
+                workExperiences: dedupeWorkExperiences([
+                  ...(prev?.workExperiences ?? []),
+                  ...savedEntries,
+                ]),
+              }));
             }
-            setIsWorkExperienceModalOpen(false);
-            const wasEditingWorkExp = editingWorkExperienceId;
+
+            const wasEditingWorkExp = Boolean(editingWorkExperienceId);
             setEditingWorkExperienceId(null);
-            showAlert(wasEditingWorkExp ? 'Work experience updated' : 'Work experience saved');
+            showAlert(
+              wasEditingWorkExp ? 'Work experience updated' : 'Work experience saved',
+            );
           } catch (error) {
             console.error('❌ Error saving work experience:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage =
+              error instanceof Error ? error.message : 'Unknown error';
             showAlert(`Error saving work experience: ${errorMessage}`);
+            throw error;
           }
         }}
       />
@@ -3678,6 +3560,7 @@ export default function ProfilePage() {
 
       <EducationModal
         isOpen={isEducationModalOpen}
+        editingEducationId={editingEducationId}
         onClose={() => {
           setIsEducationModalOpen(false);
           setEditingEducationId(null);
@@ -4235,8 +4118,23 @@ export default function ProfilePage() {
 
           try {
             // Process each certification and upload documents
+            const existingCerts = certificationsData?.certifications ?? [];
+            let certificationsToPersist = data.certifications;
+
+            if (editingCertificationId) {
+              const updated = data.certifications.find((c) => c.id === editingCertificationId);
+              certificationsToPersist = updated
+                ? existingCerts.map((c) => (c.id === editingCertificationId ? updated : c))
+                : [...existingCerts, ...data.certifications];
+            } else {
+              const newOnes = data.certifications.filter(
+                (incoming) => !existingCerts.some((existing) => existing.id === incoming.id),
+              );
+              certificationsToPersist = [...existingCerts, ...newOnes];
+            }
+
             const processedCertifications = await Promise.all(
-              data.certifications.map(async (cert) => {
+              certificationsToPersist.map(async (cert) => {
                 let documentUrls: string[] = [];
                 
                 // Upload new documents if any
@@ -4305,10 +4203,11 @@ export default function ProfilePage() {
           }
         }}
         initialData={editingCertificationId ? (() => {
-          // When editing, pass only the certification being edited
-          const certToEdit = certificationsData?.certifications?.find(c => c.id === editingCertificationId);
-          return certToEdit ? { certifications: [certToEdit] } : certificationsData;
-        })() : certificationsData}
+          const certToEdit = certificationsData?.certifications?.find(
+            (c) => c.id === editingCertificationId,
+          );
+          return certToEdit ? { certifications: [certToEdit] } : undefined;
+        })() : undefined}
       />
 
       <AccomplishmentModal
@@ -4323,8 +4222,25 @@ export default function ProfilePage() {
 
           try {
             // Process each accomplishment and upload documents
+            const existingAccomplishments = accomplishmentsData?.accomplishments ?? [];
+            let accomplishmentsToPersist = data.accomplishments;
+
+            if (editingAccomplishmentId) {
+              const updated = data.accomplishments.find((a) => a.id === editingAccomplishmentId);
+              accomplishmentsToPersist = updated
+                ? existingAccomplishments.map((a) =>
+                    a.id === editingAccomplishmentId ? updated : a,
+                  )
+                : [...existingAccomplishments, ...data.accomplishments];
+            } else {
+              const newOnes = data.accomplishments.filter(
+                (incoming) => !existingAccomplishments.some((existing) => existing.id === incoming.id),
+              );
+              accomplishmentsToPersist = [...existingAccomplishments, ...newOnes];
+            }
+
             const processedAccomplishments = await Promise.all(
-              data.accomplishments.map(async (acc) => {
+              accomplishmentsToPersist.map(async (acc) => {
                 let documentUrls: string[] = [];
                 
                 // Upload new documents if any
@@ -4392,7 +4308,16 @@ export default function ProfilePage() {
             showAlert('Error saving accomplishments');
           }
         }}
-        initialData={accomplishmentsData}
+        initialData={
+          editingAccomplishmentId
+            ? (() => {
+                const entryToEdit = accomplishmentsData?.accomplishments?.find(
+                  (a) => a.id === editingAccomplishmentId,
+                );
+                return entryToEdit ? { accomplishments: [entryToEdit] } : undefined;
+              })()
+            : undefined
+        }
         editingAccomplishmentId={editingAccomplishmentId}
       />
 
@@ -4441,77 +4366,58 @@ export default function ProfilePage() {
             // Upload documents if they are File objects
             const processedData = { ...data };
 
-            // Process visaDetailsExpected documents
-            if (processedData.visaDetailsExpected?.documents) {
-              const documentsToUpload = processedData.visaDetailsExpected.documents.filter((doc: any) => {
-                // `documents` may contain either `File` or objects like `{ file: File|string, ... }`
-                return doc instanceof File || doc?.file instanceof File;
-              });
-              const existingDocuments = processedData.visaDetailsExpected.documents.filter((doc: any) => {
-                return !(doc instanceof File || doc?.file instanceof File);
-              });
-
-              if (documentsToUpload.length > 0) {
-                const formData = new FormData();
-                documentsToUpload.forEach((doc: any) => {
-                  const file: File | undefined = doc instanceof File ? doc : doc?.file;
-                  if (file) formData.append('documents', file);
-                });
-
-                const uploadResponse = await fetch(`${API_BASE_URL}/profile/visa-work-authorization/documents/${candidateId}`, {
-                  method: 'POST',
-                  body: formData,
-                });
-
-                if (!uploadResponse.ok) {
-                  throw new Error('Failed to upload documents');
-                }
-
-                const uploadResult = await uploadResponse.json();
-                processedData.visaDetailsExpected.documents = [
-                  ...existingDocuments.map((doc: any) => (typeof doc === 'string' ? doc : doc.url || doc)),
-                  ...uploadResult.files,
-                ];
-              } else {
-                processedData.visaDetailsExpected.documents = existingDocuments.map((doc: any) => (typeof doc === 'string' ? doc : doc.url || doc));
+            const uploadVisaDocumentFiles = async (files: File[]): Promise<string[]> => {
+              if (!files.length) return [];
+              const formData = new FormData();
+              files.forEach((file) => formData.append('documents', file));
+              const uploadResponse = await fetch(
+                `${API_BASE_URL}/profile/visa-work-authorization/documents/${candidateId}`,
+                { method: 'POST', body: formData },
+              );
+              if (!uploadResponse.ok) {
+                throw new Error('Failed to upload documents');
               }
+              const uploadResult = await uploadResponse.json();
+              const uploaded = Array.isArray(uploadResult.files) ? uploadResult.files : [];
+              return uploaded
+                .map((item: unknown) => extractStoredDocumentUrl(item))
+                .filter(Boolean);
+            };
+
+            const resolveVisaSectionDocuments = async (documents: unknown) => {
+              const list = Array.isArray(documents) ? documents : [];
+              const pendingFiles: File[] = [];
+              const storedUrls: string[] = [];
+
+              for (const doc of list) {
+                if (doc instanceof File) {
+                  pendingFiles.push(doc);
+                  continue;
+                }
+                if (doc && typeof doc === 'object' && 'file' in doc && (doc as { file?: unknown }).file instanceof File) {
+                  pendingFiles.push((doc as { file: File }).file);
+                  continue;
+                }
+                const url = extractStoredDocumentUrl(doc);
+                if (url) storedUrls.push(url);
+              }
+
+              const uploadedUrls = await uploadVisaDocumentFiles(pendingFiles);
+              return [...storedUrls, ...uploadedUrls];
+            };
+
+            if (processedData.visaDetailsExpected?.documents) {
+              processedData.visaDetailsExpected.documents = await resolveVisaSectionDocuments(
+                processedData.visaDetailsExpected.documents,
+              );
             }
 
-            // Process visaEntries documents
             if (Array.isArray(processedData.visaEntries)) {
               for (const entry of processedData.visaEntries) {
                 if (entry.visaDetails?.documents) {
-                  const documentsToUpload = entry.visaDetails.documents.filter((doc: any) => {
-                    return doc instanceof File || doc?.file instanceof File;
-                  });
-                  const existingDocuments = entry.visaDetails.documents.filter((doc: any) => {
-                    return !(doc instanceof File || doc?.file instanceof File);
-                  });
-
-                  if (documentsToUpload.length > 0) {
-                    const formData = new FormData();
-                    documentsToUpload.forEach((doc: any) => {
-                      const file: File | undefined = doc instanceof File ? doc : doc?.file;
-                      if (file) formData.append('documents', file);
-                    });
-
-                    const uploadResponse = await fetch(`${API_BASE_URL}/profile/visa-work-authorization/documents/${candidateId}`, {
-                      method: 'POST',
-                      body: formData,
-                    });
-
-                    if (!uploadResponse.ok) {
-                      throw new Error('Failed to upload documents');
-                    }
-
-                    const uploadResult = await uploadResponse.json();
-                    entry.visaDetails.documents = [
-                      ...existingDocuments.map((doc: any) => (typeof doc === 'string' ? doc : doc.url || doc)),
-                      ...uploadResult.files,
-                    ];
-                  } else {
-                    entry.visaDetails.documents = existingDocuments.map((doc: any) => (typeof doc === 'string' ? doc : doc.url || doc));
-                  }
+                  entry.visaDetails.documents = await resolveVisaSectionDocuments(
+                    entry.visaDetails.documents,
+                  );
                 }
               }
             }
@@ -4651,15 +4557,26 @@ export default function ProfilePage() {
                 body: formData,
               });
 
+              const uploadResult = await uploadResponse.json().catch(() => ({}));
+
               if (!uploadResponse.ok) {
-                const errorData = await uploadResponse.json().catch(() => ({}));
-                throw new Error(errorData.message || 'Failed to upload resume file');
+                throw new Error(uploadResult.message || 'Failed to upload resume file');
               }
 
-              // File uploaded successfully, the backend already saved the resume record
+              const uploaded = uploadResult.data;
+              if (uploaded?.fileUrl) {
+                setResumeData({
+                  fileName: uploaded.fileName || data.fileName || data.file.name,
+                  fileUrl: uploaded.fileUrl,
+                  uploadedDate: new Date().toISOString(),
+                  fileSize: data.file.size,
+                  mimeType: data.file.type,
+                });
+              }
+
               await refreshProfileData(candidateId);
-          setIsResumeModalOpen(false);
-              showAlert('Resume uploaded');
+              setIsResumeModalOpen(false);
+              showAlert('Resume replaced successfully');
             } else if (data.fileName && !data.file) {
               // If only fileName is provided (no new file), just update metadata
               const payload = {

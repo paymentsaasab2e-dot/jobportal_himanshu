@@ -5,6 +5,12 @@ import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import { ALL_COUNTRY_CODES } from '@/lib/country-codes';
+import {
+  extractStoredDocumentUrl,
+  getProfileDocumentDisplayName,
+  isStoredProfileDocument,
+  normalizeVisaWorkAuthorizationFromApi,
+} from '@/lib/profile-documents';
 
 interface VisaWorkAuthorizationModalProps {
   isOpen: boolean;
@@ -131,6 +137,8 @@ export default function VisaWorkAuthorizationModal({
 
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const dragCounter = useRef<{ [key: string]: number }>({ expected: 0 });
+  /** Avoid re-init while the drawer is open (parent re-renders used to wipe uploads). */
+  const sessionInitKeyRef = useRef<string | null>(null);
   const countryComboboxRef = useRef<HTMLDivElement>(null);
   const countrySearchInputRef = useRef<HTMLInputElement>(null);
   const [countrySearchQuery, setCountrySearchQuery] = useState('');
@@ -174,29 +182,47 @@ export default function VisaWorkAuthorizationModal({
   }, [isCountryDropdownOpen]);
 
   useEffect(() => {
+    if (!isOpen) {
+      sessionInitKeyRef.current = null;
+      return;
+    }
+
+    const initKey =
+      mode === 'add' && !editingEntryId
+        ? 'add-new'
+        : editingEntryId
+          ? `edit-entry:${editingEntryId}`
+          : `edit-main:${normalizeCountryCode(initialData?.selectedDestination || '')}`;
+
+    if (sessionInitKeyRef.current === initKey) {
+      return;
+    }
+    sessionInitKeyRef.current = initKey;
+
     if (initialData) {
-      if (mode === 'add' && initialData.selectedDestination) {
+      const data = normalizeVisaWorkAuthorizationFromApi(initialData) ?? initialData;
+      if (mode === 'add' && data.selectedDestination) {
         // Move current form into visaEntries
-        const destCode = normalizeCountryCode(initialData.selectedDestination);
-        const countryName = countryDisplayName(initialData.selectedDestination);
+        const destCode = normalizeCountryCode(data.selectedDestination);
+        const countryName = countryDisplayName(data.selectedDestination);
         const newEntry: VisaEntry = {
           id: Date.now().toString(),
           country: destCode,
           countryName,
-          visaDetails: initialData.visaDetailsExpected || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] },
-          additionalRemarks: initialData.additionalRemarks,
+          visaDetails: data.visaDetailsExpected || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] },
+          additionalRemarks: data.additionalRemarks,
         };
-        setVisaEntries([...(initialData.visaEntries || []), newEntry]);
+        setVisaEntries([...(data.visaEntries || []), newEntry]);
         
         // Clear current form
         setSelectedDestination('');
         setRequiresVisa('');
         setVisaDetailsExpected({ id: 'expected', visaType: '', visaStatus: 'Active', documents: [] });
-        setVisaWorkpermitRequired(initialData.visaWorkpermitRequired || '');
-        setOpenForAll(initialData.openForAll || false);
-        setAdditionalRemarks(initialData.additionalRemarks || '');
+        setVisaWorkpermitRequired(data.visaWorkpermitRequired || '');
+        setOpenForAll(data.openForAll || false);
+        setAdditionalRemarks(data.additionalRemarks || '');
       } else if (mode === 'edit' && editingEntryId) {
-        const entryToEdit = initialData.visaEntries?.find(e => e.id === editingEntryId);
+        const entryToEdit = data.visaEntries?.find(e => e.id === editingEntryId);
         if (entryToEdit) {
           setSelectedDestination(normalizeCountryCode(entryToEdit.country || ''));
           setVisaDetailsExpected(entryToEdit.visaDetails || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] });
@@ -204,28 +230,28 @@ export default function VisaWorkAuthorizationModal({
           setOpenForAll(false);
           setAdditionalRemarks(entryToEdit.additionalRemarks || '');
           // Keep all other entries intact
-          setVisaEntries(initialData.visaEntries || []);
+          setVisaEntries(data.visaEntries || []);
           if (entryToEdit.visaDetails?.visaType) {
             setRequiresVisa('Yes');
           }
         }
       } else {
-        setSelectedDestination(normalizeCountryCode(initialData.selectedDestination || ''));
-        setVisaDetailsExpected(initialData.visaDetailsExpected || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] });
-        setVisaWorkpermitRequired(initialData.visaWorkpermitRequired || '');
-        setOpenForAll(initialData.openForAll || false);
-        setAdditionalRemarks(initialData.additionalRemarks || '');
-        setVisaEntries(initialData.visaEntries || []);
-        if (initialData.visaDetailsExpected?.visaType) {
+        setSelectedDestination(normalizeCountryCode(data.selectedDestination || ''));
+        setVisaDetailsExpected(data.visaDetailsExpected || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] });
+        setVisaWorkpermitRequired(data.visaWorkpermitRequired || '');
+        setOpenForAll(data.openForAll || false);
+        setAdditionalRemarks(data.additionalRemarks || '');
+        setVisaEntries(data.visaEntries || []);
+        if (data.visaDetailsExpected?.visaType) {
           setRequiresVisa('Yes');
-        } else if (initialData.visaWorkpermitRequired) {
+        } else if (data.visaWorkpermitRequired) {
           setRequiresVisa('No');
         }
       }
     } else {
       resetForm();
     }
-  }, [initialData, isOpen, mode, editingEntryId]);
+  }, [isOpen, mode, editingEntryId, initialData?.selectedDestination]);
 
   const resetForm = () => {
     setSelectedDestination('');
@@ -308,10 +334,10 @@ export default function VisaWorkAuthorizationModal({
   };
 
   const handleVisaDetailChange = (section: 'expected', field: keyof VisaDetailsSection, value: string) => {
-    setVisaDetailsExpected({
-      ...visaDetailsExpected!,
-      [field]: value
-    });
+    setVisaDetailsExpected((prev) => ({
+      ...(prev || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] }),
+      [field]: value,
+    }));
   };
 
   const handleFileSelect = (section: 'expected', files: FileList | null) => {
@@ -339,9 +365,12 @@ export default function VisaWorkAuthorizationModal({
       });
     }
 
-    setVisaDetailsExpected({
-      ...visaDetailsExpected!,
-      documents: [...(visaDetailsExpected?.documents || []), ...newDocuments]
+    setVisaDetailsExpected((prev) => {
+      const base = prev || { id: 'expected', visaType: '', visaStatus: 'Active', documents: [] };
+      return {
+        ...base,
+        documents: [...(base.documents || []), ...newDocuments],
+      };
     });
   };
 
@@ -415,8 +444,8 @@ export default function VisaWorkAuthorizationModal({
         visaDetailsInitial: initialData?.visaDetailsInitial,
         visaDetailsExpected: initialData?.visaDetailsExpected,
         visaWorkpermitRequired: initialData?.visaWorkpermitRequired || '',
-        openForAll: initialData?.openForAll || false,
-        additionalRemarks: additionalRemarks,
+        openForAll: initialData?.openForAll ?? false,
+        additionalRemarks,
         visaEntries: updatedEntries,
       });
     } else {
@@ -436,6 +465,40 @@ export default function VisaWorkAuthorizationModal({
   if (!isOpen) return null;
 
   const selectedCountryMeta = getCountryMeta(selectedDestination);
+
+  const renderStoredDocumentActions = (doc: unknown, docName: string) => {
+    const docUrl = extractStoredDocumentUrl(doc);
+    if (!docUrl) return null;
+    const href = resolveDocumentUrl(docUrl);
+    return (
+      <>
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
+          title="View document"
+          aria-label={`View ${docName}`}
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        </a>
+        <a
+          href={href}
+          download={docName}
+          className="rounded-lg p-1.5 text-orange-600 transition-colors hover:bg-orange-50 hover:text-orange-700"
+          title="Download document"
+          aria-label={`Download ${docName}`}
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+        </a>
+      </>
+    );
+  };
 
   const renderVisaDetailsSection = (section: VisaDetailsSection | undefined, sectionId: 'expected', title: string) => {
     const isExpanded = expandedSections[sectionId] !== false;
@@ -590,8 +653,7 @@ export default function VisaWorkAuthorizationModal({
                   </p>
                   {sectionData.documents.map((doc: any, index: number) => {
                     const docId = typeof doc === 'string' ? doc : doc.id || index.toString();
-                    const docName = typeof doc === 'string' ? doc.split('/').pop() || doc : doc.name;
-                    const docUrl = typeof doc === 'string' ? doc : doc.url;
+                    const docName = getProfileDocumentDisplayName(doc);
                     return (
                       <div key={docId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
                         <div className="flex items-center gap-3">
@@ -610,34 +672,10 @@ export default function VisaWorkAuthorizationModal({
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 shrink-0 ml-2">
-                          {docUrl && (
-                            <>
-                              <a
-                                href={resolveDocumentUrl(docUrl)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-700 transition-colors"
-                                title="View Document"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                              </a>
-                              <a
-                                href={resolveDocumentUrl(docUrl)}
-                                download={docName}
-                                className="text-orange-600 hover:text-orange-700 transition-colors"
-                                title="Download Document"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
-                              </a>
-                            </>
-                          )}
+                        <div className="flex shrink-0 items-center gap-1 ml-2">
+                          {renderStoredDocumentActions(doc, docName)}
                           <button
+                            type="button"
                             onClick={() => handleRemoveFile(sectionId, docId)}
                             className="p-1 text-amber-600 hover:text-amber-700 hover:bg-red-50 rounded transition-colors"
                             aria-label="Remove file"
@@ -928,7 +966,7 @@ export default function VisaWorkAuthorizationModal({
                 <div className="mt-3 space-y-2">
                   {visaDetailsExpected.documents.map((doc: any, index: number) => {
                     const docId = typeof doc === 'string' ? doc : doc.id || index.toString();
-                    const docName = typeof doc === 'string' ? doc.split('/').pop() || doc : doc.name;
+                    const docName = getProfileDocumentDisplayName(doc);
                     return (
                       <div key={docId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50">
                         <div className="flex items-center gap-3">
@@ -947,11 +985,15 @@ export default function VisaWorkAuthorizationModal({
                             )}
                           </div>
                         </div>
-                        <button
-                          onClick={() => handleRemoveFile('expected', typeof doc === 'string' ? doc : doc.id)}
-                          className="text-[#9095A1] hover:text-amber-600"
-                          title="Delete"
-                        >
+                        <div className="flex shrink-0 items-center gap-1">
+                          {renderStoredDocumentActions(doc, docName)}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFile('expected', typeof doc === 'string' ? doc : doc.id)}
+                            className="rounded-lg p-1 text-[#9095A1] transition-colors hover:bg-red-50 hover:text-amber-700"
+                            title="Remove"
+                            aria-label={`Remove ${docName}`}
+                          >
                           <svg
                             width="18"
                             height="18"
@@ -965,7 +1007,8 @@ export default function VisaWorkAuthorizationModal({
                             <line x1="18" y1="6" x2="6" y2="18" />
                             <line x1="6" y1="6" x2="18" y2="18" />
                           </svg>
-                        </button>
+                          </button>
+                        </div>
                       </div>
                     );
                   })}

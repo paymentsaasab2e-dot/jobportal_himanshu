@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { ProfileDocumentsUpload } from '../profile/ProfileDocumentsUpload';
-import { normalizeProfileDocuments, type ProfileDocumentItem } from '@/lib/profile-documents';
+import {
+  getProfileDocumentDisplayName,
+  normalizeProfileDocuments,
+  type ProfileDocumentItem,
+} from '@/lib/profile-documents';
 
 interface LanguagesModalProps {
   isOpen: boolean;
@@ -74,7 +78,7 @@ export default function LanguagesModal({
             if (typeof doc === 'string') {
               return {
                 id: `doc-${index}-${docIndex}-${Date.now()}`,
-                name: doc.split('/').pop() || 'Document',
+                name: getProfileDocumentDisplayName(doc),
                 url: doc,
               };
             }
