@@ -1,3 +1,35 @@
+/**
+ * Basic Information / profile drawer typography (implemented in globals.css
+ * under `.profile-modal-typography` and `.profile-page-typography`).
+ */
+export const PROFILE_TYPOGRAPHY = {
+  colors: {
+    text: '#111827',
+    label: '#64748b',
+    muted: '#94a3b8',
+    placeholder: '#94a3b8',
+    section: '#64748b',
+    alert: '#d97706',
+    error: '#dc2626',
+    success: '#16a34a',
+    cancel: '#334155',
+    border: '#e2e8f0',
+    closeIcon: '#9095a1',
+    saveBg: '#f97316',
+  },
+  drawerTitle: { size: '1.25rem', weight: 600, lineHeight: 1.3 },
+  sectionTitle: { size: '0.875rem', weight: 600, lineHeight: 1.35 },
+  label: { size: '0.8125rem', weight: 500, lineHeight: 1.4 },
+  field: { size: '0.8125rem', weight: 400, lineHeight: 1.4 },
+  helper: { size: '0.75rem', weight: 400, lineHeight: 1.45 },
+  button: { size: '0.875rem', weight: 500, lineHeight: 1.4 },
+  pageSectionTitle: { size: '0.875rem', weight: 600, lineHeight: 1.35 },
+  pageLabel: { size: '0.75rem', weight: 500, lineHeight: 1.45 },
+  pageValue: { size: '0.8125rem', weight: 500, lineHeight: 1.4 },
+  basicInfoLabel: { size: '0.8125rem', weight: 500, lineHeight: 1.4, color: '#64748b' },
+  basicInfoValue: { size: '0.8125rem', weight: 400, lineHeight: 1.4, color: '#111827' },
+} as const;
+
 /** Shared compact field styles for profile drawers (Basic Information scale). */
 
 export const profileFieldBase =
@@ -17,6 +49,10 @@ export const profileTextareaClass =
   'profile-modal-textarea w-full resize-none rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-gray-900 shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25';
 
 export const profileLabelClass = 'profile-modal-label block';
+
+export const profileHelperClass = 'profile-modal-helper';
+
+export const profileOptionalHintClass = 'profile-modal-helper font-normal inline';
 
 /** View-mode labels/values on /profile — same scale as profile-modal-label & inputs */
 export const profileDisplayLabelClass = 'profile-page-label';

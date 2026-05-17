@@ -60,10 +60,10 @@ export function ProfileDocumentsUpload({
 
   return (
     <div className={className}>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="profile-modal-label mb-2 block">
         {label}{' '}
         {optionalHint ? (
-          <span className="text-gray-500 text-xs font-normal">{optionalHint}</span>
+          <span className="profile-modal-helper font-normal inline">{optionalHint}</span>
         ) : null}
       </label>
 
@@ -106,19 +106,19 @@ export function ProfileDocumentsUpload({
             : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50'
         }`}
       >
-        <p className="text-sm text-gray-600">
+        <p className="profile-modal-helper text-gray-600">
           <span className="font-medium text-blue-600">Click to upload</span> or drag and drop
         </p>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="profile-modal-helper mt-1 text-gray-500">
           {documents.length > 0 ? 'Add more documents' : 'Select one or more files'}
         </p>
       </div>
 
-      {helperText ? <p className="mt-1 text-xs text-gray-500">{helperText}</p> : null}
+      {helperText ? <p className="profile-modal-helper mt-1 text-gray-500">{helperText}</p> : null}
 
       {documents.length > 0 ? (
         <div className="mt-3 space-y-2">
-          <p className="text-sm font-medium text-gray-700">
+          <p className="profile-modal-label mb-0">
             Uploaded documents ({documents.length})
           </p>
           {documents.map((doc) => {
@@ -144,13 +144,13 @@ export function ProfileDocumentsUpload({
                   />
                 </svg>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-gray-900" title={displayName}>
+                  <p className="truncate font-medium text-gray-900" title={displayName}>
                     {displayName}
                   </p>
                   {doc.size ? (
-                    <p className="text-xs text-gray-500">{formatProfileDocumentSize(doc.size)}</p>
+                    <p className="profile-modal-helper text-gray-500">{formatProfileDocumentSize(doc.size)}</p>
                   ) : doc.file ? (
-                    <p className="text-xs text-gray-500">Ready to upload on save</p>
+                    <p className="profile-modal-helper text-gray-500">Ready to upload on save</p>
                   ) : null}
                 </div>
                 <div className="flex shrink-0 items-center gap-1">

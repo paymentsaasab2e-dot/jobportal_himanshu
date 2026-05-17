@@ -272,7 +272,7 @@ export default function GapExplanationModal({
                   type="button"
                   onClick={addSkill}
                   disabled={!skillsInput.trim() || selectedSkills.length >= MAX_GAP_SKILLS}
-                  className="profile-modal-btn h-[2.25rem] shrink-0 rounded-lg bg-blue-600 px-3 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="profile-modal-btn h-[2.25rem] shrink-0 rounded-lg bg-blue-600 px-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Add
                 </button>

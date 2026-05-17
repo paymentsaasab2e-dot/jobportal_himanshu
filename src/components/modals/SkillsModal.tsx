@@ -124,14 +124,14 @@ export default function SkillsModal({
       widthClassName="w-full md:w-[50vw] md:max-w-[50vw]"
       footer={(
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className={`${profileCancelBtnClass} !px-3.5 !py-1.5 text-xs`}>
+          <button type="button" onClick={onClose} className={`${profileCancelBtnClass} !px-3.5 !py-1.5`}>
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
             disabled={!isFormValid}
-            className={`${profileSaveBtnClass} !px-3.5 !py-1.5 text-xs`}
+            className={`${profileSaveBtnClass} !px-3.5 !py-1.5`}
           >
             Save Skills
           </button>
@@ -140,7 +140,7 @@ export default function SkillsModal({
     >
       <div className="space-y-3.5">
         <div>
-          <label className="mb-1 block text-xs font-medium text-gray-700">Add Skills</label>
+          <label className="profile-modal-label mb-1 block">Add Skills</label>
           <div className="flex gap-1.5">
             <input
               type="text"
@@ -154,7 +154,7 @@ export default function SkillsModal({
               type="button"
               onClick={addSkillFromInput}
               disabled={!skillInput.trim() || skills.length >= 30}
-              className="profile-modal-btn h-[2.25rem] shrink-0 rounded-lg bg-blue-600 px-3 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="profile-modal-btn h-[2.25rem] shrink-0 rounded-lg bg-blue-600 px-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Add
             </button>

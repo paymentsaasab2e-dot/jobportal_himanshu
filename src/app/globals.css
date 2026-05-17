@@ -205,6 +205,7 @@ input[type="range"]::-moz-range-thumb {
   --profile-color-muted: #94a3b8;
   --profile-color-placeholder: var(--profile-color-muted);
   --profile-color-alert: #d97706;
+  --profile-color-success: #16a34a;
   --profile-color-border: #e2e8f0;
   --profile-color-section: #64748b;
   --profile-color-cancel: #334155;
@@ -390,6 +391,48 @@ input[type="range"]::-moz-range-thumb {
   white-space: nowrap;
 }
 
+.profile-modal-typography .profile-modal-close-btn {
+  color: #9095a1;
+}
+
+.profile-modal-typography .profile-modal-close-btn:hover {
+  color: #4b5563;
+}
+
+.profile-modal-typography .profile-modal-dropdown-item {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--profile-color-text);
+}
+
+.profile-modal-typography .profile-modal-dropdown-dial {
+  font-weight: 600;
+  color: var(--profile-color-text);
+}
+
+.profile-modal-typography .profile-modal-dropdown-muted {
+  color: var(--profile-color-label);
+}
+
+.profile-modal-typography .profile-modal-phone-code-display {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--profile-color-text);
+}
+
+.profile-modal-typography .profile-modal-chevron-hint {
+  font-size: 0.625rem;
+  line-height: 1;
+  color: var(--profile-color-muted);
+}
+
+.profile-modal-typography .profile-modal-helper.text-green-600 {
+  color: var(--profile-color-success, #16a34a) !important;
+}
+
 .profile-modal-textarea {
   box-sizing: border-box;
   min-height: 5.5rem;
@@ -563,6 +606,58 @@ input[type="range"]::-moz-range-thumb {
 .profile-modal-typography h3.text-lg,
 .profile-modal-typography h4.text-sm.font-semibold.text-gray-900 {
   color: var(--profile-color-section) !important;
+}
+
+/* Legacy Tailwind text utilities → Basic Information scale (all profile drawers) */
+.profile-modal-typography .text-sm {
+  font-size: 0.8125rem !important;
+  line-height: 1.4;
+}
+
+.profile-modal-typography .text-xs,
+.profile-modal-typography .text-\[10px\],
+.profile-modal-typography .text-\[11px\] {
+  font-size: 0.75rem !important;
+  line-height: 1.45;
+}
+
+.profile-modal-typography h3.text-lg,
+.profile-modal-typography .text-lg {
+  font-size: 0.875rem !important;
+  line-height: 1.35;
+}
+
+.profile-modal-typography .text-base {
+  font-size: 0.8125rem !important;
+  line-height: 1.4;
+}
+
+.profile-modal-typography [aria-hidden].text-base,
+.profile-modal-typography span[aria-hidden].text-base {
+  font-size: 1rem !important;
+  line-height: 1;
+}
+
+.profile-modal-typography label.text-xs {
+  font-size: 0.75rem !important;
+  font-weight: 500;
+  color: var(--profile-color-muted) !important;
+}
+
+.profile-modal-typography span.text-sm.text-gray-700,
+.profile-modal-typography label span.text-sm {
+  color: var(--profile-color-text) !important;
+}
+
+/* Primary / footer actions — 14px (overrides .text-sm above) */
+.profile-modal-typography .profile-modal-footer button,
+.profile-modal-typography footer button,
+.profile-modal-typography .profile-modal-btn,
+.profile-modal-typography button.h-10.rounded-lg.bg-orange-500,
+.profile-modal-typography button.h-10.rounded-lg.border.border-gray-300 {
+  font-size: 0.875rem !important;
+  line-height: 1.4;
+  font-weight: 500;
 }
 
 .profile-modal-typography footer button.border-gray-300 {
