@@ -30,7 +30,7 @@ type Props = {
 
 const drawerMenuActions: Item[] = [
   { label: 'Courses', path: '/lms/courses', icon: 'courses' },
-  { label: 'AI CV Editor', path: '/aicveditor', icon: 'aiCv' },
+  { label: 'AI CV Editor', path: '/lms/resume-builder/editor', icon: 'aiCv' },
   { label: 'Interview Prep', path: '/lms/interview-prep', icon: 'interview' },
   { label: 'Quizzes', path: '/lms/quizzes', icon: 'quizzes' },
   { label: 'Events', path: '/lms/events', icon: 'events' },
