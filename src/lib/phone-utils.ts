@@ -44,10 +44,9 @@ export function resolveSignupPhoneFields(input: {
     localPhone = stripDialCodeFromPhone(input.phone, dialCode);
   }
 
+  const stored = input.phoneCode?.trim().split(' ')[0] || '';
   const phoneCodeLabel =
-    input.phoneCode && input.phoneCode.includes('(')
-      ? input.phoneCode
-      : dialCodeToLabel(dialCode);
+    stored && stored.startsWith('+') ? stored : dialCode;
 
   return { localPhone, phoneCodeLabel };
 }

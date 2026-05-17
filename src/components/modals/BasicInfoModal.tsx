@@ -5,7 +5,6 @@ import Image from 'next/image';
 import {
   ALL_COUNTRY_CODES,
   countryCodeToFlag,
-  formatPhoneCodeLabel,
 } from '@/lib/country-codes';
 import { profileCancelBtnClass, profileFieldClass, profileSaveBtnClass } from '@/lib/profile-modal-ui';
 import { resolveSignupPhoneFields } from '@/lib/phone-utils';
@@ -57,6 +56,7 @@ type NominatimAddress = {
   state?: string;
   region?: string;
   country?: string;
+  country_code?: string;
 };
 
 type NominatimPlace = {
@@ -74,19 +74,26 @@ function extractLocality(addr: NominatimAddress | undefined, displayName: string
   return displayName.split(',')[0]?.trim() || '';
 }
 
-function formatPlaceSuggestionLine(place: NominatimPlace): string {
+function formatPlaceSuggestionLine(place: NominatimPlace, includeCountry = true): string {
   const addr = place.address;
   const locality = extractLocality(addr, place.display_name);
   const state = addr?.state || addr?.region;
   const country = addr?.country;
-  const parts = [locality, state, country].filter(Boolean);
-  if (parts.length >= 2) return parts.join(', ');
+  const parts = includeCountry
+    ? [locality, state, country].filter(Boolean)
+    : [locality, state].filter(Boolean);
+  if (parts.length >= 1) return parts.join(', ');
   const bits = place.display_name
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
-    .slice(0, 3);
+    .slice(0, includeCountry ? 3 : 2);
   return bits.join(', ');
+}
+
+function placeMatchesCountryIso(place: NominatimPlace, iso: string): boolean {
+  const cc = place.address?.country_code?.trim().toUpperCase();
+  return cc === iso.trim().toUpperCase();
 }
 
 function resolveCountryToSelectValue(raw: string | undefined): string {
@@ -105,6 +112,8 @@ function resolveCountryToSelectValue(raw: string | undefined): string {
     england: 'United Kingdom',
     scotland: 'United Kingdom',
     wales: 'United Kingdom',
+    bharat: 'India',
+    'republic of india': 'India',
   };
   const mapped = aliases[lower];
   const candidate = mapped || n;
@@ -117,8 +126,32 @@ function resolveCountryToSelectValue(raw: string | undefined): string {
   return contains?.name || '';
 }
 
-async function fetchNominatimPlaces(query: string, signal: AbortSignal): Promise<NominatimPlace[]> {
-  const url = `${NOMINATIM_URL}?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=8`;
+/** Prefer ISO country_code from Nominatim so city + country stay in sync. */
+function resolveCountryFromPlace(addr: NominatimAddress | undefined): string {
+  if (!addr) return '';
+  const iso = addr.country_code?.trim().toUpperCase();
+  if (iso) {
+    const byCode = ALL_COUNTRY_CODES.find((c) => c.code === iso);
+    if (byCode) return byCode.name;
+  }
+  return resolveCountryToSelectValue(addr.country);
+}
+
+async function fetchNominatimPlaces(
+  query: string,
+  signal: AbortSignal,
+  countryIso?: string,
+): Promise<NominatimPlace[]> {
+  const params = new URLSearchParams({
+    q: query,
+    format: 'json',
+    addressdetails: '1',
+    limit: '8',
+  });
+  if (countryIso?.trim()) {
+    params.set('countrycodes', countryIso.trim().toLowerCase());
+  }
+  const url = `${NOMINATIM_URL}?${params.toString()}`;
   const res = await fetch(url, {
     signal,
     headers: {
@@ -201,6 +234,8 @@ export default function BasicInfoModal({
   const cityAutocompleteRef = useRef<HTMLDivElement>(null);
   const cityAbortRef = useRef<AbortController | null>(null);
   const citySuggestOpenRef = useRef(false);
+  /** Only fetch/show city suggestions after the user types — not when the modal opens with saved data */
+  const citySuggestUserInitiatedRef = useRef(false);
 
   const [citySuggestions, setCitySuggestions] = useState<NominatimPlace[]>([]);
   const [citySuggestLoading, setCitySuggestLoading] = useState(false);
@@ -212,11 +247,18 @@ export default function BasicInfoModal({
   const maxDobIso = useMemo(() => dateToIsoYmd(maxDob), [maxDob]);
 
   const selectedPhoneCodeOption = useMemo(() => {
-    const directMatch = ALL_COUNTRY_CODES.find((item) => formatPhoneCodeLabel(item) === phoneCode);
-    if (directMatch) return directMatch;
-    const dialPrefix = phoneCode.split(' ')[0];
-    return ALL_COUNTRY_CODES.find((item) => item.dialCode === dialPrefix) || ALL_COUNTRY_CODES.find(c => c.code === 'CM') || ALL_COUNTRY_CODES[0];
+    const dialPrefix = phoneCode.trim().split(' ')[0];
+    return (
+      ALL_COUNTRY_CODES.find((item) => item.dialCode === dialPrefix) ||
+      ALL_COUNTRY_CODES.find((c) => c.code === 'IN') ||
+      ALL_COUNTRY_CODES[0]
+    );
   }, [phoneCode]);
+
+  const selectedCountryOption = useMemo(
+    () => ALL_COUNTRY_CODES.find((c) => c.name === countryValue.trim()),
+    [countryValue],
+  );
 
   const filteredPhoneCodes = useMemo(() => {
     const rawQuery = phoneCodeSearch.trim().toLowerCase();
@@ -281,6 +323,7 @@ export default function BasicInfoModal({
       setCityHighlight(-1);
       setCitySuggestLoading(false);
       cityAbortRef.current?.abort();
+      citySuggestUserInitiatedRef.current = false;
     } else {
       setFirstNameValue('');
       setMiddleNameValue('');
@@ -298,22 +341,37 @@ export default function BasicInfoModal({
       setCityHighlight(-1);
       setCitySuggestLoading(false);
       cityAbortRef.current?.abort();
+      citySuggestUserInitiatedRef.current = false;
       applyPhoneFields(
         user?.whatsappNumber ? { whatsappNumber: user.whatsappNumber } : undefined,
       );
     }
   }, [initialData, applyPhoneFields, user?.whatsappNumber]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    citySuggestUserInitiatedRef.current = false;
+    cityAbortRef.current?.abort();
+    setCitySuggestOpen(false);
+    setCitySuggestions([]);
+    setCitySuggestError(null);
+    setCityHighlight(-1);
+    setCitySuggestLoading(false);
+  }, [isOpen]);
+
   const applyCitySuggestion = useCallback((place: NominatimPlace) => {
+    citySuggestUserInitiatedRef.current = false;
+    cityAbortRef.current?.abort();
     const addr = place.address;
     const locality = extractLocality(addr, place.display_name);
-    const countrySelect = resolveCountryToSelectValue(addr?.country);
+    const countrySelect = resolveCountryFromPlace(addr);
     setCityValue(locality);
-    if (countrySelect) setCountryValue(countrySelect);
+    if (!countryValue.trim() && countrySelect) setCountryValue(countrySelect);
     setCitySuggestOpen(false);
     setCitySuggestions([]);
     setCityHighlight(-1);
     setCitySuggestError(null);
+    setCitySuggestLoading(false);
   }, []);
 
   useEffect(() => {
@@ -334,6 +392,27 @@ export default function BasicInfoModal({
 
   useEffect(() => {
     if (!isOpen) {
+      cityAbortRef.current?.abort();
+      setCitySuggestLoading(false);
+      setCitySuggestOpen(false);
+      setCitySuggestError(null);
+      setCityHighlight(-1);
+      setCitySuggestions([]);
+      return;
+    }
+
+    if (!citySuggestUserInitiatedRef.current) {
+      cityAbortRef.current?.abort();
+      setCitySuggestLoading(false);
+      setCitySuggestOpen(false);
+      setCitySuggestError(null);
+      setCityHighlight(-1);
+      setCitySuggestions([]);
+      return;
+    }
+
+    const countryIso = selectedCountryOption?.code;
+    if (!countryIso) {
       cityAbortRef.current?.abort();
       setCitySuggestLoading(false);
       setCitySuggestOpen(false);
@@ -366,9 +445,10 @@ export default function BasicInfoModal({
 
       void (async () => {
         try {
-          const list = await fetchNominatimPlaces(q, ac.signal);
+          const list = await fetchNominatimPlaces(q, ac.signal, countryIso);
           if (ac.signal.aborted) return;
-          setCitySuggestions(list);
+          const filtered = list.filter((place) => placeMatchesCountryIso(place, countryIso));
+          setCitySuggestions(filtered);
           setCityHighlight(-1);
         } catch (err) {
           if ((err as Error).name === 'AbortError') return;
@@ -386,7 +466,7 @@ export default function BasicInfoModal({
       window.clearTimeout(timer);
       cityAbortRef.current?.abort();
     };
-  }, [cityValue, isOpen]);
+  }, [cityValue, countryValue, selectedCountryOption?.code, isOpen]);
 
   useEffect(() => {
     if (cityHighlight < 0 || !cityAutocompleteRef.current) return;
@@ -423,7 +503,7 @@ export default function BasicInfoModal({
       const digitsOnly = payload.phone.replace(/\D/g, '');
       // Only validate length if phoneLength is defined and > 0
       if (expectedLength && expectedLength > 0 && digitsOnly.length > 0 && digitsOnly.length !== expectedLength) {
-        nextErrors.phone = `Phone number must be exactly ${expectedLength} digits for ${selectedPhoneCodeOption.name}.`;
+        nextErrors.phone = `Phone number must be exactly ${expectedLength} digits.`;
       }
     }
     if (!payload.gender) nextErrors.gender = 'Gender is required.';
@@ -667,10 +747,9 @@ export default function BasicInfoModal({
                                 key={`${item.code}-${item.dialCode}`}
                                 type="button"
                                 onClick={() => {
-                                  setPhoneCode(formatPhoneCodeLabel(item));
+                                  setPhoneCode(item.dialCode);
                                   setIsPhoneCodeOpen(false);
                                   setPhoneCodeSearch('');
-                                  // Clear phone when country changes to prevent invalid length
                                   setPhoneValue('');
                                 }}
                                 className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2"
@@ -704,7 +783,7 @@ export default function BasicInfoModal({
                         <p className="profile-modal-helper text-red-600">{errors.phone}</p>
                       ) : (
                         <p className="profile-modal-helper text-slate-500">
-                          {selectedPhoneCodeOption.name}: {selectedPhoneCodeOption.phoneLength} digits required
+                          {selectedPhoneCodeOption.phoneLength} digits required
                         </p>
                       )}
                       <p className={`profile-modal-helper ${phoneValue.replace(/\D/g, '').length === selectedPhoneCodeOption.phoneLength ? 'text-green-600' : 'text-slate-500'}`}>
@@ -795,15 +874,50 @@ export default function BasicInfoModal({
                 </h3>
                 <div className="profile-modal-form-grid profile-modal-form-grid--split">
                   <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">Current Country *</label>
+                    <select
+                      value={countryValue}
+                      onChange={(e) => {
+                        const nextCountry = e.target.value;
+                        setCountryValue(nextCountry);
+                        const dialMatch = ALL_COUNTRY_CODES.find((c) => c.name === nextCountry);
+                        if (dialMatch) setPhoneCode(dialMatch.dialCode);
+                        setCitySuggestions([]);
+                        setCitySuggestOpen(false);
+                        setCityHighlight(-1);
+                        setCitySuggestError(null);
+                        citySuggestUserInitiatedRef.current = false;
+                        cityAbortRef.current?.abort();
+                      }}
+                      className={`${profileFieldClass(!countryValue || Boolean(errors.country))} appearance-none`}
+                    >
+                      <option value="">Select Country</option>
+                      {ALL_COUNTRY_CODES.map((country) => (
+                        <option key={country.code} value={country.name}>
+                          {country.name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.country && <p className="profile-modal-helper text-red-600">{errors.country}</p>}
+                  </div>
+                  <div className="profile-modal-field-group">
                     <label className="profile-modal-label">Current City *</label>
                     <div className="relative" ref={cityAutocompleteRef}>
                       <input
                         type="text"
                         value={cityValue}
                         autoComplete="off"
-                        onChange={(e) => setCityValue(e.target.value)}
+                        disabled={!countryValue.trim()}
+                        onChange={(e) => {
+                          if (!countryValue.trim()) return;
+                          citySuggestUserInitiatedRef.current = true;
+                          setCityValue(e.target.value);
+                        }}
                         onFocus={() => {
-                          if (citySuggestions.length > 0 || citySuggestLoading || citySuggestError) {
+                          if (
+                            citySuggestUserInitiatedRef.current &&
+                            (citySuggestions.length > 0 || citySuggestLoading || citySuggestError)
+                          ) {
                             setCitySuggestOpen(true);
                           }
                         }}
@@ -833,8 +947,8 @@ export default function BasicInfoModal({
                             setCityHighlight(-1);
                           }
                         }}
-                        className={profileFieldClass(!cityValue.trim() || Boolean(errors.city))}
-                        placeholder="Enter current city"
+                        className={`${profileFieldClass(!cityValue.trim() || Boolean(errors.city))} disabled:cursor-not-allowed disabled:bg-gray-100`}
+                        placeholder={countryValue.trim() ? 'Enter current city' : 'Select country first'}
                       />
                       {citySuggestOpen ? (
                         <div className="absolute top-[calc(100%+6px)] left-0 z-50 max-h-[min(280px,50vh)] w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-2 shadow-lg">
@@ -851,36 +965,21 @@ export default function BasicInfoModal({
                                 type="button"
                                 data-city-suggest-index={idx}
                                 onMouseEnter={() => setCityHighlight(idx)}
-                                onMouseDown={(ev) => {
-                                  ev.preventDefault();
-                                  applyCitySuggestion(place);
-                                }}
+                                onMouseDown={(ev) => ev.preventDefault()}
+                                onClick={() => applyCitySuggestion(place)}
                                 className={`w-full px-3 py-2 text-left text-gray-900 hover:bg-gray-50 ${cityHighlight === idx ? 'bg-gray-50' : ''}`}
                               >
-                                {formatPlaceSuggestionLine(place)}
+                                {formatPlaceSuggestionLine(place, false)}
                               </button>
                             ))
                           )}
                         </div>
                       ) : null}
                     </div>
+                    {!countryValue.trim() ? (
+                      <p className="profile-modal-helper mt-1 text-slate-500">Select a country to search cities</p>
+                    ) : null}
                     {errors.city && <p className="profile-modal-helper text-red-600">{errors.city}</p>}
-                  </div>
-                  <div className="profile-modal-field-group">
-                    <label className="profile-modal-label">Current Country *</label>
-                    <select
-                      value={countryValue}
-                      onChange={(e) => setCountryValue(e.target.value)}
-                      className={`${profileFieldClass(!countryValue || Boolean(errors.country))} appearance-none`}
-                    >
-                      <option value="">Select Country</option>
-                      {ALL_COUNTRY_CODES.map((country) => (
-                        <option key={country.code} value={country.name}>
-                          {country.name}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.country && <p className="profile-modal-helper text-red-600">{errors.country}</p>}
                   </div>
                 </div>
               </section>

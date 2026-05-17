@@ -1,8 +1,15 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api-base';
+import {
+  getStoredCandidateId,
+  getStoredToken,
+  persistAuthSession,
+  syncAuthStorage,
+} from '@/lib/auth-storage';
+import { useTabVisibilityRefresh } from '@/hooks/useTabVisibilityRefresh';
 import { showSuccessToast } from '@/components/common/toast/toast';
 import { getAuthContextDisplayName } from '@/components/dashboard/dashboard-utils';
 
@@ -71,14 +78,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const pathname = usePathname();
 
   const logout = useCallback(async (logoutAll: boolean = false) => {
-    const candidateId = localStorage.getItem('candidateId') || sessionStorage.getItem('candidateId');
+    const candidateId = getStoredCandidateId();
     
     if (logoutAll && candidateId) {
       try {
         await fetch(`${API_BASE_URL}/settings/logout-all/${candidateId}`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
+            'Authorization': `Bearer ${getStoredToken()}`
           }
         });
       } catch (error) {
@@ -98,18 +105,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const refreshUser = useCallback(async () => {
-    const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const candidateId = localStorage.getItem('candidateId') || sessionStorage.getItem('candidateId');
+    syncAuthStorage();
+    const storedToken = getStoredToken();
+    const candidateId = getStoredCandidateId();
 
     if (!storedToken || !candidateId) {
       setIsLoading(false);
       setToken(null);
+      setUser(null);
       return;
     }
 
     try {
-      // Synchronize state with storage immediately
       if (token !== storedToken) setToken(storedToken);
+      setUser((prev) => prev ?? buildPlaceholderUser(candidateId));
 
       const response = await fetch(`${API_BASE_URL}/profile/${candidateId}`, {
         headers: {
@@ -122,6 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (result.success && result.data) {
           const profile = result.data;
           const personalInfo = profile.personalInfo || {};
+          persistAuthSession(storedToken, candidateId);
           
           setUser({
             id: candidateId,
@@ -130,6 +140,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name: getAuthContextDisplayName(profile),
             profilePhotoUrl: personalInfo.profilePhotoUrl || null
           });
+        } else {
+          setUser((prev) => prev ?? buildPlaceholderUser(candidateId));
         }
       } else if (response.status === 401) {
         // Brief wait + one retry: session row may lag the JWT by a few ms on cold DB.
@@ -191,22 +203,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 0);
   }, [refreshUser]);
 
+  const refreshUserRef = useRef(refreshUser);
+  refreshUserRef.current = refreshUser;
+
   // Initial session check & Cross-tab sync
   useEffect(() => {
-    refreshUser();
+    void refreshUserRef.current();
 
-    // Sync logout across tabs
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'token' && !e.newValue) {
         setToken(null);
         setUser(null);
-        // The Auth Guard effect (line 145) will handle the redirection
+      } else if (e.key === 'token' || e.key === 'candidateId') {
+        syncAuthStorage();
+        void refreshUserRef.current();
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []); // Only on mount
+  }, []);
+
+  useTabVisibilityRefresh(() => {
+    if (getStoredToken()) {
+      void refreshUserRef.current();
+    }
+  }, !!token);
 
   // Debug state changes
   useEffect(() => {

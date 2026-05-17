@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
+import { profileFieldClass, profileSelectClassName } from '@/lib/profile-modal-ui';
 
 interface GapExplanationModalProps {
   isOpen: boolean;
@@ -206,11 +207,7 @@ export default function GapExplanationModal({
               <select
                 value={reasonForGap}
                 onChange={(e) => setReasonForGap(e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white ${!reasonForGap ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                }}
+                className={`${profileSelectClassName} ${!reasonForGap ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''}`}
               >
                 <option value="">Select a reason</option>
                 <option value="career-break">Career Break</option>
@@ -233,11 +230,7 @@ export default function GapExplanationModal({
               <select
                 value={gapDuration}
                 onChange={(e) => setGapDuration(e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white ${!gapDuration ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                }}
+                className={`${profileSelectClassName} ${!gapDuration ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''}`}
               >
                 <option value="">Select gap duration</option>
                 <option value="Less than 3 months">Less than 3 months</option>
@@ -259,7 +252,7 @@ export default function GapExplanationModal({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Skills You Continued During the Gap
               </label>
-              <div className="relative">
+              <div className="profile-modal-icon-field">
                 <input
                   type="text"
                   value={skillsInput}
@@ -271,11 +264,7 @@ export default function GapExplanationModal({
                     }
                   }}
                   placeholder="Add relevant skills (e.g., Communication, Excel, Coding, Sales)"
-                  className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 ${selectedSkills.length === 0 ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '14px',
-                  }}
+                  className={`${profileFieldClass(selectedSkills.length === 0)} pr-10`}
                 />
                 <button
                   type="button"

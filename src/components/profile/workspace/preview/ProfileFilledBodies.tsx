@@ -75,15 +75,7 @@ export function ProfileBasicInfoFilled({ data }: { data: BasicInfoData }) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="profile-page-label">Full name</p>
-          <div className="flex flex-wrap items-center gap-3">
-            <p className="profile-page-value">{fullName(data)}</p>
-            {data.whatsappNumber && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-0.5 text-[11px] font-bold text-green-700 shadow-sm">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                WhatsApp: {data.whatsappNumber}
-              </span>
-            )}
-          </div>
+          <p className="profile-page-value">{fullName(data)}</p>
         </div>
         {data.employment ? (
           <span className="inline-flex w-fit shrink-0 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-900">
@@ -94,9 +86,6 @@ export function ProfileBasicInfoFilled({ data }: { data: BasicInfoData }) {
       <PreviewMetaGrid>
         <PreviewMetaItem label="Email" value={data.email || '—'} />
         <PreviewMetaItem label="Phone" value={phoneDisplay} />
-        {data.whatsappNumber && (
-          <PreviewMetaItem label="WhatsApp No" value={data.whatsappNumber} />
-        )}
         <PreviewMetaItem label="Gender" value={data.gender || '—'} />
         <PreviewMetaItem
           label="Date of birth"

@@ -30,6 +30,10 @@ export default function ExtractPage() {
 
   const redirectToDashboard = useCallback(() => {
     if (!isPageActiveRef.current) return;
+    // Never redirect after the user has left /extract (e.g. opened /profile).
+    if (typeof window !== "undefined" && !window.location.pathname.startsWith("/extract")) {
+      return;
+    }
     router.push("/candidate-dashboard");
   }, [router]);
 
@@ -188,6 +192,7 @@ export default function ExtractPage() {
       isPageActiveRef.current = false;
       pendingTimeouts.forEach(clearTimeout);
       clearPolling();
+      sessionStorage.removeItem("uploadStatus");
     };
   }, [authLoading, user?.id, router, redirectToDashboard]);
 

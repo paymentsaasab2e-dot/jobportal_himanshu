@@ -33,7 +33,12 @@ export const profileFieldGroupClass = 'profile-modal-field-group';
 
 /** Legacy alias — use profileFieldClass in new code. */
 export const profileInputClassName = profileFieldClass();
-export const profileSelectClassName = `${profileFieldClass()} appearance-none bg-white`;
+export const profileSelectClassName = `${profileFieldClass()} appearance-none bg-white pr-8`;
+
+/** Wrap inputs that have a left icon (date, search, etc.) */
+export const profileIconFieldClass = `${profileFieldClass()} profile-modal-field--icon-left`;
+
+export const profileIconFieldWrapClass = 'profile-modal-icon-field';
 
 export const profileCancelBtnClass =
   'profile-modal-btn rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-50';
