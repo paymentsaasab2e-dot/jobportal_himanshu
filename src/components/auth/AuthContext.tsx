@@ -12,6 +12,10 @@ import {
 import { useTabVisibilityRefresh } from '@/hooks/useTabVisibilityRefresh';
 import { showSuccessToast } from '@/components/common/toast/toast';
 import { getAuthContextDisplayName } from '@/components/dashboard/dashboard-utils';
+import {
+  PROFILE_PHOTO_UPDATED_EVENT,
+  type ProfilePhotoUpdatedDetail,
+} from '@/lib/profile-photo';
 
 interface User {
   id: string;
@@ -229,6 +233,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       void refreshUserRef.current();
     }
   }, !!token);
+
+  useEffect(() => {
+    const onProfilePhotoUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<ProfilePhotoUpdatedDetail>).detail;
+      if (!detail || detail.profilePhotoUrl === undefined) return;
+      setUser((prev) =>
+        prev ? { ...prev, profilePhotoUrl: detail.profilePhotoUrl } : prev
+      );
+    };
+
+    window.addEventListener(PROFILE_PHOTO_UPDATED_EVENT, onProfilePhotoUpdated);
+    return () =>
+      window.removeEventListener(PROFILE_PHOTO_UPDATED_EVENT, onProfilePhotoUpdated);
+  }, []);
 
   // Debug state changes
   useEffect(() => {

@@ -428,9 +428,22 @@ export default function ProfilePage() {
   // Helper function to format enum values for display
   const formatEnumValue = (value: string | null | undefined): string => {
     if (!value) return '—';
+    const slugLabels: Record<string, string> = {
+      'full-time': 'Full-time',
+      'part-time': 'Part-time',
+      contract: 'Contract',
+      internship: 'Internship',
+      freelance: 'Freelance',
+      remote: 'Remote',
+      hybrid: 'Hybrid',
+      onsite: 'On-site',
+      'on-site': 'On-site',
+    };
+    const key = value.trim().toLowerCase();
+    if (slugLabels[key]) return slugLabels[key];
     return value
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .split(/[_-]/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   };
 

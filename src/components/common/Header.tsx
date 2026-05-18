@@ -12,6 +12,11 @@ import {
   getUnreadNotificationCount,
   NOTIFICATIONS_UPDATED_EVENT,
 } from '@/lib/notifications';
+import {
+  PROFILE_PHOTO_UPDATED_EVENT,
+  resolveProfilePhotoUrl,
+  type ProfilePhotoUpdatedDetail,
+} from '@/lib/profile-photo';
 import NotificationPanel from '@/components/common/NotificationPanel';
 import ProfilePanel from '@/components/common/ProfilePanel';
 import GlobalAIAssistant from '@/components/common/GlobalAIAssistant';
@@ -108,33 +113,51 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
         };
     }, [isLoggedIn, user?.id]);
 
-    // Minimal effect to fetch profile completion if not provided by context
-    useEffect(() => {
+    const refreshHeaderProfile = useCallback(async () => {
         if (!isLoggedIn || !user?.id) return;
-        
-        const fetchCompletion = async () => {
-            try {
-                const response = await fetch(`${getApiBaseUrl()}/cv/dashboard/${user.id}`);
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success && result.data?.profile) {
-                        const { profile } = result.data;
-                        if (profile.profileCompleteness != null) {
-                            setProfileCompletion(profile.profileCompleteness);
-                        }
-                        setDashboardUser({
-                            name: getProfileDisplayFullName(profile),
-                            email: profile.email || '',
-                            photoUrl: profile.profilePhotoUrl || null,
-                        });
+
+        try {
+            const response = await fetch(`${getApiBaseUrl()}/cv/dashboard/${user.id}`);
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data?.profile) {
+                    const { profile } = result.data;
+                    if (profile.profileCompleteness != null) {
+                        setProfileCompletion(profile.profileCompleteness);
                     }
+                    setDashboardUser({
+                        name: getProfileDisplayFullName(profile),
+                        email: profile.email || '',
+                        photoUrl: resolveProfilePhotoUrl(profile.profilePhotoUrl),
+                    });
                 }
-            } catch (e) {
-                console.error("Header: Error fetching completion:", e);
             }
-        };
-        fetchCompletion();
+        } catch (e) {
+            console.error('Header: Error fetching completion:', e);
+        }
     }, [isLoggedIn, user?.id]);
+
+    useEffect(() => {
+        void refreshHeaderProfile();
+    }, [refreshHeaderProfile]);
+
+    useEffect(() => {
+        if (!isLoggedIn) return;
+
+        const onProfilePhotoUpdated = (event: Event) => {
+            const detail = (event as CustomEvent<ProfilePhotoUpdatedDetail>).detail;
+            if (!detail || detail.profilePhotoUrl === undefined) return;
+
+            setDashboardUser((prev) => ({
+                name: prev?.name || user?.name || 'User',
+                email: prev?.email || user?.email || '',
+                photoUrl: detail.profilePhotoUrl,
+            }));
+        };
+
+        window.addEventListener(PROFILE_PHOTO_UPDATED_EVENT, onProfilePhotoUpdated);
+        return () => window.removeEventListener(PROFILE_PHOTO_UPDATED_EVENT, onProfilePhotoUpdated);
+    }, [isLoggedIn, user?.email, user?.name]);
 
     useEffect(() => {
         const el = headerShellRef.current;

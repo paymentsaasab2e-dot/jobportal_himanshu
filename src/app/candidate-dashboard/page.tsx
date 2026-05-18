@@ -30,6 +30,7 @@ import {
 import { getAuthHeaders, getStoredCandidateId, syncAuthStorage } from "@/lib/auth-storage";
 import { useTabVisibilityRefresh } from "@/hooks/useTabVisibilityRefresh";
 import { recordCandidateNotification } from "@/lib/notifications";
+import { dispatchProfilePhotoUpdated } from "@/lib/profile-photo";
 
 const PAGE_BG =
   "radial-gradient(circle at top left, rgba(40,168,225,0.13), transparent 28%), radial-gradient(circle at 85% 12%, rgba(40,168,223,0.1), transparent 16%), radial-gradient(circle at 18% 82%, rgba(252,150,32,0.08), transparent 18%), linear-gradient(180deg, #f5fafd 0%, #f8fcff 44%, #fcfdff 100%)";
@@ -194,6 +195,7 @@ export default function CandidateDashboardPage() {
     "highestMatch",
   ]);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
   const [profileCompletionDetails, setProfileCompletionDetails] =
     useState<ProfileCompletenessResponse | null>(null);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
@@ -560,10 +562,71 @@ export default function CandidateDashboardPage() {
       const result = (await response.json().catch(() => ({}))) as {
         success?: boolean;
         message?: string;
+        data?: { profilePhotoUrl?: string | null };
       };
 
       if (!response.ok || !result.success) {
         throw new Error(result.message || "Failed to upload profile photo");
+      }
+
+      let syncedPhotoUrl = result.data?.profilePhotoUrl ?? null;
+
+      const refreshedProfile = await fetch(
+        `${API_BASE_URL}/cv/dashboard/${resolvedCandidateId}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      const refreshedResult = (await refreshedProfile.json()) as {
+        success?: boolean;
+        data?: DashboardData;
+      };
+
+      if (refreshedProfile.ok && refreshedResult.success && refreshedResult.data) {
+        setDashboardData(refreshedResult.data);
+        syncedPhotoUrl =
+          refreshedResult.data.profile?.profilePhotoUrl ?? syncedPhotoUrl;
+      }
+
+      if (syncedPhotoUrl) {
+        dispatchProfilePhotoUpdated(syncedPhotoUrl, API_BASE_URL);
+      }
+
+      showSuccessToast("Profile photo updated");
+      void recordCandidateNotification(candidateId, {
+        type: 'system',
+        title: 'Profile photo updated',
+        description: 'Your new profile photo is now live across recruiters.',
+      });
+    } catch (error) {
+      console.error("Error uploading profile photo:", error);
+      alert(error instanceof Error ? error.message : "Profile photo upload failed.");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handlePhotoDelete = async () => {
+    const resolvedCandidateId = candidateId || user?.id;
+    if (!resolvedCandidateId) return;
+
+    setIsDeletingPhoto(true);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/profile/photo/${resolvedCandidateId}`,
+        { method: "DELETE" }
+      );
+
+      const result = (await response.json().catch(() => ({}))) as {
+        success?: boolean;
+        message?: string;
+      };
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to delete profile photo");
       }
 
       const refreshedProfile = await fetch(
@@ -583,17 +646,13 @@ export default function CandidateDashboardPage() {
         setDashboardData(refreshedResult.data);
       }
 
-      showSuccessToast("Profile photo updated");
-      void recordCandidateNotification(candidateId, {
-        type: 'system',
-        title: 'Profile photo updated',
-        description: 'Your new profile photo is now live across recruiters.',
-      });
+      dispatchProfilePhotoUpdated(null);
+      showSuccessToast("Profile photo removed");
     } catch (error) {
-      console.error("Error uploading profile photo:", error);
-      alert(error instanceof Error ? error.message : "Profile photo upload failed.");
+      console.error("Error deleting profile photo:", error);
+      alert(error instanceof Error ? error.message : "Profile photo delete failed.");
     } finally {
-      setIsUploadingPhoto(false);
+      setIsDeletingPhoto(false);
     }
   };
 
@@ -805,7 +864,9 @@ export default function CandidateDashboardPage() {
                 missingSections={missingSectionLabels}
                 apiBaseUrl={API_BASE_URL}
                 isUploadingPhoto={isUploadingPhoto}
+                isDeletingPhoto={isDeletingPhoto}
                 onUploadPhoto={handlePhotoUpload}
+                onDeletePhoto={handlePhotoDelete}
                 onOpenProfile={() => router.push("/profile")}
                 onCompleteProfile={() => setIsProfileDrawerOpen(true)}
               />

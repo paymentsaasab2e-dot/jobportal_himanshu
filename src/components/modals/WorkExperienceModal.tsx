@@ -7,7 +7,11 @@ import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
 import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import { profileFieldClass, profileSectionTitleClass, profileTextareaClass } from '@/lib/profile-modal-ui';
-import { isPersistedWorkExperienceId } from '@/lib/work-experience-utils';
+import {
+  isPersistedWorkExperienceId,
+  normalizeEmploymentTypeFromApi,
+  normalizeWorkModeFromApi,
+} from '@/lib/work-experience-utils';
 import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
 
 interface WorkExperienceModalProps {
@@ -163,14 +167,14 @@ export default function WorkExperienceModal({
   const populateFormFromEntry = (entry: WorkExperienceEntry) => {
     setJobTitle(entry.jobTitle || '');
     setCompanyName(entry.companyName || '');
-    setEmploymentType(entry.employmentType || '');
+    setEmploymentType(normalizeEmploymentTypeFromApi(entry.employmentType));
     setIndustryDomain(entry.industryDomain || '');
     setNumberOfReportees(entry.numberOfReportees || '');
     setStartDate(entry.startDate || '');
     setEndDate(entry.endDate || '');
     setCurrentlyWorkHere(entry.currentlyWorkHere || false);
     setWorkLocation(entry.workLocation || '');
-    setWorkMode(entry.workMode || '');
+    setWorkMode(normalizeWorkModeFromApi(entry.workMode));
     setCompanyProfile(entry.companyProfile || '');
     const parsed = parseStoredTurnover(entry.companyTurnover || '');
     setCompanyTurnoverCurrency(parsed.currency);

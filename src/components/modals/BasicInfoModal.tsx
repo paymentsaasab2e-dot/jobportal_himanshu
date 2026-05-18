@@ -5,7 +5,16 @@ import Image from 'next/image';
 import {
   ALL_COUNTRY_CODES,
   countryCodeToFlag,
+  formatPhoneCodeLabel,
 } from '@/lib/country-codes';
+import {
+  type CitySuggestion,
+  formatCitySuggestionLabel,
+  resolveCountryToSelectValue,
+  clearCityCacheForCountry,
+  getCountryNameByIso,
+  searchCitySuggestions,
+} from '@/lib/geo-locations';
 import { profileCancelBtnClass, profileFieldClass, profileSaveBtnClass } from '@/lib/profile-modal-ui';
 import { resolveSignupPhoneFields } from '@/lib/phone-utils';
 import { useAuth } from '@/components/auth/AuthContext';
@@ -44,125 +53,6 @@ function dateToIsoYmd(d: Date): string {
   const mo = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${mo}-${day}`;
-}
-
-// --- Nominatim (OpenStreetMap) city autocomplete --------------------------------
-
-type NominatimAddress = {
-  city?: string;
-  town?: string;
-  village?: string;
-  county?: string;
-  state?: string;
-  region?: string;
-  country?: string;
-  country_code?: string;
-};
-
-type NominatimPlace = {
-  display_name: string;
-  address?: NominatimAddress;
-};
-
-const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
-
-function extractLocality(addr: NominatimAddress | undefined, displayName: string): string {
-  if (!addr) return displayName.split(',')[0]?.trim() || '';
-  const raw =
-    (addr.city || addr.town || addr.village || addr.county || '').trim();
-  if (raw) return raw;
-  return displayName.split(',')[0]?.trim() || '';
-}
-
-function formatPlaceSuggestionLine(place: NominatimPlace, includeCountry = true): string {
-  const addr = place.address;
-  const locality = extractLocality(addr, place.display_name);
-  const state = addr?.state || addr?.region;
-  const country = addr?.country;
-  const parts = includeCountry
-    ? [locality, state, country].filter(Boolean)
-    : [locality, state].filter(Boolean);
-  if (parts.length >= 1) return parts.join(', ');
-  const bits = place.display_name
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, includeCountry ? 3 : 2);
-  return bits.join(', ');
-}
-
-function placeMatchesCountryIso(place: NominatimPlace, iso: string): boolean {
-  const cc = place.address?.country_code?.trim().toUpperCase();
-  return cc === iso.trim().toUpperCase();
-}
-
-function resolveCountryToSelectValue(raw: string | undefined): string {
-  if (!raw?.trim()) return '';
-  const n = raw.trim();
-  const lower = n.toLowerCase();
-  const aliases: Record<string, string> = {
-    'united states of america': 'United States',
-    usa: 'United States',
-    'russian federation': 'Russia',
-    czechia: 'Czech Republic',
-    'türkiye': 'Turkey',
-    turkiye: 'Turkey',
-    'great britain': 'United Kingdom',
-    uk: 'United Kingdom',
-    england: 'United Kingdom',
-    scotland: 'United Kingdom',
-    wales: 'United Kingdom',
-    bharat: 'India',
-    'republic of india': 'India',
-  };
-  const mapped = aliases[lower];
-  const candidate = mapped || n;
-  const cLower = candidate.toLowerCase();
-  const exact = ALL_COUNTRY_CODES.find((c) => c.name.toLowerCase() === cLower);
-  if (exact) return exact.name;
-  const contains = ALL_COUNTRY_CODES.find(
-    (c) => cLower.includes(c.name.toLowerCase()) || c.name.toLowerCase().includes(cLower)
-  );
-  return contains?.name || '';
-}
-
-/** Prefer ISO country_code from Nominatim so city + country stay in sync. */
-function resolveCountryFromPlace(addr: NominatimAddress | undefined): string {
-  if (!addr) return '';
-  const iso = addr.country_code?.trim().toUpperCase();
-  if (iso) {
-    const byCode = ALL_COUNTRY_CODES.find((c) => c.code === iso);
-    if (byCode) return byCode.name;
-  }
-  return resolveCountryToSelectValue(addr.country);
-}
-
-async function fetchNominatimPlaces(
-  query: string,
-  signal: AbortSignal,
-  countryIso?: string,
-): Promise<NominatimPlace[]> {
-  const params = new URLSearchParams({
-    q: query,
-    format: 'json',
-    addressdetails: '1',
-    limit: '8',
-  });
-  if (countryIso?.trim()) {
-    params.set('countrycodes', countryIso.trim().toLowerCase());
-  }
-  const url = `${NOMINATIM_URL}?${params.toString()}`;
-  const res = await fetch(url, {
-    signal,
-    headers: {
-      Accept: 'application/json',
-      'Accept-Language': 'en',
-      'User-Agent': 'JobPortalBasicInfoModal/1.0 (CRM; contact: local)',
-    },
-  });
-  if (!res.ok) throw new Error(`Nominatim ${res.status}`);
-  const data = (await res.json()) as NominatimPlace[];
-  return Array.isArray(data) ? data : [];
 }
 
 interface BasicInfoModalProps {
@@ -232,12 +122,11 @@ export default function BasicInfoModal({
   const phoneCodeRef = useRef<HTMLDivElement>(null);
   const hiddenDobPickerRef = useRef<HTMLInputElement>(null);
   const cityAutocompleteRef = useRef<HTMLDivElement>(null);
-  const cityAbortRef = useRef<AbortController | null>(null);
   const citySuggestOpenRef = useRef(false);
   /** Only fetch/show city suggestions after the user types — not when the modal opens with saved data */
   const citySuggestUserInitiatedRef = useRef(false);
 
-  const [citySuggestions, setCitySuggestions] = useState<NominatimPlace[]>([]);
+  const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
   const [citySuggestLoading, setCitySuggestLoading] = useState(false);
   const [citySuggestError, setCitySuggestError] = useState<string | null>(null);
   const [citySuggestOpen, setCitySuggestOpen] = useState(false);
@@ -333,7 +222,9 @@ export default function BasicInfoModal({
       applyPhoneFields(initialData);
       setGenderValue(initialData.gender || '');
       setDobDisplay(initialData.dob ? isoToDdMmYyyy(initialData.dob) : '');
-      setCountryValue(initialData.country || '');
+      setCountryValue(
+        resolveCountryToSelectValue(initialData.country) || initialData.country || '',
+      );
       setCityValue(initialData.city || '');
       setEmploymentValue(initialData.employment || '');
       setPassportNumberValue(initialData.passportNumber || '');
@@ -342,7 +233,6 @@ export default function BasicInfoModal({
       setCitySuggestError(null);
       setCityHighlight(-1);
       setCitySuggestLoading(false);
-      cityAbortRef.current?.abort();
       citySuggestUserInitiatedRef.current = false;
     } else {
       setFirstNameValue('');
@@ -360,7 +250,6 @@ export default function BasicInfoModal({
       setCitySuggestError(null);
       setCityHighlight(-1);
       setCitySuggestLoading(false);
-      cityAbortRef.current?.abort();
       citySuggestUserInitiatedRef.current = false;
       applyPhoneFields(
         user?.whatsappNumber ? { whatsappNumber: user.whatsappNumber } : undefined,
@@ -371,7 +260,6 @@ export default function BasicInfoModal({
   useEffect(() => {
     if (!isOpen) return;
     citySuggestUserInitiatedRef.current = false;
-    cityAbortRef.current?.abort();
     setCitySuggestOpen(false);
     setCitySuggestions([]);
     setCitySuggestError(null);
@@ -379,20 +267,27 @@ export default function BasicInfoModal({
     setCitySuggestLoading(false);
   }, [isOpen]);
 
-  const applyCitySuggestion = useCallback((place: NominatimPlace) => {
-    citySuggestUserInitiatedRef.current = false;
-    cityAbortRef.current?.abort();
-    const addr = place.address;
-    const locality = extractLocality(addr, place.display_name);
-    const countrySelect = resolveCountryFromPlace(addr);
-    setCityValue(locality);
-    if (!countryValue.trim() && countrySelect) setCountryValue(countrySelect);
-    setCitySuggestOpen(false);
-    setCitySuggestions([]);
-    setCityHighlight(-1);
-    setCitySuggestError(null);
-    setCitySuggestLoading(false);
+  const syncCountryFromCity = useCallback((suggestion: CitySuggestion) => {
+    const countryName = getCountryNameByIso(suggestion.countryCode);
+    if (!countryName) return;
+    setCountryValue(countryName);
+    const dialMatch = ALL_COUNTRY_CODES.find((c) => c.code === suggestion.countryCode);
+    if (dialMatch) setPhoneCode(formatPhoneCodeLabel(dialMatch));
   }, []);
+
+  const applyCitySuggestion = useCallback(
+    (suggestion: CitySuggestion) => {
+      citySuggestUserInitiatedRef.current = false;
+      syncCountryFromCity(suggestion);
+      setCityValue(suggestion.value);
+      setCitySuggestOpen(false);
+      setCitySuggestions([]);
+      setCityHighlight(-1);
+      setCitySuggestError(null);
+      setCitySuggestLoading(false);
+    },
+    [syncCountryFromCity],
+  );
 
   useEffect(() => {
     citySuggestOpenRef.current = citySuggestOpen;
@@ -412,7 +307,6 @@ export default function BasicInfoModal({
 
   useEffect(() => {
     if (!isOpen) {
-      cityAbortRef.current?.abort();
       setCitySuggestLoading(false);
       setCitySuggestOpen(false);
       setCitySuggestError(null);
@@ -422,7 +316,6 @@ export default function BasicInfoModal({
     }
 
     if (!citySuggestUserInitiatedRef.current) {
-      cityAbortRef.current?.abort();
       setCitySuggestLoading(false);
       setCitySuggestOpen(false);
       setCitySuggestError(null);
@@ -432,19 +325,8 @@ export default function BasicInfoModal({
     }
 
     const countryIso = selectedCountryOption?.code;
-    if (!countryIso) {
-      cityAbortRef.current?.abort();
-      setCitySuggestLoading(false);
-      setCitySuggestOpen(false);
-      setCitySuggestError(null);
-      setCityHighlight(-1);
-      setCitySuggestions([]);
-      return;
-    }
-
     const q = cityValue.trim();
     if (q.length < 2) {
-      cityAbortRef.current?.abort();
       setCitySuggestLoading(false);
       setCitySuggestOpen(false);
       setCitySuggestError(null);
@@ -454,38 +336,17 @@ export default function BasicInfoModal({
     }
 
     const timer = window.setTimeout(() => {
-      cityAbortRef.current?.abort();
-      const ac = new AbortController();
-      cityAbortRef.current = ac;
       setCitySuggestError(null);
       setCitySuggestLoading(true);
-      setCitySuggestOpen(true);
-      setCityHighlight(-1);
-      setCitySuggestions([]);
 
-      void (async () => {
-        try {
-          const list = await fetchNominatimPlaces(q, ac.signal, countryIso);
-          if (ac.signal.aborted) return;
-          const filtered = list.filter((place) => placeMatchesCountryIso(place, countryIso));
-          setCitySuggestions(filtered);
-          setCityHighlight(-1);
-        } catch (err) {
-          if ((err as Error).name === 'AbortError') return;
-          if (!ac.signal.aborted) {
-            setCitySuggestions([]);
-            setCitySuggestError('Could not load suggestions.');
-          }
-        } finally {
-          if (!ac.signal.aborted) setCitySuggestLoading(false);
-        }
-      })();
-    }, 500);
+      const list = searchCitySuggestions(q, countryIso);
+      setCitySuggestions(list);
+      setCitySuggestOpen(list.length > 0);
+      setCityHighlight(list.length > 0 ? 0 : -1);
+      setCitySuggestLoading(false);
+    }, 200);
 
-    return () => {
-      window.clearTimeout(timer);
-      cityAbortRef.current?.abort();
-    };
+    return () => window.clearTimeout(timer);
   }, [cityValue, countryValue, selectedCountryOption?.code, isOpen]);
 
   useEffect(() => {
@@ -908,12 +769,12 @@ export default function BasicInfoModal({
                         setCountryValue(nextCountry);
                         const dialMatch = ALL_COUNTRY_CODES.find((c) => c.name === nextCountry);
                         if (dialMatch) setPhoneCode(dialMatch.dialCode);
+                        clearCityCacheForCountry();
                         setCitySuggestions([]);
                         setCitySuggestOpen(false);
                         setCityHighlight(-1);
                         setCitySuggestError(null);
                         citySuggestUserInitiatedRef.current = false;
-                        cityAbortRef.current?.abort();
                       }}
                       className={`${profileFieldClass(!countryValue || Boolean(errors.country))} appearance-none`}
                     >
@@ -933,9 +794,7 @@ export default function BasicInfoModal({
                         type="text"
                         value={cityValue}
                         autoComplete="off"
-                        disabled={!countryValue.trim()}
                         onChange={(e) => {
-                          if (!countryValue.trim()) return;
                           citySuggestUserInitiatedRef.current = true;
                           setCityValue(e.target.value);
                         }}
@@ -946,6 +805,13 @@ export default function BasicInfoModal({
                           ) {
                             setCitySuggestOpen(true);
                           }
+                        }}
+                        onBlur={() => {
+                          window.setTimeout(() => {
+                            if (!citySuggestOpenRef.current) return;
+                            setCitySuggestOpen(false);
+                            setCityHighlight(-1);
+                          }, 150);
                         }}
                         onKeyDown={(e) => {
                           if (e.key === 'ArrowDown') {
@@ -962,10 +828,20 @@ export default function BasicInfoModal({
                               setCityHighlight((i) => Math.max(i - 1, 0));
                             }
                           } else if (e.key === 'Enter') {
-                            if (citySuggestOpen && cityHighlight >= 0 && citySuggestions[cityHighlight]) {
+                            if (citySuggestOpen && citySuggestions.length > 0) {
                               e.preventDefault();
-                              applyCitySuggestion(citySuggestions[cityHighlight]);
+                              const pick =
+                                cityHighlight >= 0 && citySuggestions[cityHighlight]
+                                  ? citySuggestions[cityHighlight]
+                                  : citySuggestions[0];
+                              if (pick) applyCitySuggestion(pick);
                             }
+                          } else if (e.key === 'Tab' && citySuggestOpen && citySuggestions.length > 0) {
+                            const pick =
+                              cityHighlight >= 0 && citySuggestions[cityHighlight]
+                                ? citySuggestions[cityHighlight]
+                                : citySuggestions[0];
+                            if (pick) applyCitySuggestion(pick);
                           } else if (e.key === 'Escape' && citySuggestOpen) {
                             e.preventDefault();
                             e.stopPropagation();
@@ -974,7 +850,7 @@ export default function BasicInfoModal({
                           }
                         }}
                         className={`${profileFieldClass(!cityValue.trim() || Boolean(errors.city))} disabled:cursor-not-allowed disabled:bg-gray-100`}
-                        placeholder={countryValue.trim() ? 'Enter current city' : 'Select country first'}
+                        placeholder="Type city name, then pick from the list"
                       />
                       {citySuggestOpen ? (
                         <div className="absolute top-[calc(100%+6px)] left-0 z-50 max-h-[min(280px,50vh)] w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-2 shadow-lg">
@@ -983,28 +859,28 @@ export default function BasicInfoModal({
                           ) : citySuggestError ? (
                             <div className="profile-modal-helper px-3 py-2 text-red-600">{citySuggestError}</div>
                           ) : citySuggestions.length === 0 ? (
-                            <div className="profile-modal-helper px-3 py-2 text-slate-500">No places found</div>
+                            <div className="profile-modal-helper px-3 py-2 text-slate-500">No cities found — you can still type your city</div>
                           ) : (
-                            citySuggestions.map((place, idx) => (
+                            citySuggestions.map((suggestion, idx) => (
                               <button
-                                key={`${place.display_name}-${idx}`}
+                                key={`${suggestion.countryCode}-${suggestion.stateCode}-${suggestion.value}-${idx}`}
                                 type="button"
                                 data-city-suggest-index={idx}
                                 onMouseEnter={() => setCityHighlight(idx)}
                                 onMouseDown={(ev) => ev.preventDefault()}
-                                onClick={() => applyCitySuggestion(place)}
+                                onClick={() => applyCitySuggestion(suggestion)}
                                 className={`profile-modal-dropdown-item w-full px-3 py-2 text-left hover:bg-gray-50 ${cityHighlight === idx ? 'bg-gray-50' : ''}`}
                               >
-                                {formatPlaceSuggestionLine(place, false)}
+                                {formatCitySuggestionLabel(suggestion)}
                               </button>
                             ))
                           )}
                         </div>
                       ) : null}
                     </div>
-                    {!countryValue.trim() ? (
-                      <p className="profile-modal-helper mt-1 text-slate-500">Select a country to search cities</p>
-                    ) : null}
+                    <p className="profile-modal-helper mt-1 text-slate-500">
+                      Pick a city from the list — country will update to match
+                    </p>
                     {errors.city && <p className="profile-modal-helper text-red-600">{errors.city}</p>}
                   </div>
                 </div>

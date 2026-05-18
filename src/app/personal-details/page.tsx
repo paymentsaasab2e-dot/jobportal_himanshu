@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth/AuthContext';
 
 import { API_BASE_URL } from '@/lib/api-base';
 import { showSuccessToast } from '@/components/common/toast/toast';
+import { dispatchProfilePhotoUpdated } from '@/lib/profile-photo';
 
 // Form types
 interface LanguageEntry {
@@ -479,6 +480,7 @@ export default function PersonalDetailsPage() {
             imageSrc = `${baseUrl}${cleanPath}`;
           }
           setProfilePhotoUrl(imageSrc);
+          dispatchProfilePhotoUpdated(photoUrl, API_BASE_URL);
           showSuccessToast('Profile photo updated');
         }
       } else {

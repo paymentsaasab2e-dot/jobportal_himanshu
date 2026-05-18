@@ -1,3 +1,5 @@
+import { Country } from 'country-state-city';
+
 export interface CountryCodeOption {
   code: string;
   dialCode: string;
@@ -5,7 +7,7 @@ export interface CountryCodeOption {
   phoneLength: number; // Expected number of digits after country code
 }
 
-export const ALL_COUNTRY_CODES: CountryCodeOption[] = [
+const LEGACY_COUNTRY_DIAL_CODES: CountryCodeOption[] = [
   { code: "AF", dialCode: "+93", name: "Afghanistan", phoneLength: 9 },
   { code: "AL", dialCode: "+355", name: "Albania", phoneLength: 9 },
   { code: "DZ", dialCode: "+213", name: "Algeria", phoneLength: 9 },
@@ -202,6 +204,24 @@ export const ALL_COUNTRY_CODES: CountryCodeOption[] = [
   { code: "ZM", dialCode: "+260", name: "Zambia", phoneLength: 9 },
   { code: "ZW", dialCode: "+263", name: "Zimbabwe", phoneLength: 9 },
 ];
+
+const LEGACY_DIAL_BY_ISO = new Map(LEGACY_COUNTRY_DIAL_CODES.map((c) => [c.code, c]));
+
+/** Countries from `country-state-city`, dial codes from legacy list when available. */
+export const ALL_COUNTRY_CODES: CountryCodeOption[] = Country.getAllCountries()
+  .map((country) => {
+    const legacy = LEGACY_DIAL_BY_ISO.get(country.isoCode);
+    const fromPackage = country.phonecode
+      ? `+${country.phonecode.replace(/^\+/, '')}`
+      : undefined;
+    return {
+      code: country.isoCode,
+      name: country.name,
+      dialCode: legacy?.dialCode ?? fromPackage ?? '+1',
+      phoneLength: legacy?.phoneLength ?? 10,
+    };
+  })
+  .sort((a, b) => a.name.localeCompare(b.name));
 
 export function formatPhoneCodeLabel(option: CountryCodeOption): string {
   return `${option.dialCode} (${option.name})`;

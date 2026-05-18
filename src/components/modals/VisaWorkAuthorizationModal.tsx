@@ -321,8 +321,7 @@ export default function VisaWorkAuthorizationModal({
     (requiresVisa === 'Yes' &&
       visaDetailsExpected?.visaType &&
       visaDetailsExpected?.visaStatus &&
-      visaDetailsExpected?.visaExpiryDate &&
-      visaDetailsExpected?.itemFamilyNumber) ||
+      visaDetailsExpected?.visaExpiryDate) ||
     (requiresVisa === 'No' && visaWorkpermitRequired)
   );
 
@@ -587,7 +586,8 @@ export default function VisaWorkAuthorizationModal({
             {/* Work Permit Number */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Work Permit Number
+                Work Permit Number{' '}
+                <span className="text-gray-500 text-xs font-normal">(Optional)</span>
               </label>
               <input
                 type="text"
@@ -916,18 +916,16 @@ export default function VisaWorkAuthorizationModal({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Work Permit Number <span className="text-amber-600">*</span>
+                  Work Permit Number{' '}
+                  <span className="text-gray-500 text-xs font-normal">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   value={visaDetailsExpected?.itemFamilyNumber || ''}
                   onChange={(e) => handleVisaDetailChange('expected', 'itemFamilyNumber', e.target.value)}
                   placeholder="Enter work permit number"
-                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.itemFamilyNumber ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
-                {!visaDetailsExpected?.itemFamilyNumber && (
-                  <p className="mt-1 text-xs text-amber-600">Work permit number is required</p>
-                )}
               </div>
             </div>
 
