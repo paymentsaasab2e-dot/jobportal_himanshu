@@ -30,6 +30,14 @@ import {
 import { showInfoToast, showSuccessToast } from '@/components/common/toast/toast';
 import { notifyBellRefresh } from '@/lib/notifications';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
+import {
+  buildJobLocationFacets,
+  countJobsForLocationFacet,
+  countrySearchHasNoJobs,
+  jobMatchesCity,
+  jobMatchesCountry,
+  parseJobLocation,
+} from '@/lib/job-location-filters';
 const PAGE_BG =
   'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)';
 const SAVED_JOBS_STORAGE_PREFIX = 'dashboardSavedJobs';
@@ -40,6 +48,8 @@ interface JobListing {
   company: string
   logo: string
   location: string
+  city?: string
+  country?: string
   salary: string
   salaryMin?: number | null
   salaryMax?: number | null
@@ -491,7 +501,13 @@ const ExploreJobsPageContent = () => {
   const [matchOpen, setMatchOpen] = useState(true)
   const [industryOpen, setIndustryOpen] = useState(true)
   const [departmentOpen, setDepartmentOpen] = useState(true)
-  const [citiesOpen, setCitiesOpen] = useState(true)
+  const [locationCountryOpen, setLocationCountryOpen] = useState(true)
+  const [locationCitiesOpen, setLocationCitiesOpen] = useState(true)
+  const [selectedCountry, setSelectedCountry] = useState('')
+  const [selectedCities, setSelectedCities] = useState<Record<string, boolean>>({})
+  const [countrySearch, setCountrySearch] = useState('')
+  const [countryPickerOpen, setCountryPickerOpen] = useState(false)
+  const countryPickerRef = useRef<HTMLDivElement>(null)
 
   // View More expand states
   const [showMoreIndustry, setShowMoreIndustry] = useState(false)
@@ -562,24 +578,6 @@ const ExploreJobsPageContent = () => {
     setSelectedJob(job)
     setViewMode('detail')
   }, [loading, jobListings, searchParams, selectedJob?.id, viewMode])
-  const [cities, setCities] = useState<Record<string, boolean>>({
-    'Navi Mumbai': false,
-    'Panvel': false,
-    'Mumbai': false,
-    'Bengaluru': false,
-    'Hyderabad': false,
-    'Chennai': false,
-    'Pune': false,
-    'Delhi': false,
-    'Gurgaon': false,
-    'Noida': false,
-    'Kolkata': false,
-    'Ahmedabad': false,
-    'Jaipur': false,
-    'Chandigarh': false,
-    'Remote': false,
-  })
-
   const resetFilters = () => {
     setSearchQuery('')
     setSmartFilterSkills(false)
@@ -594,7 +592,10 @@ const ExploreJobsPageContent = () => {
     setMatchScore({ '80%+ Match': false, '70%+ Match': false, '60%+ Match': false })
     setIndustry({ 'IT Services & Consulting': false, 'Software Product': false, 'Recruitment / Staffing': false, 'Miscellaneous': false, 'Banking & Finance': false, 'Healthcare & Pharma': false, 'E-commerce & Retail': false, 'Manufacturing': false, 'Education & Training': false, 'Media & Entertainment': false, 'Telecommunications': false })
     setDepartment({ 'Engineering - Software': false, 'Data Science & Analytics': false, 'UX, Design & Architecture': false, 'IT & Information Security': false, 'Sales & Business Development': false, 'Marketing & Communications': false, 'Human Resources': false, 'Finance & Accounting': false, 'Operations & Logistics': false, 'Customer Support': false, 'Product Management': false, 'Quality Assurance': false })
-    setCities({ 'Navi Mumbai': false, 'Panvel': false, 'Mumbai': false, 'Bengaluru': false, 'Hyderabad': false, 'Chennai': false, 'Pune': false, 'Delhi': false, 'Gurgaon': false, 'Noida': false, 'Kolkata': false, 'Ahmedabad': false, 'Jaipur': false, 'Chandigarh': false, 'Remote': false })
+    setSelectedCountry('')
+    setSelectedCities({})
+    setCountrySearch('')
+    setCountryPickerOpen(false)
     setShowMoreIndustry(false)
     setShowMoreDepartment(false)
     setShowMoreCities(false)
@@ -883,6 +884,11 @@ const ExploreJobsPageContent = () => {
             asString(job.city) ||
             parsedText.location ||
             'Location not specified'
+          const parsedLoc = parseJobLocation(
+            resolvedLocation,
+            asString(job.city),
+            asString(job.country),
+          )
           const resolvedType =
             asString(job.type) ||
             asString(job.employmentType) ||
@@ -926,6 +932,8 @@ const ExploreJobsPageContent = () => {
             company: companyName,
             logo: resolveCompanyLogo(job),
             location: resolvedLocation,
+            city: parsedLoc.city || undefined,
+            country: parsedLoc.country || undefined,
             salaryMin: toFiniteNumber(job.salary?.min ?? job.salaryMin),
             salaryMax: toFiniteNumber(job.salary?.max ?? job.salaryMax),
             salaryCurrency:
@@ -1349,6 +1357,53 @@ const ExploreJobsPageContent = () => {
     setSelectedJob(null)
   }
 
+  const locationFacets = useMemo(() => buildJobLocationFacets(jobListings), [jobListings])
+
+  const availableCitiesForCountry = useMemo(() => {
+    if (!selectedCountry) return []
+    return locationFacets.citiesByCountry.get(selectedCountry) || []
+  }, [locationFacets, selectedCountry])
+
+  const filteredCountriesForPicker = useMemo(() => {
+    const q = countrySearch.trim().toLowerCase()
+    if (!q) return locationFacets.countries
+    return locationFacets.countries.filter((facet) => facet.name.toLowerCase().includes(q))
+  }, [locationFacets.countries, countrySearch])
+
+  const countrySearchNoJobs = useMemo(
+    () => countrySearchHasNoJobs(countrySearch, locationFacets),
+    [countrySearch, locationFacets],
+  )
+
+  useEffect(() => {
+    if (!countryPickerOpen) return
+    const handleDown = (event: MouseEvent) => {
+      if (countryPickerRef.current && !countryPickerRef.current.contains(event.target as Node)) {
+        setCountryPickerOpen(false)
+        if (selectedCountry) setCountrySearch(selectedCountry)
+      }
+    }
+    document.addEventListener('mousedown', handleDown)
+    return () => document.removeEventListener('mousedown', handleDown)
+  }, [countryPickerOpen, selectedCountry])
+
+  useEffect(() => {
+    if (!selectedCountry) return
+    const stillValid = locationFacets.countries.some((facet) => facet.name === selectedCountry)
+    if (!stillValid) {
+      setSelectedCountry('')
+      setCountrySearch('')
+    }
+  }, [locationFacets, selectedCountry])
+
+  useEffect(() => {
+    const cityList = selectedCountry
+      ? locationFacets.citiesByCountry.get(selectedCountry) || []
+      : []
+    setSelectedCities(Object.fromEntries(cityList.map((city) => [city, false])))
+    setShowMoreCities(false)
+  }, [selectedCountry, locationFacets])
+
   const filteredJobs = useMemo(() => {
     let jobs = jobListings;
 
@@ -1458,14 +1513,16 @@ const ExploreJobsPageContent = () => {
       );
     }
 
-    // Cities filter
-    const activeCities = Object.entries(cities)
+    // Location: country first, then city (from job database fields / parsed location)
+    if (selectedCountry.trim()) {
+      jobs = jobs.filter((j) => jobMatchesCountry(j, selectedCountry));
+    }
+
+    const activeCities = Object.entries(selectedCities)
       .filter(([, v]) => v)
-      .map(([k]) => k.toLowerCase());
+      .map(([k]) => k);
     if (activeCities.length > 0) {
-      jobs = jobs.filter((j) =>
-        activeCities.some((city) => (j.location || '').toLowerCase().includes(city))
-      );
+      jobs = jobs.filter((j) => activeCities.some((city) => jobMatchesCity(j, city)));
     }
 
     // Smart Filter: Likely to Respond (using highlight status or match score as proxy)
@@ -1492,7 +1549,8 @@ const ExploreJobsPageContent = () => {
     matchScore,
     industry,
     department,
-    cities,
+    selectedCountry,
+    selectedCities,
     appliedJobIds,
   ])
 
@@ -1508,10 +1566,12 @@ const ExploreJobsPageContent = () => {
       ...Object.values(matchScore),
       ...Object.values(industry),
       ...Object.values(department),
-      ...Object.values(cities),
+      selectedCountry.trim().length > 0,
+      ...Object.values(selectedCities),
     ].filter(Boolean).length
   }, [
-    cities,
+    selectedCountry,
+    selectedCities,
     department,
     experienceYears,
     industry,
@@ -1535,42 +1595,46 @@ const ExploreJobsPageContent = () => {
     const counts = {
       industry: {} as Record<string, number>,
       department: {} as Record<string, number>,
+      countries: {} as Record<string, number>,
       cities: {} as Record<string, number>,
     }
 
-    // Initialize counts
-    Object.keys(industry).forEach(key => counts.industry[key] = 0)
-    Object.keys(department).forEach(key => counts.department[key] = 0)
-    Object.keys(cities).forEach(key => counts.cities[key] = 0)
+    Object.keys(industry).forEach((key) => {
+      counts.industry[key] = 0
+    })
+    Object.keys(department).forEach((key) => {
+      counts.department[key] = 0
+    })
 
-    jobListings.forEach(job => {
-      // Count industries
+    locationFacets.countries.forEach((facet) => {
+      counts.countries[facet.name] = facet.jobCount
+    })
+
+    const cityList = selectedCountry
+      ? locationFacets.citiesByCountry.get(selectedCountry) || []
+      : []
+    cityList.forEach((city) => {
+      counts.cities[city] = countJobsForLocationFacet(jobListings, selectedCountry, city)
+    })
+
+    jobListings.forEach((job) => {
       const jobIndustry = (job.industry || '').toLowerCase()
-      Object.keys(industry).forEach(key => {
+      Object.keys(industry).forEach((key) => {
         if (jobIndustry.includes(key.toLowerCase().split(' ')[0])) {
           counts.industry[key]++
         }
       })
 
-      // Count departments
       const jobDept = (job.department || '').toLowerCase()
-      Object.keys(department).forEach(key => {
+      Object.keys(department).forEach((key) => {
         if (jobDept.includes(key.toLowerCase().split(' ')[0])) {
           counts.department[key]++
-        }
-      })
-
-      // Count cities
-      const jobLoc = (job.location || '').toLowerCase()
-      Object.keys(cities).forEach(key => {
-        if (jobLoc.includes(key.toLowerCase()) || (key === 'Remote' && normalizeWorkModeValue(job.workMode) === 'remote')) {
-          counts.cities[key]++
         }
       })
     })
 
     return counts
-  }, [jobListings, industry, department, cities])
+  }, [jobListings, industry, department, locationFacets, selectedCountry])
 
   const selectedJobMatchValue = selectedJob
     ? parseMatchPercentage(selectedJob.match, selectedJob.matchScore)
@@ -2337,37 +2401,145 @@ const ExploreJobsPageContent = () => {
 
                     {/* Cities */}
                     <div className="space-y-3">
-                      <SectionHeader title="Cities" open={citiesOpen} onToggle={() => setCitiesOpen((v) => !v)} />
-                      {citiesOpen ? (
-                        <div className="space-y-3">
-                          {Object.entries(cities)
-                            .slice(0, showMoreCities ? undefined : 4)
-                            .map(([label, checked]) => (
-                            <label key={label} className="flex items-center justify-between gap-3">
-                              <span className="flex items-center gap-3">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={(e) => setCities((prev) => ({ ...prev, [label]: e.target.checked }))}
-                                  className="h-4 w-4"
-                                />
-                                <span className="text-sm text-gray-700">{label}</span>
-                              </span>
-                              <span className="text-xs text-gray-500">{filterCounts.cities[label] || 0}</span>
-                            </label>
-                          ))}
-                          {Object.keys(cities).length > 4 && (
-                            <button 
-                              type="button" 
-                              onClick={() => setShowMoreCities(!showMoreCities)}
-                              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                            >
-                              {showMoreCities ? 'View Less' : 'View More'}
-                            </button>
-                          )}
-                        </div>
+                      <SectionHeader
+                        title="Country"
+                        open={locationCountryOpen}
+                        onToggle={() => setLocationCountryOpen((v) => !v)}
+                      />
+                      {locationCountryOpen ? (
+                        <div className="space-y-2" ref={countryPickerRef}>
+                          <div className="relative">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                            <input
+                              type="text"
+                              value={countrySearch}
+                              autoComplete="off"
+                              placeholder="Search country…"
+                              onChange={(e) => {
+                                setCountrySearch(e.target.value)
+                                setCountryPickerOpen(true)
+                              }}
+                              onFocus={() => setCountryPickerOpen(true)}
+                              className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-8 text-sm text-gray-800 outline-none focus:border-[#28A8E1] focus:ring-1 focus:ring-[#28A8E1]"
+                            />
+                            {(selectedCountry || countrySearch) ? (
+                              <button
+                                type="button"
+                                aria-label="Clear country"
+                                onClick={() => {
+                                  setSelectedCountry('')
+                                  setCountrySearch('')
+                                  setCountryPickerOpen(false)
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                              >
+                                ✕
+                              </button>
+                            ) : null}
+                          </div>
+                          {countryPickerOpen ? (
+                            <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-md">
+                              <p className="border-b border-gray-100 px-3 py-2 text-xs text-gray-500">
+                                {locationFacets.totalJobs} jobs ·{' '}
+                                {locationFacets.countries.length}{' '}
+                                {locationFacets.countries.length === 1 ? 'country' : 'countries'} with
+                                listings
+                                {locationFacets.jobsWithoutCountry > 0
+                                  ? ` · ${locationFacets.jobsWithoutCountry} without country set`
+                                  : ''}
+                              </p>
+                              {countrySearchNoJobs ? (
+                                <p className="px-3 py-2 text-xs font-medium text-amber-700">
+                                  No jobs found for this country
+                                </p>
+                              ) : filteredCountriesForPicker.length === 0 ? (
+                                <p className="px-3 py-2 text-xs text-gray-500">
+                                  {countrySearch.trim()
+                                    ? 'No matching countries with jobs'
+                                    : 'No countries with jobs yet'}
+                                </p>
+                              ) : (
+                                filteredCountriesForPicker.map((facet) => (
+                                  <button
+                                    key={facet.name}
+                                    type="button"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => {
+                                      setSelectedCountry(facet.name)
+                                      setCountrySearch(facet.name)
+                                      setCountryPickerOpen(false)
+                                    }}
+                                    className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-50 ${
+                                      selectedCountry === facet.name
+                                        ? 'bg-gray-50 font-medium text-[#28A8E1]'
+                                        : 'text-gray-700'
+                                    }`}
+                                  >
+                                    <span>{facet.name}</span>
+                                    <span className="text-xs text-gray-500">{facet.jobCount}</span>
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          ) : null}
+                          {locationFacets.countries.length === 0 && !countrySearch.trim() ? (
+                            <p className="text-xs text-gray-500">No countries with jobs in the database yet</p>
+                          ) : null}
+                            </div>
                       ) : null}
                     </div>
+
+                    {selectedCountry ? (
+                      <div className="space-y-3">
+                        <SectionHeader
+                          title="Cities"
+                          open={locationCitiesOpen}
+                          onToggle={() => setLocationCitiesOpen((v) => !v)}
+                        />
+                        {locationCitiesOpen ? (
+                          <div className="space-y-3">
+                            {availableCitiesForCountry.length === 0 ? (
+                              <p className="text-xs text-gray-500">No cities in database for this country</p>
+                            ) : (
+                              availableCitiesForCountry
+                                .slice(0, showMoreCities ? undefined : 6)
+                                .map((label) => (
+                                  <label key={label} className="flex items-center justify-between gap-3">
+                                    <span className="flex items-center gap-3">
+                                      <input
+                                        type="checkbox"
+                                        checked={!!selectedCities[label]}
+                                        onChange={(e) =>
+                                          setSelectedCities((prev) => ({
+                                            ...prev,
+                                            [label]: e.target.checked,
+                                          }))
+                                        }
+                                        className="h-4 w-4"
+                                      />
+                                      <span className="text-sm text-gray-700">{label}</span>
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                      {filterCounts.cities[label] || 0}
+                                    </span>
+                                  </label>
+                                ))
+                            )}
+                            {availableCitiesForCountry.length > 6 ? (
+                              <button
+                                type="button"
+                                onClick={() => setShowMoreCities(!showMoreCities)}
+                                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                              >
+                                {showMoreCities ? 'View Less' : 'View More'}
+                              </button>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-500">Select a country to filter by city</p>
+                    )}
                   </div>
                 </div>
               </aside>

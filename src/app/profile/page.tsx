@@ -428,9 +428,22 @@ export default function ProfilePage() {
   // Helper function to format enum values for display
   const formatEnumValue = (value: string | null | undefined): string => {
     if (!value) return '—';
+    const slugLabels: Record<string, string> = {
+      'full-time': 'Full-time',
+      'part-time': 'Part-time',
+      contract: 'Contract',
+      internship: 'Internship',
+      freelance: 'Freelance',
+      remote: 'Remote',
+      hybrid: 'Hybrid',
+      onsite: 'On-site',
+      'on-site': 'On-site',
+    };
+    const key = value.trim().toLowerCase();
+    if (slugLabels[key]) return slugLabels[key];
     return value
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .split(/[_-]/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   };
 
@@ -758,20 +771,24 @@ export default function ProfilePage() {
 
     if (profileData.vaccination !== undefined) {
       const v = profileData.vaccination;
-      const docUrls = Array.isArray(v.documents) && v.documents.length
-        ? v.documents
-        : v.certificate
-          ? [v.certificate]
-          : [];
-      setVaccinationData({
-        ...v,
-        documents: docUrls.map((url: string, i: number) => ({
-          id: `vac-doc-${i}`,
-          name: getDocumentName(url),
-          url,
-        })),
-        certificate: v.certificate || docUrls[0],
-      });
+      if (v == null) {
+        setVaccinationData(undefined);
+      } else {
+        const docUrls = Array.isArray(v.documents) && v.documents.length
+          ? v.documents
+          : v.certificate
+            ? [v.certificate]
+            : [];
+        setVaccinationData({
+          ...v,
+          documents: docUrls.map((url: string, i: number) => ({
+            id: `vac-doc-${i}`,
+            name: getDocumentName(url),
+            url,
+          })),
+          certificate: v.certificate || docUrls[0],
+        });
+      }
     }
     // Preserve existing vaccinationData if not in response
 
@@ -1501,6 +1518,7 @@ export default function ProfilePage() {
                     handleAddClick('PERSONAL DETAILS', 'Basic Information')
                   }
                   showEdit={Boolean(basicInfoData)}
+                  showAdd={!basicInfoData}
                   addEmphasized={!basicInfoData}
                 >
                   {basicInfoData ? (
@@ -1534,7 +1552,8 @@ export default function ProfilePage() {
                   incomplete={isMandatorySectionMissing('RESUME', 'Resume')}
                   onEdit={() => handleEditClick('RESUME', 'Resume')}
                   onAdd={() => handleAddClick('RESUME', 'Resume')}
-                  showEdit={Boolean(resumeData?.fileName || resumeData?.fileUrl)}
+                  showEdit={false}
+                  showAdd={!resumeData?.fileName && !resumeData?.fileUrl}
                   addEmphasized={
                     !resumeData?.fileName && !resumeData?.fileUrl
                   }
@@ -1633,9 +1652,7 @@ export default function ProfilePage() {
                   onAdd={() =>
                     handleAddClick('WORK HISTORY', 'Work Experience')
                   }
-                  showEdit={Boolean(
-                    workExperienceData?.workExperiences?.length,
-                  )}
+                  showEdit={false}
                   showAdd
                   addEmphasized={
                     !workExperienceData?.workExperiences?.length
@@ -1742,7 +1759,7 @@ export default function ProfilePage() {
                   onAdd={() =>
                     handleAddClick('WORK HISTORY', 'Internships')
                   }
-                  showEdit={internshipData.length > 0}
+                  showEdit={false}
                   showAdd
                   addEmphasized={internshipData.length === 0}
                 >
@@ -1859,7 +1876,7 @@ export default function ProfilePage() {
                   onAdd={() =>
                     handleAddClick('WORK HISTORY', 'Gap Explanation')
                   }
-                  showEdit={gapExplanationData.length > 0}
+                  showEdit={false}
                   showAdd
                   addEmphasized={gapExplanationData.length === 0}
                 >
@@ -1892,7 +1909,11 @@ export default function ProfilePage() {
                               formatEnum={formatEnumValue}
                               isExpanded={expandedGapExplanationId === (gapItem.id || `gap-${index}`)}
                               onToggleExpand={() =>
-                                openDetailsModal('Gap Explanation Details', gapItem)
+                                setExpandedGapExplanationId((prev) =>
+                                  prev === (gapItem.id || `gap-${index}`)
+                                    ? null
+                                    : (gapItem.id || `gap-${index}`),
+                                )
                               }
                               onEdit={() => {
                                 setGapExplanationModalMode('edit');
@@ -1972,7 +1993,7 @@ export default function ProfilePage() {
                   onAdd={() =>
                     handleAddClick('EDUCATION', 'Education')
                   }
-                  showEdit={Boolean(educationData?.educations?.length)}
+                  showEdit={false}
                   showAdd
                   addEmphasized={!educationData?.educations?.length}
                 >
@@ -2070,7 +2091,7 @@ export default function ProfilePage() {
                   onAdd={() =>
                     handleAddClick('EDUCATION', 'Academic Achievements')
                   }
-                  showEdit={academicAchievementData.length > 0}
+                  showEdit={false}
                   showAdd
                   addEmphasized={academicAchievementData.length === 0}
                 >
@@ -2484,7 +2505,7 @@ export default function ProfilePage() {
                   onAdd={() =>
                     handleAddClick('PROJECTS', 'Projects')
                   }
-                  showEdit={projectData.length > 0}
+                  showEdit={false}
                   showAdd
                   addEmphasized={projectData.length === 0}
                   sectionId="projects"
@@ -2588,7 +2609,7 @@ export default function ProfilePage() {
                   onAdd={() =>
                     handleAddClick('PROJECTS', 'Portfolio Links')
                   }
-                  showEdit={hasVisiblePortfolioLinks}
+                  showEdit={false}
                   showAdd
                   addEmphasized={!hasVisiblePortfolioLinks}
                 >
@@ -2688,10 +2709,7 @@ export default function ProfilePage() {
                   onAdd={() =>
                     handleAddClick('CERTIFICATIONS', 'Certifications')
                   }
-                  showEdit={Boolean(
-                    certificationsData?.certifications &&
-                      certificationsData.certifications.length > 0,
-                  )}
+                  showEdit={false}
                   showAdd
                   addEmphasized={
                     !(
@@ -2797,10 +2815,7 @@ export default function ProfilePage() {
                   onAdd={() =>
                     handleAddClick('CERTIFICATIONS', 'Accomplishments')
                   }
-                  showEdit={Boolean(
-                    accomplishmentsData?.accomplishments &&
-                      accomplishmentsData.accomplishments.length > 0,
-                  )}
+                  showEdit={false}
                   showAdd
                   addEmphasized={
                     !(
@@ -3184,7 +3199,9 @@ export default function ProfilePage() {
                         <ProfileVaccinationFilled
                           data={vaccinationData}
                           isExpanded={isVaccinationCardExpanded}
-                          onToggleExpand={() => openDetailsModal('Vaccination Details', vaccinationData)}
+                          onToggleExpand={() =>
+                            setIsVaccinationCardExpanded((prev) => !prev)
+                          }
                           onEdit={() => setIsVaccinationModalOpen(true)}
                           onDelete={async () => {
                           if (await showConfirm('Are you sure you want to delete your vaccination information?')) {

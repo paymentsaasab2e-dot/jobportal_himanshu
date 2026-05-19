@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Camera,
   ChevronRight,
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import DashboardPanel from "./DashboardPanel";
+import ProfilePhotoModal from "./ProfilePhotoModal";
 import type { DashboardData } from "./dashboard-types";
 import {
   getProfileDisplayFullName,
@@ -23,7 +24,9 @@ interface ProfileOverviewCardProps {
   missingSections: string[];
   apiBaseUrl: string;
   isUploadingPhoto: boolean;
+  isDeletingPhoto?: boolean;
   onUploadPhoto: (file: File) => void;
+  onDeletePhoto?: () => void | Promise<void>;
   onOpenProfile: () => void;
   onCompleteProfile: () => void;
 }
@@ -85,11 +88,14 @@ export default function ProfileOverviewCard({
   missingSections,
   apiBaseUrl,
   isUploadingPhoto,
+  isDeletingPhoto = false,
   onUploadPhoto,
+  onDeletePhoto,
   onOpenProfile,
   onCompleteProfile,
 }: ProfileOverviewCardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const profileImage = useMemo(
     () => resolveProfileImage(profile?.profilePhotoUrl, apiBaseUrl),
     [apiBaseUrl, profile?.profilePhotoUrl]
@@ -115,12 +121,7 @@ export default function ProfileOverviewCard({
     <DashboardPanel className="p-3.5 sm:p-4">
       <div className="flex flex-col gap-3.5">
         <div className="flex items-start gap-3">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="group relative flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-visible rounded-[24px] bg-[radial-gradient(circle_at_28%_22%,rgba(255,255,255,0.9),transparent_34%),linear-gradient(145deg,rgba(40,168,225,0.14),rgba(40,168,223,0.2))] shadow-[0_18px_34px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.88)]"
-            aria-label="Update profile photo"
-          >
+          <div className="relative h-[88px] w-[88px] shrink-0">
             <input
               ref={fileInputRef}
               type="file"
@@ -128,36 +129,51 @@ export default function ProfileOverviewCard({
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 if (file) onUploadPhoto(file);
+                event.target.value = "";
               }}
               className="hidden"
             />
 
-            {profileImage ? (
-              <span className="relative h-full w-full overflow-hidden rounded-[24px] ring-1 ring-white/75">
-                <Image
-                  src={profileImage}
-                  alt="Profile"
-                  fill
-                  className="object-cover"
-                  unoptimized
-                />
-              </span>
-            ) : (
-              <span className="flex h-full w-full items-center justify-center rounded-[24px] border border-white/70 bg-white/55 text-[22px] font-semibold uppercase tracking-[-0.04em] text-slate-600 ring-1 ring-white/80">
-                {profileInitials}
-              </span>
-            )}
+            <button
+              type="button"
+              onClick={() => setIsPhotoModalOpen(true)}
+              className={`group relative flex h-full w-full items-center justify-center overflow-hidden rounded-[28px] bg-[radial-gradient(circle_at_28%_22%,rgba(255,255,255,0.9),transparent_34%),linear-gradient(145deg,rgba(40,168,225,0.14),rgba(40,168,223,0.2))] shadow-[0_18px_34px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.88)] ${
+                profileImage ? "cursor-pointer" : ""
+              }`}
+              aria-label={profileImage ? "View profile photo" : "Manage profile photo"}
+            >
+              {profileImage ? (
+                <span className="relative h-full w-full overflow-hidden rounded-[28px] ring-1 ring-white/75">
+                  <Image
+                    src={profileImage}
+                    alt="Profile"
+                    fill
+                    className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                    unoptimized
+                  />
+                </span>
+              ) : (
+                <span className="flex h-full w-full items-center justify-center rounded-[28px] border border-white/70 bg-white/55 text-[24px] font-semibold uppercase tracking-[-0.04em] text-slate-600 ring-1 ring-white/80">
+                  {profileInitials}
+                </span>
+              )}
 
-            <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-[16px] border-[3px] border-white bg-[#28A8E1] text-white shadow-[0_10px_20px_rgba(40,168,225,0.24)] transition-transform duration-200 group-hover:scale-105">
+              {isUploadingPhoto ? (
+                <span className="absolute inset-0 z-10 grid place-items-center rounded-[28px] bg-slate-950/35">
+                  <span className="h-6 w-6 animate-spin rounded-full border-2 border-white border-b-transparent" />
+                </span>
+              ) : null}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute -bottom-1 -right-1 z-20 flex h-7 w-7 items-center justify-center rounded-[16px] border-[3px] border-white bg-[#28A8E1] text-white shadow-[0_10px_20px_rgba(40,168,225,0.24)] transition-transform duration-200 hover:scale-105"
+              aria-label="Update profile photo"
+            >
               <Camera className="h-3 w-3" strokeWidth={2.05} />
-            </span>
-
-            {isUploadingPhoto ? (
-              <span className="absolute inset-0 grid place-items-center bg-slate-950/35">
-                <span className="h-6 w-6 animate-spin rounded-full border-2 border-white border-b-transparent" />
-              </span>
-            ) : null}
-          </button>
+            </button>
+          </div>
 
           <div className="min-w-0 space-y-1.5">
             <div>
@@ -297,6 +313,22 @@ export default function ProfileOverviewCard({
           </div>
         </div>
       </div>
+
+      <ProfilePhotoModal
+        isOpen={isPhotoModalOpen}
+        onClose={() => setIsPhotoModalOpen(false)}
+        imageUrl={profileImage}
+        displayName={displayFullName}
+        initials={profileInitials}
+        isUploading={isUploadingPhoto}
+        isDeleting={isDeletingPhoto}
+        onUploadPhoto={onUploadPhoto}
+        onDeletePhoto={async () => {
+          if (!onDeletePhoto) return;
+          await onDeletePhoto();
+          setIsPhotoModalOpen(false);
+        }}
+      />
     </DashboardPanel>
   );
 }

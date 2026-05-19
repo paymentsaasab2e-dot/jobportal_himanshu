@@ -12,6 +12,7 @@ import {
   PreviewEntryShell,
   PreviewMetaItem,
 } from './PreviewPrimitives';
+import { PreviewEntryActionButtons } from './PreviewEntryActionButtons';
 import { useState } from 'react';
 import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
 
@@ -30,6 +31,7 @@ type Props = {
 export function EducationEntryPreview({
   entry,
   isExpanded,
+  onToggleExpand,
   onEdit,
   onDelete,
   getDocumentName,
@@ -162,31 +164,14 @@ export function EducationEntryPreview({
             )}
           </div>
         </div>
-        <div className="flex shrink-0 gap-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-            aria-label="Delete education"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
-            </svg>
-          </button>
-        </div>
+        <PreviewEntryActionButtons
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onEdit={onEdit}
+          editAriaLabel="Edit education"
+          onDelete={onDelete}
+          deleteAriaLabel="Delete education"
+        />
       </div>
 
       {isExpanded ? (

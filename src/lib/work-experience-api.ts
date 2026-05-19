@@ -11,7 +11,10 @@ function authHeadersForFormData(): Record<string, string> {
   const token = getStoredToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
-import { isPersistedWorkExperienceId } from '@/lib/work-experience-utils';
+import {
+  isPersistedWorkExperienceId,
+  normalizeWorkExperienceFromApi,
+} from '@/lib/work-experience-utils';
 
 async function uploadWorkExperienceDocuments(
   candidateId: string,
@@ -64,8 +67,9 @@ export async function persistWorkExperienceEntry(
   entry: WorkExperienceEntry,
 ): Promise<WorkExperienceEntry> {
   const documentUrls = await uploadWorkExperienceDocuments(candidateId, entry);
+  const normalized = normalizeWorkExperienceFromApi(entry);
   const expToSave = {
-    ...entry,
+    ...normalized,
     documents: documentUrls,
   };
 
@@ -103,17 +107,19 @@ export async function persistWorkExperienceEntry(
   }
 
   const result = await response.json();
-  const savedId = result.data?.id as string | undefined;
+  const saved = result.data as WorkExperienceEntry | undefined;
+  const savedId = saved?.id as string | undefined;
 
-  return {
+  return normalizeWorkExperienceFromApi({
     ...entry,
+    ...saved,
     id: savedId || entry.id,
     documents: documentUrls.map((url) => ({
       id: url,
       url,
       name: getProfileDocumentDisplayName(url),
     })),
-  };
+  });
 }
 
 export function resolveWorkExperiencesToPersist(
