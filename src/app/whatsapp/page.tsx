@@ -10,6 +10,11 @@ import { API_BASE_URL } from '@/lib/api-base';
 import { showSuccessToast } from '@/components/common/toast/toast';
 
 import { ALL_COUNTRY_CODES, countryCodeToFlag } from '@/lib/country-codes';
+import {
+  MathCaptcha,
+  validateMathCaptchaAnswer,
+  type MathCaptchaChallenge,
+} from '@/components/auth/MathCaptcha';
 
 export default function WhatsAppLogin() {
   const router = useRouter();
@@ -23,6 +28,9 @@ export default function WhatsAppLogin() {
   const [emailValue, setEmailValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [captchaError, setCaptchaError] = useState("");
+  const [captchaChallenge, setCaptchaChallenge] = useState<MathCaptchaChallenge | null>(null);
   const [otpDisplay, setOtpDisplay] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -131,6 +139,7 @@ export default function WhatsAppLogin() {
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setCaptchaError("");
     setOtpDisplay("");
 
     // Validation
@@ -154,6 +163,11 @@ export default function WhatsAppLogin() {
     const cleanNumber = whatsappNumberValue.replace(/\D/g, "");
     if (cleanNumber.length !== selectedCountry.phoneLength) {
       setError(`Please enter exactly ${selectedCountry.phoneLength} digits for WhatsApp number`);
+      return;
+    }
+
+    if (!captchaChallenge || !validateMathCaptchaAnswer(captchaChallenge, captchaAnswer)) {
+      setCaptchaError("Please solve the math question correctly");
       return;
     }
 
@@ -384,6 +398,17 @@ export default function WhatsAppLogin() {
                   />
                 </div>
               </div>
+
+              <MathCaptcha
+                value={captchaAnswer}
+                onChange={(v) => {
+                  setCaptchaAnswer(v);
+                  if (captchaError) setCaptchaError("");
+                }}
+                onChallengeChange={setCaptchaChallenge}
+                disabled={isLoading}
+                error={captchaError}
+              />
 
               {/* Errors */}
               {error && (
