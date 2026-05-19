@@ -327,6 +327,15 @@ export default function WorkExperienceModal({
     setGapInfo(null);
   };
 
+  const handleEditStagedEntry = (entry: WorkExperienceEntry) => {
+    populateFormFromEntry(entry);
+    setWorkExperiences((prev) => prev.filter((e) => e.id !== entry.id));
+  };
+
+  const handleRemoveStagedEntry = (entryId: string) => {
+    setWorkExperiences((prev) => prev.filter((e) => e.id !== entryId));
+  };
+
   const handleGapExplanationSave = (data: GapExplanationData) => {
     setGapExplanationData(data);
     // Close the gap modal
@@ -799,6 +808,73 @@ export default function WorkExperienceModal({
           </div>
         )}
       >
+            {!editingEntryId && workExperiences.length > 0 ? (
+              <section className="mb-6 space-y-3 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Entries ready to save ({workExperiences.length})
+                  </h3>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Use the edit icon to change an entry, or add another role below.
+                  </p>
+                </div>
+                <ul className="space-y-2">
+                  {workExperiences.map((entry) => (
+                    <li
+                      key={entry.id}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-gray-900">
+                          {entry.jobTitle || 'Role'}
+                        </p>
+                        <p className="truncate text-xs text-gray-500">
+                          {entry.companyName || 'Company'}
+                          {entry.startDate
+                            ? ` · ${entry.startDate}${entry.currentlyWorkHere ? ' – Present' : entry.endDate ? ` – ${entry.endDate}` : ''}`
+                            : ''}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleEditStagedEntry(entry)}
+                          className="rounded-lg border border-gray-200 p-2 text-blue-600 hover:bg-blue-50"
+                          aria-label={`Edit ${entry.jobTitle || 'work experience'}`}
+                          title="Edit entry"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveStagedEntry(entry.id)}
+                          className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
+                          aria-label={`Remove ${entry.jobTitle || 'work experience'}`}
+                          title="Remove entry"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
             {/* SECTION 1: ROLE DETAILS */}
             <section className="space-y-4">
               <h3 className={sectionTitleClassName}>Role Details</h3>

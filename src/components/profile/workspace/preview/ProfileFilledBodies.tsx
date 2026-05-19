@@ -20,6 +20,7 @@ import { resolveDocumentUrl } from '@/lib/api-base';
 import { getProfileDocumentDisplayName } from '@/lib/profile-documents';
 import { formatDobDisplay } from '@/lib/format-dob';
 import { formatVaccinationValidity } from '@/lib/format-vaccination-validity';
+import { PreviewEntryActionButtons } from './PreviewEntryActionButtons';
 import {
   PreviewChip,
   PreviewChipRow,
@@ -414,21 +415,14 @@ export function ProfileInternshipFilled({
             )}
           </div>
         </div>
-        <div className="flex shrink-0 gap-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-            aria-label="Delete internship"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
+        <PreviewEntryActionButtons
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onEdit={onEdit}
+          editAriaLabel="Edit internship"
+          onDelete={onDelete}
+          deleteAriaLabel="Delete internship"
+        />
       </div>
 
       {isExpanded ? (
@@ -551,21 +545,14 @@ export function ProfileGapExplanationFilled({
             </p>
           ) : null}
         </div>
-        <div className="flex shrink-0 gap-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-            aria-label="Delete gap explanation"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
+        <PreviewEntryActionButtons
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onEdit={onEdit}
+          editAriaLabel="Edit gap explanation"
+          onDelete={onDelete}
+          deleteAriaLabel="Delete gap explanation"
+        />
       </div>
 
       {isExpanded ? (
@@ -719,7 +706,6 @@ export function ProfileLanguagesFilled({
   data: LanguagesData;
   onDelete: () => void;
   getDocumentName: (doc: unknown) => string;
-  getDocumentName: (doc: unknown) => string;
   getApiDocumentHref: (doc: unknown) => string;
 }) {
   const [previewModal, setPreviewModal] = useState({
@@ -857,7 +843,6 @@ export function ProfileProjectFilled({
   onEdit: () => void;
   onDelete: () => void;
   getDocumentName: (doc: unknown) => string;
-  getDocumentName: (doc: unknown) => string;
   getApiDocumentHref: (doc: unknown) => string;
 }) {
   const [previewModal, setPreviewModal] = useState({
@@ -953,21 +938,14 @@ export function ProfileProjectFilled({
             <PreviewDocCount count={docCount} />
           </div>
         </div>
-        <div className="flex shrink-0 gap-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-            aria-label="Delete project"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
+        <PreviewEntryActionButtons
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onEdit={onEdit}
+          editAriaLabel="Edit project"
+          onDelete={onDelete}
+          deleteAriaLabel="Delete project"
+        />
       </div>
 
       {isExpanded ? (
@@ -1078,6 +1056,7 @@ export function ProfilePortfolioLinksFilled({
   onEditLink: (link: PortfolioLink) => void;
   onDeleteLink: (link: PortfolioLink) => void;
 }) {
+  const [expandedLinkIds, setExpandedLinkIds] = useState<Set<string>>(() => new Set());
   const links = filterPortfolioLinksForProfileDisplay(data.links);
   const visible = isExpanded ? links : links.slice(0, 4);
   const hidden = links.length - visible.length;
@@ -1095,11 +1074,19 @@ export function ProfilePortfolioLinksFilled({
       <ul className="space-y-2">
         {visible.map((link, index) => (
           (() => {
-            const typeLabel = (link.linkType || '').trim().toLowerCase();
-            const titleLabel = (link.title || '').trim().toLowerCase();
+            const linkKey = link.id || `portfolio-link-${index}`;
+            const linkExpanded = expandedLinkIds.has(linkKey);
+            const toggleLinkExpand = () => {
+              setExpandedLinkIds((prev) => {
+                const next = new Set(prev);
+                if (next.has(linkKey)) next.delete(linkKey);
+                else next.add(linkKey);
+                return next;
+              });
+            };
             return (
               <li
-                key={link.id || index}
+                key={linkKey}
                 onClick={(e) => {
                   e.stopPropagation();
                   onEditLink(link);
@@ -1121,7 +1108,9 @@ export function ProfilePortfolioLinksFilled({
                     </p>
                   )}
                   {link.description && (
-                    <p className="text-sm text-gray-600 line-clamp-2">
+                    <p
+                      className={`text-sm text-gray-600 ${linkExpanded ? '' : 'line-clamp-2'}`}
+                    >
                       {link.description}
                     </p>
                   )}
@@ -1137,21 +1126,14 @@ export function ProfilePortfolioLinksFilled({
                     </a>
                   )}
                 </div>
-                <div className="flex shrink-0 gap-1">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteLink(link);
-                    }}
-                    className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50 h-max"
-                    aria-label="Delete portfolio link"
-                  >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
+                <PreviewEntryActionButtons
+                  isExpanded={linkExpanded}
+                  onToggleExpand={link.description ? toggleLinkExpand : undefined}
+                  onEdit={() => onEditLink(link)}
+                  editAriaLabel="Edit portfolio link"
+                  onDelete={() => onDeleteLink(link)}
+                  deleteAriaLabel="Delete portfolio link"
+                />
               </li>
             );
           })()
@@ -1310,21 +1292,12 @@ export function ProfileCareerPreferencesFilled({
             />
           </PreviewMetaGrid>
         </div>
-        <div className="flex shrink-0 gap-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-            aria-label="Delete career preferences"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
+        <PreviewEntryActionButtons
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onDelete={onDelete}
+          deleteAriaLabel="Delete career preferences"
+        />
       </div>
 
       {isExpanded ? (
@@ -1562,21 +1535,12 @@ export function ProfileVisaFilled({
             </div>
           ) : null}
         </div>
-        <div className="flex shrink-0 gap-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-            aria-label="Delete visa"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
+        <PreviewEntryActionButtons
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onDelete={onDelete}
+          deleteAriaLabel="Delete visa"
+        />
       </div>
 
       {isExpanded ? (
@@ -1841,21 +1805,14 @@ export function ProfileVaccinationFilled({
             />
           </PreviewMetaGrid>
         </div>
-        <div className="flex shrink-0 gap-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-            aria-label="Delete vaccination"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
+        <PreviewEntryActionButtons
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onEdit={onEdit}
+          editAriaLabel="Edit vaccination"
+          onDelete={onDelete}
+          deleteAriaLabel="Delete vaccination"
+        />
       </div>
       {isExpanded ? (
         <div className="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-500">
@@ -1987,21 +1944,14 @@ export function ProfileAcademicAchievementFilled({
             )}
           </div>
         </div>
-        <div className="flex shrink-0 gap-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-            aria-label="Delete academic achievement"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
+        <PreviewEntryActionButtons
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onEdit={onEdit}
+          editAriaLabel="Edit academic achievement"
+          onDelete={onDelete}
+          deleteAriaLabel="Delete academic achievement"
+        />
       </div>
       {isExpanded ? (
         <div className="mt-4 space-y-4 border-t border-gray-100 pt-4">
@@ -2180,21 +2130,14 @@ export function ProfileCompetitiveExamFilled({
             )}
           </div>
         </div>
-        <div className="flex shrink-0 gap-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-            aria-label="Delete competitive exam"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
+        <PreviewEntryActionButtons
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+          onEdit={onEdit}
+          editAriaLabel="Edit competitive exam"
+          onDelete={onDelete}
+          deleteAriaLabel="Delete competitive exam"
+        />
       </div>
       {isExpanded ? (
         <div className="mt-4 space-y-3 border-t border-gray-100 pt-4 text-sm">
