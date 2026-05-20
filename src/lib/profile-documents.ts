@@ -1,3 +1,5 @@
+import { resolveDocumentUrl } from '@/lib/api-base';
+
 /** Shared profile document item used across profile drawers. */
 export interface ProfileDocumentItem {
   id: string;
@@ -199,4 +201,34 @@ export function formatProfileDocumentSize(bytes?: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+/** Open a resolved profile document URL in a new browser tab. */
+export function openProfileDocumentInNewTab(url: string): void {
+  const href = url?.trim();
+  if (!href) return;
+  const opened = window.open(href, '_blank', 'noopener,noreferrer');
+  if (!opened) {
+    const link = document.createElement('a');
+    link.href = href;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+
+/** Open a stored or pending profile document item in a new tab. */
+export function openProfileDocumentItemInNewTab(
+  doc: { url?: string; file?: File } | null | undefined,
+): void {
+  if (!doc) return;
+  let href = '';
+  if (doc.url) {
+    href = resolveDocumentUrl(doc.url);
+  } else if (doc.file instanceof File) {
+    href = URL.createObjectURL(doc.file);
+  }
+  openProfileDocumentInNewTab(href);
 }

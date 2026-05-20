@@ -3,9 +3,12 @@
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
-import DocumentViewerModal from './DocumentViewerModal';
 import { profileFieldClass, profileTextareaClass } from '@/lib/profile-modal-ui';
-import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
+import {
+  getProfileDocumentDisplayName,
+  isStoredProfileDocument,
+  openProfileDocumentItemInNewTab,
+} from '@/lib/profile-documents';
 
 interface EducationModalProps {
   isOpen: boolean;
@@ -28,6 +31,8 @@ export interface EducationData {
   educationLevel: string;
   degreeProgram: string;
   institutionName: string;
+  /** City or area shown after institution, e.g. "Khopoli" in "VISHWANIKETAN, Khopoli". */
+  institutionLocation?: string;
   fieldOfStudy: string;
   startYear: string;
   startMonth: string;
@@ -86,6 +91,72 @@ export const EDUCATION_MONTH_OPTIONS = [
 ] as const;
 
 const MONTH_SHORT = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_FULL = [
+  '',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
+
+/** SSC / HSC and similar school-level entries (relaxed academic fields). */
+export function isSchoolCertificateEntry(educationLevel: string, degreeProgram = ''): boolean {
+  const text = `${educationLevel} ${degreeProgram}`.toLowerCase();
+  return (
+    /\b(ssc|hsc)\b/.test(text) ||
+    educationLevel === 'High School' ||
+    educationLevel === 'Secondary School' ||
+    educationLevel === 'Higher Secondary'
+  );
+}
+
+export function formatEducationTitle(educationLevel: string, degreeProgram: string): string {
+  const degree = String(degreeProgram || '').trim();
+  if (degree) return degree;
+  return String(educationLevel || '').trim() || '—';
+}
+
+export function formatInstitutionLine(institutionName: string, institutionLocation?: string): string {
+  const name = String(institutionName || '').trim();
+  const location = String(institutionLocation || '').trim();
+  if (name && location) return `${name}, ${location}`;
+  return name || location || '—';
+}
+
+function formatMonthYearFull(year: string, month: string): string {
+  const y = String(year || '').trim();
+  const m = parseInt(String(month || '').trim(), 10);
+  if (!y) return '';
+  if (m >= 1 && m <= 12) return `${MONTH_FULL[m]} ${y}`;
+  return y;
+}
+
+/** CV-style date line: start month–year through end month–year (e.g. July 2021 - July 2025). */
+export function formatEducationDateLine(
+  _educationLevel: string,
+  _degreeProgram: string,
+  startYear: string,
+  startMonth: string,
+  endYear: string,
+  endMonth: string,
+  currentlyStudying: boolean,
+): string {
+  const startPart = formatMonthYearFull(startYear, startMonth);
+  if (currentlyStudying) {
+    return startPart ? `${startPart} - Present` : 'Present';
+  }
+  const endPart = formatMonthYearFull(endYear, endMonth);
+  if (startPart && endPart) return `${startPart} - ${endPart}`;
+  return startPart || endPart || '—';
+}
 
 function toMonthIndex(year: string, month: string): number | null {
   const y = parseInt(String(year || '').trim(), 10);
@@ -134,7 +205,20 @@ export function formatEducationPeriod(
   endYear: string,
   endMonth: string,
   currentlyStudying: boolean,
+  educationLevel = '',
+  degreeProgram = '',
 ): string {
+  if (educationLevel || degreeProgram) {
+    return formatEducationDateLine(
+      educationLevel,
+      degreeProgram,
+      startYear,
+      startMonth,
+      endYear,
+      endMonth,
+      currentlyStudying,
+    );
+  }
   const sm = parseInt(String(startMonth || '').trim(), 10);
   const startPart = startYear
     ? sm >= 1 && sm <= 12
@@ -221,6 +305,7 @@ export default function EducationModal({
   const [educationLevel, setEducationLevel] = useState(initialData?.educationLevel || '');
   const [degreeProgram, setDegreeProgram] = useState(initialData?.degreeProgram || '');
   const [institutionName, setInstitutionName] = useState(initialData?.institutionName || '');
+  const [institutionLocation, setInstitutionLocation] = useState(initialData?.institutionLocation || '');
   const [fieldOfStudy, setFieldOfStudy] = useState(initialData?.fieldOfStudy || '');
   const [startYear, setStartYear] = useState(initialData?.startYear || '');
   const [startMonth, setStartMonth] = useState(initialData?.startMonth || '');
@@ -236,13 +321,6 @@ export default function EducationModal({
   const [dragActive, setDragActive] = useState(false);
   const [dateError, setDateError] = useState<string>('');
   
-  // Preview Modal state
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sessionInitKeyRef = useRef<string | null>(null);
 
@@ -250,6 +328,7 @@ export default function EducationModal({
     setEducationLevel('');
     setDegreeProgram('');
     setInstitutionName('');
+    setInstitutionLocation('');
     setFieldOfStudy('');
     setStartYear('');
     setStartMonth('');
@@ -272,6 +351,7 @@ export default function EducationModal({
     setEducationLevel(data.educationLevel || '');
     setDegreeProgram(data.degreeProgram || '');
     setInstitutionName(data.institutionName || '');
+    setInstitutionLocation(data.institutionLocation || '');
     setFieldOfStudy(data.fieldOfStudy || '');
     setStartYear(data.startYear || '');
     setStartMonth(data.startMonth || '');
@@ -350,20 +430,7 @@ export default function EducationModal({
   };
 
   const handlePreviewDocument = (doc: EducationDocument) => {
-    let url = '';
-    if (doc.url) {
-      url = resolveDocumentUrl(doc.url);
-    } else if (doc.file) {
-      url = URL.createObjectURL(doc.file);
-    }
-
-    if (url) {
-      setPreviewModal({
-        isOpen: true,
-        url: url,
-        name: doc.name,
-      });
-    }
+    openProfileDocumentItemInNewTab(doc);
   };
 
   const handleDownloadFile = async (doc: EducationDocument) => {
@@ -530,19 +597,31 @@ export default function EducationModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- recalc when date fields change
   }, [isOpen, startYear, startMonth, endYear, endMonth, currentlyStudying, durationManuallyEdited]);
 
+  const isSchoolCert = isSchoolCertificateEntry(educationLevel, degreeProgram);
+
   const missingRequiredFields: string[] = [];
   if (!String(educationLevel || '').trim()) missingRequiredFields.push('Education Level');
-  if (!String(degreeProgram || '').trim()) missingRequiredFields.push('Degree / Program');
-  if (!String(institutionName || '').trim()) missingRequiredFields.push('Institution / University Name');
-  if (!String(fieldOfStudy || '').trim()) missingRequiredFields.push('Field of Study / Major');
-  
-  if (!startYear) missingRequiredFields.push('Start Year');
-  if (!startMonth) missingRequiredFields.push('Start Month');
-  if (!currentlyStudying && !endYear) missingRequiredFields.push('End Year');
-  if (!currentlyStudying && !endMonth) missingRequiredFields.push('End Month');
-  
-  if (!String(gradeInput || '').trim()) missingRequiredFields.push('Grade / Percentage / GPA');
-  if (!String(modeOfStudy || '').trim()) missingRequiredFields.push('Mode of Study');
+  if (!String(degreeProgram || '').trim() && !isSchoolCert) {
+    missingRequiredFields.push('Qualification / Program');
+  }
+  if (!String(institutionName || '').trim()) missingRequiredFields.push('School / College / University');
+  if (!isSchoolCert && !String(fieldOfStudy || '').trim()) {
+    missingRequiredFields.push('Field of Study / Major');
+  }
+
+  if (!isSchoolCert) {
+    if (!startYear) missingRequiredFields.push('Start Year');
+    if (!startMonth) missingRequiredFields.push('Start Month');
+    if (!currentlyStudying && !endYear) missingRequiredFields.push('End Year');
+    if (!currentlyStudying && !endMonth) missingRequiredFields.push('End Month');
+  }
+
+  if (!isSchoolCert && !String(gradeInput || '').trim()) {
+    missingRequiredFields.push('Grade / Percentage / GPA');
+  }
+  if (!isSchoolCert && !String(modeOfStudy || '').trim()) {
+    missingRequiredFields.push('Mode of Study');
+  }
 
   const computedDurationPreview = computeCourseDurationFromDates(
     startYear,
@@ -554,7 +633,7 @@ export default function EducationModal({
   const effectiveCourseDuration =
     String(courseDuration || '').trim() || computedDurationPreview;
 
-  if (!effectiveCourseDuration) missingRequiredFields.push('Course Duration');
+  if (!isSchoolCert && !effectiveCourseDuration) missingRequiredFields.push('Course Duration');
 
   const gradeFormatError =
     String(gradeInput || '').trim().length > 0
@@ -562,11 +641,18 @@ export default function EducationModal({
       : null;
   const isCourseDurationNumeric = /^\d+(\.\d{1,2})?$/.test(effectiveCourseDuration);
 
+  const hasPartialSchoolDates =
+    isSchoolCert &&
+    Boolean(
+      startYear ||
+        startMonth ||
+        endYear ||
+        endMonth,
+    );
   const hasDateOrderError =
-  !currentlyStudying &&
-  Boolean(
-    validateDateOrder(startYear, startMonth, endYear, endMonth),
-  );
+    !currentlyStudying &&
+    Boolean(validateDateOrder(startYear, startMonth, endYear, endMonth)) &&
+    (!isSchoolCert || hasPartialSchoolDates);
 
   const hasNumericError =
     Boolean(gradeFormatError) ||
@@ -599,12 +685,17 @@ export default function EducationModal({
       return;
     }
 
+    const resolvedDegree =
+      String(degreeProgram || '').trim() ||
+      (isSchoolCert ? educationLevel : '');
+
     onSave({
       id: initialData?.id ?? editingEducationId ?? undefined,
       educationLevel,
-      degreeProgram,
+      degreeProgram: resolvedDegree,
       institutionName,
-      fieldOfStudy,
+      institutionLocation: institutionLocation.trim() || undefined,
+      fieldOfStudy: isSchoolCert ? fieldOfStudy.trim() : fieldOfStudy,
       startYear,
       startMonth,
       endYear,
@@ -621,6 +712,25 @@ export default function EducationModal({
   const inputClassName = profileFieldClass();
   const selectClassName = `${profileFieldClass()} appearance-none bg-white`;
   const textareaClassName = `${profileTextareaClass} min-h-[100px]`;
+
+  useEffect(() => {
+    if (!isSchoolCert) return;
+    if (!degreeProgram.trim() && educationLevel.trim()) {
+      setDegreeProgram(educationLevel);
+    }
+  }, [educationLevel, isSchoolCert, degreeProgram]);
+
+  const previewTitle = formatEducationTitle(educationLevel, degreeProgram);
+  const previewInstitution = formatInstitutionLine(institutionName, institutionLocation);
+  const previewDates = formatEducationDateLine(
+    educationLevel,
+    degreeProgram,
+    startYear,
+    startMonth,
+    endYear,
+    endMonth,
+    currentlyStudying,
+  );
 
   if (!isOpen) return null;
 
@@ -649,6 +759,17 @@ export default function EducationModal({
       )}
     >
             <div className="space-y-6">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">
+                  Preview (how it appears on your profile)
+                </p>
+                <div className="space-y-1 text-gray-900">
+                  <p className="text-sm font-bold uppercase tracking-wide">{previewTitle}</p>
+                  <p className="text-sm text-gray-700">{previewInstitution}</p>
+                  <p className="text-sm text-gray-600">{previewDates}</p>
+                </div>
+              </div>
+
               {/* Education Level */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -660,46 +781,52 @@ export default function EducationModal({
                     className={`${selectClassName} ${!educationLevel && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
                   >
                     <option value="">Select Education Level</option>
-                    <option value="High School">High School</option>
-                    <option value="Associate Degree">Associate Degree</option>
-                    <option value="Bachelor's Degree">Bachelor's Degree</option>
-                    <option value="Master's Degree">Master's Degree</option>
-                    <option value="Doctorate (PhD)">Doctorate (PhD)</option>
+                    <option value="SSC">SSC (10th)</option>
+                    <option value="HSC">HSC (12th)</option>
                     <option value="Diploma">Diploma</option>
+                    <option value="Associate Degree">Associate Degree</option>
+                    <option value="Bachelor's Degree">Bachelor&apos;s Degree</option>
+                    <option value="Master's Degree">Master&apos;s Degree</option>
+                    <option value="Doctorate (PhD)">Doctorate (PhD)</option>
                     <option value="Certification">Certification</option>
+                    <option value="High School">High School</option>
                   </select>
                   {!educationLevel && (
                     <p className="mt-1 text-xs text-amber-600">Education level is required</p>
                   )}
               </div>
 
-              {/* Degree / Program */}
+              {/* Qualification / Program */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Degree / Program <span className="text-amber-600">*</span>
+                  Qualification / Program {!isSchoolCert && <span className="text-amber-600">*</span>}
                 </label>
                   <input
                     type="text"
                     value={degreeProgram}
                     onChange={(e) => setDegreeProgram(e.target.value)}
-                    placeholder="e.g., Bachelor of Computer Science"
-                    className={`${inputClassName} ${!degreeProgram.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    placeholder={
+                      isSchoolCert
+                        ? 'e.g. HSC or SSC (optional — uses level if blank)'
+                        : 'e.g. B.E IN COMPUTER SCIENCE'
+                    }
+                    className={`${inputClassName} ${!isSchoolCert && !degreeProgram.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
                   />
-                  {!degreeProgram.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Degree/Program is required</p>
+                  {!isSchoolCert && !degreeProgram.trim() && (
+                    <p className="mt-1 text-xs text-amber-600">Qualification is required for degrees and diplomas</p>
                   )}
               </div>
 
-              {/* Institution / University Name */}
+              {/* Institution */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Institution / University Name <span className="text-amber-600">*</span>
+                  School / College / University <span className="text-amber-600">*</span>
                 </label>
                   <input
                     type="text"
                     value={institutionName}
                     onChange={(e) => setInstitutionName(e.target.value)}
-                    placeholder="e.g., University of Mumbai"
+                    placeholder="e.g. VISHWANIKETAN [VIMEET] or M.P.A.S.C College"
                     className={`${inputClassName} ${!institutionName.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
                   />
                   {!institutionName.trim() && (
@@ -707,7 +834,24 @@ export default function EducationModal({
                   )}
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Location (City / Area)
+                </label>
+                <input
+                  type="text"
+                  value={institutionLocation}
+                  onChange={(e) => setInstitutionLocation(e.target.value)}
+                  placeholder="e.g. Khopoli, Panvel, Wardha"
+                  className={inputClassName}
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Shown after the institution name, e.g. &quot;College Name, Panvel&quot;
+                </p>
+              </div>
+
               {/* Field of Study / Major */}
+              {!isSchoolCert ? (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Field of Study / Major <span className="text-amber-600">*</span>
@@ -723,12 +867,19 @@ export default function EducationModal({
                   <p className="mt-1 text-xs text-amber-600">Field of study is required</p>
                 )}
               </div>
+              ) : null}
 
-              {/* Dates Section */}
+              {/* Dates: start month–year and end month–year */}
               <div className="space-y-4">
+                {isSchoolCert ? (
+                  <p className="text-sm font-medium text-gray-700">
+                    Dates{' '}
+                    <span className="font-normal text-gray-500">(optional — start and completion month–year)</span>
+                  </p>
+                ) : null}
                 <div>
                   <p className="text-sm font-medium text-gray-700 mb-2">
-                    Start date <span className="text-amber-600">*</span>
+                    Start date {!isSchoolCert && <span className="text-amber-600">*</span>}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -762,14 +913,16 @@ export default function EducationModal({
                       </select>
                     </div>
                   </div>
-                  {(!startMonth || !startYear) && (
+                  {!isSchoolCert && (!startMonth || !startYear) && (
                     <p className="mt-1 text-xs text-amber-600">Start month and year are required</p>
                   )}
                 </div>
 
                 <div>
                   <p className="text-sm font-medium text-gray-700 mb-2">
-                    End date {!currentlyStudying && <span className="text-amber-600">*</span>}
+                    {isSchoolCert ? 'End date (completion)' : 'End date'}{' '}
+                    {!isSchoolCert && !currentlyStudying && <span className="text-amber-600">*</span>}
+                    {isSchoolCert && <span className="font-normal text-gray-500"> (optional)</span>}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -813,13 +966,13 @@ export default function EducationModal({
                       </select>
                     </div>
                   </div>
-                  {!currentlyStudying && (!endMonth || !endYear) && (
+                  {!isSchoolCert && !currentlyStudying && (!endMonth || !endYear) && (
                     <p className="mt-1 text-xs text-amber-600">End month and year are required</p>
                   )}
                 </div>
               </div>
 
-              {/* Currently Studying Checkbox */}
+              {!isSchoolCert ? (
               <div>
                 <label className="flex items-center">
                   <input
@@ -849,8 +1002,10 @@ export default function EducationModal({
                   <p className="mt-2 text-xs text-red-600">{dateError}</p>
                 )}
               </div>
+              ) : null}
 
               {/* Academic Details Section */}
+              {!isSchoolCert ? (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">Academic Details</h3>
                 
@@ -973,6 +1128,7 @@ export default function EducationModal({
                   )}
                 </div>
               </div>
+              ) : null}
 
               {/* Upload Documents */}
               <div>
@@ -1140,12 +1296,6 @@ export default function EducationModal({
               )}
             </div>
 
-            <DocumentViewerModal
-              isOpen={previewModal.isOpen}
-              onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-              documentUrl={previewModal.url}
-              documentName={previewModal.name}
-            />
     </ProfileDrawer>
   );
 }

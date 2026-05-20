@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
+import { openProfileDocumentInNewTab } from '@/lib/profile-documents';
 import type { WorkExperienceEntry } from '@/components/modals/WorkExperienceModal';
 import {
   PreviewChip,
@@ -59,18 +58,8 @@ export function WorkExperienceEntryCard({
   );
   const skillPreview = (entry.workSkills || []).slice(0, 5);
 
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
-  const handlePreview = (url: string, name: string) => {
-    setPreviewModal({
-      isOpen: true,
-      url,
-      name,
-    });
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url);
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -172,7 +161,7 @@ export function WorkExperienceEntryCard({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handlePreview(resolveDocHref(entry.documents![0]), getDocumentName(entry.documents![0]));
+                    handlePreview(resolveDocHref(entry.documents![0]));
                   }}
                   className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="View Document"
@@ -269,7 +258,7 @@ export function WorkExperienceEntryCard({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handlePreview(fullUrl, docName);
+                            handlePreview(fullUrl);
                           }}
                           className="text-blue-600 hover:text-blue-700 transition-colors"
                           title="View Document"
@@ -301,12 +290,6 @@ export function WorkExperienceEntryCard({
         </div>
       ) : null}
 
-      <DocumentViewerModal
-        isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-        documentUrl={previewModal.url}
-        documentName={previewModal.name}
-      />
     </PreviewEntryShell>
   );
 }

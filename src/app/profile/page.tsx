@@ -1206,7 +1206,6 @@ export default function ProfilePage() {
 
   const {
     tabsBarRef,
-    scrollContainerRef,
     activeTabId: activeWorkspaceTab,
     scrollToTabGroup: scrollToWorkspaceTab,
     scrollPaddingStyle,
@@ -1318,11 +1317,8 @@ export default function ProfilePage() {
 
   const profileRoleLine = useMemo(() => {
     const t = careerPreferencesData?.preferredJobTitles?.[0]?.trim();
-    if (t) return t;
-    if (basicInfoData?.employment)
-      return formatEnumValue(basicInfoData.employment);
-    return undefined;
-  }, [careerPreferencesData, basicInfoData?.employment]);
+    return t || undefined;
+  }, [careerPreferencesData]);
 
   const profileHeadline = useMemo(() => {
     const e = educationData?.educations?.[0];
@@ -1468,7 +1464,10 @@ export default function ProfilePage() {
         )}
 
 
-        <div className="profile-page-typography pt-4 grid grid-cols-1 gap-6 lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start lg:gap-4 xl:grid-cols-[256px_minmax(0,1fr)]">
+        <div
+          className="profile-page-typography pt-4 grid grid-cols-1 gap-6 lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start lg:gap-4 xl:grid-cols-[256px_minmax(0,1fr)]"
+          style={scrollPaddingStyle}
+        >
           <ProfileWorkspaceRail
             identity={{
               initials: profileInitials,
@@ -1488,17 +1487,19 @@ export default function ProfilePage() {
             aiSuggestions={PROFILE_AI_SUGGESTIONS}
             onImprove={openFirstMissingModal}
           />
-          <div className="flex min-w-0 h-[750px] flex-col lg:h-[820px]">
-            <ProfileWorkspaceTabs
-              ref={tabsBarRef}
-              tabs={workspaceTabs}
-              activeId={activeWorkspaceTab}
-              onSelect={scrollToWorkspaceTab}
-            />
-            <div 
-              ref={scrollContainerRef}
-              className="profile-modal-scroll relative min-h-0 flex-1 overflow-y-auto pr-2"
+          <div className="flex min-w-0 flex-col">
+            <div
+              className="sticky z-20 -mx-1 mb-4 border-b border-gray-100/80 bg-[#f8fcff]/95 pb-1 pt-0.5 backdrop-blur-md"
+              style={{ top: 'calc(var(--app-header-height, 92px) + 4px)' }}
             >
+              <ProfileWorkspaceTabs
+                ref={tabsBarRef}
+                tabs={workspaceTabs}
+                activeId={activeWorkspaceTab}
+                onSelect={scrollToWorkspaceTab}
+              />
+            </div>
+            <div className="relative pr-2">
               <div className="space-y-4 pb-10 pt-2">
               <section
                 id="personal-details"

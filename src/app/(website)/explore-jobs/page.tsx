@@ -2156,7 +2156,7 @@ const ExploreJobsPageContent = () => {
                 {/* Main Grid */}
                 <div className="mt-6 grid grid-cols-12 gap-5 items-start relative">
               {/* Sidebar filters — sticky floating */}
-              <aside className="col-span-12 lg:col-span-4 xl:col-span-3 sticky top-[72px] self-start z-20">
+              <aside className="col-span-12 lg:col-span-4 xl:col-span-3 sticky top-[calc(var(--app-header-height,92px)+8px)] self-start z-20">
                 <div className="dashboard-surface rounded-[24px] border border-white/80 p-6 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -2174,7 +2174,7 @@ const ExploreJobsPageContent = () => {
                     </button>
                   </div>
 
-                  <div className="dashboard-scrollbar mt-5 max-h-[calc(100vh-180px)] overflow-y-auto pr-1 space-y-5">
+                  <div className="mt-5 space-y-5 pr-1">
                     {/* Smart Filters */}
                     <div className="space-y-4">
                       <SectionHeader
@@ -2596,10 +2596,8 @@ const ExploreJobsPageContent = () => {
                       ))}
                     </div>
                   ) : displayMode === 'grid' ? (
-                    <div className="dashboard-scrollbar overflow-y-auto pr-1" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-                      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                        {filteredJobs.map((job) => renderJobCard(job))}
-                      </div>
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                      {filteredJobs.map((job) => renderJobCard(job))}
                     </div>
                   ) : (
                     <div className="flex flex-col gap-5">
@@ -2699,10 +2697,8 @@ const ExploreJobsPageContent = () => {
               <div className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)] min-w-0">
                 {/* Left Sidebar - Job Listings */}
                 <div className="min-w-0">
-                  <div
-                    className="sticky top-[92px] flex h-[calc(100vh-100px)] w-full max-w-full flex-col overflow-hidden rounded-[28px] border border-white/80 bg-white/82 p-4 sm:p-5 lg:p-6 xl:p-7 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur-md"
-                  >
-                    <div className="mb-4 flex items-center justify-between gap-3 px-1 shrink-0 min-w-0">
+                  <div className="sticky top-[calc(var(--app-header-height,92px)+8px)] w-full max-w-full self-start rounded-[28px] border border-white/80 bg-white/82 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur-md sm:p-5 lg:p-6 xl:p-7">
+                    <div className="mb-4 flex items-center justify-between gap-3 px-1 min-w-0">
                       <div className="min-w-0">
                         <h2 className="truncate text-lg font-semibold tracking-tight text-slate-950">Most Recent Jobs</h2>
                         <p className="mt-1 text-[12px] font-medium text-slate-500">{filteredJobs.length} roles in this view</p>
@@ -2716,7 +2712,7 @@ const ExploreJobsPageContent = () => {
                       </button>
                     </div>
 
-                    <div className="dashboard-scrollbar flex-1 min-h-0 space-y-3 overflow-y-auto pr-1">
+                    <div className="space-y-3 pr-1">
                       {jobListings.map(job => renderJobCard(job, true))}
                     </div>
                   </div>

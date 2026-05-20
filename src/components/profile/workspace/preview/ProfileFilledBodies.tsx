@@ -14,7 +14,7 @@ import type { VisaWorkAuthorizationData } from '@/components/modals/VisaWorkAuth
 import type { VaccinationData } from '@/components/modals/VaccinationModal';
 import type { AcademicAchievementData } from '@/components/modals/AcademicAchievementModal';
 import type { CompetitiveExamsData } from '@/components/modals/CompetitiveExamsModal';
-import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
+import { openProfileDocumentInNewTab } from '@/lib/profile-documents';
 import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
 import { resolveDocumentUrl } from '@/lib/api-base';
 import { getProfileDocumentDisplayName } from '@/lib/profile-documents';
@@ -116,18 +116,8 @@ export function ProfileResumeFilled({
   scorePercent: number;
   onReplace: () => void;
 }) {
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
-  const handlePreview = (url: string, name: string) => {
-    setPreviewModal({
-      isOpen: true,
-      url,
-      name,
-    });
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url);
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -210,7 +200,7 @@ export function ProfileResumeFilled({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handlePreview(resumeData.fileUrl!, displayName);
+                    handlePreview(resumeData.fileUrl!);
                   }}
                   className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="View Resume"
@@ -250,12 +240,6 @@ export function ProfileResumeFilled({
           </div>
         </div>
       </div>
-      <DocumentViewerModal
-        isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-        documentUrl={previewModal.url}
-        documentName={previewModal.name}
-      />
     </div>
   );
 }
@@ -289,18 +273,8 @@ export function ProfileInternshipFilled({
   getDocumentName: (doc: unknown) => string;
   resolveDocHref: (doc: unknown) => string;
 }) {
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
-  const handlePreview = (url: string, name: string) => {
-    setPreviewModal({
-      isOpen: true,
-      url,
-      name,
-    });
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url);
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -388,7 +362,7 @@ export function ProfileInternshipFilled({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handlePreview(resolveDocHref(data.documents![0]), getDocumentName(data.documents![0]));
+                    handlePreview(resolveDocHref(data.documents![0]));
                   }}
                   className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="View Certificate"
@@ -467,7 +441,7 @@ export function ProfileInternshipFilled({
                     <div className="flex items-center gap-3 shrink-0 ml-2">
                       <button
                         type="button"
-                        onClick={() => handlePreview(resolveDocHref(doc), getDocumentName(doc))}
+                        onClick={() => handlePreview(resolveDocHref(doc))}
                         className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Document"
                       >
@@ -494,12 +468,6 @@ export function ProfileInternshipFilled({
           ) : null}
         </div>
       ) : null}
-      <DocumentViewerModal
-        isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-        documentUrl={previewModal.url}
-        documentName={previewModal.name}
-      />
     </PreviewEntryShell>
   );
 }
@@ -708,18 +676,8 @@ export function ProfileLanguagesFilled({
   getDocumentName: (doc: unknown) => string;
   getApiDocumentHref: (doc: unknown) => string;
 }) {
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
-  const handlePreview = (url: string, name: string) => {
-    setPreviewModal({
-      isOpen: true,
-      url,
-      name,
-    });
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url);
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -790,7 +748,7 @@ export function ProfileLanguagesFilled({
                 <div className="flex shrink-0 items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => handlePreview(getApiDocumentHref(lang.documents![0]), getDocumentName(lang.documents![0]))}
+                    onClick={() => handlePreview(getApiDocumentHref(lang.documents![0]))}
                     className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 transition-colors"
                     title="View Proof"
                   >
@@ -818,12 +776,6 @@ export function ProfileLanguagesFilled({
           </div>
         ))}
       </div>
-      <DocumentViewerModal
-        isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-        documentUrl={previewModal.url}
-        documentName={previewModal.name}
-      />
     </div>
   );
 }
@@ -845,18 +797,8 @@ export function ProfileProjectFilled({
   getDocumentName: (doc: unknown) => string;
   getApiDocumentHref: (doc: unknown) => string;
 }) {
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
-  const handlePreview = (url: string, name: string) => {
-    setPreviewModal({
-      isOpen: true,
-      url,
-      name,
-    });
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url);
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -998,7 +940,7 @@ export function ProfileProjectFilled({
                     <div className="flex items-center gap-3 shrink-0 ml-2">
                       <button
                         type="button"
-                        onClick={() => handlePreview(getApiDocumentHref(doc), getDocumentName(doc))}
+                        onClick={() => handlePreview(getApiDocumentHref(doc))}
                         className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Document"
                       >
@@ -1025,12 +967,6 @@ export function ProfileProjectFilled({
           ) : null}
         </div>
       ) : null}
-      <DocumentViewerModal
-        isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-        documentUrl={previewModal.url}
-        documentName={previewModal.name}
-      />
     </PreviewEntryShell>
   );
 }
@@ -1401,18 +1337,8 @@ export function ProfileVisaFilled({
   getDocumentName: (doc: unknown) => string;
   getApiDocumentHref: (doc: unknown) => string;
 }) {
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
-  const handlePreview = (url: string, name: string) => {
-    setPreviewModal({
-      isOpen: true,
-      url,
-      name,
-    });
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url);
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -1503,7 +1429,7 @@ export function ProfileVisaFilled({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handlePreview(href, name);
+                          handlePreview(href);
                         }}
                         className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
                         title="View document"
@@ -1580,7 +1506,7 @@ export function ProfileVisaFilled({
                   <div className="flex items-center gap-3 shrink-0 ml-2">
                     <button
                       type="button"
-                      onClick={() => handlePreview(getApiDocumentHref(doc), getDocumentName(doc))}
+                      onClick={() => handlePreview(getApiDocumentHref(doc))}
                       className="text-blue-600 hover:text-blue-700 transition-colors"
                       title="View Document"
                     >
@@ -1624,7 +1550,7 @@ export function ProfileVisaFilled({
                 <div className="flex items-center gap-3 shrink-0 ml-2">
                   <button
                     type="button"
-                    onClick={() => handlePreview(getApiDocumentHref(doc), getDocumentName(doc))}
+                    onClick={() => handlePreview(getApiDocumentHref(doc))}
                     className="text-blue-600 hover:text-blue-700 transition-colors"
                     title="View Document"
                   >
@@ -1650,12 +1576,6 @@ export function ProfileVisaFilled({
           ))}
         </div>
       ) : null}
-      <DocumentViewerModal
-        isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-        documentUrl={previewModal.url}
-        documentName={previewModal.name}
-      />
     </PreviewEntryShell>
   );
 }
@@ -1677,18 +1597,8 @@ export function ProfileVaccinationFilled({
   certificateHref?: string;
   certificateLabel?: string;
 }) {
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
-  const handlePreview = (url: string, name: string) => {
-    setPreviewModal({
-      isOpen: true,
-      url,
-      name,
-    });
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url);
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -1768,7 +1678,7 @@ export function ProfileVaccinationFilled({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handlePreview(href, displayName);
+                                handlePreview(href);
                               }}
                               className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700"
                               title="View certificate"
@@ -1819,12 +1729,6 @@ export function ProfileVaccinationFilled({
           Compliance summary only — edit the form to update medical records.
         </div>
       ) : null}
-      <DocumentViewerModal
-        isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-        documentUrl={previewModal.url}
-        documentName={previewModal.name}
-      />
     </PreviewEntryShell>
   );
 }
@@ -1846,18 +1750,8 @@ export function ProfileAcademicAchievementFilled({
   getDocumentName: (doc: unknown) => string;
   resolveDocHref: (doc: unknown) => string;
 }) {
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
-  const handlePreview = (url: string, name: string) => {
-    setPreviewModal({
-      isOpen: true,
-      url,
-      name,
-    });
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url);
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -1917,7 +1811,7 @@ export function ProfileAcademicAchievementFilled({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handlePreview(resolveDocHref(data.documents![0]), getDocumentName(data.documents![0]));
+                    handlePreview(resolveDocHref(data.documents![0]));
                   }}
                   className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="View Certificate"
@@ -1978,7 +1872,7 @@ export function ProfileAcademicAchievementFilled({
                     <div className="flex items-center gap-3 shrink-0 ml-2">
                       <button
                         type="button"
-                        onClick={() => handlePreview(resolveDocHref(doc), getDocumentName(doc))}
+                        onClick={() => handlePreview(resolveDocHref(doc))}
                         className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Document"
                       >
@@ -2005,12 +1899,6 @@ export function ProfileAcademicAchievementFilled({
           ) : null}
         </div>
       ) : null}
-      <DocumentViewerModal
-        isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-        documentUrl={previewModal.url}
-        documentName={previewModal.name}
-      />
     </PreviewEntryShell>
   );
 }
@@ -2032,18 +1920,8 @@ export function ProfileCompetitiveExamFilled({
   getDocumentName: (doc: unknown) => string;
   resolveDocHref: (doc: unknown) => string;
 }) {
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
-  const handlePreview = (url: string, name: string) => {
-    setPreviewModal({
-      isOpen: true,
-      url,
-      name,
-    });
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url);
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -2103,7 +1981,7 @@ export function ProfileCompetitiveExamFilled({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handlePreview(resolveDocHref(data.documents![0]), getDocumentName(data.documents![0]));
+                    handlePreview(resolveDocHref(data.documents![0]));
                   }}
                   className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="View Certificate"
@@ -2165,7 +2043,7 @@ export function ProfileCompetitiveExamFilled({
                     <div className="flex items-center gap-3 shrink-0 ml-2">
                       <button
                         type="button"
-                        onClick={() => handlePreview(resolveDocHref(doc), getDocumentName(doc))}
+                        onClick={() => handlePreview(resolveDocHref(doc))}
                         className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Document"
                       >
@@ -2192,12 +2070,6 @@ export function ProfileCompetitiveExamFilled({
           ) : null}
         </div>
       ) : null}
-      <DocumentViewerModal
-        isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-        documentUrl={previewModal.url}
-        documentName={previewModal.name}
-      />
     </PreviewEntryShell>
   );
 }
