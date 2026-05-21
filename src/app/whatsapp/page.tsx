@@ -197,6 +197,9 @@ export default function WhatsAppLogin() {
       sessionStorage.setItem("countryCode", selectedCountry.dialCode);
       sessionStorage.setItem("fullWhatsAppNumber", `${selectedCountry.dialCode}${cleanNumber}`);
       sessionStorage.setItem("otpEmail", normalizedEmail);
+      if (data.data?.candidateId) {
+        sessionStorage.setItem("candidateId", data.data.candidateId);
+      }
 
       // In development, show OTP on screen
       if (data.data.otp) {
