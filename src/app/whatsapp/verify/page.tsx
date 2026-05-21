@@ -124,6 +124,7 @@ export default function VerifyOTP() {
         body: JSON.stringify({
           whatsappNumber: whatsappNumber,
           countryCode: countryCode,
+          email: otpEmail,
           otp: otp,
         }),
       });

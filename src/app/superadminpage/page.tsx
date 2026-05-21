@@ -31,6 +31,178 @@ interface CandidateDetail {
   certifications: any[];
 }
 
+type DeletePreviewEntry = {
+  candidateId: string;
+  label?: string;
+  phase1: Record<string, unknown>;
+  common: Record<string, unknown> | null;
+  commonDatabaseConfigured?: boolean;
+};
+
+function JsonBlock({ data, label }: { data: unknown; label: string }) {
+  return (
+    <details className="rounded-lg border border-slate-200 bg-slate-50">
+      <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-800">
+        {label}
+      </summary>
+      <pre className="max-h-64 overflow-auto p-3 text-xs text-slate-700 whitespace-pre-wrap break-words">
+        {JSON.stringify(data, null, 2)}
+      </pre>
+    </details>
+  );
+}
+
+function DeletePreviewPanel({ entry }: { entry: DeletePreviewEntry }) {
+  const phase1 = entry.phase1 || {};
+  const core = (phase1.core || {}) as Record<string, unknown>;
+  const profile = phase1.profile as Record<string, unknown> | null | undefined;
+  const relatedCounts = phase1.relatedCounts as Record<string, number> | undefined;
+
+  return (
+    <div className="space-y-4 border-b border-slate-200 pb-6 last:border-0 last:pb-0">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-base font-semibold text-slate-900">
+          {entry.label || String(core.id || entry.candidateId)}
+        </h4>
+        <span className="font-mono text-xs text-slate-500">{entry.candidateId}</span>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="rounded-lg border border-blue-200 bg-blue-50/40 p-4">
+          <h5 className="mb-3 text-sm font-bold uppercase tracking-wide text-blue-900">
+            Phase 1 database
+          </h5>
+          <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="text-slate-500">Name</dt>
+              <dd className="font-medium text-slate-900">
+                {(profile?.fullName as string) ||
+                  [core.firstName, core.lastName].filter(Boolean).join(" ") ||
+                  "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Email</dt>
+              <dd className="break-all font-medium text-slate-900">
+                {(profile?.email as string) || (core.email as string) || "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">WhatsApp</dt>
+              <dd className="font-medium text-slate-900">
+                ({String(core.countryCode || "")}) {String(core.whatsappNumber || "—")}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Verified</dt>
+              <dd className="font-medium text-slate-900">
+                {core.isVerified ? "Yes" : "No"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Stage</dt>
+              <dd className="font-medium text-slate-900">
+                {String(core.stage || "—")}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Assigned jobs</dt>
+              <dd className="font-medium text-slate-900">
+                {Array.isArray(core.assignedJobs)
+                  ? (core.assignedJobs as string[]).length
+                  : 0}
+              </dd>
+            </div>
+          </dl>
+          {relatedCounts && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {Object.entries(relatedCounts).map(([key, count]) => (
+                <span
+                  key={key}
+                  className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-700 ring-1 ring-slate-200"
+                >
+                  {key}: {count}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="mt-3 space-y-2">
+            <JsonBlock data={phase1.core} label="Core candidate record (full)" />
+            <JsonBlock data={phase1.profile} label="Profile" />
+            <JsonBlock data={phase1.educations} label="Education" />
+            <JsonBlock data={phase1.workExperiences} label="Work experience" />
+            <JsonBlock data={phase1.skills} label="Skills" />
+            <JsonBlock data={phase1.languages} label="Languages" />
+            <JsonBlock data={phase1.applications} label="Applications" />
+            <JsonBlock data={phase1.resume} label="Resume" />
+            <JsonBlock data={phase1.cvAnalysis} label="CV analysis" />
+            <JsonBlock data={phase1} label="All Phase 1 data" />
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-4">
+          <h5 className="mb-3 text-sm font-bold uppercase tracking-wide text-emerald-900">
+            Candidate common database
+          </h5>
+          {entry.commonDatabaseConfigured === false ? (
+            <p className="text-sm text-amber-800">
+              Common database URL is not configured on the server.
+            </p>
+          ) : entry.common ? (
+            <>
+              <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-slate-500">Email</dt>
+                  <dd className="break-all font-medium text-slate-900">
+                    {String(entry.common.email || "—")}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Phone</dt>
+                  <dd className="font-medium text-slate-900">
+                    {String(entry.common.phone || "—")}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Location</dt>
+                  <dd className="font-medium text-slate-900">
+                    {[entry.common.city, entry.common.country]
+                      .filter(Boolean)
+                      .join(", ") || String(entry.common.location || "—")}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Synced at</dt>
+                  <dd className="font-medium text-slate-900">
+                    {entry.common.syncedAt
+                      ? new Date(String(entry.common.syncedAt)).toLocaleString()
+                      : "—"}
+                  </dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-slate-500">Skills</dt>
+                  <dd className="font-medium text-slate-900">
+                    {Array.isArray(entry.common.skills)
+                      ? (entry.common.skills as string[]).join(", ") || "—"
+                      : "—"}
+                  </dd>
+                </div>
+              </dl>
+              <div className="mt-3">
+                <JsonBlock data={entry.common} label="Full common database record" />
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-slate-600">
+              No row in candidate common database for this candidate.
+            </p>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
 type JobRow = {
   id: string;
   title: string;
@@ -83,6 +255,12 @@ export default function SuperAdminPage() {
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const [bulkDeletingCandidates, setBulkDeletingCandidates] = useState(false);
   const [bulkDeletingJobs, setBulkDeletingJobs] = useState(false);
+
+  const [showDeletePreviewModal, setShowDeletePreviewModal] = useState(false);
+  const [deletePreviewLoading, setDeletePreviewLoading] = useState(false);
+  const [deletePreviewEntries, setDeletePreviewEntries] = useState<DeletePreviewEntry[]>([]);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
+  const [deletePreviewMode, setDeletePreviewMode] = useState<"single" | "bulk">("single");
 
   const candidateLimit = 50;
   const jobLimit = 100;
@@ -186,39 +364,119 @@ export default function SuperAdminPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this candidate?")) {
-      return;
+  const openDeletePreview = async (ids: string[], mode: "single" | "bulk") => {
+    if (ids.length === 0) return;
+    try {
+      setDeletePreviewLoading(true);
+      setDeletePreviewMode(mode);
+      setPendingDeleteIds(ids);
+      setShowDeletePreviewModal(true);
+      setDeletePreviewEntries([]);
+
+      if (ids.length === 1) {
+        const response = await fetch(
+          `${API_BASE_URL}/candidates/${ids[0]}/delete-preview`,
+          { method: "GET", headers: { "Content-Type": "application/json" } }
+        );
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success) {
+          alert(result.message || "Failed to load candidate data for delete");
+          setShowDeletePreviewModal(false);
+          return;
+        }
+        const row = candidates.find((c) => c.id === ids[0]);
+        setDeletePreviewEntries([
+          {
+            candidateId: result.data.candidateId,
+            label: row?.fullName || row?.email || ids[0],
+            phase1: result.data.phase1,
+            common: result.data.common,
+            commonDatabaseConfigured: result.data.commonDatabaseConfigured,
+          },
+        ]);
+      } else {
+        const response = await fetch(`${API_BASE_URL}/candidates/delete-preview`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success) {
+          alert(result.message || "Failed to load candidate data for delete");
+          setShowDeletePreviewModal(false);
+          return;
+        }
+        if (result.data.missingIds?.length) {
+          console.warn("Missing candidates:", result.data.missingIds);
+        }
+        setDeletePreviewEntries(result.data.previews || []);
+      }
+    } catch (error) {
+      console.error("Error loading delete preview:", error);
+      alert("Error loading candidate data");
+      setShowDeletePreviewModal(false);
+    } finally {
+      setDeletePreviewLoading(false);
     }
+  };
+
+  const closeDeletePreviewModal = () => {
+    setShowDeletePreviewModal(false);
+    setDeletePreviewEntries([]);
+    setPendingDeleteIds([]);
+  };
+
+  const confirmDeleteFromPreview = async () => {
+    const ids = pendingDeleteIds;
+    if (ids.length === 0) return;
 
     try {
-      setDeletingId(id);
-      const response = await fetch(`${API_BASE_URL}/candidates/${id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          setCandidates((prev) => prev.filter((c) => c.id !== id));
+      if (deletePreviewMode === "single" && ids.length === 1) {
+        setDeletingId(ids[0]);
+        const response = await fetch(`${API_BASE_URL}/candidates/${ids[0]}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        });
+        const result = await response.json().catch(() => ({}));
+        if (response.ok && result.success) {
+          setCandidates((prev) => prev.filter((c) => c.id !== ids[0]));
           setTotalCount((c) => Math.max(0, c - 1));
           setSelectedCandidateIds((prev) => {
             const next = new Set(prev);
-            next.delete(id);
+            next.delete(ids[0]);
             return next;
           });
-          alert("Candidate deleted successfully");
+          closeDeletePreviewModal();
+          alert(
+            result.message ||
+              "Candidate permanently deleted from Phase 1 and common database"
+          );
+        } else {
+          alert(result.message || "Failed to delete candidate");
         }
       } else {
-        const result = await response.json();
-        alert(result.message || "Failed to delete candidate");
+        setBulkDeletingCandidates(true);
+        const response = await fetch(`${API_BASE_URL}/candidates/bulk-delete`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (response.ok && result.success) {
+          setSelectedCandidateIds(new Set());
+          closeDeletePreviewModal();
+          await fetchCandidates(currentPage);
+          alert(result.message || "Candidates deleted");
+        } else {
+          alert(result.message || "Bulk delete failed");
+        }
       }
     } catch (error) {
       console.error("Error deleting candidate:", error);
       alert("Error deleting candidate");
     } finally {
       setDeletingId(null);
+      setBulkDeletingCandidates(false);
     }
   };
 
@@ -251,34 +509,11 @@ export default function SuperAdminPage() {
       alert("Select at least one candidate.");
       return;
     }
-    if (
-      !confirm(
-        `Delete ${ids.length} candidate(s) from the portal database? This cannot be undone.`
-      )
-    ) {
+    if (ids.length > 25) {
+      alert("Select at most 25 candidates at a time for preview and delete.");
       return;
     }
-    try {
-      setBulkDeletingCandidates(true);
-      const response = await fetch(`${API_BASE_URL}/candidates/bulk-delete`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (response.ok && result.success) {
-        setSelectedCandidateIds(new Set());
-        await fetchCandidates(currentPage);
-        alert(result.message || "Candidates deleted");
-      } else {
-        alert(result.message || "Bulk delete failed");
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Bulk delete failed");
-    } finally {
-      setBulkDeletingCandidates(false);
-    }
+    await openDeletePreview(ids, "bulk");
   };
 
   const toggleJobSelected = (id: string) => {
@@ -617,13 +852,13 @@ export default function SuperAdminPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleDelete(candidate.id)}
-                                  disabled={deletingId === candidate.id}
+                                  onClick={() => openDeletePreview([candidate.id], "single")}
+                                  disabled={
+                                    deletingId === candidate.id || deletePreviewLoading
+                                  }
                                   className="rounded-md bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
                                 >
-                                  {deletingId === candidate.id
-                                    ? "…"
-                                    : "Delete"}
+                                  {deletingId === candidate.id ? "…" : "Delete"}
                                 </button>
                               </div>
                             </td>
@@ -950,6 +1185,75 @@ export default function SuperAdminPage() {
           </section>
         )}
       </main>
+
+      {showDeletePreviewModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="flex max-h-[92vh] w-full max-w-6xl flex-col rounded-lg bg-white shadow-xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">
+                  Review before delete
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  Full Phase 1 and candidate common database data. Confirming will
+                  permanently hard-delete the candidate, all related records, resume
+                  files, and the common database row. This cannot be undone.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeDeletePreviewModal}
+                className="text-2xl text-slate-500 hover:text-slate-800"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+              {deletePreviewLoading ? (
+                <p className="py-12 text-center text-slate-500">
+                  Loading candidate data from Phase 1 and common database…
+                </p>
+              ) : deletePreviewEntries.length === 0 ? (
+                <p className="py-12 text-center text-slate-500">
+                  No preview data available.
+                </p>
+              ) : (
+                deletePreviewEntries.map((entry) => (
+                  <DeletePreviewPanel key={entry.candidateId} entry={entry} />
+                ))
+              )}
+            </div>
+
+            <div className="flex shrink-0 flex-wrap justify-end gap-3 border-t border-slate-200 px-6 py-4">
+              <button
+                type="button"
+                onClick={closeDeletePreviewModal}
+                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteFromPreview}
+                disabled={
+                  deletePreviewLoading ||
+                  deletePreviewEntries.length === 0 ||
+                  bulkDeletingCandidates ||
+                  Boolean(deletingId)
+                }
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {bulkDeletingCandidates || deletingId
+                  ? "Deleting…"
+                  : deletePreviewMode === "bulk"
+                    ? `Permanently delete ${pendingDeleteIds.length} candidate(s)`
+                    : "Permanently delete candidate"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showDetailModal && selectedCandidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
