@@ -14,8 +14,6 @@ type ProfileSidebarIdentityProps = {
   firstName?: string;
   lastName?: string;
   percentage: number;
-  /** Current employment status / title from basic info */
-  employment?: string;
   city?: string;
   country?: string;
   /** Primary target role from career preferences */
@@ -27,7 +25,6 @@ export function ProfileSidebarIdentity({
   firstName,
   lastName,
   percentage,
-  employment,
   city,
   country,
   targetRole,
@@ -37,7 +34,7 @@ export function ProfileSidebarIdentity({
   const displayName =
     [firstName, lastName].filter(Boolean).join(' ') || '';
   const location = formatLocation(city, country);
-  const roleLine = targetRole?.trim() || employment?.trim() || '';
+  const roleLine = targetRole?.trim() || '';
   const atsDisplay =
     atsScore !== undefined && atsScore !== null && !Number.isNaN(Number(atsScore))
       ? Math.round(Number(atsScore))

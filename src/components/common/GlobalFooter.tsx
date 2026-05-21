@@ -11,6 +11,7 @@ export default function GlobalFooter() {
         '/whatsapp',
         '/whatsapp/verify',
         '/profile',
+        '/explore-jobs',
         '/extract',
         '/uploadcv',
     ];

@@ -3,18 +3,19 @@
 import type { EducationData as EducationEntryData } from '@/components/modals/EducationModal';
 import {
   formatCourseDurationDisplay,
-  formatEducationPeriod,
+  formatEducationDateLine,
+  formatEducationTitle,
+  formatInstitutionLine,
   formatStoredGradeForDisplay,
+  isSchoolCertificateEntry,
 } from '@/components/modals/EducationModal';
 import {
-  PreviewChip,
   PreviewDocCount,
   PreviewEntryShell,
   PreviewMetaItem,
 } from './PreviewPrimitives';
 import { PreviewEntryActionButtons } from './PreviewEntryActionButtons';
-import { useState } from 'react';
-import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
+import { openProfileDocumentInNewTab } from '@/lib/profile-documents';
 
 type Entry = EducationEntryData & { documents?: unknown[] };
 
@@ -38,26 +39,27 @@ export function EducationEntryPreview({
   resolveDocHref,
 }: Props) {
   const docCount = entry.documents?.length ?? 0;
-  const yearRange = formatEducationPeriod(
+  const titleLine = formatEducationTitle(entry.educationLevel || '', entry.degreeProgram || '');
+  const institutionLine = formatInstitutionLine(
+    entry.institutionName || '',
+    entry.institutionLocation,
+  );
+  const dateLine = formatEducationDateLine(
+    entry.educationLevel || '',
+    entry.degreeProgram || '',
     entry.startYear || '',
     entry.startMonth || '',
     entry.endYear || '',
     entry.endMonth || '',
     entry.currentlyStudying || false,
   );
+  const isSchoolCert = isSchoolCertificateEntry(
+    entry.educationLevel || '',
+    entry.degreeProgram || '',
+  );
 
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
-  const handlePreview = (url: string, name: string) => {
-    setPreviewModal({
-      isOpen: true,
-      url,
-      name,
-    });
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url);
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -72,11 +74,11 @@ export function EducationEntryPreview({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
+    } catch {
       const link = document.createElement('a');
       link.href = url;
       link.download = name;
-      link.target = "_blank";
+      link.target = '_blank';
       link.click();
     }
   };
@@ -84,52 +86,14 @@ export function EducationEntryPreview({
   return (
     <PreviewEntryShell accent="blue">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1 space-y-2">
-          <div>
-            <h4 className="text-base font-bold text-gray-900">
-              {entry.degreeProgram || '—'}
-            </h4>
-            <p className="text-sm font-semibold text-blue-600">
-              {entry.institutionName || '—'}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {entry.educationLevel ? (
-              <PreviewChip tone="blue">{entry.educationLevel}</PreviewChip>
-            ) : null}
-            {entry.modeOfStudy ? (
-              <PreviewChip tone="green">{entry.modeOfStudy}</PreviewChip>
-            ) : null}
-            {entry.currentlyStudying ? (
-              <PreviewChip tone="orange">Currently studying</PreviewChip>
-            ) : (
-              <PreviewChip tone="neutral">Completed</PreviewChip>
-            )}
-          </div>
-          <p className="text-xs text-gray-500">
-            <span className="font-medium text-gray-600">{yearRange}</span>
-            {entry.fieldOfStudy ? (
-              <>
-                {' · '}
-                {entry.fieldOfStudy}
-              </>
-            ) : null}
-          </p>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
-            {entry.grade ? (
-              <span>
-                <span className="text-gray-400">Result: </span>
-                {formatStoredGradeForDisplay(entry.grade)}
-              </span>
-            ) : null}
-            {entry.courseDuration ? (
-              <span>
-                <span className="text-gray-400">Duration: </span>
-                {formatCourseDurationDisplay(entry.courseDuration)}
-              </span>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="text-sm font-bold uppercase tracking-wide text-gray-900">{titleLine}</p>
+          <p className="text-sm text-gray-800">{institutionLine}</p>
+          <p className="text-sm text-gray-600">{dateLine}</p>
+          {!isSchoolCert && entry.fieldOfStudy ? (
+            <p className="text-xs text-gray-500 pt-1">{entry.fieldOfStudy}</p>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-2 pt-2">
             <PreviewDocCount count={docCount} />
             {docCount === 1 && entry.documents?.[0] && (
               <div className="flex items-center gap-2 ml-1">
@@ -137,7 +101,7 @@ export function EducationEntryPreview({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handlePreview(resolveDocHref(entry.documents![0]), getDocumentName(entry.documents![0]));
+                    handlePreview(resolveDocHref(entry.documents![0]));
                   }}
                   className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="View Certificate"
@@ -151,7 +115,10 @@ export function EducationEntryPreview({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDownload(resolveDocHref(entry.documents![0]), getDocumentName(entry.documents![0]));
+                    handleDownload(
+                      resolveDocHref(entry.documents![0]),
+                      getDocumentName(entry.documents![0]),
+                    );
                   }}
                   className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
                   title="Download Certificate"
@@ -176,24 +143,40 @@ export function EducationEntryPreview({
 
       {isExpanded ? (
         <div className="mt-4 space-y-4 border-t border-gray-100 pt-4">
-          <PreviewMetaItem
-            label="Field of study / major"
-            value={entry.fieldOfStudy || '—'}
-          />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {!isSchoolCert ? (
+            <PreviewMetaItem
+              label="Field of study / major"
+              value={entry.fieldOfStudy || '—'}
+            />
+          ) : null}
+          <PreviewMetaItem label="Education level" value={entry.educationLevel || '—'} />
+          {entry.institutionLocation ? (
+            <PreviewMetaItem label="Location" value={entry.institutionLocation} />
+          ) : null}
+          {!isSchoolCert ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <PreviewMetaItem
+                label="Grade / Percentage / GPA"
+                value={entry.grade ? formatStoredGradeForDisplay(entry.grade) : '—'}
+              />
+              <PreviewMetaItem
+                label="Course duration"
+                value={
+                  entry.courseDuration
+                    ? formatCourseDurationDisplay(entry.courseDuration)
+                    : '—'
+                }
+              />
+              {entry.modeOfStudy ? (
+                <PreviewMetaItem label="Mode of study" value={entry.modeOfStudy} />
+              ) : null}
+            </div>
+          ) : entry.grade ? (
             <PreviewMetaItem
               label="Grade / Percentage / GPA"
-              value={entry.grade ? formatStoredGradeForDisplay(entry.grade) : '—'}
+              value={formatStoredGradeForDisplay(entry.grade)}
             />
-            <PreviewMetaItem
-              label="Course duration"
-              value={
-                entry.courseDuration
-                  ? formatCourseDurationDisplay(entry.courseDuration)
-                  : '—'
-              }
-            />
-          </div>
+          ) : null}
           {docCount > 0 ? (
             <div>
               <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-400">
@@ -209,7 +192,7 @@ export function EducationEntryPreview({
                     <div className="flex items-center gap-3 shrink-0 ml-2">
                       <button
                         type="button"
-                        onClick={() => handlePreview(resolveDocHref(doc), getDocumentName(doc))}
+                        onClick={() => handlePreview(resolveDocHref(doc))}
                         className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Document"
                       >
@@ -237,12 +220,6 @@ export function EducationEntryPreview({
         </div>
       ) : null}
 
-      <DocumentViewerModal
-        isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-        documentUrl={previewModal.url}
-        documentName={previewModal.name}
-      />
     </PreviewEntryShell>
   );
 }

@@ -9,8 +9,7 @@ import {
   textSnippet,
 } from './PreviewPrimitives';
 import { PreviewEntryActionButtons } from './PreviewEntryActionButtons';
-import { useState } from 'react';
-import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
+import { openProfileDocumentInNewTab } from '@/lib/profile-documents';
 
 type CertProps = {
   cert: Certification;
@@ -36,18 +35,8 @@ export function CertificationEntryPreview({
     ? 'No expiry'
     : cert.expiryDate || '—';
 
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
-  const handlePreview = (url: string, name: string) => {
-    setPreviewModal({
-      isOpen: true,
-      url,
-      name,
-    });
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url);
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -196,7 +185,7 @@ export function CertificationEntryPreview({
                     <div className="flex items-center gap-3 shrink-0 ml-2">
                       <button
                         type="button"
-                        onClick={() => handlePreview(resolveDocHref(doc), getDocumentName(doc))}
+                        onClick={() => handlePreview(resolveDocHref(doc))}
                         className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Document"
                       >
@@ -223,12 +212,6 @@ export function CertificationEntryPreview({
           ) : null}
         </div>
       ) : null}
-      <DocumentViewerModal
-        isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-        documentUrl={previewModal.url}
-        documentName={previewModal.name}
-      />
     </PreviewEntryShell>
   );
 }
@@ -254,18 +237,8 @@ export function AccomplishmentEntryPreview({
 }: AccProps) {
   const docCount = acc.documents?.length ?? 0;
 
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
-  const handlePreview = (url: string, name: string) => {
-    setPreviewModal({
-      isOpen: true,
-      url,
-      name,
-    });
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url);
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -320,7 +293,7 @@ export function AccomplishmentEntryPreview({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handlePreview(resolveDocHref(acc.documents![0]), getDocumentName(acc.documents![0]));
+                    handlePreview(resolveDocHref(acc.documents![0]));
                   }}
                   className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="View Document"
@@ -390,7 +363,7 @@ export function AccomplishmentEntryPreview({
                     <div className="flex items-center gap-3 shrink-0 ml-2">
                       <button
                         type="button"
-                        onClick={() => handlePreview(resolveDocHref(doc), getDocumentName(doc))}
+                        onClick={() => handlePreview(resolveDocHref(doc))}
                         className="text-blue-600 hover:text-blue-700 transition-colors"
                         title="View Document"
                       >
@@ -417,12 +390,6 @@ export function AccomplishmentEntryPreview({
           ) : null}
         </div>
       ) : null}
-      <DocumentViewerModal
-        isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-        documentUrl={previewModal.url}
-        documentName={previewModal.name}
-      />
     </PreviewEntryShell>
   );
 }

@@ -3,8 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
-import DocumentViewerModal from './DocumentViewerModal';
-import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
+import {
+  getProfileDocumentDisplayName,
+  isStoredProfileDocument,
+  openProfileDocumentItemInNewTab,
+} from '@/lib/profile-documents';
 
 interface CertificationModalProps {
   isOpen: boolean;
@@ -122,13 +125,6 @@ export default function CertificationModal({
     issueDate: '',
     expiryDate: '',
     credentialUrl: '',
-  });
-
-  // Preview Modal state
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -302,20 +298,7 @@ export default function CertificationModal({
   };
 
   const handlePreviewDocument = (doc: CertificationDocument) => {
-    let url = '';
-    if (doc.url) {
-      url = resolveDocumentUrl(doc.url);
-    } else if (doc.file) {
-      url = URL.createObjectURL(doc.file);
-    }
-
-    if (url) {
-      setPreviewModal({
-        isOpen: true,
-        url: url,
-        name: doc.name,
-      });
-    }
+    openProfileDocumentItemInNewTab(doc);
   };
 
   const handleDownloadFile = async (doc: CertificationDocument) => {
@@ -799,12 +782,6 @@ export default function CertificationModal({
 
             </div>
 
-            <DocumentViewerModal
-              isOpen={previewModal.isOpen}
-              onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-              documentUrl={previewModal.url}
-              documentName={previewModal.name}
-            />
     </ProfileDrawer>
   );
 }

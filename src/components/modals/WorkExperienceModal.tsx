@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import GapExplanationModal, { GapExplanationData } from './GapExplanationModal';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
-import DocumentViewerModal from '@/components/modals/DocumentViewerModal';
 import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import { profileFieldClass, profileSectionTitleClass, profileTextareaClass } from '@/lib/profile-modal-ui';
 import {
@@ -12,7 +11,12 @@ import {
   normalizeEmploymentTypeFromApi,
   normalizeWorkModeFromApi,
 } from '@/lib/work-experience-utils';
-import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
+import {
+  getProfileDocumentDisplayName,
+  isStoredProfileDocument,
+  openProfileDocumentInNewTab,
+  openProfileDocumentItemInNewTab,
+} from '@/lib/profile-documents';
 
 interface WorkExperienceModalProps {
   isOpen: boolean;
@@ -526,26 +530,17 @@ export default function WorkExperienceModal({
     setDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
   };
 
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
-  });
-
   const handlePreviewDocument = (doc: WorkExperienceDocument) => {
-    let url = '';
     if (doc.url) {
-      url = resolveDocumentUrl(doc.url);
-    } else if (doc.file) {
-      url = typeof doc.file === 'string' ? resolveDocumentUrl(doc.file) : URL.createObjectURL(doc.file);
+      openProfileDocumentItemInNewTab({ url: doc.url });
+      return;
     }
-
-    if (url) {
-      setPreviewModal({
-        isOpen: true,
-        url: url,
-        name: doc.name,
-      });
+    if (doc.file) {
+      if (typeof doc.file === 'string') {
+        openProfileDocumentInNewTab(resolveDocumentUrl(doc.file));
+      } else {
+        openProfileDocumentItemInNewTab({ file: doc.file });
+      }
     }
   };
 
@@ -1335,12 +1330,6 @@ export default function WorkExperienceModal({
             )}
 
 
-              <DocumentViewerModal
-                isOpen={previewModal.isOpen}
-                onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-                documentUrl={previewModal.url}
-                documentName={previewModal.name}
-              />
       </ProfileDrawer>
     </>
   );

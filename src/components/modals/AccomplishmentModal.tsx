@@ -3,8 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
-import DocumentViewerModal from './DocumentViewerModal';
-import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
+import {
+  getProfileDocumentDisplayName,
+  isStoredProfileDocument,
+  openProfileDocumentItemInNewTab,
+} from '@/lib/profile-documents';
 
 interface AccomplishmentModalProps {
   isOpen: boolean;
@@ -104,13 +107,6 @@ export default function AccomplishmentModal({
     title: '',
     category: '',
     achievementDate: '',
-  });
-
-  // Preview Modal state
-  const [previewModal, setPreviewModal] = useState({
-    isOpen: false,
-    url: '',
-    name: '',
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -250,20 +246,7 @@ export default function AccomplishmentModal({
   };
 
   const handlePreviewDocument = (doc: AccomplishmentDocument) => {
-    let url = '';
-    if (doc.url) {
-      url = resolveDocumentUrl(doc.url);
-    } else if (doc.file) {
-      url = URL.createObjectURL(doc.file);
-    }
-
-    if (url) {
-      setPreviewModal({
-        isOpen: true,
-        url: url,
-        name: doc.name,
-      });
-    }
+    openProfileDocumentItemInNewTab(doc);
   };
 
   const handleDownloadFile = async (doc: AccomplishmentDocument) => {
@@ -709,12 +692,6 @@ export default function AccomplishmentModal({
               )}
             </div>
 
-            <DocumentViewerModal
-              isOpen={previewModal.isOpen}
-              onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
-              documentUrl={previewModal.url}
-              documentName={previewModal.name}
-            />
     </ProfileDrawer>
   );
 }
