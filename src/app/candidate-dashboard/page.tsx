@@ -25,6 +25,7 @@ import type {
 import {
   API_BASE_URL,
   fetchProfileCompleteness,
+  syncProfileToCommonDatabase,
   type ProfileCompletenessResponse,
 } from "@/lib/profile-completion";
 import { getAuthHeaders, getStoredCandidateId, syncAuthStorage } from "@/lib/auth-storage";
@@ -296,6 +297,7 @@ export default function CandidateDashboardPage() {
 
   useEffect(() => {
     if (!candidateId) return;
+    void syncProfileToCommonDatabase(candidateId);
     void refreshProfileCompleteness(candidateId);
     void fetchDashboardData(candidateId);
   }, [candidateId, refreshProfileCompleteness, fetchDashboardData]);
@@ -306,6 +308,7 @@ export default function CandidateDashboardPage() {
     const id = candidateId || user?.id || getStoredCandidateId();
     if (!id) return;
     if (!candidateId) setCandidateId(id);
+    void syncProfileToCommonDatabase(id);
     void refreshProfileCompleteness(id);
     void fetchDashboardData(id);
   }, isAuthenticated);

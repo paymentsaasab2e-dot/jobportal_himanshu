@@ -22,6 +22,13 @@ import ProfilePanel from '@/components/common/ProfilePanel';
 import GlobalAIAssistant from '@/components/common/GlobalAIAssistant';
 const PRIMARY = '#28A8E1';
 const JOBS_PATH = '/explore-jobs';
+const SERVICES_PATH = '/services';
+
+type NavItem = {
+    label: string;
+    path: string;
+    openInNewTab?: boolean;
+};
 
 async function fetchWithRetry(
     input: RequestInfo | URL,
@@ -233,25 +240,34 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
     const isLandingPage = pathname === '/';
 
     // Core public items
-    const publicNavItems = [
+    const publicNavItems: NavItem[] = [
         { label: 'Explore Jobs', path: '/explore-jobs' },
         { label: 'Courses', path: '/lms/courses' },
-        { label: 'Services', path: '/services' },
-
+        { label: 'Services', path: SERVICES_PATH },
     ];
 
-    const navItems = isLandingPage ? publicNavItems : isLoggedIn ? [
-        { label: 'Dashboard', path: '/candidate-dashboard' },
-        { label: 'Jobs', path: '/explore-jobs' },
-        { label: 'Applications', path: '/applications' },
-        { label: 'LMS', path: '/lms/courses' },
-        { label: 'Profile', path: '/profile' },
-        { label: 'Services', path: '/services' },
-    ] : publicNavItems;
+    const navItems: NavItem[] = isLandingPage
+        ? publicNavItems
+        : isLoggedIn
+          ? [
+              { label: 'Dashboard', path: '/candidate-dashboard' },
+              { label: 'Jobs', path: '/explore-jobs' },
+              { label: 'Applications', path: '/applications' },
+              { label: 'LMS', path: '/lms/courses' },
+              { label: 'Profile', path: '/profile' },
+              { label: 'Services', path: SERVICES_PATH, openInNewTab: true },
+            ]
+          : publicNavItems;
 
-    const handleTabClick = (path: string) => {
+    const handleNavItemClick = (item: NavItem) => {
         setShowJobSearch(false);
-        router.push(path);
+        if (item.openInNewTab) {
+            if (typeof window !== 'undefined') {
+                window.open(item.path, '_blank', 'noopener,noreferrer');
+            }
+            return;
+        }
+        router.push(item.path);
     };
 
     const handleJobsToggleSearch = () => {
@@ -334,7 +350,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                                         if (item.path === JOBS_PATH && active) {
                                                             handleJobsToggleSearch();
                                                         } else {
-                                                            handleTabClick(item.path);
+                                                            handleNavItemClick(item);
                                                         }
                                                     }}
                                                     className={`relative z-10 flex min-w-[72px] flex-1 items-center justify-center gap-1 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ease-in-out sm:min-w-[80px] sm:flex-none ${active
@@ -496,7 +512,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                             <button
                                                 key={item.path}
                                                 onClick={() => {
-                                                    router.push(item.path);
+                                                    handleNavItemClick(item);
                                                     setIsMobileMenuOpen(false);
                                                 }}
                                                 className={`flex items-center px-4 py-3 rounded-full text-sm font-semibold transition-all duration-200 ${active

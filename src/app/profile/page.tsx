@@ -107,7 +107,14 @@ import VisaWorkAuthorizationModal, { VisaWorkAuthorizationData } from '../../com
 import VaccinationModal, { VaccinationData } from '../../components/modals/VaccinationModal';
 import ResumeModal, { ResumeData as BaseResumeData } from '../../components/modals/ResumeModal';
 import { API_BASE_URL } from '@/lib/api-base';
-import { getAuthHeaders, getStoredCandidateId, syncAuthStorage } from '@/lib/auth-storage';
+import {
+  getAuthHeaders,
+  getStoredCandidateId,
+  getStoredToken,
+  persistAuthSession,
+  resolveCandidateIdForApi,
+  syncAuthStorage,
+} from '@/lib/auth-storage';
 import { useAuth } from '@/components/auth/AuthContext';
 import { useTabVisibilityRefresh } from '@/hooks/useTabVisibilityRefresh';
 import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
@@ -180,7 +187,7 @@ function resolveProfileImage(
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [isBasicInfoModalOpen, setIsBasicInfoModalOpen] = useState(false);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [isGapExplanationModalOpen, setIsGapExplanationModalOpen] = useState(false);
@@ -806,9 +813,19 @@ export default function ProfilePage() {
   const refreshProfileDataRef = useRef(refreshProfileData);
   refreshProfileDataRef.current = refreshProfileData;
 
+  useEffect(() => {
+    const token = getStoredToken();
+    if (user?.id && token) {
+      const stored = getStoredCandidateId();
+      if (stored && stored !== user.id) {
+        persistAuthSession(token, user.id);
+      }
+    }
+  }, [user?.id]);
+
   useTabVisibilityRefresh(() => {
     syncAuthStorage();
-    const id = getStoredCandidateId();
+    const id = resolveCandidateIdForApi(user?.id);
     if (id) {
       void refreshProfileDataRef.current(id);
     }
@@ -818,7 +835,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfileData = async () => {
       syncAuthStorage();
-      const candidateId = getStoredCandidateId();
+      const candidateId = resolveCandidateIdForApi(user?.id);
       if (!candidateId) {
         console.warn('No candidate ID found in auth storage');
         setIsLoadingProfile(false);
@@ -843,7 +860,7 @@ export default function ProfilePage() {
     };
 
     fetchProfileData();
-  }, []);
+  }, [user?.id]);
 
   // Fetch CV Analysis on component mount
   useEffect(() => {
@@ -3309,8 +3326,11 @@ export default function ProfilePage() {
         isOpen={isBasicInfoModalOpen}
         onClose={() => setIsBasicInfoModalOpen(false)}
         onSave={async (data) => {
-          const candidateId = getStoredCandidateId();
-          if (!candidateId) return;
+          const candidateId = resolveCandidateIdForApi(user?.id);
+          if (!candidateId) {
+            showAlert('Session expired. Please log in again.');
+            return;
+          }
 
           const previousBasicInfo = basicInfoData;
           setBasicInfoData(data);
@@ -3327,6 +3347,12 @@ export default function ProfilePage() {
               throw new Error(result.message || 'Failed to save personal information');
             }
 
+            const savedCandidateId = String(result.data?.candidateId || candidateId).trim();
+            const token = getStoredToken();
+            if (token && savedCandidateId) {
+              persistAuthSession(token, savedCandidateId);
+            }
+
             const savedPersonalInfo = result.data?.personalInfo;
             if (savedPersonalInfo && typeof savedPersonalInfo === 'object') {
               setBasicInfoData((prev) => ({
@@ -3339,7 +3365,7 @@ export default function ProfilePage() {
               setBasicInfoData(data);
             }
 
-            await refreshProfileData(candidateId);
+            await refreshProfileData(savedCandidateId);
             await refreshUser();
             setIsBasicInfoModalOpen(false);
             showAlert('Personal details updated');
