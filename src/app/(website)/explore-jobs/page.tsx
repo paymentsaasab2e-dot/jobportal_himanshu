@@ -38,6 +38,10 @@ import {
   jobMatchesCountry,
   parseJobLocation,
 } from '@/lib/job-location-filters';
+import { parseStructuredJobText, resolveJobSummaryText, toPlainJobText } from '@/lib/job-description';
+import { extractPortalJobMeta } from '@/lib/map-portal-job';
+import { JobDescriptionCards } from '@/components/jobs/JobDescriptionCards';
+import { JobCardMetaChips } from '@/components/jobs/JobPostingDetailsPanel';
 const PAGE_BG =
   'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)';
 const SAVED_JOBS_STORAGE_PREFIX = 'dashboardSavedJobs';
@@ -62,6 +66,7 @@ interface JobListing {
   timeAgo: string
   isHighlighted?: boolean
   description: string
+  jobOverview?: string
   responsibilities: string[]
   requiredSkills: string[]
   niceToHaveSkills?: string[]
@@ -69,6 +74,8 @@ interface JobListing {
   experienceLevel: string
   education?: string
   benefits?: string[]
+  preferredQualifications?: string[]
+  candidateRequirements?: string[]
   department?: string
   workMode: string
   industry: string
@@ -93,6 +100,22 @@ interface JobListing {
   normalizedJobProfile?: any
   applicationFormEnabled?: boolean
   screeningQuestions?: PortalScreeningQuestion[]
+  nationality?: string
+  priority?: string
+  openings?: number
+  state?: string
+  employmentType?: string
+  targetHireDate?: string
+  jdFileName?: string
+  experienceMin?: number | null
+  experienceMax?: number | null
+  experienceDisplay?: string | null
+  languages?: { language: string; proficiency: string }[]
+  videoMediaLink?: string
+  forecastRevenue?: string
+  contactPerson?: string
+  industryType?: string
+  fullDescription?: string
 }
 
 type PortalScreeningType = 'short_text' | 'yes_no' | 'single_choice' | 'slider'
@@ -364,14 +387,11 @@ function buildApiBaseCandidates(primaryBase: string) {
   return Array.from(bases)
 }
 
-/** Full job detail (includes screening questions). List/personalized payloads are sometimes stale or stripped. */
+/** Full job detail from GET /jobs/:id (portal fields + apply form). */
 async function fetchJobDetailForApply(
   jobId: string,
   primaryApiBase: string,
-): Promise<{
-  applicationFormQuestions?: unknown
-  applicationFormEnabled?: boolean
-} | null> {
+): Promise<Record<string, unknown> | null> {
   const id = String(jobId || '').trim()
   if (!id) return null
   const bases = buildApiBaseCandidates(primaryApiBase)
@@ -384,7 +404,7 @@ async function fetchJobDetailForApply(
       if (!res.ok) continue
       const json = (await res.json().catch(() => null)) as {
         success?: boolean
-        data?: { applicationFormQuestions?: unknown; applicationFormEnabled?: boolean }
+        data?: Record<string, unknown>
       }
       if (json?.success && json?.data && typeof json.data === 'object') {
         return json.data
@@ -849,7 +869,7 @@ const ExploreJobsPageContent = () => {
             asString(job.description) ||
             asString(job.jobDescription) ||
             asString(job.jobSummary) ||
-            (typeof job.jobDescriptionHtml === 'string' ? stripHtml(job.jobDescriptionHtml) : null) ||
+            asString(job.jobDescriptionHtml) ||
             ''
           const parsedText = parseStructuredJobText(rawDescriptionText)
 
@@ -894,28 +914,41 @@ const ExploreJobsPageContent = () => {
             asString(job.employmentType) ||
             parsedText.employmentType ||
             'Full-time'
-          const resolvedDescription =
-            asString(job.overview) ||
-            asString(job.aboutRole) ||
-            parsedText.summary ||
-            rawDescriptionText ||
-            'No description available.'
+          const resolvedDescription = resolveJobSummaryText(
+            {
+              overview: job.overview,
+              aboutRole: job.aboutRole,
+              description: job.description,
+              jobDescription: job.jobDescription,
+              jobSummary: job.jobSummary,
+              jobDescriptionHtml: job.jobDescriptionHtml,
+            },
+            parsedText
+          )
           const resolvedResponsibilities =
             Array.isArray(job.keyResponsibilities) && job.keyResponsibilities.length
-              ? job.keyResponsibilities
+              ? job.keyResponsibilities.map((item: unknown) => toPlainJobText(String(item)))
               : typeof job.responsibilities === 'string'
-              ? splitTextPoints(job.responsibilities)
+              ? splitTextPoints(toPlainJobText(job.responsibilities))
               : Array.isArray(job.responsibilities)
-              ? job.responsibilities
+              ? job.responsibilities.map((item: unknown) => toPlainJobText(String(item)))
               : parsedText.responsibilities
-          const resolvedRequiredSkills =
-            Array.isArray(job.skills) && job.skills.length
-              ? job.skills
-              : Array.isArray(job.requirements) && job.requirements.length
-              ? job.requirements
-              : Array.isArray(job.normalizedJobProfile?.requiredSkills) && job.normalizedJobProfile.requiredSkills.length
-              ? job.normalizedJobProfile.requiredSkills
-              : parsedText.requirements
+          const resolvedRequiredSkills = [
+            ...new Set(
+              (Array.isArray(job.skills) && job.skills.length
+                ? job.skills
+                : Array.isArray(job.requirements) && job.requirements.length
+                ? job.requirements
+                : Array.isArray(job.normalizedJobProfile?.requiredSkills) &&
+                    job.normalizedJobProfile.requiredSkills.length
+                ? job.normalizedJobProfile.requiredSkills
+                : parsedText.requiredSkills
+              ).map((item: unknown) => toPlainJobText(String(item)))
+            ),
+          ]
+          const resolvedPreferredQualifications = parsedText.preferredQualifications
+          const resolvedCandidateRequirements = parsedText.candidateRequirements
+          const portalMeta = extractPortalJobMeta(job as Record<string, unknown>)
           const resolvedBenefits =
             Array.isArray(job.benefits) && job.benefits.length
               ? job.benefits
@@ -958,6 +991,7 @@ const ExploreJobsPageContent = () => {
             timeAgo: formatTimeAgo(job.postedDate || job.postedAt || job.createdAt || new Date()),
             isHighlighted: hasRealMatchScore && matchScore >= 85,
             description: resolvedDescription,
+            jobOverview: parsedText.summary || resolvedDescription,
             responsibilities: resolvedResponsibilities,
             requiredSkills: resolvedRequiredSkills,
             niceToHaveSkills: Array.isArray(job.preferredSkills)
@@ -966,7 +1000,7 @@ const ExploreJobsPageContent = () => {
               ? job.normalizedJobProfile.preferredSkills
               : [],
             companyOverview:
-              asString(job.companyOverview) ||
+              toPlainJobText(asString(job.companyOverview)) ||
               parsedText.summary ||
               `We are a leading company in the ${job.industry || job.department || 'technology'} industry.`,
             experienceLevel: resolveExperienceLevel(job),
@@ -985,6 +1019,12 @@ const ExploreJobsPageContent = () => {
             gaps: job.skillGaps || [],
             education: resolvedEducation,
             benefits: resolvedBenefits,
+            preferredQualifications: resolvedPreferredQualifications,
+            candidateRequirements: resolvedCandidateRequirements,
+            ...portalMeta,
+            employmentType:
+              portalMeta.employmentType ||
+              resolvedType,
             confidenceTag: job.confidenceTag,
             reasoning: job.shortReason || job.reasoning,
             matchedSkills: job.matchedSkills,
@@ -1058,8 +1098,89 @@ const ExploreJobsPageContent = () => {
     resetFilters()
   }
 
+  const mergeListingWithApiJob = (prev: JobListing, apiJob: Record<string, unknown>): JobListing => {
+    const portalMeta = extractPortalJobMeta(apiJob)
+    const apiSkills = Array.isArray(apiJob.skills) ? (apiJob.skills as string[]) : prev.skills
+    const rawDescriptionText =
+      asString(apiJob.description) ||
+      asString(apiJob.jobDescription) ||
+      asString(apiJob.jobSummary) ||
+      asString(apiJob.jobDescriptionHtml) ||
+      portalMeta.fullDescription ||
+      ''
+    const parsedText = parseStructuredJobText(rawDescriptionText)
+    const resolvedDescription = resolveJobSummaryText(
+      {
+        overview: apiJob.overview,
+        aboutRole: apiJob.aboutRole,
+        description: apiJob.description,
+        jobDescription: apiJob.jobDescription,
+        jobSummary: apiJob.jobSummary,
+        jobDescriptionHtml: apiJob.jobDescriptionHtml,
+      },
+      parsedText,
+    )
+    const resolvedResponsibilities =
+      Array.isArray(apiJob.keyResponsibilities) && (apiJob.keyResponsibilities as unknown[]).length
+        ? (apiJob.keyResponsibilities as unknown[]).map((item) => toPlainJobText(String(item)))
+        : typeof apiJob.responsibilities === 'string'
+          ? splitTextPoints(toPlainJobText(String(apiJob.responsibilities)))
+          : parsedText.responsibilities.length
+            ? parsedText.responsibilities
+            : prev.responsibilities
+    const resolvedRequiredSkills = [
+      ...new Set(
+        (Array.isArray(apiJob.skills) && (apiJob.skills as unknown[]).length
+          ? (apiJob.skills as unknown[])
+          : Array.isArray(apiJob.requirements) && (apiJob.requirements as unknown[]).length
+            ? (apiJob.requirements as unknown[])
+            : parsedText.requiredSkills.length
+              ? parsedText.requiredSkills
+              : prev.requiredSkills
+        ).map((item) => toPlainJobText(String(item))),
+      ),
+    ]
+    return {
+      ...prev,
+      ...portalMeta,
+      skills: apiSkills,
+      description: resolvedDescription,
+      jobOverview: parsedText.summary || resolvedDescription,
+      responsibilities: resolvedResponsibilities,
+      requiredSkills: resolvedRequiredSkills,
+      preferredQualifications:
+        parsedText.preferredQualifications.length > 0
+          ? parsedText.preferredQualifications
+          : prev.preferredQualifications,
+      candidateRequirements:
+        parsedText.candidateRequirements.length > 0
+          ? parsedText.candidateRequirements
+          : prev.candidateRequirements,
+      fullDescription: portalMeta.fullDescription || prev.fullDescription,
+      employmentType: portalMeta.employmentType || prev.employmentType,
+      contactPerson: portalMeta.contactPerson || prev.contactPerson,
+      education: asString(apiJob.education) || prev.education,
+      benefits:
+        Array.isArray(apiJob.benefits) && (apiJob.benefits as unknown[]).length
+          ? (apiJob.benefits as string[])
+          : parsedText.benefits.length
+            ? parsedText.benefits
+            : prev.benefits,
+    }
+  }
+
   const handleJobClick = (job: JobListing) => {
     setSelectedJob(job)
+    const jobId = String(job.id || '').trim()
+    if (!jobId) return
+    void (async () => {
+      const detail = await fetchJobDetailForApply(jobId, String(API_BASE_URL))
+      if (!detail) return
+      setSelectedJob((prev) => {
+        if (!prev || String(prev.id) !== jobId) return prev
+        return mergeListingWithApiJob(prev, detail)
+      })
+    })()
   }
 
   const handleApplyNow = async () => {
@@ -1884,6 +2005,8 @@ const ExploreJobsPageContent = () => {
             ) : null}
           </div>
         </div>
+
+        <JobCardMetaChips job={job} />
 
         <div className={`mt-3 flex flex-wrap gap-1.5 ${isCompact ? '' : 'mb-1'}`}>
           {shownSkills.map((skill, index) => (
@@ -2758,95 +2881,7 @@ const ExploreJobsPageContent = () => {
 
                         <div className="h-px bg-gray-200 w-full mb-4 sm:mb-5 md:mb-6 lg:mb-7 xl:mb-8"></div>
 
-                        <div className="space-y-6 min-w-0">
-                          <section className="grid grid-cols-1 gap-4 rounded-2xl border border-slate-100 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
-                            <div>
-                              <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Job Title *</p>
-                              <p className="mt-1 text-sm font-bold text-slate-900">{selectedJob.title || '-'}</p>
-                            </div>
-                            <div>
-                              <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">For Which Company</p>
-                              <p className="mt-1 text-sm font-bold text-slate-900">{selectedJob.company || '-'}</p>
-                            </div>
-                            <div>
-                              <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Location</p>
-                              <p className="mt-1 text-sm font-bold text-slate-900">{selectedJob.location || '-'}</p>
-                            </div>
-                            <div>
-                              <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Salary</p>
-                              <p className="mt-1 text-sm font-bold text-slate-900">{selectedJob.salary || '-'}</p>
-                            </div>
-                          </section>
-
-                          <section className="rounded-2xl border border-slate-100 bg-white p-5">
-                            <h3 className="text-lg font-bold text-slate-900">Job Summary</h3>
-                            <p className="mt-3 text-sm leading-7 text-slate-600">
-                              {selectedJob.description || selectedJob.companyOverview || 'No job summary available.'}
-                            </p>
-                          </section>
-
-                          <section className="rounded-2xl border border-slate-100 bg-white p-5">
-                            <h3 className="text-lg font-bold text-slate-900">Key Responsibilities</h3>
-                            <div className="mt-3 space-y-2">
-                              {selectedJob.responsibilities?.length ? selectedJob.responsibilities.map((item, idx) => (
-                                <div key={idx} className="flex items-start gap-2.5">
-                                  <span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#28A8E1]" />
-                                  <p className="text-sm leading-7 text-slate-600">{item}</p>
-                                </div>
-                              )) : (
-                                <p className="text-sm text-slate-500">No key responsibilities available.</p>
-                              )}
-                            </div>
-                          </section>
-
-                          <section className="rounded-2xl border border-slate-100 bg-white p-5">
-                            <h3 className="text-lg font-bold text-slate-900">Qualifications and Experience</h3>
-                            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                              <div>
-                                <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Experience</p>
-                                <p className="mt-1 text-sm font-semibold text-slate-700">
-                                  {selectedJob.experienceLevel === 'Not specified'
-                                    ? '—'
-                                    : selectedJob.experienceLevel}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Education</p>
-                                <p className="mt-1 text-sm font-semibold text-slate-700">{(selectedJob as any).education || '-'}</p>
-                              </div>
-                            </div>
-                            {selectedJob.requiredSkills?.length ? (
-                              <div className="mt-4">
-                                <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Required Skills</p>
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  {selectedJob.requiredSkills.map((skill, idx) => (
-                                    <span key={idx} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700">
-                                      {skill}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : null}
-                          </section>
-
-                          <section className="rounded-2xl border border-slate-100 bg-white p-5">
-                            <h3 className="text-lg font-bold text-slate-900">Compensation & Benefits</h3>
-                            <p className="mt-3 text-sm font-semibold text-slate-700">
-                              Compensation: {selectedJob.salary || '-'}
-                            </p>
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {Array.isArray((selectedJob as any).benefits) && (selectedJob as any).benefits.length > 0 ? (
-                                (selectedJob as any).benefits.map((benefit: string, idx: number) => (
-                                  <span key={idx} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-                                    {benefit}
-                                  </span>
-                                ))
-                              ) : (
-                                <p className="text-sm text-slate-500">No additional benefits listed.</p>
-                              )}
-                            </div>
-                          </section>
-                        </div>
+                        <JobDescriptionCards job={selectedJob} />
 
                         {/* AI Match Analysis Matrix (Global AI Assistant Integrated) */}
                         {(() => {
@@ -3187,74 +3222,12 @@ const ExploreJobsPageContent = () => {
   )
 }
 
-function stripHtml(raw: string) {
-  return raw
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|ul|ol)>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/\s+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
-}
-
 function splitTextPoints(raw?: string | null) {
   if (!raw) return []
   return raw
     .split(/\n|•|;/)
     .map((line) => line.replace(/^[-*]\s*/, '').trim())
     .filter(Boolean)
-}
-
-function extractSection(text: string, start: string, ends: string[]) {
-  const endPattern = ends.length ? `(?=\\b(?:${ends.join('|')})\\b|$)` : '$'
-  const regex = new RegExp(`\\b${start}\\b[:\\s]*([\\s\\S]*?)${endPattern}`, 'i')
-  const match = text.match(regex)
-  return match?.[1]?.trim() || ''
-}
-
-function parseStructuredJobText(rawText?: string | null) {
-  const text = rawText ? stripHtml(rawText) : ''
-  if (!text) {
-    return {
-      summary: '',
-      responsibilities: [] as string[],
-      requirements: [] as string[],
-      benefits: [] as string[],
-      location: '',
-      expectedSalary: '',
-      employmentType: '',
-    }
-  }
-
-  const summary =
-    extractSection(text, 'Overview', ['Key Responsibilities', 'Responsibilities', 'Requirements', 'Preferred Qualifications', 'Benefits', 'Education']) ||
-    extractSection(text, 'Job Summary', ['Key Responsibilities', 'Responsibilities', 'Requirements', 'Preferred Qualifications', 'Benefits', 'Education'])
-
-  const responsibilitiesBlock =
-    extractSection(text, 'Key Responsibilities', ['Requirements', 'Preferred Qualifications', 'Benefits', 'Education']) ||
-    extractSection(text, 'Responsibilities', ['Requirements', 'Preferred Qualifications', 'Benefits', 'Education'])
-
-  const requirementsBlock =
-    extractSection(text, 'Requirements', ['Preferred Qualifications', 'Benefits', 'Education']) ||
-    extractSection(text, 'Qualifications and Experience', ['Preferred Qualifications', 'Benefits', 'Education']) ||
-    extractSection(text, 'Qualifications', ['Preferred Qualifications', 'Benefits', 'Education'])
-
-  const benefitsBlock = extractSection(text, 'Benefits', ['Education'])
-
-  const locationMatch = text.match(/Location\s*:\s*([^\n]+)/i)
-  const salaryMatch = text.match(/(?:Expected\s+Salary|Salary)\s*:\s*([^\n]+)/i)
-  const typeMatch = text.match(/Employment\s+Type\s*:\s*([^\n]+)/i)
-
-  return {
-    summary: summary || '',
-    responsibilities: splitTextPoints(responsibilitiesBlock),
-    requirements: splitTextPoints(requirementsBlock),
-    benefits: splitTextPoints(benefitsBlock),
-    location: locationMatch?.[1]?.trim() || '',
-    expectedSalary: salaryMatch?.[1]?.trim() || '',
-    employmentType: typeMatch?.[1]?.trim() || '',
-  }
 }
 
 export default function ExploreJobsPage() {

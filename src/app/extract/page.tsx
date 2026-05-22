@@ -8,7 +8,6 @@ import { CheckCircle2, Sparkles, User, Briefcase, GraduationCap } from "lucide-r
 
 import { API_BASE_URL } from '@/lib/api-base';
 import { showSuccessToast } from '@/components/common/toast/toast';
-import { recordCandidateNotification } from '@/lib/notifications';
 import HryantraLoader from "@/components/loader/CV Parsing Loader Final";
 
 export default function ExtractPage() {
@@ -137,13 +136,6 @@ export default function ExtractPage() {
           if (!completionToastShownRef.current) {
             completionToastShownRef.current = true;
             showSuccessToast("Resume uploaded", "Your profile has been analyzed successfully.");
-            void recordCandidateNotification(storedCandidateId, {
-              type: 'system',
-              title: 'Resume uploaded',
-              description: 'Your CV has been analyzed and your profile is ready.',
-              actionButton: 'View profile',
-              actionPath: '/profile',
-            });
           }
           finishProcessing(
             "CV analysis complete! Redirecting to dashboard...",
