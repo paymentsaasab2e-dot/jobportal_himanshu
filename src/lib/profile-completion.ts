@@ -158,11 +158,15 @@ export async function extractProfileData<T>(params: {
 }
 
 async function saveBasicInformation(candidateId: string, data: Record<string, unknown>) {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("token") || sessionStorage.getItem("token")
+      : null;
   return fetch(`${API_BASE_URL}/profile/personal-info/${candidateId}`, {
     method: "PUT",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem('token')}`
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(data),
   });

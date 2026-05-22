@@ -108,6 +108,7 @@ import VaccinationModal, { VaccinationData } from '../../components/modals/Vacci
 import ResumeModal, { ResumeData as BaseResumeData } from '../../components/modals/ResumeModal';
 import { API_BASE_URL } from '@/lib/api-base';
 import { getAuthHeaders, getStoredCandidateId, syncAuthStorage } from '@/lib/auth-storage';
+import { useAuth } from '@/components/auth/AuthContext';
 import { useTabVisibilityRefresh } from '@/hooks/useTabVisibilityRefresh';
 import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
 import {
@@ -179,6 +180,7 @@ function resolveProfileImage(
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [isBasicInfoModalOpen, setIsBasicInfoModalOpen] = useState(false);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [isGapExplanationModalOpen, setIsGapExplanationModalOpen] = useState(false);
@@ -3316,26 +3318,37 @@ export default function ProfilePage() {
           try {
             const response = await fetch(`${API_BASE_URL}/profile/personal-info/${candidateId}`, {
               method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: getAuthHeaders(),
               body: JSON.stringify(data),
             });
 
-            if (!response.ok) {
-              throw new Error('Failed to save personal information');
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.success) {
+              throw new Error(result.message || 'Failed to save personal information');
             }
 
-            const refreshed = await refreshProfileData(candidateId);
-            if (!refreshed) {
+            const savedPersonalInfo = result.data?.personalInfo;
+            if (savedPersonalInfo && typeof savedPersonalInfo === 'object') {
+              setBasicInfoData((prev) => ({
+                ...(prev || {}),
+                ...data,
+                ...savedPersonalInfo,
+                email: savedPersonalInfo.email || data.email,
+              }));
+            } else {
               setBasicInfoData(data);
             }
+
+            await refreshProfileData(candidateId);
+            await refreshUser();
             setIsBasicInfoModalOpen(false);
             showAlert('Personal details updated');
           } catch (error) {
             setBasicInfoData(previousBasicInfo);
             console.error('Error saving personal info:', error);
-            showAlert('Error saving personal information');
+            showAlert(
+              error instanceof Error ? error.message : 'Error saving personal information'
+            );
           }
         }}
         initialData={basicInfoData}
