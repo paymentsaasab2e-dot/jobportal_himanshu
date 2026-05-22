@@ -140,11 +140,19 @@ export function notifyBellRefresh() {
  * candidateId is missing (e.g. logged-out flows) and on network errors so
  * it can be safely fire-and-forget at any toast call site.
  */
+function isSuppressedBellNotification(payload: CreateNotificationInput): boolean {
+  const title = String(payload?.title || '').trim().toLowerCase();
+  const description = String(payload?.description || '').trim().toLowerCase();
+  if (title === 'profile photo updated' || title === 'profile photo removed') return true;
+  if (description.includes('new profile photo is now live')) return true;
+  return false;
+}
+
 export async function recordCandidateNotification(
   candidateId: string | null | undefined,
   payload: CreateNotificationInput
 ): Promise<void> {
-  if (!candidateId || !payload?.title) return;
+  if (!candidateId || !payload?.title || isSuppressedBellNotification(payload)) return;
 
   try {
     const token =
