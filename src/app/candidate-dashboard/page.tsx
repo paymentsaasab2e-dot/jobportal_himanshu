@@ -30,7 +30,6 @@ import {
 } from "@/lib/profile-completion";
 import { getAuthHeaders, getStoredCandidateId, syncAuthStorage } from "@/lib/auth-storage";
 import { useTabVisibilityRefresh } from "@/hooks/useTabVisibilityRefresh";
-import { recordCandidateNotification } from "@/lib/notifications";
 import { dispatchProfilePhotoUpdated } from "@/lib/profile-photo";
 
 const PAGE_BG =
@@ -598,11 +597,6 @@ export default function CandidateDashboardPage() {
       }
 
       showSuccessToast("Profile photo updated");
-      void recordCandidateNotification(candidateId, {
-        type: 'system',
-        title: 'Profile photo updated',
-        description: 'Your new profile photo is now live across recruiters.',
-      });
     } catch (error) {
       console.error("Error uploading profile photo:", error);
       alert(error instanceof Error ? error.message : "Profile photo upload failed.");
