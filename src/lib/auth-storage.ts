@@ -43,3 +43,10 @@ export function getAuthHeaders(): Record<string, string> {
   }
   return headers;
 }
+
+/** Prefer AuthContext user id so profile APIs match the JWT (avoids stale localStorage candidateId). */
+export function resolveCandidateIdForApi(authUserId?: string | null): string | null {
+  const fromAuth = String(authUserId || '').trim();
+  if (fromAuth) return fromAuth;
+  return getStoredCandidateId();
+}

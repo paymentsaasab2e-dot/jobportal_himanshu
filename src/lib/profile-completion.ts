@@ -61,6 +61,32 @@ export interface ChatMessage {
   content: string;
 }
 
+/** Push full portal profile into candidatecommon (Phase 2 "All candidates" pool). */
+export async function syncProfileToCommonDatabase(candidateId: string): Promise<void> {
+  const id = String(candidateId || "").trim();
+  if (!id) return;
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const url = `${API_BASE_URL}/profile/sync-common-dashboard/${id}`;
+
+  try {
+    await fetchWithRetry(
+      url,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      },
+      1,
+      400
+    );
+  } catch (error) {
+    console.warn("[profile] common DB sync failed:", error);
+  }
+}
+
 export async function fetchProfileCompleteness(
   candidateId: string
 ): Promise<ProfileCompletenessResponse> {
