@@ -520,7 +520,6 @@ const ExploreJobsPageContent = () => {
   const [salaryOpen, setSalaryOpen] = useState(true)
   const [matchOpen, setMatchOpen] = useState(true)
   const [industryOpen, setIndustryOpen] = useState(true)
-  const [departmentOpen, setDepartmentOpen] = useState(true)
   const [locationCountryOpen, setLocationCountryOpen] = useState(true)
   const [locationCitiesOpen, setLocationCitiesOpen] = useState(true)
   const [selectedCountry, setSelectedCountry] = useState('')
@@ -531,11 +530,9 @@ const ExploreJobsPageContent = () => {
 
   // View More expand states
   const [showMoreIndustry, setShowMoreIndustry] = useState(false)
-  const [showMoreDepartment, setShowMoreDepartment] = useState(false)
   const [showMoreCities, setShowMoreCities] = useState(false)
 
   const [smartFilterSkills, setSmartFilterSkills] = useState(false)
-  const [smartFilterHighMatch, setSmartFilterHighMatch] = useState(false)
   const [smartFilterLikelyRespond, setSmartFilterLikelyRespond] = useState(false)
   const [smartFilterRemoteFriendly, setSmartFilterRemoteFriendly] = useState(false)
 
@@ -562,21 +559,6 @@ const ExploreJobsPageContent = () => {
     'Media & Entertainment': false,
     'Telecommunications': false,
   })
-  const [department, setDepartment] = useState<Record<string, boolean>>({
-    'Engineering - Software': false,
-    'Data Science & Analytics': false,
-    'UX, Design & Architecture': false,
-    'IT & Information Security': false,
-    'Sales & Business Development': false,
-    'Marketing & Communications': false,
-    'Human Resources': false,
-    'Finance & Accounting': false,
-    'Operations & Logistics': false,
-    'Customer Support': false,
-    'Product Management': false,
-    'Quality Assurance': false,
-  })
-
   useEffect(() => {
     const query = searchParams.get('q')?.trim() || ''
     const location = searchParams.get('location')?.trim() || ''
@@ -601,7 +583,6 @@ const ExploreJobsPageContent = () => {
   const resetFilters = () => {
     setSearchQuery('')
     setSmartFilterSkills(false)
-    setSmartFilterHighMatch(false)
     setSmartFilterLikelyRespond(false)
     setSmartFilterRemoteFriendly(false)
     setWorkMode(null)
@@ -611,13 +592,11 @@ const ExploreJobsPageContent = () => {
     setSalaryFilterMax('')
     setMatchScore({ '80%+ Match': false, '70%+ Match': false, '60%+ Match': false })
     setIndustry({ 'IT Services & Consulting': false, 'Software Product': false, 'Recruitment / Staffing': false, 'Miscellaneous': false, 'Banking & Finance': false, 'Healthcare & Pharma': false, 'E-commerce & Retail': false, 'Manufacturing': false, 'Education & Training': false, 'Media & Entertainment': false, 'Telecommunications': false })
-    setDepartment({ 'Engineering - Software': false, 'Data Science & Analytics': false, 'UX, Design & Architecture': false, 'IT & Information Security': false, 'Sales & Business Development': false, 'Marketing & Communications': false, 'Human Resources': false, 'Finance & Accounting': false, 'Operations & Logistics': false, 'Customer Support': false, 'Product Management': false, 'Quality Assurance': false })
     setSelectedCountry('')
     setSelectedCities({})
     setCountrySearch('')
     setCountryPickerOpen(false)
     setShowMoreIndustry(false)
-    setShowMoreDepartment(false)
     setShowMoreCities(false)
   }
 
@@ -1546,9 +1525,6 @@ const ExploreJobsPageContent = () => {
     if (smartFilterSkills) {
       jobs = jobs.filter((j) => j.skills && j.skills.length > 0);
     }
-    if (smartFilterHighMatch) {
-      jobs = jobs.filter((j) => (j.matchScore || 0) >= 80);
-    }
     if (smartFilterRemoteFriendly) {
       jobs = jobs.filter((j) =>
         normalizeWorkModeValue(j.workMode) === 'remote' ||
@@ -1624,16 +1600,6 @@ const ExploreJobsPageContent = () => {
       );
     }
 
-    // Department filter
-    const activeDepartments = Object.entries(department)
-      .filter(([, v]) => v)
-      .map(([k]) => k.toLowerCase());
-    if (activeDepartments.length > 0) {
-      jobs = jobs.filter((j) =>
-        activeDepartments.some((dep) => (j.department || '').toLowerCase().includes(dep.split(' ')[0]))
-      );
-    }
-
     // Location: country first, then city (from job database fields / parsed location)
     if (selectedCountry.trim()) {
       jobs = jobs.filter((j) => jobMatchesCountry(j, selectedCountry));
@@ -1659,7 +1625,6 @@ const ExploreJobsPageContent = () => {
     jobListings,
     searchQuery,
     smartFilterSkills,
-    smartFilterHighMatch,
     smartFilterLikelyRespond,
     smartFilterRemoteFriendly,
     workMode,
@@ -1669,7 +1634,6 @@ const ExploreJobsPageContent = () => {
     salaryFilterMax,
     matchScore,
     industry,
-    department,
     selectedCountry,
     selectedCities,
     appliedJobIds,
@@ -1678,7 +1642,6 @@ const ExploreJobsPageContent = () => {
   const activeFilterCount = useMemo(() => {
     return [
       smartFilterSkills,
-      smartFilterHighMatch,
       smartFilterLikelyRespond,
       smartFilterRemoteFriendly,
       workMode !== null,
@@ -1686,20 +1649,17 @@ const ExploreJobsPageContent = () => {
       isSalaryFilterActive(salaryFilterMin, salaryFilterMax),
       ...Object.values(matchScore),
       ...Object.values(industry),
-      ...Object.values(department),
       selectedCountry.trim().length > 0,
       ...Object.values(selectedCities),
     ].filter(Boolean).length
   }, [
     selectedCountry,
     selectedCities,
-    department,
     experienceYears,
     industry,
     matchScore,
     salaryFilterMin,
     salaryFilterMax,
-    smartFilterHighMatch,
     smartFilterLikelyRespond,
     smartFilterRemoteFriendly,
     smartFilterSkills,
@@ -1715,7 +1675,6 @@ const ExploreJobsPageContent = () => {
   const filterCounts = useMemo(() => {
     const counts = {
       industry: {} as Record<string, number>,
-      department: {} as Record<string, number>,
       countries: {} as Record<string, number>,
       cities: {} as Record<string, number>,
     }
@@ -1723,10 +1682,6 @@ const ExploreJobsPageContent = () => {
     Object.keys(industry).forEach((key) => {
       counts.industry[key] = 0
     })
-    Object.keys(department).forEach((key) => {
-      counts.department[key] = 0
-    })
-
     locationFacets.countries.forEach((facet) => {
       counts.countries[facet.name] = facet.jobCount
     })
@@ -1745,17 +1700,10 @@ const ExploreJobsPageContent = () => {
           counts.industry[key]++
         }
       })
-
-      const jobDept = (job.department || '').toLowerCase()
-      Object.keys(department).forEach((key) => {
-        if (jobDept.includes(key.toLowerCase().split(' ')[0])) {
-          counts.department[key]++
-        }
-      })
     })
 
     return counts
-  }, [jobListings, industry, department, locationFacets, selectedCountry])
+  }, [jobListings, industry, locationFacets, selectedCountry])
 
   const selectedJobMatchValue = selectedJob
     ? parseMatchPercentage(selectedJob.match, selectedJob.matchScore)
@@ -2310,7 +2258,6 @@ const ExploreJobsPageContent = () => {
                         <div className="space-y-3">
                           {[
                             { label: 'Jobs matching my skills', value: smartFilterSkills, onChange: setSmartFilterSkills },
-                            { label: 'High match score (80%+)', value: smartFilterHighMatch, onChange: setSmartFilterHighMatch },
                             { label: 'Companies likely to respond', value: smartFilterLikelyRespond, onChange: setSmartFilterLikelyRespond },
                             { label: 'Remote-friendly companies', value: smartFilterRemoteFriendly, onChange: setSmartFilterRemoteFriendly },
                           ].map((row) => (
@@ -2480,40 +2427,6 @@ const ExploreJobsPageContent = () => {
                               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                             >
                               {showMoreIndustry ? 'View Less' : 'View More'}
-                            </button>
-                          )}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    {/* Department */}
-                    <div className="space-y-3">
-                      <SectionHeader title="Department" open={departmentOpen} onToggle={() => setDepartmentOpen((v) => !v)} />
-                      {departmentOpen ? (
-                        <div className="space-y-3">
-                          {Object.entries(department)
-                            .slice(0, showMoreDepartment ? undefined : 4)
-                            .map(([label, checked]) => (
-                            <label key={label} className="flex items-center justify-between gap-3">
-                              <span className="flex items-center gap-3">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={(e) => setDepartment((prev) => ({ ...prev, [label]: e.target.checked }))}
-                                  className="h-4 w-4"
-                                />
-                                <span className="text-sm text-gray-700">{label}</span>
-                              </span>
-                              <span className="text-xs text-gray-500">{filterCounts.department[label] || 0}</span>
-                            </label>
-                          ))}
-                          {Object.keys(department).length > 4 && (
-                            <button 
-                              type="button" 
-                              onClick={() => setShowMoreDepartment(!showMoreDepartment)}
-                              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                            >
-                              {showMoreDepartment ? 'View Less' : 'View More'}
                             </button>
                           )}
                         </div>

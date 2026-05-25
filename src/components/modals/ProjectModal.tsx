@@ -229,21 +229,29 @@ export default function ProjectModal({
     });
   };
 
-  const missingRequiredFields: string[] = [];
-  if (!String(projectTitle || '').trim()) missingRequiredFields.push('Project Title');
-  if (!String(projectType || '').trim()) missingRequiredFields.push('Project Type');
-  if (!startDate) missingRequiredFields.push('Start Date');
-  if (!String(projectDescription || '').trim()) missingRequiredFields.push('Project Description');
-
-  const isFormValid = missingRequiredFields.length === 0 && !fieldErrors.projectLink && !fieldErrors.endDate;
-
   const handleSave = () => {
-    const nextErrors: Record<string, string> = {};
+    const hasAnyFormData = Boolean(
+      projectTitle.trim() ||
+        projectType.trim() ||
+        organizationClient.trim() ||
+        currentlyWorking ||
+        startDate ||
+        endDate ||
+        projectDescription.trim() ||
+        responsibilities.trim() ||
+        technologiesInput.trim() ||
+        technologies.length > 0 ||
+        projectOutcome.trim() ||
+        projectLink.trim() ||
+        documents.length > 0,
+    );
 
-    if (!projectTitle.trim()) nextErrors.projectTitle = 'Project title is required.';
-    if (!projectType.trim()) nextErrors.projectType = 'Project type is required.';
-    if (!startDate.trim()) nextErrors.startDate = 'Start date is required.';
-    if (!projectDescription.trim()) nextErrors.projectDescription = 'Project description is required.';
+    if (!hasAnyFormData) {
+      onClose();
+      return;
+    }
+
+    const nextErrors: Record<string, string> = {};
 
     if (!currentlyWorking && startDate && endDate && endDate < startDate) {
       nextErrors.endDate = 'End date cannot be earlier than start date.';
@@ -324,7 +332,7 @@ export default function ProjectModal({
         {/* Project Title */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Project Title <span className="text-amber-600">*</span>
+            Project Title
           </label>
           <input
             type="text"
@@ -336,11 +344,8 @@ export default function ProjectModal({
               }
             }}
             placeholder="e.g., E-commerce Website, Machine Learning Model, Marketing Campaign"
-            className={`${inputClassName} ${(!projectTitle.trim() || fieldErrors.projectTitle) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
+            className={`${inputClassName} ${fieldErrors.projectTitle ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
           />
-          {!projectTitle.trim() && (
-            <p className="mt-1 text-xs text-amber-600">Project title is required</p>
-          )}
           {fieldErrors.projectTitle ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectTitle}</p> : null}
         </div>
 
@@ -349,7 +354,7 @@ export default function ProjectModal({
           {/* Project Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Project Type <span className="text-amber-600">*</span>
+              Project Type
             </label>
             <select
               value={projectType}
@@ -359,23 +364,20 @@ export default function ProjectModal({
                   setFieldErrors((prev) => ({ ...prev, projectType: '' }));
                 }
               }}
-              className={`${selectClassName} ${(!projectType.trim() || fieldErrors.projectType) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
+              className={`${selectClassName} ${fieldErrors.projectType ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
             >
               <option value="">Select Project Type</option>
               {PROJECT_TYPES.map((type) => (
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
-            {!projectType.trim() && (
-              <p className="mt-1 text-xs text-amber-600">Project type is required</p>
-            )}
             {fieldErrors.projectType ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectType}</p> : null}
           </div>
 
           {/* Organization / Client */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Organization / Client <span className="text-gray-500 text-xs">(Optional)</span>
+              Organization / Client
             </label>
             <input
               type="text"
@@ -404,7 +406,7 @@ export default function ProjectModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Start Date <span className="text-amber-600">*</span>
+              Start Date
             </label>
             <ProfileDatePicker
               value={startDate}
@@ -415,16 +417,13 @@ export default function ProjectModal({
                   setFieldErrors((prev) => ({ ...prev, startDate: '' }));
                 }
               }}
-              invalid={!startDate || Boolean(fieldErrors.startDate)}
+              invalid={Boolean(fieldErrors.startDate)}
             />
-            {!startDate && (
-              <p className="mt-1 text-xs text-amber-600">Start date is required</p>
-            )}
             {fieldErrors.startDate ? <p className="mt-1 text-xs text-red-600">{fieldErrors.startDate}</p> : null}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              End Date <span className="text-gray-500 text-xs">(Optional)</span>
+              End Date
             </label>
             <ProfileDatePicker
               value={endDate}
@@ -439,9 +438,6 @@ export default function ProjectModal({
               invalid={Boolean(fieldErrors.endDate)}
               displayValue={currentlyWorking ? 'Present' : undefined}
             />
-            {!currentlyWorking && !endDate && (
-              <p className="mt-1 text-xs text-amber-600">End date is required</p>
-            )}
             {fieldErrors.endDate ? <p className="mt-1 text-xs text-red-600">{fieldErrors.endDate}</p> : null}
           </div>
         </div>
@@ -449,7 +445,7 @@ export default function ProjectModal({
         {/* Project Description */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Project Description <span className="text-amber-600">*</span>
+            Project Description
           </label>
           <textarea
             value={projectDescription}
@@ -461,18 +457,15 @@ export default function ProjectModal({
             }}
             placeholder="Explain the project goals, your role, key tasks, and outcomes…"
             rows={4}
-            className={`${textareaClassName} ${(!projectDescription.trim() || fieldErrors.projectDescription) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
+            className={`${textareaClassName} ${fieldErrors.projectDescription ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : ''}`}
           />
-          {!projectDescription.trim() && (
-            <p className="mt-1 text-xs text-amber-600">Project description is required</p>
-          )}
           {fieldErrors.projectDescription ? <p className="mt-1 text-xs text-red-600">{fieldErrors.projectDescription}</p> : null}
         </div>
 
         {/* Responsibilities / Contributions */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Responsibilities / Contributions <span className="text-gray-500 text-xs">(Optional)</span>
+            Responsibilities / Contributions
           </label>
           <textarea
             value={responsibilities}
@@ -486,7 +479,7 @@ export default function ProjectModal({
         {/* Technologies / Tools Used */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Technologies / Tools Used <span className="text-gray-500 text-xs">(Optional)</span>
+            Technologies / Tools Used
           </label>
           <input
             type="text"
@@ -531,7 +524,7 @@ export default function ProjectModal({
         {/* Project Outcome / Results */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Project Outcome / Results <span className="text-gray-500 text-xs">(Optional)</span>
+            Project Outcome / Results
           </label>
           <textarea
             value={projectOutcome}
@@ -545,7 +538,7 @@ export default function ProjectModal({
         {/* Project Link */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Project Link <span className="text-gray-500 text-xs">(Optional)</span>
+            Project Link
           </label>
           <input
             type="text"
@@ -565,7 +558,7 @@ export default function ProjectModal({
         {/* Upload Your Project Documents/Certificates */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Upload Your Project Documents/Certificates <span className="text-gray-500 text-xs">(Optional)</span>
+            Upload Your Project Documents/Certificates
           </label>
           <input
             ref={fileInputRef}

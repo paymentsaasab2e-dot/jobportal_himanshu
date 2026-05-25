@@ -176,20 +176,23 @@ export default function CompetitiveExamsModal({
     });
   };
 
-  const missingRequiredFields: string[] = [];
-  if (!String(examName || '').trim()) missingRequiredFields.push('Exam Name');
-  if (!String(yearTaken || '').trim()) missingRequiredFields.push('Year Taken');
-  if (!String(resultStatus || '').trim()) missingRequiredFields.push('Result Status');
-  if (!String(scoreMarks || '').trim()) missingRequiredFields.push('Score / Marks');
-  if (!String(scoreType || '').trim()) missingRequiredFields.push('Score Type');
-
-  const isFormValid = missingRequiredFields.length === 0;
-
   const handleSave = () => {
-    if (!isFormValid) {
-      alert(`Please complete all required fields: ${missingRequiredFields.join(', ')}`);
+    const hasAnyFormData = Boolean(
+      examName.trim() ||
+        yearTaken ||
+        resultStatus ||
+        scoreMarks.trim() ||
+        scoreType ||
+        validUntil ||
+        additionalNotes.trim() ||
+        documents.length > 0,
+    );
+
+    if (!hasAnyFormData) {
+      onClose();
       return;
     }
+
     onSave({
       examName: examName.trim(),
       yearTaken,
@@ -230,14 +233,12 @@ export default function CompetitiveExamsModal({
           >
             Cancel
           </button>
-          {isFormValid && (
-            <button
-              onClick={handleSave}
-              className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
-            >
-              {isEditMode ? 'Update Exam' : 'Save Exam'}
-            </button>
-          )}
+          <button
+            onClick={handleSave}
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
+          >
+            {isEditMode ? 'Update Exam' : 'Save Exam'}
+          </button>
         </div>
       )}
     >
@@ -245,13 +246,13 @@ export default function CompetitiveExamsModal({
         {/* Exam Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Exam Name <span className="text-amber-600">*</span>
+            Exam Name
           </label>
           <div className="relative">
             <select
               value={examName}
               onChange={(e) => setExamName(e.target.value)}
-              className={`${selectClassName} ${!examName && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'} appearance-none pr-10`}
+              className={`${selectClassName} appearance-none pr-10`}
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2399A1AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
                 backgroundRepeat: 'no-repeat',
@@ -273,21 +274,18 @@ export default function CompetitiveExamsModal({
               <option value="CLAT">CLAT</option>
               <option value="Other">Other</option>
             </select>
-            {!examName && (
-              <p className="mt-1 text-xs text-amber-600">Exam name is required</p>
-            )}
           </div>
         </div>
 
         {/* Year Taken */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Year Taken <span className="text-amber-600">*</span>
+            Year Taken
           </label>
           <select
             value={yearTaken}
             onChange={(e) => setYearTaken(e.target.value)}
-            className={`${selectClassName} ${!yearTaken && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'} appearance-none`}
+            className={`${selectClassName} appearance-none`}
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2399A1AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'no-repeat',
@@ -302,20 +300,17 @@ export default function CompetitiveExamsModal({
               </option>
             ))}
           </select>
-          {!yearTaken && (
-            <p className="mt-1 text-xs text-amber-600">Year taken is required</p>
-          )}
         </div>
 
         {/* Result Status */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Result Status <span className="text-amber-600">*</span>
+            Result Status
           </label>
           <select
             value={resultStatus}
             onChange={(e) => setResultStatus(e.target.value)}
-            className={`${selectClassName} ${!resultStatus && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'} appearance-none`}
+            className={`${selectClassName} appearance-none`}
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2399A1AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'no-repeat',
@@ -330,15 +325,12 @@ export default function CompetitiveExamsModal({
             <option value="Qualified">Qualified</option>
             <option value="Not Qualified">Not Qualified</option>
           </select>
-          {!resultStatus && (
-            <p className="mt-1 text-xs text-amber-600">Result status is required</p>
-          )}
         </div>
 
         {/* Score / Marks */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Score / Marks <span className="text-amber-600">*</span>
+            Score / Marks
           </label>
           <input
             type="text"
@@ -350,11 +342,8 @@ export default function CompetitiveExamsModal({
             inputMode="numeric"
             pattern="[0-9]*"
             placeholder="Enter marks"
-            className={`${inputClassName} ${!scoreMarks.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+            className={inputClassName}
           />
-          {!scoreMarks.trim() && (
-            <p className="mt-1 text-xs text-amber-600">Score/Marks is required</p>
-          )}
         </div>
 
         {/* Score Type */}
@@ -365,7 +354,7 @@ export default function CompetitiveExamsModal({
           <select
             value={scoreType}
             onChange={(e) => setScoreType(e.target.value)}
-            className={`${selectClassName} ${!scoreType && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'} appearance-none pr-10`}
+            className={`${selectClassName} appearance-none pr-10`}
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2399A1AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'no-repeat',
@@ -382,15 +371,12 @@ export default function CompetitiveExamsModal({
             <option value="CGPA">CGPA</option>
             <option value="Other">Other</option>
           </select>
-          {!scoreType && (
-            <p className="mt-1 text-xs text-amber-600">Score type is required</p>
-          )}
         </div>
 
         {/* Valid Until */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Valid Until <span className="text-gray-500 text-xs">(Optional)</span>
+            Valid Until
           </label>
           <ProfileDatePicker
             value={validUntil}
@@ -401,7 +387,7 @@ export default function CompetitiveExamsModal({
         {/* Additional Notes */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Additional Notes <span className="text-gray-500 text-xs">(Optional)</span>
+            Additional Notes
           </label>
           <textarea
             value={additionalNotes}

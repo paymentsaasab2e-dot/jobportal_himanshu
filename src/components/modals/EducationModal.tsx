@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import { profileFieldClass, profileTextareaClass } from '@/lib/profile-modal-ui';
@@ -9,6 +9,11 @@ import {
   isStoredProfileDocument,
   openProfileDocumentItemInNewTab,
 } from '@/lib/profile-documents';
+import {
+  type CitySuggestion,
+  formatCitySuggestionLabel,
+  searchCitySuggestions,
+} from '@/lib/geo-locations';
 
 interface EducationModalProps {
   isOpen: boolean;
@@ -320,15 +325,42 @@ export default function EducationModal({
   const [documents, setDocuments] = useState<EducationDocument[]>(initialData?.documents || []);
   const [dragActive, setDragActive] = useState(false);
   const [dateError, setDateError] = useState<string>('');
+  const locationAutocompleteRef = useRef<HTMLDivElement>(null);
+  const locationSuggestOpenRef = useRef(false);
+  const locationSuggestUserInitiatedRef = useRef(false);
+  const [locationSuggestions, setLocationSuggestions] = useState<CitySuggestion[]>([]);
+  const [locationSuggestLoading, setLocationSuggestLoading] = useState(false);
+  const [locationSuggestError, setLocationSuggestError] = useState<string | null>(null);
+  const [locationSuggestOpen, setLocationSuggestOpen] = useState(false);
+  const [locationHighlight, setLocationHighlight] = useState(-1);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sessionInitKeyRef = useRef<string | null>(null);
+
+  const resetLocationSuggestState = useCallback(() => {
+    setLocationSuggestions([]);
+    setLocationSuggestLoading(false);
+    setLocationSuggestError(null);
+    setLocationSuggestOpen(false);
+    setLocationHighlight(-1);
+  }, []);
+
+  const applyLocationSuggestion = useCallback(
+    (suggestion: CitySuggestion) => {
+      locationSuggestUserInitiatedRef.current = false;
+      setInstitutionLocation(formatCitySuggestionLabel(suggestion));
+      resetLocationSuggestState();
+    },
+    [resetLocationSuggestState],
+  );
 
   const resetForm = () => {
     setEducationLevel('');
     setDegreeProgram('');
     setInstitutionName('');
     setInstitutionLocation('');
+    resetLocationSuggestState();
+    locationSuggestUserInitiatedRef.current = false;
     setFieldOfStudy('');
     setStartYear('');
     setStartMonth('');
@@ -352,6 +384,8 @@ export default function EducationModal({
     setDegreeProgram(data.degreeProgram || '');
     setInstitutionName(data.institutionName || '');
     setInstitutionLocation(data.institutionLocation || '');
+    resetLocationSuggestState();
+    locationSuggestUserInitiatedRef.current = false;
     setFieldOfStudy(data.fieldOfStudy || '');
     setStartYear(data.startYear || '');
     setStartMonth(data.startMonth || '');
@@ -396,7 +430,72 @@ export default function EducationModal({
     }
 
     populateFormFromEducation(initialData);
-  }, [isOpen, editingEducationId, initialData?.id]);
+  }, [isOpen, editingEducationId, initialData?.id, resetLocationSuggestState]);
+
+  useEffect(() => {
+    locationSuggestOpenRef.current = locationSuggestOpen;
+  }, [locationSuggestOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      locationSuggestUserInitiatedRef.current = false;
+      resetLocationSuggestState();
+      return;
+    }
+    locationSuggestUserInitiatedRef.current = false;
+    resetLocationSuggestState();
+  }, [isOpen, resetLocationSuggestState]);
+
+  useEffect(() => {
+    if (!locationSuggestOpen) return;
+    const handleDown = (event: MouseEvent) => {
+      if (locationAutocompleteRef.current && !locationAutocompleteRef.current.contains(event.target as Node)) {
+        setLocationSuggestOpen(false);
+        setLocationHighlight(-1);
+      }
+    };
+    document.addEventListener('mousedown', handleDown);
+    return () => document.removeEventListener('mousedown', handleDown);
+  }, [locationSuggestOpen]);
+
+  useEffect(() => {
+    if (locationHighlight < 0 || !locationAutocompleteRef.current) return;
+    const node = locationAutocompleteRef.current.querySelector(
+      `[data-location-suggest-index="${locationHighlight}"]`,
+    );
+    node?.scrollIntoView({ block: 'nearest' });
+  }, [locationHighlight]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      resetLocationSuggestState();
+      return;
+    }
+
+    if (!locationSuggestUserInitiatedRef.current) {
+      resetLocationSuggestState();
+      return;
+    }
+
+    const query = institutionLocation.trim();
+    if (query.length < 2) {
+      resetLocationSuggestState();
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setLocationSuggestError(null);
+      setLocationSuggestLoading(true);
+
+      const list = searchCitySuggestions(query);
+      setLocationSuggestions(list);
+      setLocationSuggestOpen(list.length > 0);
+      setLocationHighlight(list.length > 0 ? 0 : -1);
+      setLocationSuggestLoading(false);
+    }, 200);
+
+    return () => window.clearTimeout(timer);
+  }, [institutionLocation, isOpen, resetLocationSuggestState]);
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
@@ -658,10 +757,9 @@ export default function EducationModal({
     Boolean(gradeFormatError) ||
     (effectiveCourseDuration.length > 0 && !isCourseDurationNumeric);
 
+  missingRequiredFields.length = 0;
+
   const validationErrors: string[] = [];
-  if (missingRequiredFields.length > 0) {
-    validationErrors.push(`Missing required fields: ${missingRequiredFields.join(', ')}`);
-  }
   if (hasDateOrderError) {
     validationErrors.push('End date cannot be earlier than start date');
   }
@@ -674,12 +772,31 @@ export default function EducationModal({
     validationErrors.push(parts.join(' '));
   }
 
-  const isFormValid =
-    missingRequiredFields.length === 0 &&
-    !hasDateOrderError &&
-    !hasNumericError;
+  const isFormValid = !hasDateOrderError && !hasNumericError;
 
   const handleSave = () => {
+    const hasAnyFormData = Boolean(
+      educationLevel.trim() ||
+        degreeProgram.trim() ||
+        institutionName.trim() ||
+        institutionLocation.trim() ||
+        fieldOfStudy.trim() ||
+        startYear ||
+        startMonth ||
+        endYear ||
+        endMonth ||
+        currentlyStudying ||
+        gradeInput.trim() ||
+        modeOfStudy.trim() ||
+        String(courseDuration || '').trim() ||
+        documents.length > 0,
+    );
+
+    if (!hasAnyFormData) {
+      onClose();
+      return;
+    }
+
     if (!isFormValid) {
       alert(validationErrors.join('\n'));
       return;
@@ -750,8 +867,7 @@ export default function EducationModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={!isFormValid}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-300"
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
           >
             Save Education
           </button>
@@ -759,26 +875,28 @@ export default function EducationModal({
       )}
     >
             <div className="space-y-6">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">
-                  Preview (how it appears on your profile)
-                </p>
-                <div className="space-y-1 text-gray-900">
-                  <p className="text-sm font-bold uppercase tracking-wide">{previewTitle}</p>
-                  <p className="text-sm text-gray-700">{previewInstitution}</p>
-                  <p className="text-sm text-gray-600">{previewDates}</p>
+              {editingEducationId ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">
+                    Preview (how it appears on your profile)
+                  </p>
+                  <div className="space-y-1 text-gray-900">
+                    <p className="text-sm font-bold uppercase tracking-wide">{previewTitle}</p>
+                    <p className="text-sm text-gray-700">{previewInstitution}</p>
+                    <p className="text-sm text-gray-600">{previewDates}</p>
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
               {/* Education Level */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Education Level <span className="text-amber-600">*</span>
+                  Education Level
                 </label>
                   <select
                     value={educationLevel}
                     onChange={(e) => setEducationLevel(e.target.value)}
-                    className={`${selectClassName} ${!educationLevel && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={selectClassName}
                   >
                     <option value="">Select Education Level</option>
                     <option value="SSC">SSC (10th)</option>
@@ -791,15 +909,12 @@ export default function EducationModal({
                     <option value="Certification">Certification</option>
                     <option value="High School">High School</option>
                   </select>
-                  {!educationLevel && (
-                    <p className="mt-1 text-xs text-amber-600">Education level is required</p>
-                  )}
               </div>
 
               {/* Qualification / Program */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Qualification / Program {!isSchoolCert && <span className="text-amber-600">*</span>}
+                  Qualification / Program
                 </label>
                   <input
                     type="text"
@@ -810,41 +925,121 @@ export default function EducationModal({
                         ? 'e.g. HSC or SSC (optional — uses level if blank)'
                         : 'e.g. B.E IN COMPUTER SCIENCE'
                     }
-                    className={`${inputClassName} ${!isSchoolCert && !degreeProgram.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={inputClassName}
                   />
-                  {!isSchoolCert && !degreeProgram.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Qualification is required for degrees and diplomas</p>
-                  )}
               </div>
 
               {/* Institution */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  School / College / University <span className="text-amber-600">*</span>
+                  School / College / University
                 </label>
                   <input
                     type="text"
                     value={institutionName}
                     onChange={(e) => setInstitutionName(e.target.value)}
                     placeholder="e.g. VISHWANIKETAN [VIMEET] or M.P.A.S.C College"
-                    className={`${inputClassName} ${!institutionName.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={inputClassName}
                   />
-                  {!institutionName.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Institution name is required</p>
-                  )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Location (City / Area)
                 </label>
-                <input
-                  type="text"
-                  value={institutionLocation}
-                  onChange={(e) => setInstitutionLocation(e.target.value)}
-                  placeholder="e.g. Khopoli, Panvel, Wardha"
-                  className={inputClassName}
-                />
+                <div className="relative" ref={locationAutocompleteRef}>
+                  <input
+                    type="text"
+                    value={institutionLocation}
+                    autoComplete="off"
+                    onChange={(e) => {
+                      locationSuggestUserInitiatedRef.current = true;
+                      setInstitutionLocation(e.target.value);
+                    }}
+                    onFocus={() => {
+                      if (
+                        locationSuggestUserInitiatedRef.current &&
+                        (locationSuggestions.length > 0 || locationSuggestLoading || locationSuggestError)
+                      ) {
+                        setLocationSuggestOpen(true);
+                      }
+                    }}
+                    onBlur={() => {
+                      window.setTimeout(() => {
+                        if (!locationSuggestOpenRef.current) return;
+                        setLocationSuggestOpen(false);
+                        setLocationHighlight(-1);
+                      }, 150);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowDown') {
+                        if (!locationSuggestOpen && locationSuggestions.length > 0) {
+                          setLocationSuggestOpen(true);
+                        }
+                        if (locationSuggestOpen && locationSuggestions.length > 0) {
+                          e.preventDefault();
+                          setLocationHighlight((i) => Math.min(i + 1, locationSuggestions.length - 1));
+                        }
+                      } else if (e.key === 'ArrowUp') {
+                        if (locationSuggestOpen && locationSuggestions.length > 0) {
+                          e.preventDefault();
+                          setLocationHighlight((i) => Math.max(i - 1, 0));
+                        }
+                      } else if (e.key === 'Enter') {
+                        if (locationSuggestOpen && locationSuggestions.length > 0) {
+                          e.preventDefault();
+                          const pick =
+                            locationHighlight >= 0 && locationSuggestions[locationHighlight]
+                              ? locationSuggestions[locationHighlight]
+                              : locationSuggestions[0];
+                          if (pick) applyLocationSuggestion(pick);
+                        }
+                      } else if (e.key === 'Tab' && locationSuggestOpen && locationSuggestions.length > 0) {
+                        const pick =
+                          locationHighlight >= 0 && locationSuggestions[locationHighlight]
+                            ? locationSuggestions[locationHighlight]
+                            : locationSuggestions[0];
+                        if (pick) applyLocationSuggestion(pick);
+                      } else if (e.key === 'Escape' && locationSuggestOpen) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setLocationSuggestOpen(false);
+                        setLocationHighlight(-1);
+                      }
+                    }}
+                    placeholder="Type city or country, then pick from the list"
+                    className={inputClassName}
+                  />
+                  {locationSuggestOpen ? (
+                    <div className="absolute left-0 top-[calc(100%+6px)] z-50 max-h-[min(280px,50vh)] w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-2 shadow-lg">
+                      {locationSuggestLoading ? (
+                        <div className="px-3 py-2 text-sm text-slate-500">Searching…</div>
+                      ) : locationSuggestError ? (
+                        <div className="px-3 py-2 text-sm text-red-600">{locationSuggestError}</div>
+                      ) : locationSuggestions.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-slate-500">
+                          No locations found. You can still type manually.
+                        </div>
+                      ) : (
+                        locationSuggestions.map((suggestion, idx) => (
+                          <button
+                            key={`${suggestion.countryCode}-${suggestion.stateCode}-${suggestion.value}-${idx}`}
+                            type="button"
+                            data-location-suggest-index={idx}
+                            onMouseEnter={() => setLocationHighlight(idx)}
+                            onMouseDown={(ev) => ev.preventDefault()}
+                            onClick={() => applyLocationSuggestion(suggestion)}
+                            className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${
+                              locationHighlight === idx ? 'bg-gray-50' : ''
+                            }`}
+                          >
+                            {formatCitySuggestionLabel(suggestion)}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  ) : null}
+                </div>
                 <p className="mt-1 text-xs text-slate-500">
                   Shown after the institution name, e.g. &quot;College Name, Panvel&quot;
                 </p>
@@ -854,18 +1049,15 @@ export default function EducationModal({
               {!isSchoolCert ? (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Field of Study / Major <span className="text-amber-600">*</span>
+                  Field of Study / Major
                 </label>
                 <input
                   type="text"
                   value={fieldOfStudy}
                   onChange={(e) => setFieldOfStudy(e.target.value)}
                   placeholder="e.g., Computer Science"
-                  className={`${inputClassName} ${!fieldOfStudy.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                  className={inputClassName}
                 />
-                {!fieldOfStudy.trim() && (
-                  <p className="mt-1 text-xs text-amber-600">Field of study is required</p>
-                )}
               </div>
               ) : null}
 
@@ -879,7 +1071,7 @@ export default function EducationModal({
                 ) : null}
                 <div>
                   <p className="text-sm font-medium text-gray-700 mb-2">
-                    Start date {!isSchoolCert && <span className="text-amber-600">*</span>}
+                    Start date
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -887,7 +1079,7 @@ export default function EducationModal({
                       <select
                         value={startMonth}
                         onChange={(e) => handleStartMonthChange(e.target.value)}
-                        className={`${selectClassName} ${!startMonth && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                        className={selectClassName}
                       >
                         <option value="">Select month</option>
                         {EDUCATION_MONTH_OPTIONS.map((m) => (
@@ -902,7 +1094,7 @@ export default function EducationModal({
                       <select
                         value={startYear}
                         onChange={(e) => handleStartYearChange(e.target.value)}
-                        className={`${selectClassName} ${!startYear && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                        className={selectClassName}
                       >
                         <option value="">Select year</option>
                         {startYearOptions.map((year) => (
@@ -913,16 +1105,11 @@ export default function EducationModal({
                       </select>
                     </div>
                   </div>
-                  {!isSchoolCert && (!startMonth || !startYear) && (
-                    <p className="mt-1 text-xs text-amber-600">Start month and year are required</p>
-                  )}
                 </div>
 
                 <div>
                   <p className="text-sm font-medium text-gray-700 mb-2">
                     {isSchoolCert ? 'End date (completion)' : 'End date'}{' '}
-                    {!isSchoolCert && !currentlyStudying && <span className="text-amber-600">*</span>}
-                    {isSchoolCert && <span className="font-normal text-gray-500"> (optional)</span>}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -932,9 +1119,7 @@ export default function EducationModal({
                         onChange={(e) => handleEndMonthChange(e.target.value)}
                         disabled={currentlyStudying}
                         className={`${selectClassName} disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                          (!currentlyStudying && !endMonth) || hasDateOrderError
-                            ? 'border-red-500 focus:ring-red-500 bg-red-50'
-                            : ''
+                          hasDateOrderError ? 'border-red-500 focus:ring-red-500 bg-red-50' : ''
                         }`}
                       >
                         <option value="">Select month</option>
@@ -952,9 +1137,7 @@ export default function EducationModal({
                         onChange={(e) => handleEndYearChange(e.target.value)}
                         disabled={currentlyStudying}
                         className={`${selectClassName} disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                          (!currentlyStudying && !endYear) || hasDateOrderError
-                            ? 'border-red-500 focus:ring-red-500 bg-red-50'
-                            : ''
+                          hasDateOrderError ? 'border-red-500 focus:ring-red-500 bg-red-50' : ''
                         }`}
                       >
                         <option value="">Select year</option>
@@ -966,9 +1149,6 @@ export default function EducationModal({
                       </select>
                     </div>
                   </div>
-                  {!isSchoolCert && !currentlyStudying && (!endMonth || !endYear) && (
-                    <p className="mt-1 text-xs text-amber-600">End month and year are required</p>
-                  )}
                 </div>
               </div>
 
@@ -1012,7 +1192,7 @@ export default function EducationModal({
                 {/* Grade / Percentage / GPA */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Grade / Percentage / GPA <span className="text-amber-600">*</span>
+                    Grade / Percentage / GPA
                   </label>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(10.5rem,12rem)_1fr]">
                     <select
@@ -1037,12 +1217,9 @@ export default function EducationModal({
                             ? 'e.g. 3.5 or 8.25'
                             : 'e.g. A+, First Class'
                       }
-                      className={`${inputClassName} ${(!gradeInput.trim() || gradeFormatError) && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                      className={`${inputClassName} ${gradeFormatError ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''}`}
                     />
                   </div>
-                  {!gradeInput.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Enter your result value</p>
-                  )}
                   {gradeInput.trim().length > 0 && gradeFormatError ? (
                     <p className="mt-1 text-xs text-red-600">{gradeFormatError}</p>
                   ) : null}
@@ -1051,12 +1228,12 @@ export default function EducationModal({
                 {/* Mode of Study */}
                 <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mode of Study <span className="text-amber-600">*</span>
+                    Mode of Study
                   </label>
                   <select
                     value={modeOfStudy}
                     onChange={(e) => setModeOfStudy(e.target.value)}
-                    className={`${selectClassName} ${!modeOfStudy.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={selectClassName}
                   >
                     <option value="">Select Mode of Study</option>
                     <option value="Full-time">Full-time</option>
@@ -1064,15 +1241,12 @@ export default function EducationModal({
                     <option value="Online">Online</option>
                     <option value="Distance Learning">Distance Learning</option>
                   </select>
-                  {!modeOfStudy.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Mode of study is required</p>
-                  )}
                 </div>
 
                 {/* Course Duration — auto-filled from dates; editable */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Course Duration (years) <span className="text-amber-600">*</span>
+                    Course Duration (years)
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -1084,7 +1258,6 @@ export default function EducationModal({
                       onChange={(e) => handleCourseDurationChange(e.target.value)}
                       placeholder="e.g. 3.75"
                       className={`${inputClassName} ${
-                        !effectiveCourseDuration.trim() ||
                         (effectiveCourseDuration.length > 0 && !isCourseDurationNumeric)
                           ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'
                           : ''
@@ -1116,11 +1289,6 @@ export default function EducationModal({
                         ? `Auto-filled from ${formatEducationPeriod(startYear, startMonth, endYear, endMonth, false)}. You can edit if needed.`
                         : 'Select start and end dates to auto-fill, or enter duration in years manually.'}
                   </p>
-                  {!effectiveCourseDuration.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">
-                      Set dates or enter course duration in years
-                    </p>
-                  )}
                   {effectiveCourseDuration.length > 0 && !isCourseDurationNumeric && (
                     <p className="mt-1 text-xs text-red-600">
                       Enter a valid number of years (up to 2 decimals).
@@ -1134,7 +1302,6 @@ export default function EducationModal({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Upload Your Education Certificates/Documents{' '}
-                  <span className="text-gray-500 text-xs font-normal">(Optional)</span>
                 </label>
                 
                 {/* Hidden file input */}
@@ -1196,7 +1363,7 @@ export default function EducationModal({
                       >
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <svg
-                            className="w-5 h-5 text-gray-400 flex-shrink-0"
+                            className="w-5 h-5 text-gray-400 shrink-0"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -1268,12 +1435,10 @@ export default function EducationModal({
                 )}
               </div>
 
-              {(missingRequiredFields.length > 0 || hasDateOrderError || hasNumericError) && (
+              {(hasDateOrderError || hasNumericError) && (
                 <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2">
                   <p className="text-xs font-medium text-amber-700">
-                    {missingRequiredFields.length > 0
-                      ? `Missing required fields: ${missingRequiredFields.join(', ')}`
-                      : 'Please fix validation errors before saving.'}
+                    Please fix validation errors before saving.
                   </p>
                   {hasDateOrderError && (
                     <p className="mt-1 text-xs font-medium text-amber-700">

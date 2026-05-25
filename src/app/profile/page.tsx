@@ -142,6 +142,8 @@ interface PopupState {
   variant: PopupVariant;
   title: string;
   message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
   resolver: ((confirmed: boolean) => void) | null;
 }
 
@@ -156,6 +158,8 @@ const DEFAULT_POPUP_STATE: PopupState = {
   variant: 'alert',
   title: '',
   message: '',
+  confirmLabel: 'OK',
+  cancelLabel: 'Cancel',
   resolver: null,
 };
 
@@ -183,6 +187,41 @@ function resolveProfileImage(
   const baseUrl = apiBaseUrl.replace('/api', '');
   const cleanPath = photoUrl.startsWith('/') ? photoUrl : `/${photoUrl}`;
   return `${baseUrl}${cleanPath}`;
+}
+
+function normalizePersonName(value: string): string {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function candidateNamesLikelyMatch(leftName: string, rightName: string): boolean {
+  const left = normalizePersonName(leftName);
+  const right = normalizePersonName(rightName);
+  if (!left || !right) return true;
+
+  const ignored = new Set(['mr', 'mrs', 'ms', 'miss', 'dr', 'cv', 'resume', 'profile']);
+  const leftTokens = left
+    .split(/\s+/)
+    .filter((token) => token.length > 1 && !ignored.has(token));
+  const rightTokens = right
+    .split(/\s+/)
+    .filter((token) => token.length > 1 && !ignored.has(token));
+  if (leftTokens.length === 0 || rightTokens.length === 0) return true;
+
+  const leftCompact = leftTokens.join('');
+  const rightCompact = rightTokens.join('');
+  if (leftCompact === rightCompact) return true;
+
+  const rightSet = new Set(rightTokens);
+  const commonCount = leftTokens.filter((token) => rightSet.has(token)).length;
+  if (commonCount >= Math.min(2, leftTokens.length, rightTokens.length)) return true;
+
+  return (
+    (leftTokens[0] === rightTokens[0] && leftTokens[leftTokens.length - 1] === rightTokens[rightTokens.length - 1]) ||
+    (leftTokens[0] === rightTokens[rightTokens.length - 1] && leftTokens[leftTokens.length - 1] === rightTokens[0])
+  );
 }
 
 export default function ProfilePage() {
@@ -341,17 +380,25 @@ export default function ProfilePage() {
       variant: 'alert',
       title,
       message,
+      confirmLabel: 'OK',
+      cancelLabel: 'Cancel',
       resolver: null,
     });
   }, []);
 
-  const showConfirm = useCallback((message: string, title = 'Confirm Action') => {
+  const showConfirm = useCallback((
+    message: string,
+    title = 'Confirm Action',
+    options: { confirmLabel?: string; cancelLabel?: string } = {},
+  ) => {
     return new Promise<boolean>((resolve) => {
       setPopupState({
         isOpen: true,
         variant: 'confirm',
         title,
         message,
+        confirmLabel: options.confirmLabel || 'OK',
+        cancelLabel: options.cancelLabel || 'Cancel',
         resolver: resolve,
       });
     });
@@ -365,6 +412,19 @@ export default function ProfilePage() {
       return DEFAULT_POPUP_STATE;
     });
   }, []);
+
+  const loggedInCandidateName = useMemo(() => {
+    const basicName = [
+      basicInfoData?.firstName,
+      basicInfoData?.middleName,
+      basicInfoData?.lastName,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    if (basicName) return basicName;
+    return String(user?.name || '').trim();
+  }, [basicInfoData, user?.name]);
 
   useEffect(() => {
     if (!popupState.isOpen) return;
@@ -1003,14 +1063,9 @@ export default function ProfilePage() {
     const mandatorySections = [
       { key: 'basicInformation', name: 'Basic Information', check: () => isBasicInformationComplete },
       { key: 'summary', name: 'Summary', check: () => summaryText && summaryText.trim().length > 0 },
-      { key: 'education', name: 'Education', check: () => educationData && educationData.educations && educationData.educations.length > 0 },
       { key: 'skills', name: 'Skills', check: () => skillsData && skillsData.skills && skillsData.skills.length > 0 },
       { key: 'languages', name: 'Languages', check: () => languagesData && languagesData.languages && languagesData.languages.length > 0 },
-      { key: 'projects', name: 'Projects', check: () => projectData.length > 0 },
       { key: 'portfolioLinks', name: 'Portfolio Links', check: () => hasVisiblePortfolioLinks },
-      { key: 'careerPreferences', name: 'Career Preferences', check: () => careerPreferencesData !== undefined && careerPreferencesData !== null },
-      { key: 'visaAuthorization', name: 'Visa & Work Authorization', check: () => visaWorkAuthorizationData !== undefined && visaWorkAuthorizationData !== null },
-      { key: 'vaccination', name: 'Vaccination', check: () => vaccinationData !== undefined && vaccinationData !== null },
       { key: 'resume', name: 'Resume', check: () => resumeData && resumeData.fileUrl },
     ];
 
@@ -1050,11 +1105,8 @@ export default function ProfilePage() {
 
     const mandatoryMap: { [key: string]: string[] } = {
       'PERSONAL DETAILS': ['Basic Information', 'Summary'],
-      'EDUCATION': ['Education'],
       'SKILLS': ['Skills', 'Languages'],
-      'PROJECTS': ['Projects', 'Portfolio Links'],
-      'PREFERENCES': ['Career Preferences'],
-      'GLOBAL ELIGIBILITY': ['Visa & Work Authorization', 'Vaccination'],
+      'PROJECTS': ['Portfolio Links'],
       'RESUME': ['Resume'],
     };
 
@@ -1254,11 +1306,7 @@ export default function ProfilePage() {
       {
         id: 'education',
         label: 'Education',
-        incomplete: tabIncomplete([
-          () => isMandatorySectionMissing('EDUCATION', 'Education'),
-          () => isMandatorySectionMissing('EDUCATION', 'Academic Achievements'),
-          () => isMandatorySectionMissing('EDUCATION', 'Competitive Exams'),
-        ]),
+        incomplete: false,
       },
       {
         id: 'skills',
@@ -1272,7 +1320,6 @@ export default function ProfilePage() {
         id: 'projects-certifications',
         label: 'Projects & Certifications',
         incomplete: tabIncomplete([
-          () => isMandatorySectionMissing('PROJECTS', 'Projects'),
           () => isMandatorySectionMissing('PROJECTS', 'Portfolio Links'),
           () => isMandatorySectionMissing('CERTIFICATIONS', 'Certifications'),
         ]),
@@ -1280,21 +1327,12 @@ export default function ProfilePage() {
       {
         id: 'job-preferences',
         label: 'Job Preferences',
-        incomplete: tabIncomplete([
-          () => isMandatorySectionMissing('PREFERENCES', 'Career Preferences'),
-          () =>
-            isMandatorySectionMissing(
-              'GLOBAL ELIGIBILITY',
-              'Visa & Work Authorization',
-            ),
-        ]),
+        incomplete: false,
       },
       {
         id: 'additional-details',
         label: 'Additional Details',
-        incomplete: tabIncomplete([
-          () => isMandatorySectionMissing('GLOBAL ELIGIBILITY', 'Vaccination'),
-        ]),
+        incomplete: false,
       },
     ],
     [
@@ -2975,7 +3013,9 @@ export default function ProfilePage() {
                         <ProfileCareerPreferencesFilled
                           data={careerPreferencesData as CareerPreferencesData & Record<string, unknown>}
                           isExpanded={isCareerPreferencesCardExpanded}
-                          onToggleExpand={() => openDetailsModal('Career Preferences Details', careerPreferencesData)}
+                          onToggleExpand={() =>
+                            setIsCareerPreferencesCardExpanded((previous) => !previous)
+                          }
                           onEdit={() => setIsCareerPreferencesModalOpen(true)}
                           onDelete={async () => {
                           if (await showConfirm('Are you sure you want to delete your career preferences?')) {
@@ -3306,7 +3346,7 @@ export default function ProfilePage() {
                   onClick={() => closePopup(false)}
                   className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
-                  Cancel
+                  {popupState.cancelLabel || 'Cancel'}
                 </button>
               )}
               <button
@@ -3314,7 +3354,7 @@ export default function ProfilePage() {
                 onClick={() => closePopup(true)}
                 className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
               >
-                OK
+                {popupState.confirmLabel || 'OK'}
               </button>
             </div>
           </div>
@@ -4381,6 +4421,13 @@ export default function ProfilePage() {
       <CareerPreferencesModal
         isOpen={isCareerPreferencesModalOpen}
         onClose={() => setIsCareerPreferencesModalOpen(false)}
+        currentRole={
+          workExperienceData?.workExperiences?.find(
+            (entry) => entry.currentlyWorkHere && entry.jobTitle?.trim(),
+          )?.jobTitle
+          || workExperienceData?.workExperiences?.find((entry) => entry.jobTitle?.trim())?.jobTitle
+          || ''
+        }
         onSave={async (data) => {
           const candidateId = getStoredCandidateId();
           if (candidateId) {
@@ -4606,6 +4653,43 @@ export default function ProfilePage() {
           try {
             // If there's a file to upload, upload it first
             if (data.file && data.file instanceof File) {
+              const inspectFormData = new FormData();
+              inspectFormData.append('resume', data.file);
+
+              const inspectResponse = await fetch(`${API_BASE_URL}/profile/resume/inspect/${candidateId}`, {
+                method: 'POST',
+                body: inspectFormData,
+              });
+              const inspectResult = await inspectResponse.json().catch(() => ({}));
+
+              if (!inspectResponse.ok) {
+                throw new Error(inspectResult.message || 'Failed to inspect resume');
+              }
+
+              const inspectData = inspectResult.data || {};
+              const profileCandidateName = String(
+                inspectData.profileCandidateName || loggedInCandidateName || '',
+              ).trim();
+              const resumeCandidateName = String(inspectData.resumeCandidateName || '').trim();
+              const namesMatch =
+                typeof inspectData.namesMatch === 'boolean'
+                  ? inspectData.namesMatch
+                  : candidateNamesLikelyMatch(resumeCandidateName, profileCandidateName);
+
+              if (resumeCandidateName && profileCandidateName && !namesMatch) {
+                const continueAnyway = await showConfirm(
+                  `The candidate name extracted from the uploaded resume does not match the profile candidate name.\n\nProfile candidate: ${profileCandidateName}\nResume candidate: ${resumeCandidateName}\n\nClose this if this is the wrong file, or continue if you still want to replace the resume.`,
+                  'Resume Name Mismatch',
+                  {
+                    cancelLabel: 'Close this',
+                    confirmLabel: 'Create Anyway',
+                  },
+                );
+                if (!continueAnyway) {
+                  return;
+                }
+              }
+
               const formData = new FormData();
               formData.append('resume', data.file);
 

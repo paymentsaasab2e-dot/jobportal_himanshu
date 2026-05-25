@@ -148,18 +148,18 @@ export default function AcademicAchievementModal({
     handleFileSelect(e.dataTransfer.files);
   };
 
-  const missingRequiredFields: string[] = [];
-  if (!String(achievementTitle || '').trim()) missingRequiredFields.push('Achievement Title');
-  if (!String(awardedBy || '').trim()) missingRequiredFields.push('Awarded By');
-  if (!yearReceived) missingRequiredFields.push('Year Received');
-  if (!String(categoryType || '').trim()) missingRequiredFields.push('Category / Type');
-  if (!String(description || '').trim()) missingRequiredFields.push('Description');
-
-  const isFormValid = missingRequiredFields.length === 0;
-
   const handleSave = () => {
-    if (!isFormValid) {
-      alert(`Please complete all required fields: ${missingRequiredFields.join(', ')}`);
+    const hasAnyFormData = Boolean(
+      achievementTitle.trim() ||
+        awardedBy.trim() ||
+        yearReceived ||
+        categoryType.trim() ||
+        description.trim() ||
+        documents.length > 0,
+    );
+
+    if (!hasAnyFormData) {
+      onClose();
       return;
     }
 
@@ -203,8 +203,7 @@ export default function AcademicAchievementModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={!isFormValid}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-300"
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
           >
             Save Achievement
           </button>
@@ -215,46 +214,40 @@ export default function AcademicAchievementModal({
         {/* Achievement Title */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Achievement Title <span className="text-amber-600">*</span>
+            Achievement Title
           </label>
           <input
             type="text"
             value={achievementTitle}
             onChange={(e) => setAchievementTitle(e.target.value)}
             placeholder="e.g., Academic Excellence Award, Top 1% in Class, Dean's List"
-            className={`${inputClassName} ${!achievementTitle.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+            className={inputClassName}
           />
-          {!achievementTitle.trim() && (
-            <p className="mt-1 text-xs text-amber-600">Achievement title is required</p>
-          )}
         </div>
 
         {/* Awarded By */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Awarded By <span className="text-amber-600">*</span>
+            Awarded By
           </label>
           <input
             type="text"
             value={awardedBy}
             onChange={(e) => setAwardedBy(e.target.value)}
             placeholder="University / Board / Institution name"
-            className={`${inputClassName} ${!awardedBy.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+            className={inputClassName}
           />
-          {!awardedBy.trim() && (
-            <p className="mt-1 text-xs text-amber-600">Awarded by is required</p>
-          )}
         </div>
 
         {/* Year Received */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Year Received <span className="text-amber-600">*</span>
+            Year Received
           </label>
           <select
             value={yearReceived}
             onChange={(e) => setYearReceived(e.target.value)}
-            className={`${selectClassName} ${!yearReceived && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'} appearance-none`}
+            className={`${selectClassName} appearance-none`}
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2399A1AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'no-repeat',
@@ -269,20 +262,17 @@ export default function AcademicAchievementModal({
               </option>
             ))}
           </select>
-          {!yearReceived && (
-            <p className="mt-1 text-xs text-amber-600">Year received is required</p>
-          )}
         </div>
 
         {/* Category / Type */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Category / Type <span className="text-amber-600">*</span>
+            Category / Type
           </label>
           <select
             value={categoryType}
             onChange={(e) => setCategoryType(e.target.value)}
-            className={`${selectClassName} ${!categoryType.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'} appearance-none`}
+            className={`${selectClassName} appearance-none`}
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%2399A1AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'no-repeat',
@@ -299,33 +289,26 @@ export default function AcademicAchievementModal({
             <option value="Honor Society">Honor Society</option>
             <option value="Other">Other</option>
           </select>
-          {!categoryType.trim() && (
-            <p className="mt-1 text-xs text-amber-600">Category is required</p>
-          )}
         </div>
 
         {/* Description */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description <span className="text-amber-600">*</span>
+            Description
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Short description of the achievement, criteria, rank, and significance."
             rows={4}
-            className={`${textareaClassName} ${!description.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+            className={textareaClassName}
           />
-          {!description.trim() && (
-            <p className="mt-1 text-xs text-amber-600">Description is required</p>
-          )}
         </div>
 
         {/* Upload Documents */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Upload Your Academic Achievements Certificates/Documents{' '}
-            <span className="text-gray-500 text-xs font-normal">(Optional)</span>
           </label>
 
           {/* Hidden file input */}
@@ -459,13 +442,6 @@ export default function AcademicAchievementModal({
           )}
         </div>
 
-        {missingRequiredFields.length > 0 && (
-          <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2">
-            <p className="text-xs font-medium text-amber-700">
-              Missing required fields: {missingRequiredFields.join(', ')}
-            </p>
-          </div>
-        )}
       </div>
 
     </ProfileDrawer>

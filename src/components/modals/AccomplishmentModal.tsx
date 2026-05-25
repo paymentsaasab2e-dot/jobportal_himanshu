@@ -193,16 +193,6 @@ export default function AccomplishmentModal({
       achievementDate: '',
     };
 
-    if (!title.trim()) {
-      newErrors.title = 'Accomplishment Title is required.';
-    }
-    if (!category.trim()) {
-      newErrors.category = 'Category / Type is required.';
-    }
-    if (!achievementDate.trim()) {
-      newErrors.achievementDate = 'Achievement Date is required.';
-    }
-
     setErrors(newErrors);
     return !Object.values(newErrors).some(error => error !== '');
   };
@@ -328,12 +318,6 @@ export default function AccomplishmentModal({
       supportingDocument
   );
 
-  const isFormComplete = Boolean(
-    title.trim() &&
-      category.trim() &&
-      achievementDate.trim()
-  );
-
   const handleEditAccomplishment = (acc: Accomplishment) => {
     populateFormFromAccomplishment(acc);
   };
@@ -382,14 +366,12 @@ export default function AccomplishmentModal({
           >
             Cancel
           </button>
-          {isFormComplete && (
-            <button
-              onClick={handleSave}
-              className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
-            >
-              Save Accomplishment
-            </button>
-          )}
+          <button
+            onClick={handleSave}
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
+          >
+            Save Accomplishment
+          </button>
         </div>
       )}
     >
@@ -397,7 +379,7 @@ export default function AccomplishmentModal({
               {/* Accomplishment Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Accomplishment Title <span className="text-amber-600">*</span>
+                  Accomplishment Title
                 </label>
                 <input
                   type="text"
@@ -410,12 +392,9 @@ export default function AccomplishmentModal({
                   }}
                   placeholder="Enter accomplishment title..."
                   className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    (!title.trim() || errors.title) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
+                    errors.title ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
                   }`}
                 />
-                {!title.trim() && (
-                  <p className="mt-1 text-xs text-amber-600">Accomplishment title is required</p>
-                )}
                 {errors.title && (
                   <p className="mt-1 text-sm text-red-600">{errors.title}</p>
                 )}
@@ -426,7 +405,7 @@ export default function AccomplishmentModal({
                 {/* Category / Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category / Type <span className="text-amber-600">*</span>
+                    Category / Type
                   </label>
                   <select
                     value={category}
@@ -437,7 +416,7 @@ export default function AccomplishmentModal({
                       }
                     }}
                     className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      (!category.trim() || errors.category) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
+                      errors.category ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
                     }`}
                   >
                     <option value="">Select Category</option>
@@ -445,9 +424,6 @@ export default function AccomplishmentModal({
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
-                  {!category.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Category is required</p>
-                  )}
                   {errors.category && (
                     <p className="mt-1 text-sm text-red-600">{errors.category}</p>
                   )}
@@ -456,7 +432,7 @@ export default function AccomplishmentModal({
                 {/* Organization / Authority */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Organization / Authority <span className="text-gray-500 text-xs">(Optional)</span>
+                    Organization / Authority
                   </label>
                   <input
                     type="text"
@@ -471,7 +447,7 @@ export default function AccomplishmentModal({
               {/* Achievement Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Achievement Date <span className="text-amber-600">*</span>
+                  Achievement Date
                 </label>
                 <div className="relative">
                   <input
@@ -484,13 +460,10 @@ export default function AccomplishmentModal({
                       }
                     }}
                     className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      (!achievementDate.trim() || errors.achievementDate) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
+                      errors.achievementDate ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
                     }`}
                   />
                 </div>
-                {!achievementDate.trim() && (
-                  <p className="mt-1 text-xs text-amber-600">Achievement date is required</p>
-                )}
                 {errors.achievementDate && (
                   <p className="mt-1 text-sm text-red-600">{errors.achievementDate}</p>
                 )}
@@ -499,7 +472,7 @@ export default function AccomplishmentModal({
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description <span className="text-gray-500 text-xs">(Optional)</span>
+                  Description
                 </label>
                 <textarea
                   value={description}
@@ -513,7 +486,7 @@ export default function AccomplishmentModal({
               {/* Upload Supporting Documents */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Supporting Documents <span className="text-gray-500 text-xs">(Optional)</span>
+                  Upload Supporting Documents
                 </label>
                 <input
                   ref={fileInputRef}
