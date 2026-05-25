@@ -162,6 +162,18 @@ function scoreCityName(name: string, query: string): number | null {
   return null;
 }
 
+function scoreCitySuggestion(suggestion: CitySuggestion, query: string): number | null {
+  const nameScore = scoreCityName(suggestion.value, query);
+  if (nameScore !== null) return nameScore;
+
+  const label = suggestion.label.toLowerCase();
+  const q = query.toLowerCase();
+  if (label === q) return 3;
+  if (label.startsWith(q)) return 4;
+  if (label.includes(q)) return 5;
+  return null;
+}
+
 export function searchCitiesForCountry(
   countryIso: string,
   query: string,
@@ -172,7 +184,7 @@ export function searchCitiesForCountry(
 
   const ranked: { suggestion: CitySuggestion; score: number }[] = [];
   for (const city of loadCitiesForCountry(countryIso)) {
-    const score = scoreCityName(city.value, q);
+    const score = scoreCitySuggestion(city, q);
     if (score === null) continue;
     ranked.push({ suggestion: city, score });
   }
@@ -222,10 +234,10 @@ export function searchCitiesGlobal(query: string, limit = 20): CitySuggestion[] 
   const ranked: { suggestion: CitySuggestion; score: number }[] = [];
   const seen = new Set<string>();
 
-  for (const [name, suggestions] of getGlobalCityNameIndex()) {
-    const score = scoreCityName(name, q);
-    if (score === null) continue;
+  for (const [, suggestions] of getGlobalCityNameIndex()) {
     for (const suggestion of suggestions) {
+      const score = scoreCitySuggestion(suggestion, q);
+      if (score === null) continue;
       const id = `${suggestion.countryCode}:${suggestion.stateCode}:${suggestion.value}`;
       if (seen.has(id)) continue;
       seen.add(id);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
@@ -10,6 +10,11 @@ import {
   profileTextareaClass,
 } from '@/lib/profile-modal-ui';
 import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
+import {
+  type CitySuggestion,
+  formatCitySuggestionLabel,
+  searchCitySuggestions,
+} from '@/lib/geo-locations';
 
 interface InternshipModalProps {
   isOpen: boolean;
@@ -51,6 +56,32 @@ export default function InternshipModal({
   initialData,
   mode = 'edit',
 }: InternshipModalProps) {
+  const locationAutocompleteRef = useRef<HTMLDivElement>(null);
+  const locationSuggestOpenRef = useRef(false);
+  const locationSuggestUserInitiatedRef = useRef(false);
+  const [locationSuggestions, setLocationSuggestions] = useState<CitySuggestion[]>([]);
+  const [locationSuggestLoading, setLocationSuggestLoading] = useState(false);
+  const [locationSuggestError, setLocationSuggestError] = useState<string | null>(null);
+  const [locationSuggestOpen, setLocationSuggestOpen] = useState(false);
+  const [locationHighlight, setLocationHighlight] = useState(-1);
+
+  const resetLocationSuggestState = useCallback(() => {
+    setLocationSuggestions([]);
+    setLocationSuggestLoading(false);
+    setLocationSuggestError(null);
+    setLocationSuggestOpen(false);
+    setLocationHighlight(-1);
+  }, []);
+
+  const applyLocationSuggestion = useCallback(
+    (suggestion: CitySuggestion) => {
+      locationSuggestUserInitiatedRef.current = false;
+      setLocation(formatCitySuggestionLabel(suggestion));
+      resetLocationSuggestState();
+    },
+    [resetLocationSuggestState],
+  );
+
   const resetForm = () => {
     setInternshipTitle('');
     setCompanyName('');
@@ -60,6 +91,8 @@ export default function InternshipModal({
     setEndDate('');
     setCurrentlyWorking(false);
     setLocation('');
+    resetLocationSuggestState();
+    locationSuggestUserInitiatedRef.current = false;
     setWorkMode('');
     setResponsibilities('');
     setLearnings('');
@@ -104,6 +137,8 @@ export default function InternshipModal({
       setEndDate(initialData.endDate || '');
       setCurrentlyWorking(initialData.currentlyWorking ?? false);
       setLocation(initialData.location || '');
+      resetLocationSuggestState();
+      locationSuggestUserInitiatedRef.current = false;
       setWorkMode(initialData.workMode || '');
       setResponsibilities(initialData.responsibilities || '');
       setLearnings(initialData.learnings || '');
@@ -137,7 +172,72 @@ export default function InternshipModal({
       });
       setDocuments(normalizedDocuments);
     }
-  }, [isOpen, initialData, mode]);
+  }, [isOpen, initialData, mode, resetLocationSuggestState]);
+
+  useEffect(() => {
+    locationSuggestOpenRef.current = locationSuggestOpen;
+  }, [locationSuggestOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      locationSuggestUserInitiatedRef.current = false;
+      resetLocationSuggestState();
+      return;
+    }
+    locationSuggestUserInitiatedRef.current = false;
+    resetLocationSuggestState();
+  }, [isOpen, resetLocationSuggestState]);
+
+  useEffect(() => {
+    if (!locationSuggestOpen) return;
+    const handleDown = (event: MouseEvent) => {
+      if (locationAutocompleteRef.current && !locationAutocompleteRef.current.contains(event.target as Node)) {
+        setLocationSuggestOpen(false);
+        setLocationHighlight(-1);
+      }
+    };
+    document.addEventListener('mousedown', handleDown);
+    return () => document.removeEventListener('mousedown', handleDown);
+  }, [locationSuggestOpen]);
+
+  useEffect(() => {
+    if (locationHighlight < 0 || !locationAutocompleteRef.current) return;
+    const node = locationAutocompleteRef.current.querySelector(
+      `[data-location-suggest-index="${locationHighlight}"]`,
+    );
+    node?.scrollIntoView({ block: 'nearest' });
+  }, [locationHighlight]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      resetLocationSuggestState();
+      return;
+    }
+
+    if (!locationSuggestUserInitiatedRef.current) {
+      resetLocationSuggestState();
+      return;
+    }
+
+    const query = location.trim();
+    if (query.length < 2) {
+      resetLocationSuggestState();
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setLocationSuggestError(null);
+      setLocationSuggestLoading(true);
+
+      const list = searchCitySuggestions(query);
+      setLocationSuggestions(list);
+      setLocationSuggestOpen(list.length > 0);
+      setLocationHighlight(list.length > 0 ? 0 : -1);
+      setLocationSuggestLoading(false);
+    }, 200);
+
+    return () => window.clearTimeout(timer);
+  }, [location, isOpen, resetLocationSuggestState]);
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
@@ -230,30 +330,26 @@ export default function InternshipModal({
     }
   };
 
-  const getMissingRequiredFields = () => {
-    const missingFields: string[] = [];
-
-    if (!String(internshipTitle || '').trim()) missingFields.push('Internship Title');
-    if (!String(companyName || '').trim()) missingFields.push('Company / Organization Name');
-    if (!internshipType) missingFields.push('Internship Type');
-    if (!domainDepartment) missingFields.push('Domain / Department');
-    if (!startDate) missingFields.push('Start Date');
-    if (!currentlyWorking && !endDate) missingFields.push('End Date');
-    if (!String(location || '').trim()) missingFields.push('Location');
-    if (!workMode) missingFields.push('Work Mode');
-    if (!String(responsibilities || '').trim()) missingFields.push('Responsibilities / Tasks Performed');
-    if (!String(learnings || '').trim()) missingFields.push('Learnings or Outcomes');
-    if (skills.length === 0) missingFields.push('Skills Applied');
-
-    return missingFields;
-  };
-
-  const missingRequiredFields = getMissingRequiredFields();
-  const isFormComplete = missingRequiredFields.length === 0;
-
   const handleSave = () => {
-    if (!isFormComplete) {
-      alert(`Please complete all required fields: ${missingRequiredFields.join(', ')}`);
+    const hasAnyFormData = Boolean(
+      internshipTitle.trim() ||
+        companyName.trim() ||
+        internshipType ||
+        domainDepartment ||
+        startDate ||
+        endDate ||
+        currentlyWorking ||
+        location.trim() ||
+        workMode ||
+        responsibilities.trim() ||
+        learnings.trim() ||
+        skillsInput.trim() ||
+        skills.length > 0 ||
+        documents.length > 0,
+    );
+
+    if (!hasAnyFormData) {
+      onClose();
       return;
     }
 
@@ -293,8 +389,7 @@ export default function InternshipModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={!isFormComplete}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-300"
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
           >
             Save Internship
           </button>
@@ -309,29 +404,26 @@ export default function InternshipModal({
             {/* Internship Title */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Internship Title <span className="text-amber-600">*</span>
+                Internship Title
               </label>
               <input
                 type="text"
                 value={internshipTitle}
                 onChange={(e) => setInternshipTitle(e.target.value)}
                 placeholder="e.g., Marketing & Communications Intern"
-                className={`${profileFieldClass(!internshipTitle.trim())}`}
+                className={profileFieldClass()}
               />
-              {!internshipTitle.trim() && (
-                <p className="mt-1 text-xs text-amber-600">Internship title is required</p>
-              )}
             </div>
 
             {/* Internship Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Internship Type <span className="text-amber-600">*</span>
+                Internship Type
               </label>
               <select
                 value={internshipType}
                 onChange={(e) => setInternshipType(e.target.value)}
-                className={`${profileSelectClassName} ${!internshipType ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''}`}
+                className={profileSelectClassName}
               >
                 <option value="">Select internship type</option>
                 <option value="full-time">Full-time Internship</option>
@@ -339,9 +431,6 @@ export default function InternshipModal({
                 <option value="remote">Remote Internship</option>
                 <option value="hybrid">Hybrid Internship</option>
               </select>
-              {!internshipType && (
-                <p className="mt-1 text-xs text-amber-600">Internship type is required</p>
-              )}
             </div>
           </div>
 
@@ -350,29 +439,26 @@ export default function InternshipModal({
             {/* Company / Organization Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Company / Organization Name <span className="text-amber-600">*</span>
+                Company / Organization Name
               </label>
               <input
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="e.g., SAASA Corp."
-                className={`${profileFieldClass(!companyName.trim())}`}
+                className={profileFieldClass()}
               />
-              {!companyName.trim() && (
-                <p className="mt-1 text-xs text-amber-600">Company name is required</p>
-              )}
             </div>
 
             {/* Domain / Department */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Domain / Department <span className="text-amber-600">*</span>
+                Domain / Department
               </label>
               <select
                 value={domainDepartment}
                 onChange={(e) => setDomainDepartment(e.target.value)}
-                className={`${profileSelectClassName} ${!domainDepartment ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''}`}
+                className={profileSelectClassName}
               >
                 <option value="">Select domain / department</option>
                 <option value="marketing">Marketing</option>
@@ -383,9 +469,6 @@ export default function InternshipModal({
                 <option value="sales">Sales</option>
                 <option value="design">Design</option>
               </select>
-              {!domainDepartment && (
-                <p className="mt-1 text-xs text-amber-600">Domain/Department is required</p>
-              )}
             </div>
           </div>
         </div>
@@ -396,33 +479,25 @@ export default function InternshipModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Start Date <span className="text-amber-600">*</span>
+                Start Date
               </label>
               <ProfileDatePicker
                 value={startDate}
                 max={endDate || undefined}
                 onChange={handleStartDateChange}
-                invalid={!startDate}
               />
-              {!startDate && (
-                <p className="mt-1 text-xs text-amber-600">Start date is required</p>
-              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                End Date {!currentlyWorking && <span className="text-amber-600">*</span>}
+                End Date
               </label>
               <ProfileDatePicker
                 value={endDate}
                 min={startDate || undefined}
                 onChange={handleEndDateChange}
                 disabled={currentlyWorking}
-                invalid={!currentlyWorking && !endDate}
                 displayValue={currentlyWorking ? 'Present' : undefined}
               />
-              {!currentlyWorking && !endDate && (
-                <p className="mt-1 text-xs text-amber-600">End date is required</p>
-              )}
               <label className="flex items-center gap-2 mt-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -451,36 +526,119 @@ export default function InternshipModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Location <span className="text-amber-600">*</span>
+                Location
               </label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="City, Country"
-                className={profileFieldClass(!location.trim())}
-              />
-              {!location.trim() && (
-                <p className="mt-1 text-xs text-amber-600">Location is required</p>
-              )}
+              <div className="relative" ref={locationAutocompleteRef}>
+                <input
+                  type="text"
+                  value={location}
+                  autoComplete="off"
+                  onChange={(e) => {
+                    locationSuggestUserInitiatedRef.current = true;
+                    setLocation(e.target.value);
+                  }}
+                  onFocus={() => {
+                    if (
+                      locationSuggestUserInitiatedRef.current &&
+                      (locationSuggestions.length > 0 || locationSuggestLoading || locationSuggestError)
+                    ) {
+                      setLocationSuggestOpen(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    window.setTimeout(() => {
+                      if (!locationSuggestOpenRef.current) return;
+                      setLocationSuggestOpen(false);
+                      setLocationHighlight(-1);
+                    }, 150);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowDown') {
+                      if (!locationSuggestOpen && locationSuggestions.length > 0) {
+                        setLocationSuggestOpen(true);
+                      }
+                      if (locationSuggestOpen && locationSuggestions.length > 0) {
+                        e.preventDefault();
+                        setLocationHighlight((i) => Math.min(i + 1, locationSuggestions.length - 1));
+                      }
+                    } else if (e.key === 'ArrowUp') {
+                      if (locationSuggestOpen && locationSuggestions.length > 0) {
+                        e.preventDefault();
+                        setLocationHighlight((i) => Math.max(i - 1, 0));
+                      }
+                    } else if (e.key === 'Enter') {
+                      if (locationSuggestOpen && locationSuggestions.length > 0) {
+                        e.preventDefault();
+                        const pick =
+                          locationHighlight >= 0 && locationSuggestions[locationHighlight]
+                            ? locationSuggestions[locationHighlight]
+                            : locationSuggestions[0];
+                        if (pick) applyLocationSuggestion(pick);
+                      }
+                    } else if (e.key === 'Tab' && locationSuggestOpen && locationSuggestions.length > 0) {
+                      const pick =
+                        locationHighlight >= 0 && locationSuggestions[locationHighlight]
+                          ? locationSuggestions[locationHighlight]
+                          : locationSuggestions[0];
+                      if (pick) applyLocationSuggestion(pick);
+                    } else if (e.key === 'Escape' && locationSuggestOpen) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setLocationSuggestOpen(false);
+                      setLocationHighlight(-1);
+                    }
+                  }}
+                  placeholder="Type city or country, then pick from the list"
+                  className={profileFieldClass()}
+                />
+                {locationSuggestOpen ? (
+                  <div className="absolute left-0 top-[calc(100%+6px)] z-50 max-h-[min(280px,50vh)] w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-2 shadow-lg">
+                    {locationSuggestLoading ? (
+                      <div className="px-3 py-2 text-sm text-slate-500">Searching…</div>
+                    ) : locationSuggestError ? (
+                      <div className="px-3 py-2 text-sm text-red-600">{locationSuggestError}</div>
+                    ) : locationSuggestions.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-slate-500">
+                        No locations found. You can still type manually.
+                      </div>
+                    ) : (
+                      locationSuggestions.map((suggestion, idx) => (
+                        <button
+                          key={`${suggestion.countryCode}-${suggestion.stateCode}-${suggestion.value}-${idx}`}
+                          type="button"
+                          data-location-suggest-index={idx}
+                          onMouseEnter={() => setLocationHighlight(idx)}
+                          onMouseDown={(ev) => ev.preventDefault()}
+                          onClick={() => applyLocationSuggestion(suggestion)}
+                          className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${
+                            locationHighlight === idx ? 'bg-gray-50' : ''
+                          }`}
+                        >
+                          {formatCitySuggestionLabel(suggestion)}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                ) : null}
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                Start typing a city or country and select a suggested location
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Work Mode <span className="text-amber-600">*</span>
+                Work Mode
               </label>
               <select
                 value={workMode}
                 onChange={(e) => setWorkMode(e.target.value)}
-                className={`${profileSelectClassName} ${!workMode ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''}`}
+                className={profileSelectClassName}
               >
                 <option value="">Select work mode</option>
                 <option value="remote">Remote</option>
                 <option value="hybrid">Hybrid</option>
                 <option value="onsite">On-site</option>
               </select>
-              {!workMode && (
-                <p className="mt-1 text-xs text-amber-600">Work mode is required</p>
-              )}
             </div>
           </div>
         </div>
@@ -492,43 +650,37 @@ export default function InternshipModal({
           {/* Responsibilities / Tasks Performed */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Responsibilities / Tasks Performed <span className="text-amber-600">*</span>
+              Responsibilities / Tasks Performed
             </label>
             <textarea
               value={responsibilities}
               onChange={(e) => setResponsibilities(e.target.value)}
               rows={4}
-              className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${!responsibilities.trim() ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
+              className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Describe your main tasks, duties, and contributions..."
               style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '14px',
               }}
             />
-            {!responsibilities.trim() && (
-              <p className="mt-1 text-xs text-amber-600">Responsibilities are required</p>
-            )}
           </div>
 
           {/* Learnings or Outcomes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Learnings or Outcomes <span className="text-amber-600">*</span>
+              Learnings or Outcomes
             </label>
             <textarea
               value={learnings}
               onChange={(e) => setLearnings(e.target.value)}
               rows={4}
-              className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${!learnings.trim() ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
+              className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Describe what you learned, skills gained, or outcomes achieved..."
               style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '14px',
               }}
             />
-            {!learnings.trim() && (
-              <p className="mt-1 text-xs text-amber-600">Learnings are required</p>
-            )}
           </div>
         </div>
 
@@ -537,7 +689,7 @@ export default function InternshipModal({
           <h3 className="text-base font-semibold text-gray-900">Skills Used</h3>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Skills Applied <span className="text-amber-600">*</span>
+              Skills Applied
             </label>
             {skills.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
@@ -574,7 +726,7 @@ export default function InternshipModal({
                   }
                 }}
                 placeholder="Add skills you used during this internship..."
-                className={`flex-1 px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${skills.length === 0 ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : 'border-gray-300'}`}
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '14px',
@@ -593,9 +745,6 @@ export default function InternshipModal({
                 Add
               </button>
             </div>
-            {skills.length === 0 && (
-              <p className="mt-1 text-xs text-amber-600">At least one skill is required</p>
-            )}
           </div>
         </div>
 
@@ -603,7 +752,6 @@ export default function InternshipModal({
         <div className="space-y-4">
           <h3 className="text-base font-semibold text-gray-900">
             Upload Your Internship Certificates/Documents{' '}
-            <span className="text-gray-500 text-sm font-normal">(Optional)</span>
           </h3>
 
           {/* File Input (Hidden) */}
@@ -659,7 +807,7 @@ export default function InternshipModal({
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <svg
-                      className="w-5 h-5 text-gray-400 flex-shrink-0"
+                      className="w-5 h-5 text-gray-400 shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -726,13 +874,6 @@ export default function InternshipModal({
           )}
         </div>
 
-        {missingRequiredFields.length > 0 && (
-          <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2">
-            <p className="text-xs font-medium text-amber-700">
-              Missing required fields: {missingRequiredFields.join(', ')}
-            </p>
-          </div>
-        )}
       </div>
 
     </ProfileDrawer>

@@ -80,14 +80,7 @@ export default function GapExplanationModal({
   }, [isOpen, initialData]);
 
   const hasPreferredSupport = Object.values(preferredSupport).some(Boolean);
-  const isFormValid = Boolean(
-    gapCategory &&
-    reasonForGap &&
-    gapDuration &&
-    selectedSkills.length > 0 &&
-    coursesText.trim() &&
-    hasPreferredSupport
-  );
+  const isFormValid = true;
 
   const MAX_GAP_SKILLS = 30;
 
@@ -133,8 +126,7 @@ export default function GapExplanationModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={!isFormValid}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-300 disabled:hover:bg-orange-300"
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white transition-colors hover:bg-orange-600"
           >
             Save Gap Details
           </button>
@@ -209,7 +201,7 @@ export default function GapExplanationModal({
               <select
                 value={reasonForGap}
                 onChange={(e) => setReasonForGap(e.target.value)}
-                className={`${profileSelectClassName} ${!reasonForGap ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''}`}
+                className={profileSelectClassName}
               >
                 <option value="">Select a reason</option>
                 <option value="career-break">Career Break</option>
@@ -219,9 +211,6 @@ export default function GapExplanationModal({
                 <option value="travel">Travel</option>
                 <option value="other">Other</option>
               </select>
-              {!reasonForGap && (
-                <p className="mt-1 text-xs text-amber-600">Reason for gap is required</p>
-              )}
             </div>
 
             {/* Gap Duration */}
@@ -232,7 +221,7 @@ export default function GapExplanationModal({
               <select
                 value={gapDuration}
                 onChange={(e) => setGapDuration(e.target.value)}
-                className={`${profileSelectClassName} ${!gapDuration ? 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500' : ''}`}
+                className={profileSelectClassName}
               >
                 <option value="">Select gap duration</option>
                 <option value="Less than 3 months">Less than 3 months</option>
@@ -241,9 +230,6 @@ export default function GapExplanationModal({
                 <option value="1-2 years">1-2 years</option>
                 <option value="More than 2 years">More than 2 years</option>
               </select>
-              {!gapDuration && (
-                <p className="mt-1 text-xs text-amber-600">Gap duration is required</p>
-              )}
               <p className="mt-1 text-xs text-gray-500">
                 Pre-filled from onboarding — you can edit if incorrect.
               </p>
@@ -266,7 +252,7 @@ export default function GapExplanationModal({
                     }
                   }}
                   placeholder="Type a skill and press Enter..."
-                  className={`${profileFieldClass(selectedSkills.length === 0)} min-w-0 flex-1`}
+                  className={`${profileFieldClass()} min-w-0 flex-1`}
                 />
                 <button
                   type="button"
@@ -277,9 +263,6 @@ export default function GapExplanationModal({
                   Add
                 </button>
               </div>
-              {selectedSkills.length === 0 && (
-                <p className="mt-0.5 text-[11px] text-amber-600">At least one skill is required</p>
-              )}
               <p className="mt-0.5 text-[11px] text-gray-500">Allow up to ~30 skills</p>
               {selectedSkills.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -315,16 +298,13 @@ export default function GapExplanationModal({
                 value={coursesText}
                 onChange={(e) => setCoursesText(e.target.value)}
                 rows={4}
-                className={`w-full px-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${!coursesText.trim() ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
+                className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g., Completed a Data Science bootcamp, obtained PMP certification, attended workshops on Agile methodologies."
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '14px',
                 }}
               />
-              {!coursesText.trim() && (
-                <p className="mt-1 text-xs text-amber-600">Course/training details are required</p>
-              )}
             </div>
 
             {/* Preferred Support When Returning to Work */}
@@ -332,7 +312,7 @@ export default function GapExplanationModal({
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 Preferred Support When Returning to Work
               </label>
-              <div className={`space-y-3 p-3 rounded-lg ${!hasPreferredSupport ? 'bg-red-50 border border-red-200' : ''}`}>
+              <div className="space-y-3 rounded-lg p-3">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -370,9 +350,6 @@ export default function GapExplanationModal({
                   <span className="text-sm text-gray-700">Skill refresher recommendations</span>
                 </label>
               </div>
-              {!hasPreferredSupport && (
-                <p className="mt-1 text-xs text-amber-600">Select at least one support option</p>
-              )}
             </div>
           </div>
     </ProfileDrawer>

@@ -218,15 +218,6 @@ export default function CertificationModal({
       credentialUrl: '',
     };
 
-    if (!certificationName.trim()) {
-      newErrors.certificationName = 'Certification Name is required.';
-    }
-    if (!issuingOrganization.trim()) {
-      newErrors.issuingOrganization = 'Issuing Organization is required.';
-    }
-    if (!issueDate.trim()) {
-      newErrors.issueDate = 'Issue Date is required.';
-    }
     if (
       !doesNotExpire &&
       issueDate.trim() &&
@@ -242,10 +233,6 @@ export default function CertificationModal({
     setErrors(newErrors);
     return !Object.values(newErrors).some((error) => error !== '');
   };
-
-  const hasRequiredFields = Boolean(
-    certificationName.trim() && issuingOrganization.trim() && issueDate.trim(),
-  );
 
   const validateCredentialUrlField = (value: string) => {
     if (!value.trim()) {
@@ -373,6 +360,18 @@ export default function CertificationModal({
     description: description.trim() || undefined,
   });
 
+  const hasFormValues = Boolean(
+    certificationName.trim() ||
+      issuingOrganization.trim() ||
+      issueDate.trim() ||
+      expiryDate.trim() ||
+      credentialId.trim() ||
+      credentialUrl.trim() ||
+      description.trim() ||
+      documents.length > 0 ||
+      certificateFile,
+  );
+
   const handleAddCertification = () => {
     if (!validateForm()) {
       return;
@@ -402,8 +401,8 @@ export default function CertificationModal({
   };
 
   const handleSave = () => {
-    if (!hasRequiredFields) {
-      validateForm();
+    if (!editingCertId && !editingCertificationId && !hasFormValues) {
+      onClose();
       return;
     }
     if (!validateForm()) {
@@ -449,8 +448,7 @@ export default function CertificationModal({
           <button
             type="button"
             onClick={handleSave}
-            disabled={!hasRequiredFields}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
           >
             Save Certification
           </button>
@@ -465,7 +463,7 @@ export default function CertificationModal({
                   {/* Certification Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Certification Name <span className="text-amber-600">*</span>
+                      Certification Name
                     </label>
                     <input
                       type="text"
@@ -478,12 +476,9 @@ export default function CertificationModal({
                       }}
                       placeholder="Enter certification name..."
                       className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        (!certificationName.trim() || errors.certificationName) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
+                        errors.certificationName ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
                       }`}
                     />
-                    {!certificationName.trim() && (
-                      <p className="mt-1 text-xs text-amber-600">Certification name is required</p>
-                    )}
                     {errors.certificationName && (
                       <p className="mt-1 text-sm text-amber-600">{errors.certificationName}</p>
                     )}
@@ -492,7 +487,7 @@ export default function CertificationModal({
                   {/* Issue Date */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Issue Date <span className="text-amber-600">*</span>
+                      Issue Date
                     </label>
                     <input
                       type="month"
@@ -504,12 +499,9 @@ export default function CertificationModal({
                         }
                       }}
                       className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        (!issueDate.trim() || errors.issueDate) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
+                        errors.issueDate ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
                       }`}
                     />
-                    {!issueDate.trim() && (
-                      <p className="mt-1 text-xs text-amber-600">Issue date is required</p>
-                    )}
                     {errors.issueDate && (
                       <p className="mt-1 text-sm text-amber-600">{errors.issueDate}</p>
                     )}
@@ -518,7 +510,7 @@ export default function CertificationModal({
                   {/* Credential ID */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Credential ID <span className="text-gray-500 text-xs">(Optional)</span>
+                      Credential ID
                     </label>
                     <input
                       type="text"
@@ -532,7 +524,7 @@ export default function CertificationModal({
                   {/* Upload Certificate */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Upload Certificate <span className="text-gray-500 text-xs">(Optional)</span>
+                      Upload Certificate
                     </label>
                     <input
                       ref={fileInputRef}
@@ -641,7 +633,7 @@ export default function CertificationModal({
                   {/* Issuing Organization */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Issuing Organization <span className="text-amber-600">*</span>
+                      Issuing Organization
                     </label>
                     <input
                       type="text"
@@ -654,12 +646,9 @@ export default function CertificationModal({
                       }}
                       placeholder="e.g., Coursera, Google, AWS, Microsoft"
                       className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        (!issuingOrganization.trim() || errors.issuingOrganization) ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
+                        errors.issuingOrganization ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
                       }`}
                     />
-                    {!issuingOrganization.trim() && (
-                      <p className="mt-1 text-xs text-amber-600">Issuing organization is required</p>
-                    )}
                     {errors.issuingOrganization && (
                       <p className="mt-1 text-sm text-amber-600">{errors.issuingOrganization}</p>
                     )}
@@ -722,7 +711,7 @@ export default function CertificationModal({
                   {/* Credential URL */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                      Credential URL <span className="text-gray-500 text-xs">(Optional)</span>
+                      Credential URL
                       <svg
                         className="w-4 h-4 text-[#9095A1]"
                         fill="none"
@@ -767,7 +756,7 @@ export default function CertificationModal({
               {/* Description - Full Width */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description <span className="text-gray-500 text-xs">(Optional)</span>
+                  Description
                 </label>
                 <textarea
                   value={description}

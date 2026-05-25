@@ -60,13 +60,13 @@ export default function VaccinationModal({
     }
   }, [initialData, isOpen]);
 
-  const resetForm = () => {
+  function resetForm() {
     setVaccineType('');
     setLastVaccinationDate('');
     setValidityMonth('');
     setValidityYear('');
     setDocuments([]);
-  };
+  }
 
   const handleSave = () => {
     onSave({
@@ -99,8 +99,7 @@ export default function VaccinationModal({
           <button
             type="button"
             onClick={handleSave}
-            disabled={!vaccineType.trim()}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
           >
             Save & Update
           </button>
@@ -119,19 +118,12 @@ export default function VaccinationModal({
             value={vaccineType}
             onChange={(e) => setVaccineType(e.target.value)}
             placeholder="eg. Yellow Fever"
-            className={`w-full rounded-lg border px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 ${
-              !vaccineType.trim() ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'
-            }`}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
           />
-          {!vaccineType.trim() ? (
-            <p className="mt-1 text-xs text-amber-600">Vaccine type is required</p>
-          ) : null}
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
-            Last Vaccination Date <span className="text-xs font-normal text-gray-500">(Optional)</span>
-          </label>
+          <label className="mb-2 block text-sm font-medium text-gray-700">Last Vaccination Date</label>
           <ProfileDatePicker
             value={lastVaccinationDate}
             onChange={setLastVaccinationDate}
@@ -140,9 +132,7 @@ export default function VaccinationModal({
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
-            Validity of Vaccination <span className="text-xs font-normal text-gray-500">(Optional)</span>
-          </label>
+          <label className="mb-2 block text-sm font-medium text-gray-700">Validity of Vaccination</label>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1 block text-xs text-gray-600">Month</label>

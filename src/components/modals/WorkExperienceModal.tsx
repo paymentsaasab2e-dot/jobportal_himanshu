@@ -1,11 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import GapExplanationModal, { GapExplanationData } from './GapExplanationModal';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import { profileFieldClass, profileSectionTitleClass, profileTextareaClass } from '@/lib/profile-modal-ui';
+import {
+  type CitySuggestion,
+  formatCitySuggestionLabel,
+  searchCitySuggestions,
+} from '@/lib/geo-locations';
 import {
   isPersistedWorkExperienceId,
   normalizeEmploymentTypeFromApi,
@@ -166,6 +171,31 @@ export default function WorkExperienceModal({
     toDate: string;
   } | null>(null);
   const [gapExplanationData, setGapExplanationData] = useState<GapExplanationData | undefined>();
+  const workLocationAutocompleteRef = useRef<HTMLDivElement>(null);
+  const workLocationSuggestOpenRef = useRef(false);
+  const workLocationSuggestUserInitiatedRef = useRef(false);
+  const [workLocationSuggestions, setWorkLocationSuggestions] = useState<CitySuggestion[]>([]);
+  const [workLocationSuggestLoading, setWorkLocationSuggestLoading] = useState(false);
+  const [workLocationSuggestError, setWorkLocationSuggestError] = useState<string | null>(null);
+  const [workLocationSuggestOpen, setWorkLocationSuggestOpen] = useState(false);
+  const [workLocationHighlight, setWorkLocationHighlight] = useState(-1);
+
+  const resetWorkLocationSuggestState = useCallback(() => {
+    setWorkLocationSuggestions([]);
+    setWorkLocationSuggestLoading(false);
+    setWorkLocationSuggestError(null);
+    setWorkLocationSuggestOpen(false);
+    setWorkLocationHighlight(-1);
+  }, []);
+
+  const applyWorkLocationSuggestion = useCallback(
+    (suggestion: CitySuggestion) => {
+      workLocationSuggestUserInitiatedRef.current = false;
+      setWorkLocation(formatCitySuggestionLabel(suggestion));
+      resetWorkLocationSuggestState();
+    },
+    [resetWorkLocationSuggestState],
+  );
 
   // Function to populate form fields from an entry
   const populateFormFromEntry = (entry: WorkExperienceEntry) => {
@@ -178,6 +208,8 @@ export default function WorkExperienceModal({
     setEndDate(entry.endDate || '');
     setCurrentlyWorkHere(entry.currentlyWorkHere || false);
     setWorkLocation(entry.workLocation || '');
+    resetWorkLocationSuggestState();
+    workLocationSuggestUserInitiatedRef.current = false;
     setWorkMode(normalizeWorkModeFromApi(entry.workMode));
     setCompanyProfile(entry.companyProfile || '');
     const parsed = parseStoredTurnover(entry.companyTurnover || '');
@@ -261,6 +293,8 @@ export default function WorkExperienceModal({
     setEndDate('');
     setCurrentlyWorkHere(false);
     setWorkLocation('');
+    resetWorkLocationSuggestState();
+    workLocationSuggestUserInitiatedRef.current = false;
     setWorkMode('');
     setCompanyProfile('');
     setCompanyTurnoverCurrency('INR');
@@ -272,17 +306,80 @@ export default function WorkExperienceModal({
     setDocuments([]);
   };
 
+  useEffect(() => {
+    workLocationSuggestOpenRef.current = workLocationSuggestOpen;
+  }, [workLocationSuggestOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      workLocationSuggestUserInitiatedRef.current = false;
+      resetWorkLocationSuggestState();
+      return;
+    }
+    workLocationSuggestUserInitiatedRef.current = false;
+    resetWorkLocationSuggestState();
+  }, [isOpen, resetWorkLocationSuggestState]);
+
+  useEffect(() => {
+    if (!workLocationSuggestOpen) return;
+    const handleDown = (event: MouseEvent) => {
+      if (
+        workLocationAutocompleteRef.current &&
+        !workLocationAutocompleteRef.current.contains(event.target as Node)
+      ) {
+        setWorkLocationSuggestOpen(false);
+        setWorkLocationHighlight(-1);
+      }
+    };
+    document.addEventListener('mousedown', handleDown);
+    return () => document.removeEventListener('mousedown', handleDown);
+  }, [workLocationSuggestOpen]);
+
+  useEffect(() => {
+    if (workLocationHighlight < 0 || !workLocationAutocompleteRef.current) return;
+    const node = workLocationAutocompleteRef.current.querySelector(
+      `[data-work-location-suggest-index="${workLocationHighlight}"]`,
+    );
+    node?.scrollIntoView({ block: 'nearest' });
+  }, [workLocationHighlight]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      resetWorkLocationSuggestState();
+      return;
+    }
+
+    if (!workLocationSuggestUserInitiatedRef.current) {
+      resetWorkLocationSuggestState();
+      return;
+    }
+
+    const query = workLocation.trim();
+    if (query.length < 2) {
+      resetWorkLocationSuggestState();
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setWorkLocationSuggestError(null);
+      setWorkLocationSuggestLoading(true);
+
+      const list = searchCitySuggestions(query);
+      setWorkLocationSuggestions(list);
+      setWorkLocationSuggestOpen(list.length > 0);
+      setWorkLocationHighlight(list.length > 0 ? 0 : -1);
+      setWorkLocationSuggestLoading(false);
+    }, 200);
+
+    return () => window.clearTimeout(timer);
+  }, [workLocation, isOpen, resetWorkLocationSuggestState]);
+
   const resetForm = () => {
     clearFormFields();
     setWorkExperiences([]);
   };
 
   const handleAddWorkExperience = () => {
-    if (missingRequiredFields.length > 0) {
-      alert(`Please complete these required fields: ${missingRequiredFields.join(', ')}`);
-      return;
-    }
-
     // Check for gap before adding (only if there are existing experiences and gap modal is not already open)
     if (!isGapModalOpen) {
       const hasGap = checkForGapAndShowModal(startDate);
@@ -615,35 +712,10 @@ export default function WorkExperienceModal({
   };
 
   const getMissingRequiredFields = () => {
-    const missingFields: string[] = [];
-
-    if (!String(jobTitle || '').trim()) missingFields.push('Job Title');
-    if (!String(companyName || '').trim()) missingFields.push('Company Name');
-    if (!employmentType) missingFields.push('Employment Type');
-    if (!industryDomain) missingFields.push('Industry / Domain');
-    if (!String(numberOfReportees || '').trim()) missingFields.push('Number of Reportees');
-
-    if (!workSkills.length) missingFields.push('Skills Used');
-
-    if (!startDate) missingFields.push('Start Date');
-    if (!currentlyWorkHere && !endDate) missingFields.push('End Year');
-
-    if (!String(workLocation || '').trim()) missingFields.push('Work Location');
-    if (!workMode) missingFields.push('Work Mode');
-
-    if (!String(companyProfile || '').trim()) missingFields.push('Company Profile');
-    if (!formatStoredTurnover(companyTurnoverCurrency, companyTurnoverAmount).trim()) {
-      missingFields.push('Company Turnover');
-    }
-
-    if (!String(keyResponsibilities || '').trim()) missingFields.push('Key Responsibilities');
-    if (!String(achievements || '').trim()) missingFields.push('Achievements');
-
-    return missingFields;
+    return [];
   };
 
   const missingRequiredFields = getMissingRequiredFields();
-  const isFormComplete = missingRequiredFields.length === 0;
   const hasAnyFormData = Boolean(
     jobTitle.trim() ||
       companyName.trim() ||
@@ -663,20 +735,13 @@ export default function WorkExperienceModal({
       workSkills.length > 0 ||
       documents.length > 0
   );
-  // Only show save button when all compulsory fields are filled
-  const canSaveWorkExperience = isFormComplete;
 
   // Helper function to check if an ID is a persisted MongoDB ObjectId
   const handleSave = async () => {
     // Check if there's unsaved form data (user filled form but didn't click "Add Work Experience")
     const hasFormData = hasAnyFormData;
 
-    if (hasFormData && !isFormComplete) {
-      alert(`Please complete these required fields before saving: ${missingRequiredFields.join(', ')}`);
-      return;
-    }
-    
-    let finalWorkExperiences = [...workExperiences];
+    const finalWorkExperiences = [...workExperiences];
     
     if (hasFormData) {
       const formEntry: WorkExperienceEntry = {
@@ -721,11 +786,6 @@ export default function WorkExperienceModal({
     const entriesToPersist = editingEntryId
       ? finalWorkExperiences.filter((e) => e.id === editingEntryId)
       : finalWorkExperiences.filter((e) => !isPersistedWorkExperienceId(e.id));
-
-    if (entriesToPersist.length === 0) {
-      alert('Please fill all required work experience details before saving.');
-      return;
-    }
 
     setIsSaving(true);
     try {
@@ -790,16 +850,14 @@ export default function WorkExperienceModal({
             >
               Cancel
             </button>
-            {canSaveWorkExperience && (
-              <button
-                type="button"
-                onClick={() => void handleSave()}
-                disabled={isSaving}
-                className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSaving ? 'Saving…' : 'Save Work Experience'}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={isSaving}
+              className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSaving ? 'Saving…' : 'Save Work Experience'}
+            </button>
           </div>
         )}
       >
@@ -875,37 +933,31 @@ export default function WorkExperienceModal({
               <h3 className={sectionTitleClassName}>Role Details</h3>
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Job Title <span className="text-amber-600">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Job Title</label>
                   <input
                     type="text"
                     value={jobTitle}
                     onChange={(e) => setJobTitle(e.target.value)}
                     placeholder="e.g., Software Developer"
-                    className={`${inputClassName} ${!jobTitle.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={inputClassName}
                   />
-                  {!jobTitle.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Job title is required</p>
-                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Company Name <span className="text-amber-600">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Company Name</label>
                   <input
                     type="text"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="e.g., TCS, Deloitte, Amazon"
-                    className={`${inputClassName} ${!companyName.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={inputClassName}
                   />
-                  {!companyName.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Company name is required</p>
-                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Employment Type <span className="text-amber-600">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Employment Type</label>
                   <select
                     value={employmentType}
                     onChange={(e) => setEmploymentType(e.target.value)}
-                    className={`${selectClassName} ${!employmentType && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={selectClassName}
                   >
                     <option value="">Select employment type</option>
                     <option value="full-time">Full-time</option>
@@ -914,16 +966,13 @@ export default function WorkExperienceModal({
                     <option value="internship">Internship</option>
                     <option value="freelance">Freelance</option>
                   </select>
-                  {!employmentType && (
-                    <p className="mt-1 text-xs text-amber-600">Employment type is required</p>
-                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Industry / Domain <span className="text-amber-600">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Industry / Domain</label>
                   <select
                     value={industryDomain}
                     onChange={(e) => setIndustryDomain(e.target.value)}
-                    className={`${selectClassName} ${!industryDomain && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={selectClassName}
                   >
                     <option value="">Select Industry / Domain</option>
                     <option value="technology">Technology</option>
@@ -932,12 +981,9 @@ export default function WorkExperienceModal({
                     <option value="education">Education</option>
                     <option value="consulting">Consulting</option>
                   </select>
-                  {!industryDomain && (
-                    <p className="mt-1 text-xs text-amber-600">Industry/Domain is required</p>
-                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Number of Reportees <span className="text-amber-600">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Number of Reportees</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -955,11 +1001,8 @@ export default function WorkExperienceModal({
                       handleReporteesChange(pasted);
                     }}
                     placeholder="e.g., 5"
-                    className={`${inputClassName} ${!numberOfReportees.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={inputClassName}
                   />
-                  {!numberOfReportees.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Number of reportees is required</p>
-                  )}
                   <p className="text-xs text-gray-400">How many people directly reported to you in this role?</p>
                 </div>
               </div>
@@ -970,30 +1013,22 @@ export default function WorkExperienceModal({
               <h3 className={sectionTitleClassName}>Duration</h3>
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Start Date <span className="text-amber-600">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Start Date</label>
                   <ProfileDatePicker
                     value={startDate}
                     max={endDate || undefined}
                     onChange={handleStartDateChange}
-                    invalid={!startDate}
                   />
-                  {!startDate && (
-                    <p className="mt-1 text-xs text-amber-600">Start date is required</p>
-                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">End Date {!currentlyWorkHere && <span className="text-amber-600">*</span>}</label>
+                  <label className="block text-sm font-medium text-gray-700">End Date</label>
                   <ProfileDatePicker
                     value={endDate}
                     min={startDate || undefined}
                     onChange={setEndDate}
                     disabled={currentlyWorkHere}
-                    invalid={!currentlyWorkHere && !endDate}
                     displayValue={currentlyWorkHere ? 'Present' : undefined}
                   />
-                  {!currentlyWorkHere && !endDate && (
-                    <p className="mt-1 text-xs text-amber-600">End date is required</p>
-                  )}
                   <label className="flex items-center gap-2 text-sm text-gray-600">
                     <input
                       type="checkbox"
@@ -1017,33 +1052,124 @@ export default function WorkExperienceModal({
               <h3 className={sectionTitleClassName}>Location & Work Mode</h3>
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Work Location <span className="text-amber-600">*</span></label>
-                  <input
-                    type="text"
-                    value={workLocation}
-                    onChange={(e) => setWorkLocation(e.target.value)}
-                    placeholder="e.g., Bangalore, India"
-                    className={`${inputClassName} ${!workLocation.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
-                  />
-                  {!workLocation.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Work location is required</p>
-                  )}
+                  <label className="block text-sm font-medium text-gray-700">Work Location</label>
+                  <div className="relative" ref={workLocationAutocompleteRef}>
+                    <input
+                      type="text"
+                      value={workLocation}
+                      autoComplete="off"
+                      onChange={(e) => {
+                        workLocationSuggestUserInitiatedRef.current = true;
+                        setWorkLocation(e.target.value);
+                      }}
+                      onFocus={() => {
+                        if (
+                          workLocationSuggestUserInitiatedRef.current &&
+                          (workLocationSuggestions.length > 0 ||
+                            workLocationSuggestLoading ||
+                            workLocationSuggestError)
+                        ) {
+                          setWorkLocationSuggestOpen(true);
+                        }
+                      }}
+                      onBlur={() => {
+                        window.setTimeout(() => {
+                          if (!workLocationSuggestOpenRef.current) return;
+                          setWorkLocationSuggestOpen(false);
+                          setWorkLocationHighlight(-1);
+                        }, 150);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowDown') {
+                          if (!workLocationSuggestOpen && workLocationSuggestions.length > 0) {
+                            setWorkLocationSuggestOpen(true);
+                          }
+                          if (workLocationSuggestOpen && workLocationSuggestions.length > 0) {
+                            e.preventDefault();
+                            setWorkLocationHighlight((i) =>
+                              Math.min(i + 1, workLocationSuggestions.length - 1),
+                            );
+                          }
+                        } else if (e.key === 'ArrowUp') {
+                          if (workLocationSuggestOpen && workLocationSuggestions.length > 0) {
+                            e.preventDefault();
+                            setWorkLocationHighlight((i) => Math.max(i - 1, 0));
+                          }
+                        } else if (e.key === 'Enter') {
+                          if (workLocationSuggestOpen && workLocationSuggestions.length > 0) {
+                            e.preventDefault();
+                            const pick =
+                              workLocationHighlight >= 0 && workLocationSuggestions[workLocationHighlight]
+                                ? workLocationSuggestions[workLocationHighlight]
+                                : workLocationSuggestions[0];
+                            if (pick) applyWorkLocationSuggestion(pick);
+                          }
+                        } else if (
+                          e.key === 'Tab' &&
+                          workLocationSuggestOpen &&
+                          workLocationSuggestions.length > 0
+                        ) {
+                          const pick =
+                            workLocationHighlight >= 0 && workLocationSuggestions[workLocationHighlight]
+                              ? workLocationSuggestions[workLocationHighlight]
+                              : workLocationSuggestions[0];
+                          if (pick) applyWorkLocationSuggestion(pick);
+                        } else if (e.key === 'Escape' && workLocationSuggestOpen) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setWorkLocationSuggestOpen(false);
+                          setWorkLocationHighlight(-1);
+                        }
+                      }}
+                      placeholder="Type city or country, then pick from the list"
+                      className={inputClassName}
+                    />
+                    {workLocationSuggestOpen ? (
+                      <div className="absolute left-0 top-[calc(100%+6px)] z-50 max-h-[min(280px,50vh)] w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-2 shadow-lg">
+                        {workLocationSuggestLoading ? (
+                          <div className="px-3 py-2 text-sm text-slate-500">Searching…</div>
+                        ) : workLocationSuggestError ? (
+                          <div className="px-3 py-2 text-sm text-red-600">{workLocationSuggestError}</div>
+                        ) : workLocationSuggestions.length === 0 ? (
+                          <div className="px-3 py-2 text-sm text-slate-500">
+                            No locations found. You can still type manually.
+                          </div>
+                        ) : (
+                          workLocationSuggestions.map((suggestion, idx) => (
+                            <button
+                              key={`${suggestion.countryCode}-${suggestion.stateCode}-${suggestion.value}-${idx}`}
+                              type="button"
+                              data-work-location-suggest-index={idx}
+                              onMouseEnter={() => setWorkLocationHighlight(idx)}
+                              onMouseDown={(ev) => ev.preventDefault()}
+                              onClick={() => applyWorkLocationSuggestion(suggestion)}
+                              className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${
+                                workLocationHighlight === idx ? 'bg-gray-50' : ''
+                              }`}
+                            >
+                              {formatCitySuggestionLabel(suggestion)}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Start typing a city or country and select a suggested location
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Work Mode <span className="text-amber-600">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Work Mode</label>
                   <select
                     value={workMode}
                     onChange={(e) => setWorkMode(e.target.value)}
-                    className={`${selectClassName} ${!workMode && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={selectClassName}
                   >
                     <option value="">Select work mode</option>
                     <option value="remote">Remote</option>
                     <option value="hybrid">Hybrid</option>
                     <option value="onsite">On-site</option>
                   </select>
-                  {!workMode && (
-                    <p className="mt-1 text-xs text-amber-600">Work mode is required</p>
-                  )}
                 </div>
               </div>
             </section>
@@ -1053,19 +1179,16 @@ export default function WorkExperienceModal({
               <h3 className={sectionTitleClassName}>Company Details</h3>
               <div className="grid grid-cols-2 gap-5">
                 <div className="col-span-2 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Company Profile <span className="text-amber-600">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Company Profile</label>
                   <textarea
                     value={companyProfile}
                     onChange={(e) => setCompanyProfile(e.target.value)}
                     placeholder="Brief description of the company..."
-                    className={`${textareaClassName} ${!companyProfile.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={textareaClassName}
                   />
-                  {!companyProfile.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Company profile is required</p>
-                  )}
                 </div>
                 <div className="col-span-2 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Company Turnover <span className="text-amber-600">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Company Turnover</label>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(7rem,8.75rem)_1fr]">
                     <select
                       value={companyTurnoverCurrency}
@@ -1085,13 +1208,10 @@ export default function WorkExperienceModal({
                       value={companyTurnoverAmount}
                       onChange={(e) => setCompanyTurnoverAmount(e.target.value)}
                       placeholder="e.g. 50 Cr, 1.2M, 25000000"
-                      className={`${inputClassName} ${!companyTurnoverAmount.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                      className={inputClassName}
                       aria-label="Company turnover amount"
                     />
                   </div>
-                  {!companyTurnoverAmount.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Enter company turnover amount</p>
-                  )}
                 </div>
               </div>
             </section>
@@ -1101,28 +1221,22 @@ export default function WorkExperienceModal({
               <h3 className={sectionTitleClassName}>Role Contribution</h3>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Key Responsibilities <span className="text-amber-600">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Key Responsibilities</label>
                   <textarea
                     value={keyResponsibilities}
                     onChange={(e) => setKeyResponsibilities(e.target.value)}
                     placeholder="Describe your primary duties and responsibilities..."
-                    className={`${textareaClassName} ${!keyResponsibilities.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={textareaClassName}
                   />
-                  {!keyResponsibilities.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Key responsibilities are required</p>
-                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Achievements <span className="text-amber-600">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Achievements</label>
                   <textarea
                     value={achievements}
                     onChange={(e) => setAchievements(e.target.value)}
                     placeholder="List your key accomplishments in this role..."
-                    className={`${textareaClassName} ${!achievements.trim() && 'border-amber-200 bg-amber-50/50 focus:border-amber-500 focus:ring-amber-500'}`}
+                    className={textareaClassName}
                   />
-                  {!achievements.trim() && (
-                    <p className="mt-1 text-xs text-amber-600">Achievements are required</p>
-                  )}
                 </div>
               </div>
             </section>
@@ -1132,7 +1246,7 @@ export default function WorkExperienceModal({
               <h3 className={sectionTitleClassName}>Skills & Documents</h3>
               <div className="grid grid-cols-2 gap-5">
                 <div className="col-span-2 space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">Skills Used <span className="text-amber-600">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700">Skills Used</label>
                   <div className="grid grid-cols-12 gap-2">
                     <input
                       type="text"
@@ -1185,7 +1299,6 @@ export default function WorkExperienceModal({
                 <div className="col-span-2 space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Upload Your Work Experience Certificates/Documents{' '}
-                    <span className="text-gray-500 text-xs font-normal">(Optional)</span>
                   </label>
               
               {/* Hidden file input */}
@@ -1320,15 +1433,6 @@ export default function WorkExperienceModal({
                 </div>
               </div>
             </section>
-
-            {hasAnyFormData && missingRequiredFields.length > 0 && (
-              <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2">
-                <p className="text-xs font-medium text-amber-700">
-                  Missing required fields: {missingRequiredFields.join(', ')}
-                </p>
-              </div>
-            )}
-
 
       </ProfileDrawer>
     </>

@@ -253,7 +253,7 @@ export default function VisaWorkAuthorizationModal({
     }
   }, [isOpen, mode, editingEntryId, initialData?.selectedDestination]);
 
-  const resetForm = () => {
+  function resetForm() {
     setSelectedDestination('');
     setRequiresVisa('');
     setVisaDetailsExpected({ id: 'expected', visaType: '', visaStatus: 'Active', documents: [] });
@@ -265,7 +265,7 @@ export default function VisaWorkAuthorizationModal({
     setExpandedSections({ expected: true });
     setCountrySearchQuery('');
     setIsCountryDropdownOpen(false);
-  };
+  }
 
   const handleAddVisaEntry = () => {
     if (!selectedDestination) {
@@ -316,14 +316,6 @@ export default function VisaWorkAuthorizationModal({
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
   };
-
-  const isFormComplete = selectedDestination && (
-    (requiresVisa === 'Yes' &&
-      visaDetailsExpected?.visaType &&
-      visaDetailsExpected?.visaStatus &&
-      visaDetailsExpected?.visaExpiryDate) ||
-    (requiresVisa === 'No' && visaWorkpermitRequired)
-  );
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections({
@@ -537,9 +529,7 @@ export default function VisaWorkAuthorizationModal({
             {/* Visa Type and Status */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Visa Type <span className="text-amber-600">*</span>
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Visa Type</label>
                 <select
                   value={sectionData.visaType}
                   onChange={(e) => handleVisaDetailChange(sectionId, 'visaType', e.target.value)}
@@ -585,10 +575,7 @@ export default function VisaWorkAuthorizationModal({
 
             {/* Work Permit Number */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Work Permit Number{' '}
-                <span className="text-gray-500 text-xs font-normal">(Optional)</span>
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Work Permit Number</label>
               <input
                 type="text"
                 value={sectionData.itemFamilyNumber || ''}
@@ -714,8 +701,7 @@ export default function VisaWorkAuthorizationModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={!isFormComplete}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
           >
             Save Visa & Work Authorization
           </button>
@@ -742,9 +728,7 @@ export default function VisaWorkAuthorizationModal({
                     : 'Choose country'
               }
               onClick={() => setIsCountryDropdownOpen((prev) => !prev)}
-              className={`flex h-11 w-full items-center justify-between gap-2 rounded-lg border px-4 text-left text-gray-900 shadow-sm transition hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                !selectedDestination ? 'border-amber-200 bg-amber-50/50' : 'border-gray-300 bg-white'
-              }`}
+              className="flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-4 text-left text-gray-900 shadow-sm transition hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <span className="flex min-w-0 flex-1 items-center">
                 {selectedCountryMeta ? (
@@ -810,9 +794,6 @@ export default function VisaWorkAuthorizationModal({
               </div>
             )}
           </div>
-          {!selectedDestination && (
-            <p className="mt-1 text-xs text-amber-600">Country selection is required</p>
-          )}
           <p className="mt-1 text-xs text-gray-500">
             Full world list — use search to filter quickly. Pick where you are legally authorized to work.
           </p>
@@ -824,7 +805,7 @@ export default function VisaWorkAuthorizationModal({
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Do you require a visa for this country?
             </label>
-            <div className={`flex gap-6 p-2 rounded-lg ${!requiresVisa ? 'bg-amber-50 border border-amber-200' : ''}`}>
+            <div className="flex gap-6 rounded-lg p-2">
               <label className="flex items-center gap-2">
                 <input
                   type="radio"
@@ -848,9 +829,6 @@ export default function VisaWorkAuthorizationModal({
                 <span className="text-sm text-gray-700">No</span>
               </label>
             </div>
-            {!requiresVisa && (
-              <p className="mt-1 text-xs text-amber-600">Please select an option</p>
-            )}
           </div>
         )}
 
@@ -860,39 +838,29 @@ export default function VisaWorkAuthorizationModal({
             {/* Row 1: Visa Type and Visa Status */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Visa Type <span className="text-amber-600">*</span>
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Visa Type</label>
                 <select
                   value={visaDetailsExpected?.visaType || ''}
                   onChange={(e) => handleVisaDetailChange('expected', 'visaType', e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.visaType ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select Visa Type</option>
                   {VISA_TYPES.map((type) => (
                     <option key={type} value={type}>{type}</option>
                   ))}
                 </select>
-                {!visaDetailsExpected?.visaType && (
-                  <p className="mt-1 text-[10px] text-amber-600">Required</p>
-                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Visa Status <span className="text-amber-600">*</span>
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Visa Status</label>
                 <select
                   value={visaDetailsExpected?.visaStatus || 'Active'}
                   onChange={(e) => handleVisaDetailChange('expected', 'visaStatus', e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!visaDetailsExpected?.visaStatus ? 'border-amber-200 bg-amber-50/50 focus:ring-amber-500' : 'border-gray-300'}`}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                 >
                   {VISA_STATUSES.map((status) => (
                     <option key={status} value={status}>{status}</option>
                   ))}
                 </select>
-                {!visaDetailsExpected?.visaStatus && (
-                  <p className="mt-1 text-[10px] text-amber-600">Required</p>
-                )}
               </div>
             </div>
 
@@ -900,25 +868,18 @@ export default function VisaWorkAuthorizationModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Visa Expiry Date <span className="text-amber-600">*</span>
+                  Visa Expiry Date
                 </label>
                 <ProfileDatePicker
                   value={visaDetailsExpected?.visaExpiryDate || ''}
                   onChange={(value) => handleVisaDetailChange('expected', 'visaExpiryDate', value)}
-                  invalid={!visaDetailsExpected?.visaExpiryDate}
                 />
-                {!visaDetailsExpected?.visaExpiryDate && (
-                  <p className="mt-1 text-xs text-amber-600">Expiry date is required</p>
-                )}
                 <p className="mt-1 text-xs text-gray-500">
                   This helps employers understand your visa timeline.
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Work Permit Number{' '}
-                  <span className="text-gray-500 text-xs font-normal">(Optional)</span>
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Work Permit Number</label>
                 <input
                   type="text"
                   value={visaDetailsExpected?.itemFamilyNumber || ''}
@@ -933,7 +894,7 @@ export default function VisaWorkAuthorizationModal({
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Upload Visa / Work Permit Document{' '}
-                <span className="text-gray-500 text-xs font-normal">(Optional)</span>
+                
               </label>
               <input
                 ref={(el) => { fileInputRefs.current['expected'] = el; }}
@@ -1066,7 +1027,7 @@ export default function VisaWorkAuthorizationModal({
         {/* Additional Notes (Optional) */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Additional Notes (Optional)
+            Additional Notes
           </label>
           <textarea
             value={additionalRemarks}
