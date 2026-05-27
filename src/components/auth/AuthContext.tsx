@@ -25,12 +25,16 @@ interface User {
   profilePhotoUrl?: string | null;
 }
 
+type LoginUserData = Partial<User> & {
+  id?: string | number;
+};
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string, candidateId: string, userData?: any) => void;
+  login: (token: string, candidateId: string, userData?: LoginUserData) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -51,6 +55,7 @@ const PUBLIC_ROUTES = [
   '/services',
   '/employers',
   '/aicveditor',
+  '/apply',
   '/searchjobs',
   '/ats-check',
   '/courses',
@@ -92,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             'Authorization': `Bearer ${getStoredToken()}`
           }
         });
-      } catch (error) {
+      } catch {
       }
     }
 
@@ -170,13 +175,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           logout();
         }
       }
-    } catch (error) {
+    } catch {
     } finally {
       setIsLoading(false);
     }
   }, [logout, token]);
 
-  const login = useCallback((newToken: string, candidateId: string, userData?: any) => {
+  const login = useCallback((newToken: string, candidateId: string, userData?: LoginUserData) => {
     localStorage.setItem('token', newToken);
     localStorage.setItem('candidateId', candidateId);
     sessionStorage.setItem('token', newToken);

@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthContext";
-import { BookMarked, BriefcaseBusiness, Gauge, Rocket, Target } from "lucide-react";
+import { BookMarked, BriefcaseBusiness, Gauge, Target } from "lucide-react";
 import { GlobalLoader } from "@/components/auth/GlobalLoader";
+import ApplicationSuccessModal from "@/components/modals/ApplicationSuccessModal";
 import ProfileCompletionDrawer from "@/components/profile/ProfileCompletionDrawer";
 import { showSuccessToast } from "@/components/common/toast/toast";
 import ApplicationPipelineCard from "@/components/dashboard/ApplicationPipelineCard";
@@ -29,6 +30,7 @@ import {
   type ProfileCompletenessResponse,
 } from "@/lib/profile-completion";
 import { getAuthHeaders, getStoredCandidateId, syncAuthStorage } from "@/lib/auth-storage";
+import { clearPendingJobApply, readPendingJobApply } from "@/lib/job-apply-flow";
 import { useTabVisibilityRefresh } from "@/hooks/useTabVisibilityRefresh";
 import { dispatchProfilePhotoUpdated } from "@/lib/profile-photo";
 
@@ -55,6 +57,12 @@ function asNullableNumber(value: unknown): number | null {
 
 function mergeUnique(items: string[]) {
   return Array.from(new Set(items.filter(Boolean)));
+}
+
+function formatAppliedDate(value?: string | null) {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return new Date().toLocaleDateString("en-GB");
+  return date.toLocaleDateString("en-GB");
 }
 
 function createFallbackCourses(
@@ -182,6 +190,7 @@ export default function CandidateDashboardPage() {
   const jobMatchesRef = useRef<HTMLDivElement>(null);
   const matchesHighlightTimeoutRef = useRef<number | null>(null);
   const matchesArrivalTimeoutRef = useRef<number | null>(null);
+  const pendingApplyInFlightRef = useRef<string | null>(null);
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -196,6 +205,17 @@ export default function CandidateDashboardPage() {
   ]);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
+  const [pendingApplyBanner, setPendingApplyBanner] = useState<{
+    tone: "success" | "info" | "error";
+    title: string;
+    description: string;
+  } | null>(null);
+  const [submittedApplicationModal, setSubmittedApplicationModal] = useState<{
+    jobTitle: string;
+    company: string;
+    appliedDate: string;
+    applicationId?: string;
+  } | null>(null);
   const [profileCompletionDetails, setProfileCompletionDetails] =
     useState<ProfileCompletenessResponse | null>(null);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
@@ -300,6 +320,97 @@ export default function CandidateDashboardPage() {
     void refreshProfileCompleteness(candidateId);
     void fetchDashboardData(candidateId);
   }, [candidateId, refreshProfileCompleteness, fetchDashboardData]);
+
+  useEffect(() => {
+    if (!candidateId || !isAuthenticated) return;
+
+    const pendingApply = readPendingJobApply();
+    if (!pendingApply?.jobId) return;
+    if (pendingApplyInFlightRef.current === pendingApply.jobId) return;
+
+    let cancelled = false;
+    pendingApplyInFlightRef.current = pendingApply.jobId;
+
+    const submitPendingApplication = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/applications`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            candidateId,
+            jobId: pendingApply.jobId,
+            screeningAnswers: {
+              submittedVia: "phase2_job_link_redirect",
+              applyLinkToken: pendingApply.token,
+              tenantDbName: pendingApply.tenantDbName || null,
+            },
+          }),
+        });
+
+        const result = (await response.json().catch(() => ({}))) as {
+          message?: string;
+          data?: { applicationId?: string; appliedAt?: string; job?: { title?: string; company?: string } };
+        };
+        const message = String(result?.message || "").trim();
+
+        if (!response.ok) {
+          if (message.toLowerCase().includes("already applied")) {
+            clearPendingJobApply();
+            if (!cancelled) {
+              setPendingApplyBanner({
+                tone: "info",
+                title: "Application already submitted",
+                description: `You had already applied for ${pendingApply.jobTitle} at ${pendingApply.company}.`,
+              });
+              showSuccessToast("Application already submitted");
+              void fetchDashboardData(candidateId);
+            }
+            return;
+          }
+          throw new Error(message || "Unable to submit your application right now.");
+        }
+
+        clearPendingJobApply();
+        if (!cancelled) {
+          const appliedDate = formatAppliedDate(result?.data?.appliedAt);
+          const resolvedJobTitle = String(result?.data?.job?.title || pendingApply.jobTitle || "Job");
+          const resolvedCompany = String(result?.data?.job?.company || pendingApply.company || "Company");
+          setPendingApplyBanner({
+            tone: "success",
+            title: "Application submitted",
+            description: `Your application for ${resolvedJobTitle} at ${resolvedCompany} has been submitted successfully.`,
+          });
+          setSubmittedApplicationModal({
+            jobTitle: resolvedJobTitle,
+            company: resolvedCompany,
+            appliedDate,
+            applicationId: result?.data?.applicationId,
+          });
+          showSuccessToast("Application submitted");
+          void fetchDashboardData(candidateId);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setPendingApplyBanner({
+            tone: "error",
+            title: "Application pending",
+            description:
+              error instanceof Error
+                ? error.message
+                : "We could not submit your application automatically. Please try again from the jobs page.",
+          });
+        }
+      } finally {
+        pendingApplyInFlightRef.current = null;
+      }
+    };
+
+    void submitPendingApplication();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [candidateId, fetchDashboardData, isAuthenticated]);
 
   useTabVisibilityRefresh(() => {
     if (!isAuthenticated) return;
@@ -771,7 +882,7 @@ export default function CandidateDashboardPage() {
 
   const dashboardName = getDashboardName(
     dashboardData?.profile || 
-    (profileCompletionDetails ? { fullName: "Candidate" } as any : null)
+    (profileCompletionDetails ? { fullName: "Candidate" } : null)
   );
   const greeting = getDynamicGreeting(dashboardName, filteredJobMatches.length);
 
@@ -852,6 +963,21 @@ export default function CandidateDashboardPage() {
             onOpenMatches={handleJumpToMatches}
           />
 
+          {pendingApplyBanner ? (
+            <div
+              className={`rounded-[24px] border px-5 py-4 shadow-sm ${
+                pendingApplyBanner.tone === "success"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                  : pendingApplyBanner.tone === "info"
+                    ? "border-sky-200 bg-sky-50 text-sky-900"
+                    : "border-amber-200 bg-amber-50 text-amber-900"
+              }`}
+            >
+              <p className="text-sm font-black tracking-tight">{pendingApplyBanner.title}</p>
+              <p className="mt-1 text-sm font-medium opacity-90">{pendingApplyBanner.description}</p>
+            </div>
+          ) : null}
+
           <div className="grid items-start gap-3 xl:grid-cols-[minmax(300px,0.82fr)_minmax(0,1.45fr)]">
             <div className="space-y-3">
               <ProfileOverviewCard
@@ -916,6 +1042,15 @@ export default function CandidateDashboardPage() {
           }}
         />
       ) : null}
+
+      <ApplicationSuccessModal
+        isOpen={Boolean(submittedApplicationModal)}
+        onClose={() => setSubmittedApplicationModal(null)}
+        jobTitle={submittedApplicationModal?.jobTitle || "Job"}
+        company={submittedApplicationModal?.company || "Company"}
+        appliedDate={submittedApplicationModal?.appliedDate || formatAppliedDate()}
+        applicationId={submittedApplicationModal?.applicationId}
+      />
     </div>
   );
 }
