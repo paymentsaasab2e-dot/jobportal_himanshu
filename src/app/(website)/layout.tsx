@@ -4,6 +4,7 @@ import Navbar from "./_components/Navbar";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthContext";
 import Header from "@/components/common/Header";
+import { stripLocaleFromPathname } from "@/lib/i18n";
 
 export default function WebsiteSiteLayout({
   children,
@@ -11,6 +12,7 @@ export default function WebsiteSiteLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const normalizedPath = stripLocaleFromPathname(pathname || "/");
   const { isAuthenticated, user } = useAuth();
 
   // Pages under (website) that must always show the marketing Navbar
@@ -32,9 +34,9 @@ export default function WebsiteSiteLayout({
   ]);
 
   const usesMarketingNavbar =
-    marketingNavbarPaths.has(pathname) ||
-    pathname.startsWith("/employers/") ||
-    pathname.startsWith("/services/");
+    marketingNavbarPaths.has(normalizedPath) ||
+    normalizedPath.startsWith("/employers/") ||
+    normalizedPath.startsWith("/services/");
 
   return (
     <div className="flex flex-col min-h-screen selection:bg-[#28A8DF] selection:text-white">

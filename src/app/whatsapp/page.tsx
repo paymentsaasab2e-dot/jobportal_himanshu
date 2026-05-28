@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Mail, AlertCircle, Sparkles, TrendingUp, CheckCircle2, Star } from "lucide-react";
 
@@ -15,9 +16,12 @@ import {
   validateMathCaptchaAnswer,
   type MathCaptchaChallenge,
 } from '@/components/auth/MathCaptcha';
+import { AppLocale, localizePath } from "@/lib/i18n";
 
 export default function WhatsAppLogin() {
   const router = useRouter();
+  const locale = useLocale() as AppLocale;
+  const t = useTranslations();
   const [selectedCountry, setSelectedCountry] = useState(
     ALL_COUNTRY_CODES.find((c) => c.code === "CM") || ALL_COUNTRY_CODES[0]
   );
@@ -144,30 +148,30 @@ export default function WhatsAppLogin() {
 
     // Validation
     if (!whatsappNumberValue.trim()) {
-      setError("Please enter your WhatsApp number");
+      setError(t("whatsapp.enterWhatsappNumber"));
       return;
     }
 
     if (!emailValue.trim()) {
-      setError("Please enter your mail address");
+      setError(t("whatsapp.enterMailAddress"));
       return;
     }
 
     const normalizedEmail = emailValue.trim().toLowerCase();
     const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
     if (!gmailRegex.test(normalizedEmail)) {
-      setError("Please enter a valid mail address");
+      setError(t("whatsapp.enterValidMailAddress"));
       return;
     }
 
     const cleanNumber = whatsappNumberValue.replace(/\D/g, "");
     if (cleanNumber.length !== selectedCountry.phoneLength) {
-      setError(`Please enter exactly ${selectedCountry.phoneLength} digits for WhatsApp number`);
+      setError(t("whatsapp.exactDigitsWhatsapp", { count: selectedCountry.phoneLength }));
       return;
     }
 
     if (!captchaChallenge || !validateMathCaptchaAnswer(captchaChallenge, captchaAnswer)) {
-      setCaptchaError("Please solve the math question correctly");
+      setCaptchaError(t("whatsapp.solveMathQuestion"));
       return;
     }
 
@@ -189,7 +193,7 @@ export default function WhatsAppLogin() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to send OTP");
+        throw new Error(data.message || t("whatsapp.failedToSendOtp"));
       }
 
       // Store WhatsApp number and country code in sessionStorage for verify page
@@ -209,20 +213,20 @@ export default function WhatsAppLogin() {
         sessionStorage.removeItem("otpPreview");
       }
 
-      showSuccessToast("OTP sent", "Check your email for the verification code.");
+      showSuccessToast(t("whatsapp.otpSent"), t("whatsapp.checkEmailForCode"));
 
       // Navigate to verify page
-      router.push("/whatsapp/verify");
+      router.push(localizePath("/whatsapp/verify", locale));
     } catch (err: unknown) {
       const isNetworkFail =
         err instanceof TypeError &&
         (err.message === "Failed to fetch" || err.message.includes("fetch"));
       setError(
         isNetworkFail
-          ? `Cannot reach the API (${API_BASE_URL}). Start the backend on port 5000.`
+          ? t("whatsapp.cannotReachApi", { apiBaseUrl: API_BASE_URL })
           : err instanceof Error
             ? err.message
-            : "Something went wrong. Please try again.",
+            : t("whatsapp.somethingWentWrong"),
       );
       console.error("Error sending OTP:", err);
     } finally {
@@ -241,7 +245,7 @@ export default function WhatsAppLogin() {
 
       {/* Header (Cleaned up, no floating Help) */}
       <header className="flex flex-none items-center justify-between px-8 py-8 relative z-10 w-full max-w-[1440px] mx-auto">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push(localizePath('/', locale))}>
           <Image
             src="/SAASA%20Logo.png"
             alt="SAASA B2E"
@@ -262,10 +266,10 @@ export default function WhatsAppLogin() {
             
             <div className="mb-8 text-center">
               <h1 className="text-[28px] font-black text-slate-900 tracking-tight leading-tight">
-                Create your account
+                {t("whatsapp.createAccount")}
               </h1>
               <p className="mt-3 text-[15px] font-medium text-slate-500 leading-relaxed px-2">
-                Enter your standard contact details safely. We'll send a code to your email.
+                {t("whatsapp.enterContactDetails")}
               </p>
             </div>
 
@@ -273,7 +277,7 @@ export default function WhatsAppLogin() {
               
               {/* WhatsApp number input group */}
               <div>
-                <label className="block text-[12px] font-black text-slate-700 uppercase tracking-widest mb-2 ml-1">WhatsApp Number</label>
+                <label className="block text-[12px] font-black text-slate-700 uppercase tracking-widest mb-2 ml-1">{t("whatsapp.whatsappNumber")}</label>
                 <div className="flex relative rounded-[16px] border border-slate-200 shadow-sm overflow-visible bg-white focus-within:ring-4 focus-within:ring-sky-100/50 focus-within:border-sky-400 transition-all">
                   
                   {/* Country Dropdown trigger inside input */}
@@ -297,13 +301,13 @@ export default function WhatsAppLogin() {
                         <div className="sticky top-0 bg-white z-10 border-b border-slate-100">
                           <div className="px-3 py-2.5 flex items-center gap-2">
                             <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
-                              <span className="text-slate-400 text-xs">Search:</span>
+                              <span className="text-slate-400 text-xs">{t("whatsapp.searchLabel")}</span>
                               <input
                                 ref={searchInputRef}
                                 type="text"
                                 value={countrySearch}
                                 onChange={(e) => setCountrySearch(e.target.value)}
-                                placeholder="Type country or code..."
+                                placeholder={t("whatsapp.typeCountryOrCode")}
                                 className="flex-1 bg-transparent text-[13px] font-semibold text-slate-700 outline-none placeholder:text-slate-400"
                               />
                               {countrySearch && (
@@ -322,7 +326,7 @@ export default function WhatsAppLogin() {
                           </div>
                           {countrySearch && (
                             <div className="px-3 pb-2 text-[11px] text-slate-500">
-                              Found {filteredCountries.length} result{filteredCountries.length !== 1 ? 's' : ''}
+                              {t("whatsapp.foundResults", { count: filteredCountries.length })}
                             </div>
                           )}
                         </div>
@@ -341,13 +345,13 @@ export default function WhatsAppLogin() {
                         ))}
                         {filteredCountries.length === 0 && (
                           <div className="px-4 py-4 text-center">
-                            <p className="text-[13px] font-medium text-slate-500">No country found</p>
+                            <p className="text-[13px] font-medium text-slate-500">{t("whatsapp.noCountryFound")}</p>
                             <button
                               type="button"
                               onClick={() => setCountrySearch("")}
                               className="mt-2 text-[12px] text-sky-600 hover:text-sky-700 font-semibold"
                             >
-                              Clear search
+                              {t("whatsapp.clearSearch")}
                             </button>
                           </div>
                         )}
@@ -377,7 +381,7 @@ export default function WhatsAppLogin() {
                 </div>
                 <div className="flex items-center justify-between mt-1 px-1">
                   <p className="text-[11px] font-bold text-slate-400">
-                    {selectedCountry.name}: {selectedCountry.phoneLength} digits required
+                    {t("whatsapp.digitsRequired", { country: selectedCountry.name, count: selectedCountry.phoneLength })}
                   </p>
                   <p className={`text-[11px] font-bold ${whatsappNumberValue.length === selectedCountry.phoneLength ? 'text-emerald-500' : 'text-slate-400'}`}>
                     {whatsappNumberValue.length}/{selectedCountry.phoneLength}
@@ -387,7 +391,7 @@ export default function WhatsAppLogin() {
 
               {/* Email input group */}
               <div>
-                <label className="block text-[12px] font-black text-slate-700 uppercase tracking-widest mb-2 ml-1">mail Address</label>
+                <label className="block text-[12px] font-black text-slate-700 uppercase tracking-widest mb-2 ml-1">{t("whatsapp.mailAddress")}</label>
                 <div className="relative rounded-[16px] border border-slate-200 shadow-sm overflow-hidden bg-white focus-within:ring-4 focus-within:ring-sky-100/50 focus-within:border-sky-400 transition-all">
                   <div className="absolute left-4 top-0 bottom-0 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5 text-slate-400" />
@@ -424,13 +428,13 @@ export default function WhatsAppLogin() {
               {/* Dev Mode OTP */}
               {otpDisplay && (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 mt-4">
-                  <p className="text-[11px] font-black text-emerald-700 uppercase tracking-widest mb-3">Development Mode</p>
+                  <p className="text-[11px] font-black text-emerald-700 uppercase tracking-widest mb-3">{t("whatsapp.developmentMode")}</p>
                   <div className="flex items-center gap-4">
                     <span className="bg-white border border-emerald-200 text-emerald-800 font-mono font-black text-xl px-4 py-2 rounded-xl shadow-sm tracking-[0.2em]">
                       {otpDisplay}
                     </span>
                     <p className="text-[13px] font-semibold text-emerald-700 leading-snug flex-1">
-                      OTP delivery bypassed.
+                      {t("whatsapp.otpDeliveryBypassed")}
                     </p>
                   </div>
                 </div>
@@ -447,11 +451,11 @@ export default function WhatsAppLogin() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Sending code...
+                    {t("whatsapp.sendingCode")}
                   </>
                 ) : (
                   <>
-                    Continue
+                    {t("whatsapp.continue")}
                     <ArrowRight className="w-5 h-5 ml-1" />
                   </>
                 )}
@@ -462,7 +466,7 @@ export default function WhatsAppLogin() {
             <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
               <p className="text-[13px] font-bold text-slate-500 tracking-tight">
-                Secure passwordless entry
+                {t("whatsapp.securePasswordlessEntry")}
               </p>
             </div>
 
@@ -470,12 +474,12 @@ export default function WhatsAppLogin() {
           
           {/* Help & Terms Restructured Below */}
           <div className="mt-8 flex flex-col items-center lg:items-end w-full max-w-[440px] gap-3 px-2">
-            <Link href="/help" className="text-[14px] font-bold text-sky-600 hover:text-sky-700 transition-colors flex items-center gap-1.5 hover:underline decoration-sky-300 underline-offset-4">
-              Need help entering?
+            <Link href={localizePath("/help", locale)} className="text-[14px] font-bold text-sky-600 hover:text-sky-700 transition-colors flex items-center gap-1.5 hover:underline decoration-sky-300 underline-offset-4">
+              {t("whatsapp.needHelpEntering")}
             </Link>
             <p className="text-center lg:text-right text-[12px] font-medium text-slate-400 leading-relaxed max-w-[380px]">
-              By continuing, you agree to our <Link href="/terms" className="text-slate-600 hover:text-sky-600 transition-colors font-bold">Terms of Service</Link> & <Link href="/privacypolicy" className="text-slate-600 hover:text-sky-600 transition-colors font-bold">Privacy Policy</Link>. 
-              You consent to the use of your data for AI-powered career analysis and job matching.
+              {t("whatsapp.byContinuing")} <Link href={localizePath("/terms", locale)} className="text-slate-600 hover:text-sky-600 transition-colors font-bold">{t("footer.termsOfService")}</Link> {t("whatsapp.and")} <Link href={localizePath("/privacypolicy", locale)} className="text-slate-600 hover:text-sky-600 transition-colors font-bold">{t("footer.privacyPolicy")}</Link>. 
+              {t("whatsapp.dataConsent")}
             </p>
           </div>
 
@@ -489,10 +493,10 @@ export default function WhatsAppLogin() {
             <div className="absolute top-1/2 left-[40%] -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-sky-200/40 blur-[100px] rounded-full pointer-events-none" />
 
             <h2 className="text-[40px] font-black text-slate-900 tracking-tight leading-[1.1] mb-5 relative z-10 drop-shadow-sm">
-              Enter the <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-sky-300">intelligent era</span><br />of hiring.
+              {t("whatsapp.enterThe")} <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-sky-300">{t("whatsapp.intelligentEra")}</span><br />{t("whatsapp.ofHiring")}
             </h2>
             <p className="text-[18px] font-medium text-slate-500 leading-relaxed mb-16 relative z-10 max-w-[420px]">
-              Our OS builds your AI profile, validates your experience, and matches you with top-tier opportunities instantly.
+              {t("whatsapp.aiProfileSubtitle")}
             </p>
 
             <div className="relative w-full h-[320px]">
@@ -503,10 +507,10 @@ export default function WhatsAppLogin() {
                     <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md">
                       <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                     </div>
-                    <span className="text-[11px] font-bold tracking-widest uppercase bg-white/10 px-3 py-1.5 rounded-full text-slate-300">ATS Match</span>
+                    <span className="text-[11px] font-bold tracking-widest uppercase bg-white/10 px-3 py-1.5 rounded-full text-slate-300">{t("whatsapp.atsMatch")}</span>
                  </div>
                  <p className="text-[46px] font-black leading-none mb-1 tracking-tighter">94<span className="text-[24px] text-slate-400 font-bold ml-1">%</span></p>
-                 <p className="text-[14px] font-semibold text-slate-400">Exceptional Fit Profile</p>
+                 <p className="text-[14px] font-semibold text-slate-400">{t("whatsapp.exceptionalFitProfile")}</p>
               </div>
 
               {/* Card 2: Skill Engine (Glassmorphism overlap) */}
@@ -516,8 +520,8 @@ export default function WhatsAppLogin() {
                        <Sparkles className="w-6 h-6 text-sky-500" />
                     </div>
                     <div>
-                       <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Extraction</p>
-                       <p className="text-[16px] font-black text-slate-800 tracking-tight leading-none">Skills Validated</p>
+                       <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{t("whatsapp.extraction")}</p>
+                       <p className="text-[16px] font-black text-slate-800 tracking-tight leading-none">{t("whatsapp.skillsValidated")}</p>
                     </div>
                  </div>
                  <div className="flex flex-wrap gap-2">
@@ -537,9 +541,9 @@ export default function WhatsAppLogin() {
                     <div className="flex items-center justify-between mb-2">
                        <div className="flex items-center gap-1.5">
                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                         <span className="text-[13px] font-black text-slate-800 tracking-tight">Top 5% Candidate</span>
+                         <span className="text-[13px] font-black text-slate-800 tracking-tight">{t("whatsapp.topCandidate")}</span>
                        </div>
-                       <span className="text-[12px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-right shrink-0">Strong</span>
+                       <span className="text-[12px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-right shrink-0">{t("whatsapp.strong")}</span>
                     </div>
                     <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                        <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 w-[95%] rounded-full shadow-sm" />

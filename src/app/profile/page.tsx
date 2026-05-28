@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { ProfilePageShell } from '@/components/profile/layout';
 import {
@@ -226,6 +227,7 @@ function candidateNamesLikelyMatch(leftName: string, rightName: string): boolean
 
 export default function ProfilePage() {
   const router = useRouter();
+  const t = useTranslations();
   const { user, refreshUser } = useAuth();
   const [isBasicInfoModalOpen, setIsBasicInfoModalOpen] = useState(false);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -1492,7 +1494,7 @@ export default function ProfilePage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-base font-semibold">Career preferences updated</p>
+                  <p className="text-base font-semibold">{t("profile.careerPreferencesUpdated")}</p>
                   <p className="mt-1 text-sm text-slate-600">{careerPreferencesSuccessMessage}</p>
                 </div>
               </div>
@@ -1500,7 +1502,7 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => setCareerPreferencesSuccessMessage('')}
                 className="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:text-slate-700"
-                aria-label="Close success message"
+                aria-label={t("profile.closeSuccessMessage")}
               >
                 <svg
                   width="16"
@@ -4444,13 +4446,13 @@ export default function ProfilePage() {
                 await refreshProfileData(candidateId);
                 setCareerPreferencesSuccessMessage('');
                 setIsCareerPreferencesModalOpen(false);
-                showAlert('Career preferences updated');
+                showAlert(t("profile.careerPreferencesUpdated"));
               } else {
-                showAlert('Failed to save career preferences');
+                showAlert(t("profile.failedToSaveCareerPreferences"));
               }
             } catch (error) {
               console.error('Error saving career preferences:', error);
-              showAlert('Error saving career preferences');
+              showAlert(t("profile.errorSavingCareerPreferences"));
             }
           }
         }}

@@ -4,6 +4,8 @@ import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import { useLocale, useTranslations } from "next-intl";
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 import { API_BASE_URL, getApiBaseUrl } from '@/lib/api-base';
 import { useAuth } from '@/components/auth/AuthContext';
@@ -20,6 +22,7 @@ import {
 import NotificationPanel from '@/components/common/NotificationPanel';
 import ProfilePanel from '@/components/common/ProfilePanel';
 import GlobalAIAssistant from '@/components/common/GlobalAIAssistant';
+import { AppLocale, localizePath, stripLocaleFromPathname } from '@/lib/i18n';
 const PRIMARY = '#28A8E1';
 const JOBS_PATH = '/explore-jobs';
 const SERVICES_PATH = '/services';
@@ -57,6 +60,9 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
     const { user, isAuthenticated: isLoggedIn, logout } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
+    const normalizedPath = stripLocaleFromPathname(pathname || "/");
+    const locale = useLocale() as AppLocale;
+    const t = useTranslations();
     const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     
@@ -67,17 +73,17 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
     const isActive = useCallback(
         (path: string) => {
             if (path === '/candidate-dashboard') {
-                return pathname === path;
+                return normalizedPath === path;
             }
             if (path === '/applications') {
-                return pathname?.startsWith('/applications') || pathname?.startsWith('/interviews');
+                return normalizedPath?.startsWith('/applications') || normalizedPath?.startsWith('/interviews');
             }
             if (path === '/lms/courses') {
-                return pathname?.startsWith('/lms');
+                return normalizedPath?.startsWith('/lms');
             }
-            return pathname?.startsWith(path);
+            return normalizedPath?.startsWith(path);
         },
-        [pathname]
+        [normalizedPath]
     );
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -237,25 +243,25 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
         return () => clearTimeout(t);
     }, [showJobSearch]);
 
-    const isLandingPage = pathname === '/';
+    const isLandingPage = normalizedPath === '/';
 
     // Core public items
     const publicNavItems: NavItem[] = [
-        { label: 'Explore Jobs', path: '/explore-jobs' },
-        { label: 'Courses', path: '/lms/courses' },
-        { label: 'Services', path: SERVICES_PATH },
+        { label: t('nav.exploreJobs'), path: '/explore-jobs' },
+        { label: t('nav.courses'), path: '/lms/courses' },
+        { label: t('nav.services'), path: SERVICES_PATH },
     ];
 
     const navItems: NavItem[] = isLandingPage
         ? publicNavItems
         : isLoggedIn
           ? [
-              { label: 'Dashboard', path: '/candidate-dashboard' },
-              { label: 'Jobs', path: '/explore-jobs' },
-              { label: 'Applications', path: '/applications' },
-              { label: 'LMS', path: '/lms/courses' },
-              { label: 'Profile', path: '/profile' },
-              { label: 'Services', path: SERVICES_PATH, openInNewTab: true },
+              { label: t('nav.dashboard'), path: '/candidate-dashboard' },
+              { label: t('nav.jobs'), path: '/explore-jobs' },
+              { label: t('nav.applications'), path: '/applications' },
+              { label: t('nav.lms'), path: '/lms/courses' },
+              { label: t('nav.profile'), path: '/profile' },
+              { label: t('nav.services'), path: SERVICES_PATH, openInNewTab: true },
             ]
           : publicNavItems;
 
@@ -267,7 +273,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
             }
             return;
         }
-        router.push(item.path);
+        router.push(localizePath(item.path, locale));
     };
 
     const handleJobsToggleSearch = () => {
@@ -281,10 +287,10 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
     const handleSearch = () => {
         const q = jobSearchValue.trim();
         if (!q) return;
-        router.push(`${JOBS_PATH}?q=${encodeURIComponent(q)}`);
+        router.push(`${localizePath(JOBS_PATH, locale)}?q=${encodeURIComponent(q)}`);
     };
 
-    const isJobsPage = pathname?.startsWith(JOBS_PATH) ?? false;
+    const isJobsPage = normalizedPath?.startsWith(JOBS_PATH) ?? false;
 
     return (
         <>
@@ -326,7 +332,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                             width={110}
                             height={32}
                             className="h-8 w-auto cursor-pointer"
-                            onClick={() => router.push('/candidate-dashboard')}
+                            onClick={() => router.push(localizePath('/candidate-dashboard', locale))}
                         />
                     </div>
 
@@ -382,7 +388,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                         <button
                                             type="button"
                                             onClick={handleSearchJobsButtonClick}
-                                            aria-label="Universal Search"
+                                            aria-label={t("nav.universalSearch")}
                                             className="flex items-center justify-center p-2 rounded-full hover:bg-gray-100/80 transition-all duration-200 group/search-btn"
                                         >
                                             <span
@@ -440,7 +446,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                                         if (e.key === 'Enter') { e.preventDefault(); handleSearch(); }
                                                         if (e.key === 'Escape') { setShowJobSearch(false); }
                                                     }}
-                                                    placeholder="Search for roles, companies, or insights..."
+                                                    placeholder={t("nav.searchPlaceholder")}
                                                     className="w-full rounded-full border bg-white pl-12 pr-14 py-4 text-base focus:outline-none focus:ring-2 focus:ring-offset-0"
                                                     style={{
                                                         borderColor: 'var(--border-color)',
@@ -453,7 +459,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                                 <motion.button
                                                     type="button"
                                                     onClick={handleSearch}
-                                                    aria-label="Search jobs"
+                                                    aria-label={t("nav.searchJobs")}
                                                     initial={{ opacity: 0, scale: 0.7 }}
                                                     animate={{ opacity: 1, scale: 1 }}
                                                     exit={{ opacity: 0, scale: 0.7 }}
@@ -531,6 +537,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
 
                     {/* Right side icons - Settings, Notifications, Profile / Login */}
                     <div className="flex items-center gap-3">
+                        <LanguageSwitcher />
                         {isLoggedIn && !isLandingPage ? (
                             <>
                                 {/* Notifications trigger */}
@@ -606,24 +613,24 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                             <div className="hidden sm:flex items-center gap-4">
                                 <button
                                     type="button"
-                                    onClick={() => router.push('/employers')}
+                                    onClick={() => router.push(localizePath('/employers', locale))}
                                     className="text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors mr-2"
                                 >
-                                    For Employers
+                                    {t("common.forEmployers")}
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => router.push('/whatsapp')}
+                                    onClick={() => router.push(localizePath('/whatsapp', locale))}
                                     className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors"
                                 >
-                                    Log In
+                                    {t("common.login")}
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => router.push('/whatsapp')}
+                                    onClick={() => router.push(localizePath('/whatsapp', locale))}
                                     className="rounded-full bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
                                 >
-                                    Sign Up
+                                    {t("common.signup")}
                                 </button>
                             </div>
                         )}
@@ -640,7 +647,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                 isOpen={isNotificationsModalOpen}
                 onClose={() => setIsNotificationsModalOpen(false)}
                 onNavigate={(path) => {
-                    router.push(path);
+                    router.push(localizePath(path, locale));
                     setIsNotificationsModalOpen(false);
                 }}
             />
@@ -648,7 +655,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                 isOpen={isProfileModalOpen}
                 onClose={() => setIsProfileModalOpen(false)}
                 onNavigate={(path) => {
-                    router.push(path);
+                    router.push(localizePath(path, locale));
                     setIsProfileModalOpen(false);
                 }}
                 profilePhotoUrl={dashboardUser?.photoUrl || user?.profilePhotoUrl || null}

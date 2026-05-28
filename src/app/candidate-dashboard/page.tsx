@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/components/auth/AuthContext";
 import { BookMarked, BriefcaseBusiness, Gauge, Target } from "lucide-react";
 import { GlobalLoader } from "@/components/auth/GlobalLoader";
@@ -33,6 +34,7 @@ import { getAuthHeaders, getStoredCandidateId, syncAuthStorage } from "@/lib/aut
 import { clearPendingJobApply, readPendingJobApply } from "@/lib/job-apply-flow";
 import { useTabVisibilityRefresh } from "@/hooks/useTabVisibilityRefresh";
 import { dispatchProfilePhotoUpdated } from "@/lib/profile-photo";
+import { AppLocale, localizePath } from "@/lib/i18n";
 
 const PAGE_BG =
   "radial-gradient(circle at top left, rgba(40,168,225,0.13), transparent 28%), radial-gradient(circle at 85% 12%, rgba(40,168,223,0.1), transparent 16%), radial-gradient(circle at 18% 82%, rgba(252,150,32,0.08), transparent 18%), linear-gradient(180deg, #f5fafd 0%, #f8fcff 44%, #fcfdff 100%)";
@@ -59,10 +61,14 @@ function mergeUnique(items: string[]) {
   return Array.from(new Set(items.filter(Boolean)));
 }
 
-function formatAppliedDate(value?: string | null) {
+function getDateLocale(locale: AppLocale) {
+  return locale === "fr" ? "fr-FR" : "en-GB";
+}
+
+function formatAppliedDate(locale: AppLocale, value?: string | null) {
   const date = value ? new Date(value) : new Date();
-  if (Number.isNaN(date.getTime())) return new Date().toLocaleDateString("en-GB");
-  return date.toLocaleDateString("en-GB");
+  if (Number.isNaN(date.getTime())) return new Date().toLocaleDateString(getDateLocale(locale));
+  return date.toLocaleDateString(getDateLocale(locale));
 }
 
 function createFallbackCourses(
@@ -187,6 +193,8 @@ function mapJobRecord(job: Record<string, unknown>, fallbackId: string): Dashboa
 export default function CandidateDashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const locale = useLocale() as AppLocale;
+  const t = useTranslations();
   const jobMatchesRef = useRef<HTMLDivElement>(null);
   const matchesHighlightTimeoutRef = useRef<number | null>(null);
   const matchesArrivalTimeoutRef = useRef<number | null>(null);
@@ -359,10 +367,13 @@ export default function CandidateDashboardPage() {
             if (!cancelled) {
               setPendingApplyBanner({
                 tone: "info",
-                title: "Application already submitted",
-                description: `You had already applied for ${pendingApply.jobTitle} at ${pendingApply.company}.`,
+                title: t("candidateDashboard.applicationAlreadySubmittedTitle"),
+                description: t("candidateDashboard.applicationAlreadySubmittedDescription", {
+                  jobTitle: pendingApply.jobTitle,
+                  company: pendingApply.company
+                }),
               });
-              showSuccessToast("Application already submitted");
+              showSuccessToast(t("candidateDashboard.applicationAlreadySubmittedTitle"));
               void fetchDashboardData(candidateId);
             }
             return;
@@ -372,13 +383,16 @@ export default function CandidateDashboardPage() {
 
         clearPendingJobApply();
         if (!cancelled) {
-          const appliedDate = formatAppliedDate(result?.data?.appliedAt);
+          const appliedDate = formatAppliedDate(locale, result?.data?.appliedAt);
           const resolvedJobTitle = String(result?.data?.job?.title || pendingApply.jobTitle || "Job");
           const resolvedCompany = String(result?.data?.job?.company || pendingApply.company || "Company");
           setPendingApplyBanner({
             tone: "success",
-            title: "Application submitted",
-            description: `Your application for ${resolvedJobTitle} at ${resolvedCompany} has been submitted successfully.`,
+            title: t("candidateDashboard.applicationSubmittedTitle"),
+            description: t("candidateDashboard.applicationSubmittedDescription", {
+              jobTitle: resolvedJobTitle,
+              company: resolvedCompany
+            }),
           });
           setSubmittedApplicationModal({
             jobTitle: resolvedJobTitle,
@@ -386,18 +400,18 @@ export default function CandidateDashboardPage() {
             appliedDate,
             applicationId: result?.data?.applicationId,
           });
-          showSuccessToast("Application submitted");
+          showSuccessToast(t("candidateDashboard.applicationSubmittedTitle"));
           void fetchDashboardData(candidateId);
         }
       } catch (error) {
         if (!cancelled) {
           setPendingApplyBanner({
             tone: "error",
-            title: "Application pending",
+            title: t("candidateDashboard.applicationPendingTitle"),
             description:
               error instanceof Error
                 ? error.message
-                : "We could not submit your application automatically. Please try again from the jobs page.",
+                : t("candidateDashboard.applicationPendingDescription"),
           });
         }
       } finally {
@@ -410,7 +424,7 @@ export default function CandidateDashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [candidateId, fetchDashboardData, isAuthenticated]);
+  }, [candidateId, fetchDashboardData, isAuthenticated, locale, t]);
 
   useTabVisibilityRefresh(() => {
     if (!isAuthenticated) return;
@@ -649,12 +663,12 @@ export default function CandidateDashboardPage() {
     if (!resolvedCandidateId) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file.");
+      alert(t("candidateDashboard.selectImageFile"));
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      alert("Profile photos must be smaller than 2MB.");
+      alert(t("candidateDashboard.profilePhotoSizeLimit"));
       return;
     }
 
@@ -679,7 +693,7 @@ export default function CandidateDashboardPage() {
       };
 
       if (!response.ok || !result.success) {
-        throw new Error(result.message || "Failed to upload profile photo");
+        throw new Error(result.message || t("candidateDashboard.profilePhotoUploadFailed"));
       }
 
       let syncedPhotoUrl = result.data?.profilePhotoUrl ?? null;
@@ -707,10 +721,14 @@ export default function CandidateDashboardPage() {
         dispatchProfilePhotoUpdated(syncedPhotoUrl, API_BASE_URL);
       }
 
-      showSuccessToast("Profile photo updated");
+      showSuccessToast(t("candidateDashboard.profilePhotoUpdated"));
     } catch (error) {
       console.error("Error uploading profile photo:", error);
-      alert(error instanceof Error ? error.message : "Profile photo upload failed.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : t("candidateDashboard.profilePhotoUploadFailed")
+      );
     } finally {
       setIsUploadingPhoto(false);
     }
@@ -734,7 +752,7 @@ export default function CandidateDashboardPage() {
       };
 
       if (!response.ok || !result.success) {
-        throw new Error(result.message || "Failed to delete profile photo");
+        throw new Error(result.message || t("candidateDashboard.profilePhotoDeleteFailed"));
       }
 
       const refreshedProfile = await fetch(
@@ -755,10 +773,14 @@ export default function CandidateDashboardPage() {
       }
 
       dispatchProfilePhotoUpdated(null);
-      showSuccessToast("Profile photo removed");
+      showSuccessToast(t("candidateDashboard.profilePhotoRemoved"));
     } catch (error) {
       console.error("Error deleting profile photo:", error);
-      alert(error instanceof Error ? error.message : "Profile photo delete failed.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : t("candidateDashboard.profilePhotoDeleteFailed")
+      );
     } finally {
       setIsDeletingPhoto(false);
     }
@@ -779,7 +801,11 @@ export default function CandidateDashboardPage() {
         ? previous.filter((item) => item !== jobId)
         : [...previous, jobId]
     );
-    showSuccessToast(wasSaved ? "Job removed from saved jobs" : "Job saved");
+    showSuccessToast(
+      wasSaved
+        ? t("candidateDashboard.jobRemovedFromSaved")
+        : t("candidateDashboard.jobSaved")
+    );
   };
 
   const handleJumpToMatches = useCallback(() => {
@@ -889,32 +915,32 @@ export default function CandidateDashboardPage() {
   const heroStats: DashboardHeroStat[] = [
     {
       id: "applications",
-      label: "Applications",
+      label: t("candidateDashboard.applicationsLabel"),
       value: String(dashboardData?.stats?.totalApplications || 0),
-      helper: "Roles already in motion",
+      helper: t("candidateDashboard.applicationsHelper"),
       icon: BriefcaseBusiness,
-      onClick: () => router.push("/applications"),
+      onClick: () => router.push(localizePath("/applications", locale)),
     },
     {
       id: "profile",
-      label: "Profile Strength",
+      label: t("candidateDashboard.profileStrengthLabel"),
       value: `${profileCompletionPercentage}%`,
-      helper: "Recruiter-facing completion",
+      helper: t("candidateDashboard.profileStrengthHelper"),
       icon: Target,
-      onClick: () => router.push("/profile"),
+      onClick: () => router.push(localizePath("/profile", locale)),
     },
     {
       id: "cv-score",
-      label: "CV Score",
+      label: t("candidateDashboard.cvScoreLabel"),
       value: `${dashboardData?.stats?.cvScore ?? 0}`,
-      helper: "Based on latest analysis",
+      helper: t("candidateDashboard.cvScoreHelper"),
       icon: Gauge,
     },
     {
       id: "saved-jobs",
-      label: "Saved Jobs",
+      label: t("candidateDashboard.savedJobsLabel"),
       value: String(savedJobsTotal),
-      helper: "Bookmarked for later",
+      helper: t("candidateDashboard.savedJobsHelper"),
       icon: BookMarked,
     },
   ];
@@ -932,18 +958,17 @@ export default function CandidateDashboardPage() {
               <BriefcaseBusiness className="h-7 w-7" strokeWidth={2.2} />
             </div>
             <h1 className="mt-6 text-3xl font-bold tracking-tight text-slate-950">
-              Sign in to unlock your dashboard
+              {t("candidateDashboard.signInHeading")}
             </h1>
             <p className="mx-auto mt-3 max-w-2xl text-base font-medium leading-7 text-slate-500">
-              Verify your WhatsApp number first so we can load your applications,
-              profile progress, and role recommendations.
+              {t("candidateDashboard.signInDescription")}
             </p>
             <button
               type="button"
-              onClick={() => router.push("/whatsapp/verify")}
+              onClick={() => router.push(localizePath("/whatsapp/verify", locale))}
               className="mt-8 inline-flex items-center justify-center rounded-full bg-(--brand-primary) px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-(--brand-primary-strong)"
             >
-              Continue with WhatsApp
+              {t("candidateDashboard.continueWithWhatsapp")}
             </button>
           </div>
         </main>
@@ -990,14 +1015,14 @@ export default function CandidateDashboardPage() {
                 isDeletingPhoto={isDeletingPhoto}
                 onUploadPhoto={handlePhotoUpload}
                 onDeletePhoto={handlePhotoDelete}
-                onOpenProfile={() => router.push("/profile")}
+                onOpenProfile={() => router.push(localizePath("/profile", locale))}
                 onCompleteProfile={() => setIsProfileDrawerOpen(true)}
               />
 
               <ApplicationPipelineCard
                 stats={dashboardData?.stats || null}
                 applicationCounts={dashboardData?.applicationCounts}
-                onViewApplications={() => router.push("/applications")}
+                onViewApplications={() => router.push(localizePath("/applications", locale))}
               />
             </div>
 
@@ -1013,18 +1038,18 @@ export default function CandidateDashboardPage() {
                   onToggleSave={handleToggleSaveJob}
                   onApply={(jobId) =>
                     router.push(
-                      `/explore-jobs?job=${encodeURIComponent(jobId)}`,
+                      `${localizePath("/explore-jobs", locale)}?job=${encodeURIComponent(jobId)}`,
                     )
                   }
-                  onViewAll={() => router.push("/explore-jobs")}
+                  onViewAll={() => router.push(localizePath("/explore-jobs", locale))}
                 />
               </div>
 
               <RecommendedCoursesPanel
                 courses={recommendedCourses}
                 loading={coursesLoading}
-                onBrowseAll={() => router.push("/courses")}
-                onOpenCourse={(courseId) => router.push(`/courses/${courseId}`)}
+                onBrowseAll={() => router.push(localizePath("/courses", locale))}
+                onOpenCourse={(courseId) => router.push(localizePath(`/courses/${courseId}`, locale))}
               />
             </div>
           </div>
@@ -1046,9 +1071,9 @@ export default function CandidateDashboardPage() {
       <ApplicationSuccessModal
         isOpen={Boolean(submittedApplicationModal)}
         onClose={() => setSubmittedApplicationModal(null)}
-        jobTitle={submittedApplicationModal?.jobTitle || "Job"}
-        company={submittedApplicationModal?.company || "Company"}
-        appliedDate={submittedApplicationModal?.appliedDate || formatAppliedDate()}
+        jobTitle={submittedApplicationModal?.jobTitle || t("candidateDashboard.jobFallback")}
+        company={submittedApplicationModal?.company || t("candidateDashboard.companyFallback")}
+        appliedDate={submittedApplicationModal?.appliedDate || formatAppliedDate(locale)}
         applicationId={submittedApplicationModal?.applicationId}
       />
     </div>

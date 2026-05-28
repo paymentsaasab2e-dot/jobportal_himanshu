@@ -1,6 +1,7 @@
 'use client';
 import { Suspense, useMemo, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 
 import Image from 'next/image';
 import ApplicationSuccessModal from '@/components/modals/ApplicationSuccessModal';
@@ -42,6 +43,7 @@ import { parseStructuredJobText, resolveJobSummaryText, toPlainJobText } from '@
 import { extractPortalJobMeta } from '@/lib/map-portal-job';
 import { JobDescriptionCards } from '@/components/jobs/JobDescriptionCards';
 import { JobCardMetaChips } from '@/components/jobs/JobPostingDetailsPanel';
+import { AppLocale, localizePath } from '@/lib/i18n';
 const PAGE_BG =
   'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)';
 const SAVED_JOBS_STORAGE_PREFIX = 'dashboardSavedJobs';
@@ -473,6 +475,8 @@ function getScoreBadgeClasses(scoreColorHint?: string) {
 
 const ExploreJobsPageContent = () => {
   const router = useRouter()
+  const locale = useLocale() as AppLocale
+  const t = useTranslations()
   const searchParams = useSearchParams()
   const detailsRef = useRef<HTMLDivElement | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -1449,7 +1453,7 @@ const ExploreJobsPageContent = () => {
         ? previous.filter((item) => item !== targetId)
         : [...previous, targetId]
     )
-    showSuccessToast(wasSaved ? 'Job removed from saved jobs' : 'Job saved')
+    showSuccessToast(wasSaved ? t("exploreJobs.jobRemovedFromSaved") : t("exploreJobs.jobSaved"))
   }
 
   const handleBackToGrid = () => {
@@ -2144,7 +2148,7 @@ const ExploreJobsPageContent = () => {
                           <button
                             onClick={() => router.back()}
                             className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
-                            title="Go Back"
+                            title={t("exploreJobs.goBack")}
                           >
                             <svg
                               width="20"
@@ -2160,7 +2164,7 @@ const ExploreJobsPageContent = () => {
                             </svg>
                           </button>
                           <h1 className="text-[2rem] font-semibold tracking-tight text-slate-950 sm:text-[2.25rem]">
-                            Explore Jobs
+                            {t("exploreJobs.title")}
                           </h1>
                           {isPersonalized ? (
                             <span className="inline-flex items-center rounded-full bg-[rgba(40,168,225,0.10)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#28A8E1]">
@@ -2177,9 +2181,9 @@ const ExploreJobsPageContent = () => {
                       </div>
 
                       <div className="grid gap-2 sm:grid-cols-3 xl:max-w-[560px]">
-                        <SummaryStat label="Matches" value={String(filteredJobs.length)} />
-                        <SummaryStat label="Strong Fit" value={String(strongMatchCount)} />
-                        <SummaryStat label="Saved" value={String(savedJobIds.length)} />
+                        <SummaryStat label={t("exploreJobs.matches")} value={String(filteredJobs.length)} />
+                        <SummaryStat label={t("exploreJobs.strongFit")} value={String(strongMatchCount)} />
+                        <SummaryStat label={t("exploreJobs.saved")} value={String(savedJobIds.length)} />
                       </div>
                     </div>
 
@@ -2189,7 +2193,7 @@ const ExploreJobsPageContent = () => {
                         <input
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Search jobs, companies, or keywords..."
+                          placeholder={t("exploreJobs.searchPlaceholder")}
                           className="w-full rounded-[20px] border border-white/80 bg-white/90 py-3 pl-11 pr-4 text-sm font-medium text-slate-900 shadow-[0_14px_32px_rgba(15,23,42,0.06)] outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.24)] focus:ring-4 focus:ring-[rgba(40,168,225,0.10)]"
                         />
                       </label>
@@ -2861,10 +2865,10 @@ const ExploreJobsPageContent = () => {
 
                                         {/* 5. Button - Centered */}
                                         <button
-                                          onClick={() => router.push('/lms/resume-builder/editor')}
+                                          onClick={() => router.push(localizePath('/lms/resume-builder/editor', locale))}
                                           className="mt-2 relative inline-flex h-fit w-full items-center justify-center rounded-xl bg-[#28A8E1] px-4 py-2.5 text-[12px] font-bold text-white shadow-[0_10px_20px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF] active:scale-[0.99]"
                                         >
-                                          Optimize My CV
+                                          {t("exploreJobs.optimizeCv")}
                                         </button>
                                       </div>
                                     </div>
