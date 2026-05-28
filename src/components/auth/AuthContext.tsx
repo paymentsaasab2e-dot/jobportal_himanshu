@@ -9,6 +9,7 @@ import {
   persistAuthSession,
   syncAuthStorage,
 } from '@/lib/auth-storage';
+import { getLocaleFromPathname, localizePath, stripLocaleFromPathname } from '@/lib/i18n';
 import { useTabVisibilityRefresh } from '@/hooks/useTabVisibilityRefresh';
 import { showSuccessToast } from '@/components/common/toast/toast';
 import { getAuthContextDisplayName } from '@/components/dashboard/dashboard-utils';
@@ -85,6 +86,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const normalizedPathname = stripLocaleFromPathname(pathname || '/');
+  const currentLocale = getLocaleFromPathname(pathname || '/');
 
   const logout = useCallback(async (logoutAll: boolean = false) => {
     const candidateId = getStoredCandidateId();
@@ -264,15 +267,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Only redirect away from the phone-entry page.
     // /whatsapp/verify manages its own post-login navigation — do NOT interfere.
     // /uploadcv is intentionally accessible post-login for new users.
-    const isPublicAuthRoute = pathname === '/whatsapp';
-    const isPublicRoute = PUBLIC_ROUTES.some(path => pathname === path || (path !== '/' && pathname.startsWith(path + '/')));
+    const isPublicAuthRoute = normalizedPathname === '/whatsapp';
+    const isPublicRoute = PUBLIC_ROUTES.some(
+      path =>
+        normalizedPathname === path ||
+        (path !== '/' && normalizedPathname.startsWith(path + '/'))
+    );
     
     if (!token && !isPublicRoute) {
-      router.push('/whatsapp');
+      router.push(localizePath('/whatsapp', currentLocale));
     } else if (token && isPublicAuthRoute) {
-      router.push('/candidate-dashboard');
+      router.push(localizePath('/candidate-dashboard', currentLocale));
     }
-  }, [token, isLoading, pathname, router]);
+  }, [token, isLoading, normalizedPathname, currentLocale, router]);
 
   return (
     <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, isLoading, login, logout, refreshUser }}>
