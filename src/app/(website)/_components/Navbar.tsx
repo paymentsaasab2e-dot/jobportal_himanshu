@@ -5,23 +5,29 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
+import { AppLocale, localizePath, stripLocaleFromPathname } from "@/lib/i18n";
 
 const navLinks = [
-  { name: "Jobs", href: "/" },
+  { key: "exploreJobs", href: "/" },
   // { name: "Courses", href: "/explore-jobs" },
-  { name: "Employers", href: "/employers" },
-  { name: "Services", href: "/services" },
+  { key: "employers", href: "/employers" },
+  { key: "services", href: "/services" },
 ];
 
 export default function WebsiteNavbar() {
   const pathname = usePathname();
+  const locale = useLocale() as AppLocale;
+  const t = useTranslations();
+  const normalizedPath = stripLocaleFromPathname(pathname || "/");
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const employersLoginHref = "https://employers.hryantra.com/login?redirect=%2Fleads";
-  const isEmployersPage = pathname === "/employers" || pathname.startsWith("/employers/");
-  const isServicesPage = pathname === "/services" || pathname.startsWith("/services/");
-  const loginSignupHref = isEmployersPage ? employersLoginHref : "/whatsapp";
+  const isEmployersPage = normalizedPath === "/employers" || normalizedPath.startsWith("/employers/");
+  const isServicesPage = normalizedPath === "/services" || normalizedPath.startsWith("/services/");
+  const loginSignupHref = isEmployersPage ? employersLoginHref : localizePath("/whatsapp", locale);
 
   // Sliding pill state
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
@@ -29,10 +35,7 @@ export default function WebsiteNavbar() {
   const navRef = useRef<HTMLDivElement>(null);
   const linkRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  const activeIndex = navLinks.findIndex((l) => 
-    pathname === l.href || 
-    (l.categories && l.categories.some(c => c.links.some(s => s.href === pathname)))
-  );
+  const activeIndex = navLinks.findIndex((l) => normalizedPath === l.href);
   const currentIndex = activeIndex; // Remove the default to 0
   const hasActiveTab = currentIndex !== -1;
 
@@ -79,7 +82,7 @@ export default function WebsiteNavbar() {
 
         {/* Logo */}
         <div className="flex-1">
-          <Link href="/" className="relative flex items-center group w-fit">
+          <Link href={localizePath("/", locale)} className="relative flex items-center group w-fit">
             <div className="relative h-9 w-32">
               <Image
                 src="/SAASA%20Logo.png"
@@ -108,52 +111,16 @@ export default function WebsiteNavbar() {
 
           {navLinks.map((link, i) => {
             const isActive = currentIndex === i;
-            if (link.categories) {
-              return (
-                <div key={link.name} className="relative group/nav z-50">
-                  <button
-                    ref={(el) => { linkRefs.current[i] = el; }}
-                    onClick={() => router.push(link.href)}
-                    className={`relative z-10 px-5 py-2 rounded-full text-[15px] font-medium transition-colors duration-200 flex items-center gap-1 ${
-                      isActive ? "text-white" : "text-black hover:text-slate-700"
-                    }`}
-                  >
-                    {link.name}
-                    <svg className="w-4 h-4 opacity-70 group-hover/nav:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0.5 w-[440px] bg-white/95 backdrop-blur-md border border-slate-100 rounded-[20px] shadow-xl p-5 opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200">
-                    <div className="grid grid-cols-2 gap-6">
-                      {link.categories.map((category) => (
-                        <div key={category.title}>
-                          <p className="text-[11px] font-black uppercase tracking-widest text-[#28A8DF] mb-3 px-3">{category.title}</p>
-                          <div className="flex flex-col gap-1">
-                            {category.links.map((sub) => (
-                              <Link
-                                key={sub.name}
-                                href={sub.href}
-                                className="block px-3 py-2 rounded-xl text-[14px] font-bold !text-black hover:!text-[#28A8DF] hover:bg-sky-50 transition-colors"
-                              >
-                                {sub.name}
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            }
             return (
               <button
-                key={link.name}
+                key={link.key}
                 ref={(el) => { linkRefs.current[i] = el; }}
-                onClick={() => router.push(link.href)}
+                onClick={() => router.push(localizePath(link.href, locale))}
                 className={`relative z-10 px-5 py-2 rounded-full text-[15px] font-medium transition-colors duration-200 ${
                   isActive ? "text-white" : "text-black hover:text-slate-700"
                 }`}
               >
-                {link.name}
+                {t(`nav.${link.key}`)}
               </button>
             );
           })}
@@ -167,10 +134,13 @@ export default function WebsiteNavbar() {
                 href={loginSignupHref}
                 className="border-2 border-black !text-black px-6 py-2 rounded-full text-[15px] font-bold hover:bg-black hover:!text-white transition-all"
               >
-                Login
+                {t("common.login")}
               </Link>
             </div>
           )}
+          <div className="ml-3">
+            <LanguageSwitcher />
+          </div>
         </div>
 
         {/* Mobile Toggle */}
@@ -186,35 +156,14 @@ export default function WebsiteNavbar() {
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 bg-white border-t border-slate-100 shadow-2xl p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300 h-[calc(100vh-80px)] overflow-y-auto">
           {navLinks.map((link) => (
-            <div key={link.name} className="flex flex-col gap-2">
+            <div key={link.key} className="flex flex-col gap-2">
               <Link
-                href={link.href}
-                className={`text-lg font-bold ${pathname === link.href ? "text-blue-600" : "text-slate-800"}`}
+                href={localizePath(link.href, locale)}
+                className={`text-lg font-bold ${normalizedPath === link.href ? "text-blue-600" : "text-slate-800"}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                {link.name}
+                {t(`nav.${link.key}`)}
               </Link>
-              {link.categories && (
-                <div className="flex flex-col gap-4 pl-4 border-l-2 border-slate-100 ml-2 mt-2">
-                  {link.categories.map((category) => (
-                    <div key={category.title} className="flex flex-col gap-2">
-                       <p className="text-[11px] font-black uppercase tracking-widest text-[#28A8DF]">{category.title}</p>
-                       <div className="flex flex-col gap-3">
-                        {category.links.map(sub => (
-                          <Link
-                            key={sub.name}
-                            href={sub.href}
-                            className={`text-[15px] font-bold ${pathname === sub.href ? "!text-blue-600" : "!text-black"}`}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          >
-                            {sub.name}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           ))}
           <div className="h-px bg-slate-100 my-2" />
@@ -225,10 +174,11 @@ export default function WebsiteNavbar() {
                 className="border-2 border-black !text-black text-center py-4 rounded-[18px] font-bold text-lg hover:bg-black hover:!text-white transition-all"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Login
+                {t("common.login")}
               </Link>
             </div>
           )}
+          <LanguageSwitcher className="rounded-full border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" />
         </div>
       )}
     </nav>

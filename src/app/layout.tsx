@@ -15,6 +15,7 @@ import GlobalHeader from "@/components/common/GlobalHeader";
 import ApiHealthChecker from "@/components/common/ApiHealthChecker";
 import GlobalFooter from "@/components/common/GlobalFooter";
 import { NavigationLoader } from "@/components/common/NavigationLoader";
+import { IntlProvider } from "@/components/i18n/IntlProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -37,21 +38,23 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
-        <ApiHealthChecker />
-        <ToastProvider>
-          <AuthProvider>
-            <InactivityGuard>
-              <AuthGuard>
-                <NavigationLoader />
-                <GlobalHeader />
-                <main className="min-h-screen">
-                  {children}
-                </main>
-                <GlobalFooter />
-              </AuthGuard>
-            </InactivityGuard>
-          </AuthProvider>
-        </ToastProvider>
+        <IntlProvider>
+          <ApiHealthChecker />
+          <ToastProvider>
+            <AuthProvider>
+              <InactivityGuard>
+                <AuthGuard>
+                  <NavigationLoader />
+                  <GlobalHeader />
+                  <main className="min-h-screen">
+                    {children}
+                  </main>
+                  <GlobalFooter />
+                </AuthGuard>
+              </InactivityGuard>
+            </AuthProvider>
+          </ToastProvider>
+        </IntlProvider>
       </body>
     </html>
   );

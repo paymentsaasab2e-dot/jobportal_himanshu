@@ -3,9 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { Facebook, Instagram, Linkedin, X } from "lucide-react";
 
 import { useAuth } from "@/components/auth/AuthContext";
+import { AppLocale, localizePath, stripLocaleFromPathname } from "@/lib/i18n";
 
 const currentYear = new Date().getFullYear();
 
@@ -50,42 +52,45 @@ const socialLinks = [
 export default function Footer() {
   const { isAuthenticated: isLoggedIn } = useAuth();
   const pathname = usePathname();
-  const isLandingPage = pathname === "/";
-  const isEmployersPage = pathname === "/employers";
+  const locale = useLocale() as AppLocale;
+  const t = useTranslations();
+  const normalizedPath = stripLocaleFromPathname(pathname || "/");
+  const isLandingPage = normalizedPath === "/";
+  const isEmployersPage = normalizedPath === "/employers";
 
   const platformLinks = (isLoggedIn && !isLandingPage && !isEmployersPage) ? [
-    { href: "/candidate-dashboard", label: "Dashboard" },
-    { href: "/explore-jobs", label: "Jobs" },
-    { href: "/applications", label: "Applications" },
+    { href: "/candidate-dashboard", label: t("nav.dashboard") },
+    { href: "/explore-jobs", label: t("nav.jobs") },
+    { href: "/applications", label: t("nav.applications") },
     { href: "/lms/courses", label: "LMS" },
-    { href: "/profile", label: "Profile" },
-    { href: "/services", label: "Services" },
+    { href: "/profile", label: t("nav.profile") },
+    { href: "/services", label: t("nav.services") },
   ] : [
-    { href: "/", label: "Find Jobs" },
-    { href: "/courses", label: "Courses & LMS" },
-    { href: "/services", label: "Expert Services" },
+    { href: "/", label: t("footer.findJobs") },
+    { href: "/courses", label: t("footer.coursesLms") },
+    { href: "/services", label: t("footer.expertServices") },
   ];
 
   const footerLinks: FooterLinkGroup[] = [
     {
-      title: "Platform",
+      title: t("footer.platform"),
       items: platformLinks,
     },
     {
-      title: "Company",
+      title: t("footer.company"),
       items: [
-        { href: "/aboutus", label: "About Us" },
-        { href: "/employers", label: "For Employers" },
-        { href: "/help", label: "Help Center" },
-        { href: "/contact", label: "Contact" },
+        { href: "/aboutus", label: t("footer.aboutUs") },
+        { href: "/employers", label: t("common.forEmployers") },
+        { href: "/help", label: t("footer.helpCenter") },
+        { href: "/contact", label: t("footer.contact") },
       ],
     },
     {
-      title: "Legal",
+      title: t("footer.legal"),
       items: [
-        { href: "/privacypolicy", label: "Privacy Policy" },
-        { href: "/terms", label: "Terms of Service" },
-        { href: "/trust-safety", label: "Trust & Safety" },
+        { href: "/privacypolicy", label: t("footer.privacyPolicy") },
+        { href: "/terms", label: t("footer.termsOfService") },
+        { href: "/trust-safety", label: t("footer.trustSafety") },
       ],
     },
   ];
@@ -95,7 +100,7 @@ export default function Footer() {
       <div className="mx-auto max-w-[1240px] px-6 py-10">
         <div className="flex flex-col gap-10 lg:flex-row lg:justify-between">
           <div className="flex max-w-sm flex-col gap-4">
-            <Link href="/" className="inline-flex transition-opacity hover:opacity-90">
+            <Link href={localizePath("/", locale)} className="inline-flex transition-opacity hover:opacity-90">
               <Image
                 src="/SAASA%20Logo.png"
                 alt="SAASA B2E"
@@ -106,8 +111,7 @@ export default function Footer() {
             </Link>
 
             <p className="text-[14px] font-medium leading-6">
-              The modern ecosystem bridging the gap between world-class talent and
-              leading employers through AI-driven intelligence.
+              {t("footer.description")}
             </p>
 
             <div className="mt-1 flex items-center gap-3">
@@ -136,7 +140,7 @@ export default function Footer() {
                   {group.items.map((item) => (
                     <Link
                       key={item.label}
-                      href={item.href}
+                      href={localizePath(item.href, locale)}
                       target={item.external ? "_blank" : undefined}
                       rel={item.external ? "noopener noreferrer" : undefined}
                       className="text-[14px] font-medium transition-colors hover:text-[var(--brand-primary)]"
@@ -154,7 +158,7 @@ export default function Footer() {
       <div className="border-t border-slate-200/70 bg-white/40">
         <div className="mx-auto flex max-w-[1240px] items-center justify-center px-6 py-4 text-center">
           <p className="text-[13px] font-medium">
-            (c) {currentYear} SAASA B2E. All rights reserved.
+            (c) {currentYear} SAASA B2E. {t("footer.rightsReserved")}
           </p>
         </div>
       </div>

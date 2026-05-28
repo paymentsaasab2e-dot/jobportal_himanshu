@@ -11,6 +11,10 @@ const PHASE2_PUBLIC_JOBS_BASE =
   process.env.NODE_ENV === 'development'
     ? 'http://localhost:5001/api/v1/jobs/public-feed'
     : 'https://api2.hryantra.com/api/v1/jobs/public-feed';
+const PHASE2_PUBLIC_APPLY_BASE =
+  process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5001/api/v1/jobs/public/apply'
+    : 'https://api2.hryantra.com/api/v1/jobs/public/apply';
 
 const defaultBackendBase =
   process.env.NODE_ENV === 'development' ? LOCAL_BACKEND_BASE : HOSTED_BACKEND_BASE;
@@ -21,6 +25,11 @@ const buildTargetUrl = (req: NextRequest, pathParts: string[]) => {
   if (pathParts[0] === 'phase2-public-jobs') {
     const query = req.nextUrl.search || '';
     return `${process.env.PHASE2_PUBLIC_JOBS_URL || PHASE2_PUBLIC_JOBS_BASE}${query}`;
+  }
+  if (pathParts[0] === 'phase2-public-apply') {
+    const token = encodeURIComponent(String(pathParts[1] || '').trim());
+    const query = req.nextUrl.search || '';
+    return `${process.env.PHASE2_PUBLIC_APPLY_URL || PHASE2_PUBLIC_APPLY_BASE}/${token}${query}`;
   }
 
   const pathname = pathParts.join('/');
@@ -45,7 +54,7 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
 
   // Public feed is anonymous on Phase 2; strip caller JWT so tenant middleware does not
   // pick the wrong DB from a candidate token. Prefer explicit tenant header + env.
-  if (pathParts[0] === 'phase2-public-jobs') {
+  if (pathParts[0] === 'phase2-public-jobs' || pathParts[0] === 'phase2-public-apply') {
     headers.delete('authorization');
     if (PHASE2_PUBLIC_FEED_TENANT_DB) {
       headers.set('x-tenant-db-name', PHASE2_PUBLIC_FEED_TENANT_DB);
@@ -82,6 +91,9 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
     // Return empty response for phase2-public-jobs when backend is unavailable
     if (pathParts[0] === 'phase2-public-jobs') {
       return NextResponse.json({ jobs: [], total: 0, page: 1, limit: 120 }, { status: 200 });
+    }
+    if (pathParts[0] === 'phase2-public-apply') {
+      return NextResponse.json({ success: false, message: 'Apply page unavailable' }, { status: 503 });
     }
     return NextResponse.json({ error: 'Backend service unavailable' }, { status: 503 });
   }

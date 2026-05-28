@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { useTranslations } from "next-intl";
 
 export type MathCaptchaChallenge = {
   a: number;
@@ -43,6 +44,7 @@ export function MathCaptcha({
   disabled = false,
   error,
 }: MathCaptchaProps) {
+  const t = useTranslations();
   const [challenge, setChallenge] = useState<MathCaptchaChallenge>(() => buildChallenge());
 
   useEffect(() => {
@@ -65,7 +67,7 @@ export function MathCaptcha({
   return (
     <div className="space-y-2">
       <label className="block text-[12px] font-black text-slate-700 uppercase tracking-widest ml-1">
-        Security check
+        {t("mathCaptcha.securityCheck")}
       </label>
       <div
         className={`w-full overflow-hidden rounded-[16px] border bg-white shadow-sm transition-all ${
@@ -93,15 +95,15 @@ export function MathCaptcha({
               disabled={disabled}
               className="h-[52px] min-w-[120px] w-full max-w-[168px] flex-1 rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-center text-[18px] font-black text-slate-900 outline-none focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100/50 disabled:opacity-50"
               placeholder="?"
-              aria-label="Enter the answer to the math problem"
+              aria-label={t("mathCaptcha.enterAnswerAria")}
             />
             <button
               type="button"
               onClick={refresh}
               disabled={disabled}
               className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-sky-600 disabled:opacity-50"
-            title="New question"
-            aria-label="Generate new math question"
+            title={t("mathCaptcha.newQuestion")}
+            aria-label={t("mathCaptcha.generateNewQuestionAria")}
           >
             <RefreshCw className="h-5 w-5" />
             </button>
@@ -112,7 +114,7 @@ export function MathCaptcha({
         <p className="text-[12px] font-bold text-red-600 ml-1">{error}</p>
       ) : (
         <p className="text-[11px] font-semibold text-slate-400 ml-1">
-          Solve the calculation to continue
+          {t("mathCaptcha.solveToContinue")}
         </p>
       )}
     </div>

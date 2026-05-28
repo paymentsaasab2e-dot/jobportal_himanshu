@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/components/auth/AuthContext";
 import { API_BASE_URL, getApiBaseUrl } from "@/lib/api-base";
+import { AppLocale, localizePath } from "@/lib/i18n";
 import {
   Search, MapPin, ChevronRight, PlayCircle, Star, ArrowRight, CheckCircle2,
   Sparkles, Award, FileText, Target, Mic2, UploadCloud, Zap, Clock, Briefcase,
@@ -98,7 +100,7 @@ const HighlightMatch = ({ label, query }: { label: string; query: string }) => {
   );
 };
 
-const buildSearchJobsUrl = (title: string, location: string) => {
+const buildSearchJobsUrl = (locale: AppLocale, title: string, location: string) => {
   const params = new URLSearchParams();
   const normalizedTitle = title.trim();
   const normalizedLocation = location.trim();
@@ -106,18 +108,19 @@ const buildSearchJobsUrl = (title: string, location: string) => {
   if (normalizedTitle) params.append("q", normalizedTitle);
   if (normalizedLocation) params.append("location", normalizedLocation);
 
-  return params.toString() ? `/searchjobs?${params.toString()}` : "/searchjobs";
+  const basePath = localizePath("/searchjobs", locale);
+  return params.toString() ? `${basePath}?${params.toString()}` : basePath;
 };
 
-const formatTimeAgo = (date: Date | string): string => {
+const formatTimeAgo = (locale: AppLocale, date: Date | string): string => {
   const now = new Date();
   const postedDate = typeof date === 'string' ? new Date(date) : date;
   const diffInMs = now.getTime() - postedDate.getTime();
   const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-  if (diffInDays === 0) return 'Just now';
-  if (diffInDays === 1) return '1 day ago';
-  if (diffInDays < 7) return `${diffInDays} days ago`;
+  if (diffInDays === 0) return locale === "fr" ? "A l'instant" : "Just now";
+  if (diffInDays === 1) return locale === "fr" ? "Il y a 1 jour" : "1 day ago";
+  if (diffInDays < 7) return locale === "fr" ? `Il y a ${diffInDays} jours` : `${diffInDays} days ago`;
   if (diffInDays < 30) return `${Math.floor(diffInDays / 7)}w ago`;
   return `${Math.floor(diffInDays / 30)}mo ago`;
 };
@@ -149,12 +152,14 @@ function AuthInterceptModal({
   redirectUrl: string;
 }) {
   const router = useRouter();
+  const locale = useLocale() as AppLocale;
+  const t = useTranslations();
 
   if (!isOpen) return null;
 
   const handleContinue = () => {
     sessionStorage.setItem("postLoginRedirect", redirectUrl);
-    router.push("/whatsapp");
+    router.push(localizePath("/whatsapp", locale));
   };
 
   return (
@@ -177,14 +182,14 @@ function AuthInterceptModal({
               onClick={handleContinue}
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#28A8DF] py-3.5 px-4 text-[15px] font-semibold text-white shadow-sm hover:bg-[#1f97cb] transition-all"
             >
-              Continue with WhatsApp
+              {t("candidateDashboard.continueWithWhatsapp")}
               <ArrowRight className="w-5 h-5" />
             </button>
             <button
               onClick={onClose}
               className="w-full rounded-xl py-3.5 px-4 text-[15px] font-semibold text-slate-600 hover:bg-slate-50 border border-slate-200 transition-all"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </div>
@@ -199,6 +204,8 @@ function AuthInterceptModal({
 export default function LandingPage() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const locale = useLocale() as AppLocale;
+  const t = useTranslations();
   const [jobs, setJobs] = useState<JobListing[]>([
     { id: '1', title: 'Senior Research Scientist', company: 'Pfizer', location: 'Mumbai, IN', workStyle: 'Hybrid', type: 'Full-time', salary: '$140k - $175k/yr', match: '94% Match', timeAgo: '2h ago', experience: 'Senior level', logo: '' },
     { id: '2', title: 'Payments Infrastructure Engineer', company: 'Stripe', location: 'Bangalore, IN', workStyle: 'Remote', type: 'Full-time', salary: '$165k - $210k/yr', match: '88% Match', timeAgo: '5h ago', experience: 'Mid level', logo: '' },
@@ -333,7 +340,7 @@ export default function LandingPage() {
             type: job.type === 'FULL_TIME' ? 'Full-time' : job.type === 'CONTRACT' ? 'Contract' : 'Part-time',
             salary: formatSalary(job.salary?.min ?? job.salaryMin, job.salary?.max ?? job.salaryMax, null, null),
             match: `${Math.floor(Math.random() * 10) + 85}% Match`,
-            timeAgo: formatTimeAgo(job.postedDate || new Date()),
+            timeAgo: formatTimeAgo(locale, job.postedDate || new Date()),
             experience: 'Mid-Senior level',
             logo: job.client?.logo || job.companyLogo || '',
           }));
@@ -349,7 +356,7 @@ export default function LandingPage() {
 
   const triggerGatedAction = (title: string, description: string, redirectUrl: string) => {
     if (isAuthenticated) {
-      router.push(redirectUrl);
+      router.push(localizePath(redirectUrl, locale));
     } else {
       setAuthConfig({ title, description, redirectUrl });
       setIsAuthModalOpen(true);
@@ -363,10 +370,10 @@ export default function LandingPage() {
 
   const triggerSearch = () => {
     if (searchMode === 'ai') {
-      router.push('/whatsapp');
+      router.push(localizePath('/whatsapp', locale));
       return;
     }
-    router.push(buildSearchJobsUrl(heroSearch.title, heroSearch.location));
+    router.push(buildSearchJobsUrl(locale, heroSearch.title, heroSearch.location));
   };
 
   const preventEnterSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -386,7 +393,7 @@ export default function LandingPage() {
     });
 
     if (shouldSearch) {
-      router.push(buildSearchJobsUrl(normalizedValue, heroSearch.location));
+      router.push(buildSearchJobsUrl(locale, normalizedValue, heroSearch.location));
     }
   };
 
@@ -401,12 +408,16 @@ export default function LandingPage() {
     });
 
     if (shouldSearch) {
-      router.push(buildSearchJobsUrl(heroSearch.title, normalizedValue));
+      router.push(buildSearchJobsUrl(locale, heroSearch.title, normalizedValue));
     }
   };
 
-  const rotatingWords = ["Job Title", "Skills", "Company", "Roles", "Keywords", "Specific Field"];
-  const rotatingLocations = ["City, State", "Remote Friendly", "USA", "India", "UK", "Remote", "International"];
+  const rotatingWords = locale === "fr"
+    ? ["Intitule du poste", "Competences", "Entreprise", "Roles", "Mots-cles", "Domaine specifique"]
+    : ["Job Title", "Skills", "Company", "Roles", "Keywords", "Specific Field"];
+  const rotatingLocations = locale === "fr"
+    ? ["Ville, region", "Compatible remote", "France", "Canada", "Belgique", "Remote", "International"]
+    : ["City, State", "Remote Friendly", "USA", "India", "UK", "Remote", "International"];
   const rotatingAIPrompts = [
     "Show me jobs for fresher React developer in Mumbai",
     "Digital Marketing roles in New York for remote work",
@@ -553,18 +564,18 @@ export default function LandingPage() {
                 {/* Brand badge */}
                 <div className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200/80 rounded-full px-4 py-2 mb-6 shadow-sm">
                   <span className="flex h-2 w-2 rounded-full bg-sky-500 animate-pulse"></span>
-                  <span className="text-[12px] font-black uppercase tracking-[0.18em] text-sky-700">HR Yantra AI — Powered Job Search</span>
+                  <span className="text-[12px] font-black uppercase tracking-[0.18em] text-sky-700">{t("landing.badge")}</span>
                 </div>
 
                 <h1 className="text-4xl md:text-[3.75rem] font-black tracking-tight text-slate-900 mb-5 leading-[1.12]">
-                  Find the job that<br className="hidden sm:block" />
+                  {t("landing.heroLine1")}<br className="hidden sm:block" />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600">
-                    fits you perfectly.
+                    {t("landing.heroLine2")}
                   </span>
                 </h1>
 
                 <p className="text-[17px] text-slate-500 font-medium max-w-2xl leading-relaxed">
-                  HR Yantra AI matches you to roles that suit your skills, experience &amp; goals — so every application counts.
+                  {t("landing.heroSubtitle")}
                 </p>
               </div>
 
@@ -744,7 +755,7 @@ export default function LandingPage() {
                       type="button"
                       onClick={() => {
                         setSearchMode('search');
-                        router.push(buildSearchJobsUrl(heroSearch.title, heroSearch.location));
+                        router.push(buildSearchJobsUrl(locale, heroSearch.title, heroSearch.location));
                       }}
                       className={`relative z-10 flex items-center justify-center w-[50%] h-full rounded-full transition-colors duration-300 ${searchMode === 'search'
                           ? 'text-slate-900'
@@ -780,7 +791,7 @@ export default function LandingPage() {
                   >
                     {searchMode === 'ai' ? (
                       <>
-                        <span>Ask</span>
+                        <span>{t("landing.ask")}</span>
                         <Image
                           src="/ai2yantra-removebg.png"
                           alt="AI"
@@ -791,7 +802,7 @@ export default function LandingPage() {
                         />
                       </>
                     ) : (
-                      <><Search className="w-5 h-5" /> Search</>
+                      <><Search className="w-5 h-5" /> {t("landing.search")}</>
                     )}
                   </button>
                 </div>
@@ -799,25 +810,25 @@ export default function LandingPage() {
 
               {/* Industry / Domain Category Grid */}
               <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
-                <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.25em] text-center mb-6">Explore by Category</p>
+                <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.25em] text-center mb-6">{t("landing.exploreByCategory")}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {([
-                    { label: 'Remote', Icon: Home, q: 'Remote', color: 'text-sky-600', bg: 'bg-sky-50' },
-                    { label: 'Corporate', Icon: Building2, q: 'MNC', color: 'text-violet-600', bg: 'bg-violet-50' },
-                    { label: 'Analytics', Icon: BarChart2, q: 'Analytics', color: 'text-amber-600', bg: 'bg-amber-50' },
-                    { label: 'Logistics', Icon: Package, q: 'Supply Chain', color: 'text-orange-600', bg: 'bg-orange-50' },
-                    { label: 'Fresher', Icon: GraduationCap, q: 'Fresher', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                    { label: 'Software', Icon: Code2, q: 'Software Engineer', color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: 'Sales', Icon: TrendingUp, q: 'Sales', color: 'text-rose-600', bg: 'bg-rose-50' },
-                    { label: 'Finance', Icon: BadgeDollarSign, q: 'Banking Finance', color: 'text-green-600', bg: 'bg-green-50' },
-                    { label: 'Leadership', Icon: Users, q: 'Project Manager', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                    { label: 'Engineering', Icon: Cpu, q: 'Engineering', color: 'text-slate-600', bg: 'bg-slate-100' },
-                    { label: 'Data', Icon: Database, q: 'Data Science', color: 'text-pink-600', bg: 'bg-pink-50' },
+                    { label: t("landing.categoryRemote"), Icon: Home, q: 'Remote', color: 'text-sky-600', bg: 'bg-sky-50' },
+                    { label: t("landing.categoryCorporate"), Icon: Building2, q: 'MNC', color: 'text-violet-600', bg: 'bg-violet-50' },
+                    { label: t("landing.categoryAnalytics"), Icon: BarChart2, q: 'Analytics', color: 'text-amber-600', bg: 'bg-amber-50' },
+                    { label: t("landing.categoryLogistics"), Icon: Package, q: 'Supply Chain', color: 'text-orange-600', bg: 'bg-orange-50' },
+                    { label: t("landing.categoryFresher"), Icon: GraduationCap, q: 'Fresher', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                    { label: t("landing.categorySoftware"), Icon: Code2, q: 'Software Engineer', color: 'text-blue-600', bg: 'bg-blue-50' },
+                    { label: t("landing.categorySales"), Icon: TrendingUp, q: 'Sales', color: 'text-rose-600', bg: 'bg-rose-50' },
+                    { label: t("landing.categoryFinance"), Icon: BadgeDollarSign, q: 'Banking Finance', color: 'text-green-600', bg: 'bg-green-50' },
+                    { label: t("landing.categoryLeadership"), Icon: Users, q: 'Project Manager', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                    { label: t("landing.categoryEngineering"), Icon: Cpu, q: 'Engineering', color: 'text-slate-600', bg: 'bg-slate-100' },
+                    { label: t("landing.categoryData"), Icon: Database, q: 'Data Science', color: 'text-pink-600', bg: 'bg-pink-50' },
                   ] as const).map(cat => (
                     <button
                       key={cat.label}
                       type="button"
-                      onClick={() => router.push(buildSearchJobsUrl(cat.q, ""))}
+                      onClick={() => router.push(buildSearchJobsUrl(locale, cat.q, ""))}
                       className="group relative flex items-center gap-4 bg-white border border-slate-200/90 rounded-2xl px-6 py-4.5 text-left transition-all duration-300 shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 cursor-pointer overflow-hidden"
                     >
                       {/* Left-to-Right Hover Background */}
@@ -853,17 +864,17 @@ export default function LandingPage() {
           <div className="mx-auto max-w-[1240px] px-6">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-6">
               <div className="max-w-xl">
-                <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-2">Trending Jobs</h2>
-                <p className="text-slate-500 text-lg font-medium">High-growth roles actively hiring. Ready for your next move.</p>
+                <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-2">{t("landing.trendingJobs")}</h2>
+                <p className="text-slate-500 text-lg font-medium">{t("landing.trendingSubtitle")}</p>
               </div>
               <button
-                onClick={() => router.push('/searchjobs')}
+                onClick={() => router.push(localizePath('/searchjobs', locale))}
                 className="group relative flex-shrink-0 flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-900 font-bold text-[15px] px-8 py-3.5 rounded-2xl transition-all shadow-sm w-full md:w-auto overflow-hidden"
               >
                 {/* Left-to-Right Hover Fill Layer */}
                 <div className="absolute inset-0 w-0 bg-slate-900 transition-all duration-500 ease-out group-hover:w-full z-0" />
 
-                <span className="relative z-10 group-hover:text-white transition-colors duration-300">Explore More Jobs</span>
+                <span className="relative z-10 group-hover:text-white transition-colors duration-300">{t("landing.exploreMoreJobs")}</span>
                 <ArrowRight className="relative z-10 w-4 h-4 group-hover:text-white group-hover:translate-x-1 transition-all" />
               </button>
             </div>
@@ -881,8 +892,8 @@ export default function LandingPage() {
                     key={`s1-${job.id}-${idx}`}
                     onClick={() =>
                       triggerGatedAction(
-                        'Continue To Job Match',
-                        `Log in or sign up to continue with ${job.title} and unlock the guided job matching flow.`,
+                        t("landing.continueToJobMatch"),
+                        t("landing.continueToJobMatchDescription", { title: job.title }),
                         '/whatsapp'
                       )
                     }
@@ -927,7 +938,7 @@ export default function LandingPage() {
 
                     <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
                       <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Salary</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{t("landing.salary")}</p>
                         <span className="font-black text-[16px] text-slate-900 tracking-tight">{job.salary}</span>
                       </div>
                       <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white group-hover:bg-sky-500 transition-all shadow-lg group-hover:scale-105">
@@ -948,8 +959,8 @@ export default function LandingPage() {
                     key={`s2-${job.id}-${idx}`}
                     onClick={() =>
                       triggerGatedAction(
-                        'Continue To Job Match',
-                        `Log in or sign up to continue with ${job.title} and unlock the guided job matching flow.`,
+                        t("landing.continueToJobMatch"),
+                        t("landing.continueToJobMatchDescription", { title: job.title }),
                         '/whatsapp'
                       )
                     }
@@ -994,7 +1005,7 @@ export default function LandingPage() {
 
                     <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
                       <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Salary</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{t("landing.salary")}</p>
                         <span className="font-black text-[16px] text-slate-900 tracking-tight">{job.salary}</span>
                       </div>
                       <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white group-hover:bg-sky-500 transition-all shadow-lg group-hover:scale-105">
