@@ -50,7 +50,7 @@ export default function LmsResumeBuilderPage() {
     <div className="space-y-8">
       <div className="min-w-0 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1 tracking-tight">Resume builder</h1>
+          <h1 className="application-detail-title mb-1">Resume builder</h1>
           <p className={LMS_PAGE_SUBTITLE}>
             Conversion-focused flow — recruiter scan, job match, and ATS risk before you apply (mock).
           </p>

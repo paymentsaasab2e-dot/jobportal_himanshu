@@ -19,10 +19,10 @@ export function LmsSharedIntelligenceHint() {
             <Sparkles className="h-5 w-5" strokeWidth={2} />
           </div>
           <div className="space-y-0.5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#28A8E1]">
+            <p className="profile-page-label text-[#28A8E1]">
               AI Connected
             </p>
-            <p className="text-[13px] font-medium leading-relaxed text-slate-600">
+            <p className="application-detail-helper leading-relaxed">
               {summary}
             </p>
           </div>

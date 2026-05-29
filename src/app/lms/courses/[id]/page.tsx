@@ -104,7 +104,7 @@ export default function LmsCourseDetailPage({
             <ArrowLeft className="h-4 w-4" strokeWidth={2} />
             Back to courses
           </Link>
-          <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">{course.title}</h1>
+          <h1 className="application-detail-title mt-3">{course.title}</h1>
           <p className={`${LMS_PAGE_SUBTITLE} mt-1`}>{course.description}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-gray-600">
             <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 border border-gray-200 px-3 py-1 font-semibold">

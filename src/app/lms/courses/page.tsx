@@ -249,7 +249,7 @@ function LmsCoursesPageContent() {
   return (
     <div className="space-y-6 pt-2">
       <div className="min-w-0">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1 tracking-tight">Courses</h1>
+        <h1 className="application-detail-title mb-1">Courses</h1>
         <p className={LMS_PAGE_SUBTITLE}>Structured learning paths to support your job search and interviews.</p>
       </div>
 

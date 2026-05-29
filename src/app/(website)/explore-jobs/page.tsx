@@ -44,8 +44,10 @@ import { extractPortalJobMeta } from '@/lib/map-portal-job';
 import { JobDescriptionCards } from '@/components/jobs/JobDescriptionCards';
 import { JobCardMetaChips } from '@/components/jobs/JobPostingDetailsPanel';
 import { AppLocale, localizePath } from '@/lib/i18n';
+
 const PAGE_BG =
   'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)';
+
 const SAVED_JOBS_STORAGE_PREFIX = 'dashboardSavedJobs';
 
 interface JobListing {
@@ -1740,7 +1742,7 @@ const ExploreJobsPageContent = () => {
     <button
       type="button"
       onClick={onClick}
-      className={`px-5 py-2 rounded-full border text-sm transition-all duration-300 ease-out ${
+      className={`rounded-full border px-4 py-2 text-[0.8125rem] transition-all duration-300 ease-out ${
         active ? 'bg-blue-50 border-blue-200 text-blue-700 font-medium' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
       }`}
     >
@@ -1766,8 +1768,8 @@ const ExploreJobsPageContent = () => {
       aria-expanded={open}
     >
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-gray-900">{title}</p>
-        {subtitle ? <p className="text-xs font-semibold text-blue-600 mt-0.5">{subtitle}</p> : null}
+        <p className="profile-page-section-title">{title}</p>
+        {subtitle ? <p className="profile-page-empty mt-0.5 text-[#28A8E1]">{subtitle}</p> : null}
       </div>
       <svg
         width="18"
@@ -1822,8 +1824,8 @@ const ExploreJobsPageContent = () => {
     value: string
   }) => (
     <div className="rounded-[18px] border border-white/70 bg-white/80 px-4 py-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
-      <p className="mt-1 text-lg font-semibold tracking-tight text-slate-950">{value}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#94a3b8]">{label}</p>
+      <p className="profile-page-value mt-1 font-semibold tracking-tight">{value}</p>
     </div>
   )
 
@@ -1867,7 +1869,7 @@ const ExploreJobsPageContent = () => {
             <JobLogoBadge job={job} compact={isCompact} />
             <div className="min-w-0">
               <p className="truncate text-[12px] font-semibold text-slate-500">{job.company}</p>
-              <h3 className={`mt-0.5 line-clamp-2 font-semibold tracking-tight text-slate-950 ${isCompact ? 'text-[17px] leading-tight' : 'text-[19px]'}`}>
+              <h3 className="profile-page-value mt-0.5 line-clamp-2 font-semibold leading-snug tracking-tight">
                 {job.title}
               </h3>
             </div>
@@ -2080,8 +2082,8 @@ const ExploreJobsPageContent = () => {
 
           {/* Left content */}
           <div className="flex-1 min-w-0">
-            <p className="text-base font-semibold text-gray-900 truncate">{job.title}</p>
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 min-w-0">
+            <p className="profile-page-value truncate font-semibold">{job.title}</p>
+            <div className="application-detail-helper mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
               <span className="truncate">{job.company}</span>
               <span className="text-gray-300">•</span>
               <span className="truncate">{job.location}</span>
@@ -2124,11 +2126,10 @@ const ExploreJobsPageContent = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: PAGE_BG }}>
-
-      <main className="w-full grow overflow-x-clip">
+    <div className="flex min-h-screen flex-col" style={{ background: PAGE_BG }}>
+      <main className="profile-page-typography explore-jobs-page w-full grow overflow-x-clip">
         <DashboardContainer className="pt-3 pb-6 sm:pt-4 sm:pb-8 lg:pt-4 lg:pb-10">
-          <div className="mx-auto max-w-[1320px] px-6 lg:px-8">
+          <div className="mx-auto max-w-[1320px] px-4 sm:px-5 lg:px-6">
             {/* LIST/GRID VIEW */}
             {viewMode !== 'detail' ? (
               <>
@@ -2163,7 +2164,7 @@ const ExploreJobsPageContent = () => {
                               <path d="m15 18-6-6 6-6" />
                             </svg>
                           </button>
-                          <h1 className="text-[2rem] font-semibold tracking-tight text-slate-950 sm:text-[2.25rem]">
+                          <h1 className="application-detail-title">
                             {t("exploreJobs.title")}
                           </h1>
                           {isPersonalized ? (
@@ -2173,7 +2174,7 @@ const ExploreJobsPageContent = () => {
                           ) : null}
                         </div>
 
-                        <p className="max-w-2xl text-[14px] font-medium leading-6 text-slate-600">
+                        <p className="application-detail-helper max-w-2xl">
                           {isPersonalized
                             ? 'Curated roles based on your current profile, experience signals, and application intent.'
                             : 'Search the current market, compare fit signals, and jump into the roles worth your time.'}
@@ -2235,7 +2236,7 @@ const ExploreJobsPageContent = () => {
                 <div className="dashboard-surface rounded-[24px] border border-white/80 p-6 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-gray-900">Filters</p>
+                      <p className="profile-page-section-title">Filters</p>
                       <span className="inline-flex rounded-full bg-[rgba(40,168,225,0.10)] px-2.5 py-1 text-[11px] font-semibold text-[#28A8E1]">
                         {activeFilterCount}
                       </span>
@@ -2243,7 +2244,7 @@ const ExploreJobsPageContent = () => {
                     <button
                       type="button"
                       onClick={handleResetFilters}
-                      className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                      className="text-[0.8125rem] font-medium text-blue-600 hover:text-blue-700"
                     >
                       Reset Filters
                     </button>
@@ -2272,18 +2273,18 @@ const ExploreJobsPageContent = () => {
                                 onChange={(e) => row.onChange(e.target.checked)}
                                 className="h-4 w-4"
                               />
-                              <span className="text-sm text-gray-700">{row.label}</span>
+                              <span className="profile-page-value">{row.label}</span>
                             </label>
                           ))}
                         </div>
                       ) : null}
                     </div>
 
-                    <p className="text-xs tracking-widest text-gray-400 font-bold uppercase">Job Preferences</p>
+                    <p className="profile-page-label">Job Preferences</p>
 
                     {/* Work Mode */}
                     <div className="space-y-3">
-                      <p className="text-sm font-semibold text-gray-900">Work Mode</p>
+                      <p className="profile-page-section-title">Work Mode</p>
                       <div className="flex flex-wrap gap-2">
                         <Pill label="Remote" active={workMode === 'Remote'} onClick={() => setWorkMode(workMode === 'Remote' ? null : 'Remote')} />
                         <Pill label="Hybrid" active={workMode === 'Hybrid'} onClick={() => setWorkMode(workMode === 'Hybrid' ? null : 'Hybrid')} />
@@ -2329,7 +2330,7 @@ const ExploreJobsPageContent = () => {
                             <select
                               value={salaryFilterCurrency}
                               onChange={(e) => setSalaryFilterCurrency(e.target.value)}
-                              className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="profile-modal-field h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-[0.8125rem] text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               {SALARY_FILTER_CURRENCIES.map((currency) => (
                                 <option key={currency} value={currency}>
@@ -2349,7 +2350,7 @@ const ExploreJobsPageContent = () => {
                                 value={salaryFilterMin}
                                 onChange={(e) => setSalaryFilterMin(e.target.value)}
                                 placeholder="Min"
-                                className="h-10 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="profile-modal-field h-10 w-full rounded-lg border border-gray-200 px-3 text-[0.8125rem] text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                               />
                             </div>
                             <div>
@@ -2362,7 +2363,7 @@ const ExploreJobsPageContent = () => {
                                 value={salaryFilterMax}
                                 onChange={(e) => setSalaryFilterMax(e.target.value)}
                                 placeholder="Max"
-                                className="h-10 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="profile-modal-field h-10 w-full rounded-lg border border-gray-200 px-3 text-[0.8125rem] text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                               />
                             </div>
                           </div>
@@ -2394,14 +2395,14 @@ const ExploreJobsPageContent = () => {
                                 onChange={(e) => setMatchScore((prev) => ({ ...prev, [label]: e.target.checked }))}
                                 className="h-4 w-4"
                               />
-                              <span className="text-sm text-gray-700">{label}</span>
+                              <span className="profile-page-value">{label}</span>
                             </label>
                           ))}
                         </div>
                       ) : null}
                     </div>
 
-                    <p className="text-xs tracking-widest text-gray-400 font-bold uppercase">Company Filters</p>
+                    <p className="profile-page-label">Company Filters</p>
 
                     {/* Industry */}
                     <div className="space-y-3">
@@ -2419,7 +2420,7 @@ const ExploreJobsPageContent = () => {
                                   onChange={(e) => setIndustry((prev) => ({ ...prev, [label]: e.target.checked }))}
                                   className="h-4 w-4"
                                 />
-                                <span className="text-sm text-gray-700">{label}</span>
+                                <span className="profile-page-value">{label}</span>
                               </span>
                               <span className="text-xs text-gray-500">{filterCounts.industry[label] || 0}</span>
                             </label>
@@ -2437,7 +2438,7 @@ const ExploreJobsPageContent = () => {
                       ) : null}
                     </div>
 
-                    <p className="text-xs tracking-widest text-gray-400 font-bold uppercase">Location</p>
+                    <p className="profile-page-label">Location</p>
 
                     {/* Cities */}
                     <div className="space-y-3">
@@ -2460,7 +2461,7 @@ const ExploreJobsPageContent = () => {
                                 setCountryPickerOpen(true)
                               }}
                               onFocus={() => setCountryPickerOpen(true)}
-                              className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-8 text-sm text-gray-800 outline-none focus:border-[#28A8E1] focus:ring-1 focus:ring-[#28A8E1]"
+                              className="profile-modal-field w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-8 text-[0.8125rem] text-gray-800 outline-none focus:border-[#28A8E1] focus:ring-1 focus:ring-[#28A8E1]"
                             />
                             {(selectedCountry || countrySearch) ? (
                               <button
@@ -2557,7 +2558,7 @@ const ExploreJobsPageContent = () => {
                                         }
                                         className="h-4 w-4"
                                       />
-                                      <span className="text-sm text-gray-700">{label}</span>
+                                      <span className="profile-page-value">{label}</span>
                                     </span>
                                     <span className="text-xs text-gray-500">
                                       {filterCounts.cities[label] || 0}
@@ -2590,11 +2591,11 @@ const ExploreJobsPageContent = () => {
                 <div className="dashboard-surface rounded-[24px] border border-white/80 p-5 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-xs tracking-widest text-[#28A8DF] font-black uppercase flex items-center gap-2">
+                      <p className="profile-page-label flex items-center gap-2 text-[#28A8DF]">
                         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM11 16h2v2h-2v-2zm0-10h2v8h-2V6z"/></svg>
                         {isPersonalized ? "Elite AI Matches for your Profile" : "Recommended for you"}
                       </p>
-                      <p className="mt-1 text-sm text-gray-600 font-bold">
+                      <p className="profile-page-value mt-1 font-semibold">
                         {loading ? 'Analyzing your profile…' : `Identified ${filteredJobs.length} potential career matches`}
                       </p>
                     </div>
@@ -2740,8 +2741,8 @@ const ExploreJobsPageContent = () => {
                   <div className="sticky top-[calc(var(--app-header-height,92px)+8px)] w-full max-w-full self-start rounded-[28px] border border-white/80 bg-white/82 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur-md sm:p-5 lg:p-6 xl:p-7">
                     <div className="mb-4 flex items-center justify-between gap-3 px-1 min-w-0">
                       <div className="min-w-0">
-                        <h2 className="truncate text-lg font-semibold tracking-tight text-slate-950">Most Recent Jobs</h2>
-                        <p className="mt-1 text-[12px] font-medium text-slate-500">{filteredJobs.length} roles in this view</p>
+                        <h2 className="profile-page-section-title truncate">Most Recent Jobs</h2>
+                        <p className="profile-page-empty mt-1">{filteredJobs.length} roles in this view</p>
                       </div>
                       <button
                         type="button"
@@ -2769,9 +2770,9 @@ const ExploreJobsPageContent = () => {
                             <div className="flex min-w-0 items-start gap-4">
                               <JobLogoBadge job={selectedJob} />
                               <div className="min-w-0">
-                                <h1 className="wrap-break-word text-[clamp(22px,2.4vw,32px)] font-semibold tracking-tight text-slate-950">{selectedJob.title}</h1>
-                                <p className="mt-1 wrap-break-word text-[15px] font-medium text-slate-500">{selectedJob.company} • {selectedJob.location}</p>
-                                <p className="mt-2 wrap-break-word text-[14px] font-medium text-slate-500">
+                                <h1 className="application-detail-title wrap-break-word">{selectedJob.title}</h1>
+                                <p className="application-detail-meta mt-1 wrap-break-word">{selectedJob.company} • {selectedJob.location}</p>
+                                <p className="application-detail-helper mt-2 wrap-break-word">
                                   {selectedJob.salary}
                                   {' • '}
                                   {selectedJob.experienceLevel === 'Not specified'
@@ -2858,7 +2859,7 @@ const ExploreJobsPageContent = () => {
                                             />
                                           </svg>
                                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span className="text-[24px] font-bold tracking-tight text-slate-950 leading-none">{selectedJobMatchValue}%</span>
+                                            <span className="application-detail-title leading-none">{selectedJobMatchValue}%</span>
                                             <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500 mt-0.5">Match</span>
                                           </div>
                                         </div>
@@ -2884,7 +2885,7 @@ const ExploreJobsPageContent = () => {
                                         </div>
                                       </div>
 
-                                      <p className="max-w-3xl text-[15px] leading-7 text-slate-600">
+                                      <p className="application-detail-helper max-w-3xl">
                                         &ldquo;
                                         {selectedJob.reasoning ||
                                           'Based on your technical background and experience, you are a competitive candidate for this role. Key overlaps found in core technical stacks.'}
@@ -2979,7 +2980,7 @@ const ExploreJobsPageContent = () => {
               <div className="px-6 pt-6 pb-2">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Quick Screening Questions</h2>
                 <p className="text-base text-gray-700 mb-1">{selectedJob.title} — {selectedJob.company}</p>
-                <p className="text-sm text-gray-600 mb-2">These quick questions help us understand if you are a good fit for the role</p>
+                <p className="application-detail-helper mb-2">These quick questions help us understand if you are a good fit for the role</p>
               </div>
 
               {/* Questions (dynamic, configured by recruiter) */}
@@ -2992,7 +2993,7 @@ const ExploreJobsPageContent = () => {
                     if (question.type === 'yes_no') {
                       return (
                         <div key={question.id}>
-                          <label className="block text-base font-medium text-gray-900 mb-3">
+                          <label className="profile-page-section-title mb-3 block">
                             {question.label}
                             {question.required ? <span className="ml-1 text-red-500">*</span> : null}
                           </label>
@@ -3019,7 +3020,7 @@ const ExploreJobsPageContent = () => {
                       const options = Array.isArray(question.options) ? question.options : []
                       return (
                         <div key={question.id}>
-                          <label className="block text-base font-medium text-gray-900 mb-3">
+                          <label className="profile-page-section-title mb-3 block">
                             {question.label}
                             {question.required ? <span className="ml-1 text-red-500">*</span> : null}
                           </label>
@@ -3054,7 +3055,7 @@ const ExploreJobsPageContent = () => {
                       const fillPercent = Math.max(0, Math.min(100, ((numericValue - min) / range) * 100))
                       return (
                         <div key={question.id}>
-                          <label className="block text-base font-medium text-gray-900 mb-3">
+                          <label className="profile-page-section-title mb-3 block">
                             {question.label}
                             {question.required ? <span className="ml-1 text-red-500">*</span> : null}
                           </label>
@@ -3085,7 +3086,7 @@ const ExploreJobsPageContent = () => {
 
                     return (
                       <div key={question.id}>
-                        <label className="block text-base font-medium text-gray-900 mb-3">
+                        <label className="profile-page-section-title mb-3 block">
                           {question.label}
                           {question.required ? <span className="ml-1 text-red-500">*</span> : null}
                         </label>
@@ -3135,7 +3136,7 @@ const ExploreJobsPageContent = () => {
         />
       )}
 
-    </div >
+    </div>
   )
 }
 
@@ -3149,7 +3150,7 @@ function splitTextPoints(raw?: string | null) {
 
 export default function ExploreJobsPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: PAGE_BG }} />}>
+    <Suspense fallback={<div className="min-h-screen" style={{ background: PAGE_BG }} />}>
       <ExploreJobsPageContent />
     </Suspense>
   )

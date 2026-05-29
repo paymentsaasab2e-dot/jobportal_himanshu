@@ -15,7 +15,7 @@ export function LmsDailyMomentum() {
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-500 text-white shadow-sm">
             <Flame className="h-4.5 w-4.5" strokeWidth={2.5} aria-hidden />
           </div>
-          <h2 className="text-sm font-bold text-gray-900 leading-tight">{d.title || "Today's focus"}</h2>
+          <h2 className="profile-page-section-title leading-tight">{d.title || "Today's focus"}</h2>
         </div>
         
         <ul className="space-y-2.5">
@@ -39,7 +39,7 @@ export function LmsDailyMomentum() {
         <div className="pt-1">
           <Link
             href="/lms/quizzes"
-            className="inline-flex w-full items-center justify-center rounded-xl bg-[#28A8E1] px-4 py-2 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
+            className="inline-flex w-full items-center justify-center rounded-xl bg-[#28A8E1] px-4 py-2 text-[0.8125rem] font-medium text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
           >
             Start now
           </Link>

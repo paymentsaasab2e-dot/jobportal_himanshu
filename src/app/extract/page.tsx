@@ -9,6 +9,7 @@ import { CheckCircle2, Sparkles, User, Briefcase, GraduationCap } from "lucide-r
 import { API_BASE_URL } from '@/lib/api-base';
 import { showSuccessToast } from '@/components/common/toast/toast';
 import HryantraLoader from "@/components/loader/CV Parsing Loader Final";
+import { getLocaleFromPathname, localizePath, stripLocaleFromPathname } from "@/lib/i18n";
 
 export default function ExtractPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -30,7 +31,14 @@ export default function ExtractPage() {
   const redirectToDashboard = useCallback(() => {
     if (!isPageActiveRef.current) return;
     // Never redirect after the user has left /extract (e.g. opened /profile).
-    if (typeof window !== "undefined" && !window.location.pathname.startsWith("/extract")) {
+    // Browser URL is locale-prefixed (/en/extract); strip locale before comparing.
+    if (typeof window !== "undefined") {
+      const internalPath = stripLocaleFromPathname(window.location.pathname);
+      if (!internalPath.startsWith("/extract")) {
+        return;
+      }
+      const locale = getLocaleFromPathname(window.location.pathname);
+      router.push(localizePath("/candidate-dashboard", locale));
       return;
     }
     router.push("/candidate-dashboard");

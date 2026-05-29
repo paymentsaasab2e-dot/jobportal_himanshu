@@ -92,7 +92,7 @@ const DATE_OPTIONS = [
 ];
 
 const PAGE_BG =
-  'radial-gradient(circle at top left, rgba(40,168,225,0.13), transparent 28%), radial-gradient(circle at 85% 12%, rgba(40,168,223,0.1), transparent 16%), radial-gradient(circle at 18% 82%, rgba(252,150,32,0.08), transparent 18%), linear-gradient(180deg, #f5fafd 0%, #f8fcff 44%, #fcfdff 100%)';
+  'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)';
 
 const SAVED_JOBS_STORAGE_PREFIX = 'dashboardSavedJobs';
 
@@ -474,18 +474,18 @@ function MetricTile({
     <div className="rounded-[18px] border border-white/75 bg-white/78 px-3.5 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#94a3b8]">
             {label}
           </p>
-          <p className="mt-1.5 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
+          <p className="profile-page-value mt-1.5 font-semibold tracking-tight">
             {value}
           </p>
         </div>
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--brand-primary-soft) text-(--brand-primary)">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]">
           <Icon className="h-4 w-4" strokeWidth={2.1} />
         </span>
       </div>
-      <p className="mt-2 text-[11px] font-medium leading-5 text-slate-500">{helper}</p>
+      <p className="profile-page-empty mt-2 leading-5">{helper}</p>
     </div>
   );
 }
@@ -517,7 +517,7 @@ function SegmentedControl({
             key={item.key}
             type="button"
             onClick={() => onChange(item.key)}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[0.8125rem] font-semibold transition-all duration-200 ${
               active
                 ? 'bg-[#28A8E1] text-white shadow-[0_10px_18px_rgba(40,168,225,0.18)]'
                 : 'text-slate-600 hover:bg-slate-100/80'
@@ -1184,10 +1184,10 @@ export default function ApplicationsPageClient() {
             <div className="flex min-w-0 items-start gap-3">
               <CompanyMark company={application.company} />
               <div className="min-w-0">
-                <p className="truncate text-lg font-semibold tracking-tight text-slate-950">
+                <p className="profile-page-value truncate font-semibold tracking-tight">
                   {application.jobTitle}
                 </p>
-                <p className="mt-1 truncate text-sm font-medium text-slate-500">
+                <p className="application-detail-meta mt-1 truncate">
                   {application.company}
                 </p>
               </div>
@@ -1207,7 +1207,7 @@ export default function ApplicationsPageClient() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
               Next action
             </p>
-            <p className="mt-1 text-sm font-semibold">{action.label}</p>
+            <p className="profile-page-value mt-1 font-semibold">{action.label}</p>
             <p className="mt-1 text-[12px] leading-5 opacity-80">{action.detail}</p>
           </div>
 
@@ -1312,10 +1312,10 @@ export default function ApplicationsPageClient() {
             <div className="flex min-w-0 items-start gap-3">
               <CompanyMark company={job.company} />
               <div className="min-w-0">
-                <p className="truncate text-lg font-semibold tracking-tight text-slate-950">
+                <p className="profile-page-value truncate font-semibold tracking-tight">
                   {job.title}
                 </p>
-                <p className="mt-1 truncate text-sm font-medium text-slate-500">{job.company}</p>
+                <p className="application-detail-meta mt-1 truncate">{job.company}</p>
                 <p className="mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
                   {formatSavedJobMeta(job)}
                 </p>
@@ -1331,7 +1331,7 @@ export default function ApplicationsPageClient() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
               Why keep this role
             </p>
-            <p className="mt-1 text-sm font-semibold text-slate-900">
+            <p className="profile-page-value mt-1 font-semibold">
               {job.matchScore != null && job.matchScore >= 75
                 ? 'This role still looks like a strong fit for your profile.'
                 : 'You bookmarked this role to revisit when you are ready to apply.'}
@@ -1389,17 +1389,17 @@ export default function ApplicationsPageClient() {
 
   if (candidateMissing) {
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: PAGE_BG }}>
-        <main className="w-full grow overflow-x-hidden">
-          <div className="mx-auto max-w-[1320px] px-6 py-14 lg:px-8">
+      <div className="flex min-h-screen flex-col" style={{ background: PAGE_BG }}>
+        <main className="profile-page-typography applications-page w-full grow overflow-x-hidden">
+          <div className="mx-auto max-w-[1180px] px-4 py-14 sm:px-5 lg:px-6">
             <DashboardPanel className="px-6 py-10 text-center sm:px-10">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-(--brand-primary-soft) text-(--brand-primary)">
                 <BriefcaseBusiness className="h-7 w-7" strokeWidth={2.2} />
               </div>
-              <h1 className="mt-5 text-3xl font-semibold tracking-tight text-slate-950">
+              <h1 className="application-detail-title mt-5">
                 Sign in to see your applications
               </h1>
-              <p className="mx-auto mt-3 max-w-2xl text-sm font-medium leading-7 text-slate-500">
+              <p className="application-detail-helper mx-auto mt-3 max-w-2xl">
                 Verify your WhatsApp number so we can load only your application history,
                 interview schedule, and next recommended actions.
               </p>
@@ -1422,55 +1422,56 @@ export default function ApplicationsPageClient() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: PAGE_BG }}>
+    <div className="flex min-h-screen flex-col" style={{ background: PAGE_BG }}>
 
-      <main className="w-full grow overflow-x-hidden pt-2 sm:pt-4 lg:pt-6">
+      <main className="profile-page-typography applications-page w-full grow overflow-x-hidden pt-2 sm:pt-4 lg:pt-6">
         <div className="mx-auto max-w-[1180px] px-4 pt-0 pb-2 sm:px-5 sm:pb-3 lg:px-6 lg:pb-4">
           <div className="space-y-1.5">
             <DashboardPanel className="relative overflow-hidden px-4 py-1.5 sm:px-5 sm:py-2 lg:px-6 lg:py-3">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(40,168,225,0.16),transparent_34%),radial-gradient(circle_at_82%_18%,rgba(252,150,32,0.08),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(40,168,223,0.1),transparent_30%)]" />
 
-              <div className="relative flex flex-col gap-1 xl:flex-row xl:items-start xl:justify-between">
-                <div className="max-w-2xl space-y-1">
+              <div className="relative flex flex-col gap-4">
+                <div className="max-w-2xl space-y-3">
                   <div className="inline-flex items-center gap-1.5 rounded-full border border-(--brand-primary-soft) bg-white/72 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-primary) shadow-sm">
                     <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
                     Application command center
                   </div>
 
                   <div className="space-y-2">
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => router.back()}
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
-                      title="Go Back"
-                    >
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => router.back()}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
+                        title="Go Back"
                       >
-                        <path d="m15 18-6-6 6-6" />
-                      </svg>
-                    </button>
-                    <h1 className="text-[1.8rem] font-semibold tracking-tight text-slate-950 sm:text-[2.1rem]">
-                      {activeSection === 'applications'
-                        ? 'My Applications'
-                        : activeSection === 'interviews'
-                        ? 'Interview Tracker'
-                        : 'Saved Jobs'}
-                    </h1>
-                  </div>
-                    <p className="max-w-2xl text-[13px] font-medium leading-6 text-slate-600 sm:text-sm">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="m15 18-6-6 6-6" />
+                        </svg>
+                      </button>
+                      <h1 className="application-detail-title">
+                        {activeSection === 'applications'
+                          ? 'My Applications'
+                          : activeSection === 'interviews'
+                            ? 'Interview Tracker'
+                            : 'Saved Jobs'}
+                      </h1>
+                    </div>
+                    <p className="application-detail-helper max-w-2xl">
                       {activeSection === 'applications'
                         ? 'Track every role, understand its current stage, and move quickly on the applications that need attention.'
                         : activeSection === 'interviews'
-                        ? 'Keep your interview schedule, formats, and next actions in one cleaner view.'
-                        : 'Revisit the roles you bookmarked, compare fit signals, and jump back into the jobs board when you want to apply.'}
+                          ? 'Keep your interview schedule, formats, and next actions in one cleaner view.'
+                          : 'Revisit the roles you bookmarked, compare fit signals, and jump back into the jobs board when you want to apply.'}
                     </p>
                   </div>
 
@@ -1483,22 +1484,24 @@ export default function ApplicationsPageClient() {
                   />
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-2 xl:w-[460px]">
-                  {heroMetrics.map((metric) => (
-                    <MetricTile
-                      key={metric.id}
-                      label={metric.label}
-                      value={metric.value}
-                      helper={metric.helper}
-                      icon={metric.icon}
-                    />
-                  ))}
+                <div className="-mx-1 overflow-x-auto px-1 sm:mx-0 sm:overflow-visible sm:px-0">
+                  <div className="grid min-w-[38rem] grid-cols-4 gap-2 sm:min-w-0">
+                    {heroMetrics.map((metric) => (
+                      <MetricTile
+                        key={metric.id}
+                        label={metric.label}
+                        value={metric.value}
+                        helper={metric.helper}
+                        icon={metric.icon}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </DashboardPanel>
 
             {fetchError ? (
-              <DashboardPanel className="border border-rose-100 bg-rose-50/90 px-4 py-3 text-sm font-medium text-rose-800">
+              <DashboardPanel className="border border-rose-100 bg-rose-50/90 px-4 py-3 text-[0.8125rem] font-medium text-rose-800">
                 {fetchError}
               </DashboardPanel>
             ) : null}
@@ -1512,10 +1515,10 @@ export default function ApplicationsPageClient() {
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-accent)">
                         Needs attention
                       </p>
-                      <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+                      <h2 className="profile-page-section-title mt-1">
                         {featuredApplication.jobTitle}
                       </h2>
-                      <p className="mt-1 text-sm font-medium text-slate-500">
+                      <p className="application-detail-meta mt-1">
                         {featuredApplication.company}
                       </p>
                     </div>
@@ -1545,10 +1548,10 @@ export default function ApplicationsPageClient() {
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-accent)">
                       Upcoming interview
                     </p>
-                    <h2 className="text-lg font-semibold tracking-tight text-slate-950">
+                    <h2 className="profile-page-section-title">
                       {featuredInterview.jobTitle}
                     </h2>
-                    <p className="text-sm font-medium text-slate-500">{featuredInterview.company}</p>
+                    <p className="application-detail-meta">{featuredInterview.company}</p>
                     <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-slate-600">
                       <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm ring-1 ring-slate-100">
                         <CalendarRange className="h-3 w-3" strokeWidth={2.1} />
@@ -1600,10 +1603,10 @@ export default function ApplicationsPageClient() {
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-accent)">
                         Saved spotlight
                       </p>
-                      <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+                      <h2 className="profile-page-section-title mt-1">
                         {featuredSavedJob.title}
                       </h2>
-                      <p className="mt-1 text-sm font-medium text-slate-500">
+                      <p className="application-detail-meta mt-1">
                         {featuredSavedJob.company}
                       </p>
                       <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
@@ -1651,7 +1654,7 @@ export default function ApplicationsPageClient() {
                           ? 'Search interviews by role or company'
                           : 'Search saved jobs by role, company, or location'
                       }
-                      className="w-full rounded-[18px] border border-slate-200/80 bg-slate-50/85 py-3 pl-11 pr-4 text-sm font-medium text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.28)] focus:bg-white focus:ring-4 focus:ring-[rgba(40,168,225,0.08)]"
+                      className="profile-modal-field w-full rounded-[18px] border border-slate-200/80 bg-slate-50/85 py-3 pl-11 pr-4 text-[0.8125rem] font-medium text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.28)] focus:bg-white focus:ring-4 focus:ring-[rgba(40,168,225,0.08)]"
                     />
                   </div>
 
@@ -1745,10 +1748,10 @@ export default function ApplicationsPageClient() {
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-slate-100 text-slate-400">
                     <BriefcaseBusiness className="h-7 w-7" strokeWidth={1.8} />
                   </div>
-                  <h2 className="mt-5 text-2xl font-semibold tracking-tight text-slate-950">
+                  <h2 className="application-detail-title mt-5">
                     {applications.length === 0 ? 'No applications yet' : 'No applications found'}
                   </h2>
-                  <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-6 text-slate-500">
+                  <p className="application-detail-helper mx-auto mt-3 max-w-md">
                     {applications.length === 0
                       ? 'Browse jobs and apply - your application history will show up here.'
                       : 'We could not find any applications matching your current search or filters.'}
@@ -1788,10 +1791,10 @@ export default function ApplicationsPageClient() {
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-slate-100 text-slate-400">
                     <BookmarkCheck className="h-7 w-7" strokeWidth={1.8} />
                   </div>
-                  <h2 className="mt-5 text-2xl font-semibold tracking-tight text-slate-950">
+                  <h2 className="application-detail-title mt-5">
                     {savedJobs.length === 0 ? 'No saved jobs yet' : 'No saved jobs found'}
                   </h2>
-                  <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-6 text-slate-500">
+                  <p className="application-detail-helper mx-auto mt-3 max-w-md">
                     {savedJobs.length === 0
                       ? 'Save roles from the dashboard and they will appear here for quick follow-up.'
                       : 'We could not find any saved jobs matching your current search.'}
@@ -1826,10 +1829,10 @@ export default function ApplicationsPageClient() {
                         <div className="flex min-w-0 items-start gap-3">
                           <CompanyMark company={interview.company} />
                           <div className="min-w-0">
-                            <p className="truncate text-lg font-semibold tracking-tight text-slate-950">
+                            <p className="profile-page-value truncate font-semibold tracking-tight">
                               {interview.jobTitle}
                             </p>
-                            <p className="mt-1 truncate text-sm font-medium text-slate-500">
+                            <p className="application-detail-meta mt-1 truncate">
                               {interview.company}
                             </p>
                           </div>
@@ -1849,7 +1852,7 @@ export default function ApplicationsPageClient() {
                           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                             Scheduled
                           </p>
-                          <p className="mt-1 text-sm font-semibold text-slate-900">
+                          <p className="profile-page-value mt-1 font-semibold">
                             {formatInterviewDateTime(interview.interviewDateTime)}
                           </p>
                         </div>
@@ -1857,13 +1860,13 @@ export default function ApplicationsPageClient() {
                           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                             Format
                           </p>
-                          <p className="mt-1 text-sm font-semibold text-slate-900">
+                          <p className="profile-page-value mt-1 font-semibold">
                             {interview.interviewType === 'online' ? 'Online interview' : 'Walk-in interview'}
                           </p>
                         </div>
                       </div>
 
-                      <div className="rounded-[18px] border border-slate-100/90 bg-slate-50/85 px-3.5 py-3 text-sm font-medium text-slate-600">
+                      <div className="application-detail-helper rounded-[18px] border border-slate-100/90 bg-slate-50/85 px-3.5 py-3">
                         {interview.interviewType === 'online'
                           ? 'Meeting access is available when you are ready to join.'
                           : 'Keep interview documents and location details handy before the visit.'}
@@ -1911,10 +1914,10 @@ export default function ApplicationsPageClient() {
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-slate-100 text-slate-400">
                   <CalendarRange className="h-7 w-7" strokeWidth={1.8} />
                 </div>
-                <h2 className="mt-5 text-2xl font-semibold tracking-tight text-slate-950">
+                <h2 className="application-detail-title mt-5">
                   No interviews scheduled
                 </h2>
-                <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-6 text-slate-500">
+                <p className="application-detail-helper mx-auto mt-3 max-w-md">
                   You do not have any interview events in view right now. Keep applying to increase
                   your chances.
                 </p>

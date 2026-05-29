@@ -43,7 +43,7 @@ export default function CompanyResearchPage() {
                <Building2 className="h-8 w-8" />
              </div>
              <div>
-               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">{company.name}</h1>
+               <h1 className="application-detail-title">{company.name}</h1>
                <p className="text-gray-600 mt-1">{company.overview}</p>
              </div>
           </div>

@@ -168,7 +168,7 @@ export function LmsQuizzesPageContent() {
   return (
     <div className="space-y-10">
       <div className="min-w-0">
-        <h1 className="mb-1 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Quizzes</h1>
+        <h1 className="application-detail-title mb-1">Quizzes</h1>
         <p className={LMS_PAGE_SUBTITLE}>
           Adaptive practice linked directly to your Database API limits and registration records.
         </p>
@@ -271,8 +271,8 @@ export function LmsQuizzesPageContent() {
                   </div>
                   <p className="text-sm font-normal text-gray-600">{selectedSkillDetail.summary}</p>
                   <div className="flex flex-wrap gap-3">
-                    <div className="rounded-2xl border border-sky-100 bg-white px-4 py-3"><p className="text-xs font-bold uppercase tracking-wide text-gray-400">Current mastery</p><p className="mt-1 text-2xl font-bold text-gray-900">{selectedSkillDetail.mastery}%</p></div>
-                    <div className="rounded-2xl border border-sky-100 bg-white px-4 py-3"><p className="text-xs font-bold uppercase tracking-wide text-gray-400">Last attempt</p><p className="mt-1 text-2xl font-bold text-gray-900">{selectedSkillDetail.lastScore != null ? `${selectedSkillDetail.lastScore}%` : 'No history'}</p></div>
+                    <div className="rounded-2xl border border-sky-100 bg-white px-4 py-3"><p className="text-xs font-bold uppercase tracking-wide text-gray-400">Current mastery</p><p className="profile-page-value mt-1 font-semibold">{selectedSkillDetail.mastery}%</p></div>
+                    <div className="rounded-2xl border border-sky-100 bg-white px-4 py-3"><p className="text-xs font-bold uppercase tracking-wide text-gray-400">Last attempt</p><p className="profile-page-value mt-1 font-semibold">{selectedSkillDetail.lastScore != null ? `${selectedSkillDetail.lastScore}%` : 'No history'}</p></div>
                     <div className="rounded-2xl border border-sky-100 bg-white px-4 py-3"><p className="text-xs font-bold uppercase tracking-wide text-gray-400">Trend</p><p className="mt-1 text-sm font-bold text-gray-900">{selectedSkillDetail.trend === 'up' ? 'Improving' : selectedSkillDetail.trend === 'down' ? 'Needs another pass' : selectedSkillDetail.trend === 'steady' ? 'Holding steady' : 'Trend unlocks after more attempts'}</p></div>
                   </div>
                   <div>

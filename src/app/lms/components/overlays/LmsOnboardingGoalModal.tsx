@@ -74,7 +74,7 @@ export function LmsOnboardingGoalModal({ onClose }: { onClose: () => void }) {
             <Target className="h-8 w-8" strokeWidth={2.5} />
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mb-3">
+          <h2 className="application-detail-title mb-3">
             What is your goal?
           </h2>
           <p className="text-slate-500 text-sm sm:text-[15px] font-medium max-w-[320px] mx-auto mb-10 leading-relaxed">

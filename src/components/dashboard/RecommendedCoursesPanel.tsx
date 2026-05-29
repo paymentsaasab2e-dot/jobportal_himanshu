@@ -188,10 +188,10 @@ export default function RecommendedCoursesPanel({
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight text-slate-950">
+            <h2 className="profile-page-section-title">
               Recommended courses
             </h2>
-            <p className="mt-1 text-[13px] font-medium text-slate-500">
+            <p className="application-detail-helper mt-1">
               Sharpen the exact skills that help your strongest matches convert.
             </p>
           </div>
@@ -228,10 +228,10 @@ export default function RecommendedCoursesPanel({
 
                   <div className="mt-3 flex flex-1 flex-col gap-3">
                     <div>
-                      <p className="text-sm font-semibold leading-6 text-slate-950">
+                      <p className="profile-page-value font-semibold leading-[1.4]">
                         {course.title}
                       </p>
-                      <p className="mt-1 text-[12px] font-medium text-slate-500">
+                      <p className="profile-page-empty mt-1">
                         {course.provider}
                       </p>
                     </div>

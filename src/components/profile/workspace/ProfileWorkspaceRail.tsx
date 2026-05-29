@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
+import { PROFILE_DASHBOARD_CARD } from '@/components/profile/layout/profile-layout.constants';
 
 export type ProfileAlert = {
   id: string;
@@ -42,9 +43,9 @@ export function ProfileWorkspaceRail({
   const offset = circumference - (pct / 100) * circumference;
 
   return (
-    <aside className="space-y-3.5 lg:sticky lg:top-[calc(var(--app-header-height,92px)+8px)] lg:self-start">
+    <aside className="mx-auto w-full max-w-[248px] space-y-3 lg:mx-0 lg:sticky lg:top-[calc(var(--app-header-height,92px)+8px)] lg:w-[248px] lg:max-w-none lg:self-start xl:w-[256px]">
       {/* Identity */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-3.5 shadow-sm">
+      <div className={`${PROFILE_DASHBOARD_CARD} p-4 sm:p-5`}>
         <div className="flex gap-3">
           <div
             className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-sm font-semibold text-white shadow-sm"
@@ -91,10 +92,8 @@ export function ProfileWorkspaceRail({
 
       {/* Alerts */}
       {alerts.length > 0 ? (
-        <div className="rounded-2xl border border-gray-100 bg-white p-3.5 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-            Alerts
-          </p>
+        <div className={`${PROFILE_DASHBOARD_CARD} p-4 sm:p-5`}>
+          <p className="profile-page-label">Alerts</p>
           <ul className="mt-2 space-y-2">
             {alerts.map((a) => (
               <li
@@ -114,10 +113,8 @@ export function ProfileWorkspaceRail({
       ) : null}
 
       {/* Score + pending */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-3.5 shadow-sm">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-          Profile health
-        </p>
+      <div className={`${PROFILE_DASHBOARD_CARD} p-4 sm:p-5`}>
+        <p className="profile-page-label">Profile health</p>
         <div className="mt-3 flex items-center gap-4">
           <div className="relative h-22 w-22 shrink-0">
             <svg className="-rotate-90" viewBox="0 0 100 100" aria-hidden>

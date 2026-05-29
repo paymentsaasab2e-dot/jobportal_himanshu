@@ -359,11 +359,10 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                                             handleNavItemClick(item);
                                                         }
                                                     }}
-                                                    className={`relative z-10 flex min-w-[72px] flex-1 items-center justify-center gap-1 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ease-in-out sm:min-w-[80px] sm:flex-none ${active
+                                                    className={`app-header-nav-link relative z-10 flex min-w-[68px] flex-1 items-center justify-center gap-1 rounded-full px-3 py-1.5 transition-all duration-200 ease-in-out sm:min-w-[76px] sm:flex-none ${active
                                                         ? 'text-white'
                                                         : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                                                         }`}
-                                                    style={{ fontFamily: 'var(--font-plus-jakarta), "Plus Jakarta Sans", sans-serif' }}
                                                 >
                                                     {active && (
                                                         <motion.div
@@ -521,8 +520,8 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                                     handleNavItemClick(item);
                                                     setIsMobileMenuOpen(false);
                                                 }}
-                                                className={`flex items-center px-4 py-3 rounded-full text-sm font-semibold transition-all duration-200 ${active
-                                                    ? 'bg-[#28A8E1] text-white shadow-[0_10px_18px_rgba(40,168,225,0.18)]'
+                                                className={`app-header-nav-link flex items-center rounded-full px-4 py-2.5 transition-all duration-200 ${active
+                                                    ? 'bg-[#28A8E1] font-semibold text-white shadow-[0_10px_18px_rgba(40,168,225,0.18)]'
                                                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                                                     }`}
                                             >

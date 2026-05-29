@@ -214,7 +214,7 @@ export default function LmsDashboardPage() {
   return (
     <div className="space-y-8 pb-10">
       <div className="min-w-0">
-        <h1 className="mb-1 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Welcome back</h1>
+        <h1 className="application-detail-title mb-1">Welcome back</h1>
         <p className={LMS_PAGE_SUBTITLE}>Your AI-powered career hub. Tracking your journey to your next professional destination.</p>
       </div>
 

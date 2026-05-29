@@ -116,7 +116,7 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
                   <Link
                     key={href}
                     href={href}
-                    className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm transition-all duration-300 ${active
+                    className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-[0.8125rem] font-medium transition-all duration-300 ${active
                       ? 'bg-[#28A8E1] text-white shadow-md shadow-[#28A8E1]/20 scale-[1.02] font-bold'
                       : 'bg-slate-50 text-slate-900 font-medium border border-slate-200/60 hover:bg-slate-100'
                       }`}
@@ -146,7 +146,7 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
                     <div className="h-1.5 w-6 rounded-full bg-slate-200" />
                   </div>
                 ) : (
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Learning Hub</span>
+                  <span className="profile-page-label block">Learning Hub</span>
                 )}
               </div>
               {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
@@ -156,7 +156,7 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
                     key={href}
                     href={href}
                     title={collapsed ? label : undefined}
-                    className={`flex items-center rounded-xl px-3 py-3 text-[0.95rem] transition-all duration-200 group ${
+                    className={`flex items-center rounded-xl px-3 py-3 text-[0.8125rem] transition-all duration-200 group ${
                       collapsed ? 'justify-center gap-0' : 'gap-3 justify-start'
                     } ${
                       active
@@ -175,10 +175,10 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
             </nav>
           </aside>
 
-          <main className={`flex-1 min-w-0 flex flex-col relative z-10 w-full transition-all duration-300 ${collapsed ? 'lg:max-w-[calc(100%-68px)]' : 'lg:max-w-[calc(100%-16rem)]'} overflow-hidden`}>
+          <main className={`profile-page-typography lms-page flex-1 min-w-0 flex flex-col relative z-10 w-full transition-all duration-300 ${collapsed ? 'lg:max-w-[calc(100%-68px)]' : 'lg:max-w-[calc(100%-16rem)]'} overflow-hidden`}>
             <div className={LMS_CONTENT_CLASS}>
 {/* <LmsCareerEngineStrip /> */}
-              <div className="relative isolate px-6 pt-3 lg:px-8">
+              <div className="relative isolate pt-3">
                 {pathname === '/lms/courses' && <LmsDailyMomentum />}
                 {pathname !== '/lms/interview-prep' && pathname !== '/lms/courses' && <LmsSharedIntelligenceHint />}
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out fill-mode-both">

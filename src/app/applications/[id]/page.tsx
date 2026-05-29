@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api-base';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
+import { ProfilePageShell } from '@/components/profile/layout';
+import { ApplicationDetailSectionCard } from '@/components/applications/ApplicationDetailSectionCard';
 
 interface CommunicationUpdate {
   id: string;
@@ -48,6 +50,15 @@ interface ApplicationDetail {
   offerLetterUrl?: string | null;
   offerLetterFileName?: string | null;
   offerLetterUploadedAt?: string | null;
+  placementId?: string | null;
+  placementStatus?: string | null;
+  offerResponse?: string | null;
+  offerRespondedAt?: string | null;
+  joiningDate?: string | null;
+  reportingToName?: string | null;
+  reportingToTitle?: string | null;
+  reportingToEmail?: string | null;
+  joiningNotes?: string | null;
   interviewDetails?: InterviewDetailsPayload | null;
   /** All CRM-scheduled interview rounds for this application (chronological). */
   interviewRounds?: InterviewRoundPayload[];
@@ -421,6 +432,7 @@ export default function ApplicationStatusPage() {
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false);
+  const [offerResponding, setOfferResponding] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -673,6 +685,55 @@ export default function ApplicationStatusPage() {
     setWithdrawConfirmOpen(false);
   };
 
+  const reloadApplication = async () => {
+    if (!applicationId) return;
+    const response = await fetch(`${API_BASE_URL}/applications/detail/${encodeURIComponent(applicationId)}`);
+    const result = await response.json();
+    if (response.ok && result?.success && result?.data) {
+      setApplication(result.data as ApplicationDetail);
+    }
+  };
+
+  const respondToOffer = async (decision: 'accept' | 'reject') => {
+    if (!application || !candidateId) {
+      showErrorToast('Sign in required', 'Please log in as the candidate to respond to the offer.');
+      return;
+    }
+    if (application.candidateId && application.candidateId !== candidateId) {
+      showErrorToast('Not allowed', 'This offer belongs to another account.');
+      return;
+    }
+    setOfferResponding(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/applications/detail/${encodeURIComponent(applicationId)}/offer-response`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ candidateId, decision }),
+        }
+      );
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || 'Could not submit your response');
+      }
+      showSuccessToast(
+        decision === 'accept' ? 'Offer accepted' : 'Offer declined',
+        decision === 'accept'
+          ? 'The recruiter has been notified. Joining details will appear here once scheduled.'
+          : 'The recruiter has been notified of your decision.'
+      );
+      await reloadApplication();
+    } catch (err: unknown) {
+      showErrorToast(
+        'Response failed',
+        err instanceof Error ? err.message : 'Could not submit your response'
+      );
+    } finally {
+      setOfferResponding(false);
+    }
+  };
+
   const confirmWithdrawApplication = async () => {
     if (!application || !candidateId) {
       return;
@@ -708,18 +769,12 @@ export default function ApplicationStatusPage() {
     (!application.candidateId || application.candidateId === candidateId);
 
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        background:
-          'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)',
-      }}
-    >
-
-      <main className="mx-auto max-w-[1320px] px-6 lg:px-8 pb-6 sm:pb-8 lg:py-10 pt-2 sm:pt-4 lg:pt-6">
+    <ProfilePageShell>
+      <main className="profile-page-typography application-detail-page mx-auto max-w-[1180px] px-4 pb-7 pt-2 sm:px-5 sm:pt-3 sm:pb-8 lg:px-6 lg:py-5">
         <button
+          type="button"
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm font-medium"
+          className="application-detail-helper mb-4 flex items-center gap-2 transition-colors hover:text-[#111827]"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
@@ -728,29 +783,35 @@ export default function ApplicationStatusPage() {
         </button>
 
         {loading ? (
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 text-sm text-gray-600">Loading application details...</div>
+          <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3.5 text-[0.8125rem] text-[#64748b] lg:px-[18px]">
+            Loading application details...
+          </div>
         ) : error ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">{error}</div>
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3.5 text-[0.8125rem] text-rose-700 lg:px-[18px]">
+            {error}
+          </div>
         ) : application ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 tracking-tight">{application.job.title}</h1>
-                <div className="flex items-center gap-4 text-gray-600 mb-4">
-                  <span className="font-medium text-gray-700">{application.job.company}</span>
-                  <span>•</span>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-4">
+            <div className="space-y-4 lg:col-span-2">
+              <ApplicationDetailSectionCard bare>
+                <h1 className="application-detail-title mb-1.5">{application.job.title}</h1>
+                <div className="application-detail-meta mb-3 flex flex-wrap items-center gap-2">
+                  <span>{application.job.company}</span>
+                  <span aria-hidden>•</span>
                   <span>{application.job.location}</span>
                 </div>
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className={`text-lg font-semibold ${stagePresentation.colorClass} mb-1`}>{stagePresentation.title}</p>
-                    <p className="text-sm text-gray-600">{stagePresentation.message}</p>
+                    <p className={`application-detail-status mb-1 ${stagePresentation.colorClass}`}>
+                      {stagePresentation.title}
+                    </p>
+                    <p className="application-detail-helper">{stagePresentation.message}</p>
                   </div>
                   {showInterviewDetailsButton && effectiveInterviewDetails && interviewRoundsStack.length === 0 ? (
                     <button
                       type="button"
                       onClick={() => router.push(`/interviews/${encodeURIComponent(applicationId)}`)}
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[#28A8E1] bg-[#28A8E1] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-[#28A8E1] bg-[#28A8E1] px-3.5 py-2 text-[0.8125rem] font-medium text-white shadow-sm transition hover:opacity-95"
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                         <rect width="18" height="18" x="3" y="4" rx="2" />
@@ -760,22 +821,21 @@ export default function ApplicationStatusPage() {
                       Interview details
                     </button>
                   ) : interviewRoundsStack.length > 0 ? (
-                    <p className="text-sm text-gray-600 shrink-0 max-w-xs text-right">
+                    <p className="application-detail-helper max-w-xs shrink-0 text-right">
                       {interviewRoundsStack.length === 1
                         ? 'Interview details are in the section below.'
                         : `${interviewRoundsStack.length} interview rounds — open each card below for links and times.`}
                     </p>
                   ) : null}
                 </div>
-              </div>
+              </ApplicationDetailSectionCard>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Pipeline Stage</h2>
+              <ApplicationDetailSectionCard title="Pipeline Stage">
                 {pipelineStageFlow.length > 0 ? (
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-600">
+                  <div className="space-y-3">
+                    <p className="application-detail-helper">
                       Current stage:{' '}
-                      <span className="font-semibold text-gray-900">{currentPipelineStageLabel}</span>
+                      <span className="font-semibold text-[#111827]">{currentPipelineStageLabel}</span>
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
                       {pipelineStageFlow.map((stage, index) => {
@@ -790,7 +850,7 @@ export default function ApplicationStatusPage() {
                         return (
                           <div key={`${stage}-${index}`} className="flex items-center gap-2">
                             <span
-                              className={`rounded-2xl border px-3 py-2 text-xs font-semibold text-left whitespace-normal leading-snug max-w-[min(100%,18rem)] sm:max-w-88 ${
+                              className={`application-pipeline-pill rounded-xl border px-2.5 py-1.5 text-left leading-snug whitespace-normal max-w-[min(100%,18rem)] sm:max-w-88 ${
                                 isCurrent
                                   ? 'bg-blue-100 text-blue-700 border-blue-200'
                                   : isCompleted
@@ -802,7 +862,7 @@ export default function ApplicationStatusPage() {
                               {pillLabel}
                             </span>
                             {index < pipelineStageFlow.length - 1 ? (
-                              <span className="text-gray-300 text-xs">→</span>
+                              <span className="text-[#cbd5e1] text-[0.75rem]">→</span>
                             ) : null}
                           </div>
                         );
@@ -810,14 +870,13 @@ export default function ApplicationStatusPage() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">Pipeline stages are not available yet.</p>
+                  <p className="profile-page-empty">Pipeline stages are not available yet.</p>
                 )}
-              </div>
+              </ApplicationDetailSectionCard>
 
               {interviewRoundsStack.length > 0 ? (
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-1">Scheduled interviews</h2>
-                  <p className="text-sm text-gray-600 mb-4">
+                <ApplicationDetailSectionCard title="Scheduled interviews">
+                  <p className="application-detail-helper mb-3">
                     Each round is listed in order (latest scheduling at the bottom). Open a card for meeting link, time,
                     and format.
                   </p>
@@ -835,34 +894,34 @@ export default function ApplicationStatusPage() {
                       return (
                         <div
                           key={round.timelineId || `round-${index}-${round.scheduledAt}`}
-                          className="rounded-xl border border-emerald-200/90 bg-linear-to-br from-emerald-50 to-white p-4 shadow-sm flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+                          className="flex flex-col gap-3 rounded-xl border border-emerald-200/90 bg-linear-to-br from-emerald-50 to-white p-3.5 shadow-sm sm:flex-row sm:items-start sm:justify-between"
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                            <p className="text-[0.75rem] font-semibold uppercase tracking-wide text-emerald-800">
                               Round {index + 1}
                               {interviewRoundsStack.length > 1 ? ` of ${interviewRoundsStack.length}` : ''}
                             </p>
-                            <h3 className="text-base font-semibold text-gray-900 mt-0.5">{headline}</h3>
-                            {sub ? <p className="text-sm text-gray-600 mt-0.5">{sub}</p> : null}
-                            <p className="text-sm text-gray-700 mt-2">
+                            <h3 className="profile-page-section-title mt-0.5">{headline}</h3>
+                            {sub ? <p className="application-detail-helper mt-0.5">{sub}</p> : null}
+                            <p className="profile-page-value mt-2">
                               {when.date} · {when.time}
                             </p>
                             {round.format ? (
-                              <p className="text-sm text-gray-600 mt-1">Format: {round.format}</p>
+                              <p className="application-detail-helper mt-1">Format: {round.format}</p>
                             ) : null}
                             {Array.isArray(round.interviewerNames) && round.interviewerNames.length > 0 ? (
-                              <p className="text-sm text-gray-600 mt-1">
+                              <p className="application-detail-helper mt-1">
                                 Interviewer{round.interviewerNames.length > 1 ? 's' : ''}: {round.interviewerNames.join(', ')}
                               </p>
                             ) : null}
                             {round.recruiterName ? (
-                              <p className="text-sm text-gray-600 mt-1">Recruiter: {round.recruiterName}</p>
+                              <p className="application-detail-helper mt-1">Recruiter: {round.recruiterName}</p>
                             ) : null}
                           </div>
                           <button
                             type="button"
                             onClick={() => router.push(`/interviews/${encodeURIComponent(applicationId)}`)}
-                            className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600/40 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 shadow-sm hover:bg-emerald-50"
+                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-emerald-600/40 bg-white px-3.5 py-2 text-[0.8125rem] font-medium text-emerald-900 shadow-sm hover:bg-emerald-50"
                           >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                               <rect width="18" height="18" x="3" y="4" rx="2" />
@@ -875,34 +934,29 @@ export default function ApplicationStatusPage() {
                       );
                     })}
                   </div>
-                </div>
+                </ApplicationDetailSectionCard>
               ) : null}
 
               {application.offerLetterUrl ? (
-                <div className="bg-white rounded-2xl p-6 border border-emerald-100 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900">Offer Letter</h2>
-                      <p className="mt-1 text-sm text-gray-600">
-                        Congratulations — your offer letter has been shared by the recruiter. Open it to review the
-                        details, or save a copy for your records.
-                      </p>
-                      {application.offerLetterUploadedAt
-                        ? (() => {
-                            const d = new Date(application.offerLetterUploadedAt);
-                            if (Number.isNaN(d.getTime())) return null;
-                            const { date, time } = formatDateTime(d);
-                            return (
-                              <p className="mt-1 text-xs text-gray-500">
-                                Received {date} at {time}
-                              </p>
-                            );
-                          })()
-                        : null}
-                    </div>
-                  </div>
+                <ApplicationDetailSectionCard title="Offer Letter" className="border-emerald-100">
+                  <p className="application-detail-helper">
+                    Congratulations — your offer letter has been shared by the recruiter. Open it to review the
+                    details, or save a copy for your records.
+                  </p>
+                  {application.offerLetterUploadedAt
+                    ? (() => {
+                        const d = new Date(application.offerLetterUploadedAt);
+                        if (Number.isNaN(d.getTime())) return null;
+                        const { date, time } = formatDateTime(d);
+                        return (
+                          <p className="profile-page-empty mt-1">
+                            Received {date} at {time}
+                          </p>
+                        );
+                      })()
+                    : null}
 
-                  <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/70 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="mt-3 flex flex-col gap-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3.5 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-emerald-700">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -912,10 +966,10 @@ export default function ApplicationStatusPage() {
                         </svg>
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-gray-900">
+                        <p className="truncate profile-page-value font-semibold">
                           {application.offerLetterFileName || 'Offer letter.pdf'}
                         </p>
-                        <p className="text-xs text-gray-500">PDF document</p>
+                        <p className="profile-page-empty">PDF document</p>
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-wrap gap-2">
@@ -923,7 +977,7 @@ export default function ApplicationStatusPage() {
                         href={application.offerLetterUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-700/30 bg-white px-3 py-2 text-sm font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-700/30 bg-white px-3 py-2 text-[0.8125rem] font-medium text-emerald-800 shadow-sm hover:bg-emerald-50"
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -936,7 +990,7 @@ export default function ApplicationStatusPage() {
                         download={application.offerLetterFileName || 'offer-letter.pdf'}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-[0.8125rem] font-medium text-white shadow-sm hover:bg-emerald-700"
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -947,18 +1001,81 @@ export default function ApplicationStatusPage() {
                       </a>
                     </div>
                   </div>
-                </div>
+
+                  {application.offerResponse === 'ACCEPTED' ||
+                  application.offerResponse === 'REJECTED' ? (
+                    <p className="profile-page-value mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5">
+                      You {application.offerResponse === 'ACCEPTED' ? 'accepted' : 'declined'} this offer
+                      {application.offerRespondedAt
+                        ? ` on ${formatDateTime(application.offerRespondedAt).date}`
+                        : ''}
+                      .
+                    </p>
+                  ) : (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={offerResponding}
+                        onClick={() => void respondToOffer('accept')}
+                        className="inline-flex min-w-[140px] flex-1 items-center justify-center rounded-lg bg-emerald-600 px-3.5 py-2 text-[0.8125rem] font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                      >
+                        Accept offer
+                      </button>
+                      <button
+                        type="button"
+                        disabled={offerResponding}
+                        onClick={() => void respondToOffer('reject')}
+                        className="inline-flex min-w-[140px] flex-1 items-center justify-center rounded-lg border border-red-200 bg-white px-3.5 py-2 text-[0.8125rem] font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+                      >
+                        Reject offer
+                      </button>
+                    </div>
+                  )}
+                </ApplicationDetailSectionCard>
               ) : null}
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">Application Timeline</h2>
-                <div className="space-y-4">
-                  <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
-                    <h3 className="text-base font-semibold text-gray-900">Application Submitted</h3>
-                    <p className="text-sm text-gray-500 mt-1">
+              {application.joiningDate ||
+              application.reportingToName ||
+              application.placementStatus === 'JOINING_SCHEDULED' ? (
+                <ApplicationDetailSectionCard title="Joining details" className="border-amber-100">
+                  <p className="application-detail-helper">
+                    Your recruiter has scheduled your joining. Please review the information below.
+                  </p>
+                  <div className="profile-page-value mt-3 space-y-2 rounded-xl border border-amber-100 bg-amber-50/70 p-3.5">
+                    {application.joiningDate ? (
+                      <p>
+                        <span className="font-semibold">Joining date:</span> {application.joiningDate}
+                      </p>
+                    ) : null}
+                    {application.reportingToName ? (
+                      <p>
+                        <span className="font-semibold">Report to:</span> {application.reportingToName}
+                        {application.reportingToTitle ? ` (${application.reportingToTitle})` : ''}
+                      </p>
+                    ) : null}
+                    {application.reportingToEmail ? (
+                      <p>
+                        <span className="font-semibold">Contact:</span>{' '}
+                        <a href={`mailto:${application.reportingToEmail}`} className="text-emerald-800 underline">
+                          {application.reportingToEmail}
+                        </a>
+                      </p>
+                    ) : null}
+                    {application.joiningNotes ? (
+                      <p className="whitespace-pre-wrap pt-1">{application.joiningNotes}</p>
+                    ) : null}
+                  </div>
+                </ApplicationDetailSectionCard>
+              ) : null}
+
+              <ApplicationDetailSectionCard title="Application Timeline">
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-blue-100 bg-blue-50 p-3.5">
+                    <h3 className="profile-page-section-title">Application Submitted</h3>
+                    <p className="profile-page-empty mt-1">
                       {application.appliedAt ? `${formatDateTime(application.appliedAt).date}, ${formatDateTime(application.appliedAt).time}` : '-'}
                     </p>
-                    <p className="text-sm text-gray-700 mt-2">
+                    <p className="profile-page-value mt-2">
                       Your application has been successfully submitted
                     </p>
                   </div>
@@ -973,17 +1090,17 @@ export default function ApplicationStatusPage() {
                         ? 'border-emerald-200 bg-emerald-50/90'
                         : 'border-gray-200 bg-gray-50';
                     return (
-                      <div key={row.id} className={`rounded-xl border p-4 ${cardBorder}`}>
+                      <div key={row.id} className={`rounded-xl border p-3.5 ${cardBorder}`}>
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-base font-semibold text-gray-900">{row.title || row.status}</h3>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <h3 className="profile-page-section-title">{row.title || row.status}</h3>
+                            <p className="profile-page-empty mt-1">
                               {date}, {time}
                             </p>
                             {row.description ? (
-                              <p className="text-sm text-gray-700 mt-2 line-clamp-4">{row.description}</p>
+                              <p className="profile-page-value mt-2 line-clamp-4">{row.description}</p>
                             ) : (
-                              <p className="text-sm text-gray-600 mt-2 italic">No additional notes for this step.</p>
+                              <p className="application-detail-helper mt-2 italic">No additional notes for this step.</p>
                             )}
                           </div>
                           <div className="flex shrink-0 flex-wrap gap-2 sm:pt-0.5">
@@ -991,7 +1108,7 @@ export default function ApplicationStatusPage() {
                               <button
                                 type="button"
                                 onClick={() => router.push(`/interviews/${encodeURIComponent(applicationId)}`)}
-                                className="rounded-lg border border-emerald-600/30 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50"
+                                className="rounded-lg border border-emerald-600/30 bg-white px-3 py-1.5 text-[0.75rem] font-medium text-emerald-800 shadow-sm hover:bg-emerald-50"
                               >
                                 Interview details
                               </button>
@@ -1003,7 +1120,7 @@ export default function ApplicationStatusPage() {
                                   setRejectionModalPayload(buildRejectionPayloadFromRow(row));
                                   setRejectionModalOpen(true);
                                 }}
-                                className="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-900 shadow-sm hover:bg-rose-50"
+                                className="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-[0.75rem] font-medium text-rose-900 shadow-sm hover:bg-rose-50"
                               >
                                 View feedback
                               </button>
@@ -1022,17 +1139,17 @@ export default function ApplicationStatusPage() {
                         return (
                           <div
                             key={`${stage}-${index}`}
-                            className={`rounded-xl border p-4 ${
+                            className={`rounded-xl border p-3.5 ${
                               isCurrent ? 'border-emerald-200 bg-emerald-50' : 'border-gray-200 bg-gray-50'
                             }`}
                           >
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                               <div className="min-w-0 flex-1">
-                                <h3 className="text-base font-semibold text-gray-900">{stage}</h3>
-                                <p className="text-sm text-gray-500 mt-1">
+                                <h3 className="profile-page-section-title">{stage}</h3>
+                                <p className="profile-page-empty mt-1">
                                   {stageUpdatedAt ? `${stageUpdatedAt.date}, ${stageUpdatedAt.time}` : '-'}
                                 </p>
-                                <p className="text-sm text-gray-700 mt-2">
+                                <p className="profile-page-value mt-2">
                                   {isCurrent
                                     ? `You are currently in the ${stage} stage.`
                                     : `Your application moved to ${stage}.`}
@@ -1042,7 +1159,7 @@ export default function ApplicationStatusPage() {
                                 <button
                                   type="button"
                                   onClick={() => router.push(`/interviews/${encodeURIComponent(applicationId)}`)}
-                                  className="shrink-0 rounded-lg border border-emerald-600/30 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50"
+                                  className="shrink-0 rounded-lg border border-emerald-600/30 bg-white px-3 py-1.5 text-[0.75rem] font-medium text-emerald-800 shadow-sm hover:bg-emerald-50"
                                 >
                                   Interview details
                                 </button>
@@ -1054,86 +1171,89 @@ export default function ApplicationStatusPage() {
                     : null}
 
                   {timelineRowsForDisplay.length === 0 && stageProgressCards.length === 0 ? (
-                    <p className="text-sm text-gray-500">No timeline events available yet.</p>
+                    <p className="profile-page-empty">No timeline events available yet.</p>
                   ) : null}
                 </div>
-              </div>
+              </ApplicationDetailSectionCard>
             </div>
 
-            <div className="space-y-6">
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Job Snapshot</h3>
-                <div className="space-y-3">
+            <div className="space-y-4">
+              <ApplicationDetailSectionCard title="Job Snapshot">
+                <div className="profile-basic-info-display space-y-3">
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Job Title</p>
-                    <p className="text-sm font-medium text-gray-900">{application.job.title}</p>
+                    <p className="profile-page-label">Job Title</p>
+                    <p className="profile-page-value">{application.job.title}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Work Mode</p>
-                    <p className="text-sm font-medium text-gray-900">{application.job.workMode}</p>
+                    <p className="profile-page-label">Work Mode</p>
+                    <p className="profile-page-value">{application.job.workMode}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Experience</p>
-                    <p className="text-sm font-medium text-gray-900">{application.job.experience}</p>
+                    <p className="profile-page-label">Experience</p>
+                    <p className="profile-page-value">{application.job.experience}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Employment</p>
-                    <p className="text-sm font-medium text-gray-900">{application.job.employmentType}</p>
+                    <p className="profile-page-label">Employment</p>
+                    <p className="profile-page-value">{application.job.employmentType}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Salary</p>
-                    <p className="text-sm font-medium text-gray-900">{application.job.salary}</p>
+                    <p className="profile-page-label">Salary</p>
+                    <p className="profile-page-value">{application.job.salary}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Applied On</p>
-                    <p className="text-sm font-medium text-gray-900">{defaultAppliedAt}</p>
+                    <p className="profile-page-label">Applied On</p>
+                    <p className="profile-page-value">{defaultAppliedAt}</p>
                   </div>
                 </div>
 
                 {canWithdraw ? (
-                  <div className="mt-6 pt-6 border-t border-gray-100">
-                    <p className="text-sm text-gray-600 mb-3">
+                  <div className="mt-4 border-t border-gray-100 pt-4">
+                    <p className="application-detail-helper mb-3">
                       Change your mind? Withdrawing removes this role from My Applications. You can apply again from Explore Jobs.
                     </p>
                     <button
                       type="button"
                       onClick={() => setWithdrawConfirmOpen(true)}
                       disabled={withdrawing}
-                      className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-800 shadow-sm transition hover:bg-rose-100 disabled:opacity-60"
+                      className="inline-flex w-full items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2 text-[0.8125rem] font-medium text-rose-800 shadow-sm transition hover:bg-rose-100 disabled:opacity-60 sm:w-auto"
                     >
                       Withdraw application
                     </button>
                   </div>
                 ) : null}
-              </div>
+              </ApplicationDetailSectionCard>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Communication Updates</h3>
-
-                <div className="mb-4 flex items-center gap-4 text-sm">
-                  <span className={`font-medium ${application.emailUpdates ? 'text-emerald-700' : 'text-gray-500'}`}>Email Updates</span>
-                  <span className={`font-medium ${application.whatsappUpdates ? 'text-emerald-700' : 'text-gray-500'}`}>WhatsApp Updates</span>
+              <ApplicationDetailSectionCard title="Communication Updates">
+                <div className="mb-3 flex items-center gap-4">
+                  <span className={`text-[0.8125rem] font-medium ${application.emailUpdates ? 'text-emerald-700' : 'text-[#64748b]'}`}>
+                    Email Updates
+                  </span>
+                  <span className={`text-[0.8125rem] font-medium ${application.whatsappUpdates ? 'text-emerald-700' : 'text-[#64748b]'}`}>
+                    WhatsApp Updates
+                  </span>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {(emailUpdates.length || whatsappUpdates.length) ? (
                     [...emailUpdates, ...whatsappUpdates].map((item) => (
                       <div key={item.id} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                        <div className="mb-1 flex items-center justify-between">
-                          <p className="text-sm font-semibold text-gray-900">{item.title}</p>
-                          <span className="text-xs uppercase tracking-wide text-gray-500">{item.channel}</span>
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                          <p className="profile-page-value font-semibold">{item.title}</p>
+                          <span className="text-[0.75rem] font-medium uppercase tracking-wide text-[#94a3b8]">
+                            {item.channel}
+                          </span>
                         </div>
-                        <p className="text-xs text-gray-500 mb-1">
+                        <p className="profile-page-empty mb-1">
                           {item.date}, {item.time}
                         </p>
-                        <p className="text-sm text-gray-700 line-clamp-3">{item.preview}</p>
+                        <p className="profile-page-value line-clamp-3">{item.preview}</p>
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-500">No communication updates yet.</p>
+                    <p className="profile-page-empty">No communication updates yet.</p>
                   )}
                 </div>
-              </div>
+              </ApplicationDetailSectionCard>
             </div>
           </div>
         ) : null}
@@ -1152,13 +1272,13 @@ export default function ApplicationStatusPage() {
             aria-label="Close dialog"
             onClick={closeInterviewModal}
           />
-          <div className="relative z-101 w-full max-w-lg rounded-2xl border border-gray-100 bg-white p-6 shadow-2xl">
+          <div className="profile-modal-typography relative z-101 w-full max-w-lg rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
-                <h2 id="interview-details-title" className="text-xl font-semibold text-gray-900">
+                <h2 id="interview-details-title" className="profile-modal-title">
                   {interviewModalPayload.timelineTitle}
                 </h2>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="profile-modal-helper mt-1">
                   {application?.job.title} · {application?.job.company}
                 </p>
               </div>
@@ -1174,10 +1294,10 @@ export default function ApplicationStatusPage() {
               </button>
             </div>
 
-            <dl className="space-y-4 text-sm">
+            <dl className="space-y-3">
               <div>
-                <dt className="font-medium text-gray-500">Scheduled</dt>
-                <dd className="mt-1 text-gray-900">
+                <dt className="profile-modal-label">Scheduled</dt>
+                <dd className="profile-modal-field mt-1">
                   {(() => {
                     const d = new Date(interviewModalPayload.scheduledAt);
                     if (Number.isNaN(d.getTime())) return '—';
@@ -1279,11 +1399,11 @@ export default function ApplicationStatusPage() {
             aria-label="Close dialog"
             onClick={closeWithdrawConfirm}
           />
-          <div className="relative z-101 w-full max-w-md rounded-2xl border border-gray-100 bg-white p-6 shadow-2xl">
-            <h2 id="withdraw-confirm-title" className="text-lg font-semibold text-gray-900">
+          <div className="profile-modal-typography relative z-101 w-full max-w-md rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl">
+            <h2 id="withdraw-confirm-title" className="profile-modal-title">
               Withdraw application?
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-gray-600">
+            <p className="profile-modal-helper mt-3">
               This removes the role from My Applications. You can apply again anytime from Explore Jobs.
             </p>
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -1321,13 +1441,13 @@ export default function ApplicationStatusPage() {
             aria-label="Close dialog"
             onClick={closeRejectionModal}
           />
-          <div className="relative z-101 w-full max-w-lg rounded-2xl border border-rose-100 bg-white p-6 shadow-2xl">
+          <div className="profile-modal-typography relative z-101 w-full max-w-lg rounded-2xl border border-rose-100 bg-white p-5 shadow-2xl">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
-                <h2 id="rejection-feedback-title" className="text-xl font-semibold text-gray-900">
+                <h2 id="rejection-feedback-title" className="profile-modal-title">
                   {rejectionModalPayload.title}
                 </h2>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="profile-modal-helper mt-1">
                   {application?.job.title} · {application?.job.company}
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
@@ -1366,6 +1486,6 @@ export default function ApplicationStatusPage() {
           </div>
         </div>
       ) : null}
-    </div>
+    </ProfilePageShell>
   );
 }

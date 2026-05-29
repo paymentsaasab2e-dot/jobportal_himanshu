@@ -30,7 +30,7 @@ export default function LanguageSwitcher({
       aria-label="Select language"
       className={
         className ||
-        "rounded-full border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700"
+        "app-header-nav-link rounded-full border border-slate-300 px-2 py-1 font-semibold text-slate-700"
       }
       value={locale}
       onChange={(event) => onLocaleChange(event.target.value as AppLocale)}

@@ -1472,7 +1472,7 @@ export default function ProfilePage() {
     <ProfilePageShell>
       <>
 
-      <main className="mx-auto max-w-[1180px] px-4 pt-0 pb-7 sm:px-5 sm:pt-0 sm:pb-8 lg:px-6">
+      <main className="profile-page-typography candidate-dashboard-page mx-auto max-w-[1180px] px-4 py-3 sm:px-5 lg:px-6 lg:py-5">
         {careerPreferencesSuccessMessage && (
           <div className="mb-6">
             <div className="flex items-start justify-between gap-4 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-slate-900 shadow-sm">
@@ -1524,7 +1524,7 @@ export default function ProfilePage() {
 
 
         <div
-          className="profile-page-typography pt-4 grid grid-cols-1 gap-6 lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start lg:gap-4 xl:grid-cols-[256px_minmax(0,1fr)]"
+          className="grid grid-cols-1 gap-3 pt-2 lg:grid-cols-[248px_minmax(0,1fr)] lg:items-start lg:gap-4 xl:grid-cols-[256px_minmax(0,1fr)]"
           style={scrollPaddingStyle}
         >
           <ProfileWorkspaceRail
@@ -1548,7 +1548,7 @@ export default function ProfilePage() {
           />
           <div className="flex min-w-0 flex-col">
             <div
-              className="sticky z-20 -mx-1 mb-4 border-b border-gray-100/80 bg-[#f8fcff]/95 pb-1 pt-0.5 backdrop-blur-md"
+              className="sticky z-20 mb-3 w-fit max-w-full self-start pb-1 pt-0.5"
               style={{ top: 'calc(var(--app-header-height, 92px) + 4px)' }}
             >
               <ProfileWorkspaceTabs
@@ -1558,11 +1558,11 @@ export default function ProfilePage() {
                 onSelect={scrollToWorkspaceTab}
               />
             </div>
-            <div className="relative pr-2">
-              <div className="space-y-4 pb-10 pt-2">
+            <div className="relative w-full pr-2">
+              <div className="space-y-3 pb-10 pt-1">
               <section
                 id="personal-details"
-                className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-4"
+                className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3"
               >
                 <WorkspaceSectionCard
                   title="Basic Information"
@@ -1701,7 +1701,7 @@ export default function ProfilePage() {
 
               <section
                 id="work-experience"
-                className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-4"
+                className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3"
               >
                 <WorkspaceSectionCard
                   title="Work Experience"
@@ -2039,7 +2039,7 @@ export default function ProfilePage() {
                 </WorkspaceSectionCard>
               </section>
 
-              <section id="education" className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-4">
+              <section id="education" className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3">
                 <WorkspaceSectionCard
                   title="Education"
                   sectionId="education"
@@ -2368,7 +2368,7 @@ export default function ProfilePage() {
 
               <section
                 id="skills"
-                className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-4"
+                className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3"
               >
                 <div className="space-y-4">
 
@@ -2551,7 +2551,7 @@ export default function ProfilePage() {
 
               <section
                 id="projects-certifications"
-                className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-4"
+                className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3"
               >
                 <WorkspaceSectionCard
                   title="Projects"
@@ -2976,7 +2976,7 @@ export default function ProfilePage() {
 
               <section
                 id="job-preferences"
-                className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-4"
+                className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3"
               >
                 <WorkspaceSectionCard
                   title="Career Preferences"
@@ -3057,7 +3057,7 @@ export default function ProfilePage() {
                 </WorkspaceSectionCard>
               </section>
 
-              <section id="additional-details" className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-4">
+              <section id="additional-details" className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3">
 
                 <WorkspaceSectionCard
                   title="Visa & Work Authorization"

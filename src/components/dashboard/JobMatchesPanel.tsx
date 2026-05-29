@@ -142,10 +142,10 @@ export default function JobMatchesPanel({
               <Sparkles className="h-3 w-3" strokeWidth={2.2} />
               AI matched roles
             </div>
-            <h2 className="mt-2.5 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
+            <h2 className="profile-page-section-title mt-2.5">
               Top job matches
             </h2>
-            <p className="mt-1 text-[13px] font-medium text-slate-500">
+            <p className="application-detail-helper mt-1">
               Prioritized roles you have not applied to yet, with full hiring context restored.
             </p>
           </div>
@@ -230,10 +230,10 @@ export default function JobMatchesPanel({
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-slate-950">
+                          <p className="profile-page-value truncate font-semibold">
                             {job.title}
                           </p>
-                          <p className="mt-0.5 text-[13px] font-medium text-slate-700">
+                          <p className="profile-page-value mt-0.5 font-medium">
                             {job.company}
                           </p>
                           <p className="mt-0.5 truncate text-[11px] font-medium uppercase tracking-[0.05em] text-slate-500">

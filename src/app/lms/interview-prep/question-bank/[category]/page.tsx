@@ -48,7 +48,7 @@ export default function QuestionBankCategoryPage() {
             <Library className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight capitalize">{categoryDecoded} Question Bank</h1>
+            <h1 className="application-detail-title capitalize">{categoryDecoded} Question Bank</h1>
             <p className="text-gray-500 mt-1">{questions.length} mock questions found.</p>
           </div>
         </div>
