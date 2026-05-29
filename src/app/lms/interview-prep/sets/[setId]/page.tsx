@@ -73,7 +73,7 @@ export default function QuestionSetWorkspace() {
         <div className="mt-4 flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-violet-700">Practice Workspace</p>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mt-1 tracking-tight">{set.kind} questions</h1>
+            <h1 className="application-detail-title mt-1">{set.kind} questions</h1>
             <p className={LMS_PAGE_SUBTITLE}>Question {index + 1} of {set.questions.length}</p>
           </div>
           <button
@@ -95,7 +95,7 @@ export default function QuestionSetWorkspace() {
           <span className="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800 border border-blue-100">
             {q.category} • {q.difficulty}
           </span>
-          <h2 className="mt-4 text-2xl font-bold text-gray-900">{q.prompt}</h2>
+          <h2 className="profile-page-section-title mt-4">{q.prompt}</h2>
         </div>
 
         <div className="rounded-2xl border border-violet-100 bg-violet-50/50 p-4">

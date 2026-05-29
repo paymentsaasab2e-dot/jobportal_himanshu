@@ -44,15 +44,16 @@ export default function DashboardHero({
         </button>
 
         <div className="space-y-2.5">
-          <h1 className="max-w-3xl text-[1.55rem] font-bold tracking-tight text-slate-950 sm:text-[1.8rem] xl:text-[2.1rem] xl:leading-[1.12]">
+          <h1 className="application-detail-title max-w-3xl">
             {heading}
           </h1>
-          <p className="max-w-2xl text-[13px] font-medium leading-6 text-slate-600 sm:text-sm">
+          <p className="application-detail-helper max-w-2xl">
             {subheading}
           </p>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-4">
+        <div className="-mx-1 overflow-x-auto px-1 sm:mx-0 sm:overflow-visible sm:px-0">
+          <div className="grid min-w-[38rem] grid-cols-4 gap-2 sm:min-w-0">
           {stats.map(({ id, label, value, helper, icon: Icon, onClick }) => {
             const Tag = onClick ? "button" : "div";
 
@@ -65,7 +66,7 @@ export default function DashboardHero({
                       onClick,
                     }
                   : {})}
-                className={`rounded-[18px] border border-white/74 bg-white/74 px-3.5 py-3 shadow-[0_8px_20px_rgba(15,23,42,0.04)] ${
+                className={`min-w-0 rounded-[18px] border border-white/80 bg-white/90 px-3 py-3 shadow-[0_8px_20px_rgba(15,23,42,0.04)] ${
                   onClick
                     ? "group cursor-pointer text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[rgba(40,168,225,0.22)] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(40,168,225,0.24)]"
                     : ""
@@ -73,19 +74,19 @@ export default function DashboardHero({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#94a3b8]">
                       {label}
                     </p>
-                    <p className="mt-2 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
+                    <p className="profile-page-value mt-2 font-semibold tracking-tight">
                       {value}
                     </p>
                   </div>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-950/[0.035] text-[var(--brand-primary)] transition-colors duration-200 group-hover:bg-[var(--brand-primary-soft)]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] text-[var(--brand-primary)] transition-colors duration-200 group-hover:bg-[rgba(40,168,225,0.18)]">
                     <Icon className="h-4 w-4" strokeWidth={2.2} />
                   </span>
                 </div>
                 <div className="mt-2 flex items-center justify-between gap-2">
-                  <p className="text-[11px] font-medium leading-5 text-slate-500">{helper}</p>
+                  <p className="profile-page-empty leading-5">{helper}</p>
                   {onClick ? (
                     <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-slate-300 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--brand-primary)]" />
                   ) : null}
@@ -93,6 +94,7 @@ export default function DashboardHero({
               </Tag>
             );
           })}
+          </div>
         </div>
       </div>
     </DashboardPanel>

@@ -143,7 +143,7 @@ export default function PlannedItemDetailPage() {
             <span className="inline-flex items-center rounded-full border border-violet-100 bg-violet-50 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-violet-700">
               {item.type}
             </span>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">{item.label}</h1>
+            <h1 className="application-detail-title">{item.label}</h1>
             <p className="text-sm font-medium text-gray-500">
               Source: <span className="text-gray-900">{item.sourceLabel || 'LMS Module'}</span>
             </p>

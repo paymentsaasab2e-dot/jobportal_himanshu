@@ -769,7 +769,7 @@ export function ResumeStudioPageClient() {
                   Resume Studio
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+                  <h1 className="application-detail-title">
                     Resume Editor
                   </h1>
                   <p className={LMS_PAGE_SUBTITLE}>

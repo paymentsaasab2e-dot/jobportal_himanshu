@@ -90,7 +90,7 @@ function MockInterviewSessionContent() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
             <CheckCircle2 className="h-8 w-8" strokeWidth={2} />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Session Complete</h1>
+          <h1 className="application-detail-title">Session Complete</h1>
           <p className="text-gray-500">You completed {questions.length} questions in {Math.floor(time / 60)}m {time % 60}s.</p>
         </div>
 
@@ -165,7 +165,7 @@ function MockInterviewSessionContent() {
             <Play className="h-6 w-6 text-gray-400" />
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug tracking-tight">
+            <h2 className="profile-page-section-title leading-snug">
               {q.prompt}
             </h2>
             <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-orange-50 border border-orange-100 px-3 py-1.5 text-xs font-semibold text-orange-800">

@@ -222,7 +222,7 @@ export default function LmsEventsPage() {
   return (
     <div className="space-y-8 pb-10">
       <div className="min-w-0">
-        <h1 className="mb-1 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Events</h1>
+        <h1 className="application-detail-title mb-1">Events</h1>
         <p className={LMS_PAGE_SUBTITLE}>
           Career-relevant sessions with urgency cues - tied directly to your active DB.
         </p>

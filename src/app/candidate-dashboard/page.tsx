@@ -35,9 +35,7 @@ import { clearPendingJobApply, readPendingJobApply } from "@/lib/job-apply-flow"
 import { useTabVisibilityRefresh } from "@/hooks/useTabVisibilityRefresh";
 import { dispatchProfilePhotoUpdated } from "@/lib/profile-photo";
 import { AppLocale, localizePath } from "@/lib/i18n";
-
-const PAGE_BG =
-  "radial-gradient(circle at top left, rgba(40,168,225,0.13), transparent 28%), radial-gradient(circle at 85% 12%, rgba(40,168,223,0.1), transparent 16%), radial-gradient(circle at 18% 82%, rgba(252,150,32,0.08), transparent 18%), linear-gradient(180deg, #f5fafd 0%, #f8fcff 44%, #fcfdff 100%)";
+import { ProfilePageShell } from "@/components/profile/layout";
 
 const SAVED_JOBS_STORAGE_PREFIX = "dashboardSavedJobs";
 
@@ -951,34 +949,34 @@ export default function CandidateDashboardPage() {
 
   if (!candidateId) {
     return (
-      <div className="min-h-screen" style={{ background: PAGE_BG }}>
-        <main className="mx-auto max-w-5xl px-6 py-16 sm:px-8">
+      <ProfilePageShell>
+        <main className="profile-page-typography candidate-dashboard-page mx-auto max-w-5xl px-6 py-16 sm:px-8">
           <div className="dashboard-surface rounded-[32px] px-8 py-12 text-center shadow-[0_28px_60px_rgba(15,23,42,0.08)]">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-(--brand-primary-soft) text-(--brand-primary)">
               <BriefcaseBusiness className="h-7 w-7" strokeWidth={2.2} />
             </div>
-            <h1 className="mt-6 text-3xl font-bold tracking-tight text-slate-950">
+            <h1 className="application-detail-title mt-6">
               {t("candidateDashboard.signInHeading")}
             </h1>
-            <p className="mx-auto mt-3 max-w-2xl text-base font-medium leading-7 text-slate-500">
+            <p className="application-detail-helper mx-auto mt-3 max-w-2xl">
               {t("candidateDashboard.signInDescription")}
             </p>
             <button
               type="button"
               onClick={() => router.push(localizePath("/whatsapp/verify", locale))}
-              className="mt-8 inline-flex items-center justify-center rounded-full bg-(--brand-primary) px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-(--brand-primary-strong)"
+              className="mt-8 inline-flex items-center justify-center rounded-full bg-(--brand-primary) px-6 py-3 text-[0.8125rem] font-medium text-white shadow-[0_18px_36px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-(--brand-primary-strong)"
             >
               {t("candidateDashboard.continueWithWhatsapp")}
             </button>
           </div>
         </main>
-      </div>
+      </ProfilePageShell>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: PAGE_BG }}>
-      <main className="mx-auto max-w-[1180px] px-4 py-3 sm:px-5 lg:px-6 lg:py-5">
+    <ProfilePageShell>
+      <main className="profile-page-typography candidate-dashboard-page mx-auto max-w-[1180px] px-4 py-3 sm:px-5 lg:px-6 lg:py-5">
         <div className="space-y-3">
           <DashboardHero
             eyebrow={greeting.eyebrow}
@@ -998,8 +996,8 @@ export default function CandidateDashboardPage() {
                     : "border-amber-200 bg-amber-50 text-amber-900"
               }`}
             >
-              <p className="text-sm font-black tracking-tight">{pendingApplyBanner.title}</p>
-              <p className="mt-1 text-sm font-medium opacity-90">{pendingApplyBanner.description}</p>
+              <p className="profile-page-value font-semibold tracking-tight">{pendingApplyBanner.title}</p>
+              <p className="application-detail-helper mt-1 opacity-90">{pendingApplyBanner.description}</p>
             </div>
           ) : null}
 
@@ -1076,6 +1074,6 @@ export default function CandidateDashboardPage() {
         appliedDate={submittedApplicationModal?.appliedDate || formatAppliedDate(locale)}
         applicationId={submittedApplicationModal?.applicationId}
       />
-    </div>
+    </ProfilePageShell>
   );
 }

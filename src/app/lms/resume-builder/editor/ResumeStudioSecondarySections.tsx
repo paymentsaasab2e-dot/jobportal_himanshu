@@ -522,7 +522,7 @@ export function ResumeStudioCompletionSection({
 
         <div className="rounded-[1.8rem] border border-sky-100 bg-[linear-gradient(180deg,rgba(239,248,255,0.9),rgba(255,255,255,0.96))] p-6 shadow-[0_18px_44px_-28px_rgba(40,168,225,0.45)]">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-sky-700">Final action</p>
-          <h3 className="mt-3 text-2xl font-bold tracking-tight text-slate-950">
+          <h3 className="profile-page-section-title mt-3">
             Confirm and sync this version
           </h3>
           

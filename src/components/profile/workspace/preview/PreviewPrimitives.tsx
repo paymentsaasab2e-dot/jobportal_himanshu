@@ -206,7 +206,7 @@ export function PreviewEntryShell({
     amber: 'bg-amber-500',
   };
   return (
-    <div className="relative overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+    <div className="relative overflow-hidden rounded-[18px] border border-white/80 bg-white/90 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
       <div className={`absolute left-0 top-0 h-full w-1 ${bar[accent]}`} />
       <div className="pl-4 pr-4 py-3 sm:pl-5 sm:pr-4 sm:py-3.5">{children}</div>
     </div>

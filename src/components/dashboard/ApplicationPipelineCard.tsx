@@ -58,10 +58,10 @@ export default function ApplicationPipelineCard({
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold tracking-tight text-slate-950">
+            <h2 className="profile-page-section-title">
               Application pipeline
             </h2>
-            <p className="mt-1 text-[12px] font-medium text-slate-500">
+            <p className="application-detail-helper mt-1">
               A compact view of where your applications are moving.
             </p>
           </div>
@@ -95,14 +95,14 @@ export default function ApplicationPipelineCard({
                   >
                     <Icon className="h-4 w-4" strokeWidth={2.1} />
                   </span>
-                  <p className="text-lg font-semibold tracking-tight text-slate-950">
+                  <p className="profile-page-value font-semibold tracking-tight">
                     {step.count}
                   </p>
                 </div>
-                <p className="mt-2 text-[13px] font-semibold text-slate-900">
+                <p className="profile-page-value mt-2 font-semibold">
                   {step.label}
                 </p>
-                <p className="mt-0.5 text-[11px] font-medium leading-5 text-slate-500">
+                <p className="profile-page-empty mt-0.5 leading-5">
                   {step.helper}
                 </p>
               </div>

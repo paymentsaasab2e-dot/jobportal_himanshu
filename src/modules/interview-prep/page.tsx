@@ -82,7 +82,7 @@ export default function InterviewPrepModulePage() {
     <div className="space-y-8 pb-2 -mt-8">
       <div className="min-w-0">
         <p className="text-xs font-bold uppercase tracking-wider text-violet-700">AI interview operating system</p>
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mt-1 tracking-tight">Interview preparation</h1>
+        <h1 className="application-detail-title mt-1">Interview preparation</h1>
         <p className={LMS_PAGE_SUBTITLE}>
           Modular, API-ready shell — mock data and console hooks until your AI services ship.
         </p>

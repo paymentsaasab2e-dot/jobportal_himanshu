@@ -177,7 +177,7 @@ export default function ProfileOverviewCard({
 
           <div className="min-w-0 space-y-1.5">
             <div>
-              <p className="text-lg font-semibold tracking-tight text-slate-950">
+              <p className="profile-page-value font-semibold tracking-tight">
                 {displayFullName}
               </p>
               
@@ -209,10 +209,10 @@ export default function ProfileOverviewCard({
                 Profile health
               </p>
               <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <p className="text-lg font-semibold tracking-tight text-slate-950">
+                <p className="profile-page-value font-semibold tracking-tight">
                   {completionPercentage}%
                 </p>
-                <p className="text-[11px] font-medium text-slate-500">{completionLabel}</p>
+                <p className="profile-page-empty">{completionLabel}</p>
               </div>
             </div>
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/84 text-[var(--brand-accent)] shadow-[0_8px_18px_rgba(252,150,32,0.14)]">
@@ -290,7 +290,7 @@ export default function ProfileOverviewCard({
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-slate-900">Top skills</p>
+            <p className="profile-page-section-title">Top skills</p>
             <button
               type="button"
               onClick={onOpenProfile}

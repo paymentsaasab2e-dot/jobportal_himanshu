@@ -121,7 +121,7 @@ export function LessonPlayerClient({ course, courseMeta, flatLessons, initialInd
           <ArrowLeft className="h-4 w-4" strokeWidth={2} />
           Back to course overview
         </Link>
-        <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">{current.lessonTitle}</h1>
+        <h1 className="application-detail-title mt-3">{current.lessonTitle}</h1>
         <p className={LMS_PAGE_SUBTITLE}>{detail.intro}</p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <LmsStatusBadge label={detail.type} tone="info" />

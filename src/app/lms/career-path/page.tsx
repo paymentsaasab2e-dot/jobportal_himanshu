@@ -104,7 +104,7 @@ export default function LmsCareerPathPage() {
     <div className="space-y-8 pb-10">
       <div className="min-w-0 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="mb-1 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Career path</h1>
+          <h1 className="application-detail-title mb-1">Career path</h1>
           <p className={LMS_PAGE_SUBTITLE}>
             Mission system with adaptive roadmap. Quizzes, notes, events, and resume work feed this view natively.
           </p>

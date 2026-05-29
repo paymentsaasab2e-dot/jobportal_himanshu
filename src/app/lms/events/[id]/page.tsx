@@ -97,7 +97,7 @@ export default function LmsEventDetailPage({ params }: { params: Promise<{ id: s
             </span>
           )}
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight leading-tight">{event.title}</h1>
+        <h1 className="application-detail-title leading-tight">{event.title}</h1>
         <p className={`${LMS_PAGE_SUBTITLE} mt-2 max-w-2xl`}>{event.overview}</p>
       </div>
 

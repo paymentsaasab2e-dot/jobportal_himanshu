@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { PROFILE_DASHBOARD_CARD } from '@/components/profile/layout/profile-layout.constants';
 
 export type WorkspaceSectionCardProps = {
   title: string;
@@ -32,9 +33,9 @@ export function WorkspaceSectionCard({
   return (
     <div
       id={sectionId}
-      className={`rounded-2xl border border-gray-100 bg-white shadow-sm scroll-mt-[120px] ${className}`.trim()}
+      className={`${PROFILE_DASHBOARD_CARD} scroll-mt-[120px] ${className}`.trim()}
     >
-      <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-2.5 lg:px-[18px]">
+      <div className="flex items-center justify-between gap-3 border-b border-white/70 px-4 py-2.5 sm:px-5 lg:px-6">
         <div className="flex min-w-0 items-center gap-2">
           {incomplete ? (
             <span
@@ -99,7 +100,7 @@ export function WorkspaceSectionCard({
           ) : null}
         </div>
       </div>
-      <div className="px-4 py-3.5 lg:px-[18px]">{children}</div>
+      <div className="px-4 py-3.5 sm:px-5 sm:py-4 lg:px-6">{children}</div>
     </div>
   );
 }

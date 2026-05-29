@@ -1,9 +1,12 @@
-/** Matches Applications page background but polished for premium learning environments */
+/** Shared with Explore Jobs / Applications — peach & blue gradient */
 export const LMS_PAGE_BG =
-  'radial-gradient(circle at top left, rgba(40,168,225,0.13), transparent 28%), radial-gradient(circle at 85% 12%, rgba(40,168,223,0.1), transparent 16%), radial-gradient(circle at 18% 82%, rgba(252,150,32,0.08), transparent 18%), linear-gradient(180deg, #f5fafd 0%, #f8fcff 44%, #fcfdff 100%)';
+  'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)';
 
 export const LMS_CONTENT_CLASS =
-  'mx-auto max-w-[1360px] px-4 sm:px-6 lg:px-10 pt-0 pb-8 sm:pb-10 lg:pb-12 w-full';
+  'mx-auto max-w-[1180px] px-4 sm:px-5 lg:px-6 pt-0 pb-8 sm:pb-10 lg:pb-12 w-full';
+
+/** Page title — matches /profile (1.25rem) */
+export const LMS_PAGE_TITLE = 'application-detail-title';
 
 /** Base card — static panels, premium glassmorphic border */
 export const LMS_CARD_CLASS =
@@ -12,5 +15,9 @@ export const LMS_CARD_CLASS =
 /** Interactive section cards: hover lift, rich shadow, pointer */
 export const LMS_CARD_INTERACTIVE = `${LMS_CARD_CLASS} cursor-pointer transition-all duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.08)] hover:border-slate-300 hover:-translate-y-[2px] active:scale-[0.98]`;
 
-export const LMS_SECTION_TITLE = 'text-[1.15rem] font-bold text-slate-900 tracking-tight flex items-center gap-2 relative';
-export const LMS_PAGE_SUBTITLE = 'text-slate-500 font-medium text-[1.05rem] leading-relaxed max-w-2xl mt-1.5';
+/** Section headings — profile scale (0.875rem) */
+export const LMS_SECTION_TITLE =
+  'profile-page-section-title flex items-center gap-2 relative';
+
+/** Page intro line — profile helper scale */
+export const LMS_PAGE_SUBTITLE = 'application-detail-helper max-w-2xl mt-1.5';

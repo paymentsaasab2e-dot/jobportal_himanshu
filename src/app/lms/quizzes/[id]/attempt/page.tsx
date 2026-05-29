@@ -22,7 +22,7 @@ export default async function LmsQuizAttemptPage({
           <ArrowLeft className="h-4 w-4" strokeWidth={2} />
           Back to quizzes
         </Link>
-        <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+        <h1 className="application-detail-title mt-3">
           {quiz?.title ?? "Quiz Attempt"}
         </h1>
         <p className={LMS_PAGE_SUBTITLE}>

@@ -150,7 +150,7 @@ export function QuizResultClient({ quizId }: { quizId: string }) {
               <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
                 Result summary
               </p>
-              <h2 className="mt-1 text-2xl font-bold text-gray-900">
+              <h2 className="profile-page-section-title mt-1">
                 {quiz.title}
               </h2>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-gray-600">
@@ -171,7 +171,7 @@ export function QuizResultClient({ quizId }: { quizId: string }) {
                 ) : null}
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="text-3xl font-bold text-gray-900">{score}%</span>
+                <span className="application-detail-title">{score}%</span>
                 <LmsStatusBadge
                   label={score >= 70 ? "Ready to build on" : "Needs another drill"}
                   tone={score >= 70 ? "success" : "warning"}
