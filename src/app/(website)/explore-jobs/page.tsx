@@ -43,6 +43,8 @@ import { parseStructuredJobText, resolveJobSummaryText, toPlainJobText } from '@
 import { extractPortalJobMeta } from '@/lib/map-portal-job';
 import { JobDescriptionCards } from '@/components/jobs/JobDescriptionCards';
 import { JobCardMetaChips } from '@/components/jobs/JobPostingDetailsPanel';
+import ScreeningQuestionsDrawer from '@/components/jobs/ScreeningQuestionsDrawer';
+import { getScreeningValidationError } from '@/lib/screening-questions';
 import { AppLocale, localizePath } from '@/lib/i18n';
 
 const PAGE_BG =
@@ -1211,31 +1213,8 @@ const ExploreJobsPageContent = () => {
     setScreeningAnswers({})
   }
 
-  const validateScreeningAnswers = (questions: PortalScreeningQuestion[]): string | null => {
-    for (const q of questions) {
-      if (!q.required) continue
-      const value = screeningAnswers[q.id]
-      if (q.type === 'slider') {
-        if (typeof value !== 'number' || Number.isNaN(value)) return `Please answer: ${q.label}`
-        continue
-      }
-      if (q.type === 'yes_no') {
-        if (value !== 'yes' && value !== 'no') return `Please answer: ${q.label}`
-        continue
-      }
-      if (q.type === 'single_choice') {
-        const v = typeof value === 'string' ? value.trim() : ''
-        if (!v) return `Please answer: ${q.label}`
-        const opts = (q.options || []).map((o) => String(o).trim()).filter(Boolean)
-        if (opts.length > 0 && !opts.includes(v)) return `Please choose a valid option for: ${q.label}`
-        continue
-      }
-      if (typeof value !== 'string' || !value.trim()) {
-        return `Please answer: ${q.label}`
-      }
-    }
-    return null
-  }
+  const validateScreeningAnswers = (questions: PortalScreeningQuestion[]): string | null =>
+    getScreeningValidationError(questions, screeningAnswers)
 
   /**
    * Build the payload sent to the backend. Each entry is keyed by question id and
@@ -1432,14 +1411,6 @@ const ExploreJobsPageContent = () => {
   const handleCloseSuccessModal = () => {
     setIsSuccessModalOpen(false)
     setAppliedJobSummary(null)
-  }
-
-  const getProficiencyLabel = (value: number) => {
-    if (value === 0) return 'Beginner'
-    if (value <= 25) return 'Basic'
-    if (value <= 50) return 'Intermediate'
-    if (value <= 75) return 'Advanced'
-    return 'Expert'
   }
 
   const isSavedJob = (jobId: string | number) => savedJobIds.includes(String(jobId))
@@ -2963,165 +2934,18 @@ const ExploreJobsPageContent = () => {
         </DashboardContainer>
       </main>
 
-      {
-        isScreeningModalOpen && selectedJob && (
-          <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pb-4 pt-24 sm:pt-28">
-            <div className="fixed inset-0 bg-black bg-opacity-50" onClick={handleCloseModal} />
-            <div
-              className="z-10 w-full max-w-[520px] overflow-y-auto rounded-lg bg-white shadow-xl"
-              style={{
-                maxHeight: "calc(100vh - 140px)",
-                borderRadius: "10px",
-                boxShadow: "0 0 2px 0 rgba(23, 26, 31, 0.20), 0 0 1px 0 rgba(23, 26, 31, 0.07)"
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="px-6 pt-6 pb-2">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Quick Screening Questions</h2>
-                <p className="text-base text-gray-700 mb-1">{selectedJob.title} — {selectedJob.company}</p>
-                <p className="application-detail-helper mb-2">These quick questions help us understand if you are a good fit for the role</p>
-              </div>
-
-              {/* Questions (dynamic, configured by recruiter) */}
-              <div className="px-6 pt-2 pb-6 space-y-8">
-                {activeScreeningQuestions.length === 0 ? (
-                  <p className="text-sm text-gray-600 italic">No screening questions configured.</p>
-                ) : (
-                  activeScreeningQuestions.map((question) => {
-                    const value = screeningAnswers[question.id]
-                    if (question.type === 'yes_no') {
-                      return (
-                        <div key={question.id}>
-                          <label className="profile-page-section-title mb-3 block">
-                            {question.label}
-                            {question.required ? <span className="ml-1 text-red-500">*</span> : null}
-                          </label>
-                          <div className="flex gap-3">
-                            {['yes', 'no'].map((opt) => (
-                              <button
-                                key={opt}
-                                onClick={() => setScreeningAnswer(question.id, opt)}
-                                className={`px-6 py-2.5 rounded-lg border-2 transition-colors capitalize ${
-                                  value === opt
-                                    ? 'border-blue-500 bg-blue-50 text-blue-600 font-medium'
-                                    : 'border-blue-200 bg-white text-gray-900 hover:border-blue-300'
-                                }`}
-                              >
-                                {opt}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    if (question.type === 'single_choice') {
-                      const options = Array.isArray(question.options) ? question.options : []
-                      return (
-                        <div key={question.id}>
-                          <label className="profile-page-section-title mb-3 block">
-                            {question.label}
-                            {question.required ? <span className="ml-1 text-red-500">*</span> : null}
-                          </label>
-                          <div className="grid grid-cols-2 gap-3">
-                            {options.map((option, idx) => (
-                              <button
-                                key={`${question.id}-${idx}`}
-                                onClick={() => setScreeningAnswer(question.id, option)}
-                                className={`px-4 py-2.5 rounded-lg border-2 transition-colors ${
-                                  value === option
-                                    ? 'border-blue-500 bg-blue-50 text-blue-600 font-medium'
-                                    : 'border-blue-200 bg-white text-gray-900 hover:border-blue-300'
-                                }`}
-                              >
-                                {option}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    if (question.type === 'slider') {
-                      const min = typeof question.min === 'number' ? question.min : 0
-                      const max = typeof question.max === 'number' ? question.max : 100
-                      const step = typeof question.step === 'number' && question.step > 0 ? question.step : 1
-                      const minLabel = question.minLabel || 'Beginner'
-                      const maxLabel = question.maxLabel || 'Expert'
-                      const numericValue =
-                        typeof value === 'number' ? value : typeof value === 'string' ? Number(value) || min : min
-                      const range = max - min || 1
-                      const fillPercent = Math.max(0, Math.min(100, ((numericValue - min) / range) * 100))
-                      return (
-                        <div key={question.id}>
-                          <label className="profile-page-section-title mb-3 block">
-                            {question.label}
-                            {question.required ? <span className="ml-1 text-red-500">*</span> : null}
-                          </label>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm text-gray-600">{minLabel}</span>
-                              <span className="text-sm text-gray-600">{maxLabel}</span>
-                            </div>
-                            <input
-                              type="range"
-                              min={min}
-                              max={max}
-                              step={step}
-                              value={numericValue}
-                              onChange={(e) => setScreeningAnswer(question.id, Number(e.target.value))}
-                              className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                              style={{
-                                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${fillPercent}%, #e0e7ff ${fillPercent}%, #e0e7ff 100%)`,
-                              }}
-                            />
-                            <p className="text-sm text-blue-600 font-medium">
-                              Current selection: {numericValue} ({getProficiencyLabel(fillPercent)})
-                            </p>
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    return (
-                      <div key={question.id}>
-                        <label className="profile-page-section-title mb-3 block">
-                          {question.label}
-                          {question.required ? <span className="ml-1 text-red-500">*</span> : null}
-                        </label>
-                        <input
-                          type="text"
-                          value={typeof value === 'string' ? value : ''}
-                          onChange={(e) => setScreeningAnswer(question.id, e.target.value)}
-                          placeholder="Type your answer"
-                          className="w-full px-4 py-2.5 rounded-lg border-2 border-blue-200 bg-white text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                        />
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="px-6 py-4 border-t border-gray-200 flex justify-between items-center">
-                <button
-                  onClick={handleCloseModal}
-                  className="px-4 py-2 text-blue-600 font-medium hover:text-blue-700 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSubmitScreening}
-                  className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors"
-                >
-                  Submit & Continue
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      }
+      {selectedJob ? (
+        <ScreeningQuestionsDrawer
+          isOpen={isScreeningModalOpen}
+          onClose={handleCloseModal}
+          jobTitle={selectedJob.title}
+          company={selectedJob.company}
+          questions={activeScreeningQuestions}
+          answers={screeningAnswers}
+          onAnswerChange={setScreeningAnswer}
+          onSubmit={handleSubmitScreening}
+        />
+      ) : null}
 
       {/* Application Success Modal */}
       {isSuccessModalOpen && (
