@@ -9,7 +9,7 @@ interface ApplicationSuccessModalProps {
   company: string;
   appliedDate: string;
   jobId?: number | string;
-  applicationId?: string; // Optional: if application already exists, use this ID
+  applicationId?: string;
 }
 
 export default function ApplicationSuccessModal({
@@ -18,112 +18,103 @@ export default function ApplicationSuccessModal({
   jobTitle,
   company,
   appliedDate,
-  jobId,
   applicationId,
 }: ApplicationSuccessModalProps) {
   const router = useRouter();
 
   const handleTrackApplication = () => {
     onClose();
-    // Navigate to the specific application status page using the real applicationId
     if (applicationId) {
       router.push(`/applications/${applicationId}`);
     } else {
-      // Fallback to applications list if no applicationId is available
       router.push('/applications');
     }
   };
 
   const handleBrowseMoreJobs = () => {
     onClose();
-    // Optionally reset selected job or navigate
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-[10050] flex items-center justify-center p-4">
       <div
-        className="fixed inset-0 bg-black bg-opacity-50"
+        className="fixed inset-0 bg-slate-900/20 backdrop-blur-md"
         onClick={onClose}
+        aria-hidden
       />
-      
-      {/* Modal */}
+
       <div
-        className="bg-white rounded-lg shadow-xl z-10 relative"
-        style={{
-          width: '600px',
-          maxWidth: '90vw',
-          borderRadius: '10px',
-          boxShadow: '0 0 2px 0 rgba(23, 26, 31, 0.20), 0 0 1px 0 rgba(23, 26, 31, 0.07)',
-        }}
+        className="profile-page-typography candidate-dashboard-page relative z-10 w-full max-w-[400px] rounded-2xl border border-white/80 bg-white shadow-[0_20px_48px_rgba(15,23,42,0.14)]"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="application-success-title"
       >
-        <div className="p-8">
-          {/* Success Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center border-2 border-green-500">
+        <div className="px-5 py-5 sm:px-6 sm:py-6">
+          <div className="mb-4 flex justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 shadow-sm">
               <svg
-                width="40"
-                height="40"
+                width="28"
+                height="28"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="white"
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                aria-hidden
               >
-                <polyline points="20 6 9 17 4 12"></polyline>
+                <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
           </div>
 
-          {/* Success Message */}
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">
-              Application Submitted
+          <div className="mb-4 text-center">
+            <h2
+              id="application-success-title"
+              className="application-detail-title text-[#111827]"
+            >
+              Application submitted successfully
             </h2>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Successfully
-            </h2>
-            <p className="text-base text-gray-600">
+            <p className="application-detail-helper mt-2">
               You will receive updates via email and WhatsApp.
             </p>
           </div>
 
-          {/* Job Summary */}
-          <div className="bg-gray-50 rounded-lg p-6 mb-6 border border-gray-200">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Job Summary</h3>
-            <div className="space-y-3">
-              <div>
-                <span className="text-sm font-bold text-gray-700">Title: </span>
-                <span className="text-sm text-gray-900">{jobTitle}</span>
-              </div>
-              <div>
-                <span className="text-sm font-bold text-gray-700">Company: </span>
-                <span className="text-sm text-gray-900">{company}</span>
-              </div>
-              <div>
-                <span className="text-sm font-bold text-gray-700">Applied On: </span>
-                <span className="text-sm text-gray-900">{appliedDate}</span>
-              </div>
+          <div className="mb-4 rounded-xl border border-slate-200/80 bg-slate-50/90 px-4 py-3">
+            <h3 className="profile-page-section-title mb-2 text-[#111827]">Job summary</h3>
+            <div className="space-y-1.5">
+              <p className="text-[0.8125rem] text-[#111827]">
+                <span className="font-medium text-[#64748b]">Title: </span>
+                {jobTitle}
+              </p>
+              <p className="text-[0.8125rem] text-[#111827]">
+                <span className="font-medium text-[#64748b]">Company: </span>
+                {company}
+              </p>
+              <p className="text-[0.8125rem] text-[#111827]">
+                <span className="font-medium text-[#64748b]">Applied on: </span>
+                {appliedDate}
+              </p>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <button
+              type="button"
               onClick={handleTrackApplication}
-              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+              className="profile-modal-btn flex-1 rounded-lg bg-[#28A8E1] px-4 py-2.5 text-[0.8125rem] font-medium text-white transition-colors hover:bg-[#1e96cc]"
             >
-              Track Application
+              Track application
             </button>
             <button
+              type="button"
               onClick={handleBrowseMoreJobs}
-              className="flex-1 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-lg border-2 border-gray-300 transition-colors"
+              className="profile-modal-btn flex-1 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-[0.8125rem] font-medium text-[#111827] transition-colors hover:bg-slate-50"
             >
-              Browse More Jobs
+              Browse more jobs
             </button>
           </div>
         </div>
