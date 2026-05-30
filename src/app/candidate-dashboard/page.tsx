@@ -36,6 +36,8 @@ import { useTabVisibilityRefresh } from "@/hooks/useTabVisibilityRefresh";
 import { dispatchProfilePhotoUpdated } from "@/lib/profile-photo";
 import { AppLocale, localizePath } from "@/lib/i18n";
 import { ProfilePageShell } from "@/components/profile/layout";
+import ProfileMissingSectionNudge from "@/components/profile/ProfileMissingSectionNudge";
+import { getMissingProfileSections } from "@/lib/profile-section-routes";
 
 const SAVED_JOBS_STORAGE_PREFIX = "dashboardSavedJobs";
 
@@ -224,6 +226,7 @@ export default function CandidateDashboardPage() {
   } | null>(null);
   const [profileCompletionDetails, setProfileCompletionDetails] =
     useState<ProfileCompletenessResponse | null>(null);
+  const [profileSnapshot, setProfileSnapshot] = useState<Record<string, unknown> | null>(null);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
   const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
 
@@ -272,6 +275,32 @@ export default function CandidateDashboardPage() {
       matchesHighlightTimeoutRef.current = null;
     }, 1800);
   }, []);
+
+  const refreshProfileSnapshot = useCallback(
+    async (id?: string) => {
+      const resolvedCandidateId = id || candidateId || user?.id;
+      if (!resolvedCandidateId) return null;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/profile/${resolvedCandidateId}`, {
+          method: "GET",
+          headers: getAuthHeaders(),
+        });
+        const result = (await response.json()) as {
+          success?: boolean;
+          data?: Record<string, unknown>;
+        };
+        if (response.ok && result.success && result.data) {
+          setProfileSnapshot(result.data);
+          return result.data;
+        }
+      } catch (error) {
+        console.error("Error fetching profile snapshot:", error);
+      }
+      return null;
+    },
+    [candidateId, user?.id],
+  );
 
   const refreshProfileCompleteness = useCallback(
     async (id?: string) => {
@@ -324,6 +353,7 @@ export default function CandidateDashboardPage() {
     if (!candidateId) return;
     void syncProfileToCommonDatabase(candidateId);
     void refreshProfileCompleteness(candidateId);
+    void refreshProfileSnapshot(candidateId);
     void fetchDashboardData(candidateId);
   }, [candidateId, refreshProfileCompleteness, fetchDashboardData]);
 
@@ -432,6 +462,7 @@ export default function CandidateDashboardPage() {
     if (!candidateId) setCandidateId(id);
     void syncProfileToCommonDatabase(id);
     void refreshProfileCompleteness(id);
+    void refreshProfileSnapshot(id);
     void fetchDashboardData(id);
   }, isAuthenticated);
 
@@ -894,10 +925,10 @@ export default function CandidateDashboardPage() {
     profileCompletionDetails?.percentage ||
     dashboardData?.stats.profileCompleteness ||
     0;
-  const missingSectionLabels =
-    profileCompletionDetails?.sections
-      .filter((section) => !section.isComplete)
-      .map((section) => section.label) || [];
+  const missingProfileSections = useMemo(
+    () => getMissingProfileSections(profileSnapshot, profileCompletionDetails),
+    [profileSnapshot, profileCompletionDetails],
+  );
 
   const savedJobsTotal = mergeUnique([
     ...savedJobIds,
@@ -1007,7 +1038,7 @@ export default function CandidateDashboardPage() {
                 profile={dashboardData?.profile || null}
                 topSkills={dashboardData?.topSkills || []}
                 completionPercentage={profileCompletionPercentage}
-                missingSections={missingSectionLabels}
+                missingSections={missingProfileSections.map((section) => section.label)}
                 apiBaseUrl={API_BASE_URL}
                 isUploadingPhoto={isUploadingPhoto}
                 isDeletingPhoto={isDeletingPhoto}
@@ -1074,6 +1105,15 @@ export default function CandidateDashboardPage() {
         appliedDate={submittedApplicationModal?.appliedDate || formatAppliedDate(locale)}
         applicationId={submittedApplicationModal?.applicationId}
       />
+
+      {candidateId && missingProfileSections.length > 0 ? (
+        <ProfileMissingSectionNudge
+          locale={locale}
+          missingSections={missingProfileSections}
+          onNavigate={(href) => router.push(href)}
+          storageKeyPrefix={`${candidateId}:profileMissingNudge`}
+        />
+      ) : null}
     </ProfilePageShell>
   );
 }

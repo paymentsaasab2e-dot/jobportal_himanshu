@@ -38,24 +38,30 @@ function HOrbitCanvas({ size = 160, theme = "light" }: { size?: number; theme?: 
     const glowColor = light ? "rgba(37,150,190,0.25)" : "rgba(37,150,190,0.35)";
     const orbitColor = light ? "rgba(37,150,190,0.18)" : "rgba(37,150,190,0.22)";
     const innerOrbitColor = light ? "rgba(239,139,33,0.12)" : "rgba(239,139,33,0.2)";
-    const hColor = "#1a5a8a";
+
+    const logo = new Image();
+    logo.src = "/fs.png";
+    let logoReady = false;
+    logo.onload = () => {
+      logoReady = true;
+    };
+    if (logo.complete) {
+      logoReady = true;
+    }
 
     let frame = 0;
     let animId: number;
 
-    const drawH = (x: number, y: number, sf: number, a: number) => {
+    const drawLogo = (x: number, y: number, a: number) => {
+      if (!logoReady) return;
       ctx.save();
       const scalePulse = 1 + 0.03 * Math.sin(a * 0.5);
       const alphaPulse = 0.88 + 0.12 * Math.sin(a * 0.5);
       ctx.globalAlpha = alphaPulse;
+      const logoSize = size * 0.32;
       ctx.translate(x, y);
       ctx.scale(scalePulse, scalePulse);
-      const fontSize = Math.round(26 * sf);
-      ctx.font = `700 ${fontSize}px system-ui, -apple-system, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = hColor;
-      ctx.fillText("H", 0, fontSize * 0.04);
+      ctx.drawImage(logo, -logoSize / 2, -logoSize / 2, logoSize, logoSize);
       ctx.restore();
     };
 
@@ -143,7 +149,7 @@ function HOrbitCanvas({ size = 160, theme = "light" }: { size?: number; theme?: 
       drawParticles(a);
       ctx.restore();
 
-      drawH(cx, cy, size / 100, a);
+      drawLogo(cx, cy, a);
 
       ctx.beginPath();
       ctx.arc(cx, cy, size * 0.065, 0, Math.PI * 2);
