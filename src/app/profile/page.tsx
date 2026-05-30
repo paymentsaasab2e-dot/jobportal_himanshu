@@ -1,8 +1,16 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { AppLocale, localizePath } from '@/lib/i18n';
+import {
+  getMissingProfileSections,
+  getProfileSectionTabId,
+  isProfileSectionSlug,
+  openProfileSectionBySlug,
+  type ProfileModalHandlers,
+} from '@/lib/profile-section-routes';
 
 import { ProfilePageShell } from '@/components/profile/layout';
 import {
@@ -227,6 +235,8 @@ function candidateNamesLikelyMatch(leftName: string, rightName: string): boolean
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const locale = useLocale() as AppLocale;
   const t = useTranslations();
   const { user, refreshUser } = useAuth();
   const [isBasicInfoModalOpen, setIsBasicInfoModalOpen] = useState(false);
@@ -272,6 +282,8 @@ export default function ProfilePage() {
   );
   const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(profileSessionReady);
   const completenessFetchRef = useRef(0);
+  const pendingDeepLinkRef = useRef<{ open: string; tab?: string | null } | null>(null);
+  const deepLinkHandledRef = useRef(false);
 
   useEffect(() => {
     sessionStorage.removeItem('uploadStatus');
@@ -288,6 +300,7 @@ export default function ProfilePage() {
     percentage: 0,
     completedSections: [] as string[],
     missingSections: [] as string[],
+    sections: [] as import('@/lib/profile-completion').ProfileSectionStatus[],
   });
 
   // Data storage for modals - Initialize with empty/undefined to allow auto-population
@@ -981,6 +994,7 @@ export default function ProfilePage() {
             percentage: result.data.percentage,
             completedSections: result.data.completedSections || [],
             missingSections: result.data.missingSections || [],
+            sections: result.data.sections || [],
           });
           return;
         }
@@ -1014,41 +1028,136 @@ export default function ProfilePage() {
   ]);
 
   // Function to open the first missing modal
-  const openFirstMissingModal = () => {
-    if (profileCompleteness.missingSections.length === 0) {
-      // If no missing sections, just scroll to profile
-      return;
-    }
-
-    const firstMissingSection = profileCompleteness.missingSections[0];
-    
-    // Map section names to their modal openers
-    const modalMap: { [key: string]: () => void } = {
-      'Basic Information': () => setIsBasicInfoModalOpen(true),
-      'Summary': () => setIsSummaryModalOpen(true),
-      'Education': () => {
+  const profileModalHandlers = useMemo<ProfileModalHandlers>(
+    () => ({
+      openBasicInfo: () => setIsBasicInfoModalOpen(true),
+      openSummary: () => setIsSummaryModalOpen(true),
+      openResume: () => setIsResumeModalOpen(true),
+      openWorkExperience: () => setIsWorkExperienceModalOpen(true),
+      openInternships: () => {
+        if (internshipData.length === 0) {
+          setInternshipModalMode('add');
+          setEditingInternshipId(null);
+        } else {
+          setInternshipModalMode('edit');
+          setEditingInternshipId(internshipData[internshipData.length - 1]?.id || null);
+        }
+        setIsInternshipModalOpen(true);
+      },
+      openGapExplanation: () => {
+        if (gapExplanationData.length === 0) {
+          setGapExplanationModalMode('add');
+          setEditingGapExplanationId(null);
+        } else {
+          setGapExplanationModalMode('edit');
+          setEditingGapExplanationId(
+            gapExplanationData[gapExplanationData.length - 1]?.id || null,
+          );
+        }
+        setIsGapExplanationModalOpen(true);
+      },
+      openEducation: () => {
         setEditingEducationId(null);
         setIsEducationModalOpen(true);
       },
-      'Skills': () => setIsSkillsModalOpen(true),
-      'Languages': () => setIsLanguagesModalOpen(true),
-      'Projects': () => {
-        setProjectModalMode('add');
-        setEditingProjectId(null);
+      openAcademicAchievements: () => {
+        if (academicAchievementData.length === 0) {
+          setAcademicAchievementModalMode('add');
+          setEditingAcademicAchievementId(null);
+        } else {
+          setAcademicAchievementModalMode('edit');
+          setEditingAcademicAchievementId(
+            academicAchievementData[academicAchievementData.length - 1]?.id || null,
+          );
+        }
+        setIsAcademicAchievementModalOpen(true);
+      },
+      openCompetitiveExams: () => {
+        if (competitiveExamsData.length === 0) {
+          setCompetitiveExamsModalMode('add');
+          setEditingCompetitiveExamId(null);
+        } else {
+          setCompetitiveExamsModalMode('edit');
+          setEditingCompetitiveExamId(
+            competitiveExamsData[competitiveExamsData.length - 1]?.id || null,
+          );
+        }
+        setIsCompetitiveExamsModalOpen(true);
+      },
+      openSkills: () => setIsSkillsModalOpen(true),
+      openLanguages: () => setIsLanguagesModalOpen(true),
+      openProjects: () => {
+        setProjectModalMode(projectData.length === 0 ? 'add' : 'edit');
+        setEditingProjectId(
+          projectData.length === 0 ? null : projectData[projectData.length - 1]?.id || null,
+        );
         setIsProjectModalOpen(true);
       },
-      'Portfolio Links': () => setIsPortfolioLinksModalOpen(true),
-      'Career Preferences': () => setIsCareerPreferencesModalOpen(true),
-      'Visa & Work Authorization': () => { setVisaModalMode('add'); setIsVisaWorkAuthorizationModalOpen(true); },
-      'Vaccination': () => setIsVaccinationModalOpen(true),
-      'Resume': () => setIsResumeModalOpen(true),
-    };
+      openPortfolioLinks: () => setIsPortfolioLinksModalOpen(true),
+      openCertifications: () => setIsCertificationModalOpen(true),
+      openAccomplishments: () => {
+        setEditingAccomplishmentId(null);
+        setIsAccomplishmentModalOpen(true);
+      },
+      openCareerPreferences: () => setIsCareerPreferencesModalOpen(true),
+      openVisaWorkAuthorization: () => {
+        setVisaModalMode('add');
+        setEditingVisaEntryId(null);
+        setIsVisaWorkAuthorizationModalOpen(true);
+      },
+      openVaccination: () => {
+        setVaccinationData(undefined);
+        setIsVaccinationModalOpen(true);
+      },
+    }),
+    [
+      internshipData,
+      gapExplanationData,
+      academicAchievementData,
+      competitiveExamsData,
+      projectData,
+    ],
+  );
 
-    // Open the modal for the first missing section
-    if (modalMap[firstMissingSection]) {
-      modalMap[firstMissingSection]();
-    }
-  };
+  const profileSnapshotForMissing = useMemo(
+    () => ({
+      workExperiences: workExperienceData?.workExperiences ?? [],
+      workExperience: workExperienceData?.workExperiences ?? [],
+      internships: internshipData,
+      gapExplanations: gapExplanationData,
+      educations: educationData?.educations ?? [],
+      academicAchievements: academicAchievementData,
+      competitiveExams: competitiveExamsData,
+      certifications: certificationsData?.certifications ?? [],
+      accomplishments: accomplishmentsData?.accomplishments ?? [],
+    }),
+    [
+      workExperienceData,
+      internshipData,
+      gapExplanationData,
+      educationData,
+      academicAchievementData,
+      competitiveExamsData,
+      certificationsData,
+      accomplishmentsData,
+    ],
+  );
+
+  const profileCompletenessResponse = useMemo(
+    () => ({
+      candidateId: getStoredCandidateId() || '',
+      percentage: profileCompleteness.percentage,
+      completedSections: profileCompleteness.completedSections,
+      missingSections: profileCompleteness.missingSections,
+      sections: profileCompleteness.sections,
+    }),
+    [profileCompleteness],
+  );
+
+  const detailedMissingSections = useMemo(
+    () => getMissingProfileSections(profileSnapshotForMissing, profileCompletenessResponse),
+    [profileSnapshotForMissing, profileCompletenessResponse],
+  );
 
   // Calculate profile completeness based on mandatory fields
   const calculateProfileCompleteness = () => {
@@ -1283,6 +1392,46 @@ export default function ProfilePage() {
     scrollToTabGroup: scrollToWorkspaceTab,
     scrollPaddingStyle,
   } = useProfileTabNavigation(PROFILE_SECTIONS);
+
+  const openFirstMissingModal = useCallback(() => {
+    const firstMissing = detailedMissingSections[0];
+    if (!firstMissing) return;
+    scrollToWorkspaceTab(firstMissing.tabId);
+    openProfileSectionBySlug(firstMissing.slug, profileModalHandlers);
+  }, [detailedMissingSections, profileModalHandlers, scrollToWorkspaceTab]);
+
+  useEffect(() => {
+    const open = searchParams.get('open');
+    if (!isProfileSectionSlug(open)) return;
+    pendingDeepLinkRef.current = { open, tab: searchParams.get('tab') };
+    deepLinkHandledRef.current = false;
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (deepLinkHandledRef.current || !pendingDeepLinkRef.current) return;
+    if (!profileSessionReady || isLoadingProfile) return;
+
+    const { open, tab } = pendingDeepLinkRef.current;
+    if (!isProfileSectionSlug(open)) return;
+
+    deepLinkHandledRef.current = true;
+    pendingDeepLinkRef.current = null;
+
+    const tabId = tab || getProfileSectionTabId(open);
+    scrollToWorkspaceTab(tabId);
+    window.setTimeout(() => {
+      openProfileSectionBySlug(open, profileModalHandlers);
+    }, 120);
+
+    router.replace(localizePath('/profile', locale), { scroll: false });
+  }, [
+    profileSessionReady,
+    isLoadingProfile,
+    profileModalHandlers,
+    router,
+    locale,
+    scrollToWorkspaceTab,
+  ]);
 
   const workspaceTabs: WorkspaceTabItem[] = useMemo(
     () => [
@@ -1541,7 +1690,7 @@ export default function ProfilePage() {
             }
             alerts={workspaceAlerts}
             completionPct={profileCompleteness.percentage}
-            pendingRows={profileCompleteness.missingSections}
+            pendingRows={detailedMissingSections.map((section) => section.label)}
             atsDisplay={atsDisplay}
             aiSuggestions={PROFILE_AI_SUGGESTIONS}
             onImprove={openFirstMissingModal}
