@@ -1093,7 +1093,7 @@ export default function WorkExperienceModal({
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Industry / Domain</label>
+                  <label className="block text-sm font-medium text-gray-700">Industry</label>
                   <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
                     <div className="relative">
                       <input
@@ -1118,7 +1118,7 @@ export default function WorkExperienceModal({
                             }
                           }
                         }}
-                        placeholder="Type industry/domain"
+                        placeholder="Type industry"
                         className={inputClassName}
                       />
                       {industryDomainSuggestOpen && filteredIndustrySuggestions.length > 0 ? (
