@@ -24,7 +24,7 @@ export default function EmployerModulesPage() {
             </h1>
             
             <p className="text-xl text-slate-600 leading-relaxed font-medium mb-10 max-w-2xl mx-auto">
-              Each module in the SAASA ecosystem is built for high-performance operations, ensuring your team has the exact tools they need for recruitment, CRM, and payroll.
+              Each module in the SAASA B2E ecosystem is built for high-performance operations, ensuring your team has the exact tools they need for recruitment, CRM, and payroll.
             </p>
 
             <div className="flex justify-center mb-16">
@@ -61,7 +61,7 @@ export default function EmployerModulesPage() {
                 <span className="text-emerald-600">business outcomes.</span>
               </h2>
               <p className="text-xl text-slate-500 font-medium mb-12 max-w-2xl mx-auto">
-                Select only the modules you need, or deploy the full SAASA suite for maximum operational harmony.
+                Select only the modules you need, or deploy the full SAASA B2E suite for maximum operational harmony.
               </p>
               <button
                 onClick={() => router.push('/whatsapp')}

@@ -58,7 +58,7 @@ const AiLoadingScreen = ({ message = "HRYantra AI" }) => {
       {/* Footer Branding */}
       <div className="absolute bottom-10 flex items-center gap-2 opacity-30 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0">
          <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-900 underline decoration-blue-500 decoration-2 underline-offset-4">
-           SAASA AI
+           SAASA B2E AI
          </span>
          <div className="h-1 w-1 rounded-full bg-blue-500" />
          <span className="text-[10px] font-bold text-slate-500">Neural Engine (v4.2.0)</span>

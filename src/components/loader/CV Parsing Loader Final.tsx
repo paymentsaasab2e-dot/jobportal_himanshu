@@ -337,7 +337,7 @@ export default function HryantraLoader() {
           }}>
             {MESSAGES[msgIdx]}
           </div>
-          <div style={{ fontSize: 12, color: t.textSecondary }}>Powered by HRYANTRA AI Engine</div>
+          <div style={{ fontSize: 12, color: t.textSecondary }}>Powered by SAASA B2E</div>
         </div>
 
         {/* AI Pill */}

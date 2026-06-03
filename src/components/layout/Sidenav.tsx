@@ -151,7 +151,6 @@ const UserDropdown = ({ avatarUrl }: { avatarUrl: string }) => {
         >
             <div className="px-4 py-2 border-b border-slate-100 mb-1">
               <p className="text-sm font-semibold text-slate-800">John Doe</p>
-              <p className="text-xs text-slate-500">Recruiter • SAASA B2E</p>
             </div>
             {menuItems.map((item, i) => (
               <button
@@ -286,7 +285,7 @@ export function Sidenav({ avatarUrl = '', userProfile, children }: SidenavProps)
         >
           <ImageWithFallback 
             src="/SAASA Logo.png" 
-            alt="SAASA Logo" 
+            alt="SAASA B2E" 
             className="h-8 w-auto object-contain"
           />
           <button

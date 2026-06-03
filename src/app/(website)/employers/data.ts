@@ -88,7 +88,7 @@ export const employerTrustBand = [
 export const employerModules: ModuleCard[] = [
   {
     id: 'recruitos',
-    name: 'SAASA RecruitOS',
+    name: 'SAASA B2E RecruitOS',
     label: 'Recruitment System',
     description:
       'Move from manpower request to shortlist, interviews, invoicing, and onboarding handoff inside one workspace.',
@@ -99,7 +99,7 @@ export const employerModules: ModuleCard[] = [
   },
   {
     id: 'peoplecore',
-    name: 'SAASA PeopleCore',
+    name: 'SAASA B2E PeopleCore',
     label: 'Employee Management',
     description:
       'Digitize onboarding, records, attendance, tasks, assets, leave, expenses, and training continuity.',
@@ -110,7 +110,7 @@ export const employerModules: ModuleCard[] = [
   },
   {
     id: 'payflow',
-    name: 'SAASA PayFlow',
+    name: 'SAASA B2E PayFlow',
     label: 'Payroll & Compliance',
     description:
       'Automate payroll with attendance sync, late marks, overtime, bonus inputs, payslips, and compliance reminders.',
@@ -121,7 +121,7 @@ export const employerModules: ModuleCard[] = [
   },
   {
     id: 'flowcrm',
-    name: 'SAASA FlowCRM',
+    name: 'SAASA B2E FlowCRM',
     label: 'CRM & Lead Operations',
     description:
       'Capture leads from ads, website, WhatsApp, plugins, and manual sources, then move them through disciplined follow-up workflows.',
@@ -132,7 +132,7 @@ export const employerModules: ModuleCard[] = [
   },
   {
     id: 'commandiq',
-    name: 'SAASA CommandIQ',
+    name: 'SAASA B2E CommandIQ',
     label: 'HR Analytics & Business Intelligence',
     description:
       'Give owners, HR, finance, and managers one command layer for workforce, payroll, hiring, training, and business signals.',
@@ -162,7 +162,7 @@ export const employerSolutions = [
 export const employerDeepDiveModules: DeepDiveModule[] = [
   {
     id: 'recruitos',
-    name: 'SAASA RecruitOS',
+    name: 'SAASA B2E RecruitOS',
     label: 'Recruitment System',
     kicker: 'Recruit with more precision',
     headline: 'From manpower request to invoice-ready hiring workflows.',
@@ -190,7 +190,7 @@ export const employerDeepDiveModules: DeepDiveModule[] = [
   },
   {
     id: 'peoplecore',
-    name: 'SAASA PeopleCore',
+    name: 'SAASA B2E PeopleCore',
     label: 'Employee Management',
     kicker: 'Run people operations with clarity',
     headline: 'Digital onboarding, attendance, tasks, performance, and employee 360 in one core system.',
@@ -218,7 +218,7 @@ export const employerDeepDiveModules: DeepDiveModule[] = [
   },
   {
     id: 'payflow',
-    name: 'SAASA PayFlow',
+    name: 'SAASA B2E PayFlow',
     label: 'Payroll & Compliance',
     kicker: 'Close payroll with confidence',
     headline: 'Attendance-linked payroll with compliance discipline and finance visibility.',
@@ -246,7 +246,7 @@ export const employerDeepDiveModules: DeepDiveModule[] = [
   },
   {
     id: 'flowcrm',
-    name: 'SAASA FlowCRM',
+    name: 'SAASA B2E FlowCRM',
     label: 'CRM & Lead Operations',
     kicker: 'Keep revenue ops connected',
     headline: 'Capture, assign, follow up, quote, and convert from one CRM operating flow.',
@@ -274,7 +274,7 @@ export const employerDeepDiveModules: DeepDiveModule[] = [
   },
   {
     id: 'commandiq',
-    name: 'SAASA CommandIQ',
+    name: 'SAASA B2E CommandIQ',
     label: 'HR Analytics & Business Intelligence',
     kicker: 'See the whole system',
     headline: 'One command layer for workforce decisions, founder visibility, and predictive alerts.',

@@ -87,7 +87,7 @@ function createFallbackCourses(
     {
       id: "career-reactivation-lab",
       title: "Premium Resume Positioning Lab",
-      provider: "SAASA Learning Studio",
+      provider: "SAASA B2E Learning Studio",
       duration: "4h 30m",
       level: "Intermediate",
       rating: 4.9,

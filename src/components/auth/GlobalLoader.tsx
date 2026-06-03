@@ -204,7 +204,7 @@ export const GlobalLoader: React.FC<GlobalLoaderProps> = ({ theme = "light" }) =
           <p className={`text-[12px] font-black uppercase tracking-[0.3em] mb-1 ${
             theme === 'light' ? 'text-slate-400' : 'text-slate-500'
           }`}>
-            HRYANTRA AI Engine
+            SAASA B2E
           </p>
           <div className="flex gap-1 justify-center">
             {[0, 1, 2].map((i) => (

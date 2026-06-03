@@ -233,7 +233,7 @@ function HeroControlCenter() {
         <div className="flex items-center justify-between rounded-[24px] border border-slate-200 bg-slate-50/90 px-4 py-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
-              SAASA Employer OS
+              SAASA B2E Employer OS
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-900">
               Hiring, people ops, payroll, CRM, analytics, and training continuity in one command view.
@@ -1845,7 +1845,7 @@ function FinalCtaSection() {
                   Talk to Our Team
                 </a>
                 <Link href="#ecosystem" className={secondaryCtaClass}>
-                  Explore the SAASA Ecosystem
+                  Explore the SAASA B2E Ecosystem
                 </Link>
               </div>
             </div>

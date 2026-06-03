@@ -33,7 +33,7 @@ export default function CoursesPage() {
     {
       id: 1,
       title: 'Agile Project Management Fundamentals',
-      provider: 'SAASAaaaaa',
+      provider: 'SAASA B2E',
       duration: '4 weeks',
       price: 'Free',
       description: 'Learn the core principles and practices of Agile methodology to efficiently manage projects and deliver value.',
@@ -93,7 +93,7 @@ export default function CoursesPage() {
     {
       id: 5,
       title: 'Cloud Computing Essentials (AWS)',
-      provider: 'SAASA',
+      provider: 'SAASA B2E',
       duration: '6 weeks',
       price: '$149.00',
       description: 'Gain foundational knowledge of cloud computing, focusing on Amazon Web Services (AWS) infrastructure.',
@@ -138,7 +138,7 @@ export default function CoursesPage() {
     {
       id: 8,
       title: 'Digital Marketing Fundamentals',
-      provider: 'SAASA',
+      provider: 'SAASA B2E',
       duration: '4 weeks',
       price: 'Free',
       description: 'Learn the essentials of digital marketing, including SEO, social media, and content strategy for online presence.',
@@ -183,7 +183,7 @@ export default function CoursesPage() {
     {
       id: 11,
       title: 'Full Stack Web Development',
-      provider: 'SAASA',
+      provider: 'SAASA B2E',
       duration: '12 weeks',
       price: '$249.00',
       description: 'Master frontend and backend development with modern frameworks and tools to build complete web applications.',
@@ -390,7 +390,7 @@ export default function CoursesPage() {
                   }}
                 >
                   <option value="all">All Providers</option>
-                  <option value="saasa">SAASA</option>
+                  <option value="saasa">SAASA B2E</option>
                   <option value="udemy">Udemy</option>
                   <option value="coursera">Coursera</option>
                 </select>
