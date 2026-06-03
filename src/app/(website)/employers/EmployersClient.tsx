@@ -83,7 +83,7 @@ export default function EmployerLandingPage() {
                    <div className="absolute inset-8 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.05)] z-20">
                       <div className="text-center">
                         <Cpu className="w-10 h-10 text-indigo-500 mx-auto mb-3" />
-                        <span className="text-[11px] font-bold tracking-[0.25em] uppercase text-slate-800">SAASA AI</span>
+                        <span className="text-[11px] font-bold tracking-[0.25em] uppercase text-slate-800">SAASA B2E AI</span>
                       </div>
                    </div>
 

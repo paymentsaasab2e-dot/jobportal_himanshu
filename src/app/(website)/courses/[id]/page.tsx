@@ -48,7 +48,7 @@ export default function CourseDetailsPage() {
   const course: Course = {
     id: 1,
     title: 'Advanced AI for Job Seekers: Mastering Prompt Engineering & Interview Prep',
-    provider: 'SAASA',
+    provider: 'SAASA B2E',
     duration: '12 Weeks',
     price: '$299',
     originalPrice: '$499',
@@ -756,7 +756,7 @@ The course also covers AI-driven networking strategies and market analysis, help
                     fontWeight: 500,
                   }}
                 >
-                  Earn a SAASA recognized Certificate of Completion upon finishing this course.
+                  Earn a SAASA B2E recognized Certificate of Completion upon finishing this course.
                 </p>
               </div>
             </div>

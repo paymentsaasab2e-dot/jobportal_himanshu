@@ -269,7 +269,7 @@ export default function GlobalAIAssistant() {
                     </button>
                   </div>
                   <p className="mt-2 text-[10px] text-center text-slate-400 font-medium">
-                    Powered by HRYANTRA Intelligence
+                    Powered by SAASA B2E
                   </p>
                 </div>
               </>

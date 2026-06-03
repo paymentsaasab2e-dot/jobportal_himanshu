@@ -69,7 +69,36 @@ const INDUSTRY_DOMAIN_OPTIONS = [
   'Healthcare',
   'Education',
   'Consulting',
+  'Marketing',
+  'Advertising',
+  'Manufacturing',
+  'Retail',
+  'Media',
+  'Real Estate',
+  'Legal',
+  'Government',
+  'Insurance',
+  'E-commerce',
+  'Human Resources',
+  'Construction',
+  'Hospitality',
+  'Transportation',
+  'Energy',
 ] as const;
+
+function filterLocalIndustrySuggestions(query: string, selectedDomains: string[]): string[] {
+  const selectedSet = new Set(selectedDomains.map((domain) => domain.trim().toLowerCase()));
+  const normalizedQuery = query.trim().toLowerCase();
+  const tokens = normalizedQuery.split(/\s+/).filter((token) => token.length >= 2);
+
+  return INDUSTRY_DOMAIN_OPTIONS.filter((option) => {
+    if (selectedSet.has(option.toLowerCase())) return false;
+    if (!normalizedQuery) return true;
+    const normalizedOption = option.toLowerCase();
+    if (normalizedOption.includes(normalizedQuery)) return true;
+    return tokens.some((token) => normalizedOption.includes(token));
+  }).slice(0, 8);
+}
 
 function parseIndustryDomainList(value: string): string[] {
   return String(value || '')
@@ -348,20 +377,41 @@ export default function WorkExperienceModal({
           }),
         });
 
-        const result = await response.json();
+        const result = await response.json().catch(() => ({}));
+        const apiSuggestions = Array.isArray(result?.data?.suggestions)
+          ? result.data.suggestions.filter((value: unknown) => typeof value === 'string')
+          : [];
+
         if (!response.ok || !result?.success) {
-          throw new Error(result?.message || 'Failed to load industry/domain suggestions');
+          const localSuggestions = filterLocalIndustrySuggestions(
+            query,
+            parseIndustryDomainList(industryDomain),
+          );
+          if (localSuggestions.length > 0) {
+            setIndustryDomainSuggestions(localSuggestions);
+            setIndustryDomainSuggestError(null);
+            return;
+          }
+          throw new Error(result?.message || 'Failed to load industry suggestions');
         }
 
-        setIndustryDomainSuggestions(
-          Array.isArray(result?.data?.suggestions)
-            ? result.data.suggestions.filter((value: unknown) => typeof value === 'string')
-            : [],
-        );
+        const mergedSuggestions =
+          apiSuggestions.length > 0
+            ? apiSuggestions
+            : filterLocalIndustrySuggestions(query, parseIndustryDomainList(industryDomain));
+
+        setIndustryDomainSuggestions(mergedSuggestions);
+        setIndustryDomainSuggestError(null);
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') return;
-        setIndustryDomainSuggestions([]);
-        setIndustryDomainSuggestError('Unable to load suggestions right now.');
+        const localSuggestions = filterLocalIndustrySuggestions(
+          query,
+          parseIndustryDomainList(industryDomain),
+        );
+        setIndustryDomainSuggestions(localSuggestions);
+        setIndustryDomainSuggestError(
+          localSuggestions.length > 0 ? null : 'Unable to load suggestions right now.',
+        );
       } finally {
         setIndustryDomainSuggestLoading(false);
       }

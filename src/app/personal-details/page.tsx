@@ -1084,7 +1084,7 @@ export default function PersonalDetailsPage() {
             <div className="absolute top-4 left-4 z-30">
               <Image 
                 src="/SAASA Logo.png" 
-                alt="SAASA Logo" 
+                alt="SAASA B2E" 
                 width={120} 
                 height={40} 
                 className="object-contain"
