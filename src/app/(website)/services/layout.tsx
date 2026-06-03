@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { ServicesProvider } from "./context/ServicesContext";
 
 export const metadata: Metadata = {
   title: "Expert Services",
@@ -10,5 +11,5 @@ export default function ServicesLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <ServicesProvider>{children}</ServicesProvider>;
 }
