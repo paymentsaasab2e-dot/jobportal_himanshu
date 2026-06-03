@@ -40,10 +40,21 @@ export default function VaccinationModal({
   onSave,
   initialData,
 }: VaccinationModalProps) {
+  const deriveValidityMode = (month?: string, year?: string): 'lifetime' | 'custom' => {
+    const m = String(month || '').trim().toUpperCase();
+    const y = String(year || '').trim().toUpperCase();
+    if (m === 'LIFETIME' || y === 'LIFETIME') return 'lifetime';
+    if (m || y) return 'custom';
+    return 'lifetime';
+  };
+
   const [vaccineType, setVaccineType] = useState(initialData?.vaccineType || '');
   const [lastVaccinationDate, setLastVaccinationDate] = useState(initialData?.lastVaccinationDate || '');
   const [validityMonth, setValidityMonth] = useState(initialData?.validityMonth || '');
   const [validityYear, setValidityYear] = useState(initialData?.validityYear || '');
+  const [validityMode, setValidityMode] = useState<'lifetime' | 'custom'>(
+    deriveValidityMode(initialData?.validityMonth, initialData?.validityYear),
+  );
   const [documents, setDocuments] = useState<ProfileDocumentItem[]>(() =>
     initialDocumentsFromData(initialData),
   );
@@ -54,6 +65,7 @@ export default function VaccinationModal({
       setLastVaccinationDate(initialData.lastVaccinationDate || '');
       setValidityMonth(initialData.validityMonth || '');
       setValidityYear(initialData.validityYear || '');
+      setValidityMode(deriveValidityMode(initialData.validityMonth, initialData.validityYear));
       setDocuments(initialDocumentsFromData(initialData));
     } else {
       resetForm();
@@ -65,15 +77,18 @@ export default function VaccinationModal({
     setLastVaccinationDate('');
     setValidityMonth('');
     setValidityYear('');
+    setValidityMode('lifetime');
     setDocuments([]);
   }
 
   const handleSave = () => {
+    const finalValidityMonth = validityMode === 'lifetime' ? 'LIFETIME' : validityMonth || undefined;
+    const finalValidityYear = validityMode === 'lifetime' ? undefined : validityYear || undefined;
     onSave({
       vaccineType: vaccineType.trim() || undefined,
       lastVaccinationDate: lastVaccinationDate || undefined,
-      validityMonth: validityMonth || undefined,
-      validityYear: validityYear || undefined,
+      validityMonth: finalValidityMonth,
+      validityYear: finalValidityYear,
       documents: documents.length > 0 ? documents : undefined,
     });
     onClose();
@@ -133,49 +148,73 @@ export default function VaccinationModal({
 
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">Validity of Vaccination</label>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-3">
             <div>
-              <label className="mb-1 block text-xs text-gray-600">Month</label>
+              <label className="mb-1 block text-xs text-gray-600">Validity</label>
               <select
-                value={validityMonth}
-                onChange={(e) => setValidityMonth(e.target.value)}
+                value={validityMode}
+                onChange={(e) => {
+                  const nextMode = e.target.value as 'lifetime' | 'custom';
+                  setValidityMode(nextMode);
+                  if (nextMode === 'lifetime') {
+                    setValidityMonth('');
+                    setValidityYear('');
+                  }
+                }}
                 className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select Month</option>
-                <option value="01">January</option>
-                <option value="02">February</option>
-                <option value="03">March</option>
-                <option value="04">April</option>
-                <option value="05">May</option>
-                <option value="06">June</option>
-                <option value="07">July</option>
-                <option value="08">August</option>
-                <option value="09">September</option>
-                <option value="10">October</option>
-                <option value="11">November</option>
-                <option value="12">December</option>
+                <option value="lifetime">Lifetime</option>
+                <option value="custom">Custom validity</option>
               </select>
             </div>
-            <div>
-              <label className="mb-1 block text-xs text-gray-600">Year</label>
-              <select
-                value={validityYear}
-                onChange={(e) => setValidityYear(e.target.value)}
-                className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select Year</option>
-                {Array.from({ length: 20 }, (_, i) => {
-                  const year = new Date().getFullYear() + i;
-                  return (
-                    <option key={year} value={String(year)}>
-                      {year}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
+            {validityMode === 'custom' ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-xs text-gray-600">Month</label>
+                  <select
+                    value={validityMonth}
+                    onChange={(e) => setValidityMonth(e.target.value)}
+                    className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Month</option>
+                    <option value="01">January</option>
+                    <option value="02">February</option>
+                    <option value="03">March</option>
+                    <option value="04">April</option>
+                    <option value="05">May</option>
+                    <option value="06">June</option>
+                    <option value="07">July</option>
+                    <option value="08">August</option>
+                    <option value="09">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-gray-600">Year</label>
+                  <select
+                    value={validityYear}
+                    onChange={(e) => setValidityYear(e.target.value)}
+                    className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Year</option>
+                    {Array.from({ length: 20 }, (_, i) => {
+                      const year = new Date().getFullYear() + i;
+                      return (
+                        <option key={year} value={String(year)}>
+                          {year}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+            ) : null}
           </div>
-          <p className="mt-1 text-xs text-gray-500">When your vaccination is valid through (month and year).</p>
+          <p className="mt-1 text-xs text-gray-500">
+            Choose lifetime validity or set a custom month and year.
+          </p>
         </div>
 
         <ProfileDocumentsUpload

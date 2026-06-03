@@ -2176,7 +2176,7 @@ const ExploreJobsPageContent = () => {
                 <div className="hidden">
                   <div className="min-w-0">
                     <div className="flex items-center gap-3">
-                      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">Explore Jobs</h1>
+                      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">{t("exploreJobs.title")}</h1>
                       {isPersonalized && (
                          <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 border border-blue-100 uppercase tracking-wider">
                            Profile Matched
@@ -2226,7 +2226,6 @@ const ExploreJobsPageContent = () => {
                     <div className="space-y-4">
                       <SectionHeader
                         title="Smart Filters"
-                        subtitle="Powered by SAASA AI"
                         open={smartFiltersOpen}
                         onToggle={() => setSmartFiltersOpen((v) => !v)}
                       />
@@ -2250,8 +2249,6 @@ const ExploreJobsPageContent = () => {
                         </div>
                       ) : null}
                     </div>
-
-                    <p className="profile-page-label">Job Preferences</p>
 
                     {/* Work Mode */}
                     <div className="space-y-3">
@@ -2301,10 +2298,11 @@ const ExploreJobsPageContent = () => {
                             <select
                               value={salaryFilterCurrency}
                               onChange={(e) => setSalaryFilterCurrency(e.target.value)}
-                              className="profile-modal-field h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-[0.8125rem] text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="profile-modal-field h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              style={{ fontSize: '12px', lineHeight: '1.25rem' }}
                             >
                               {SALARY_FILTER_CURRENCIES.map((currency) => (
-                                <option key={currency} value={currency}>
+                                <option key={currency} value={currency} style={{ fontSize: '12px' }}>
                                   {currency}
                                 </option>
                               ))}
@@ -2373,8 +2371,6 @@ const ExploreJobsPageContent = () => {
                       ) : null}
                     </div>
 
-                    <p className="profile-page-label">Company Filters</p>
-
                     {/* Industry */}
                     <div className="space-y-3">
                       <SectionHeader title="Industry" open={industryOpen} onToggle={() => setIndustryOpen((v) => !v)} />
@@ -2409,8 +2405,6 @@ const ExploreJobsPageContent = () => {
                       ) : null}
                     </div>
 
-                    <p className="profile-page-label">Location</p>
-
                     {/* Cities */}
                     <div className="space-y-3">
                       <SectionHeader
@@ -2432,7 +2426,8 @@ const ExploreJobsPageContent = () => {
                                 setCountryPickerOpen(true)
                               }}
                               onFocus={() => setCountryPickerOpen(true)}
-                              className="profile-modal-field w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-8 text-[0.8125rem] text-gray-800 outline-none focus:border-[#28A8E1] focus:ring-1 focus:ring-[#28A8E1]"
+                              className="profile-modal-field w-full rounded-lg border border-gray-200 bg-white py-2 pr-8 text-[0.8125rem] text-gray-800 outline-none focus:border-[#28A8E1] focus:ring-1 focus:ring-[#28A8E1]"
+                              style={{ paddingLeft: '2.8rem' }}
                             />
                             {(selectedCountry || countrySearch) ? (
                               <button

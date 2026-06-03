@@ -19,7 +19,6 @@ import {
   ProfileWorkspaceRail,
   useProfileTabNavigation,
   type WorkspaceTabItem,
-  type ProfileAlert,
 } from '@/components/profile/workspace';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 import type { ProfileSectionGroup } from '@/components/profile/workspace/useProfileTabNavigation';
@@ -177,7 +176,6 @@ const PROFILE_AI_SUGGESTIONS = [
   'Improve your summary to highlight leadership skills.',
   'Add quantifiable achievements to your work experience.',
   'Consider certifications in cloud computing for better matching.',
-  'Include a project demonstrating full-stack development expertise.',
 ];
 
 function resolveProfileImage(
@@ -690,16 +688,18 @@ export default function ProfilePage() {
         }
       };
       const incomingLinks = profileData.portfolioLinks?.links || [];
-      const dedupedLinks = incomingLinks.filter((item: any, index: number, arr: any[]) => {
-        const key = normalizeUrlForCompare(item?.url || '');
-        if (!key) return true;
-        return (
-          arr.findIndex(
-            (candidate) =>
-              normalizeUrlForCompare(candidate?.url || '') === key
-          ) === index
-        );
-      });
+      const dedupedLinks = filterPortfolioLinksForProfileDisplay(
+        incomingLinks.filter((item: any, index: number, arr: any[]) => {
+          const key = normalizeUrlForCompare(item?.url || '');
+          if (!key) return true;
+          return (
+            arr.findIndex(
+              (candidate) =>
+                normalizeUrlForCompare(candidate?.url || '') === key
+            ) === index
+          );
+        }),
+      );
       setPortfolioLinksData(profileData.portfolioLinks ? { ...profileData.portfolioLinks, links: dedupedLinks } : undefined);
     }
     // Preserve existing portfolioLinksData if not in response
@@ -1509,93 +1509,6 @@ export default function ProfilePage() {
     ],
   );
 
-  const profileInitials = useMemo(() => {
-    const f = basicInfoData?.firstName?.trim()?.[0];
-    const l = basicInfoData?.lastName?.trim()?.[0];
-    if (f || l) return `${f ?? ''}${l ?? ''}`.toUpperCase();
-    return '?';
-  }, [basicInfoData?.firstName, basicInfoData?.lastName]);
-
-  const profileDisplayName = useMemo(() => {
-    const n = [basicInfoData?.firstName, basicInfoData?.lastName]
-      .filter(Boolean)
-      .join(' ');
-    return n || '';
-  }, [basicInfoData?.firstName, basicInfoData?.lastName]);
-
-  const profileRoleLine = useMemo(() => {
-    const t = careerPreferencesData?.preferredJobTitles?.[0]?.trim();
-    return t || undefined;
-  }, [careerPreferencesData]);
-
-  const profileHeadline = useMemo(() => {
-    const e = educationData?.educations?.[0];
-    if (!e) return undefined;
-    const parts = [
-      (e as { degree?: string }).degree,
-      (e as { institute?: string; institution?: string }).institute ||
-        (e as { institution?: string }).institution,
-    ].filter(Boolean);
-    return parts.length ? parts.join(' · ') : undefined;
-  }, [educationData]);
-
-  const profileLocationLine = useMemo(() => {
-    const c = basicInfoData?.city?.trim();
-    const co = basicInfoData?.country?.trim();
-    if (c && co) return `${c}, ${co}`;
-    return c || co || undefined;
-  }, [basicInfoData?.city, basicInfoData?.country]);
-
-  const resolvedProfilePhoto = useMemo(
-    () => resolveProfileImage(profilePhotoUrl, API_BASE_URL),
-    [profilePhotoUrl],
-  );
-
-  const workspaceAlerts: ProfileAlert[] = useMemo(() => {
-    const list: ProfileAlert[] = [];
-    if (profileCompleteness.percentage < 100) {
-      list.push({
-        id: 'incomplete',
-        tone: 'warning',
-        label: `Profile ${profileCompleteness.percentage}% complete — finish required sections.`,
-      });
-    }
-    if (!basicInfoData?.phone?.trim()) {
-      list.push({
-        id: 'phone',
-        tone: 'neutral',
-        label: 'Add a phone number for recruiter contact.',
-      });
-    }
-    if (!resumeData?.fileUrl) {
-      list.push({
-        id: 'resume',
-        tone: 'warning',
-        label: 'No resume on file — upload to unlock ATS scoring.',
-      });
-    }
-    const ats = cvAnalysis?.cv_score ?? resumeData?.atsScore;
-    if (
-      resumeData?.fileUrl &&
-      ats !== undefined &&
-      ats !== null &&
-      Number(ats) < 60
-    ) {
-      list.push({
-        id: 'ats',
-        tone: 'warning',
-        label: 'ATS score has room to improve — refine bullets and keywords.',
-      });
-    }
-    return list.slice(0, 5);
-  }, [
-    profileCompleteness.percentage,
-    basicInfoData?.phone,
-    resumeData?.fileUrl,
-    resumeData?.atsScore,
-    cvAnalysis?.cv_score,
-  ]);
-
   const atsPct =
     cvAnalysis?.cv_score ?? resumeData?.atsScore ?? null;
   const atsDisplay =
@@ -1677,18 +1590,6 @@ export default function ProfilePage() {
           style={scrollPaddingStyle}
         >
           <ProfileWorkspaceRail
-            identity={{
-              initials: profileInitials,
-              displayName: profileDisplayName,
-              photoUrl: resolvedProfilePhoto,
-              roleLine: profileRoleLine,
-              headline: profileHeadline,
-              location: profileLocationLine,
-            }}
-            onEditIdentity={() =>
-              handleEditClick('PERSONAL DETAILS', 'Basic Information')
-            }
-            alerts={workspaceAlerts}
             completionPct={profileCompleteness.percentage}
             pendingRows={detailedMissingSections.map((section) => section.label)}
             atsDisplay={atsDisplay}
@@ -1697,7 +1598,7 @@ export default function ProfilePage() {
           />
           <div className="flex min-w-0 flex-col">
             <div
-              className="sticky z-20 mb-3 w-fit max-w-full self-start pb-1 pt-0.5"
+              className="sticky z-30 -mt-0.5 mb-2.5 flex w-full self-start items-center rounded-2xl border border-slate-200/70 bg-white/95 px-2 py-0.5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-sm"
               style={{ top: 'calc(var(--app-header-height, 92px) + 4px)' }}
             >
               <ProfileWorkspaceTabs

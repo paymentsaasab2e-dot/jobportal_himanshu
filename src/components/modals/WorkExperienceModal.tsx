@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import GapExplanationModal, { GapExplanationData } from './GapExplanationModal';
 import ProfileDrawer from '../ui/ProfileDrawer';
-import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
+import { API_BASE_URL, resolveDocumentUrl } from '@/lib/api-base';
 import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import { profileFieldClass, profileSectionTitleClass, profileTextareaClass } from '@/lib/profile-modal-ui';
 import {
@@ -61,6 +61,29 @@ export interface WorkExperienceEntry {
 
 export interface WorkExperienceData {
   workExperiences: WorkExperienceEntry[];
+}
+
+const INDUSTRY_DOMAIN_OPTIONS = [
+  'Technology',
+  'Finance',
+  'Healthcare',
+  'Education',
+  'Consulting',
+] as const;
+
+function parseIndustryDomainList(value: string): string[] {
+  return String(value || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function joinIndustryDomainList(values: string[]): string {
+  return values
+    .map((value) => String(value || '').trim())
+    .filter(Boolean)
+    .filter((value, index, arr) => arr.indexOf(value) === index)
+    .join(', ');
 }
 
 const TURNOVER_CURRENCIES = [
@@ -143,6 +166,11 @@ export default function WorkExperienceModal({
   const [companyName, setCompanyName] = useState('');
   const [employmentType, setEmploymentType] = useState('');
   const [industryDomain, setIndustryDomain] = useState('');
+  const [industryDomainCustomInput, setIndustryDomainCustomInput] = useState('');
+  const [industryDomainSuggestOpen, setIndustryDomainSuggestOpen] = useState(false);
+  const [industryDomainSuggestions, setIndustryDomainSuggestions] = useState<string[]>([]);
+  const [industryDomainSuggestLoading, setIndustryDomainSuggestLoading] = useState(false);
+  const [industryDomainSuggestError, setIndustryDomainSuggestError] = useState<string | null>(null);
   const [numberOfReportees, setNumberOfReportees] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -203,6 +231,11 @@ export default function WorkExperienceModal({
     setCompanyName(entry.companyName || '');
     setEmploymentType(normalizeEmploymentTypeFromApi(entry.employmentType));
     setIndustryDomain(entry.industryDomain || '');
+    setIndustryDomainCustomInput('');
+    setIndustryDomainSuggestOpen(false);
+    setIndustryDomainSuggestions([]);
+    setIndustryDomainSuggestLoading(false);
+    setIndustryDomainSuggestError(null);
     setNumberOfReportees(entry.numberOfReportees || '');
     setStartDate(entry.startDate || '');
     setEndDate(entry.endDate || '');
@@ -283,11 +316,73 @@ export default function WorkExperienceModal({
     }
   }, [isOpen, editingEntryId, initialData?.workExperiences?.[0]?.id]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setIndustryDomainSuggestions([]);
+      setIndustryDomainSuggestLoading(false);
+      setIndustryDomainSuggestError(null);
+      return;
+    }
+
+    const query = industryDomainCustomInput.trim();
+    if (query.length < 2) {
+      setIndustryDomainSuggestions([]);
+      setIndustryDomainSuggestLoading(false);
+      setIndustryDomainSuggestError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        setIndustryDomainSuggestLoading(true);
+        setIndustryDomainSuggestError(null);
+
+        const response = await fetch(`${API_BASE_URL}/ai/industry-domain-suggestions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            query,
+            selectedDomains: parseIndustryDomainList(industryDomain),
+          }),
+        });
+
+        const result = await response.json();
+        if (!response.ok || !result?.success) {
+          throw new Error(result?.message || 'Failed to load industry/domain suggestions');
+        }
+
+        setIndustryDomainSuggestions(
+          Array.isArray(result?.data?.suggestions)
+            ? result.data.suggestions.filter((value: unknown) => typeof value === 'string')
+            : [],
+        );
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
+        setIndustryDomainSuggestions([]);
+        setIndustryDomainSuggestError('Unable to load suggestions right now.');
+      } finally {
+        setIndustryDomainSuggestLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [isOpen, industryDomainCustomInput, industryDomain]);
+
   const clearFormFields = () => {
     setJobTitle('');
     setCompanyName('');
     setEmploymentType('');
     setIndustryDomain('');
+    setIndustryDomainCustomInput('');
+    setIndustryDomainSuggestOpen(false);
+    setIndustryDomainSuggestions([]);
+    setIndustryDomainSuggestLoading(false);
+    setIndustryDomainSuggestError(null);
     setNumberOfReportees('');
     setStartDate('');
     setEndDate('');
@@ -426,6 +521,36 @@ export default function WorkExperienceModal({
     // Close gap modal if open
     setIsGapModalOpen(false);
     setGapInfo(null);
+  };
+
+  const industryDomainItems = parseIndustryDomainList(industryDomain);
+  const filteredIndustrySuggestions = (industryDomainSuggestions.length
+    ? industryDomainSuggestions
+    : INDUSTRY_DOMAIN_OPTIONS
+  ).filter((opt) => {
+    const q = industryDomainCustomInput.trim().toLowerCase();
+    const selected = industryDomainItems.some((item) => item.toLowerCase() === opt.toLowerCase());
+    if (selected) return false;
+    if (!q) return true;
+    return opt.toLowerCase().includes(q);
+  });
+
+  const addIndustryDomainValue = (name: string) => {
+    const trimmed = String(name || '').trim();
+    if (!trimmed) return;
+    const current = parseIndustryDomainList(industryDomain);
+    const exists = current.some((item) => item.toLowerCase() === trimmed.toLowerCase());
+    if (!exists) setIndustryDomain(joinIndustryDomainList([...current, trimmed]));
+    setIndustryDomainCustomInput('');
+    setIndustryDomainSuggestOpen(false);
+  };
+
+  const removeIndustryDomainValue = (name: string) => {
+    const trimmed = String(name || '').trim().toLowerCase();
+    if (!trimmed) return;
+    const current = parseIndustryDomainList(industryDomain);
+    const next = current.filter((item) => item.toLowerCase() !== trimmed);
+    setIndustryDomain(joinIndustryDomainList(next));
   };
 
   const handleEditStagedEntry = (entry: WorkExperienceEntry) => {
@@ -969,18 +1094,86 @@ export default function WorkExperienceModal({
                 </div>
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">Industry / Domain</label>
-                  <select
-                    value={industryDomain}
-                    onChange={(e) => setIndustryDomain(e.target.value)}
-                    className={selectClassName}
-                  >
-                    <option value="">Select Industry / Domain</option>
-                    <option value="technology">Technology</option>
-                    <option value="finance">Finance</option>
-                    <option value="healthcare">Healthcare</option>
-                    <option value="education">Education</option>
-                    <option value="consulting">Consulting</option>
-                  </select>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={industryDomainCustomInput}
+                        onChange={(e) => {
+                          setIndustryDomainCustomInput(e.target.value);
+                          setIndustryDomainSuggestOpen(true);
+                        }}
+                        onFocus={() => setIndustryDomainSuggestOpen(true)}
+                        onBlur={() => {
+                          window.setTimeout(() => setIndustryDomainSuggestOpen(false), 120);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const topSuggestion = filteredIndustrySuggestions[0];
+                            if (topSuggestion && industryDomainCustomInput.trim()) {
+                              addIndustryDomainValue(topSuggestion);
+                            } else {
+                              addIndustryDomainValue(industryDomainCustomInput);
+                            }
+                          }
+                        }}
+                        placeholder="Type industry/domain"
+                        className={inputClassName}
+                      />
+                      {industryDomainSuggestOpen && filteredIndustrySuggestions.length > 0 ? (
+                        <div className="absolute z-20 mt-1 max-h-44 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                          {filteredIndustrySuggestions.map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => addIndustryDomainValue(opt)}
+                              className="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-blue-50"
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                      {industryDomainSuggestOpen && industryDomainSuggestLoading ? (
+                        <div className="absolute z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 shadow-lg">
+                          Loading suggestions...
+                        </div>
+                      ) : null}
+                      {industryDomainSuggestOpen &&
+                      !industryDomainSuggestLoading &&
+                      filteredIndustrySuggestions.length === 0 &&
+                      industryDomainSuggestError ? (
+                        <div className="absolute z-20 mt-1 w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 shadow-lg">
+                          {industryDomainSuggestError}
+                        </div>
+                      ) : null}
+                    </div>
+                    {industryDomainItems.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {industryDomainItems.map((item) => (
+                          <span
+                            key={item}
+                            className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700"
+                          >
+                            {item}
+                            <button
+                              type="button"
+                              onClick={() => removeIndustryDomainValue(item)}
+                              className="text-blue-700 hover:text-blue-900"
+                              aria-label={`Remove ${item}`}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    Type to get suggestions in dropdown. Press Enter to add.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">Number of Reportees</label>
@@ -1296,6 +1489,7 @@ export default function WorkExperienceModal({
                   )}
                 </div>
 
+                {!currentlyWorkHere ? (
                 <div className="col-span-2 space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Upload Your Work Experience Certificates/Documents{' '}
@@ -1431,6 +1625,7 @@ export default function WorkExperienceModal({
                 </div>
               )}
                 </div>
+                ) : null}
               </div>
             </section>
 

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Explore Jobs",
+  title: "Jobseeker",
   description: "Browse and apply for the best jobs matched to your profile.",
 };
 

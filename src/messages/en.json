@@ -9,7 +9,7 @@
     "cancel": "Cancel"
   },
   "nav": {
-    "exploreJobs": "Explore Jobs",
+    "exploreJobs": "Jobseeker",
     "courses": "Courses",
     "services": "Services",
     "dashboard": "Dashboard",
@@ -58,7 +58,7 @@
     "errorSavingCareerPreferences": "Error saving career preferences"
   },
   "exploreJobs": {
-    "title": "Explore Jobs",
+    "title": "Jobseeker",
     "goBack": "Go Back",
     "matches": "Matches",
     "strongFit": "Strong Fit",
