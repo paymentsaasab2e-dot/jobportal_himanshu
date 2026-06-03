@@ -301,10 +301,10 @@ function LmsCoursesPageContent() {
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
             className="lg:col-span-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
           >
-            <option value="recommended">Sort: Recommended</option>
-            <option value="progress">Sort: Progress</option>
-            <option value="duration">Sort: Duration</option>
-            <option value="alphabetical">Sort: Alphabetical</option>
+            <option value="recommended">Recommended</option>
+            <option value="progress">Progress</option>
+            <option value="duration">Duration</option>
+            <option value="alphabetical">Alphabetical</option>
           </select>
         </div>
 

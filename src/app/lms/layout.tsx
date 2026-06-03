@@ -146,7 +146,9 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
                     <div className="h-1.5 w-6 rounded-full bg-slate-200" />
                   </div>
                 ) : (
-                  <span className="profile-page-label block">Learning Hub</span>
+                  <span className="block text-[0.82rem] font-extrabold uppercase tracking-[0.08em] text-slate-900">
+                    Learning Hub
+                  </span>
                 )}
               </div>
               {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {

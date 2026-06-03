@@ -152,28 +152,28 @@ export default function GlobalAIAssistant() {
               opacity: 1, 
               y: 0, 
               scale: 1,
-              height: isMinimized ? 'auto' : '500px',
-              width: '380px'
+              height: isMinimized ? 'auto' : '460px',
+              width: '350px'
             }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className="mb-4 bg-white/90 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] border border-white/20 overflow-hidden flex flex-col backdrop-blur-2xl"
           >
             {/* Header */}
-            <div className="p-5 bg-gradient-to-br from-[#28A8DF] via-[#28A8DF] to-[#1e8dbd] text-white flex items-center justify-between shadow-lg relative overflow-hidden">
+            <div className="p-4 bg-gradient-to-br from-[#28A8DF] via-[#28A8DF] to-[#1e8dbd] text-white flex items-center justify-between shadow-lg relative overflow-hidden">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
               <div className="relative flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/30 shadow-inner">
+                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/30 shadow-inner">
                   <Sparkles size={20} className="text-white animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base tracking-tight leading-none mb-1">AI Career Assistant</h3>
+                  <h3 className="font-bold text-[15px] tracking-tight leading-none mb-1">AI Career Assistant</h3>
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse"></span>
                     <span className="text-[11px] text-white/90 font-semibold uppercase tracking-wider">Ready to help</span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
+                <div className="flex items-center gap-0.5">
                 <button 
                   onClick={() => setIsMinimized(!isMinimized)}
                   className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
@@ -197,7 +197,7 @@ export default function GlobalAIAssistant() {
             {!isMinimized && (
               <>
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50" style={{ scrollbarWidth: 'thin' }}>
+                <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50/50" style={{ scrollbarWidth: 'thin' }}>
                   {messages.map((message) => (
                     <div 
                       key={message.id} 
@@ -233,7 +233,7 @@ export default function GlobalAIAssistant() {
                         <button
                           key={func.id}
                           onClick={() => handleFunctionClick(func)}
-                          className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl hover:border-[#28A8DF]/30 hover:bg-[#28A8DF]/5 transition-all text-left group shadow-sm"
+                          className="flex items-center gap-2.5 p-2.5 bg-white border border-slate-100 rounded-xl hover:border-[#28A8DF]/30 hover:bg-[#28A8DF]/5 transition-all text-left group shadow-sm"
                         >
                           <div className="w-8 h-8 rounded-lg bg-[#28A8DF]/10 flex items-center justify-center text-[#28A8DF] group-hover:scale-110 transition-transform">
                             <func.icon size={16} />
@@ -250,7 +250,7 @@ export default function GlobalAIAssistant() {
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 bg-white border-t border-slate-100">
+                <div className="p-3 bg-white border-t border-slate-100">
                   <div className="relative">
                     <input
                       type="text"
@@ -269,7 +269,7 @@ export default function GlobalAIAssistant() {
                     </button>
                   </div>
                   <p className="mt-2 text-[10px] text-center text-slate-400 font-medium">
-                    Powered by SAASA Intelligence
+                    Powered by HRYANTRA Intelligence
                   </p>
                 </div>
               </>

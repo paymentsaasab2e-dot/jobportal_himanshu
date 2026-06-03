@@ -18,7 +18,7 @@ export default function WebsiteSiteLayout({
   // Pages under (website) that must always show the marketing Navbar
   // (the same one used on /employers) — regardless of auth state. Without
   // this, an authenticated user landing on `/` would get the old Header
-  // ("Explore Jobs / Courses / Services / For Employers / Log In / Sign Up")
+  // ("Jobseeker / Courses / Services / For Employers / Log In / Sign Up")
   // overlapping the marketing nav.
   const marketingNavbarPaths = new Set<string>([
     "/",

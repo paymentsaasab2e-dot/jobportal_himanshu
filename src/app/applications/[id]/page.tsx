@@ -754,7 +754,7 @@ export default function ApplicationStatusPage() {
         throw new Error(typeof result?.message === 'string' ? result.message : 'Could not withdraw application');
       }
       setWithdrawConfirmOpen(false);
-      showSuccessToast('Application withdrawn', 'You can apply again from Explore Jobs.');
+      showSuccessToast('Application withdrawn', 'You can apply again from Jobseeker.');
       router.push('/explore-jobs');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Could not withdraw application';
@@ -1209,7 +1209,7 @@ export default function ApplicationStatusPage() {
                 {canWithdraw ? (
                   <div className="mt-4 border-t border-gray-100 pt-4">
                     <p className="application-detail-helper mb-3">
-                      Change your mind? Withdrawing removes this role from My Applications. You can apply again from Explore Jobs.
+                      Change your mind? Withdrawing removes this role from My Applications. You can apply again from Jobseeker.
                     </p>
                     <button
                       type="button"
@@ -1404,7 +1404,7 @@ export default function ApplicationStatusPage() {
               Withdraw application?
             </h2>
             <p className="profile-modal-helper mt-3">
-              This removes the role from My Applications. You can apply again anytime from Explore Jobs.
+              This removes the role from My Applications. You can apply again anytime from Jobseeker.
             </p>
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button

@@ -44,7 +44,7 @@ export interface InternshipData {
   location: string;
   workMode: string;
   responsibilities: string;
-  learnings: string;
+  learnings?: string;
   skills: string[];
   documents?: InternshipDocument[];
 }
@@ -95,7 +95,6 @@ export default function InternshipModal({
     locationSuggestUserInitiatedRef.current = false;
     setWorkMode('');
     setResponsibilities('');
-    setLearnings('');
     setSkillsInput('');
     setSkills([]);
     setDocuments([]);
@@ -111,7 +110,6 @@ export default function InternshipModal({
   const [location, setLocation] = useState(initialData?.location || '');
   const [workMode, setWorkMode] = useState(initialData?.workMode || '');
   const [responsibilities, setResponsibilities] = useState(initialData?.responsibilities || '');
-  const [learnings, setLearnings] = useState(initialData?.learnings || '');
   const [skillsInput, setSkillsInput] = useState('');
   const [skills, setSkills] = useState<string[]>(initialData?.skills || []);
   const [documents, setDocuments] = useState<InternshipDocument[]>(initialData?.documents || []);
@@ -141,7 +139,6 @@ export default function InternshipModal({
       locationSuggestUserInitiatedRef.current = false;
       setWorkMode(initialData.workMode || '');
       setResponsibilities(initialData.responsibilities || '');
-      setLearnings(initialData.learnings || '');
       setSkills(initialData.skills || []);
 
       // Normalize documents to ensure they all have unique IDs
@@ -342,7 +339,6 @@ export default function InternshipModal({
         location.trim() ||
         workMode ||
         responsibilities.trim() ||
-        learnings.trim() ||
         skillsInput.trim() ||
         skills.length > 0 ||
         documents.length > 0,
@@ -364,7 +360,6 @@ export default function InternshipModal({
       location: location.trim(),
       workMode,
       responsibilities: responsibilities.trim(),
-      learnings: learnings.trim(),
       skills,
       documents: documents.length > 0 ? documents : undefined,
     });
@@ -665,23 +660,6 @@ export default function InternshipModal({
             />
           </div>
 
-          {/* Learnings or Outcomes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Learnings or Outcomes
-            </label>
-            <textarea
-              value={learnings}
-              onChange={(e) => setLearnings(e.target.value)}
-              rows={4}
-              className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Describe what you learned, skills gained, or outcomes achieved..."
-              style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '14px',
-              }}
-            />
-          </div>
         </div>
 
         {/* Skills Used Section */}

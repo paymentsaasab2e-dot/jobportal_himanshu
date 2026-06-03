@@ -9,7 +9,7 @@
     "cancel": "Annuler"
   },
   "nav": {
-    "exploreJobs": "Explorer les emplois",
+    "exploreJobs": "Chercheur d'emploi",
     "courses": "Cours",
     "services": "Services",
     "dashboard": "Tableau de bord",
@@ -58,7 +58,7 @@
     "errorSavingCareerPreferences": "Erreur lors de l'enregistrement des preferences de carriere"
   },
   "exploreJobs": {
-    "title": "Explorer les emplois",
+    "title": "Chercheur d'emploi",
     "goBack": "Retour",
     "matches": "Correspondances",
     "strongFit": "Forte adequation",

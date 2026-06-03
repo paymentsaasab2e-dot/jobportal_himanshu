@@ -205,16 +205,14 @@ export function normalizeCareerPreferencesFromApi(raw: unknown): CareerPreferenc
   const preferredIndustries = parsePreferenceList(r.preferredIndustries ?? r.preferredIndustry);
   const functionalAreas = parsePreferenceList(r.functionalAreas ?? r.functionalArea);
   const preferredJobTitles = parseStringArray(r.preferredJobTitles ?? r.preferredRoles);
-  const passportNumbersByLocation = parsePassportNumbersByLocation(r.passportNumbersByLocation);
   const preferredWorkMode = normalizeWorkModeLabel(r.preferredWorkMode);
   const workModes = uniqueStrings(
     parseStringArray(r.workModes).map((mode) => normalizeWorkModeLabel(mode)).filter(Boolean),
   );
   const normalizedWorkModes = workModes.length > 0 ? workModes : preferredWorkMode ? [preferredWorkMode] : [];
-  const preferredLocations = uniqueStrings([
-    ...parseStringArray(r.preferredLocations),
-    ...Object.keys(passportNumbersByLocation),
-  ]);
+  // Passport numbers are intentionally not handled in this drawer UI.
+  // Keep preferredLocations strictly from preferredLocations only.
+  const preferredLocations = uniqueStrings([...parseStringArray(r.preferredLocations)]);
   const preferredCurrency = String(r.preferredCurrency ?? r.salaryCurrency ?? 'USD');
   const preferredSalary = String(r.preferredSalary ?? r.salaryAmount ?? '');
   const preferredSalaryType = normalizeSalaryTypeLabel(r.preferredSalaryType ?? r.salaryFrequency);
@@ -246,7 +244,6 @@ export function normalizeCareerPreferencesFromApi(raw: unknown): CareerPreferenc
     currentBenefits: parseStringArray(r.currentBenefits),
     availabilityToStart: String(r.availabilityToStart ?? ''),
     noticePeriod: r.noticePeriod ? String(r.noticePeriod) : undefined,
-    passportNumbersByLocation,
   };
 }
 
@@ -262,15 +259,15 @@ export default function CareerPreferencesModal({
   const [jobTitleSuggestions, setJobTitleSuggestions] = useState<string[]>([]);
   const [jobTitleSuggestLoading, setJobTitleSuggestLoading] = useState(false);
   const [jobTitleSuggestError, setJobTitleSuggestError] = useState<string | null>(null);
+  const [jobTitleSuggestOpen, setJobTitleSuggestOpen] = useState(false);
   const [preferredIndustries, setPreferredIndustries] = useState<string[]>([]);
   const [functionalAreas, setFunctionalAreas] = useState<string[]>([]);
   const [industryCustomInput, setIndustryCustomInput] = useState('');
   const [functionalAreaCustomInput, setFunctionalAreaCustomInput] = useState('');
   const [jobTypes, setJobTypes] = useState<string[]>([]);
-  const [preferredWorkMode, setPreferredWorkMode] = useState('');
+  const [preferredWorkModes, setPreferredWorkModes] = useState<string[]>([]);
   const [preferredLocations, setPreferredLocations] = useState<string[]>([]);
   const [locationInput, setLocationInput] = useState('');
-  const [passportNumbersByLocation, setPassportNumbersByLocation] = useState<Record<string, string>>({});
   const [relocationPreference, setRelocationPreference] = useState('');
 
   const [currentCurrency, setCurrentCurrency] = useState('USD');
@@ -366,10 +363,9 @@ export default function CareerPreferencesModal({
     setIndustryCustomInput('');
     setFunctionalAreaCustomInput('');
     setJobTypes([]);
-    setPreferredWorkMode('');
+    setPreferredWorkModes([]);
     setPreferredLocations([]);
     setLocationInput('');
-    setPassportNumbersByLocation({});
     setRelocationPreference('');
     setCurrentCurrency('USD');
     setCurrentRoleValue('');
@@ -401,8 +397,6 @@ export default function CareerPreferencesModal({
       return;
     }
     const preferredRoles = uniqueStrings(data.preferredJobTitles || data.preferredRoles || []);
-    const passportMap = parsePassportNumbersByLocation(data.passportNumbersByLocation);
-    const locationValues = uniqueStrings([...(data.preferredLocations || []), ...Object.keys(passportMap)]);
     const availability = parseAvailabilityManual(data.availabilityToStart);
     setPreferredJobTitles(preferredRoles);
     setJobTitleInput('');
@@ -411,13 +405,18 @@ export default function CareerPreferencesModal({
     setIndustryCustomInput('');
     setFunctionalAreaCustomInput('');
     setJobTypes(data.jobTypes || []);
-    setPreferredWorkMode(
-      data.preferredWorkMode ||
-        (data.workModes && data.workModes.length > 0 ? data.workModes[0] : ''),
+    setPreferredWorkModes(
+      uniqueStrings(
+        [
+          ...(Array.isArray(data.workModes) ? data.workModes : []),
+          data.preferredWorkMode || '',
+        ]
+          .map((mode) => normalizeWorkModeLabel(mode))
+          .filter(Boolean),
+      ),
     );
-    setPreferredLocations(locationValues);
+    setPreferredLocations(data.preferredLocations || []);
     setLocationInput('');
-    setPassportNumbersByLocation(passportMap);
     setRelocationPreference(data.relocationPreference || '');
     setCurrentRoleValue((data.currentRole || currentRole || '').trim());
     setCurrentCurrency(data.currentCurrency || 'USD');
@@ -583,25 +582,30 @@ export default function CareerPreferencesModal({
     return () => window.clearTimeout(timer);
   }, [locationInput, isOpen, resetLocationSuggestState]);
 
-  const addJobTitleFromInput = () => {
-    const title = jobTitleInput.trim();
+  const addJobTitleFromInput = (titleOverride?: string) => {
+    const title = String(titleOverride ?? jobTitleInput).trim();
     if (!title) return;
     setPreferredJobTitles((prev) => uniqueStrings([...prev, title]));
     setJobTitleInput('');
+    setJobTitleSuggestOpen(false);
+    setJobTitleSuggestions([]);
+    setJobTitleSuggestError(null);
   };
 
   const handleAddJobTitle = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      addJobTitleFromInput();
+      const topSuggestion = jobTitleSuggestions[0];
+      if (topSuggestion && jobTitleInput.trim().length >= 2) {
+        addJobTitleFromInput(topSuggestion);
+      } else {
+        addJobTitleFromInput();
+      }
     }
   };
 
   const handleSelectSuggestedJobTitle = (title: string) => {
-    setPreferredJobTitles((prev) => uniqueStrings([...prev, title]));
-    setJobTitleInput('');
-    setJobTitleSuggestions([]);
-    setJobTitleSuggestError(null);
+    addJobTitleFromInput(title);
   };
 
   const handleRemoveJobTitle = (title: string) => {
@@ -749,6 +753,12 @@ export default function CareerPreferencesModal({
     setJobTypes((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
   };
 
+  const togglePreferredWorkMode = (value: string) => {
+    setPreferredWorkModes((prev) =>
+      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
+    );
+  };
+
   const toggleBenefit = (
     benefit: string,
     selected: string[],
@@ -775,12 +785,6 @@ export default function CareerPreferencesModal({
     closeInput();
   };
 
-  const cleanedPassportNumbersByLocation = Object.fromEntries(
-    Object.entries(passportNumbersByLocation)
-      .map(([location, passport]) => [location, passport.trim()] as const)
-      .filter(([, passport]) => Boolean(passport)),
-  );
-
   const handleSave = () => {
     onSave({
       currentRole: currentRoleValue.trim() || undefined,
@@ -791,8 +795,8 @@ export default function CareerPreferencesModal({
       preferredIndustry: preferredIndustries.length ? preferredIndustries.join('; ') : undefined,
       functionalArea: functionalAreas.length ? functionalAreas.join('; ') : undefined,
       jobTypes,
-      workModes: preferredWorkMode ? [preferredWorkMode] : [],
-      preferredWorkMode,
+      workModes: preferredWorkModes,
+      preferredWorkMode: preferredWorkModes[0] || undefined,
       preferredLocations,
       relocationPreference,
       salaryCurrency: preferredCurrency,
@@ -809,10 +813,6 @@ export default function CareerPreferencesModal({
       currentBenefits,
       availabilityToStart: mergeAvailabilityManual(availabilityDate, availabilityText),
       noticePeriod: noticePeriod || undefined,
-      passportNumbersByLocation:
-        Object.keys(cleanedPassportNumbersByLocation).length > 0
-          ? cleanedPassportNumbersByLocation
-          : undefined,
     });
     onClose();
   };
@@ -982,45 +982,63 @@ export default function CareerPreferencesModal({
                     </div>
                   ) : null}
                   <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={jobTitleInput}
-                      onChange={(e) => setJobTitleInput(e.target.value)}
-                      onKeyDown={handleAddJobTitle}
-                      placeholder="e.g. Software Engineer, Product Manager"
-                      className={`${profileFieldClass()} min-w-0 flex-1`}
-                    />
+                    <div className="relative min-w-0 flex-1">
+                      <input
+                        type="text"
+                        value={jobTitleInput}
+                        onChange={(e) => {
+                          setJobTitleInput(e.target.value);
+                          setJobTitleSuggestOpen(true);
+                        }}
+                        onFocus={() => setJobTitleSuggestOpen(true)}
+                        onBlur={() => {
+                          window.setTimeout(() => setJobTitleSuggestOpen(false), 120);
+                        }}
+                        onKeyDown={handleAddJobTitle}
+                        placeholder="Type preferred role (e.g. Software Engineer)"
+                        className={`${profileFieldClass()} w-full`}
+                      />
+                      {jobTitleSuggestOpen && jobTitleInput.trim().length >= 2 ? (
+                        jobTitleSuggestLoading ? (
+                          <div className="absolute z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 shadow-lg">
+                            Loading AI suggestions...
+                          </div>
+                        ) : jobTitleSuggestions.length > 0 ? (
+                          <div className="absolute z-20 mt-1 max-h-44 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                            {jobTitleSuggestions.map((role) => (
+                              <button
+                                key={role}
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleSelectSuggestedJobTitle(role)}
+                                className="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-blue-50"
+                              >
+                                {role}
+                              </button>
+                            ))}
+                          </div>
+                        ) : jobTitleSuggestError ? (
+                          <div className="absolute z-20 mt-1 w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 shadow-lg">
+                            {jobTitleSuggestError}
+                          </div>
+                        ) : null
+                      ) : null}
+                    </div>
                     <button
                       type="button"
-                      onClick={addJobTitleFromInput}
+                      onClick={() => addJobTitleFromInput()}
                       disabled={!jobTitleInput.trim()}
                       className="h-10 shrink-0 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Add
                     </button>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {jobTitleInput.trim().length >= 2 ? (
-                      jobTitleSuggestLoading ? (
-                        <span className="text-sm text-slate-500">Loading suggestions...</span>
-                      ) : jobTitleSuggestions.length > 0 ? (
-                        jobTitleSuggestions.map((role) => (
-                          <button
-                            key={role}
-                            type="button"
-                            onClick={() => handleSelectSuggestedJobTitle(role)}
-                            className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-700 transition hover:bg-sky-100"
-                          >
-                            {role}
-                          </button>
-                        ))
-                      ) : (
-                        <span className="text-sm text-slate-500">
-                          {jobTitleSuggestError || 'No matching role suggestions found.'}
-                        </span>
-                      )
-                    ) : (
-                      QUICK_ROLE_CHIPS.filter((role) => !preferredJobTitles.includes(role)).map((role) => (
+                  <p className="mt-2 text-xs text-gray-400">
+                    Suggestions are powered by OpenAI based on what you type. Press Enter to add the top match.
+                  </p>
+                  {jobTitleInput.trim().length < 2 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {QUICK_ROLE_CHIPS.filter((role) => !preferredJobTitles.includes(role)).map((role) => (
                         <button
                           key={role}
                           type="button"
@@ -1029,9 +1047,9 @@ export default function CareerPreferencesModal({
                         >
                           {role}
                         </button>
-                      ))
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -1140,35 +1158,26 @@ export default function CareerPreferencesModal({
                       </div>
                     ) : null}
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Passport numbers can be added for any selected location below.
-                  </p>
+                  {/* Passport number per location is removed from this drawer UI. */}
                 </div>
 
-                {preferredLocations.length > 0 ? (
-                  <div className="space-y-3">
-                    {preferredLocations.map((location) => (
-                      <PackageTextField
-                        key={location}
-                        label={`Passport Number (${location})`}
-                        value={passportNumbersByLocation[location] || ''}
-                        onChange={(value) =>
-                          setPassportNumbersByLocation((prev) => ({
-                            ...prev,
-                            [location]: value,
-                          }))
-                        }
-                      />
+                <div className="rounded-2xl border border-gray-200 bg-white p-4">
+                  <h4 className="mb-2 text-sm font-semibold text-gray-900">Preferred Work Mode</h4>
+                  <p className="mb-3 text-xs text-gray-500">Select one or more work modes.</p>
+                  <div className="space-y-2">
+                    {WORK_MODE_OPTIONS.map((mode) => (
+                      <label key={mode} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={preferredWorkModes.includes(mode)}
+                          onChange={() => togglePreferredWorkMode(mode)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">{mode}</span>
+                      </label>
                     ))}
                   </div>
-                ) : null}
-
-                <PackageSelectField
-                  label="Preferred Work Mode"
-                  value={preferredWorkMode}
-                  onChange={setPreferredWorkMode}
-                  options={WORK_MODE_OPTIONS}
-                />
+                </div>
 
                 <BenefitSelector
                   title="Benefits"

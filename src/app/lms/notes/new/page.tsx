@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { Suspense, useState } from 'react';
-import { LMS_CARD_CLASS, LMS_PAGE_SUBTITLE } from '../../constants';
+import { LMS_CARD_CLASS } from '../../constants';
 import { useLmsToast } from '../../components/ux/LmsToastProvider';
 import type { NoteType } from '../../data/ai-mock';
 import { LmsCtaButton } from '../../components/ux/LmsCtaButton';
@@ -58,7 +58,6 @@ function LmsNewNotePageContent() {
           Back to notes
         </Link>
         <h1 className="application-detail-title mt-3">Create note</h1>
-        <p className={LMS_PAGE_SUBTITLE}>Stored directly in your MongoDB Database.</p>
       </div>
 
       <div className={`${LMS_CARD_CLASS} space-y-4`}>

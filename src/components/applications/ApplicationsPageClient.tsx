@@ -1063,13 +1063,6 @@ export default function ApplicationsPageClient() {
         icon: FileSearch,
       },
       {
-        id: 'interviewing',
-        label: 'Interviews',
-        value: String(applicationSummary.interviews),
-        helper: 'Roles in interview rounds',
-        icon: CalendarRange,
-      },
-      {
         id: 'selected',
         label: 'Success',
         value: String(applicationSummary.selected),
@@ -1654,18 +1647,13 @@ export default function ApplicationsPageClient() {
                           ? 'Search interviews by role or company'
                           : 'Search saved jobs by role, company, or location'
                       }
-                      className="profile-modal-field w-full rounded-[18px] border border-slate-200/80 bg-slate-50/85 py-3 pl-11 pr-4 text-[0.8125rem] font-medium text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.28)] focus:bg-white focus:ring-4 focus:ring-[rgba(40,168,225,0.08)]"
+                      className="profile-modal-field w-full rounded-[18px] border border-slate-200/80 bg-slate-50/85 py-3 pr-4 text-[0.8125rem] font-medium text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.28)] focus:bg-white focus:ring-4 focus:ring-[rgba(40,168,225,0.08)]"
+                      style={{ paddingLeft: '3.1rem' }}
                     />
                   </div>
 
                   {activeSection === 'applications' ? (
                     <div className="flex-1 space-y-3">
-                      <FilterPillRow
-                        label="Status"
-                        options={STATUS_OPTIONS}
-                        activeValue={statusFilter}
-                        onChange={setStatusFilter}
-                      />
                       <FilterPillRow
                         label="Timeline"
                         options={DATE_OPTIONS}
