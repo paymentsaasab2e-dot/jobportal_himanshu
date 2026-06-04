@@ -4,7 +4,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useMemo, useEffect } from 'react';
 import { Plus, StickyNote, Sparkles, BookOpen, Link2, Search, X } from 'lucide-react';
-import { LMS_CARD_CLASS, LMS_CARD_INTERACTIVE, LMS_PAGE_SUBTITLE, LMS_SECTION_TITLE } from '../constants';
+import {
+  LMS_CARD_CLASS,
+  LMS_CARD_INTERACTIVE,
+  LMS_INPUT_CLASS,
+  LMS_PRIMARY_LINK_CLASS,
+  LMS_SECTION_TITLE,
+  LMS_SELECT_CLASS,
+} from '../constants';
+import { LmsPageHeader } from '../components/LmsPageHeader';
 import { AISectionHeading, AIActionChips, AIInsightCard } from '../components/ai';
 import {
   notesAIChips,
@@ -109,21 +117,16 @@ export default function LmsNotesPage() {
 
   return (
     <div className="space-y-8 pb-10">
-      <div className="min-w-0 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="application-detail-title mb-1">Notes</h1>
-          <p className={LMS_PAGE_SUBTITLE}>
-            Learning engine directly connected to your remote Database.
-          </p>
-        </div>
-        <Link
-          href="/lms/notes/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md hover:scale-[1.01] active:scale-[0.98] cursor-pointer shrink-0"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} />
-          Create note
-        </Link>
-      </div>
+      <LmsPageHeader
+        title="Notes"
+        subtitle="Learning engine directly connected to your remote Database."
+        actions={
+          <Link href="/lms/notes/new" className={LMS_PRIMARY_LINK_CLASS}>
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            Create note
+          </Link>
+        }
+      />
 
       <section className="space-y-4 rounded-2xl border border-violet-100 bg-white/70 p-5 sm:p-6 shadow-sm transition-shadow duration-200 hover:shadow-md">
         <AISectionHeading title="AI note actions" />
@@ -191,7 +194,7 @@ export default function LmsNotesPage() {
                     placeholder="Search notes by title or content..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#28A8E1] focus:ring-1 focus:ring-[#28A8E1] outline-none"
+                    className={`${LMS_INPUT_CLASS} pl-10 pr-10 py-2.5`}
                  />
                  {searchQuery && (
                     <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -203,7 +206,7 @@ export default function LmsNotesPage() {
               <select 
                  value={activeTab}
                  onChange={(e) => setActiveTab(e.target.value as 'All' | NoteType)}
-                 className="w-full sm:w-48 px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-medium focus:border-[#28A8E1] focus:ring-1 focus:ring-[#28A8E1] outline-none bg-white cursor-pointer"
+                 className={`w-full sm:w-48 cursor-pointer ${LMS_SELECT_CLASS}`}
               >
                  <option value="All">All Types</option>
                  {NOTE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -224,7 +227,7 @@ export default function LmsNotesPage() {
             <p className="mt-2 text-sm font-normal text-gray-500 max-w-md mx-auto">{notesEmptyState.body}</p>
             <Link
               href="/lms/notes/new"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#28A8E1] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:scale-[1.02] cursor-pointer"
+              className={`mt-6 ${LMS_PRIMARY_LINK_CLASS}`}
             >
               <Plus className="h-4 w-4" strokeWidth={2} />
               {notesEmptyState.cta}

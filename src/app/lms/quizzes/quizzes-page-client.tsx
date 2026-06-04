@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { ArrowRight, Award, Flame, Sparkles, TrendingUp } from 'lucide-react';
-import { LMS_CARD_CLASS, LMS_CARD_INTERACTIVE, LMS_PAGE_SUBTITLE } from '../constants';
+import { LMS_CARD_CLASS, LMS_CARD_INTERACTIVE } from '../constants';
+import { LmsPageHeader } from '../components/LmsPageHeader';
 import { AISectionHeading, AIInsightCard } from '../components/ai';
 import { LmsEmptyState } from '../components/states/LmsEmptyState';
 import { LmsStatusBadge } from '../components/ux/LmsStatusBadge';
@@ -167,12 +168,10 @@ export function LmsQuizzesPageContent() {
 
   return (
     <div className="space-y-10">
-      <div className="min-w-0">
-        <h1 className="application-detail-title mb-1">Quizzes</h1>
-        <p className={LMS_PAGE_SUBTITLE}>
-          Adaptive practice linked directly to your Database API limits and registration records.
-        </p>
-      </div>
+      <LmsPageHeader
+        title="Quizzes"
+        subtitle="Adaptive practice linked directly to your Database API limits and registration records."
+      />
 
       {previewId ? (
         <QuizPreviewSection

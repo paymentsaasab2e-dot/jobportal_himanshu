@@ -35,7 +35,7 @@ export function LmsCtaButton({
       type="button"
       disabled={isDisabled}
       aria-disabled={isDisabled}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-sm transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-100 ${
+      className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-[0.8125rem] font-medium shadow-sm transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-[#28A8E1]/15 ${
         isDisabled ? 'opacity-60 cursor-not-allowed shadow-none' : 'cursor-pointer'
       } ${variantClass(variant)} ${className}`}
       {...rest}

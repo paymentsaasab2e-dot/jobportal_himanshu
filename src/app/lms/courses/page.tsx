@@ -5,7 +5,14 @@ import Link from 'next/link';
 import { Suspense, useMemo, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Clock, BookOpen, Code2, Palette, LineChart, Search } from 'lucide-react';
-import { LMS_CARD_INTERACTIVE, LMS_PAGE_SUBTITLE } from '../constants';
+import {
+  LMS_CARD_INTERACTIVE,
+  LMS_FILTER_CHIP,
+  LMS_FILTER_CHIP_ACTIVE,
+  LMS_INPUT_CLASS,
+  LMS_SELECT_CLASS,
+} from '../constants';
+import { LmsPageHeader } from '../components/LmsPageHeader';
 import { LmsProgressBar } from '../components/LmsProgressBar';
 import { AISectionHeading } from '../components/ai';
 import { useLmsState } from '../state/LmsStateProvider';
@@ -248,10 +255,10 @@ function LmsCoursesPageContent() {
 
   return (
     <div className="space-y-6 pt-2">
-      <div className="min-w-0">
-        <h1 className="application-detail-title mb-1">Courses</h1>
-        <p className={LMS_PAGE_SUBTITLE}>Structured learning paths to support your job search and interviews.</p>
-      </div>
+      <LmsPageHeader
+        title="Courses"
+        subtitle="Structured learning paths to support your job search and interviews."
+      />
 
       <section className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm space-y-3">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
@@ -263,14 +270,14 @@ function LmsCoursesPageContent() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by title, skill, or keyword"
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className={`${LMS_INPUT_CLASS} py-2.5 pl-10 pr-3`}
               />
             </div>
           </label>
           <select
             value={level}
             onChange={(e) => setLevel(e.target.value as typeof level)}
-            className="lg:col-span-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+            className={`lg:col-span-2 ${LMS_SELECT_CLASS}`}
           >
             <option value="all">All levels</option>
             <option value="Beginner">Beginner</option>
@@ -279,7 +286,7 @@ function LmsCoursesPageContent() {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as typeof status)}
-            className="lg:col-span-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+            className={`lg:col-span-2 ${LMS_SELECT_CLASS}`}
           >
             <option value="all">All status</option>
             <option value="in_progress">In progress</option>
@@ -289,7 +296,7 @@ function LmsCoursesPageContent() {
           <select
             value={durationBand}
             onChange={(e) => setDurationBand(e.target.value as typeof durationBand)}
-            className="lg:col-span-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+            className={`lg:col-span-2 ${LMS_SELECT_CLASS}`}
           >
             <option value="all">Any duration</option>
             <option value="short">Short (&lt;3h)</option>
@@ -299,7 +306,7 @@ function LmsCoursesPageContent() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="lg:col-span-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+            className={`lg:col-span-2 ${LMS_SELECT_CLASS}`}
           >
             <option value="recommended">Recommended</option>
             <option value="progress">Progress</option>
@@ -314,10 +321,7 @@ function LmsCoursesPageContent() {
               key={cat}
               type="button"
               onClick={() => setCategory(cat)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all capitalize ${category === cat
-                  ? 'border-[#28A8E1]/40 bg-[#28A8E1]/10 text-gray-900'
-                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                }`}
+              className={`capitalize transition-all ${category === cat ? LMS_FILTER_CHIP_ACTIVE : LMS_FILTER_CHIP}`}
             >
               {cat === 'all' ? 'All categories' : cat}
             </button>

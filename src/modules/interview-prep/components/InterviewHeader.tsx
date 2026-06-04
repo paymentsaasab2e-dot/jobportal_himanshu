@@ -29,12 +29,12 @@ export function InterviewHeader({ data, onNextAction }: InterviewHeaderProps) {
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">AI interview OS</p>
-              <h1 className="mt-1 text-2xl sm:text-3xl font-bold text-white tracking-tight">Your goal</h1>
-              <p className="mt-1 text-xl font-bold text-white/95">{data.goal}</p>
+              <h2 className="mt-1 text-[0.875rem] font-semibold text-white tracking-tight">Your goal</h2>
+              <p className="mt-1 text-[0.8125rem] font-medium leading-snug text-white/95">{data.goal}</p>
             </div>
           </div>
           <div className="w-full lg:max-w-md lg:shrink-0">
-            <div className="flex items-center justify-between gap-2 text-sm font-semibold text-white">
+            <div className="flex items-center justify-between gap-2 text-[0.8125rem] font-medium text-white">
               <span>Readiness</span>
               <span className="tabular-nums">{data.readiness}%</span>
             </div>

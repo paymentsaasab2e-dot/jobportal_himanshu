@@ -6,7 +6,7 @@ import { useInterviewPrep } from './hooks/useInterviewPrep';
 import { InterviewHeader } from './components/InterviewHeader';
 import { QuestionGeneratorGrid } from './components/QuestionGenerator/QuestionGeneratorGrid';
 import { MockInterviewCard } from './components/MockInterview/MockInterviewCard';
-import { LMS_PAGE_SUBTITLE } from '@/app/lms/constants';
+import { LmsPageHeader } from '@/app/lms/components/LmsPageHeader';
 import { useLmsOverlay } from '@/app/lms/components/overlays/LmsOverlayProvider';
 import { useLmsToast } from '@/app/lms/components/ux/LmsToastProvider';
 import { useLmsState } from '@/app/lms/state/LmsStateProvider';
@@ -80,13 +80,11 @@ export default function InterviewPrepModulePage() {
 
   return (
     <div className="space-y-8 pb-2 -mt-1">
-      <div className="min-w-0">
-        <p className="mt-1 text-xs font-bold uppercase tracking-wider text-violet-700">AI interview operating system</p>
-        <h1 className="application-detail-title mt-1">Interview preparation</h1>
-        <p className={LMS_PAGE_SUBTITLE}>
-          Modular, API-ready shell — mock data and console hooks until your AI services ship.
-        </p>
-      </div>
+      <LmsPageHeader
+        eyebrow="AI interview operating system"
+        title="Interview prep"
+        subtitle="Modular, API-ready shell — mock data and console hooks until your AI services ship."
+      />
 
       <InterviewHeader
         data={{
