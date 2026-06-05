@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import {
+  downloadProfileDocumentItem,
   getProfileDocumentDisplayName,
   isStoredProfileDocument,
   openProfileDocumentItemInNewTab,
@@ -288,34 +289,8 @@ export default function CertificationModal({
     openProfileDocumentItemInNewTab(doc);
   };
 
-  const handleDownloadFile = async (doc: CertificationDocument) => {
-    let url = '';
-    if (doc.url) {
-      url = resolveDocumentUrl(doc.url);
-    } else if (doc.file) {
-      url = URL.createObjectURL(doc.file);
-    }
-
-    if (!url) return;
-
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = doc.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = doc.name;
-      link.target = "_blank";
-      link.click();
-    }
+  const handleDownloadFile = (doc: CertificationDocument) => {
+    void downloadProfileDocumentItem(doc, doc.name);
   };
 
   const handleDragEnter = (e: React.DragEvent) => {

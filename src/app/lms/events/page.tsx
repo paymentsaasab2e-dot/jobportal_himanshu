@@ -19,7 +19,8 @@ import {
 import { AISectionHeading } from '../components/ai';
 import { useLmsOverlay } from '../components/overlays/LmsOverlayProvider';
 import { useLmsToast } from '../components/ux/LmsToastProvider';
-import { LMS_CARD_INTERACTIVE, LMS_PAGE_SUBTITLE, LMS_SECTION_TITLE } from '../constants';
+import { LMS_CARD_INTERACTIVE, LMS_INPUT_CLASS, LMS_PRIMARY_LINK_CLASS, LMS_SECTION_TITLE } from '../constants';
+import { LmsPageHeader } from '../components/LmsPageHeader';
 import { eventsRecommendedIntro } from '../data/ai-mock'; // just the static strings
 import { useLmsState } from '../state/LmsStateProvider';
 import { EventRegisterSheet } from './EventRegisterSheet';
@@ -166,7 +167,11 @@ export default function LmsEventsPage() {
         <div className="flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
-            className={`flex-1 rounded-xl ${currentlyRegistered ? 'bg-red-500' : 'bg-[#28A8E1]'} px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]`}
+            className={
+              currentlyRegistered
+                ? 'flex-1 rounded-xl bg-red-500 px-5 py-2.5 text-[0.8125rem] font-medium text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]'
+                : `flex-1 ${LMS_PRIMARY_LINK_CLASS}`
+            }
             onClick={async () => {
               try {
                 // Optimistic UI updates
@@ -221,12 +226,10 @@ export default function LmsEventsPage() {
 
   return (
     <div className="space-y-8 pb-10">
-      <div className="min-w-0">
-        <h1 className="application-detail-title mb-1">Events</h1>
-        <p className={LMS_PAGE_SUBTITLE}>
-          Career-relevant sessions with urgency cues - tied directly to your active DB.
-        </p>
-      </div>
+      <LmsPageHeader
+        title="Events"
+        subtitle="Career-relevant sessions with urgency cues — tied directly to your active DB."
+      />
 
       {!loading && activeTab === 'All' && !searchQuery && recommendedEvents.length > 0 ? (
         <section className="space-y-4">
@@ -277,7 +280,7 @@ export default function LmsEventsPage() {
               placeholder="Search events..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 py-2 pl-9 pr-4 text-sm outline-none transition-all focus:border-[#28A8E1] focus:ring-1 focus:ring-[#28A8E1]"
+              className={`${LMS_INPUT_CLASS} py-2 pl-9 pr-4`}
             />
           </div>
         </div>

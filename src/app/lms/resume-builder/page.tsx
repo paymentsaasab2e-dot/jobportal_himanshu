@@ -3,7 +3,8 @@
 
 import { useEffect } from 'react';
 import { FileText, LayoutTemplate, Sparkles, Briefcase, Bot, Eye, X, Check, AlertTriangle } from 'lucide-react';
-import { LMS_CARD_CLASS, LMS_CARD_INTERACTIVE, LMS_PAGE_SUBTITLE, LMS_SECTION_TITLE } from '../constants';
+import { LMS_CARD_CLASS, LMS_CARD_INTERACTIVE, LMS_PRIMARY_LINK_CLASS, LMS_SECTION_TITLE } from '../constants';
+import { LmsPageHeader } from '../components/LmsPageHeader';
 import { AISectionHeading, AIScoreCard, AIActionChips } from '../components/ai';
 import {
   resumeAIScores,
@@ -48,21 +49,16 @@ export default function LmsResumeBuilderPage() {
   ] : resumeAIScores;
   return (
     <div className="space-y-8">
-      <div className="min-w-0 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="application-detail-title mb-1">Resume builder</h1>
-          <p className={LMS_PAGE_SUBTITLE}>
-            Conversion-focused flow — recruiter scan, job match, and ATS risk before you apply (mock).
-          </p>
-        </div>
-        <Link
-          href="/lms/resume-builder/editor"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#28A8E1] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md hover:scale-[1.01] active:scale-[0.98] cursor-pointer shrink-0"
-        >
-          <FileText className="h-4 w-4" strokeWidth={2} />
-          {hasDraft ? 'Continue editing' : 'Create resume'}
-        </Link>
-      </div>
+      <LmsPageHeader
+        title="Resume builder"
+        subtitle="Conversion-focused flow — recruiter scan, job match, and ATS risk before you apply (mock)."
+        actions={
+          <Link href="/lms/resume-builder/editor" className={LMS_PRIMARY_LINK_CLASS}>
+            <FileText className="h-4 w-4" strokeWidth={2} />
+            {hasDraft ? 'Continue editing' : 'Create resume'}
+          </Link>
+        }
+      />
 
       <p className="text-xs font-medium text-gray-500 border-l-2 border-violet-200 pl-3 -mt-2">
         Linked to career engine: {lmsSharedIntelligence.resumeToReadiness}

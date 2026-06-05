@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { LMS_CARD_CLASS } from '../../constants';
+import { LMS_BODY, LMS_CARD_CLASS, LMS_CARD_TITLE } from '../../constants';
 
 type LmsEmptyStateProps = {
   title: string;
@@ -13,8 +13,8 @@ export function LmsEmptyState({ title, body, icon, action, className = '' }: Lms
   return (
     <div className={`${LMS_CARD_CLASS} text-center py-12 px-6 border-dashed border-2 border-gray-200 ${className}`}>
       {icon ? <div className="mx-auto mb-4 w-fit text-gray-300">{icon}</div> : null}
-      <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-      {body ? <p className="mt-2 text-sm font-normal text-gray-500 max-w-md mx-auto">{body}</p> : null}
+      <h3 className={LMS_CARD_TITLE}>{title}</h3>
+      {body ? <p className={`mt-2 max-w-md mx-auto ${LMS_BODY}`}>{body}</p> : null}
       {action ? <div className="mt-6 flex justify-center">{action}</div> : null}
     </div>
   );

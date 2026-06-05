@@ -9,7 +9,12 @@ import {
   profileSelectClassName,
   profileTextareaClass,
 } from '@/lib/profile-modal-ui';
-import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
+import {
+  downloadProfileDocumentItem,
+  extractStoredDocumentUrl,
+  getProfileDocumentDisplayName,
+  isStoredProfileDocument,
+} from '@/lib/profile-documents';
 import {
   type CitySuggestion,
   formatCitySuggestionLabel,
@@ -19,8 +24,9 @@ import {
 interface InternshipModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: InternshipData) => void;
+  onSave: (data: InternshipData) => void | Promise<void>;
   initialData?: InternshipData;
+  editingInternshipId?: string | null;
   mode?: 'add' | 'edit';
 }
 
@@ -49,11 +55,40 @@ export interface InternshipData {
   documents?: InternshipDocument[];
 }
 
+function normalizeInternshipDocuments(
+  documents: InternshipData['documents'],
+): InternshipDocument[] {
+  return (documents || []).map((doc, index) => {
+    if (typeof doc === 'string') {
+      return {
+        id: `doc-${Date.now()}-${index}`,
+        url: doc,
+        name: getProfileDocumentDisplayName(doc),
+      };
+    }
+    if (doc && typeof doc === 'object') {
+      const storedUrl = extractStoredDocumentUrl(doc);
+      return {
+        id: doc.id || `doc-${Date.now()}-${index}`,
+        file: doc.file instanceof File ? doc.file : undefined,
+        name: doc.name || getProfileDocumentDisplayName(storedUrl || doc.name || 'Document'),
+        url: storedUrl || doc.url,
+        size: doc.size,
+      };
+    }
+    return {
+      id: `doc-${Date.now()}-${index}`,
+      name: 'Document',
+    };
+  });
+}
+
 export default function InternshipModal({
   isOpen,
   onClose,
   onSave,
   initialData,
+  editingInternshipId = null,
   mode = 'edit',
 }: InternshipModalProps) {
   const locationAutocompleteRef = useRef<HTMLDivElement>(null);
@@ -115,61 +150,54 @@ export default function InternshipModal({
   const [documents, setDocuments] = useState<InternshipDocument[]>(initialData?.documents || []);
   const [dragActive, setDragActive] = useState(false);
   const [dateError, setDateError] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sessionInitKeyRef = useRef<string | null>(null);
 
-  // Update state when modal opens or initial data changes
+  const populateFormFromInternship = useCallback(
+    (data: InternshipData) => {
+      setInternshipTitle(data.internshipTitle || '');
+      setCompanyName(data.companyName || '');
+      setInternshipType(data.internshipType || '');
+      setDomainDepartment(data.domainDepartment || '');
+      setStartDate(data.startDate || '');
+      setEndDate(data.endDate || '');
+      setCurrentlyWorking(data.currentlyWorking ?? false);
+      setLocation(data.location || '');
+      resetLocationSuggestState();
+      locationSuggestUserInitiatedRef.current = false;
+      setWorkMode(data.workMode || '');
+      setResponsibilities(data.responsibilities || '');
+      setSkillsInput('');
+      setSkills(data.skills || []);
+      setDocuments(normalizeInternshipDocuments(data.documents));
+      setDateError('');
+    },
+    [resetLocationSuggestState],
+  );
+
+  // Initialize only when the drawer opens or the edited entry changes —
+  // not on every parent re-render (which used to wipe newly added documents).
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      sessionInitKeyRef.current = null;
+      return;
+    }
 
-    if (mode === 'add' || !initialData) {
+    const initKey =
+      mode === 'add' || !editingInternshipId ? 'add' : `edit:${editingInternshipId}`;
+    if (sessionInitKeyRef.current === initKey) {
+      return;
+    }
+    sessionInitKeyRef.current = initKey;
+
+    if (mode === 'add' || !editingInternshipId || !initialData) {
       resetForm();
       return;
     }
 
-    if (initialData) {
-      setInternshipTitle(initialData.internshipTitle || '');
-      setCompanyName(initialData.companyName || '');
-      setInternshipType(initialData.internshipType || '');
-      setDomainDepartment(initialData.domainDepartment || '');
-      setStartDate(initialData.startDate || '');
-      setEndDate(initialData.endDate || '');
-      setCurrentlyWorking(initialData.currentlyWorking ?? false);
-      setLocation(initialData.location || '');
-      resetLocationSuggestState();
-      locationSuggestUserInitiatedRef.current = false;
-      setWorkMode(initialData.workMode || '');
-      setResponsibilities(initialData.responsibilities || '');
-      setSkills(initialData.skills || []);
-
-      // Normalize documents to ensure they all have unique IDs
-      const normalizedDocuments: InternshipDocument[] = (initialData.documents || []).map((doc, index) => {
-        if (typeof doc === 'string') {
-          // If it's a string (URL from database), convert to object
-          return {
-            id: `doc-${Date.now()}-${index}`,
-            url: doc,
-            name: getProfileDocumentDisplayName(doc),
-          };
-        } else if (doc && typeof doc === 'object') {
-          // If it's already an object, ensure it has an id
-          return {
-            id: doc.id || `doc-${Date.now()}-${index}`,
-            file: doc.file,
-            name: doc.name || 'Document',
-            url: doc.url,
-            size: doc.size,
-          };
-        } else {
-          // Fallback for any other type
-          return {
-            id: `doc-${Date.now()}-${index}`,
-            name: 'Document',
-          };
-        }
-      });
-      setDocuments(normalizedDocuments);
-    }
-  }, [isOpen, initialData, mode, resetLocationSuggestState]);
+    populateFormFromInternship(initialData);
+  }, [isOpen, mode, editingInternshipId, initialData?.id, populateFormFromInternship]);
 
   useEffect(() => {
     locationSuggestOpenRef.current = locationSuggestOpen;
@@ -261,6 +289,10 @@ export default function InternshipModal({
       };
       setDocuments((prev) => [...prev, newDoc]);
     });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleRemoveFile = (id: string) => {
@@ -327,7 +359,7 @@ export default function InternshipModal({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const hasAnyFormData = Boolean(
       internshipTitle.trim() ||
         companyName.trim() ||
@@ -349,21 +381,33 @@ export default function InternshipModal({
       return;
     }
 
-    onSave({
-      internshipTitle: internshipTitle.trim(),
-      companyName: companyName.trim(),
-      internshipType,
-      domainDepartment,
-      startDate,
-      endDate,
-      currentlyWorking,
-      location: location.trim(),
-      workMode,
-      responsibilities: responsibilities.trim(),
-      skills,
-      documents: documents.length > 0 ? documents : undefined,
-    });
-    onClose();
+    setIsSaving(true);
+    try {
+      await onSave({
+        internshipTitle: internshipTitle.trim(),
+        companyName: companyName.trim(),
+        internshipType,
+        domainDepartment,
+        startDate,
+        endDate,
+        currentlyWorking,
+        location: location.trim(),
+        workMode,
+        responsibilities: responsibilities.trim(),
+        skills,
+        documents: documents.length > 0 ? documents : undefined,
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error saving internship:', error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Failed to save internship. Please try again.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -383,10 +427,11 @@ export default function InternshipModal({
             Cancel
           </button>
           <button
-            onClick={handleSave}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
+            onClick={() => void handleSave()}
+            disabled={isSaving}
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Save Internship
+            {isSaving ? 'Saving…' : 'Save Internship'}
           </button>
         </div>
       )}
@@ -820,16 +865,16 @@ export default function InternshipModal({
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
                           </a>
-                          <a
-                            href={resolveDocumentUrl(doc.url)}
-                            download={doc.name}
+                          <button
+                            type="button"
+                            onClick={() => void downloadProfileDocumentItem(doc, doc.name)}
                             className="text-orange-600 hover:text-orange-700 transition-colors"
                             title="Download Document"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                          </a>
+                          </button>
                         </>
                       )}
                     </div>

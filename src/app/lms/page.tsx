@@ -11,7 +11,8 @@ import {
   Layers,
   Lightbulb,
 } from 'lucide-react';
-import { LMS_CARD_INTERACTIVE, LMS_SECTION_TITLE, LMS_PAGE_SUBTITLE } from './constants';
+import { LMS_CARD_INTERACTIVE, LMS_PRIMARY_LINK_CLASS, LMS_SECTION_TITLE } from './constants';
+import { LmsPageHeader } from './components/LmsPageHeader';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 import { LmsProgressBar } from './components/LmsProgressBar';
 import {
@@ -180,7 +181,7 @@ export default function LmsDashboardPage() {
         <div className="flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
-            className="flex-1 rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
+            className={`flex-1 ${LMS_PRIMARY_LINK_CLASS}`}
             onClick={() => {
               if (isRegistered) {
                 unregisterEvent(eventId);
@@ -213,10 +214,11 @@ export default function LmsDashboardPage() {
 
   return (
     <div className="space-y-8 pb-10">
-      <div className="min-w-0">
-        <h1 className="application-detail-title mb-1">Welcome back</h1>
-        <p className={LMS_PAGE_SUBTITLE}>Your AI-powered career hub. Tracking your journey to your next professional destination.</p>
-      </div>
+      <LmsPageHeader
+        eyebrow="Learning hub"
+        title="Welcome back"
+        subtitle="Your AI-powered career hub. Tracking your journey to your next professional destination."
+      />
 
       <section className="space-y-4 rounded-2xl border border-violet-100 bg-white/60 p-5 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-6">
         <AISectionHeading title="Real-time LMS intelligence" />

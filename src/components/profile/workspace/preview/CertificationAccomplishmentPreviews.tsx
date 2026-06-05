@@ -9,7 +9,7 @@ import {
   textSnippet,
 } from './PreviewPrimitives';
 import { PreviewEntryActionButtons } from './PreviewEntryActionButtons';
-import { openProfileDocumentInNewTab } from '@/lib/profile-documents';
+import { downloadProfileDocument, openProfileDocumentInNewTab } from '@/lib/profile-documents';
 
 type CertProps = {
   cert: Certification;
@@ -39,25 +39,8 @@ export function CertificationEntryPreview({
     openProfileDocumentInNewTab(url);
   };
 
-  const handleDownload = async (url: string, name: string) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      link.target = "_blank";
-      link.click();
-    }
+  const handleDownload = (url: string, name: string) => {
+    void downloadProfileDocument(url, name);
   };
 
   return (
@@ -241,25 +224,8 @@ export function AccomplishmentEntryPreview({
     openProfileDocumentInNewTab(url);
   };
 
-  const handleDownload = async (url: string, name: string) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      link.target = "_blank";
-      link.click();
-    }
+  const handleDownload = (url: string, name: string) => {
+    void downloadProfileDocument(url, name);
   };
 
   return (

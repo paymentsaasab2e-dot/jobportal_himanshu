@@ -92,6 +92,7 @@ import {
   persistWorkExperienceEntry,
   resolveWorkExperiencesToPersist,
 } from '@/lib/work-experience-api';
+import { persistInternshipEntry } from '@/lib/internship-api';
 import InternshipModal, { InternshipData } from '../../components/modals/InternshipModal';
 import EducationModal, { EducationData as EducationEntryData } from '../../components/modals/EducationModal';
 
@@ -1598,8 +1599,8 @@ export default function ProfilePage() {
           />
           <div className="flex min-w-0 flex-col">
             <div
-              className="sticky z-30 -mt-0.5 mb-2.5 flex w-full self-start items-center rounded-2xl border border-slate-200/70 bg-white/95 px-2 py-0.5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-sm"
-              style={{ top: 'calc(var(--app-header-height, 92px) + 4px)' }}
+              className="sticky z-30 mb-2 flex w-full self-start items-center rounded-b-2xl rounded-t-md border border-slate-200/70 border-t-0 bg-white/95 px-2 py-0.5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-sm"
+              style={{ top: 'var(--app-header-height, 92px)' }}
             >
               <ProfileWorkspaceTabs
                 ref={tabsBarRef}
@@ -3623,6 +3624,9 @@ export default function ProfilePage() {
 
       <InternshipModal
         isOpen={isInternshipModalOpen}
+        editingInternshipId={
+          internshipModalMode === 'edit' ? editingInternshipId : null
+        }
         onClose={() => {
           setIsInternshipModalOpen(false);
           setInternshipModalMode('edit');
@@ -3631,73 +3635,20 @@ export default function ProfilePage() {
         mode={internshipModalMode}
         onSave={async (data) => {
           const candidateId = getStoredCandidateId();
-          if (!candidateId) return;
-
-          try {
-            // Upload documents first if any
-            let documentUrls: string[] = [];
-            if (data.documents && data.documents.length > 0) {
-              const filesToUpload = data.documents.filter(doc => doc.file instanceof File);
-              if (filesToUpload.length > 0) {
-                const formData = new FormData();
-                filesToUpload.forEach(doc => {
-                  if (doc.file instanceof File) {
-                    formData.append('documents', doc.file);
-                  }
-                });
-
-                const uploadResponse = await fetch(`${API_BASE_URL}/profile/internship/documents/${candidateId}`, {
-                  method: 'POST',
-                  body: formData,
-                });
-
-                if (uploadResponse.ok) {
-                  const uploadResult = await uploadResponse.json();
-                  documentUrls = uploadResult.data?.documents?.map((d: any) => d.url) || [];
-                } else {
-                  console.warn('Failed to upload documents, continuing without them');
-                }
-              }
-
-              // Include existing URLs (from database)
-              const existingUrls = data.documents
-                .filter(doc => typeof doc === 'string' || (typeof doc === 'object' && doc.url && !(doc.file instanceof File)))
-                .map(doc => typeof doc === 'string' ? doc : (doc as any).url);
-              documentUrls = [...documentUrls, ...existingUrls];
-            }
-
-            // Save internship with document URLs
-            const internshipToSave = {
-              ...data,
-              documents: documentUrls,
-            };
-            if (
-              internshipModalMode === 'edit' &&
-              (editingInternshipId || internshipData[internshipData.length - 1]?.id)
-            ) {
-              internshipToSave.id =
-                editingInternshipId || internshipData[internshipData.length - 1]?.id;
-            }
-
-            const response = await fetch(`${API_BASE_URL}/profile/internship/${candidateId}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(internshipToSave),
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to save internship');
-            }
-
-            await refreshProfileData(candidateId);
-          setIsInternshipModalOpen(false);
-          showAlert('Internship saved');
-          } catch (error) {
-            console.error('Error saving internship:', error);
-            showAlert('Error saving internship');
+          if (!candidateId) {
+            throw new Error('Candidate ID not found. Please refresh the page.');
           }
+
+          const entryId =
+            internshipModalMode === 'edit'
+              ? editingInternshipId || internshipData[internshipData.length - 1]?.id || null
+              : null;
+
+          await persistInternshipEntry(candidateId, data, { entryId });
+          await refreshProfileData(candidateId);
+          setIsInternshipModalOpen(false);
+          setEditingInternshipId(null);
+          showAlert(entryId ? 'Internship updated' : 'Internship saved');
         }}
         initialData={
           internshipModalMode === 'add'

@@ -28,7 +28,7 @@ export function LmsSharedIntelligenceHint() {
           </div>
         </div>
         
-        <div className="flex items-center gap-2 self-end rounded-lg bg-white/80 px-3 py-1.5 text-[11px] font-bold text-slate-400 shadow-sm sm:self-center">
+        <div className="profile-page-label flex items-center gap-2 self-end rounded-lg bg-white/80 px-3 py-1.5 normal-case shadow-sm sm:self-center">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#28A8E1]" />
           Flow Analysis Live
         </div>

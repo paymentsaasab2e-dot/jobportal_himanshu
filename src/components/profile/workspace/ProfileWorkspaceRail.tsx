@@ -23,7 +23,7 @@ export function ProfileWorkspaceRail({
   const offset = circumference - (pct / 100) * circumference;
 
   return (
-    <aside className="mx-auto w-full max-w-[248px] space-y-3 lg:mx-0 lg:sticky lg:top-[calc(var(--app-header-height,92px)+8px)] lg:w-[248px] lg:max-w-none lg:self-start xl:w-[256px]">
+    <aside className="mx-auto w-full max-w-[248px] space-y-3 lg:mx-0 lg:sticky lg:top-[var(--app-header-height,92px)] lg:w-[248px] lg:max-w-none lg:self-start xl:w-[256px]">
       <div className={`${PROFILE_DASHBOARD_CARD} p-4 sm:p-5`}>
         <p className="profile-page-label">Profile health</p>
         <div className="mt-3 flex items-center gap-4">
