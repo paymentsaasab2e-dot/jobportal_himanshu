@@ -45,7 +45,7 @@ export function useProfileTabNavigation(sectionGroups: readonly ProfileSectionGr
     }
     const updatePad = () => {
       const tabsH = el.getBoundingClientRect().height;
-      setScrollPadPx(Math.round(getHeaderHeightPx() + tabsH + 16));
+      setScrollPadPx(Math.round(getHeaderHeightPx() + tabsH + 12));
     };
     const ro = new ResizeObserver(updatePad);
     ro.observe(el);
@@ -59,7 +59,7 @@ export function useProfileTabNavigation(sectionGroups: readonly ProfileSectionGr
 
     setActiveTabId(id);
     const tabsH = tabsBarRef.current?.getBoundingClientRect().height ?? 0;
-    const offset = getHeaderHeightPx() + tabsH + 12;
+    const offset = getHeaderHeightPx() + tabsH + 8;
     const top =
       groupEl.getBoundingClientRect().top + window.scrollY - offset;
 
@@ -74,7 +74,7 @@ export function useProfileTabNavigation(sectionGroups: readonly ProfileSectionGr
 
     const resolveActiveGroup = () => {
       const tabsH = tabsBarRef.current?.getBoundingClientRect().height ?? 0;
-      const activationPoint = getHeaderHeightPx() + tabsH + 24;
+      const activationPoint = getHeaderHeightPx() + tabsH + 20;
 
       let activeGroupId = sectionGroups[0].id;
 

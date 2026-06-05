@@ -14,10 +14,13 @@ import type { VisaWorkAuthorizationData } from '@/components/modals/VisaWorkAuth
 import type { VaccinationData } from '@/components/modals/VaccinationModal';
 import type { AcademicAchievementData } from '@/components/modals/AcademicAchievementModal';
 import type { CompetitiveExamsData } from '@/components/modals/CompetitiveExamsModal';
-import { openProfileDocumentInNewTab } from '@/lib/profile-documents';
+import {
+  downloadProfileDocument,
+  getProfileDocumentDisplayName,
+  openProfileDocumentInNewTab,
+} from '@/lib/profile-documents';
 import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
 import { resolveDocumentUrl } from '@/lib/api-base';
-import { getProfileDocumentDisplayName } from '@/lib/profile-documents';
 import { formatDobDisplay } from '@/lib/format-dob';
 import { formatVaccinationValidity } from '@/lib/format-vaccination-validity';
 import { PreviewEntryActionButtons } from './PreviewEntryActionButtons';
@@ -120,25 +123,8 @@ export function ProfileResumeFilled({
     openProfileDocumentInNewTab(url);
   };
 
-  const handleDownload = async (url: string, name: string) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      link.target = "_blank";
-      link.click();
-    }
+  const handleDownload = (url: string, name: string) => {
+    void downloadProfileDocument(url, name);
   };
 
   const displayName = resumeData.fileName
@@ -277,25 +263,8 @@ export function ProfileInternshipFilled({
     openProfileDocumentInNewTab(url);
   };
 
-  const handleDownload = async (url: string, name: string) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      link.target = "_blank";
-      link.click();
-    }
+  const handleDownload = (url: string, name: string) => {
+    void downloadProfileDocument(url, name);
   };
 
   const docCount = data.documents?.length ?? 0;
@@ -680,25 +649,8 @@ export function ProfileLanguagesFilled({
     openProfileDocumentInNewTab(url);
   };
 
-  const handleDownload = async (url: string, name: string) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      link.target = "_blank";
-      link.click();
-    }
+  const handleDownload = (url: string, name: string) => {
+    void downloadProfileDocument(url, name);
   };
 
   return (
@@ -801,25 +753,8 @@ export function ProfileProjectFilled({
     openProfileDocumentInNewTab(url);
   };
 
-  const handleDownload = async (url: string, name: string) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      link.target = "_blank";
-      link.click();
-    }
+  const handleDownload = (url: string, name: string) => {
+    void downloadProfileDocument(url, name);
   };
 
   const snippet = textSnippet(
@@ -1341,25 +1276,8 @@ export function ProfileVisaFilled({
     openProfileDocumentInNewTab(url);
   };
 
-  const handleDownload = async (url: string, name: string) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      link.target = "_blank";
-      link.click();
-    }
+  const handleDownload = (url: string, name: string) => {
+    void downloadProfileDocument(url, name);
   };
 
   const visaDocuments = collectVisaDocuments(data);
@@ -1601,25 +1519,8 @@ export function ProfileVaccinationFilled({
     openProfileDocumentInNewTab(url);
   };
 
-  const handleDownload = async (url: string, name: string) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      link.target = "_blank";
-      link.click();
-    }
+  const handleDownload = (url: string, name: string) => {
+    void downloadProfileDocument(url, name);
   };
 
   const vaccinationDocs =
@@ -1754,25 +1655,8 @@ export function ProfileAcademicAchievementFilled({
     openProfileDocumentInNewTab(url);
   };
 
-  const handleDownload = async (url: string, name: string) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      link.target = "_blank";
-      link.click();
-    }
+  const handleDownload = (url: string, name: string) => {
+    void downloadProfileDocument(url, name);
   };
 
   const docCount = data.documents?.length ?? 0;
@@ -1924,25 +1808,8 @@ export function ProfileCompetitiveExamFilled({
     openProfileDocumentInNewTab(url);
   };
 
-  const handleDownload = async (url: string, name: string) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      link.target = "_blank";
-      link.click();
-    }
+  const handleDownload = (url: string, name: string) => {
+    void downloadProfileDocument(url, name);
   };
 
   const docCount = data.documents?.length ?? 0;

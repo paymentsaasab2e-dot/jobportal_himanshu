@@ -5,7 +5,11 @@ import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import { profileFieldClass, profileTextareaClass } from '@/lib/profile-modal-ui';
-import { getProfileDocumentDisplayName, isStoredProfileDocument } from '@/lib/profile-documents';
+import {
+  downloadProfileDocumentItem,
+  getProfileDocumentDisplayName,
+  isStoredProfileDocument,
+} from '@/lib/profile-documents';
 
 interface ProjectModalProps {
   isOpen: boolean;
@@ -629,16 +633,16 @@ export default function ProjectModal({
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
                           </a>
-                          <a
-                            href={resolveDocumentUrl(doc.url)}
-                            download={doc.name}
+                          <button
+                            type="button"
+                            onClick={() => void downloadProfileDocumentItem(doc, doc.name)}
                             className="text-orange-600 hover:text-orange-700 transition-colors"
                             title="Download Document"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                          </a>
+                          </button>
                         </>
                       )}
                     </div>

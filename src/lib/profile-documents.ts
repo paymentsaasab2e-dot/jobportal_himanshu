@@ -203,20 +203,97 @@ export function formatProfileDocumentSize(bytes?: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+function triggerBrowserDownload(href: string, fileName: string): void {
+  const link = document.createElement('a');
+  link.href = href;
+  link.download = fileName;
+  link.rel = 'noopener noreferrer';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+/** Same-origin API that streams private S3/Cloudinary files as attachment. */
+export function getProfileDocumentDownloadUrl(
+  sourceUrl: string,
+  fileName?: string,
+): string {
+  const resolved = resolveDocumentUrl(sourceUrl);
+  if (!resolved) return '';
+  const params = new URLSearchParams({ url: resolved });
+  if (fileName?.trim()) params.set('filename', fileName.trim());
+  return `/api/document-download?${params.toString()}`;
+}
+
+/** Download a stored profile document without opening a new tab. */
+export async function downloadProfileDocument(
+  sourceUrl: string,
+  fileName: string,
+): Promise<void> {
+  const resolved = resolveDocumentUrl(sourceUrl);
+  if (!resolved) return;
+
+  if (resolved.startsWith('blob:')) {
+    triggerBrowserDownload(resolved, fileName);
+    return;
+  }
+
+  const proxyUrl = getProfileDocumentDownloadUrl(resolved, fileName);
+  try {
+    const response = await fetch(proxyUrl);
+    if (!response.ok) {
+      const detail = (await response.text().catch(() => '')).trim();
+      throw new Error(
+        detail
+          ? `Download failed (${response.status}): ${detail}`
+          : `Download failed (${response.status})`,
+      );
+    }
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    triggerBrowserDownload(blobUrl, fileName);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error('Profile document download failed:', error);
+    throw error instanceof Error
+      ? error
+      : new Error('Failed to download document. Please try again.');
+  }
+}
+
+/** Download a modal/profile document item (pending File or stored URL). */
+export async function downloadProfileDocumentItem(
+  doc: { url?: string; file?: File | string; name?: string } | null | undefined,
+  fileName?: string,
+): Promise<void> {
+  if (!doc) return;
+  const name =
+    fileName?.trim() ||
+    doc.name?.trim() ||
+    getProfileDocumentDisplayName(doc.url || (typeof doc.file === 'string' ? doc.file : '')) ||
+    'document';
+
+  if (doc.file instanceof File) {
+    const blobUrl = URL.createObjectURL(doc.file);
+    triggerBrowserDownload(blobUrl, name);
+    URL.revokeObjectURL(blobUrl);
+    return;
+  }
+
+  const storedUrl =
+    doc.url ||
+    (typeof doc.file === 'string' ? extractStoredDocumentUrl(doc.file) || doc.file : '');
+  if (!storedUrl) return;
+  await downloadProfileDocument(storedUrl, name);
+}
+
 /** Open a resolved profile document URL in a new browser tab. */
 export function openProfileDocumentInNewTab(url: string): void {
   const href = url?.trim();
   if (!href) return;
-  const opened = window.open(href, '_blank', 'noopener,noreferrer');
-  if (!opened) {
-    const link = document.createElement('a');
-    link.href = href;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+  // With noopener/noreferrer, window.open() returns null even when the tab opens.
+  // A fallback <a> click would open a second tab — use a single navigation only.
+  window.open(href, '_blank', 'noopener,noreferrer');
 }
 
 /** Open a stored or pending profile document item in a new tab. */

@@ -4,6 +4,7 @@ import { X, ExternalLink, FileText, Image as ImageIcon, File } from 'lucide-reac
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { resolveDocumentUrl } from '@/lib/api-base';
+import { downloadProfileDocument } from '@/lib/profile-documents';
 import {
   buildResumeHtmlPreviewUrl,
   buildResumeViewerUrl,
@@ -126,26 +127,9 @@ export default function DocumentViewerModal({
 
           <div className="flex items-center gap-3">
             <button
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.stopPropagation();
-                try {
-                  const response = await fetch(href);
-                  const blob = await response.blob();
-                  const url = window.URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = documentName;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  window.URL.revokeObjectURL(url);
-                } catch {
-                  const link = document.createElement('a');
-                  link.href = href;
-                  link.download = documentName;
-                  link.target = '_blank';
-                  link.click();
-                }
+                void downloadProfileDocument(href, documentName);
               }}
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900"
               title="Download"
@@ -243,14 +227,16 @@ export default function DocumentViewerModal({
                 download it or open it in a new tab.
               </p>
               <div className="mt-8 flex gap-4">
-                <a
-                  href={href}
-                  download={documentName}
-                  onClick={(e) => e.stopPropagation()}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void downloadProfileDocument(href, documentName);
+                  }}
                   className="rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
                 >
                   Download File
-                </a>
+                </button>
                 <a
                   href={href}
                   target="_blank"
