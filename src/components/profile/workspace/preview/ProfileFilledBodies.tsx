@@ -119,14 +119,6 @@ export function ProfileResumeFilled({
   scorePercent: number;
   onReplace: () => void;
 }) {
-  const handlePreview = (url: string) => {
-    openProfileDocumentInNewTab(url);
-  };
-
-  const handleDownload = (url: string, name: string) => {
-    void downloadProfileDocument(url, name);
-  };
-
   const displayName = resumeData.fileName
     ? getProfileDocumentDisplayName(resumeData.fileName)
     : resumeData.fileUrl
@@ -138,6 +130,14 @@ export function ProfileResumeFilled({
   const ext =
     resumeData.mimeType?.split('/').pop()?.toUpperCase() ||
     displayName.split('.').pop()?.toUpperCase();
+
+  const handlePreview = (url: string) => {
+    openProfileDocumentInNewTab(url, displayName);
+  };
+
+  const handleDownload = (url: string, name: string) => {
+    void downloadProfileDocument(url, name);
+  };
 
   return (
     <div className="rounded-xl border border-gray-200/80 bg-gradient-to-br from-slate-50/90 to-white p-4 shadow-sm ring-1 ring-gray-100 sm:p-5">
