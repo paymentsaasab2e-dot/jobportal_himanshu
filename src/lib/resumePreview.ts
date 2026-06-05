@@ -22,10 +22,21 @@ export function isWordResume(resumeUrl?: string | null): boolean {
   return ext === 'docx' || ext === 'doc';
 }
 
+export function isTextResume(resumeUrl?: string | null): boolean {
+  return getResumeExtension(resumeUrl) === 'txt';
+}
+
+export function isImageResume(resumeUrl?: string | null): boolean {
+  const ext = getResumeExtension(resumeUrl);
+  return ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext);
+}
+
 export function canPreviewResumeInline(resumeUrl?: string | null): boolean {
   const href = String(resumeUrl || '').trim();
   if (!href) return false;
   if (getResumeExtension(href) === 'pdf') return true;
+  if (getResumeExtension(href) === 'txt') return true;
+  if (isImageResume(href)) return true;
   if (/\.pdf(\?|#|$)/i.test(href)) return true;
   // Cloudinary/S3 uploads may omit .pdf in the path but still serve PDF bytes
   if (/cloudinary\.com/i.test(href) && /\/upload\//i.test(href) && !isWordResume(href)) {
@@ -49,5 +60,10 @@ export function buildResumeHtmlPreviewUrl(resumeUrl: string): string {
 
 export function buildResumeViewerUrl(resumeUrl: string): string {
   const base = normalizeResumeHref(resumeUrl.split('#')[0] || resumeUrl);
+  if (!base) return '';
+  if (isTextResume(base) || isImageResume(base)) {
+    const params = new URLSearchParams({ url: base });
+    return `/api/document-view?${params.toString()}`;
+  }
   return `${base}#toolbar=0`;
 }
