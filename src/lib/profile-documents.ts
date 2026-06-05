@@ -1,4 +1,8 @@
 import { resolveDocumentUrl } from '@/lib/api-base';
+import {
+  buildResumeHtmlPreviewUrl,
+  canPreviewResumeAsHtml,
+} from '@/lib/resumePreview';
 
 /** Shared profile document item used across profile drawers. */
 export interface ProfileDocumentItem {
@@ -225,6 +229,24 @@ export function getProfileDocumentDownloadUrl(
   return `/api/document-download?${params.toString()}`;
 }
 
+/** Same-origin API that streams private S3/Cloudinary files inline for browser preview. */
+export function getProfileDocumentViewUrl(
+  sourceUrl: string,
+  fileName?: string,
+): string {
+  const resolved = resolveDocumentUrl(sourceUrl);
+  if (!resolved) return '';
+  if (resolved.startsWith('blob:') || resolved.startsWith('data:')) {
+    return resolved;
+  }
+  if (canPreviewResumeAsHtml(resolved)) {
+    return buildResumeHtmlPreviewUrl(resolved);
+  }
+  const params = new URLSearchParams({ url: resolved });
+  if (fileName?.trim()) params.set('filename', fileName.trim());
+  return `/api/document-view?${params.toString()}`;
+}
+
 /** Download a stored profile document without opening a new tab. */
 export async function downloadProfileDocument(
   sourceUrl: string,
@@ -287,9 +309,9 @@ export async function downloadProfileDocumentItem(
   await downloadProfileDocument(storedUrl, name);
 }
 
-/** Open a resolved profile document URL in a new browser tab. */
-export function openProfileDocumentInNewTab(url: string): void {
-  const href = url?.trim();
+/** Open a stored profile document for inline viewing in a new browser tab (no download). */
+export function openProfileDocumentInNewTab(url: string, fileName?: string): void {
+  const href = getProfileDocumentViewUrl(url, fileName) || url?.trim();
   if (!href) return;
   // With noopener/noreferrer, window.open() returns null even when the tab opens.
   // A fallback <a> click would open a second tab — use a single navigation only.
@@ -307,5 +329,9 @@ export function openProfileDocumentItemInNewTab(
   } else if (doc.file instanceof File) {
     href = URL.createObjectURL(doc.file);
   }
-  openProfileDocumentInNewTab(href);
+  const name =
+    doc.name?.trim() ||
+    (doc.url ? getProfileDocumentDisplayName(doc.url) : '') ||
+    undefined;
+  openProfileDocumentInNewTab(href, name);
 }
