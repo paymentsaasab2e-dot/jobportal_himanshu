@@ -4,13 +4,14 @@ import { X, ExternalLink, FileText, Image as ImageIcon, File } from 'lucide-reac
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { resolveDocumentUrl } from '@/lib/api-base';
-import { downloadProfileDocument } from '@/lib/profile-documents';
+import { downloadProfileDocument, getProfileDocumentViewUrl } from '@/lib/profile-documents';
 import {
   buildResumeHtmlPreviewUrl,
   buildResumeViewerUrl,
   canPreviewResumeAsHtml,
-  canPreviewResumeInline,
   getResumeExtension,
+  isImageResume,
+  isTextResume,
   normalizeResumeHref,
 } from '@/lib/resumePreview';
 
@@ -28,14 +29,16 @@ export default function DocumentViewerModal({
   documentName,
 }: DocumentViewerModalProps) {
   const [mounted, setMounted] = useState(false);
-  const [htmlPreview, setHtmlPreview] = useState<string | null>(null);
-  const [htmlLoading, setHtmlLoading] = useState(false);
-  const [htmlError, setHtmlError] = useState<string | null>(null);
+  const [textPreview, setTextPreview] = useState<string | null>(null);
+  const [textLoading, setTextLoading] = useState(false);
+  const [textError, setTextError] = useState<string | null>(null);
 
   const href = documentUrl ? normalizeResumeHref(resolveDocumentUrl(documentUrl)) : '';
-  const isImage =
-    /\.(jpg|jpeg|png|gif|webp)$/i.test(href) || href.startsWith('data:image/');
-  const canPdf = Boolean(href && canPreviewResumeInline(href));
+  const viewUrl = href ? getProfileDocumentViewUrl(href, documentName) : '';
+  const htmlPreviewUrl = href && canPreviewResumeAsHtml(href) ? buildResumeHtmlPreviewUrl(href) : '';
+  const isImage = Boolean(href && (isImageResume(href) || href.startsWith('data:image/')));
+  const canText = Boolean(href && isTextResume(href));
+  const canPdf = Boolean(href && getResumeExtension(href) === 'pdf');
   const canHtml = Boolean(href && canPreviewResumeAsHtml(href));
   const extension = getResumeExtension(href);
 
@@ -52,41 +55,41 @@ export default function DocumentViewerModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen || !href || !canHtml) {
-      setHtmlPreview(null);
-      setHtmlLoading(false);
-      setHtmlError(null);
+    if (!isOpen || !href || !canText) {
+      setTextPreview(null);
+      setTextLoading(false);
+      setTextError(null);
       return;
     }
 
     let cancelled = false;
-    setHtmlLoading(true);
-    setHtmlError(null);
-    setHtmlPreview(null);
+    setTextLoading(true);
+    setTextError(null);
+    setTextPreview(null);
 
-    const loadPreview = async () => {
+    const loadText = async () => {
       try {
-        const response = await fetch(buildResumeHtmlPreviewUrl(href), { cache: 'no-store' });
+        const response = await fetch(viewUrl || href, { cache: 'no-store' });
         if (!response.ok) {
           throw new Error(`Failed to load preview (${response.status})`);
         }
-        const html = await response.text();
-        if (!cancelled) setHtmlPreview(html);
+        const text = await response.text();
+        if (!cancelled) setTextPreview(text);
       } catch (error: unknown) {
         if (!cancelled) {
-          setHtmlError(error instanceof Error ? error.message : 'Preview unavailable');
-          setHtmlPreview(null);
+          setTextError(error instanceof Error ? error.message : 'Preview unavailable');
+          setTextPreview(null);
         }
       } finally {
-        if (!cancelled) setHtmlLoading(false);
+        if (!cancelled) setTextLoading(false);
       }
     };
 
-    void loadPreview();
+    void loadText();
     return () => {
       cancelled = true;
     };
-  }, [isOpen, href, canHtml]);
+  }, [isOpen, href, canText, viewUrl]);
 
   if (!isOpen || !mounted) return null;
 
@@ -139,7 +142,7 @@ export default function DocumentViewerModal({
               </svg>
             </button>
             <a
-              href={href}
+              href={viewUrl || href}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
@@ -165,11 +168,33 @@ export default function DocumentViewerModal({
           {isImage ? (
             <div className="flex h-full items-center justify-center">
               <img
-                src={href}
+                src={viewUrl || href}
                 alt={documentName}
                 className="max-h-full max-w-full rounded-xl bg-white object-contain shadow-lg transition-transform duration-300"
               />
             </div>
+          ) : canText ? (
+            textLoading ? (
+              <div className="flex h-full min-h-[min(70vh,640px)] items-center justify-center rounded-2xl border border-slate-200 bg-white">
+                <div className="text-center">
+                  <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+                  <p className="text-sm text-slate-600">Loading document preview...</p>
+                </div>
+              </div>
+            ) : textError ? (
+              <div className="flex h-full min-h-[320px] items-center justify-center">
+                <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+                  <h4 className="text-base font-semibold text-slate-900">Preview unavailable</h4>
+                  <p className="mt-2 text-sm text-slate-500">{textError}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="h-full min-h-[min(70vh,640px)] overflow-auto rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-lg">
+                <pre className="whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-slate-800">
+                  {textPreview || 'Empty file'}
+                </pre>
+              </div>
+            )
           ) : canPdf ? (
             <div className="h-full min-h-[min(70vh,640px)] w-full overflow-hidden rounded-2xl bg-white shadow-lg">
               <iframe
@@ -178,43 +203,14 @@ export default function DocumentViewerModal({
                 title={documentName}
               />
             </div>
-          ) : canHtml ? (
-            htmlLoading ? (
-              <div className="flex h-full min-h-[min(70vh,640px)] items-center justify-center rounded-2xl border border-slate-200 bg-white">
-                <div className="text-center">
-                  <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
-                  <p className="text-sm text-slate-600">Loading document preview...</p>
-                </div>
-              </div>
-            ) : htmlError ? (
-              <div className="flex h-full min-h-[320px] items-center justify-center">
-                <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-                  <h4 className="text-base font-semibold text-slate-900">Preview unavailable</h4>
-                  <p className="mt-2 text-sm text-slate-500">{htmlError}</p>
-                  <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-                    <a
-                      href={href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-                    >
-                      Open file
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ) : htmlPreview ? (
+          ) : canHtml && htmlPreviewUrl ? (
+            <div className="h-full min-h-[min(70vh,640px)] w-full overflow-hidden rounded-2xl bg-white shadow-lg">
               <iframe
+                src={htmlPreviewUrl}
+                className="h-full w-full border-0"
                 title={documentName}
-                srcDoc={htmlPreview}
-                sandbox="allow-same-origin"
-                className="h-full min-h-[min(70vh,640px)] w-full rounded-xl border border-slate-200 bg-white"
               />
-            ) : (
-              <div className="flex h-full min-h-[320px] items-center justify-center rounded-xl border border-slate-200 bg-white">
-                <p className="text-sm text-slate-500">No preview data available.</p>
-              </div>
-            )
+            </div>
           ) : (
             <div className="flex h-full flex-col items-center justify-center p-10 text-center">
               <div className="mb-6 rounded-[28px] bg-white p-8 shadow-sm">
