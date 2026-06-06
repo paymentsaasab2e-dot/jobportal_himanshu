@@ -4,6 +4,10 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
+import {
+  profileAvatarInitialsClass,
+  profileAvatarSurfaceClass,
+} from '@/lib/profile-avatar';
 
 type Item = {
   label: string;
@@ -23,6 +27,7 @@ type Props = {
   onClose: () => void;
   onNavigate: (path: string) => void;
   profilePhotoUrl: string | null;
+  profileInitials: string;
   userName: string;
   userEmail: string;
   profileCompletion?: number | null;
@@ -136,6 +141,7 @@ export default function ProfilePanel({
   onClose,
   onNavigate,
   profilePhotoUrl,
+  profileInitials,
   userName,
   userEmail,
   profileCompletion,
@@ -189,10 +195,16 @@ export default function ProfilePanel({
           >
             <div className="border-b border-slate-200 px-6 py-6">
               <div className="flex items-start gap-4">
-                <div className="relative h-14 w-14 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className={`relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/70 bg-white/55 ring-1 ring-white/80 ${profileAvatarSurfaceClass}`}
+                >
                   {profilePhotoUrl ? (
                     <Image src={profilePhotoUrl} alt="User avatar" fill className="object-cover" unoptimized />
-                  ) : null}
+                  ) : (
+                    <span className={`text-lg ${profileAvatarInitialsClass}`}>
+                      {profileInitials}
+                    </span>
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-lg font-bold text-slate-900 tracking-tight">{userName || 'User'}</h3>

@@ -23,6 +23,7 @@ import {
   openProfileDocumentInNewTab,
   openProfileDocumentItemInNewTab,
 } from '@/lib/profile-documents';
+import { getAuthHeaders } from '@/lib/auth-storage';
 
 interface WorkExperienceModalProps {
   isOpen: boolean;
@@ -208,6 +209,10 @@ export default function WorkExperienceModal({
   const [workLocation, setWorkLocation] = useState('');
   const [workMode, setWorkMode] = useState('');
   const [companyProfile, setCompanyProfile] = useState('');
+  const [isGeneratingWorkExpAi, setIsGeneratingWorkExpAi] = useState(false);
+  const [workExpAiError, setWorkExpAiError] = useState<string | null>(null);
+  const lastAutofilledKeyRef = useRef('');
+  const autofillInFlightRef = useRef(false);
   const [companyTurnoverCurrency, setCompanyTurnoverCurrency] = useState('INR');
   const [companyTurnoverAmount, setCompanyTurnoverAmount] = useState('');
   const [keyResponsibilities, setKeyResponsibilities] = useState('');
@@ -281,6 +286,8 @@ export default function WorkExperienceModal({
     setKeyResponsibilities(entry.keyResponsibilities || '');
     setAchievements(entry.achievements || '');
     setWorkSkills(entry.workSkills || []);
+    lastAutofilledKeyRef.current = `${String(entry.companyName || '').trim().toLowerCase()}|${String(entry.jobTitle || '').trim().toLowerCase()}`;
+    setWorkExpAiError(null);
     
     // Handle documents - convert URLs to document objects
     if (entry.documents && entry.documents.length > 0) {
@@ -443,6 +450,8 @@ export default function WorkExperienceModal({
     workLocationSuggestUserInitiatedRef.current = false;
     setWorkMode('');
     setCompanyProfile('');
+    setWorkExpAiError(null);
+    lastAutofilledKeyRef.current = '';
     setCompanyTurnoverCurrency('INR');
     setCompanyTurnoverAmount('');
     setKeyResponsibilities('');
@@ -451,6 +460,133 @@ export default function WorkExperienceModal({
     setWorkSkills([]);
     setDocuments([]);
   };
+
+  const autofillWorkExperienceAi = useCallback(
+    async (
+      options: {
+        force?: boolean;
+        fillProfile?: boolean;
+        fillSkills?: boolean;
+      } = {},
+    ) => {
+      const name = companyName.trim();
+      if (!name || name.length < 2) {
+        if (options.force) {
+          setWorkExpAiError('Enter a company name first.');
+        }
+        return;
+      }
+
+      const fillProfile = options.fillProfile ?? true;
+      const fillSkills = options.fillSkills ?? true;
+      const autofillKey = `${name.toLowerCase()}|${jobTitle.trim().toLowerCase()}`;
+
+      if (
+        !options.force &&
+        lastAutofilledKeyRef.current === autofillKey &&
+        (!fillProfile || companyProfile.trim()) &&
+        (!fillSkills || workSkills.length > 0)
+      ) {
+        return;
+      }
+
+      if (!options.force) {
+        const needsProfile = fillProfile && !companyProfile.trim();
+        const needsSkills = fillSkills && workSkills.length === 0;
+        if (!needsProfile && !needsSkills) {
+          return;
+        }
+      }
+
+      if (autofillInFlightRef.current) return;
+      autofillInFlightRef.current = true;
+      setIsGeneratingWorkExpAi(true);
+      setWorkExpAiError(null);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/profile/work-experience-ai-autofill`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            companyName: name,
+            jobTitle: jobTitle.trim() || undefined,
+            industryDomain: industryDomain.trim() || undefined,
+            workLocation: workLocation.trim() || undefined,
+            keyResponsibilities: keyResponsibilities.trim() || undefined,
+          }),
+        });
+
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(result.message || `Server error: ${response.status}`);
+        }
+
+        const profileText = String(result.data?.companyProfile || '').trim();
+        const skillList = (Array.isArray(result.data?.workSkills) ? result.data.workSkills : [])
+          .map((s: unknown) => String(s || '').trim())
+          .filter(Boolean);
+
+        if (fillProfile && profileText && (options.force || !companyProfile.trim())) {
+          setCompanyProfile(profileText);
+        }
+
+        if (fillSkills && skillList.length && (options.force || workSkills.length === 0)) {
+          setWorkSkills(skillList);
+        } else if (fillSkills && skillList.length && options.force) {
+          setWorkSkills((prev) => {
+            const seen = new Set(prev.map((s) => s.toLowerCase()));
+            const merged = [...prev];
+            for (const skill of skillList) {
+              const key = skill.toLowerCase();
+              if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(skill);
+              }
+            }
+            return merged;
+          });
+        }
+
+        if (
+          (fillProfile && profileText && (options.force || !companyProfile.trim())) ||
+          (fillSkills && skillList.length)
+        ) {
+          lastAutofilledKeyRef.current = autofillKey;
+        } else {
+          throw new Error('No autofill data returned for this company.');
+        }
+      } catch (error) {
+        console.error('Error autofill work experience with AI:', error);
+        setWorkExpAiError(
+          error instanceof Error ? error.message : 'Could not autofill from CV.',
+        );
+      } finally {
+        autofillInFlightRef.current = false;
+        setIsGeneratingWorkExpAi(false);
+      }
+    },
+    [
+      companyName,
+      companyProfile,
+      industryDomain,
+      jobTitle,
+      keyResponsibilities,
+      workLocation,
+      workSkills,
+    ],
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const name = companyName.trim();
+    if (name.length < 2) return;
+
+    const timer = window.setTimeout(() => {
+      void autofillWorkExperienceAi({ force: false, fillProfile: true, fillSkills: true });
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [isOpen, companyName, jobTitle, autofillWorkExperienceAi]);
 
   useEffect(() => {
     workLocationSuggestOpenRef.current = workLocationSuggestOpen;
@@ -1097,7 +1233,10 @@ export default function WorkExperienceModal({
                   <input
                     type="text"
                     value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
+                    onChange={(e) => {
+                      setCompanyName(e.target.value);
+                      if (workExpAiError) setWorkExpAiError(null);
+                    }}
                     placeholder="e.g., TCS, Deloitte, Amazon"
                     className={inputClassName}
                   />
@@ -1397,12 +1536,29 @@ export default function WorkExperienceModal({
               <h3 className={sectionTitleClassName}>Company Details</h3>
               <div className="grid grid-cols-2 gap-5">
                 <div className="col-span-2 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Company Profile</label>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="block text-sm font-medium text-gray-700">Company Profile</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void autofillWorkExperienceAi({
+                          force: true,
+                          fillProfile: true,
+                          fillSkills: false,
+                        })
+                      }
+                      disabled={isGeneratingWorkExpAi || !companyName.trim()}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isGeneratingWorkExpAi ? 'Generating…' : 'Autofill with AI'}
+                    </button>
+                  </div>
                   <textarea
                     value={companyProfile}
                     onChange={(e) => setCompanyProfile(e.target.value)}
-                    placeholder="Brief description of the company..."
+                    placeholder="Brief description of the company (auto-filled from your CV and company name)..."
                     className={textareaClassName}
+                    rows={4}
                   />
                 </div>
                 <div className="col-span-2 space-y-2">
@@ -1464,7 +1620,35 @@ export default function WorkExperienceModal({
               <h3 className={sectionTitleClassName}>Skills & Documents</h3>
               <div className="grid grid-cols-2 gap-5">
                 <div className="col-span-2 space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">Skills Used</label>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="block text-sm font-medium text-gray-700">Skills Used</label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void autofillWorkExperienceAi({
+                          force: true,
+                          fillProfile: false,
+                          fillSkills: true,
+                        })
+                      }
+                      disabled={isGeneratingWorkExpAi || !companyName.trim()}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-800 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isGeneratingWorkExpAi ? 'Fetching…' : 'Suggest skills from CV'}
+                    </button>
+                  </div>
+                  {isGeneratingWorkExpAi ? (
+                    <p className="text-xs text-slate-500">
+                      Reading your CV and filling company profile & skills…
+                    </p>
+                  ) : null}
+                  {workExpAiError ? (
+                    <p className="text-xs text-amber-700">{workExpAiError}</p>
+                  ) : (
+                    <p className="text-xs text-slate-500">
+                      Skills and company profile auto-fill shortly after you enter the company name.
+                    </p>
+                  )}
                   <div className="grid grid-cols-12 gap-2">
                     <input
                       type="text"

@@ -11,6 +11,12 @@ import { API_BASE_URL, getApiBaseUrl } from '@/lib/api-base';
 import { useAuth } from '@/components/auth/AuthContext';
 import { getProfileDisplayFullName } from '@/components/dashboard/dashboard-utils';
 import {
+    getAvatarInitials,
+    getProfileInitials,
+    profileAvatarInitialsClass,
+    profileAvatarSurfaceClass,
+} from '@/lib/profile-avatar';
+import {
   getUnreadNotificationCount,
   NOTIFICATIONS_UPDATED_EVENT,
 } from '@/lib/notifications';
@@ -68,7 +74,12 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
     
     // Fallback to local state for specific completion logic if needed
     const [profileCompletion, setProfileCompletion] = useState<number | null>(null);
-    const [dashboardUser, setDashboardUser] = useState<{ name: string; email: string; photoUrl?: string | null } | null>(null);
+    const [dashboardUser, setDashboardUser] = useState<{
+        name: string;
+        email: string;
+        photoUrl?: string | null;
+        initials?: string;
+    } | null>(null);
     const [unreadCount, setUnreadCount] = useState<number>(0);
     const isActive = useCallback(
         (path: string) => {
@@ -138,10 +149,12 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                     if (profile.profileCompleteness != null) {
                         setProfileCompletion(profile.profileCompleteness);
                     }
+                    const displayName = getProfileDisplayFullName(profile);
                     setDashboardUser({
-                        name: getProfileDisplayFullName(profile),
+                        name: displayName,
                         email: profile.email || '',
                         photoUrl: resolveProfilePhotoUrl(profile.profilePhotoUrl),
+                        initials: getAvatarInitials(profile, displayName),
                     });
                 }
             }
@@ -165,6 +178,9 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                 name: prev?.name || user?.name || 'User',
                 email: prev?.email || user?.email || '',
                 photoUrl: detail.profilePhotoUrl,
+                initials:
+                    prev?.initials ||
+                    getProfileInitials(prev?.name || user?.name || 'User'),
             }));
         };
 
@@ -601,9 +617,12 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                                 setIsProfileModalOpen(!isProfileModalOpen);
                                                 setIsNotificationsModalOpen(false);
                                             }}
-                                            className="profile-button h-9 w-9 cursor-pointer overflow-hidden rounded-full bg-[#D6E2ED] flex items-center justify-center text-[15px] font-bold text-[#4A5E73] transition-transform active:scale-95"
+                                            className={`profile-button flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-white/70 bg-white/55 text-[13px] ring-1 ring-white/80 transition-transform active:scale-95 ${profileAvatarSurfaceClass} ${profileAvatarInitialsClass}`}
                                         >
-                                            {(dashboardUser?.name || user?.name || 'User').trim().charAt(0).toUpperCase()}
+                                            {dashboardUser?.initials ||
+                                                getProfileInitials(
+                                                    dashboardUser?.name || user?.name || 'User',
+                                                )}
                                         </button>
                                     </div>
                                 )}
@@ -658,6 +677,10 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                     setIsProfileModalOpen(false);
                 }}
                 profilePhotoUrl={dashboardUser?.photoUrl || user?.profilePhotoUrl || null}
+                profileInitials={
+                    dashboardUser?.initials ||
+                    getProfileInitials(dashboardUser?.name || user?.name || 'User')
+                }
                 userName={dashboardUser?.name || user?.name || ''}
                 userEmail={dashboardUser?.email || user?.email || ''}
                 profileCompletion={profileCompletion}

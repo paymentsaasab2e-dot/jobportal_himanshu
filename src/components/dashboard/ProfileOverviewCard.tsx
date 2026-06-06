@@ -12,10 +12,12 @@ import {
 import DashboardPanel from "./DashboardPanel";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import type { DashboardData } from "./dashboard-types";
+import { getProfileDisplayFullName } from "./dashboard-utils";
 import {
-  getProfileDisplayFullName,
-  isPortalPlaceholderFullName,
-} from "./dashboard-utils";
+  getAvatarInitials,
+  profileAvatarInitialsClass,
+  profileAvatarSurfaceClass,
+} from "@/lib/profile-avatar";
 
 interface ProfileOverviewCardProps {
   profile: DashboardData["profile"] | null;
@@ -47,38 +49,6 @@ function resolveProfileImage(
   const baseUrl = apiBaseUrl.replace("/api", "");
   const cleanPath = photoUrl.startsWith("/") ? photoUrl : `/${photoUrl}`;
   return `${baseUrl}${cleanPath}`;
-}
-
-function getProfileInitials(fullName?: string | null) {
-  const parts =
-    fullName
-      ?.trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2) || [];
-
-  if (parts.length === 0) return "UP";
-
-  const initials = parts
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-
-  return initials || "UP";
-}
-
-function getAvatarInitials(
-  profile: ProfileOverviewCardProps["profile"],
-  displayFullName: string
-) {
-  const raw = profile?.fullName?.trim() || "";
-  if (raw && !isPortalPlaceholderFullName(raw)) {
-    return getProfileInitials(raw);
-  }
-  const digits = String(profile?.whatsappNumber || "").replace(/\D/g, "");
-  if (digits.length >= 2) {
-    return digits.slice(-2).toUpperCase();
-  }
-  return getProfileInitials(displayFullName);
 }
 
 export default function ProfileOverviewCard({
@@ -137,7 +107,7 @@ export default function ProfileOverviewCard({
             <button
               type="button"
               onClick={() => setIsPhotoModalOpen(true)}
-              className={`group relative flex h-full w-full items-center justify-center overflow-hidden rounded-[28px] bg-[radial-gradient(circle_at_28%_22%,rgba(255,255,255,0.9),transparent_34%),linear-gradient(145deg,rgba(40,168,225,0.14),rgba(40,168,223,0.2))] shadow-[0_18px_34px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.88)] ${
+              className={`group relative flex h-full w-full items-center justify-center overflow-hidden rounded-[28px] ${profileAvatarSurfaceClass} shadow-[0_18px_34px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.88)] ${
                 profileImage ? "cursor-pointer" : ""
               }`}
               aria-label={profileImage ? "View profile photo" : "Manage profile photo"}
@@ -153,7 +123,7 @@ export default function ProfileOverviewCard({
                   />
                 </span>
               ) : (
-                <span className="flex h-full w-full items-center justify-center rounded-[28px] border border-white/70 bg-white/55 text-[24px] font-semibold uppercase tracking-[-0.04em] text-slate-600 ring-1 ring-white/80">
+                <span className={`flex h-full w-full items-center justify-center rounded-[28px] border border-white/70 bg-white/55 text-[24px] ring-1 ring-white/80 ${profileAvatarInitialsClass}`}>
                   {profileInitials}
                 </span>
               )}
