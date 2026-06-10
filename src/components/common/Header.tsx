@@ -81,6 +81,10 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
         initials?: string;
     } | null>(null);
     const [unreadCount, setUnreadCount] = useState<number>(0);
+    const isResumeStudioEditorRoute =
+        normalizedPath === '/lms/resume-builder/editor' ||
+        normalizedPath.startsWith('/lms/resume-builder/editor/');
+
     const isActive = useCallback(
         (path: string) => {
             if (path === '/candidate-dashboard') {
@@ -89,12 +93,19 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
             if (path === '/applications') {
                 return normalizedPath?.startsWith('/applications') || normalizedPath?.startsWith('/interviews');
             }
+            if (path === SERVICES_PATH) {
+                return (
+                    normalizedPath === SERVICES_PATH ||
+                    normalizedPath.startsWith(`${SERVICES_PATH}/`) ||
+                    isResumeStudioEditorRoute
+                );
+            }
             if (path === '/lms/courses') {
-                return normalizedPath?.startsWith('/lms');
+                return Boolean(normalizedPath?.startsWith('/lms') && !isResumeStudioEditorRoute);
             }
             return normalizedPath?.startsWith(path);
         },
-        [normalizedPath]
+        [normalizedPath, isResumeStudioEditorRoute]
     );
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

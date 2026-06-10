@@ -27,7 +27,8 @@ export default function GlobalHeader() {
         '/aboutus',
         '/contact',
         '/explore-jobs',
-        '/help'
+        '/help',
+        '/sa'
     ];
     const shouldHide = hideHeaderPaths.some(path => normalizedPath === path || normalizedPath.startsWith(path + '/'));
 

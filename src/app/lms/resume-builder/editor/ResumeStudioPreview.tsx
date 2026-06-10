@@ -304,7 +304,7 @@ export function ResumeStudioPreview({
       paperObserver.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, []);
+  }, [sections, template, activeSection]);
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -327,11 +327,10 @@ export function ResumeStudioPreview({
 
   const inlineScaledWidth = inlinePaperWidth * inlineScale;
   const inlineScaledHeight = inlinePaperHeight * inlineScale;
-  const inlineViewportHeight = Math.max(inlineScaledHeight + 12, 600);
 
   return (
     <>
-      <div className="flex h-full flex-col rounded-[2rem] border border-slate-200/80 bg-gradient-to-b from-slate-100 via-slate-50 to-white p-4 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.35)] sm:p-5">
+      <div className="flex flex-col rounded-[2rem] border border-slate-200/80 bg-gradient-to-b from-slate-100 via-slate-50 to-white p-4 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.35)] sm:p-5">
         <div className="mb-4 flex items-center justify-between gap-3 px-1">
           <div className="flex items-center gap-3">
              <div className="flex h-7 items-center rounded-lg bg-sky-600 px-3 text-[10px] font-black uppercase tracking-widest text-white shadow-sm">
@@ -355,7 +354,7 @@ export function ResumeStudioPreview({
           />
         </div>
 
-        <div className="flex flex-1 flex-col overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_28px_60px_-34px_rgba(15,23,42,0.25)]">
+        <div className="flex flex-col overflow-visible rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_28px_60px_-34px_rgba(15,23,42,0.25)]">
           <div className="border-b border-slate-100 bg-slate-50/80 px-5 py-3">
             <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
               <span className="font-semibold">Resume document</span>
@@ -372,13 +371,13 @@ export function ResumeStudioPreview({
 
           <div
             ref={inlineFrameRef}
-            className="flex-1 overflow-y-auto bg-[linear-gradient(180deg,#ffffff_0%,#ffffff_78%,#f8fafc_100%)] py-4"
+            className="overflow-visible bg-[linear-gradient(180deg,#ffffff_0%,#ffffff_78%,#f8fafc_100%)] py-4"
           >
             <div
               className="mx-auto"
               style={{
                 width: inlineScaledWidth,
-                minHeight: inlineScaledHeight,
+                height: inlineScaledHeight,
               }}
             >
               <ResumeDocumentPaper
