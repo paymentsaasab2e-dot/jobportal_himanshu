@@ -92,6 +92,13 @@ import {
   persistWorkExperienceEntry,
   resolveWorkExperiencesToPersist,
 } from '@/lib/work-experience-api';
+import { persistAcademicAchievementEntry } from '@/lib/academic-achievement-api';
+import { persistCompetitiveExamEntry } from '@/lib/competitive-exam-api';
+import { persistProjectEntry } from '@/lib/project-api';
+import {
+  normalizeCertificationsFromApi,
+  persistCertificationEntry,
+} from '@/lib/certification-api';
 import { persistInternshipEntry } from '@/lib/internship-api';
 import InternshipModal, { InternshipData } from '../../components/modals/InternshipModal';
 import EducationModal, { EducationData as EducationEntryData } from '../../components/modals/EducationModal';
@@ -315,6 +322,8 @@ export default function ProfilePage() {
   const [projectData, setProjectData] = useState<ProjectData[]>([]);
   const [portfolioLinksData, setPortfolioLinksData] = useState<PortfolioLinksData | undefined>();
   const [certificationsData, setCertificationsData] = useState<CertificationsData | undefined>();
+  const certificationsDataRef = useRef(certificationsData);
+  certificationsDataRef.current = certificationsData;
   const [accomplishmentsData, setAccomplishmentsData] = useState<AccomplishmentsData | undefined>();
   const [careerPreferencesData, setCareerPreferencesData] = useState<CareerPreferencesData | undefined>();
   const [visaWorkAuthorizationData, setVisaWorkAuthorizationData] = useState<VisaWorkAuthorizationData | undefined>();
@@ -356,6 +365,7 @@ export default function ProfilePage() {
   const [expandedCompetitiveExamId, setExpandedCompetitiveExamId] = useState<string | null>(null);
   const [editingCompetitiveExamId, setEditingCompetitiveExamId] = useState<string | null>(null);
   const [isCertificationCardExpanded, setIsCertificationCardExpanded] = useState<{ [key: string]: boolean }>({});
+  const [certificationModalMode, setCertificationModalMode] = useState<'add' | 'edit'>('edit');
   const [editingCertificationId, setEditingCertificationId] = useState<string | null>(null);
   const [isAccomplishmentCardExpanded, setIsAccomplishmentCardExpanded] = useState<{ [key: string]: boolean }>({});
   const [editingAccomplishmentId, setEditingAccomplishmentId] = useState<string | null>(null);
@@ -829,7 +839,8 @@ export default function ProfilePage() {
     // Preserve existing competitiveExamsData if not in response
 
     if (profileData.certifications !== undefined) {
-      setCertificationsData(profileData.certifications || undefined);
+      const certifications = normalizeCertificationsFromApi(profileData.certifications);
+      setCertificationsData({ certifications });
     }
     // Preserve existing certificationsData if not in response
 
@@ -1095,7 +1106,11 @@ export default function ProfilePage() {
         setIsProjectModalOpen(true);
       },
       openPortfolioLinks: () => setIsPortfolioLinksModalOpen(true),
-      openCertifications: () => setIsCertificationModalOpen(true),
+      openCertifications: () => {
+        setCertificationModalMode('add');
+        setEditingCertificationId(null);
+        setIsCertificationModalOpen(true);
+      },
       openAccomplishments: () => {
         setEditingAccomplishmentId(null);
         setIsAccomplishmentModalOpen(true);
@@ -1306,6 +1321,12 @@ export default function ProfilePage() {
     } else if (category === 'PROJECTS' && itemName === 'Portfolio Links') {
       setIsPortfolioLinksModalOpen(true);
     } else if (category === 'CERTIFICATIONS' && itemName === 'Certifications') {
+      setCertificationModalMode('edit');
+      setEditingCertificationId(
+        certificationsDataRef.current?.certifications?.[
+          (certificationsDataRef.current?.certifications?.length || 1) - 1
+        ]?.id ?? null,
+      );
       setIsCertificationModalOpen(true);
     } else if (category === 'CERTIFICATIONS' && itemName === 'Accomplishments') {
       setEditingAccomplishmentId(null);
@@ -1364,7 +1385,8 @@ export default function ProfilePage() {
     } else if (category === 'PROJECTS' && itemName === 'Portfolio Links') {
       setIsPortfolioLinksModalOpen(true);
     } else if (category === 'CERTIFICATIONS' && itemName === 'Certifications') {
-      setEditingCertificationId(null); // Clear edit ID for new entry
+      setCertificationModalMode('add');
+      setEditingCertificationId(null);
       setIsCertificationModalOpen(true);
     } else if (category === 'CERTIFICATIONS' && itemName === 'Accomplishments') {
       setEditingAccomplishmentId(null); // Clear edit ID for new entry
@@ -2841,12 +2863,14 @@ export default function ProfilePage() {
                               tabIndex={0}
                               onClick={(event) =>
                                 handleEditableCardClick(event, () => {
+                                  setCertificationModalMode('edit');
                                   setEditingCertificationId(cert.id ?? null);
                                   setIsCertificationModalOpen(true);
                                 })
                               }
                               onKeyDown={(event) =>
                                 handleEditableCardKeyDown(event, () => {
+                                  setCertificationModalMode('edit');
                                   setEditingCertificationId(cert.id ?? null);
                                   setIsCertificationModalOpen(true);
                                 })
@@ -2863,6 +2887,7 @@ export default function ProfilePage() {
                                   }))
                                 }
                                 onEdit={() => {
+                                  setCertificationModalMode('edit');
                                   setEditingCertificationId(cert.id ?? null);
                                   setIsCertificationModalOpen(true);
                                 }}
@@ -3744,6 +3769,8 @@ export default function ProfilePage() {
 
       <AcademicAchievementModal
         isOpen={isAcademicAchievementModalOpen}
+        mode={academicAchievementModalMode}
+        editingEntryId={editingAcademicAchievementId}
         onClose={() => {
           setIsAcademicAchievementModalOpen(false);
           setAcademicAchievementModalMode('edit');
@@ -3753,74 +3780,26 @@ export default function ProfilePage() {
           const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
-          try {
-            // Upload documents first if any
-            let documentUrls: string[] = [];
-            if (data.documents && data.documents.length > 0) {
-              const filesToUpload = data.documents.filter(doc => doc.file instanceof File);
-              if (filesToUpload.length > 0) {
-                const formData = new FormData();
-                filesToUpload.forEach(doc => {
-                  if (doc.file instanceof File) {
-                    formData.append('documents', doc.file);
-                  }
-                });
+          const entryId =
+            academicAchievementModalMode === 'edit'
+              ? editingAcademicAchievementId ||
+                academicAchievementData[academicAchievementData.length - 1]?.id ||
+                null
+              : null;
 
-                const uploadResponse = await fetch(`${API_BASE_URL}/profile/academic-achievement/documents/${candidateId}`, {
-                  method: 'POST',
-                  body: formData,
-                });
+          const savedEntries = await persistAcademicAchievementEntry(candidateId, data, {
+            entryId,
+          });
 
-                if (uploadResponse.ok) {
-                  const uploadData = await uploadResponse.json();
-                  documentUrls = uploadData.data?.documents?.map((doc: any) => doc.url) || [];
-                } else {
-                  throw new Error('Failed to upload documents');
-                }
-              }
-
-              // Include existing document URLs (from database)
-              const existingUrls = data.documents
-                .filter(doc => doc.url && !doc.file)
-                .map(doc => doc.url!)
-                .filter(Boolean);
-              documentUrls = [...documentUrls, ...existingUrls];
-            }
-
-            // Prepare academic achievement data with document URLs
-            const achievementData = {
-              ...data,
-              documents: documentUrls,
-            };
-            if (
-              academicAchievementModalMode === 'edit' &&
-              (editingAcademicAchievementId ||
-                academicAchievementData[academicAchievementData.length - 1]?.id)
-            ) {
-              achievementData.id =
-                editingAcademicAchievementId ||
-                academicAchievementData[academicAchievementData.length - 1]?.id;
-            }
-
-            const response = await fetch(`${API_BASE_URL}/profile/academic-achievement/${candidateId}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(achievementData),
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to save academic achievement');
-            }
-
-            await refreshProfileData(candidateId);
-          setIsAcademicAchievementModalOpen(false);
-          showAlert('Academic achievement saved');
-          } catch (error) {
-            console.error('Error saving academic achievement:', error);
-            showAlert(error instanceof Error ? error.message : 'Error saving academic achievement');
+          if (savedEntries.length) {
+            setAcademicAchievementData(savedEntries);
           }
+
+          await refreshProfileData(candidateId);
+          setIsAcademicAchievementModalOpen(false);
+          setAcademicAchievementModalMode('edit');
+          setEditingAcademicAchievementId(null);
+          showAlert('Academic achievement saved');
         }}
         initialData={
           academicAchievementModalMode === 'add'
@@ -3833,6 +3812,8 @@ export default function ProfilePage() {
 
       <CompetitiveExamsModal
         isOpen={isCompetitiveExamsModalOpen}
+        mode={competitiveExamsModalMode}
+        editingEntryId={editingCompetitiveExamId}
         onClose={() => {
           setIsCompetitiveExamsModalOpen(false);
           setCompetitiveExamsModalMode('edit');
@@ -3842,66 +3823,26 @@ export default function ProfilePage() {
           const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
-          try {
-            // Upload documents if there are any new files
-            let documentUrls: string[] = [];
-            if (data.documents && data.documents.length > 0) {
-              const filesToUpload = data.documents.filter(doc => doc.file);
-              const existingUrls = data.documents.filter(doc => doc.url && !doc.file).map(doc => doc.url!);
+          const entryId =
+            competitiveExamsModalMode === 'edit'
+              ? editingCompetitiveExamId ||
+                competitiveExamsData[competitiveExamsData.length - 1]?.id ||
+                null
+              : null;
 
-              if (filesToUpload.length > 0) {
-                const formData = new FormData();
-                filesToUpload.forEach(doc => {
-                  if (doc.file) {
-                    formData.append('documents', doc.file);
-                  }
-                });
+          const savedEntries = await persistCompetitiveExamEntry(candidateId, data, {
+            entryId,
+          });
 
-                const uploadResponse = await fetch(`${API_BASE_URL}/profile/competitive-exam/documents/${candidateId}`, {
-                  method: 'POST',
-                  body: formData,
-                });
+          if (savedEntries.length) {
+            setCompetitiveExamsData(savedEntries);
+          }
 
-                if (!uploadResponse.ok) {
-                  throw new Error('Failed to upload documents');
-                }
-
-                const uploadResult = await uploadResponse.json();
-                documentUrls = [...existingUrls, ...uploadResult.files];
-              } else {
-                documentUrls = existingUrls;
-              }
-            }
-
-            // Save the competitive exam data with document URLs
-            const saveData = {
-              ...data,
-              ...(competitiveExamsModalMode === 'edit' && editingCompetitiveExamId
-                ? { id: editingCompetitiveExamId }
-                : {}),
-              documents: documentUrls,
-            };
-
-            const response = await fetch(`${API_BASE_URL}/profile/competitive-exam/${candidateId}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(saveData),
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to save competitive exam');
-            }
-
-            await refreshProfileData(candidateId);
+          await refreshProfileData(candidateId);
           setIsCompetitiveExamsModalOpen(false);
+          setCompetitiveExamsModalMode('edit');
           setEditingCompetitiveExamId(null);
           showAlert('Competitive exam saved');
-          } catch (error) {
-            console.error('Error saving competitive exam:', error);
-            showAlert('Error saving competitive exam');
-          }
         }}
         initialData={
           competitiveExamsModalMode === 'add'
@@ -4019,6 +3960,8 @@ export default function ProfilePage() {
 
       <ProjectModal
         isOpen={isProjectModalOpen}
+        mode={projectModalMode}
+        editingEntryId={editingProjectId}
         onClose={() => {
           setIsProjectModalOpen(false);
           setProjectModalMode('edit');
@@ -4028,64 +3971,23 @@ export default function ProfilePage() {
           const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
-          try {
-            // Upload documents if there are any new files
-            let documentUrls: string[] = [];
-            if (data.documents && data.documents.length > 0) {
-              const filesToUpload = data.documents.filter(doc => doc.file);
-              const existingUrls = data.documents.filter(doc => doc.url && !doc.file).map(doc => doc.url!);
+          const entryId =
+            projectModalMode === 'edit'
+              ? editingProjectId || projectData[projectData.length - 1]?.id || null
+              : null;
 
-              if (filesToUpload.length > 0) {
-                const formData = new FormData();
-                filesToUpload.forEach(doc => {
-                  if (doc.file) {
-                    formData.append('documents', doc.file);
-                  }
-                });
+          const savedEntries = await persistProjectEntry(candidateId, data, { entryId });
 
-                const uploadResponse = await fetch(`${API_BASE_URL}/profile/project/documents/${candidateId}`, {
-                  method: 'POST',
-                  body: formData,
-                });
+          if (savedEntries.length) {
+            setProjectData(savedEntries);
+          }
 
-                if (uploadResponse.ok) {
-                  const uploadResult = await uploadResponse.json();
-                  documentUrls = [...existingUrls, ...uploadResult.files];
-                } else {
-                  throw new Error('Failed to upload documents');
-                }
-              } else {
-                documentUrls = existingUrls;
-              }
-            }
-
-            const response = await fetch(`${API_BASE_URL}/profile/project/${candidateId}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                ...data,
-                ...(projectModalMode === 'edit' && editingProjectId
-                  ? { id: editingProjectId }
-                  : {}),
-                documents: documentUrls,
-              }),
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to save project');
-            }
-
-            await refreshProfileData(candidateId);
+          await refreshProfileData(candidateId);
           setIsProjectModalOpen(false);
-          const wasEditingProject = editingProjectId;
+          const wasEditingProject = Boolean(entryId);
+          setProjectModalMode('edit');
           setEditingProjectId(null);
           showAlert(wasEditingProject ? 'Project updated' : 'Project saved');
-          } catch (error) {
-            console.error('Error saving project:', error);
-            showAlert('Error saving project');
-          }
         }}
         initialData={
           projectModalMode === 'add'
@@ -4207,107 +4109,58 @@ export default function ProfilePage() {
 
       <CertificationModal
         isOpen={isCertificationModalOpen}
+        mode={certificationModalMode}
         editingCertificationId={editingCertificationId}
         onClose={() => {
           setIsCertificationModalOpen(false);
+          setCertificationModalMode('edit');
           setEditingCertificationId(null);
         }}
-        onSave={async (data) => {
+        onSave={async (cert) => {
           const candidateId = getStoredCandidateId();
           if (!candidateId) return;
 
           try {
-            // Process each certification and upload documents
-            const existingCerts = certificationsData?.certifications ?? [];
-            let certificationsToPersist = data.certifications;
+            const entryId =
+              certificationModalMode === 'edit'
+                ? editingCertificationId ||
+                  certificationsDataRef.current?.certifications?.[
+                    (certificationsDataRef.current?.certifications?.length || 1) - 1
+                  ]?.id ||
+                  null
+                : null;
 
-            if (editingCertificationId) {
-              const updated = data.certifications.find((c) => c.id === editingCertificationId);
-              certificationsToPersist = updated
-                ? existingCerts.map((c) => (c.id === editingCertificationId ? updated : c))
-                : [...existingCerts, ...data.certifications];
-            } else {
-              const newOnes = data.certifications.filter(
-                (incoming) => !existingCerts.some((existing) => existing.id === incoming.id),
-              );
-              certificationsToPersist = [...existingCerts, ...newOnes];
-            }
-
-            const processedCertifications = await Promise.all(
-              certificationsToPersist.map(async (cert) => {
-                let documentUrls: string[] = [];
-                
-                // Upload new documents if any
-                if (cert.documents && cert.documents.length > 0) {
-                  const filesToUpload = cert.documents.filter(doc => doc.file instanceof File);
-                  if (filesToUpload.length > 0) {
-                    const formData = new FormData();
-                    filesToUpload.forEach(doc => {
-                      if (doc.file instanceof File) {
-                        formData.append('documents', doc.file);
-                      }
-                    });
-
-                    const uploadResponse = await fetch(`${API_BASE_URL}/profile/certification/documents/${candidateId}`, {
-                      method: 'POST',
-                      body: formData,
-                    });
-
-                    if (uploadResponse.ok) {
-                      const uploadResult = await uploadResponse.json();
-                      documentUrls = uploadResult.data?.documents?.map((d: any) => d.url) || [];
-                    } else {
-                      console.warn('Failed to upload documents, continuing without them');
-                    }
-                  }
-
-                  // Include existing URLs (from database)
-                  const existingUrls = cert.documents
-                    .filter(doc => typeof doc === 'string' || (typeof doc === 'object' && doc.url && !(doc.file instanceof File)))
-                    .map(doc => typeof doc === 'string' ? doc : (doc as any).url);
-                  documentUrls = [...documentUrls, ...existingUrls];
-                }
-
-                return {
-                  ...cert,
-                  certificateFile: serializeMaybeFile(cert.certificateFile),
-                  documents: documentUrls,
-                };
-              })
-            );
-
-            const payload = {
-              certifications: processedCertifications,
-            };
-
-            const response = await fetch(`${API_BASE_URL}/profile/certifications/${candidateId}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(payload),
+            const savedCerts = await persistCertificationEntry(candidateId, cert, {
+              existingCerts: certificationsDataRef.current?.certifications ?? [],
+              entryId,
             });
 
-            if (!response.ok) {
-              throw new Error('Failed to save certifications');
+            if (savedCerts.length) {
+              setCertificationsData({ certifications: savedCerts });
             }
 
             await refreshProfileData(candidateId);
             setIsCertificationModalOpen(false);
-            const wasEditing = editingCertificationId;
+            const wasEditing = Boolean(entryId);
+            setCertificationModalMode('edit');
             setEditingCertificationId(null);
             showAlert(wasEditing ? 'Certification updated' : 'Certification saved');
           } catch (error) {
             console.error('Error saving certifications:', error);
-            showAlert('Error saving certifications');
+            showAlert(
+              error instanceof Error ? error.message : 'Error saving certifications',
+            );
+            throw error;
           }
         }}
-        initialData={editingCertificationId ? (() => {
-          const certToEdit = certificationsData?.certifications?.find(
-            (c) => c.id === editingCertificationId,
-          );
-          return certToEdit ? { certifications: [certToEdit] } : undefined;
-        })() : undefined}
+        initialData={
+          certificationModalMode === 'add'
+            ? undefined
+            : certificationsData?.certifications?.find((c) => c.id === editingCertificationId) ||
+              certificationsData?.certifications?.[
+                (certificationsData?.certifications?.length || 1) - 1
+              ]
+        }
       />
 
       <AccomplishmentModal

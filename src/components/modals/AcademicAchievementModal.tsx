@@ -1,21 +1,23 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
-import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import { profileFieldClass, profileTextareaClass } from '@/lib/profile-modal-ui';
 import {
   downloadProfileDocumentItem,
   getProfileDocumentDisplayName,
   isStoredProfileDocument,
   openProfileDocumentInNewTab,
+  validateProfileDocumentFile,
 } from '@/lib/profile-documents';
 
 interface AcademicAchievementModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: AcademicAchievementData) => void;
+  onSave: (data: AcademicAchievementData) => void | Promise<void>;
   initialData?: AcademicAchievementData;
+  mode?: 'add' | 'edit';
+  editingEntryId?: string | null;
 }
 
 export interface AcademicAchievementDocument {
@@ -36,93 +38,127 @@ export interface AcademicAchievementData {
   documents?: AcademicAchievementDocument[];
 }
 
+function normalizeAcademicAchievementDocuments(
+  documents: AcademicAchievementData['documents'],
+): AcademicAchievementDocument[] {
+  return (documents || []).map((doc, index) => {
+    if (typeof doc === 'string') {
+      return {
+        id: `doc-${index}-${doc}`,
+        url: doc,
+        name: getProfileDocumentDisplayName(doc),
+      };
+    }
+    if (doc && typeof doc === 'object') {
+      const storedUrl =
+        typeof doc.url === 'string' && doc.url.trim()
+          ? doc.url
+          : typeof (doc as { file?: string }).file === 'string'
+            ? String((doc as { file?: string }).file)
+            : undefined;
+      return {
+        id: doc.id || `doc-${index}-${storedUrl || doc.name || 'document'}`,
+        file: doc.file instanceof File ? doc.file : undefined,
+        name: doc.name || (storedUrl ? getProfileDocumentDisplayName(storedUrl) : 'Document'),
+        url: storedUrl,
+        size: doc.size,
+      };
+    }
+    return {
+      id: `doc-${index}`,
+      name: 'Document',
+    };
+  });
+}
+
 export default function AcademicAchievementModal({
   isOpen,
   onClose,
   onSave,
   initialData,
+  mode = 'edit',
+  editingEntryId = null,
 }: AcademicAchievementModalProps) {
   const [achievementTitle, setAchievementTitle] = useState(initialData?.achievementTitle || '');
   const [awardedBy, setAwardedBy] = useState(initialData?.awardedBy || '');
   const [yearReceived, setYearReceived] = useState(initialData?.yearReceived || '');
   const [categoryType, setCategoryType] = useState(initialData?.categoryType || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [documents, setDocuments] = useState<AcademicAchievementDocument[]>(initialData?.documents || []);
+  const [documents, setDocuments] = useState<AcademicAchievementDocument[]>(
+    normalizeAcademicAchievementDocuments(initialData?.documents),
+  );
   const [dragActive, setDragActive] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sessionInitKeyRef = useRef<string | null>(null);
 
-  // Update values when initialData changes
+  const resetForm = useCallback(() => {
+    setAchievementTitle('');
+    setAwardedBy('');
+    setYearReceived('');
+    setCategoryType('');
+    setDescription('');
+    setDocuments([]);
+  }, []);
+
+  const populateFormFromAchievement = useCallback((data: AcademicAchievementData) => {
+    setAchievementTitle(data.achievementTitle || '');
+    setAwardedBy(data.awardedBy || '');
+    setYearReceived(data.yearReceived || '');
+    setCategoryType(data.categoryType || '');
+    setDescription(data.description || '');
+    setDocuments(normalizeAcademicAchievementDocuments(data.documents));
+  }, []);
+
+  // Initialize only when the drawer opens or the edited entry changes —
+  // not on every parent re-render (which used to wipe newly added documents).
   useEffect(() => {
-    if (initialData) {
-      setAchievementTitle(initialData.achievementTitle || '');
-      setAwardedBy(initialData.awardedBy || '');
-      setYearReceived(initialData.yearReceived || '');
-      setCategoryType(initialData.categoryType || '');
-      setDescription(initialData.description || '');
-
-      // Normalize documents to ensure they all have unique IDs
-      const normalizedDocuments: AcademicAchievementDocument[] = (initialData.documents || []).map((doc: any, index) => {
-        if (typeof doc === 'string') {
-          // If it's a string (URL from database), convert to object
-          return {
-            id: `doc-${Date.now()}-${index}`,
-            url: doc,
-            name: getProfileDocumentDisplayName(doc),
-          };
-        } else if (doc && typeof doc === 'object') {
-          // If it's already an object, ensure it has an id
-          return {
-            id: doc.id || `doc-${Date.now()}-${index}`,
-            file: doc.file,
-            name: doc.name || 'Document',
-            url: doc.url,
-            size: doc.size,
-          };
-        } else {
-          // Fallback for any other type
-          return {
-            id: `doc-${Date.now()}-${index}`,
-            name: 'Document',
-          };
-        }
-      });
-      setDocuments(normalizedDocuments);
-    } else {
-      // Clear all fields for "Add" mode
-      setAchievementTitle('');
-      setAwardedBy('');
-      setYearReceived('');
-      setCategoryType('');
-      setDescription('');
-      setDocuments([]);
+    if (!isOpen) {
+      sessionInitKeyRef.current = null;
+      return;
     }
-  }, [initialData, isOpen]);
+
+    const initKey =
+      mode === 'add' || !editingEntryId ? 'add' : `edit:${editingEntryId}`;
+    if (sessionInitKeyRef.current === initKey) {
+      return;
+    }
+    sessionInitKeyRef.current = initKey;
+
+    if (mode === 'add' || !editingEntryId || !initialData) {
+      resetForm();
+      return;
+    }
+
+    populateFormFromAchievement(initialData);
+  }, [isOpen, mode, editingEntryId, initialData, populateFormFromAchievement, resetForm]);
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
 
-    Array.from(files).forEach((file) => {
-      // Validate file type
-      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-      if (!allowedTypes.includes(file.type)) {
-        alert(`Invalid file type: ${file.name}. Only PDF, PNG, and JPG files are allowed.`);
-        return;
+    const nextDocs: AcademicAchievementDocument[] = [];
+    for (const file of Array.from(files)) {
+      const validation = validateProfileDocumentFile(file);
+      if (!validation.ok) {
+        alert(validation.message);
+        continue;
       }
 
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        alert(`File too large: ${file.name}. Maximum size is 5MB.`);
-        return;
-      }
-
-      const newDoc: AcademicAchievementDocument = {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      nextDocs.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         file,
         name: file.name,
         size: file.size,
-      };
-      setDocuments((prev) => [...prev, newDoc]);
-    });
+      });
+    }
+
+    if (nextDocs.length > 0) {
+      setDocuments((prev) => [...prev, ...nextDocs]);
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleRemoveFile = (id: string) => {
@@ -153,7 +189,7 @@ export default function AcademicAchievementModal({
     handleFileSelect(e.dataTransfer.files);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const hasAnyFormData = Boolean(
       achievementTitle.trim() ||
         awardedBy.trim() ||
@@ -168,15 +204,25 @@ export default function AcademicAchievementModal({
       return;
     }
 
-    onSave({
-      achievementTitle: achievementTitle.trim(),
-      awardedBy: awardedBy.trim(),
-      yearReceived,
-      categoryType,
-      description: description.trim(),
-      documents: documents.length > 0 ? documents : undefined,
-    });
-    onClose();
+    setIsSaving(true);
+    try {
+      await onSave({
+        achievementTitle: achievementTitle.trim(),
+        awardedBy: awardedBy.trim(),
+        yearReceived,
+        categoryType,
+        description: description.trim(),
+        documents: documents.length > 0 ? documents : undefined,
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error saving academic achievement:', error);
+      alert(
+        error instanceof Error ? error.message : 'Error saving academic achievement. Please try again.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const inputClassName = profileFieldClass();
@@ -207,10 +253,11 @@ export default function AcademicAchievementModal({
             Cancel
           </button>
           <button
-            onClick={handleSave}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
+            onClick={() => void handleSave()}
+            disabled={isSaving}
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Save Achievement
+            {isSaving ? 'Saving…' : 'Save Achievement'}
           </button>
         </div>
       )}

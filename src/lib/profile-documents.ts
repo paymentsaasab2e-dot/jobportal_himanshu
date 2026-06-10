@@ -139,11 +139,16 @@ export function normalizeProfileDocuments(
   });
 }
 
+function isAllowedProfileDocumentMimeOrExtension(file: File): boolean {
+  if (ALLOWED_TYPES.includes(file.type)) return true;
+  return /\.(pdf|png|jpe?g)$/i.test(file.name);
+}
+
 export function validateProfileDocumentFile(
   file: File,
   maxSizeMb = 5,
 ): { ok: true } | { ok: false; message: string } {
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (!isAllowedProfileDocumentMimeOrExtension(file)) {
     return { ok: false, message: `${file.name}: Please upload a PDF, PNG, or JPG file.` };
   }
   if (file.size > maxSizeMb * 1024 * 1024) {
