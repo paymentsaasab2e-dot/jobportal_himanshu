@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
@@ -10,13 +10,16 @@ import {
   getProfileDocumentDisplayName,
   isStoredProfileDocument,
   openProfileDocumentInNewTab,
+  validateProfileDocumentFile,
 } from '@/lib/profile-documents';
 
 interface CompetitiveExamsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: CompetitiveExamsData) => void;
+  onSave: (data: CompetitiveExamsData) => void | Promise<void>;
   initialData?: CompetitiveExamsData;
+  mode?: 'add' | 'edit';
+  editingEntryId?: string | null;
 }
 
 export interface CompetitiveExamDocument {
@@ -39,13 +42,48 @@ export interface CompetitiveExamsData {
   documents?: CompetitiveExamDocument[];
 }
 
+function normalizeCompetitiveExamDocuments(
+  documents: CompetitiveExamsData['documents'],
+): CompetitiveExamDocument[] {
+  return (documents || []).map((doc, index) => {
+    if (typeof doc === 'string') {
+      return {
+        id: `doc-${index}-${doc}`,
+        url: doc,
+        name: getProfileDocumentDisplayName(doc),
+      };
+    }
+    if (doc && typeof doc === 'object') {
+      const storedUrl =
+        typeof doc.url === 'string' && doc.url.trim()
+          ? doc.url
+          : typeof (doc as { file?: string }).file === 'string'
+            ? String((doc as { file?: string }).file)
+            : undefined;
+      return {
+        id: doc.id || `doc-${index}-${storedUrl || doc.name || 'document'}`,
+        file: doc.file instanceof File ? doc.file : undefined,
+        name: doc.name || (storedUrl ? getProfileDocumentDisplayName(storedUrl) : 'Document'),
+        url: storedUrl,
+        size: doc.size,
+      };
+    }
+    return {
+      id: `doc-${index}`,
+      name: 'Document',
+    };
+  });
+}
+
 export default function CompetitiveExamsModal({
   isOpen,
   onClose,
   onSave,
   initialData,
+  mode = 'edit',
+  editingEntryId = null,
 }: CompetitiveExamsModalProps) {
-  const isEditMode = Boolean(initialData);
+  const isEditMode = mode === 'edit' && Boolean(initialData);
   const [examName, setExamName] = useState(initialData?.examName || '');
   const [yearTaken, setYearTaken] = useState(initialData?.yearTaken || '');
   const [resultStatus, setResultStatus] = useState(initialData?.resultStatus || '');
@@ -53,84 +91,88 @@ export default function CompetitiveExamsModal({
   const [scoreType, setScoreType] = useState(initialData?.scoreType || '');
   const [validUntil, setValidUntil] = useState(initialData?.validUntil || '');
   const [additionalNotes, setAdditionalNotes] = useState(initialData?.additionalNotes || '');
-  const [documents, setDocuments] = useState<CompetitiveExamDocument[]>(initialData?.documents || []);
+  const [documents, setDocuments] = useState<CompetitiveExamDocument[]>(
+    normalizeCompetitiveExamDocuments(initialData?.documents),
+  );
   const [dragActive, setDragActive] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sessionInitKeyRef = useRef<string | null>(null);
 
-  // Update values when initialData changes
+  const resetForm = useCallback(() => {
+    setExamName('');
+    setYearTaken('');
+    setResultStatus('');
+    setScoreMarks('');
+    setScoreType('');
+    setValidUntil('');
+    setAdditionalNotes('');
+    setDocuments([]);
+  }, []);
+
+  const populateFormFromExam = useCallback((data: CompetitiveExamsData) => {
+    setExamName(data.examName || '');
+    setYearTaken(data.yearTaken || '');
+    setResultStatus(data.resultStatus || '');
+    setScoreMarks(data.scoreMarks || '');
+    setScoreType(data.scoreType || '');
+    setValidUntil(data.validUntil || '');
+    setAdditionalNotes(data.additionalNotes || '');
+    setDocuments(normalizeCompetitiveExamDocuments(data.documents));
+  }, []);
+
+  // Initialize only when the drawer opens or the edited entry changes —
+  // not on every parent re-render (which used to wipe newly added documents).
   useEffect(() => {
-    if (initialData) {
-      setExamName(initialData.examName || '');
-      setYearTaken(initialData.yearTaken || '');
-      setResultStatus(initialData.resultStatus || '');
-      setScoreMarks(initialData.scoreMarks || '');
-      setScoreType(initialData.scoreType || '');
-      setValidUntil(initialData.validUntil || '');
-      setAdditionalNotes(initialData.additionalNotes || '');
-      // Normalize documents to ensure each has a unique id
-      if (initialData.documents) {
-        const normalizedDocs = initialData.documents.map((doc: string | { id?: string; name?: string; url?: string; file?: File; size?: number }, index) => {
-          if (typeof doc === 'string') {
-            return {
-              id: `doc-${index}-${Date.now()}`,
-              name: getProfileDocumentDisplayName(doc),
-              url: doc,
-            };
-          }
-          return {
-            id: doc.id || `doc-${index}-${Date.now()}`,
-            name: doc.name || 'Document',
-            url: doc.url,
-            file: doc.file,
-            size: doc.size,
-          };
-        });
-        setDocuments(normalizedDocs);
-      } else {
-        setDocuments([]);
-      }
-    } else {
-      // Clear all fields for "Add" mode
-      setExamName('');
-      setYearTaken('');
-      setResultStatus('');
-      setScoreMarks('');
-      setScoreType('');
-      setValidUntil('');
-      setAdditionalNotes('');
-      setDocuments([]);
+    if (!isOpen) {
+      sessionInitKeyRef.current = null;
+      return;
     }
-  }, [initialData, isOpen]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
+    const initKey = mode === 'add' || !editingEntryId ? 'add' : `edit:${editingEntryId}`;
+    if (sessionInitKeyRef.current === initKey) {
+      return;
+    }
+    sessionInitKeyRef.current = initKey;
 
-    Array.from(e.target.files).forEach((file) => {
-      // Validate file type
-      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-      if (!allowedTypes.includes(file.type)) {
-        alert(`Invalid file type: ${file.name}. Only PDF, PNG, and JPG files are allowed.`);
-        return;
+    if (mode === 'add' || !editingEntryId || !initialData) {
+      resetForm();
+      return;
+    }
+
+    populateFormFromExam(initialData);
+  }, [isOpen, mode, editingEntryId, initialData, populateFormFromExam, resetForm]);
+
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files) return;
+
+    const nextDocs: CompetitiveExamDocument[] = [];
+    for (const file of Array.from(files)) {
+      const validation = validateProfileDocumentFile(file);
+      if (!validation.ok) {
+        alert(validation.message);
+        continue;
       }
 
-      // Validate file size (10MB max)
-      if (file.size > 10 * 1024 * 1024) {
-        alert(`File too large: ${file.name}. Maximum size is 10MB.`);
-        return;
-      }
-
-      const newDoc: CompetitiveExamDocument = {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      nextDocs.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         file,
         name: file.name,
         size: file.size,
-      };
-      setDocuments([...documents, newDoc]);
-    });
+      });
+    }
+
+    if (nextDocs.length > 0) {
+      setDocuments((prev) => [...prev, ...nextDocs]);
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleRemoveFile = (id: string) => {
-    setDocuments(documents.filter((doc) => doc.id !== id));
+    setDocuments((prev) => prev.filter((doc) => doc.id !== id));
   };
 
   const handleDragEnter = (e: React.DragEvent) => {
@@ -154,34 +196,10 @@ export default function CompetitiveExamsModal({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
-    if (!e.dataTransfer.files) return;
-
-    Array.from(e.dataTransfer.files).forEach((file) => {
-      // Validate file type
-      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-      if (!allowedTypes.includes(file.type)) {
-        alert(`Invalid file type: ${file.name}. Only PDF, PNG, and JPG files are allowed.`);
-        return;
-      }
-
-      // Validate file size (10MB max)
-      if (file.size > 10 * 1024 * 1024) {
-        alert(`File too large: ${file.name}. Maximum size is 10MB.`);
-        return;
-      }
-
-      const newDoc: CompetitiveExamDocument = {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        file,
-        name: file.name,
-        size: file.size,
-      };
-      setDocuments([...documents, newDoc]);
-    });
+    handleFileSelect(e.dataTransfer.files);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const hasAnyFormData = Boolean(
       examName.trim() ||
         yearTaken ||
@@ -198,17 +216,28 @@ export default function CompetitiveExamsModal({
       return;
     }
 
-    onSave({
-      examName: examName.trim(),
-      yearTaken,
-      resultStatus,
-      scoreMarks: scoreMarks.trim(),
-      scoreType,
-      validUntil,
-      additionalNotes: additionalNotes.trim(),
-      documents,
-    });
-    onClose();
+    setIsSaving(true);
+    try {
+      await onSave({
+        id: initialData?.id ?? editingEntryId ?? undefined,
+        examName: examName.trim(),
+        yearTaken,
+        resultStatus,
+        scoreMarks: scoreMarks.trim(),
+        scoreType,
+        validUntil,
+        additionalNotes: additionalNotes.trim(),
+        documents: documents.length > 0 ? documents : undefined,
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error saving competitive exam:', error);
+      alert(
+        error instanceof Error ? error.message : 'Error saving competitive exam. Please try again.',
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const inputClassName = profileFieldClass();
@@ -239,10 +268,11 @@ export default function CompetitiveExamsModal({
             Cancel
           </button>
           <button
-            onClick={handleSave}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
+            onClick={() => void handleSave()}
+            disabled={isSaving}
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isEditMode ? 'Update Exam' : 'Save Exam'}
+            {isSaving ? 'Saving...' : isEditMode ? 'Update Exam' : 'Save Exam'}
           </button>
         </div>
       )}
@@ -413,7 +443,7 @@ export default function CompetitiveExamsModal({
             type="file"
             multiple
             accept=".pdf,.png,.jpg,.jpeg"
-            onChange={handleFileSelect}
+            onChange={(e) => handleFileSelect(e.target.files)}
             className="hidden"
           />
           <div

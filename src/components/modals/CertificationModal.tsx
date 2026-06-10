@@ -13,8 +13,9 @@ import {
 interface CertificationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: CertificationsData) => void;
-  initialData?: CertificationsData;
+  onSave: (cert: Certification) => void | Promise<void>;
+  initialData?: Certification;
+  mode?: 'add' | 'edit';
   editingCertificationId?: string | null;
 }
 
@@ -103,9 +104,10 @@ export default function CertificationModal({
   onClose,
   onSave,
   initialData,
+  mode = 'edit',
   editingCertificationId,
 }: CertificationModalProps) {
-  const [certifications, setCertifications] = useState<Certification[]>(initialData?.certifications || []);
+  const isEditMode = mode === 'edit' && Boolean(initialData);
   const [certificationName, setCertificationName] = useState('');
   const [issuingOrganization, setIssuingOrganization] = useState('');
   const [issueDate, setIssueDate] = useState('');
@@ -118,6 +120,7 @@ export default function CertificationModal({
   const [documents, setDocuments] = useState<CertificationDocument[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [editingCertId, setEditingCertId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Error states
   const [errors, setErrors] = useState({
@@ -191,24 +194,13 @@ export default function CertificationModal({
     }
     sessionInitKeyRef.current = initKey;
 
-    if (!editingCertificationId) {
-      setCertifications([]);
+    if (!editingCertificationId || !initialData) {
       resetForm();
       return;
     }
 
-    const certToEdit =
-      initialData?.certifications?.find((c) => c.id === editingCertificationId) ??
-      initialData?.certifications?.[0];
-
-    if (certToEdit) {
-      setCertifications([certToEdit]);
-      populateFormFromCert(certToEdit);
-    } else {
-      setCertifications([]);
-      resetForm();
-    }
-  }, [isOpen, editingCertificationId, initialData?.certifications?.[0]?.id]);
+    populateFormFromCert(initialData);
+  }, [isOpen, editingCertificationId, initialData?.id]);
 
   const validateForm = (): boolean => {
     const newErrors = {
@@ -347,35 +339,7 @@ export default function CertificationModal({
       certificateFile,
   );
 
-  const handleAddCertification = () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    const newCertification = buildCertificationFromForm();
-
-    if (editingCertId) {
-      // Update existing certification
-      setCertifications(certifications.map(cert =>
-        cert.id === editingCertId ? newCertification : cert
-      ));
-    } else {
-      // Add new certification
-      setCertifications([...certifications, newCertification]);
-    }
-
-    resetForm();
-  };
-
-  const handleEditCertification = (cert: Certification) => {
-    populateFormFromCert(cert);
-  };
-
-  const handleDeleteCertification = (certId: string) => {
-    setCertifications(certifications.filter(cert => cert.id !== certId));
-  };
-
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingCertId && !editingCertificationId && !hasFormValues) {
       onClose();
       return;
@@ -384,24 +348,17 @@ export default function CertificationModal({
       return;
     }
 
-    const formCertification = buildCertificationFromForm();
-    const activeEditId = editingCertId || editingCertificationId;
-    let certificationsToSave = [...certifications];
-
-    if (activeEditId) {
-      const existingIndex = certificationsToSave.findIndex((cert) => cert.id === activeEditId);
-      const updated = { ...formCertification, id: activeEditId };
-      if (existingIndex >= 0) {
-        certificationsToSave[existingIndex] = updated;
-      } else {
-        certificationsToSave.push(updated);
-      }
-    } else {
-      certificationsToSave.push(formCertification);
+    setIsSaving(true);
+    try {
+      const activeEditId = editingCertId || editingCertificationId;
+      const formCertification = buildCertificationFromForm();
+      await onSave(
+        activeEditId ? { ...formCertification, id: activeEditId } : formCertification,
+      );
+      onClose();
+    } finally {
+      setIsSaving(false);
     }
-
-    onSave({ certifications: certificationsToSave });
-    onClose();
   };
 
   if (!isOpen) return null;
@@ -410,7 +367,7 @@ export default function CertificationModal({
     <ProfileDrawer
       isOpen={isOpen}
       onClose={onClose}
-      title={editingCertId ? 'Edit Certification' : 'Add Certification'}
+      title={isEditMode || editingCertId ? 'Edit Certification' : 'Add Certification'}
       widthClassName="w-full md:w-[50vw] md:max-w-[50vw]"
       footer={(
         <div className="flex justify-end gap-3">
@@ -422,10 +379,11 @@ export default function CertificationModal({
           </button>
           <button
             type="button"
-            onClick={handleSave}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600"
+            onClick={() => void handleSave()}
+            disabled={isSaving}
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Save Certification
+            {isSaving ? 'Saving...' : 'Save Certification'}
           </button>
         </div>
       )}

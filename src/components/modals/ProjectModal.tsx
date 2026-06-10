@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 import { API_ORIGIN, resolveDocumentUrl } from '@/lib/api-base';
 import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
@@ -10,13 +10,16 @@ import {
   getProfileDocumentDisplayName,
   isStoredProfileDocument,
   openProfileDocumentInNewTab,
+  validateProfileDocumentFile,
 } from '@/lib/profile-documents';
 
 interface ProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: ProjectData) => void;
+  onSave: (data: ProjectData) => void | Promise<void>;
   initialData?: ProjectData;
+  mode?: 'add' | 'edit';
+  editingEntryId?: string | null;
 }
 
 export interface ProjectDocument {
@@ -53,13 +56,46 @@ const PROJECT_TYPES = [
   'Other'
 ];
 
+function normalizeProjectDocuments(documents: ProjectData['documents']): ProjectDocument[] {
+  return (documents || []).map((doc, index) => {
+    if (typeof doc === 'string') {
+      return {
+        id: `doc-${index}-${doc}`,
+        url: doc,
+        name: getProfileDocumentDisplayName(doc),
+      };
+    }
+    if (doc && typeof doc === 'object') {
+      const storedUrl =
+        typeof doc.url === 'string' && doc.url.trim()
+          ? doc.url
+          : typeof (doc as { file?: string }).file === 'string'
+            ? String((doc as { file?: string }).file)
+            : undefined;
+      return {
+        id: doc.id || `doc-${index}-${storedUrl || doc.name || 'document'}`,
+        file: doc.file instanceof File ? doc.file : undefined,
+        name: doc.name || (storedUrl ? getProfileDocumentDisplayName(storedUrl) : 'Document'),
+        url: storedUrl,
+        size: doc.size,
+      };
+    }
+    return {
+      id: `doc-${index}`,
+      name: 'Document',
+    };
+  });
+}
+
 export default function ProjectModal({
   isOpen,
   onClose,
   onSave,
   initialData,
+  mode = 'edit',
+  editingEntryId = null,
 }: ProjectModalProps) {
-  const isEditMode = Boolean(initialData);
+  const isEditMode = mode === 'edit' && Boolean(initialData);
   const [projectTitle, setProjectTitle] = useState(initialData?.projectTitle || '');
   const [projectType, setProjectType] = useState(initialData?.projectType || '');
   const [organizationClient, setOrganizationClient] = useState(initialData?.organizationClient || '');
@@ -72,68 +108,73 @@ export default function ProjectModal({
   const [technologies, setTechnologies] = useState<string[]>(initialData?.technologies || []);
   const [projectOutcome, setProjectOutcome] = useState(initialData?.projectOutcome || '');
   const [projectLink, setProjectLink] = useState(initialData?.projectLink || '');
-  const [documents, setDocuments] = useState<ProjectDocument[]>([]);
+  const [documents, setDocuments] = useState<ProjectDocument[]>(
+    normalizeProjectDocuments(initialData?.documents),
+  );
   const [dragActive, setDragActive] = useState(false);
   const [validationError, setValidationError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sessionInitKeyRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    // Normalize documents to ensure each has a unique id
-    if (initialData?.documents && Array.isArray(initialData.documents)) {
-      const normalizedDocs = initialData.documents.map((doc: any, index: number) => {
-        if (typeof doc === 'string') {
-          return {
-            id: `doc-${index}-${Date.now()}`,
-            name: getProfileDocumentDisplayName(doc),
-            url: doc,
-          };
-        }
-        return {
-          id: doc.id || `doc-${index}-${Date.now()}`,
-          name: doc.name || 'Document',
-          url: doc.url,
-          file: doc.file,
-          size: doc.size,
-        };
-      });
-      setDocuments(normalizedDocs);
-    } else {
-      setDocuments([]);
-    }
-  }, [initialData, isOpen]);
-
-  useEffect(() => {
-    if (initialData) {
-      setProjectTitle(initialData.projectTitle || '');
-      setProjectType(initialData.projectType || '');
-      setOrganizationClient(initialData.organizationClient || '');
-      setCurrentlyWorking(initialData.currentlyWorking ?? false);
-      setStartDate(initialData.startDate || '');
-      setEndDate(initialData.endDate || '');
-      setProjectDescription(initialData.projectDescription || '');
-      setResponsibilities(initialData.responsibilities || '');
-      setTechnologies(initialData.technologies || []);
-      setProjectOutcome(initialData.projectOutcome || '');
-      setProjectLink(initialData.projectLink || '');
-    } else {
-      // Reset all fields when initialData is undefined (Add mode)
-      setProjectTitle('');
-      setProjectType('');
-      setOrganizationClient('');
-      setCurrentlyWorking(false);
-      setStartDate('');
-      setEndDate('');
-      setProjectDescription('');
-      setResponsibilities('');
-      setTechnologies([]);
-      setProjectOutcome('');
-      setProjectLink('');
-      setDocuments([]);
-    }
+  const resetForm = useCallback(() => {
+    setProjectTitle('');
+    setProjectType('');
+    setOrganizationClient('');
+    setCurrentlyWorking(false);
+    setStartDate('');
+    setEndDate('');
+    setProjectDescription('');
+    setResponsibilities('');
+    setTechnologiesInput('');
+    setTechnologies([]);
+    setProjectOutcome('');
+    setProjectLink('');
+    setDocuments([]);
     setValidationError('');
     setFieldErrors({});
-  }, [initialData, isOpen]);
+  }, []);
+
+  const populateFormFromProject = useCallback((data: ProjectData) => {
+    setProjectTitle(data.projectTitle || '');
+    setProjectType(data.projectType || '');
+    setOrganizationClient(data.organizationClient || '');
+    setCurrentlyWorking(data.currentlyWorking ?? false);
+    setStartDate(data.startDate || '');
+    setEndDate(data.endDate || '');
+    setProjectDescription(data.projectDescription || '');
+    setResponsibilities(data.responsibilities || '');
+    setTechnologiesInput('');
+    setTechnologies(data.technologies || []);
+    setProjectOutcome(data.projectOutcome || '');
+    setProjectLink(data.projectLink || '');
+    setDocuments(normalizeProjectDocuments(data.documents));
+    setValidationError('');
+    setFieldErrors({});
+  }, []);
+
+  // Initialize only when the drawer opens or the edited entry changes —
+  // not on every parent re-render (which used to wipe newly added documents).
+  useEffect(() => {
+    if (!isOpen) {
+      sessionInitKeyRef.current = null;
+      return;
+    }
+
+    const initKey = mode === 'add' || !editingEntryId ? 'add' : `edit:${editingEntryId}`;
+    if (sessionInitKeyRef.current === initKey) {
+      return;
+    }
+    sessionInitKeyRef.current = initKey;
+
+    if (mode === 'add' || !editingEntryId || !initialData) {
+      resetForm();
+      return;
+    }
+
+    populateFormFromProject(initialData);
+  }, [isOpen, mode, editingEntryId, initialData, populateFormFromProject, resetForm]);
 
   useEffect(() => {
     if (currentlyWorking && endDate) {
@@ -155,31 +196,32 @@ export default function ProjectModal({
     setTechnologies(technologies.filter((_, i) => i !== index));
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files) return;
 
-    Array.from(e.target.files).forEach((file) => {
-      // Validate file type
-      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-      if (!allowedTypes.includes(file.type)) {
-        alert(`Invalid file type: ${file.name}. Only PDF, PNG, and JPG files are allowed.`);
-        return;
+    const nextDocs: ProjectDocument[] = [];
+    for (const file of Array.from(files)) {
+      const validation = validateProfileDocumentFile(file);
+      if (!validation.ok) {
+        alert(validation.message);
+        continue;
       }
 
-      // Validate file size (10MB max)
-      if (file.size > 10 * 1024 * 1024) {
-        alert(`File too large: ${file.name}. Maximum size is 10MB.`);
-        return;
-      }
-
-      const newDoc: ProjectDocument = {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      nextDocs.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         file,
         name: file.name,
         size: file.size,
-      };
-      setDocuments(prev => [...prev, newDoc]);
-    });
+      });
+    }
+
+    if (nextDocs.length > 0) {
+      setDocuments((prev) => [...prev, ...nextDocs]);
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleRemoveFile = (docId: string) => {
@@ -210,31 +252,10 @@ export default function ProjectModal({
 
     if (!e.dataTransfer.files) return;
 
-    Array.from(e.dataTransfer.files).forEach((file) => {
-      // Validate file type
-      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-      if (!allowedTypes.includes(file.type)) {
-        alert(`Invalid file type: ${file.name}. Only PDF, PNG, and JPG files are allowed.`);
-        return;
-      }
-
-      // Validate file size (10MB max)
-      if (file.size > 10 * 1024 * 1024) {
-        alert(`File too large: ${file.name}. Maximum size is 10MB.`);
-        return;
-      }
-
-      const newDoc: ProjectDocument = {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        file,
-        name: file.name,
-        size: file.size,
-      };
-      setDocuments(prev => [...prev, newDoc]);
-    });
+    handleFileSelect(e.dataTransfer.files);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const hasAnyFormData = Boolean(
       projectTitle.trim() ||
         projectType.trim() ||
@@ -282,21 +303,36 @@ export default function ProjectModal({
     setFieldErrors({});
     setValidationError('');
 
-    onSave({
-      projectTitle: projectTitle.trim(),
-      projectType,
-      organizationClient: organizationClient.trim(),
-      currentlyWorking,
-      startDate,
-      endDate,
-      projectDescription: projectDescription.trim(),
-      responsibilities: responsibilities.trim(),
-      technologies,
-      projectOutcome: projectOutcome.trim(),
-      projectLink: projectLink.trim(),
-      documents,
-    });
-    onClose();
+    const finalTechnologies = [...technologies];
+    const pendingTechnology = technologiesInput.trim();
+    if (pendingTechnology && !finalTechnologies.includes(pendingTechnology)) {
+      finalTechnologies.push(pendingTechnology);
+    }
+
+    setIsSaving(true);
+    try {
+      await onSave({
+        id: initialData?.id ?? editingEntryId ?? undefined,
+        projectTitle: projectTitle.trim(),
+        projectType,
+        organizationClient: organizationClient.trim(),
+        currentlyWorking,
+        startDate,
+        endDate,
+        projectDescription: projectDescription.trim(),
+        responsibilities: responsibilities.trim(),
+        technologies: finalTechnologies,
+        projectOutcome: projectOutcome.trim(),
+        projectLink: projectLink.trim(),
+        documents: documents.length > 0 ? documents : undefined,
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error saving project:', error);
+      alert(error instanceof Error ? error.message : 'Error saving project. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const inputClassName = profileFieldClass();
@@ -320,10 +356,11 @@ export default function ProjectModal({
             Cancel
           </button>
           <button
-            onClick={handleSave}
-            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-gray-300"
+            onClick={() => void handleSave()}
+            disabled={isSaving}
+            className="h-10 rounded-lg bg-orange-500 px-5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isEditMode ? 'Update Project' : 'Save Project'}
+            {isSaving ? 'Saving...' : isEditMode ? 'Update Project' : 'Save Project'}
           </button>
         </div>
       )}
@@ -570,7 +607,7 @@ export default function ProjectModal({
             type="file"
             multiple
             accept=".pdf,.png,.jpg,.jpeg"
-            onChange={handleFileSelect}
+            onChange={(e) => handleFileSelect(e.target.files)}
             className="hidden"
           />
           <div
