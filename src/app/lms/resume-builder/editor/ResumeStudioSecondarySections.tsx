@@ -385,7 +385,7 @@ export function ResumeStudioLayoutSection({
       onToggleCollapse={onToggleCollapse}
       sectionRef={sectionRef}
     >
-      <div className="grid grid-cols-2 gap-4 py-2">
+      <div className="grid grid-cols-2 gap-2 py-1">
         {TEMPLATE_OPTIONS.map((option) => {
           const selected = currentTemplate === option.id;
 
@@ -394,32 +394,37 @@ export function ResumeStudioLayoutSection({
               key={option.id}
               type="button"
               onClick={() => onSelectTemplate(option.id, option.label)}
-              className={`group flex min-w-[140px] max-w-[180px] flex-1 flex-col rounded-[2.2rem] border p-2 text-center transition-all duration-300 ${
+              className={`group flex w-full min-w-0 flex-col rounded-xl border p-1.5 text-center transition-all duration-300 ${
                 selected
-                  ? 'border-sky-400 bg-sky-50 shadow-[0_20px_40px_-24px_rgba(40,168,225,0.45)]'
+                  ? 'border-sky-400 bg-sky-50 shadow-[0_12px_24px_-18px_rgba(40,168,225,0.45)]'
                   : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
-              <div className={`relative aspect-[4/5] w-full overflow-hidden rounded-[1.8rem] border border-slate-100/90 bg-white transition-all duration-300 ${
-                selected ? 'ring-2 ring-sky-100' : 'group-hover:scale-[0.98]'
-              }`}>
-                <div className="absolute inset-0 origin-top-left scale-[0.16] pointer-events-none">
-                   <div className="w-[840px]">
-                      <ResumeDocumentPaper 
-                        activeSection="layout" 
-                        contentId={`mini-${option.id}`} 
-                        sections={sections} 
-                        template={option.id}
-                        className="!shadow-none !px-8 !py-6 !min-h-0"
-                      />
-                   </div>
+              <div
+                className={`relative aspect-[3/4] w-full overflow-hidden rounded-lg border border-slate-100/90 bg-white transition-all duration-300 ${
+                  selected ? 'ring-2 ring-sky-100' : 'group-hover:scale-[0.98]'
+                }`}
+              >
+                <div className="pointer-events-none absolute inset-0 origin-top-left scale-[0.14]">
+                  <div className="w-[840px]">
+                    <ResumeDocumentPaper
+                      activeSection="layout"
+                      contentId={`mini-${option.id}`}
+                      sections={sections}
+                      template={option.id}
+                      className="!min-h-0 !px-8 !py-6 !shadow-none"
+                    />
+                  </div>
                 </div>
-                {/* Subtle overlay to soften the content for the tiny view */}
                 <div className="absolute inset-0 bg-white/5 backdrop-blur-[0.5px]" />
               </div>
 
-              <div className="my-3 flex flex-col items-center">
-                <p className={`text-[10px] font-black uppercase tracking-[0.18em] ${selected ? 'text-sky-700' : 'text-slate-500'}`}>
+              <div className="my-1.5 flex flex-col items-center px-1">
+                <p
+                  className={`text-[9px] font-black uppercase leading-tight tracking-[0.14em] ${
+                    selected ? 'text-sky-700' : 'text-slate-500'
+                  }`}
+                >
                   {option.label}
                 </p>
               </div>

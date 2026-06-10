@@ -1,25 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
-  ArrowLeft,
   AlertTriangle,
-  Clock3,
-  Eye,
   FileText,
   LayoutTemplate,
-  Printer,
   RotateCcw,
-  Save,
-  Target,
   ChevronRight,
   Sparkles,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { LMS_CARD_CLASS, LMS_PAGE_SUBTITLE } from '../../constants';
-import { LmsCtaButton } from '../../components/ux/LmsCtaButton';
-import { LmsStatusBadge } from '../../components/ux/LmsStatusBadge';
+import { LMS_CARD_CLASS } from '../../constants';
 import { useLmsToast } from '../../components/ux/LmsToastProvider';
 import CVEditor from '@/components/cveditor/CVEditor';
 import { 
@@ -51,7 +43,6 @@ import {
   clampPct,
   getSectionStatus,
   parseSkillTokens,
-  prettifyTemplate,
   type DerivedSectionState,
   type ResumeSections,
   type SectionId,
@@ -61,7 +52,6 @@ import {
 type CollapsibleSectionId = Exclude<SectionId, 'completion'>;
 
 export function ResumeStudioPageClient() {
-  const router = useRouter();
   const search = useSearchParams();
   const toast = useLmsToast();
   const {
@@ -83,7 +73,6 @@ export function ResumeStudioPageClient() {
   const draft = state.resumeDraft;
   const sections = draft.sections;
 
-  const [showPreview, setShowPreview] = useState(false);
   const [activeSection, setActiveSection] = useState<SectionId>('basics');
   const [collapsedSections, setCollapsedSections] = useState<Record<CollapsibleSectionId, boolean>>({
     basics: false,
@@ -109,6 +98,32 @@ export function ResumeStudioPageClient() {
   const [isHtmlSaving, setIsHtmlSaving] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const editorScrollRef = useRef<HTMLElement | null>(null);
+  const previewShellRef = useRef<HTMLElement | null>(null);
+  const [editorPanelHeight, setEditorPanelHeight] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    const previewShell = previewShellRef.current;
+    if (!previewShell || typeof ResizeObserver === 'undefined') return;
+
+    const syncEditorHeight = () => {
+      if (window.innerWidth < 1280) {
+        setEditorPanelHeight(undefined);
+        return;
+      }
+      setEditorPanelHeight(previewShell.getBoundingClientRect().height);
+    };
+
+    syncEditorHeight();
+
+    const observer = new ResizeObserver(syncEditorHeight);
+    observer.observe(previewShell);
+    window.addEventListener('resize', syncEditorHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', syncEditorHeight);
+    };
+  }, [sections, draft.template, activeSection, editorMode]);
 
   useEffect(() => {
     const loadHtml = async () => {
@@ -425,12 +440,6 @@ export function ResumeStudioPageClient() {
   ]);
 
   const targetRole = sections.basics.headline.trim() || 'Target role not set';
-  const saveStateTone =
-    draft.updatedAtLabel === 'Unsaved changes'
-      ? 'warning'
-      : draft.updatedAtLabel === 'Not saved yet'
-        ? 'neutral'
-        : 'success';
 
   const readinessHighlights = useMemo(() => {
     const highlights = [
@@ -562,10 +571,6 @@ export function ResumeStudioPageClient() {
     });
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const handleSaveHtml = async () => {
     setIsHtmlSaving(true);
     try {
@@ -658,20 +663,6 @@ export function ResumeStudioPageClient() {
     }
   };
 
-  const handleSaveDraft = async () => {
-    const toastId = `save-${Date.now()}`;
-    const minDelay = new Promise(resolve => setTimeout(resolve, 1000));
-    try {
-      toast.push({ id: toastId, title: 'Saving draft...', message: 'Syncing with secure cloud storage.', tone: 'info' });
-      await Promise.all([syncResumeDraftToBackend(), minDelay]);
-      toast.dismiss(toastId);
-      toast.push({ title: 'Draft Secure', message: 'All current sections and layout choices are now synced.', tone: 'success' });
-    } catch (err) {
-      toast.dismiss(toastId);
-      toast.push({ title: 'Save failed', message: 'Could not reach backend to save your draft.', tone: 'warning' });
-    }
-  };
-
   const handleSyncResume = async () => {
     const toastId = `sync-${Date.now()}`;
     const minDelay = new Promise(resolve => setTimeout(resolve, 1000));
@@ -694,17 +685,6 @@ export function ResumeStudioPageClient() {
         tone: 'error'
       });
     }
-  };
-
-  const handlePreviewAction = () => {
-    if (window.matchMedia('(min-width: 1280px)').matches) {
-      document.getElementById('resume-preview-shell')?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-      return;
-    }
-    setShowPreview((current) => !current);
   };
 
   return (
@@ -751,138 +731,7 @@ export function ResumeStudioPageClient() {
         }}
       />
 
-      <div className="xl:-mx-10 space-y-6 pb-12">
-        <section className="hide-on-print overflow-hidden rounded-[2rem] border border-sky-100 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(240,249,255,0.92),rgba(255,255,255,0.98))] p-6 shadow-[0_22px_48px_-28px_rgba(40,168,225,0.35)] sm:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <button
-                onClick={() => router.back()}
-                style={{ color: '#000000', opacity: 1 }}
-                className="inline-flex items-center gap-2 text-sm font-black transition-colors hover:text-sky-600"
-              >
-                <ArrowLeft className="h-4 w-4" style={{ color: '#000000' }} strokeWidth={2.8} />
-                Back
-              </button>
-
-              <div className="mt-4 space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/85 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-sky-800">
-                  Resume Studio
-                </div>
-                <div>
-                  <h1 className="application-detail-title">
-                    Resume Editor
-                  </h1>
-                  <p className={LMS_PAGE_SUBTITLE}>
-                    Build a recruiter-ready, ATS-aware resume with a stronger editing workflow, live document preview, and completion guidance.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 flex flex-wrap items-center gap-2">
-                <LmsStatusBadge label={`Template: ${prettifyTemplate(draft.template)}`} tone="info" />
-                <LmsStatusBadge label={`Draft: ${draft.updatedAtLabel}`} tone={saveStateTone} />
-                <LmsStatusBadge label={`ATS readiness: ${atsReadiness}%`} tone={atsReadiness >= 80 ? 'success' : 'warning'} />
-                <LmsStatusBadge label={`Target role: ${targetRole}`} tone="neutral" />
-              </div>
-            </div>
-
-            <div className="grid max-w-[420px] grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm">
-                <div className="flex items-center gap-2 text-slate-500">
-                  <Clock3 className="h-4 w-4 text-sky-600" strokeWidth={2.1} />
-                  <span className="text-xs font-bold uppercase tracking-[0.2em]">Save state</span>
-                </div>
-                <p className="mt-2 text-lg font-bold text-slate-900">{draft.updatedAtLabel}</p>
-                <p className="mt-1 text-sm text-slate-500">Local LMS session is keeping this draft available while you edit.</p>
-              </div>
-
-              <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm">
-                <div className="flex items-center gap-2 text-slate-500">
-                  <Target className="h-4 w-4 text-sky-600" strokeWidth={2.1} />
-                  <span className="text-xs font-bold uppercase tracking-[0.2em]">Completion</span>
-                </div>
-                <p className="mt-2 text-lg font-bold text-slate-900">{editorProgress}% ready</p>
-                <p className="mt-1 text-sm text-slate-500">
-                  {completedSectionsCount}/6 core editor sections are already in strong shape.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="hide-on-print sticky top-[calc(var(--app-header-height,5.75rem)+0.75rem)] z-20 rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)] backdrop-blur-xl">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex rounded-xl bg-slate-100 p-1">
-                <button
-                  onClick={() => setEditorMode('studio')}
-                  className={`rounded-lg px-4 py-1.5 text-xs font-bold transition-all ${
-                    editorMode === 'studio'
-                      ? 'bg-white text-sky-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  STUDIO
-                </button>
-                {/* 
-                <button
-                  onClick={() => setEditorMode('ai')}
-                  className={`rounded-lg px-4 py-1.5 text-xs font-bold transition-all ${
-                    editorMode === 'ai'
-                      ? 'bg-white text-sky-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  AI EDITOR
-                </button> 
-                */}
-              </div>
-              <div className="h-6 w-px bg-slate-200" />
-              <div className="min-w-0">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Editor state</p>
-                <p className="text-xs font-bold text-slate-700">
-                  {editorMode === 'studio' ? 'Structured blocks' : 'Free-form rich text'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {editorMode === 'studio' ? (
-                <>
-                  <LmsCtaButton variant="secondary" leftIcon={<Eye className="h-4 w-4" strokeWidth={2} />} onClick={handlePreviewAction}>
-                    {showPreview ? 'Hide preview' : 'View layout'}
-                  </LmsCtaButton>
-                  <LmsCtaButton variant="secondary" leftIcon={<Printer className="h-4 w-4" strokeWidth={2} />} onClick={handlePrint}>
-                    Print Preview
-                  </LmsCtaButton>
-                  <LmsCtaButton variant="primary" leftIcon={<Save className="h-4 w-4" strokeWidth={2} />} onClick={handleSaveDraft}>
-                    Save draft
-                  </LmsCtaButton>
-                </>
-              ) : (
-                <>
-                  <LmsCtaButton 
-                    variant="secondary" 
-                    leftIcon={<Printer className="h-4 w-4" strokeWidth={2} />} 
-                    disabled={isExportingPdf}
-                    onClick={handleExportPdf}
-                  >
-                    {isExportingPdf ? 'Exporting...' : 'Export PDF'}
-                  </LmsCtaButton>
-                  <LmsCtaButton 
-                    variant="primary" 
-                    leftIcon={<Save className="h-4 w-4" strokeWidth={2} />} 
-                    disabled={isHtmlSaving}
-                    onClick={handleSaveHtml}
-                  >
-                    {isHtmlSaving ? 'Saving...' : 'Save Changes'}
-                  </LmsCtaButton>
-                </>
-              )}
-            </div>
-          </div>
-        </section>
-
+      <div className="w-full min-w-0 max-w-full space-y-6 overflow-x-hidden pb-12">
         <div className="space-y-6">
           {editorMode === 'studio' ? (
             <>
@@ -899,10 +748,11 @@ export function ResumeStudioPageClient() {
                 />
               </section>
 
-              <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1fr_480px] xl:gap-8">
+              <div className="grid min-w-0 grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] xl:items-start xl:gap-6 2xl:grid-cols-[minmax(0,1fr)_480px] 2xl:gap-8">
                 <aside
                   id="resume-preview-shell"
-                  className={`${showPreview ? 'flex' : 'hidden'} hide-on-print flex-col gap-5 self-start xl:flex xl:sticky xl:top-[calc(var(--app-header-height,5.75rem)+7.9rem)] xl:h-[calc(100vh-180px)]`}
+                  ref={previewShellRef}
+                  className="hide-on-print hidden flex-col gap-5 xl:sticky xl:top-[calc(var(--app-header-height,5.75rem)+0.75rem)] xl:flex"
                 >
                   <ResumeStudioPreview 
                     sections={sections} 
@@ -915,7 +765,8 @@ export function ResumeStudioPageClient() {
 
                 <main 
                   ref={editorScrollRef}
-                  className="relative min-w-0 space-y-6 xl:h-[calc(100vh-180px)] xl:overflow-y-auto xl:pr-4 xl:pt-8 xl:custom-scrollbar"
+                  style={editorPanelHeight ? { height: editorPanelHeight } : undefined}
+                  className="relative min-w-0 space-y-4 xl:min-h-0 xl:overflow-y-auto xl:pr-2 xl:pt-0 xl:custom-scrollbar"
                 >
                   <ResumeStudioBasicsSection
                     collapsed={collapsedSections.basics}

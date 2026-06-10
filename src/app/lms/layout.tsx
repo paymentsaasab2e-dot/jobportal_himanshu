@@ -9,7 +9,6 @@ import {
   Mic2,
   ClipboardList,
   CalendarDays,
-  FileText,
   StickyNote,
   Route,
 } from 'lucide-react';
@@ -30,7 +29,6 @@ const NAV_ITEMS = [
   { href: '/lms/interview-prep', label: 'Interview Prep', icon: Mic2, exact: false },
   { href: '/lms/quizzes', label: 'Quizzes', icon: ClipboardList, exact: false },
   { href: '/lms/events', label: 'Events', icon: CalendarDays, exact: false },
-  { href: '/lms/resume-builder/editor', label: 'Resume Builder', icon: FileText, exact: false },
   { href: '/lms/notes', label: 'Notes', icon: StickyNote, exact: false },
   { href: '/lms/career-path', label: 'Career Path', icon: Route, exact: false },
 ] as const;
@@ -39,6 +37,13 @@ function isSidebarActive(pathname: string | null, href: string, exact: boolean) 
   if (!pathname) return false;
   if (exact) return pathname === href || pathname === `${href}/`;
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** Full-width resume studio — no Learning Hub sidebar on the editor page only. */
+function isResumeBuilderEditorRoute(pathname: string | null): boolean {
+  if (!pathname) return false;
+  const path = pathname.split('?')[0].replace(/\/$/, '');
+  return path.endsWith('/lms/resume-builder/editor');
 }
 
 export default function LmsLayout({ children }: { children: ReactNode }) {
@@ -53,6 +58,7 @@ export default function LmsLayout({ children }: { children: ReactNode }) {
 
 function LmsLayoutInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const hideLmsSidebar = isResumeBuilderEditorRoute(pathname);
   const { state } = useLmsState();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -105,6 +111,7 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
 
         <div className="flex flex-1 flex-col lg:flex-row w-full min-w-0 max-w-[1550px] mx-auto -mt-4 sm:-mt-6 lg:-mt-8 relative z-10">
           {/* Mobile / small: horizontal strip */}
+          {!hideLmsSidebar ? (
           <aside className="lg:hidden w-full shrink-0 border-b border-slate-200/80 bg-white/95 backdrop-blur-md sticky top-[var(--app-header-height,92px)] z-30 shadow-sm">
             <nav
               className="flex gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -128,8 +135,10 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
               })}
             </nav>
           </aside>
+          ) : null}
 
           {/* Desktop: vertical sidebar - collapsible */}
+          {!hideLmsSidebar ? (
           <aside
             className={`hidden lg:flex shrink-0 flex-col pt-8 pb-8 sticky top-[calc(var(--app-header-height,92px)+10px)] self-start z-30 transition-all duration-300 ease-in-out ${collapsed ? 'w-[68px] px-2' : 'w-64 px-6'}`}
             onMouseEnter={handleSidebarEnter}
@@ -176,13 +185,20 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
               })}
             </nav>
           </aside>
+          ) : null}
 
-          <main className={`profile-page-typography lms-page flex-1 min-w-0 flex flex-col relative z-10 w-full transition-all duration-300 ${collapsed ? 'lg:max-w-[calc(100%-68px)]' : 'lg:max-w-[calc(100%-16rem)]'} overflow-hidden`}>
-            <div className={LMS_CONTENT_CLASS}>
+          <main
+            className={`profile-page-typography lms-page flex-1 min-w-0 flex flex-col relative z-10 w-full transition-all duration-300 overflow-x-hidden ${
+              hideLmsSidebar ? 'lg:max-w-full' : collapsed ? 'lg:max-w-[calc(100%-68px)]' : 'lg:max-w-[calc(100%-16rem)]'
+            }`}
+          >
+            <div className={`${LMS_CONTENT_CLASS} min-w-0`}>
 {/* <LmsCareerEngineStrip /> */}
               <div className="relative isolate pt-3">
-                {pathname === '/lms/courses' && <LmsDailyMomentum />}
-                {pathname !== '/lms/interview-prep' && pathname !== '/lms/courses' && <LmsSharedIntelligenceHint />}
+                {!hideLmsSidebar && pathname === '/lms/courses' && <LmsDailyMomentum />}
+                {!hideLmsSidebar &&
+                  pathname !== '/lms/interview-prep' &&
+                  pathname !== '/lms/courses' && <LmsSharedIntelligenceHint />}
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out fill-mode-both">
                   {children}
                 </div>

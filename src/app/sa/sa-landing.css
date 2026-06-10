@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap');
+
+.sa-landing {
+  --background: 0 0% 100%;
+  --foreground: 210 14% 17%;
+  --primary: 210 14% 17%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 184 5% 55%;
+  --accent: 239 84% 67%;
+  --accent-foreground: 0 0% 100%;
+  --border: 0 0% 90%;
+  --ring: 239 84% 67%;
+  --radius: 0.5rem;
+  --font-display: 'Instrument Serif', serif;
+  --font-body: 'Inter', sans-serif;
+  --shadow-dashboard: 0 25px 80px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-body);
+}
+
+.sa-landing .font-display {
+  font-family: var(--font-display);
+}
+
+.sa-landing .font-body {
+  font-family: var(--font-body);
+}
+
+.sa-landing .bg-background {
+  background-color: hsl(var(--background));
+}
+
+.sa-landing .text-foreground {
+  color: hsl(var(--foreground));
+}
+
+.sa-landing .text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+.sa-landing .border-border {
+  border-color: hsl(var(--border));
+}
+
+.sa-landing .bg-primary {
+  background-color: hsl(var(--primary));
+}
+
+.sa-landing .text-primary-foreground {
+  color: hsl(var(--primary-foreground));
+}
+
+.sa-landing .bg-secondary {
+  background-color: hsl(var(--secondary));
+}
+
+.sa-landing .text-secondary-foreground {
+  color: hsl(var(--secondary-foreground));
+}
+
+.sa-landing .bg-secondary-30 {
+  background-color: hsl(var(--secondary) / 0.3);
+}
+
+.sa-landing .bg-muted {
+  background-color: hsl(var(--muted));
+}
+
+.sa-landing .bg-accent {
+  background-color: hsl(var(--accent));
+}
+
+.sa-landing .text-accent {
+  color: hsl(var(--accent));
+}
+
+.sa-landing .text-accent-foreground {
+  color: hsl(var(--accent-foreground));
+}
+
+.sa-landing .shadow-dashboard {
+  box-shadow: var(--shadow-dashboard);
+}
+
+.sa-landing .hover\:bg-background\/80:hover {
+  background-color: hsl(var(--background) / 0.8);
+}

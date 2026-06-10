@@ -153,8 +153,8 @@ export function ResumeStudioSummarySection({
           <textarea
             value={sections.summary}
             onChange={(event) => onSummaryChange(event.target.value)}
-            rows={7}
-            className={`${TEXTAREA_CLASS} bg-slate-50/30 focus:bg-white`}
+            rows={12}
+            className={`${TEXTAREA_CLASS} min-h-[220px] bg-slate-50/30 focus:bg-white`}
             placeholder="Write a sharp overview of your experience, strengths, and recruiter-facing value."
           />
         </div>

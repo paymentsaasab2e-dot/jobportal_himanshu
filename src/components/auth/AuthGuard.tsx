@@ -43,7 +43,9 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children })
     normalizedPathname === '/aboutus' ||
     normalizedPathname.startsWith('/aboutus/') ||
     normalizedPathname === '/contact' ||
-    normalizedPathname.startsWith('/contact/');
+    normalizedPathname.startsWith('/contact/') ||
+    normalizedPathname === '/sa' ||
+    normalizedPathname.startsWith('/sa/');
 
   if (isLoading) {
     if (pathname === '/extract' || pathname?.startsWith('/extract/')) {
