@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/components/auth/AuthContext";
 import { API_BASE_URL, getApiBaseUrl } from "@/lib/api-base";
+import { resolvePortalCompanyLogo, resolvePortalCompanyName } from "@/lib/map-portal-job";
 import { AppLocale, localizePath } from "@/lib/i18n";
 import {
   Search, MapPin, ChevronRight, PlayCircle, Star, ArrowRight, CheckCircle2,
@@ -334,7 +335,7 @@ export default function LandingPage() {
           const formatted = rawJobs.slice(0, 6).map((job: any) => ({
             id: job.id || job._id,
             title: job.title || 'Job Title',
-            company: job.client?.companyName || job.company || 'Company Name',
+            company: resolvePortalCompanyName(job),
             location: job.location || 'Location not specified',
             workStyle: job.location?.toLowerCase().includes('remote') ? 'Remote' : 'Hybrid',
             type: job.type === 'FULL_TIME' ? 'Full-time' : job.type === 'CONTRACT' ? 'Contract' : 'Part-time',
@@ -342,7 +343,7 @@ export default function LandingPage() {
             match: `${Math.floor(Math.random() * 10) + 85}% Match`,
             timeAgo: formatTimeAgo(locale, job.postedDate || new Date()),
             experience: 'Mid-Senior level',
-            logo: job.client?.logo || job.companyLogo || '',
+            logo: resolvePortalCompanyLogo(job, ''),
           }));
           setJobs(formatted);
         }

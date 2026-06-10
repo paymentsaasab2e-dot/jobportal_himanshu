@@ -21,6 +21,7 @@ import {
 
 
 import DashboardPanel from '@/components/dashboard/DashboardPanel';
+import { resolvePortalCompanyLogo, resolvePortalCompanyName } from '@/lib/map-portal-job';
 import { showSuccessToast } from '@/components/common/toast/toast';
 import type { DashboardData, DashboardJob } from '@/components/dashboard/dashboard-types';
 import { API_BASE_URL } from '@/lib/profile-completion';
@@ -256,39 +257,11 @@ function formatSavedSalary(job: SavedJobRecord) {
 }
 
 function mapJobRecord(job: Record<string, unknown>, fallbackId: string): DashboardJob {
-  const companyValue = job.company;
-  const clientValue = job.client;
-
-  let companyName = 'Unknown Company';
-  if (companyValue && typeof companyValue === 'object') {
-    companyName =
-      asString((companyValue as { name?: unknown }).name) ??
-      asString((companyValue as { companyName?: unknown }).companyName) ??
-      companyName;
-  } else if (typeof companyValue === 'string') {
-    companyName = companyValue;
-  }
-
-  if (clientValue && typeof clientValue === 'object') {
-    companyName =
-      asString((clientValue as { companyName?: unknown }).companyName) ?? companyName;
-  }
-
-  const companyLogo =
-    asString(job.companyLogo) ??
-    asString(job.logo) ??
-    (companyValue && typeof companyValue === 'object'
-      ? asString((companyValue as { logoUrl?: unknown }).logoUrl)
-      : null) ??
-    (clientValue && typeof clientValue === 'object'
-      ? asString((clientValue as { logo?: unknown }).logo)
-      : null);
-
   return {
     id: asString(job.id) ?? fallbackId,
     title: asString(job.jobTitle) ?? asString(job.title) ?? 'Untitled role',
-    company: companyName,
-    companyLogo,
+    company: resolvePortalCompanyName(job),
+    companyLogo: resolvePortalCompanyLogo(job, ''),
     location: asNullableString(job.location),
     salaryMin:
       asNullableNumber(job.salaryMin) ??

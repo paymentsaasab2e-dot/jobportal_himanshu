@@ -200,24 +200,34 @@ export function resolveJobSummaryText(
   },
   parsed: ParsedJobDescription
 ): string {
-  const fromScalar = [fields.overview, fields.aboutRole, fields.jobSummary]
-    .map((v) => resolveScalarOverviewField(v, parsed))
-    .find((v) => v.length > 0)
+  const overviewText =
+    [fields.overview, fields.aboutRole, fields.jobSummary]
+      .map((v) => resolveScalarOverviewField(v, parsed))
+      .find((v) => v.length > 0) || ''
 
-  if (fromScalar) return fromScalar
-  if (parsed.summary) return parsed.summary
-
-  const raw =
+  const rawDescription =
     fields.description || fields.jobDescription || fields.jobDescriptionHtml || ''
-  const plain = toPlainJobText(raw)
-  if (!plain) return 'No description available.'
-  if (looksLikeHtmlJobDescription(raw)) {
-    return parsed.summary || 'No job summary available.'
+  const descriptionPlain = toPlainJobText(rawDescription)
+
+  if (descriptionPlain) {
+    const structuredDescription =
+      looksLikeHtmlJobDescription(rawDescription) ||
+      /\b(?:Key Responsibilities|Required Skills|Qualifications and Experience)\b/i.test(
+        descriptionPlain,
+      )
+    if (structuredDescription && parsed.summary) {
+      return parsed.summary
+    }
+    // CRM stores a short overview plus a fuller job description — prefer the fuller body on the portal.
+    if (!overviewText || descriptionPlain.length > overviewText.length + 15) {
+      return descriptionPlain
+    }
   }
-  if (parsed.summary && /\b(?:Key Responsibilities|Required Skills)\b/i.test(plain)) {
-    return parsed.summary
-  }
-  return plain
+
+  if (overviewText) return overviewText
+  if (parsed.summary) return parsed.summary
+  if (!descriptionPlain) return 'No description available.'
+  return descriptionPlain
 }
 
 /** Paragraphs for the Job Summary section on explore-jobs detail. */
@@ -252,4 +262,318 @@ export function summaryParagraphs(summary: string): string[] {
     .split(/\n{2,}|\n/)
     .map((p) => p.trim())
     .filter((p) => p.length > 0 && !/^job overview$/i.test(p))
+}
+
+export type JobDescriptionSection = {
+  id: string
+  title: string
+  paragraphs: string[]
+  bullets: string[]
+}
+
+const PLAIN_SECTION_HEADERS: Array<{ id: string; title: string; patterns: RegExp[] }> = [
+  { id: 'overview', title: 'Overview', patterns: [/^overview$/i, /^about the role$/i, /^job overview$/i] },
+  {
+    id: 'key-responsibilities',
+    title: 'Key Responsibilities',
+    patterns: [/^key responsibilities$/i, /^responsibilities$/i, /^role & responsibilities$/i],
+  },
+  {
+    id: 'requirements',
+    title: 'Requirements',
+    patterns: [/^requirements$/i, /^required skills$/i, /^qualifications and experience$/i],
+  },
+  {
+    id: 'preferred-qualifications',
+    title: 'Preferred Qualifications',
+    patterns: [/^preferred qualifications?$/i, /^preferred education/i],
+  },
+  {
+    id: 'candidate-requirements',
+    title: 'Candidate Requirements',
+    patterns: [/^candidate requirements?$/i],
+  },
+  {
+    id: 'benefits',
+    title: 'Benefits',
+    patterns: [/^benefits$/i, /^compensation & benefits$/i, /^compensation$/i],
+  },
+  { id: 'job-summary', title: 'Job Summary', patterns: [/^job summary$/i] },
+]
+
+function normalizeSectionHeader(line: string): string {
+  return line.replace(/[:：]\s*$/, '').trim()
+}
+
+function isSectionHeaderLine(line: string): (typeof PLAIN_SECTION_HEADERS)[number] | null {
+  const normalized = normalizeSectionHeader(line)
+  if (!normalized) return null
+  for (const section of PLAIN_SECTION_HEADERS) {
+    if (section.patterns.some((p) => p.test(normalized))) return section
+  }
+  return null
+}
+
+function bulletsFromBlock(block: string): string[] {
+  return splitTextPoints(
+    block
+      .split('\n')
+      .map((line) => line.replace(/^[-*•]\s*/, '').trim())
+      .join('\n'),
+  )
+}
+
+function paragraphsFromBlock(block: string): string[] {
+  const bullets = bulletsFromBlock(block)
+  if (bullets.length >= 2 && bullets.every((b) => b.length < 220)) {
+    return []
+  }
+  return block
+    .split(/\n{2,}/)
+    .flatMap((chunk) => chunk.split('\n'))
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0 && !/^[-*•]\s/.test(p))
+}
+
+function finalizeSectionBody(
+  body: string,
+  options?: { preferParagraphs?: boolean },
+): Pick<JobDescriptionSection, 'paragraphs' | 'bullets'> {
+  const trimmed = body.trim()
+  if (!trimmed) return { paragraphs: [], bullets: [] }
+
+  if (options?.preferParagraphs) {
+    const lines = trimmed.split('\n').map((line) => line.trim()).filter(Boolean)
+    if (lines.length <= 1) return { paragraphs: [trimmed], bullets: [] }
+    return { paragraphs: lines, bullets: [] }
+  }
+
+  const bullets = bulletsFromBlock(trimmed)
+  const paragraphs = paragraphsFromBlock(trimmed)
+  if (bullets.length >= 2 && paragraphs.length <= 1) {
+    return { paragraphs: paragraphs.length ? paragraphs : [], bullets }
+  }
+  if (paragraphs.length) return { paragraphs, bullets: [] }
+  return { paragraphs: [trimmed], bullets: [] }
+}
+
+function parsePlainJobDescriptionSections(text: string): JobDescriptionSection[] {
+  const lines = text.split('\n')
+  const sections: JobDescriptionSection[] = []
+  const introLines: string[] = []
+  let current: JobDescriptionSection | null = null
+  let bodyLines: string[] = []
+
+  const flushCurrent = () => {
+    if (!current) return
+    const body = bodyLines.join('\n')
+    const { paragraphs, bullets } = finalizeSectionBody(body)
+    if (paragraphs.length || bullets.length) {
+      sections.push({ ...current, paragraphs, bullets })
+    }
+    current = null
+    bodyLines = []
+  }
+
+  for (const line of lines) {
+    const header = isSectionHeaderLine(line)
+    if (header) {
+      flushCurrent()
+      current = { id: header.id, title: header.title, paragraphs: [], bullets: [] }
+      continue
+    }
+    if (current) {
+      bodyLines.push(line)
+    } else if (!/^job description$/i.test(normalizeSectionHeader(line))) {
+      introLines.push(line)
+    }
+  }
+  flushCurrent()
+
+  const introText = introLines.join('\n').trim()
+  if (introText) {
+    const { paragraphs, bullets } = finalizeSectionBody(introText, { preferParagraphs: true })
+    if (paragraphs.length || bullets.length) {
+      sections.unshift({
+        id: 'intro',
+        title: 'About this role',
+        paragraphs,
+        bullets,
+      })
+    }
+  }
+
+  return sections
+}
+
+function parseHtmlJobDescriptionSections(html: string): JobDescriptionSection[] {
+  if (typeof DOMParser === 'undefined') {
+    return parsePlainJobDescriptionSections(stripJobDescriptionHtml(html))
+  }
+
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  const sections: JobDescriptionSection[] = []
+  let current: JobDescriptionSection | null = null
+  let introParts: string[] = []
+
+  const flush = () => {
+    if (!current) return
+    sections.push(current)
+    current = null
+  }
+
+  const isHeading = (el: Element) => /^H[1-3]$/i.test(el.tagName)
+
+  const matchHeader = (text: string) => {
+    const line = normalizeSectionHeader(text)
+    for (const def of PLAIN_SECTION_HEADERS) {
+      if (def.patterns.some((p) => p.test(line))) return def
+    }
+    if (/^job description$/i.test(line)) return null
+    return null
+  }
+
+  const walk = (nodes: NodeListOf<ChildNode>) => {
+    for (const node of Array.from(nodes)) {
+      if (node.nodeType !== Node.ELEMENT_NODE) continue
+      const el = node as HTMLElement
+      if (isHeading(el)) {
+        const def = matchHeader(el.textContent || '')
+        if (def) {
+          flush()
+          current = { id: def.id, title: def.title, paragraphs: [], bullets: [] }
+          continue
+        }
+      }
+
+      const tag = el.tagName.toLowerCase()
+      if (tag === 'ul' || tag === 'ol') {
+        const items = Array.from(el.querySelectorAll(':scope > li'))
+          .map((li) => toPlainJobText(li.innerHTML))
+          .filter(Boolean)
+        if (current) {
+          current.bullets.push(...items)
+        } else if (items.length) {
+          introParts.push(items.join('\n'))
+        }
+        continue
+      }
+
+      const text = toPlainJobText(el.innerHTML)
+      if (!text) continue
+
+      if (current) {
+        if (tag === 'p' || tag === 'div') current.paragraphs.push(text)
+        else current.paragraphs.push(text)
+      } else {
+        introParts.push(text)
+      }
+    }
+  }
+
+  walk(doc.body.childNodes)
+  flush()
+
+  const introText = introParts.join('\n\n').trim()
+  if (introText) {
+    const { paragraphs, bullets } = finalizeSectionBody(introText, { preferParagraphs: true })
+    sections.unshift({
+      id: 'intro',
+      title: 'About this role',
+      paragraphs,
+      bullets,
+    })
+  }
+
+  return sections.filter((s) => s.paragraphs.length > 0 || s.bullets.length > 0)
+}
+
+/** Split CRM HTML or plain job description into titled sections for Phase 1 detail UI. */
+export function parseJobDescriptionSections(raw?: string | null): JobDescriptionSection[] {
+  const value = String(raw || '').trim()
+  if (!value) return []
+  if (looksLikeHtmlJobDescription(value)) {
+    return parseHtmlJobDescriptionSections(value)
+  }
+  return parsePlainJobDescriptionSections(toPlainJobText(value))
+}
+
+function mergeSectionBullets(existing: string[], incoming: string[]): string[] {
+  return [...new Set([...existing, ...incoming].map((s) => s.trim()).filter(Boolean))]
+}
+
+/** Merge API array fields into parsed description sections (API wins on duplicates). */
+export function buildJobDescriptionSections(
+  rawDescription: string | null | undefined,
+  arrays: {
+    responsibilities?: string[]
+    preferredQualifications?: string[]
+    candidateRequirements?: string[]
+    benefits?: string[]
+  },
+): JobDescriptionSection[] {
+  const parsed = parseJobDescriptionSections(rawDescription)
+  const byId = new Map(parsed.map((s) => [s.id, { ...s }]))
+
+  const upsert = (id: string, title: string, bullets: string[]) => {
+    if (!bullets.length) return
+    const existing = byId.get(id)
+    if (existing) {
+      existing.bullets = mergeSectionBullets(existing.bullets, bullets)
+    } else {
+      byId.set(id, { id, title, paragraphs: [], bullets })
+    }
+  }
+
+  upsert('key-responsibilities', 'Key Responsibilities', arrays.responsibilities || [])
+  upsert('preferred-qualifications', 'Preferred Qualifications', arrays.preferredQualifications || [])
+  upsert('candidate-requirements', 'Candidate Requirements', arrays.candidateRequirements || [])
+  upsert('benefits', 'Benefits', arrays.benefits || [])
+
+  const order = [
+    'intro',
+    'job-summary',
+    'overview',
+    'key-responsibilities',
+    'requirements',
+    'preferred-qualifications',
+    'candidate-requirements',
+    'benefits',
+  ]
+
+  const ordered: JobDescriptionSection[] = []
+  for (const id of order) {
+    const section = byId.get(id)
+    if (section && (section.paragraphs.length || section.bullets.length)) {
+      ordered.push(section)
+    }
+    byId.delete(id)
+  }
+  for (const section of byId.values()) {
+    if (section.paragraphs.length || section.bullets.length) ordered.push(section)
+  }
+  return ordered
+}
+
+export function sectionVisibleOnPortal(
+  sectionId: string,
+  show: (field: import('@/lib/job-public-field-visibility').JobPublicVisibilityField) => boolean,
+): boolean {
+  switch (sectionId) {
+    case 'intro':
+    case 'overview':
+    case 'job-summary':
+      return show('jobDescription')
+    case 'key-responsibilities':
+      return show('keyResponsibilities')
+    case 'requirements':
+    case 'preferred-qualifications':
+      return show('qualifications')
+    case 'candidate-requirements':
+      return show('candidateRequirements')
+    case 'benefits':
+      return show('jobDescription')
+    default:
+      return show('jobDescription')
+  }
 }

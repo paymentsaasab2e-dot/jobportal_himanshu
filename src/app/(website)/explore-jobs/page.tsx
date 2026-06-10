@@ -40,9 +40,18 @@ import {
   parseJobLocation,
 } from '@/lib/job-location-filters';
 import { parseStructuredJobText, resolveJobSummaryText, toPlainJobText } from '@/lib/job-description';
-import { extractPortalJobMeta } from '@/lib/map-portal-job';
-import { JobDescriptionCards } from '@/components/jobs/JobDescriptionCards';
-import { JobCardMetaChips } from '@/components/jobs/JobPostingDetailsPanel';
+import {
+  extractPortalJobMeta,
+  isClientNamePubliclyVisible,
+  mergeGeneralJobWithPersonalizedOverlay,
+  resolvePortalCompanyLogo,
+  resolvePortalCompanyName,
+} from '@/lib/map-portal-job';
+import {
+  JobCardMetaChips,
+  JobDetailHeaderMeta,
+  JobPostingDetailsPanel,
+} from '@/components/jobs/JobPostingDetailsPanel';
 import ScreeningQuestionsDrawer from '@/components/jobs/ScreeningQuestionsDrawer';
 import { getScreeningValidationError } from '@/lib/screening-questions';
 import { AppLocale, localizePath } from '@/lib/i18n';
@@ -76,6 +85,7 @@ interface JobListing {
   responsibilities: string[]
   requiredSkills: string[]
   niceToHaveSkills?: string[]
+  preferredSkills?: string[]
   companyOverview: string
   experienceLevel: string
   education?: string
@@ -122,6 +132,8 @@ interface JobListing {
   contactPerson?: string
   industryType?: string
   fullDescription?: string
+  showClientNamePublicly?: boolean
+  publicFieldVisibility?: Record<string, boolean> | null
 }
 
 type PortalScreeningType = 'short_text' | 'yes_no' | 'single_choice' | 'slider'
@@ -234,43 +246,11 @@ function formatWorkModeLabel(value: unknown) {
 }
 
 function resolveCompanyName(job: Record<string, any>) {
-  if (typeof job.company === 'object' && job.company !== null) {
-    return (
-      asString(job.company.name) ||
-      asString(job.company.companyName) ||
-      asString(job.client?.companyName) ||
-      'Company Name'
-    )
-  }
-
-  return asString(job.company) || asString(job.client?.companyName) || 'Company Name'
+  return resolvePortalCompanyName(job)
 }
 
 function resolveCompanyLogo(job: Record<string, any>) {
-  const customJobImage =
-    typeof job.applicationFormLogo === 'string' && /^https?:\/\//i.test(job.applicationFormLogo.trim())
-      ? job.applicationFormLogo.trim()
-      : null
-
-  if (typeof job.company === 'object' && job.company !== null) {
-    return (
-      customJobImage ||
-      asString(job.company.logoUrl) ||
-      asString(job.company.logo) ||
-      asString(job.client?.logo) ||
-      asString(job.logo) ||
-      asString(job.companyLogo) ||
-      '/perosn_icon.png'
-    )
-  }
-
-  return (
-    customJobImage ||
-    asString(job.logo) ||
-    asString(job.companyLogo) ||
-    asString(job.client?.logo) ||
-    '/perosn_icon.png'
-  )
+  return resolvePortalCompanyLogo(job)
 }
 
 function getSavedJobsStorageKey() {
@@ -809,6 +789,12 @@ const ExploreJobsPageContent = () => {
 
         if (generalSucceeded) {
           // Index personalized matches by job id so we can overlay their richer scoring fields.
+          const generalById = new Map<string, any>();
+          for (const item of generalJobs) {
+            const id = String(item?.id || item?._id || item?.jobId || '');
+            if (id) generalById.set(id, item);
+          }
+
           const personalizedById = new Map<string, any>();
           for (const item of personalizedJobs) {
             const id = String(item?.id || item?._id || item?.jobId || '');
@@ -822,7 +808,9 @@ const ExploreJobsPageContent = () => {
             const id = String(job?.id || job?._id || job?.jobId || '');
             if (!id || seen.has(id)) continue;
             seen.add(id);
-            merged.push(job);
+            merged.push(
+              mergeGeneralJobWithPersonalizedOverlay(generalById.get(id) || {}, job),
+            );
           }
           // Append every other job from the general listing so newly added roles are never hidden.
           for (const job of generalJobs) {
@@ -830,7 +818,11 @@ const ExploreJobsPageContent = () => {
             if (!id || seen.has(id)) continue;
             seen.add(id);
             const personalizedMatch = personalizedById.get(id);
-            merged.push(personalizedMatch ? { ...job, ...personalizedMatch } : job);
+            merged.push(
+              personalizedMatch
+                ? mergeGeneralJobWithPersonalizedOverlay(job, personalizedMatch)
+                : job,
+            );
           }
 
           rawJobs = merged;
@@ -933,8 +925,14 @@ const ExploreJobsPageContent = () => {
               ).map((item: unknown) => toPlainJobText(String(item)))
             ),
           ]
-          const resolvedPreferredQualifications = parsedText.preferredQualifications
-          const resolvedCandidateRequirements = parsedText.candidateRequirements
+          const resolvedPreferredQualifications =
+            Array.isArray(job.preferredQualifications) && job.preferredQualifications.length
+              ? job.preferredQualifications.map((item: unknown) => toPlainJobText(String(item)))
+              : parsedText.preferredQualifications
+          const resolvedCandidateRequirements =
+            Array.isArray(job.candidateRequirements) && job.candidateRequirements.length
+              ? job.candidateRequirements.map((item: unknown) => toPlainJobText(String(item)))
+              : parsedText.candidateRequirements
           const portalMeta = extractPortalJobMeta(job as Record<string, unknown>)
           const resolvedBenefits =
             Array.isArray(job.benefits) && job.benefits.length
@@ -978,7 +976,16 @@ const ExploreJobsPageContent = () => {
             timeAgo: formatTimeAgo(job.postedDate || job.postedAt || job.createdAt || new Date()),
             isHighlighted: hasRealMatchScore && matchScore >= 85,
             description: resolvedDescription,
-            jobOverview: parsedText.summary || resolvedDescription,
+            jobOverview: toPlainJobText(asString(job.overview)) || undefined,
+            fullDescription:
+              asString(job.description) ||
+              asString(job.jobDescriptionHtml) ||
+              '',
+            preferredSkills: Array.isArray(job.preferredSkills)
+              ? job.preferredSkills
+              : Array.isArray(job.normalizedJobProfile?.preferredSkills)
+              ? job.normalizedJobProfile.preferredSkills
+              : [],
             responsibilities: resolvedResponsibilities,
             requiredSkills: resolvedRequiredSkills,
             niceToHaveSkills: Array.isArray(job.preferredSkills)
@@ -986,10 +993,11 @@ const ExploreJobsPageContent = () => {
               : Array.isArray(job.normalizedJobProfile?.preferredSkills)
               ? job.normalizedJobProfile.preferredSkills
               : [],
-            companyOverview:
-              toPlainJobText(asString(job.companyOverview)) ||
-              parsedText.summary ||
-              `We are a leading company in the ${job.industry || job.department || 'technology'} industry.`,
+            companyOverview: isClientNamePubliclyVisible(job as Record<string, unknown>)
+              ? toPlainJobText(asString(job.companyOverview)) ||
+                parsedText.summary ||
+                `We are a leading company in the ${job.industry || job.department || 'technology'} industry.`
+              : 'The hiring company has chosen to keep their name confidential for this role.',
             experienceLevel: resolveExperienceLevel(job),
             department: job.industry || job.department || undefined,
             workMode: formatWorkModeLabel(
@@ -1008,6 +1016,11 @@ const ExploreJobsPageContent = () => {
             benefits: resolvedBenefits,
             preferredQualifications: resolvedPreferredQualifications,
             candidateRequirements: resolvedCandidateRequirements,
+            showClientNamePublicly: job.showClientNamePublicly !== false,
+            publicFieldVisibility:
+              job.publicFieldVisibility && typeof job.publicFieldVisibility === 'object'
+                ? (job.publicFieldVisibility as Record<string, boolean>)
+                : null,
             ...portalMeta,
             employmentType:
               portalMeta.employmentType ||
@@ -1130,21 +1143,48 @@ const ExploreJobsPageContent = () => {
     return {
       ...prev,
       ...portalMeta,
+      title: asString(apiJob.title) || asString(apiJob.jobTitle) || prev.title,
+      company: resolvePortalCompanyName(apiJob),
+      logo: resolvePortalCompanyLogo(apiJob),
+      location:
+        asString(apiJob.location) ||
+        [portalMeta.city, portalMeta.state, portalMeta.country].filter(Boolean).join(', ') ||
+        prev.location,
       skills: apiSkills,
       description: resolvedDescription,
-      jobOverview: parsedText.summary || resolvedDescription,
+      jobOverview: toPlainJobText(asString(apiJob.overview)) || prev.jobOverview,
+      fullDescription:
+        asString(apiJob.description) ||
+        asString(apiJob.jobDescriptionHtml) ||
+        portalMeta.fullDescription ||
+        prev.fullDescription,
       responsibilities: resolvedResponsibilities,
       requiredSkills: resolvedRequiredSkills,
+      preferredSkills: Array.isArray(apiJob.preferredSkills)
+        ? (apiJob.preferredSkills as string[])
+        : prev.preferredSkills,
       preferredQualifications:
-        parsedText.preferredQualifications.length > 0
-          ? parsedText.preferredQualifications
-          : prev.preferredQualifications,
+        Array.isArray(apiJob.preferredQualifications) &&
+        (apiJob.preferredQualifications as unknown[]).length
+          ? (apiJob.preferredQualifications as unknown[]).map((item) =>
+              toPlainJobText(String(item)),
+            )
+          : parsedText.preferredQualifications.length > 0
+            ? parsedText.preferredQualifications
+            : prev.preferredQualifications,
       candidateRequirements:
-        parsedText.candidateRequirements.length > 0
-          ? parsedText.candidateRequirements
-          : prev.candidateRequirements,
-      fullDescription: portalMeta.fullDescription || prev.fullDescription,
+        Array.isArray(apiJob.candidateRequirements) &&
+        (apiJob.candidateRequirements as unknown[]).length
+          ? (apiJob.candidateRequirements as unknown[]).map((item) =>
+              toPlainJobText(String(item)),
+            )
+          : parsedText.candidateRequirements.length > 0
+            ? parsedText.candidateRequirements
+            : prev.candidateRequirements,
       employmentType: portalMeta.employmentType || prev.employmentType,
+      workMode:
+        asString(apiJob.workMode || apiJob.jobLocationType) ||
+        prev.workMode,
       contactPerson: portalMeta.contactPerson || prev.contactPerson,
       education: asString(apiJob.education) || prev.education,
       benefits:
@@ -1153,6 +1193,16 @@ const ExploreJobsPageContent = () => {
           : parsedText.benefits.length
             ? parsedText.benefits
             : prev.benefits,
+      salaryMin: portalMeta.salaryMin ?? prev.salaryMin,
+      salaryMax: portalMeta.salaryMax ?? prev.salaryMax,
+      salaryCurrency: portalMeta.salaryCurrency ?? prev.salaryCurrency,
+      salaryType: portalMeta.salaryType ?? prev.salaryType,
+      showClientNamePublicly:
+        apiJob.showClientNamePublicly === false ? false : prev.showClientNamePublicly,
+      publicFieldVisibility:
+        apiJob.publicFieldVisibility && typeof apiJob.publicFieldVisibility === 'object'
+          ? (apiJob.publicFieldVisibility as Record<string, boolean>)
+          : prev.publicFieldVisibility,
     }
   }
 
@@ -2730,42 +2780,38 @@ const ExploreJobsPageContent = () => {
                   {selectedJob ? (
                     <div className="w-full max-w-full overflow-hidden rounded-[28px] border border-white/80 bg-white/82 p-4 shadow-[0_18px_42px_rgba(15,23,42,0.06)] backdrop-blur-md sm:p-5 lg:p-6 xl:p-7">
                       <div className="mb-0 min-w-0">
-                        {/* Header Section */}
-                        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between min-w-0">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex min-w-0 items-start gap-4">
-                              <JobLogoBadge job={selectedJob} />
-                              <div className="min-w-0">
-                                <h1 className="application-detail-title wrap-break-word">{selectedJob.title}</h1>
-                                <p className="application-detail-meta mt-1 wrap-break-word">{selectedJob.company} • {selectedJob.location}</p>
-                                <p className="application-detail-helper mt-2 wrap-break-word">
-                                  {selectedJob.salary}
-                                  {' • '}
-                                  {selectedJob.experienceLevel === 'Not specified'
-                                    ? 'Experience not specified'
-                                    : selectedJob.experienceLevel}
-                                </p>
-                              </div>
+                        {/* Job detail header — title, company • location, salary • experience */}
+                        <div className="mb-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0">
+                          <div className="flex min-w-0 flex-1 items-center gap-4">
+                            <JobLogoBadge job={selectedJob} />
+                            <div className="min-w-0 flex-1">
+                              <h1 className="text-xl font-bold leading-tight text-slate-900 wrap-break-word sm:text-2xl">
+                                {selectedJob.title}
+                              </h1>
+                              <JobDetailHeaderMeta job={selectedJob} />
                             </div>
                           </div>
-                          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 shrink-0">
+                          <div className="flex shrink-0 flex-row gap-2 sm:gap-3">
                             <button
                               type="button"
                               disabled={applyPreflightLoading}
                               onClick={() => void handleApplyNow()}
-                              className="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#28A8E1] px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_14px_28px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-[#28A8DF] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(40,168,225,0.25)] transition-all duration-200 hover:bg-[#28A8DF] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {applyPreflightLoading ? 'Loading…' : 'Apply Now'}
                             </button>
-                            <button onClick={() => handleSaveJob(selectedJob)} className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[rgba(40,168,225,0.24)] bg-white px-4 py-2.5 text-[13px] font-semibold text-[#28A8E1] transition-all duration-200 hover:bg-[rgba(40,168,225,0.08)]">
+                            <button
+                              onClick={() => handleSaveJob(selectedJob)}
+                              className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-[#28A8E1] transition-all duration-200 hover:bg-slate-50"
+                            >
                               {isSavedJob(selectedJob.id) ? 'Saved' : 'Save Job'}
                             </button>
                           </div>
                         </div>
 
-                        <div className="h-px bg-gray-200 w-full mb-4 sm:mb-5 md:mb-6 lg:mb-7 xl:mb-8"></div>
+                        <div className="my-5 h-px w-full bg-slate-200" />
 
-                        <JobDescriptionCards job={selectedJob} />
+                        <JobPostingDetailsPanel job={selectedJob} />
 
                         {/* AI Match Analysis Matrix (Global AI Assistant Integrated) */}
                         {(() => {
