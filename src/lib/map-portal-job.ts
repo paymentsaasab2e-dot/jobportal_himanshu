@@ -43,6 +43,81 @@ function asString(v: unknown): string {
   return String(v).trim()
 }
 
+export const CONFIDENTIAL_COMPANY_LABEL = 'Confidential'
+
+export function isClientNamePubliclyVisible(job: Record<string, unknown>): boolean {
+  if (job.showClientNamePublicly === false) return false
+  const visibility = job.publicFieldVisibility
+  if (visibility && typeof visibility === 'object' && !Array.isArray(visibility)) {
+    if ((visibility as Record<string, unknown>).client === false) return false
+  }
+  return true
+}
+
+/** Candidate-facing company label — never falls back to hidden client rows. */
+export function resolvePortalCompanyName(
+  job: Record<string, unknown>,
+  fallback = CONFIDENTIAL_COMPANY_LABEL,
+): string {
+  if (!isClientNamePubliclyVisible(job)) {
+    return fallback
+  }
+
+  const company = job.company
+  if (company && typeof company === 'object') {
+    const name =
+      asString((company as { name?: unknown }).name) ||
+      asString((company as { companyName?: unknown }).companyName)
+    if (name) return name
+  }
+
+  const companyText = asString(company)
+  if (companyText) return companyText
+
+  const client = job.client
+  if (client && typeof client === 'object') {
+    const clientName = asString((client as { companyName?: unknown }).companyName)
+    if (clientName) return clientName
+  }
+
+  return fallback
+}
+
+export function resolvePortalCompanyLogo(
+  job: Record<string, unknown>,
+  hiddenFallback = '/perosn_icon.png',
+): string {
+  if (!isClientNamePubliclyVisible(job)) {
+    return hiddenFallback
+  }
+
+  const customJobImage =
+    typeof job.applicationFormLogo === 'string' && /^https?:\/\//i.test(job.applicationFormLogo.trim())
+      ? job.applicationFormLogo.trim()
+      : null
+
+  const company = job.company
+  if (company && typeof company === 'object') {
+    return (
+      customJobImage ||
+      asString((company as { logoUrl?: unknown }).logoUrl) ||
+      asString((company as { logo?: unknown }).logo) ||
+      asString((job.client as { logo?: unknown } | undefined)?.logo) ||
+      asString(job.logo) ||
+      asString(job.companyLogo) ||
+      hiddenFallback
+    )
+  }
+
+  return (
+    customJobImage ||
+    asString(job.logo) ||
+    asString(job.companyLogo) ||
+    asString((job.client as { logo?: unknown } | undefined)?.logo) ||
+    hiddenFallback
+  )
+}
+
 function formatDisplayDate(value: unknown): string {
   if (!value) return ''
   const d = value instanceof Date ? value : new Date(String(value))
@@ -138,4 +213,48 @@ export function formatLocationParts(meta: PortalJobMeta, fallbackLocation?: stri
   const parts = [meta.city, meta.state, meta.country].filter(Boolean)
   if (parts.length) return parts.join(', ')
   return fallbackLocation || '—'
+}
+
+/** Match/scoring fields only — canonical job content must come from GET /jobs listing. */
+const PERSONALIZED_MATCH_OVERLAY_KEYS = [
+  'matchScore',
+  'normalizedScore',
+  'confidenceTag',
+  'matchedSkills',
+  'missingSkills',
+  'reasoning',
+  'shortReason',
+  'whyNotMatched',
+  'insights',
+  'ruleScore',
+  'embeddingScore',
+  'gptScore',
+  'keywordScore',
+  'titleMatch',
+  'directSkillMatchCount',
+  'domainMatch',
+  'candidateSummary',
+  'normalizedJobProfile',
+  'penaltiesApplied',
+  'totalJobsScanned',
+  'match',
+  'match_score',
+  'aiScore',
+  'finalScore',
+  'totalScore',
+  'score',
+] as const
+
+export function mergeGeneralJobWithPersonalizedOverlay(
+  generalJob: Record<string, unknown>,
+  personalizedJob?: Record<string, unknown> | null,
+): Record<string, unknown> {
+  if (!personalizedJob) return generalJob
+  const overlay: Record<string, unknown> = {}
+  for (const key of PERSONALIZED_MATCH_OVERLAY_KEYS) {
+    if (personalizedJob[key] !== undefined) {
+      overlay[key] = personalizedJob[key]
+    }
+  }
+  return { ...personalizedJob, ...generalJob, ...overlay }
 }

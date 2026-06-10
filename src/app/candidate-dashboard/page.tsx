@@ -18,6 +18,7 @@ import {
   getDashboardName,
   getDynamicGreeting,
 } from "@/components/dashboard/dashboard-utils";
+import { resolvePortalCompanyLogo, resolvePortalCompanyName } from "@/lib/map-portal-job";
 import type {
   DashboardCourse,
   DashboardData,
@@ -118,44 +119,11 @@ function createFallbackCourses(
 }
 
 function mapJobRecord(job: Record<string, unknown>, fallbackId: string): DashboardJob {
-  const companyValue = job.company;
-  const clientValue = job.client;
-
-  let companyName = "Unknown Company";
-  if (companyValue && typeof companyValue === "object") {
-    companyName =
-      asString((companyValue as { name?: unknown }).name) ??
-      asString((companyValue as { companyName?: unknown }).companyName) ??
-      companyName;
-  } else if (typeof companyValue === "string") {
-    companyName = companyValue;
-  }
-
-  if (clientValue && typeof clientValue === "object") {
-    companyName =
-      asString((clientValue as { companyName?: unknown }).companyName) ?? companyName;
-  }
-
-  const appFormLogo = asString(job.applicationFormLogo);
-  const customListingImage =
-    appFormLogo && /^https?:\/\//i.test(appFormLogo.trim()) ? appFormLogo.trim() : null;
-
-  const companyLogo =
-    customListingImage ??
-    asString(job.companyLogo) ??
-    asString(job.logo) ??
-    (companyValue && typeof companyValue === "object"
-      ? asString((companyValue as { logoUrl?: unknown }).logoUrl)
-      : null) ??
-    (clientValue && typeof clientValue === "object"
-      ? asString((clientValue as { logo?: unknown }).logo)
-      : null);
-
   return {
     id: asString(job.id) ?? asString(job._id) ?? fallbackId,
     title: asString(job.jobTitle) ?? asString(job.title) ?? "Untitled role",
-    company: companyName,
-    companyLogo,
+    company: resolvePortalCompanyName(job),
+    companyLogo: resolvePortalCompanyLogo(job, ""),
     location: asNullableString(job.location),
     salaryMin:
       asNullableNumber(job.salaryMin) ??

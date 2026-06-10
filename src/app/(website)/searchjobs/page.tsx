@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, Briefcase, Clock3, MapPin, Search, Sparkles } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/api-base';
+import { resolvePortalCompanyLogo, resolvePortalCompanyName } from '@/lib/map-portal-job';
 
 type SearchJob = {
   id: string | number;
@@ -50,8 +51,8 @@ function mapJob(job: any, index: number): SearchJob {
   return {
     id: job.id || job._id || `job-${index}`,
     title: job.jobTitle || job.title || 'Untitled Job',
-    company: job.company?.name || job.company?.companyName || job.client?.companyName || job.company || 'Hiring Company',
-    logo: job.company?.logoUrl || job.company?.logo || job.client?.logo || job.logo || job.companyLogo || '',
+    company: resolvePortalCompanyName(job),
+    logo: resolvePortalCompanyLogo(job, ''),
     location: job.location || 'Location not specified',
     salary: formatSalary(job),
     type: job.type || job.employmentType || 'Full-time',
