@@ -9,6 +9,7 @@ import { API_BASE_URL } from '@/lib/api-base';
 import { AppLocale } from '@/lib/i18n';
 import { withJobApiLocale } from '@/lib/jobApiLocale';
 import { resolvePortalCompanyLogo, resolvePortalCompanyName } from '@/lib/map-portal-job';
+import { redactPortalJobListing } from '@/lib/job-public-field-visibility';
 
 type SearchJob = {
   id: string | number;
@@ -51,17 +52,34 @@ function formatTimeAgo(date: Date | string) {
 }
 
 function mapJob(job: any, index: number): SearchJob {
+  const redacted = redactPortalJobListing(job, {
+    showClientNamePublicly: job.showClientNamePublicly !== false,
+    publicFieldVisibility: job.publicFieldVisibility,
+  });
+  const title = String(redacted.title || redacted.jobTitle || '').trim();
+  const company = String(redacted.company || resolvePortalCompanyName(redacted) || '').trim();
+  const location = String(redacted.location || '').trim();
+  const salary =
+    redacted.salaryMin != null || redacted.salaryMax != null || redacted.salary
+      ? formatSalary(redacted)
+      : '';
+  const type = String(redacted.type || redacted.employmentType || '').trim();
+  const workMode = String(redacted.workMode || redacted.jobLocationType || '').trim();
+  const description = String(
+    redacted.overview || redacted.aboutRole || redacted.description || '',
+  ).trim();
+
   return {
-    id: job.id || job._id || `job-${index}`,
-    title: job.jobTitle || job.title || 'Untitled Job',
-    company: job.company || resolvePortalCompanyName(job),
-    logo: resolvePortalCompanyLogo(job, ''),
-    location: job.location || 'Location not specified',
-    salary: formatSalary(job),
-    type: job.type || job.employmentType || 'Full-time',
-    workMode: job.workMode || job.jobLocationType || 'On-site',
+    id: redacted.id || redacted._id || job.id || job._id || `job-${index}`,
+    title,
+    company,
+    logo: resolvePortalCompanyLogo(redacted, ''),
+    location,
+    salary,
+    type,
+    workMode,
     postedAtLabel: formatTimeAgo(job.postedDate || job.postedAt || job.createdAt || new Date()),
-    description: job.overview || job.aboutRole || job.description || 'Explore this opportunity and continue with login/signup to unlock guided matching.',
+    description,
   };
 }
 

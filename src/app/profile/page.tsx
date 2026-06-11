@@ -67,17 +67,17 @@ const PROFILE_SECTIONS: ProfileSectionGroup[] = [
   {
     id: 'projects-certifications',
     label: 'Projects & Certifications',
-    sections: ['projects', 'portfolio-links', 'certifications'],
+    sections: ['projects', 'portfolio-links', 'certifications', 'accomplishments'],
   },
   {
     id: 'job-preferences',
     label: 'Job Preferences',
-    sections: ['career-preferences', 'visa-work-authorization'],
+    sections: ['career-preferences'],
   },
   {
     id: 'additional-details',
     label: 'Additional Details',
-    sections: ['vaccination'],
+    sections: ['visa-work-authorization', 'vaccination'],
   },
 ];
 import BasicInfoModal, { BasicInfoData } from '../../components/modals/BasicInfoModal';
@@ -140,7 +140,6 @@ import {
   normalizeVisaWorkAuthorizationFromApi,
   profileDocumentsToUrlList,
 } from '@/lib/profile-documents';
-import ProfileDrawer from '../../components/ui/ProfileDrawer';
 
 // Extended ResumeData interface for profile page
 interface ResumeData extends BaseResumeData {
@@ -161,12 +160,6 @@ interface PopupState {
   confirmLabel?: string;
   cancelLabel?: string;
   resolver: ((confirmed: boolean) => void) | null;
-}
-
-interface DetailModalState {
-  isOpen: boolean;
-  title: string;
-  data: unknown;
 }
 
 const DEFAULT_POPUP_STATE: PopupState = {
@@ -370,7 +363,7 @@ export default function ProfilePage() {
   const [isAccomplishmentCardExpanded, setIsAccomplishmentCardExpanded] = useState<{ [key: string]: boolean }>({});
   const [editingAccomplishmentId, setEditingAccomplishmentId] = useState<string | null>(null);
   const [isCareerPreferencesCardExpanded, setIsCareerPreferencesCardExpanded] = useState<boolean>(false);
-  const [isVisaCardExpanded, setIsVisaCardExpanded] = useState<boolean>(false);
+  const [isVisaCardExpanded, setIsVisaCardExpanded] = useState<{ [key: string]: boolean }>({});
   const [isVaccinationCardExpanded, setIsVaccinationCardExpanded] = useState<boolean>(false);
   const [isResumeCardExpanded, setIsResumeCardExpanded] = useState<boolean>(false);
   const [isPortfolioLinksCardExpanded, setIsPortfolioLinksCardExpanded] = useState<boolean>(false);
@@ -388,11 +381,6 @@ export default function ProfilePage() {
   }, [visiblePortfolioLinks.length]);
 
   const [popupState, setPopupState] = useState<PopupState>(DEFAULT_POPUP_STATE);
-  const [detailModal, setDetailModal] = useState<DetailModalState>({
-    isOpen: false,
-    title: '',
-    data: null,
-  });
 
   // API base URL
 
@@ -462,36 +450,6 @@ export default function ProfilePage() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [popupState.isOpen, closePopup]);
-
-  const sanitizeDetails = useCallback((value: unknown): unknown => {
-    try {
-      return JSON.parse(
-        JSON.stringify(value, (_key, currentValue) => {
-          if (currentValue instanceof File) {
-            return {
-              name: currentValue.name,
-              size: currentValue.size,
-              type: currentValue.type,
-            };
-          }
-          return currentValue;
-        }),
-      );
-    } catch {
-      return value;
-    }
-  }, []);
-
-  const openDetailsModal = useCallback(
-    (title: string, data: unknown) => {
-      setDetailModal({
-        isOpen: true,
-        title,
-        data: sanitizeDetails(data),
-      });
-    },
-    [sanitizeDetails],
-  );
 
   const shouldIgnoreDetailsOpen = (target: EventTarget | null) => {
     return (
@@ -1414,7 +1372,7 @@ export default function ProfilePage() {
     activeTabId: activeWorkspaceTab,
     scrollToTabGroup: scrollToWorkspaceTab,
     scrollPaddingStyle,
-  } = useProfileTabNavigation(PROFILE_SECTIONS);
+  } = useProfileTabNavigation(PROFILE_SECTIONS, !isLoadingProfile);
 
   const openFirstMissingModal = useCallback(() => {
     const firstMissing = detailedMissingSections[0];
@@ -1501,7 +1459,10 @@ export default function ProfilePage() {
       {
         id: 'job-preferences',
         label: 'Job Preferences',
-        incomplete: false,
+        incomplete: tabIncomplete([
+          () =>
+            isMandatorySectionMissing('PREFERENCES', 'Career Preferences'),
+        ]),
       },
       {
         id: 'additional-details',
@@ -2945,6 +2906,7 @@ export default function ProfilePage() {
 
                 <WorkspaceSectionCard
                   title="Accomplishments"
+                  sectionId="accomplishments"
                   onEdit={() =>
                     handleEditClick('CERTIFICATIONS', 'Accomplishments')
                   }
@@ -3187,8 +3149,13 @@ export default function ProfilePage() {
                                 ...visaWorkAuthorizationData,
                                 visaEntries: [] // Hide nested entries for this card
                               }}
-                              isExpanded={isVisaCardExpanded}
-                              onToggleExpand={() => openDetailsModal('Visa & Work Authorization Details', visaWorkAuthorizationData)}
+                              isExpanded={isVisaCardExpanded['top-level'] || false}
+                              onToggleExpand={() =>
+                                setIsVisaCardExpanded((prev) => ({
+                                  ...prev,
+                                  'top-level': !prev['top-level'],
+                                }))
+                              }
                               onEdit={() => { setVisaModalMode('edit'); setEditingVisaEntryId(null); setIsVisaWorkAuthorizationModalOpen(true); }}
                               onDelete={async () => {
                                 const countryName = visaWorkAuthorizationData.selectedDestination;
@@ -3250,15 +3217,13 @@ export default function ProfilePage() {
                                 visaDetailsExpected: entry.visaDetails,
                                 visaEntries: []
                               }}
-                              isExpanded={isVisaCardExpanded}
-                              onToggleExpand={() => openDetailsModal('Visa & Work Authorization Details', {
-                                selectedDestination: entry.country,
-                                openForAll: false,
-                                visaWorkpermitRequired: '',
-                                additionalRemarks: entry.additionalRemarks || '',
-                                visaDetailsExpected: entry.visaDetails,
-                                visaEntries: []
-                              })}
+                              isExpanded={isVisaCardExpanded[entry.id] || false}
+                              onToggleExpand={() =>
+                                setIsVisaCardExpanded((prev) => ({
+                                  ...prev,
+                                  [entry.id]: !prev[entry.id],
+                                }))
+                              }
                               onEdit={() => { setVisaModalMode('edit'); setEditingVisaEntryId(entry.id); setIsVisaWorkAuthorizationModalOpen(true); }}
                               onDelete={async () => {
                                 if (
@@ -3398,19 +3363,6 @@ export default function ProfilePage() {
         </div>
       </div>
     </main>
-
-    <ProfileDrawer
-        isOpen={detailModal.isOpen}
-        onClose={() => setDetailModal({ isOpen: false, title: '', data: null })}
-        title={detailModal.title || 'View Details'}
-        widthClassName="w-full md:w-[50vw] md:max-w-[50vw]"
-      >
-        <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-4">
-          <pre className="profile-view-details max-h-[65vh] overflow-auto">
-            {JSON.stringify(detailModal.data, null, 2)}
-          </pre>
-        </div>
-      </ProfileDrawer>
 
       {popupState.isOpen && (
         <div className="fixed inset-0 z-[10040] flex items-center justify-center bg-black/40 px-4">
