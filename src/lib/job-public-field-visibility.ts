@@ -165,3 +165,27 @@ export function redactPortalJobListing<T extends Record<string, unknown>>(
 
   return out as T;
 }
+
+/** Whether a JD section heading from HTML/plain text should show on Phase 1. */
+export function htmlSectionTitleVisibleOnPortal(
+  title: string,
+  show: (field: JobPublicVisibilityField) => boolean,
+): boolean {
+  const normalized = String(title || '').trim().toLowerCase();
+  if (/^job title$/.test(normalized)) return show('jobTitle');
+  if (/key responsibilities|^responsibilities$|role & responsibilities/.test(normalized)) {
+    return show('keyResponsibilities');
+  }
+  if (
+    /^requirements$|^required skills$|qualifications|preferred education|preferred qualifications/.test(
+      normalized,
+    )
+  ) {
+    return show('qualifications');
+  }
+  if (/candidate requirements?/.test(normalized)) return show('candidateRequirements');
+  if (/^skills$|^key skills$/.test(normalized)) return show('skills');
+  if (/benefits|compensation/.test(normalized)) return show('jobDescription');
+  if (/^overview$|^job summary$|^about this role$/.test(normalized)) return show('jobDescription');
+  return show('jobDescription');
+}

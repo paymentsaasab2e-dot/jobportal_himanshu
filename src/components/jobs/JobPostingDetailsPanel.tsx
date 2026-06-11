@@ -19,6 +19,7 @@ import {
   type JobDescriptionSection,
 } from '@/lib/job-description'
 import {
+  htmlSectionTitleVisibleOnPortal,
   isJobFieldPubliclyVisible,
   parseJobPublicFieldVisibility,
   type JobPublicVisibilityField,
@@ -336,7 +337,11 @@ export function JobPostingDetailsPanel({ job }: { job: JobPostingDetailsJob }) {
     preferredQualifications: show('qualifications') ? job.preferredQualifications : [],
     candidateRequirements: show('candidateRequirements') ? job.candidateRequirements : [],
     benefits: show('jobDescription') ? job.benefits : [],
-  }).filter((section) => sectionVisibleOnPortal(section.id, show))
+  }).filter(
+    (section) =>
+      sectionVisibleOnPortal(section.id, show) &&
+      htmlSectionTitleVisibleOnPortal(section.title, show),
+  )
 
   const metaRows: { label: string; value: string }[] = []
   if (show('nationality') && job.nationality) {

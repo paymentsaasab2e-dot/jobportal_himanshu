@@ -52,7 +52,11 @@ import {
   JobDetailHeaderMeta,
   JobPostingDetailsPanel,
 } from '@/components/jobs/JobPostingDetailsPanel';
-import { redactPortalJobListing } from '@/lib/job-public-field-visibility';
+import {
+  isJobFieldPubliclyVisible,
+  parseJobPublicFieldVisibility,
+  redactPortalJobListing,
+} from '@/lib/job-public-field-visibility';
 import ScreeningQuestionsDrawer from '@/components/jobs/ScreeningQuestionsDrawer';
 import { getScreeningValidationError } from '@/lib/screening-questions';
 import { AppLocale, localizePath } from '@/lib/i18n';
@@ -596,6 +600,22 @@ const ExploreJobsPageContent = () => {
   }, [locale])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const refreshJobs = () => {
+      void loadJobListings()
+    }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refreshJobs()
+    }
+    window.addEventListener('focus', refreshJobs)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      window.removeEventListener('focus', refreshJobs)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [locale])
+
+  useEffect(() => {
     if (typeof window === 'undefined') return
 
     const stored = localStorage.getItem(getSavedJobsStorageKey())
@@ -846,12 +866,18 @@ const ExploreJobsPageContent = () => {
         // Transform API response to JobListing format
         const transformedJobs: JobListing[] = rawJobs
         .map((job: any) => {
-          const rawDescriptionText =
-            asString(job.description) ||
-            asString(job.jobDescription) ||
-            asString(job.jobSummary) ||
-            asString(job.jobDescriptionHtml) ||
-            ''
+          const showClientNamePublicly = job.showClientNamePublicly !== false
+          const publicFieldVisibility = parseJobPublicFieldVisibility(job.publicFieldVisibility)
+          const fieldVisible = (field: Parameters<typeof isJobFieldPubliclyVisible>[1]) =>
+            isJobFieldPubliclyVisible(publicFieldVisibility, field, showClientNamePublicly)
+
+          const rawDescriptionText = fieldVisible('jobDescription')
+            ? asString(job.description) ||
+              asString(job.jobDescription) ||
+              asString(job.jobSummary) ||
+              asString(job.jobDescriptionHtml) ||
+              ''
+            : ''
           const parsedText = parseStructuredJobText(rawDescriptionText)
 
           const matchScoreFromApi =
@@ -879,12 +905,13 @@ const ExploreJobsPageContent = () => {
           if (!jobId) {
             return null;
           }
-          const companyName = resolveCompanyName(job);
-          const resolvedLocation =
-            asString(job.location) ||
-            asString(job.city) ||
-            parsedText.location ||
-            'Location not specified'
+          const companyName = fieldVisible('client') ? resolveCompanyName(job) : '';
+          const resolvedLocation = fieldVisible('location')
+            ? asString(job.location) ||
+              asString(job.city) ||
+              parsedText.location ||
+              ''
+            : '';
           const parsedLoc = parseJobLocation(
             resolvedLocation,
             asString(job.city),
@@ -906,49 +933,58 @@ const ExploreJobsPageContent = () => {
             },
             parsedText
           )
-          const resolvedResponsibilities =
-            Array.isArray(job.keyResponsibilities) && job.keyResponsibilities.length
+          const resolvedResponsibilities = fieldVisible('keyResponsibilities')
+            ? Array.isArray(job.keyResponsibilities) && job.keyResponsibilities.length
               ? job.keyResponsibilities.map((item: unknown) => toPlainJobText(String(item)))
               : typeof job.responsibilities === 'string'
               ? splitTextPoints(toPlainJobText(job.responsibilities))
               : Array.isArray(job.responsibilities)
               ? job.responsibilities.map((item: unknown) => toPlainJobText(String(item)))
               : parsedText.responsibilities
-          const resolvedRequiredSkills = [
-            ...new Set(
-              (Array.isArray(job.skills) && job.skills.length
-                ? job.skills
-                : Array.isArray(job.requirements) && job.requirements.length
-                ? job.requirements
-                : Array.isArray(job.normalizedJobProfile?.requiredSkills) &&
-                    job.normalizedJobProfile.requiredSkills.length
-                ? job.normalizedJobProfile.requiredSkills
-                : parsedText.requiredSkills
-              ).map((item: unknown) => toPlainJobText(String(item)))
-            ),
-          ]
-          const resolvedPreferredQualifications =
-            Array.isArray(job.preferredQualifications) && job.preferredQualifications.length
+            : []
+          const resolvedRequiredSkills = fieldVisible('skills')
+            ? [
+                ...new Set(
+                  (Array.isArray(job.skills) && job.skills.length
+                    ? job.skills
+                    : Array.isArray(job.requirements) && job.requirements.length
+                    ? job.requirements
+                    : Array.isArray(job.normalizedJobProfile?.requiredSkills) &&
+                        job.normalizedJobProfile.requiredSkills.length
+                    ? job.normalizedJobProfile.requiredSkills
+                    : parsedText.requiredSkills
+                  ).map((item: unknown) => toPlainJobText(String(item))),
+                ),
+              ]
+            : []
+          const resolvedPreferredQualifications = fieldVisible('qualifications')
+            ? Array.isArray(job.preferredQualifications) && job.preferredQualifications.length
               ? job.preferredQualifications.map((item: unknown) => toPlainJobText(String(item)))
               : parsedText.preferredQualifications
-          const resolvedCandidateRequirements =
-            Array.isArray(job.candidateRequirements) && job.candidateRequirements.length
+            : []
+          const resolvedCandidateRequirements = fieldVisible('candidateRequirements')
+            ? Array.isArray(job.candidateRequirements) && job.candidateRequirements.length
               ? job.candidateRequirements.map((item: unknown) => toPlainJobText(String(item)))
               : parsedText.candidateRequirements
+            : []
           const portalMeta = extractPortalJobMeta(job as Record<string, unknown>)
-          const resolvedBenefits =
-            Array.isArray(job.benefits) && job.benefits.length
+          const resolvedBenefits = fieldVisible('jobDescription')
+            ? Array.isArray(job.benefits) && job.benefits.length
               ? job.benefits
               : parsedText.benefits
-          const resolvedEducation =
-            asString(job.education) ||
-            asString(job.qualification) ||
-            asString(job.educationalQualification) ||
-            '-'
+            : []
+          const resolvedEducation = fieldVisible('qualifications')
+            ? asString(job.education) ||
+              asString(job.qualification) ||
+              asString(job.educationalQualification) ||
+              '-'
+            : '-'
           
           const listing: JobListing = {
             id: jobId,
-            title: job.jobTitle || job.title || 'Job Title',
+            title: fieldVisible('jobTitle')
+              ? asString(job.jobTitle) || asString(job.title) || ''
+              : '',
             company: companyName,
             logo: resolveCompanyLogo(job),
             location: resolvedLocation,
@@ -960,15 +996,21 @@ const ExploreJobsPageContent = () => {
               asString(job.salary?.currency ?? job.salaryCurrency) ||
               asString(job.currency) ||
               null,
-            salary: formatSalary(
-              job.salary?.min ?? job.salaryMin, 
-              job.salary?.max ?? job.salaryMax, 
-              job.salary?.currency ?? job.salaryCurrency, 
-              job.salary?.type ?? job.salaryType,
-              job.salary?.amount || asString(job.expectedSalary) || parsedText.expectedSalary || asString(job.compensation)
-            ),
-            type: resolvedType,
-            skills: Array.isArray(job.skills) ? job.skills : (job.matchedSkills || []),
+            salary: fieldVisible('salary')
+              ? formatSalary(
+                  job.salary?.min ?? job.salaryMin,
+                  job.salary?.max ?? job.salaryMax,
+                  job.salary?.currency ?? job.salaryCurrency,
+                  job.salary?.type ?? job.salaryType,
+                  job.salary?.amount || asString(job.expectedSalary) || parsedText.expectedSalary || asString(job.compensation),
+                )
+              : '',
+            type: fieldVisible('employmentType') ? resolvedType : '',
+            skills: fieldVisible('skills')
+              ? Array.isArray(job.skills)
+                ? job.skills
+                : (job.matchedSkills || [])
+              : [],
             match: hasRealMatchScore ? `${matchScore}% Match` : 'Not scored yet',
             matchScore: hasRealMatchScore ? matchScore : undefined,
             normalizedScore:
@@ -979,21 +1021,26 @@ const ExploreJobsPageContent = () => {
             isHighlighted: hasRealMatchScore && matchScore >= 85,
             description: resolvedDescription,
             jobOverview: toPlainJobText(asString(job.overview)) || undefined,
-            fullDescription:
-              asString(job.description) ||
-              asString(job.jobDescriptionHtml) ||
-              '',
-            preferredSkills: Array.isArray(job.preferredSkills)
-              ? job.preferredSkills
-              : Array.isArray(job.normalizedJobProfile?.preferredSkills)
-              ? job.normalizedJobProfile.preferredSkills
+            fullDescription: fieldVisible('jobDescription')
+              ? asString(job.description) ||
+                asString(job.jobDescriptionHtml) ||
+                ''
+              : '',
+            preferredSkills: fieldVisible('skills')
+              ? Array.isArray(job.preferredSkills)
+                ? job.preferredSkills
+                : Array.isArray(job.normalizedJobProfile?.preferredSkills)
+                ? job.normalizedJobProfile.preferredSkills
+                : []
               : [],
             responsibilities: resolvedResponsibilities,
             requiredSkills: resolvedRequiredSkills,
-            niceToHaveSkills: Array.isArray(job.preferredSkills)
-              ? job.preferredSkills
-              : Array.isArray(job.normalizedJobProfile?.preferredSkills)
-              ? job.normalizedJobProfile.preferredSkills
+            niceToHaveSkills: fieldVisible('skills')
+              ? Array.isArray(job.preferredSkills)
+                ? job.preferredSkills
+                : Array.isArray(job.normalizedJobProfile?.preferredSkills)
+                ? job.normalizedJobProfile.preferredSkills
+                : []
               : [],
             companyOverview: isClientNamePubliclyVisible(job as Record<string, unknown>)
               ? toPlainJobText(asString(job.companyOverview)) ||
@@ -1018,12 +1065,14 @@ const ExploreJobsPageContent = () => {
             benefits: resolvedBenefits,
             preferredQualifications: resolvedPreferredQualifications,
             candidateRequirements: resolvedCandidateRequirements,
-            showClientNamePublicly: job.showClientNamePublicly !== false,
-            publicFieldVisibility:
-              job.publicFieldVisibility && typeof job.publicFieldVisibility === 'object'
-                ? (job.publicFieldVisibility as Record<string, boolean>)
-                : null,
+            showClientNamePublicly,
+            publicFieldVisibility,
             ...portalMeta,
+            nationality: fieldVisible('nationality') ? portalMeta.nationality : undefined,
+            contactPerson: fieldVisible('contactPerson') ? portalMeta.contactPerson : undefined,
+            priority: fieldVisible('priority') ? portalMeta.priority : undefined,
+            openings: fieldVisible('openings') ? portalMeta.openings : undefined,
+            targetHireDate: fieldVisible('targetHireDate') ? portalMeta.targetHireDate : undefined,
             employmentType:
               portalMeta.employmentType ||
               resolvedType,
@@ -1060,10 +1109,29 @@ const ExploreJobsPageContent = () => {
         .filter((job) => job !== null) as JobListing[];
 
         setJobListings(transformedJobs);
-        if (transformedJobs.length > 0) {
-          setSelectedJob(transformedJobs[0]);
-        } else {
-          setSelectedJob(null);
+        let refreshedSelection: JobListing | null = null;
+        setSelectedJob((prev) => {
+          if (transformedJobs.length === 0) return null;
+          if (prev) {
+            const refreshed = transformedJobs.find((job) => String(job.id) === String(prev.id));
+            if (refreshed) {
+              refreshedSelection = refreshed;
+              return refreshed;
+            }
+          }
+          refreshedSelection = transformedJobs[0];
+          return transformedJobs[0];
+        });
+        if (refreshedSelection) {
+          const selectedId = String(refreshedSelection.id);
+          void fetchJobDetailForApply(selectedId, String(API_BASE_URL)).then((detail) => {
+            if (!detail) return;
+            setSelectedJob((prev) =>
+              prev && String(prev.id) === selectedId
+                ? mergeListingWithApiJob(prev, detail)
+                : prev,
+            );
+          });
         }
       } else {
         setJobListings([]);
@@ -1106,111 +1174,142 @@ const ExploreJobsPageContent = () => {
   }
 
   const mergeListingWithApiJob = (prev: JobListing, apiJob: Record<string, unknown>): JobListing => {
-    const portalMeta = extractPortalJobMeta(apiJob)
-    const apiSkills = Array.isArray(apiJob.skills) ? (apiJob.skills as string[]) : prev.skills
-    const rawDescriptionText =
-      asString(apiJob.description) ||
-      asString(apiJob.jobDescription) ||
-      asString(apiJob.jobSummary) ||
-      asString(apiJob.jobDescriptionHtml) ||
-      portalMeta.fullDescription ||
-      ''
-    const parsedText = parseStructuredJobText(rawDescriptionText)
-    const resolvedDescription = resolveJobSummaryText(
-      {
-        overview: apiJob.overview,
-        aboutRole: apiJob.aboutRole,
-        description: apiJob.description,
-        jobDescription: apiJob.jobDescription,
-        jobSummary: apiJob.jobSummary,
-        jobDescriptionHtml: apiJob.jobDescriptionHtml,
-      },
-      parsedText,
+    const showClientNamePublicly = apiJob.showClientNamePublicly !== false
+    const publicFieldVisibility = parseJobPublicFieldVisibility(
+      apiJob.publicFieldVisibility ?? prev.publicFieldVisibility,
     )
-    const resolvedResponsibilities =
-      Array.isArray(apiJob.keyResponsibilities) && (apiJob.keyResponsibilities as unknown[]).length
+    const fieldVisible = (field: Parameters<typeof isJobFieldPubliclyVisible>[1]) =>
+      isJobFieldPubliclyVisible(publicFieldVisibility, field, showClientNamePublicly)
+
+    const portalMeta = extractPortalJobMeta(apiJob)
+    const rawDescriptionText = fieldVisible('jobDescription')
+      ? asString(apiJob.description) ||
+        asString(apiJob.jobDescription) ||
+        asString(apiJob.jobSummary) ||
+        asString(apiJob.jobDescriptionHtml) ||
+        portalMeta.fullDescription ||
+        ''
+      : ''
+    const parsedText = parseStructuredJobText(rawDescriptionText)
+    const resolvedDescription = fieldVisible('jobDescription')
+      ? resolveJobSummaryText(
+          {
+            overview: apiJob.overview,
+            aboutRole: apiJob.aboutRole,
+            description: apiJob.description,
+            jobDescription: apiJob.jobDescription,
+            jobSummary: apiJob.jobSummary,
+            jobDescriptionHtml: apiJob.jobDescriptionHtml,
+          },
+          parsedText,
+        )
+      : ''
+    const resolvedResponsibilities = fieldVisible('keyResponsibilities')
+      ? Array.isArray(apiJob.keyResponsibilities) && (apiJob.keyResponsibilities as unknown[]).length
         ? (apiJob.keyResponsibilities as unknown[]).map((item) => toPlainJobText(String(item)))
         : typeof apiJob.responsibilities === 'string'
           ? splitTextPoints(toPlainJobText(String(apiJob.responsibilities)))
-          : parsedText.responsibilities.length
-            ? parsedText.responsibilities
-            : prev.responsibilities
-    const resolvedRequiredSkills = [
-      ...new Set(
-        (Array.isArray(apiJob.skills) && (apiJob.skills as unknown[]).length
-          ? (apiJob.skills as unknown[])
-          : Array.isArray(apiJob.requirements) && (apiJob.requirements as unknown[]).length
-            ? (apiJob.requirements as unknown[])
-            : parsedText.requiredSkills.length
-              ? parsedText.requiredSkills
-              : prev.requiredSkills
-        ).map((item) => toPlainJobText(String(item))),
-      ),
-    ]
-    return {
+          : parsedText.responsibilities
+      : []
+    const resolvedRequiredSkills = fieldVisible('skills')
+      ? [
+          ...new Set(
+            (Array.isArray(apiJob.skills) && (apiJob.skills as unknown[]).length
+              ? (apiJob.skills as unknown[])
+              : Array.isArray(apiJob.requirements) && (apiJob.requirements as unknown[]).length
+                ? (apiJob.requirements as unknown[])
+                : parsedText.requiredSkills
+            ).map((item) => toPlainJobText(String(item))),
+          ),
+        ]
+      : []
+    const resolvedLocation = fieldVisible('location')
+      ? asString(apiJob.location) ||
+        [portalMeta.city, portalMeta.state, portalMeta.country].filter(Boolean).join(', ')
+      : ''
+    const resolvedSalary = fieldVisible('salary')
+      ? formatSalary(
+          portalMeta.salaryMin ?? apiJob.salaryMin,
+          portalMeta.salaryMax ?? apiJob.salaryMax,
+          portalMeta.salaryCurrency ?? apiJob.salaryCurrency,
+          portalMeta.salaryType ?? apiJob.salaryType,
+          (apiJob.salary as { amount?: string } | undefined)?.amount ||
+            asString(apiJob.expectedSalary) ||
+            parsedText.expectedSalary,
+        )
+      : ''
+
+    const merged: JobListing = {
       ...prev,
       ...portalMeta,
-      title: asString(apiJob.title) || asString(apiJob.jobTitle) || prev.title,
-      company: resolvePortalCompanyName(apiJob),
-      logo: resolvePortalCompanyLogo(apiJob),
-      location:
-        asString(apiJob.location) ||
-        [portalMeta.city, portalMeta.state, portalMeta.country].filter(Boolean).join(', ') ||
-        prev.location,
-      skills: apiSkills,
+      title: fieldVisible('jobTitle')
+        ? asString(apiJob.title) || asString(apiJob.jobTitle) || ''
+        : '',
+      company: fieldVisible('client') ? resolvePortalCompanyName(apiJob) : '',
+      logo: fieldVisible('client') ? resolvePortalCompanyLogo(apiJob) : '/perosn_icon.png',
+      location: resolvedLocation,
+      skills: fieldVisible('skills') && Array.isArray(apiJob.skills) ? (apiJob.skills as string[]) : [],
       description: resolvedDescription,
-      jobOverview: toPlainJobText(asString(apiJob.overview)) || prev.jobOverview,
-      fullDescription:
-        asString(apiJob.description) ||
-        asString(apiJob.jobDescriptionHtml) ||
-        portalMeta.fullDescription ||
-        prev.fullDescription,
+      jobOverview: fieldVisible('jobDescription')
+        ? toPlainJobText(asString(apiJob.overview)) || undefined
+        : undefined,
+      fullDescription: fieldVisible('jobDescription')
+        ? asString(apiJob.description) ||
+          asString(apiJob.jobDescriptionHtml) ||
+          portalMeta.fullDescription ||
+          ''
+        : '',
       responsibilities: resolvedResponsibilities,
       requiredSkills: resolvedRequiredSkills,
-      preferredSkills: Array.isArray(apiJob.preferredSkills)
-        ? (apiJob.preferredSkills as string[])
-        : prev.preferredSkills,
-      preferredQualifications:
-        Array.isArray(apiJob.preferredQualifications) &&
-        (apiJob.preferredQualifications as unknown[]).length
+      preferredSkills:
+        fieldVisible('skills') && Array.isArray(apiJob.preferredSkills)
+          ? (apiJob.preferredSkills as string[])
+          : [],
+      preferredQualifications: fieldVisible('qualifications')
+        ? Array.isArray(apiJob.preferredQualifications) &&
+          (apiJob.preferredQualifications as unknown[]).length
           ? (apiJob.preferredQualifications as unknown[]).map((item) =>
               toPlainJobText(String(item)),
             )
-          : parsedText.preferredQualifications.length > 0
-            ? parsedText.preferredQualifications
-            : prev.preferredQualifications,
-      candidateRequirements:
-        Array.isArray(apiJob.candidateRequirements) &&
-        (apiJob.candidateRequirements as unknown[]).length
+          : parsedText.preferredQualifications
+        : [],
+      candidateRequirements: fieldVisible('candidateRequirements')
+        ? Array.isArray(apiJob.candidateRequirements) &&
+          (apiJob.candidateRequirements as unknown[]).length
           ? (apiJob.candidateRequirements as unknown[]).map((item) =>
               toPlainJobText(String(item)),
             )
-          : parsedText.candidateRequirements.length > 0
-            ? parsedText.candidateRequirements
-            : prev.candidateRequirements,
-      employmentType: portalMeta.employmentType || prev.employmentType,
-      workMode:
-        asString(apiJob.workMode || apiJob.jobLocationType) ||
-        prev.workMode,
-      contactPerson: portalMeta.contactPerson || prev.contactPerson,
-      education: asString(apiJob.education) || prev.education,
-      benefits:
-        Array.isArray(apiJob.benefits) && (apiJob.benefits as unknown[]).length
+          : parsedText.candidateRequirements
+        : [],
+      employmentType: fieldVisible('employmentType') ? portalMeta.employmentType || '' : '',
+      workMode: fieldVisible('location')
+        ? asString(apiJob.workMode || apiJob.jobLocationType) || prev.workMode
+        : '',
+      contactPerson: fieldVisible('contactPerson') ? portalMeta.contactPerson || '' : '',
+      education: fieldVisible('qualifications') ? asString(apiJob.education) || '-' : '-',
+      benefits: fieldVisible('jobDescription')
+        ? Array.isArray(apiJob.benefits) && (apiJob.benefits as unknown[]).length
           ? (apiJob.benefits as string[])
-          : parsedText.benefits.length
-            ? parsedText.benefits
-            : prev.benefits,
-      salaryMin: portalMeta.salaryMin ?? prev.salaryMin,
-      salaryMax: portalMeta.salaryMax ?? prev.salaryMax,
-      salaryCurrency: portalMeta.salaryCurrency ?? prev.salaryCurrency,
-      salaryType: portalMeta.salaryType ?? prev.salaryType,
-      showClientNamePublicly:
-        apiJob.showClientNamePublicly === false ? false : prev.showClientNamePublicly,
-      publicFieldVisibility:
-        apiJob.publicFieldVisibility && typeof apiJob.publicFieldVisibility === 'object'
-          ? (apiJob.publicFieldVisibility as Record<string, boolean>)
-          : prev.publicFieldVisibility,
+          : parsedText.benefits
+        : [],
+      salary: resolvedSalary,
+      salaryMin: fieldVisible('salary') ? (portalMeta.salaryMin ?? null) : null,
+      salaryMax: fieldVisible('salary') ? (portalMeta.salaryMax ?? null) : null,
+      salaryCurrency: fieldVisible('salary') ? (portalMeta.salaryCurrency ?? null) : null,
+      salaryType: fieldVisible('salary') ? (portalMeta.salaryType ?? null) : null,
+      showClientNamePublicly,
+      publicFieldVisibility,
+      nationality: fieldVisible('nationality') ? portalMeta.nationality : undefined,
+      contactPerson: fieldVisible('contactPerson') ? portalMeta.contactPerson || '' : '',
+      priority: fieldVisible('priority') ? portalMeta.priority : undefined,
+      openings: fieldVisible('openings') ? portalMeta.openings : undefined,
+      targetHireDate: fieldVisible('targetHireDate') ? portalMeta.targetHireDate : undefined,
     }
+
+    return redactPortalJobListing(merged, {
+      showClientNamePublicly,
+      publicFieldVisibility,
+    })
   }
 
   const handleJobClick = (job: JobListing) => {
@@ -1862,14 +1961,19 @@ const ExploreJobsPageContent = () => {
   )
 
   const renderJobCard = (job: JobListing, isCompact = false) => {
+    const cardVisibility = parseJobPublicFieldVisibility(job.publicFieldVisibility)
+    const cardFieldVisible = (field: Parameters<typeof isJobFieldPubliclyVisible>[1]) =>
+      isJobFieldPubliclyVisible(cardVisibility, field, job.showClientNamePublicly !== false)
+
     const isSelected = selectedJob?.id === job.id && isCompact
     const when = (job.timeAgo || job.postedDate || '').toString()
     const isSaved = isSavedJob(job.id)
     const isApplied = appliedJobIds.has(String(job.id))
-    const skills = Array.isArray(job.skills) ? job.skills : []
+    const skills = cardFieldVisible('skills') && Array.isArray(job.skills) ? job.skills : []
     const shownSkills = skills.slice(0, isCompact ? 2 : 3)
-    const metaLocation = String(job.location || '').trim()
-    const metaSalary = String(job.salary || '').trim()
+    const displayCompany = cardFieldVisible('client') ? String(job.company || '').trim() : ''
+    const metaLocation = cardFieldVisible('location') ? String(job.location || '').trim() : ''
+    const metaSalary = cardFieldVisible('salary') ? String(job.salary || '').trim() : ''
     const metaType = job.type ? String(job.type).replace(/_/g, ' ') : ''
     const metaMode = job.workMode ? String(job.workMode).replace(/_/g, ' ') : ''
     const hasMetaLine = Boolean(metaLocation || metaSalary)
@@ -1902,8 +2006,8 @@ const ExploreJobsPageContent = () => {
           <div className="flex min-w-0 items-start gap-3">
             <JobLogoBadge job={job} compact={isCompact} />
             <div className="min-w-0">
-              {job.company ? (
-                <p className="truncate text-[12px] font-semibold text-slate-500">{job.company}</p>
+              {displayCompany ? (
+                <p className="truncate text-[12px] font-semibold text-slate-500">{displayCompany}</p>
               ) : null}
               {job.title ? (
                 <h3 className="profile-page-value mt-0.5 line-clamp-2 font-semibold leading-snug tracking-tight">
@@ -2114,8 +2218,17 @@ const ExploreJobsPageContent = () => {
   };
 
   const renderJobListItem = (job: JobListing) => {
+    const listVisibility = parseJobPublicFieldVisibility(job.publicFieldVisibility)
+    const listFieldVisible = (field: Parameters<typeof isJobFieldPubliclyVisible>[1]) =>
+      isJobFieldPubliclyVisible(listVisibility, field, job.showClientNamePublicly !== false)
     const when = (job.timeAgo || job.postedDate || '').toString()
-    const skills = Array.isArray(job.skills) ? job.skills : []
+    const skills =
+      listFieldVisible('skills') && Array.isArray(job.skills) ? job.skills : []
+    const metaParts = [
+      listFieldVisible('client') ? job.company : '',
+      listFieldVisible('location') ? job.location : '',
+      listFieldVisible('salary') ? job.salary : '',
+    ]
     return (
       <div
         key={job.id}
@@ -2132,7 +2245,7 @@ const ExploreJobsPageContent = () => {
           <div className="flex-1 min-w-0">
             <p className="profile-page-value truncate font-semibold">{job.title}</p>
             <div className="application-detail-helper mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-              {[job.company, job.location, job.salary]
+              {metaParts
                 .map((part) => String(part || '').trim())
                 .filter(Boolean)
                 .map((part, index) => (

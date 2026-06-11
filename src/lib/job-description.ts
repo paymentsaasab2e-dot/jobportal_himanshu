@@ -279,9 +279,14 @@ const PLAIN_SECTION_HEADERS: Array<{ id: string; title: string; patterns: RegExp
     patterns: [/^key responsibilities$/i, /^responsibilities$/i, /^role & responsibilities$/i],
   },
   {
+    id: 'skills',
+    title: 'Skills',
+    patterns: [/^skills$/i, /^key skills$/i, /^required skills$/i],
+  },
+  {
     id: 'requirements',
     title: 'Requirements',
-    patterns: [/^requirements$/i, /^required skills$/i, /^qualifications and experience$/i],
+    patterns: [/^requirements$/i, /^qualifications and experience$/i],
   },
   {
     id: 'preferred-qualifications',
@@ -566,6 +571,8 @@ export function sectionVisibleOnPortal(
       return show('jobDescription')
     case 'key-responsibilities':
       return show('keyResponsibilities')
+    case 'skills':
+      return show('skills')
     case 'requirements':
     case 'preferred-qualifications':
       return show('qualifications')
