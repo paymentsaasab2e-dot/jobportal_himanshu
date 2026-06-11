@@ -60,8 +60,8 @@ export function getSalaryDisplaySymbol(currency?: string | null): string | null 
   return null;
 }
 
-function compactNumber(n: number): string {
-  return n.toLocaleString('en-US', { maximumFractionDigits: 0, notation: 'compact' });
+function compactNumber(n: number, numberLocale = 'en-US'): string {
+  return n.toLocaleString(numberLocale, { maximumFractionDigits: 0, notation: 'compact' });
 }
 
 /**
@@ -72,7 +72,10 @@ export function formatCompactSalarySafe(
   max?: number | null,
   currency?: string | null,
   amount?: string | null,
+  options?: { numberLocale?: string; unspecifiedLabel?: string },
 ): string {
+  const numberLocale = options?.numberLocale ?? 'en-US';
+  const unspecifiedLabel = options?.unspecifiedLabel ?? 'Salary not specified';
   const cur = String(currency ?? '').trim() || null;
   const amountStr = String(amount ?? '').trim() || null;
 
@@ -83,20 +86,20 @@ export function formatCompactSalarySafe(
   const nMin = typeof min === 'number' && Number.isFinite(min) ? min : null;
   const nMax = typeof max === 'number' && Number.isFinite(max) ? max : null;
 
-  if (nMin == null && nMax == null) return 'Salary not specified';
+  if (nMin == null && nMax == null) return unspecifiedLabel;
 
   const sym = getSalaryDisplaySymbol(cur);
 
   if (sym) {
-    if (nMin != null && nMax != null) return `${sym}${compactNumber(nMin)} - ${sym}${compactNumber(nMax)}`;
-    if (nMin != null) return `${sym}${compactNumber(nMin)}+`;
-    return `${sym}${compactNumber(nMax ?? 0)}`;
+    if (nMin != null && nMax != null) return `${sym}${compactNumber(nMin, numberLocale)} - ${sym}${compactNumber(nMax, numberLocale)}`;
+    if (nMin != null) return `${sym}${compactNumber(nMin, numberLocale)}+`;
+    return `${sym}${compactNumber(nMax ?? 0, numberLocale)}`;
   }
 
   const iso = resolveIsoCurrencyCode(cur);
   if (iso) {
     try {
-      const formatter = new Intl.NumberFormat('en-US', {
+      const formatter = new Intl.NumberFormat(numberLocale, {
         style: 'currency',
         currency: iso,
         maximumFractionDigits: 0,
@@ -112,8 +115,8 @@ export function formatCompactSalarySafe(
 
   const label = cur || '';
   if (nMin != null && nMax != null) {
-    return `${compactNumber(nMin)} - ${compactNumber(nMax)} ${label}`.trim();
+    return `${compactNumber(nMin, numberLocale)} - ${compactNumber(nMax, numberLocale)} ${label}`.trim();
   }
-  if (nMin != null) return `${compactNumber(nMin)}+ ${label}`.trim();
-  return `${compactNumber(nMax ?? 0)} ${label}`.trim();
+  if (nMin != null) return `${compactNumber(nMin, numberLocale)}+ ${label}`.trim();
+  return `${compactNumber(nMax ?? 0, numberLocale)} ${label}`.trim();
 }

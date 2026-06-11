@@ -223,6 +223,43 @@ export const ALL_COUNTRY_CODES: CountryCodeOption[] = Country.getAllCountries()
   })
   .sort((a, b) => a.name.localeCompare(b.name));
 
+export type LocalizedCountryCodeOption = CountryCodeOption & {
+  displayName: string;
+};
+
+const displayNamesCache = new Map<string, Intl.DisplayNames>();
+
+function getRegionDisplayNames(locale: string): Intl.DisplayNames {
+  const key = locale === 'fr' ? 'fr' : 'en';
+  if (!displayNamesCache.has(key)) {
+    displayNamesCache.set(key, new Intl.DisplayNames([key], { type: 'region' }));
+  }
+  return displayNamesCache.get(key)!;
+}
+
+/** Locale-aware country label; English source name kept on the option for APIs. */
+export function getLocalizedCountryName(
+  isoCode: string,
+  fallbackName: string,
+  locale: string = 'en',
+): string {
+  if (locale !== 'fr') return fallbackName;
+  try {
+    const localized = getRegionDisplayNames('fr').of(isoCode);
+    return localized || fallbackName;
+  } catch {
+    return fallbackName;
+  }
+}
+
+export function getCountryCodesForLocale(locale: string): LocalizedCountryCodeOption[] {
+  const sortLocale = locale === 'fr' ? 'fr' : 'en';
+  return ALL_COUNTRY_CODES.map((country) => ({
+    ...country,
+    displayName: getLocalizedCountryName(country.code, country.name, locale),
+  })).sort((a, b) => a.displayName.localeCompare(b.displayName, sortLocale));
+}
+
 export function formatPhoneCodeLabel(option: CountryCodeOption): string {
   return `${option.dialCode} (${option.name})`;
 }

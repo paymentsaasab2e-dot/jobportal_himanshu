@@ -3,15 +3,19 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { ShieldCheck, ArrowRight, AlertCircle, Phone, Mail } from "lucide-react";
 
 import { API_BASE_URL } from '@/lib/api-base';
 import { showSuccessToast } from '@/components/common/toast/toast';
 import { useAuth } from '@/components/auth/AuthContext';
+import { AppLocale, localizePath } from "@/lib/i18n";
 
 export default function VerifyOTP() {
   const { login } = useAuth();
   const router = useRouter();
+  const locale = useLocale() as AppLocale;
+  const t = useTranslations("whatsapp.verify");
   const [otp, setOtp] = useState("");
   const [timer, setTimer] = useState(29);
   const [isResendDisabled, setIsResendDisabled] = useState(true);
@@ -37,9 +41,9 @@ export default function VerifyOTP() {
       setOtpPreview(storedOtpPreview || "");
     } else {
       // If no stored data, redirect back to WhatsApp page
-      router.push("/whatsapp");
+      router.push(localizePath("/whatsapp", locale));
     }
-  }, [router]);
+  }, [router, locale]);
 
   useEffect(() => {
     if (timer > 0) {
@@ -64,7 +68,7 @@ export default function VerifyOTP() {
     setIsResendDisabled(true);
 
     if (!whatsappNumber || !countryCode || !otpEmail) {
-      setError("Missing WhatsApp number. Please go back and enter your number again.");
+      setError(t("missingWhatsappNumber"));
       return;
     }
 
@@ -84,7 +88,7 @@ export default function VerifyOTP() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to resend OTP");
+        throw new Error(data.message || t("failedToResendOtp"));
       }
 
       // Show OTP on screen when backend sends fallback/testing OTP
@@ -93,9 +97,9 @@ export default function VerifyOTP() {
         sessionStorage.setItem("otpPreview", data.data.otp);
       }
 
-      showSuccessToast("OTP resent", "A fresh verification code has been sent.");
+      showSuccessToast(t("otpResentTitle"), t("otpResentDescription"));
     } catch (err: any) {
-      setError(err.message || "Failed to resend OTP. Please try again.");
+      setError(err.message || t("failedToResendOtp"));
       console.error("Error resending OTP:", err);
     }
   };
@@ -104,12 +108,12 @@ export default function VerifyOTP() {
     setError("");
 
     if (!otp || otp.length !== 6) {
-      setError("Please enter a valid 6-digit OTP");
+      setError(t("enterValidOtp"));
       return;
     }
 
     if (!whatsappNumber || !countryCode) {
-      setError("Missing WhatsApp number. Please go back and enter your number again.");
+      setError(t("missingWhatsappNumber"));
       return;
     }
 
@@ -132,7 +136,7 @@ export default function VerifyOTP() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Invalid OTP. Please try again.");
+        throw new Error(data.message || t("invalidOtp"));
       }
 
       // Use the centralized login function from AuthContext
@@ -151,21 +155,21 @@ export default function VerifyOTP() {
       const skipCv = data.data.skipCvUpload === true;
       const postLoginRedirect = sessionStorage.getItem("postLoginRedirect");
 
-      showSuccessToast("Login successful", "Your account has been verified.");
+      showSuccessToast(t("loginSuccessfulTitle"), t("loginSuccessfulDescription"));
 
       if (!skipCv) {
         // New user — always collect their CV first regardless of any stored redirect
-        router.push("/uploadcv");
+        router.push(localizePath("/uploadcv", locale));
       } else if (postLoginRedirect) {
         // Returning user who came from a gated link — send them there
         sessionStorage.removeItem("postLoginRedirect");
         router.push(postLoginRedirect);
       } else {
         // Returning user — go to dashboard
-        router.push("/candidate-dashboard");
+        router.push(localizePath("/candidate-dashboard", locale));
       }
     } catch (err: any) {
-      setError(err.message || "Verification failed. Please try again.");
+      setError(err.message || t("verificationFailed"));
       console.error("Error verifying OTP:", err);
     } finally {
       setIsLoading(false);
@@ -187,7 +191,7 @@ export default function VerifyOTP() {
 
       {/* Header */}
       <header className="flex flex-none items-center justify-between px-6 py-6 relative z-10 mx-auto w-full max-w-[1240px]">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push(localizePath('/', locale))}>
           <Image
             src="/SAASA%20Logo.png"
             alt="SAASA B2E"
@@ -197,7 +201,7 @@ export default function VerifyOTP() {
           />
         </div>
         <a href="#" className="text-[13px] font-bold text-sky-600 hover:text-sky-700 transition-colors uppercase tracking-widest">
-          Help 
+          {t("help")}
         </a>
       </header>
 
@@ -213,10 +217,10 @@ export default function VerifyOTP() {
 
           <div className="mb-8">
             <h1 className="text-[26px] font-black text-slate-900 tracking-tight leading-tight">
-              Check your email
+              {t("checkYourEmail")}
             </h1>
             <p className="mt-2 text-[15px] font-medium text-slate-500 leading-relaxed max-w-[300px] mx-auto">
-              We've sent a 6-digit verification code to <span className="text-slate-900 font-bold">{otpEmail || "your email"}</span>.
+              {t("sentCodeToEmail", { email: otpEmail || t("yourEmailFallback") })}
             </p>
           </div>
 
@@ -266,10 +270,10 @@ export default function VerifyOTP() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Verifying...
+                  {t("verifying")}
                 </>
               ) : (
-                "Verify & Continue"
+                t("verifyAndContinue")
               )}
             </button>
             
@@ -277,25 +281,25 @@ export default function VerifyOTP() {
 
           <div className="mt-8 flex flex-col items-center gap-3">
              <div className="text-[13px] font-medium text-slate-500">
-                Didn't receive the code?{" "}
+                {t("didntReceiveCode")}{" "}
                 {isResendDisabled ? (
                   <span className="text-slate-400">
-                    Resend in {formatTime(timer)}
+                    {t("resendIn", { time: formatTime(timer) })}
                   </span>
                 ) : (
                   <button
                     onClick={handleResend}
                     className="text-sky-600 hover:text-sky-700 font-bold transition-colors"
                   >
-                    Resend code
+                    {t("resendCode")}
                   </button>
                 )}
              </div>
              <button
-                onClick={() => router.push("/whatsapp")}
+                onClick={() => router.push(localizePath("/whatsapp", locale))}
                 className="text-[13px] font-bold text-slate-500 hover:text-slate-800 transition-colors"
              >
-                Change contact details
+                {t("changeContactDetails")}
              </button>
           </div>
 

@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
+import type { AppLocale } from "@/lib/i18n";
 
 import {
   Bookmark,
@@ -98,14 +100,6 @@ function CompanyLogoBadge({
   );
 }
 
-const FILTER_PILLS: Array<{ key: JobFilterKey; label: string }> = [
-  { key: "remote", label: "Remote Only" },
-  { key: "highestMatch", label: "Highest Match" },
-  { key: "salary100k", label: "Salary >$100k" },
-  { key: "recent", label: "Freshly Posted" },
-  { key: "visaFriendly", label: "Visa Friendly" },
-];
-
 interface JobMatchesPanelProps {
   jobs: DashboardJob[];
   loading: boolean;
@@ -129,6 +123,17 @@ export default function JobMatchesPanel({
   onApply,
   onViewAll,
 }: JobMatchesPanelProps) {
+  const locale = useLocale() as AppLocale;
+  const t = useTranslations("candidateDashboard.jobs");
+
+  const filterPills: Array<{ key: JobFilterKey; label: string }> = [
+    { key: "remote", label: t("filterRemoteOnly") },
+    { key: "highestMatch", label: t("filterHighestMatch") },
+    { key: "salary100k", label: t("filterSalary100k") },
+    { key: "recent", label: t("filterFreshlyPosted") },
+    { key: "visaFriendly", label: t("filterVisaFriendly") },
+  ];
+
   return (
     <DashboardPanel className="p-3.5 sm:p-4">
       <div className="flex flex-col gap-3">
@@ -140,13 +145,13 @@ export default function JobMatchesPanel({
               }`}
             >
               <Sparkles className="h-3 w-3" strokeWidth={2.2} />
-              AI matched roles
+              {t("aiMatchedRoles")}
             </div>
             <h2 className="profile-page-section-title mt-2.5">
-              Top job matches
+              {t("topJobMatches")}
             </h2>
             <p className="application-detail-helper mt-1">
-              Prioritized roles you have not applied to yet, with full hiring context restored.
+              {t("description")}
             </p>
           </div>
 
@@ -155,13 +160,13 @@ export default function JobMatchesPanel({
             onClick={onViewAll}
             className="inline-flex items-center gap-1.5 rounded-full bg-[#28A8E1] px-3 py-1.5 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-[#28A8DF]"
           >
-            Browse all jobs
+            {t("browseAllJobs")}
             <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.2} />
           </button>
         </div>
 
         <div className="dashboard-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {FILTER_PILLS.map((pill) => {
+          {filterPills.map((pill) => {
             const active = activeFilters.includes(pill.key);
             return (
               <button
@@ -200,10 +205,10 @@ export default function JobMatchesPanel({
           ) : jobs.length === 0 ? (
             <div className="rounded-[20px] bg-slate-100/80 px-4 py-7 text-center">
               <p className="text-sm font-semibold text-slate-900">
-                No roles match this filter mix yet.
+                {t("noRolesMatch")}
               </p>
               <p className="mt-2 text-[12px] font-medium text-slate-500">
-                Clear a pill or open the full jobs board to expand your search.
+                {t("clearFilterHint")}
               </p>
             </div>
           ) : (
@@ -237,20 +242,20 @@ export default function JobMatchesPanel({
                             {job.company}
                           </p>
                           <p className="mt-0.5 truncate text-[11px] font-medium uppercase tracking-[0.05em] text-slate-500">
-                            {formatJobMeta(job)}
+                            {formatJobMeta(job, t)}
                           </p>
                         </div>
 
                         <div className="flex shrink-0 items-center gap-2">
                           {matchScore != null ? (
                             <span className="inline-flex rounded-full bg-[var(--brand-accent-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--brand-accent)]">
-                              {matchScore}% match
+                              {t("matchPercent", { score: matchScore })}
                             </span>
                           ) : null}
                           <button
                             type="button"
                             onClick={() => onToggleSave(job.id)}
-                            aria-label={isSaved ? "Remove job from saved" : "Save job for later"}
+                            aria-label={isSaved ? t("removeFromSaved") : t("saveJobAria")}
                             className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition-all duration-200 ${
                               isSaved
                                 ? "border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]"
@@ -268,7 +273,7 @@ export default function JobMatchesPanel({
                             onClick={() => onApply(job.id)}
                             className="inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-[#28A8DF]"
                           >
-                            Apply now
+                            {t("applyNow")}
                           </button>
                         </div>
                       </div>
@@ -276,19 +281,23 @@ export default function JobMatchesPanel({
                       <div className="mt-3 flex flex-wrap items-center gap-1.5">
                         <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">
                           <Clock3 className="h-3 w-3" strokeWidth={2.2} />
-                          {formatRelativeDate(job.postedAt)}
+                          {formatRelativeDate(job.postedAt, t)}
                         </span>
                         <span className="inline-flex rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">
                           {formatCompactSalary(
                             job.salaryMin,
                             job.salaryMax,
                             job.salaryCurrency,
-                            job.salaryAmount
+                            job.salaryAmount,
+                            {
+                              locale,
+                              unspecifiedLabel: t("salaryUnspecified"),
+                            }
                           )}
                         </span>
                         {job.visaSponsorship ? (
                           <span className="inline-flex rounded-full bg-[var(--brand-primary-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--brand-primary)]">
-                            Visa friendly
+                            {t("visaFriendly")}
                           </span>
                         ) : null}
                       </div>
