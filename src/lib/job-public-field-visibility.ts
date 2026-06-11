@@ -63,3 +63,105 @@ export function resolveShowClientNamePublicly(
   if (legacyShowClient === false) return false;
   return isJobFieldPubliclyVisible(visibility, 'client', legacyShowClient ?? true);
 }
+
+/** Strip hidden CRM fields from a Phase 1 job listing — no placeholders or confidential labels. */
+export function redactPortalJobListing<T extends Record<string, unknown>>(
+  listing: T,
+  options?: {
+    showClientNamePublicly?: boolean;
+    publicFieldVisibility?: Record<string, boolean> | null;
+  },
+): T {
+  const visibility = parseJobPublicFieldVisibility(options?.publicFieldVisibility);
+  const legacyShowClient = options?.showClientNamePublicly !== false;
+  const show = (field: JobPublicVisibilityField) =>
+    isJobFieldPubliclyVisible(visibility, field, legacyShowClient);
+
+  const out: Record<string, unknown> = { ...listing };
+
+  if (!show('client')) {
+    out.company = '';
+    out.companyOverview = '';
+    out.logo = '/perosn_icon.png';
+    out.contactPerson = '';
+  }
+  if (!show('jobTitle')) {
+    out.title = '';
+  }
+  if (!show('location')) {
+    out.location = '';
+    out.city = undefined;
+    out.state = undefined;
+    out.country = undefined;
+  }
+  if (!show('salary')) {
+    out.salary = '';
+    out.salaryMin = null;
+    out.salaryMax = null;
+    out.salaryCurrency = null;
+  }
+  if (!show('experience')) {
+    out.experienceLevel = '';
+    out.experienceMin = null;
+    out.experienceMax = null;
+    out.experienceDisplay = null;
+  }
+  if (!show('employmentType')) {
+    out.type = '';
+    out.employmentType = '';
+  }
+  if (!show('openings')) {
+    out.openings = undefined;
+  }
+  if (!show('nationality')) {
+    out.nationality = undefined;
+  }
+  if (!show('industryType')) {
+    out.industryType = undefined;
+    out.industry = '';
+    out.department = undefined;
+  }
+  if (!show('targetHireDate')) {
+    out.targetHireDate = undefined;
+  }
+  if (!show('priority')) {
+    out.priority = undefined;
+  }
+  if (!show('languages')) {
+    out.languages = [];
+  }
+  if (!show('skills')) {
+    out.skills = [];
+    out.requiredSkills = [];
+    out.niceToHaveSkills = [];
+    out.preferredSkills = [];
+  }
+  if (!show('keyResponsibilities')) {
+    out.responsibilities = [];
+  }
+  if (!show('qualifications')) {
+    out.preferredQualifications = [];
+    out.education = undefined;
+  }
+  if (!show('candidateRequirements')) {
+    out.candidateRequirements = [];
+  }
+  if (!show('jobDescription')) {
+    out.description = '';
+    out.jobOverview = undefined;
+    out.fullDescription = '';
+    out.companyOverview = '';
+    out.benefits = [];
+  }
+  if (!show('videoMediaLink')) {
+    out.videoMediaLink = undefined;
+  }
+  if (!show('forecastRevenue')) {
+    out.forecastRevenue = undefined;
+  }
+  if (!show('contactPerson')) {
+    out.contactPerson = '';
+  }
+
+  return out as T;
+}

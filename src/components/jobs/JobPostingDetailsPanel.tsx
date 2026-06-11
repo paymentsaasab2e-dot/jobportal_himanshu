@@ -58,6 +58,9 @@ export type JobPostingDetailsJob = {
   jobOverview?: string
   showClientNamePublicly?: boolean
   publicFieldVisibility?: Record<string, boolean> | null
+  priority?: string | null
+  targetHireDate?: string | null
+  contactPerson?: string | null
 }
 
 function formatExperienceRange(job: JobPostingDetailsJob): { min: string; max: string } {
@@ -107,7 +110,7 @@ export function formatJobHeaderCompanyLocation(
 ): string | null {
   const company = show('client') ? String(job.company || '').trim() : ''
   const location = show('location') ? formatLocationLabel(job) : ''
-  if (location === 'Not disclosed') {
+  if (!location) {
     return company || null
   }
   if (company && location) return `${company} • ${location}`
@@ -143,7 +146,7 @@ export function JobDetailHeaderMeta({ job }: { job: JobPostingDetailsJob }) {
 function formatLocationLabel(job: JobPostingDetailsJob): string {
   const parts = [job.city, job.state, job.country].map((p) => String(p || '').trim()).filter(Boolean)
   if (parts.length) return parts.join(', ')
-  return String(job.location || '').trim() || 'Not disclosed'
+  return String(job.location || '').trim()
 }
 
 function formatSalaryLabel(job: JobPostingDetailsJob): string {
@@ -332,7 +335,7 @@ export function JobPostingDetailsPanel({ job }: { job: JobPostingDetailsJob }) {
     responsibilities: show('keyResponsibilities') ? job.responsibilities : [],
     preferredQualifications: show('qualifications') ? job.preferredQualifications : [],
     candidateRequirements: show('candidateRequirements') ? job.candidateRequirements : [],
-    benefits: job.benefits,
+    benefits: show('jobDescription') ? job.benefits : [],
   }).filter((section) => sectionVisibleOnPortal(section.id, show))
 
   const metaRows: { label: string; value: string }[] = []
@@ -348,8 +351,23 @@ export function JobPostingDetailsPanel({ job }: { job: JobPostingDetailsJob }) {
       value: String(job.employmentType).replace(/_/g, ' '),
     })
   }
-  if (job.education && job.education !== '-') {
+  if (show('qualifications') && job.education && job.education !== '-') {
     metaRows.push({ label: 'Education', value: job.education })
+  }
+  if (show('priority') && job.priority) {
+    metaRows.push({ label: 'Priority', value: String(job.priority) })
+  }
+  if (show('targetHireDate') && job.targetHireDate) {
+    metaRows.push({ label: 'Target hire date', value: String(job.targetHireDate) })
+  }
+  if (show('openings') && job.openings != null) {
+    metaRows.push({
+      label: 'Openings',
+      value: `${job.openings} position${job.openings === 1 ? '' : 's'}`,
+    })
+  }
+  if (show('contactPerson') && job.contactPerson) {
+    metaRows.push({ label: 'Contact person', value: String(job.contactPerson) })
   }
 
   return (

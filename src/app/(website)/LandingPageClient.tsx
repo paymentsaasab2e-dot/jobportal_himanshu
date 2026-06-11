@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/components/auth/AuthContext";
 import { API_BASE_URL, getApiBaseUrl } from "@/lib/api-base";
 import { resolvePortalCompanyLogo, resolvePortalCompanyName } from "@/lib/map-portal-job";
+import { redactPortalJobListing } from "@/lib/job-public-field-visibility";
 import { AppLocale, localizePath } from "@/lib/i18n";
 import { withJobApiLocale } from "@/lib/jobApiLocale";
 import {
@@ -229,32 +230,51 @@ export default function LandingPage() {
         const rawJobs = result?.data?.jobs || result?.data?.data || result?.data?.items || [];
 
         if (rawJobs.length > 0) {
-          const formatted = rawJobs.slice(0, 6).map((job: Record<string, unknown>) => ({
-            id: String(job.id || job._id || ''),
-            title: String(job.title || jobLabels.jobTitleFallback),
-            company: String(job.company || resolvePortalCompanyName(job)),
-            location: String(job.location || jobLabels.locationUnspecified),
-            workStyle: resolveLandingWorkStyle(job, jobLabels),
-            type: resolveLandingJobType(job.type || job.employmentType, jobLabels),
-            salary: formatLandingSalary(
-              (job.salary as { min?: number } | undefined)?.min ?? (job.salaryMin as number | null),
-              (job.salary as { max?: number } | undefined)?.max ?? (job.salaryMax as number | null),
-              (job.salary as { currency?: string } | undefined)?.currency ??
-                (job.salaryCurrency as string | null) ??
-                null,
-              (job.salary as { type?: string } | undefined)?.type ??
-                (job.salaryType as string | null) ??
-                'MONTHLY',
-              jobLabels,
-            ),
+          const formatted = rawJobs.slice(0, 6).map((job: Record<string, unknown>) => {
+            const redacted = redactPortalJobListing(job, {
+              showClientNamePublicly: job.showClientNamePublicly !== false,
+              publicFieldVisibility:
+                job.publicFieldVisibility && typeof job.publicFieldVisibility === 'object'
+                  ? (job.publicFieldVisibility as Record<string, boolean>)
+                  : null,
+            });
+            const salaryMin =
+              (redacted.salary as { min?: number } | undefined)?.min ??
+              (redacted.salaryMin as number | null);
+            const salaryMax =
+              (redacted.salary as { max?: number } | undefined)?.max ??
+              (redacted.salaryMax as number | null);
+            const hasSalary = salaryMin != null || salaryMax != null;
+
+            return {
+            id: String(redacted.id || redacted._id || job.id || job._id || ''),
+            title: String(redacted.title || '').trim(),
+            company: String(redacted.company || resolvePortalCompanyName(redacted) || '').trim(),
+            location: String(redacted.location || '').trim(),
+            workStyle: resolveLandingWorkStyle(redacted, jobLabels),
+            type: resolveLandingJobType(redacted.type || redacted.employmentType, jobLabels),
+            salary: hasSalary
+              ? formatLandingSalary(
+                  salaryMin,
+                  salaryMax,
+                  (redacted.salary as { currency?: string } | undefined)?.currency ??
+                    (redacted.salaryCurrency as string | null) ??
+                    null,
+                  (redacted.salary as { type?: string } | undefined)?.type ??
+                    (redacted.salaryType as string | null) ??
+                    'MONTHLY',
+                  jobLabels,
+                )
+              : '',
             match: `${Math.floor(Math.random() * 10) + 85}% Match`,
             timeAgo: formatLandingTimeAgo(
               String(job.postedDate || job.postedAt || job.createdAt || new Date()),
               jobLabels,
             ),
             experience: 'Mid-Senior level',
-            logo: resolvePortalCompanyLogo(job, ''),
-          }));
+            logo: resolvePortalCompanyLogo(redacted, ''),
+          };
+          });
           setJobs(formatted);
         }
       }

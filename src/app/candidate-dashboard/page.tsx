@@ -19,6 +19,7 @@ import {
   getDynamicGreeting,
 } from "@/components/dashboard/dashboard-utils";
 import { resolvePortalCompanyLogo, resolvePortalCompanyName } from "@/lib/map-portal-job";
+import { redactPortalJobListing } from "@/lib/job-public-field-visibility";
 import type {
   DashboardCourse,
   DashboardData,
@@ -126,32 +127,40 @@ function createFallbackCourses(
 }
 
 function mapJobRecord(job: Record<string, unknown>, fallbackId: string): DashboardJob {
+  const redacted = redactPortalJobListing(job, {
+    showClientNamePublicly: job.showClientNamePublicly !== false,
+    publicFieldVisibility:
+      job.publicFieldVisibility && typeof job.publicFieldVisibility === "object"
+        ? (job.publicFieldVisibility as Record<string, boolean>)
+        : null,
+  });
+
   return {
-    id: asString(job.id) ?? asString(job._id) ?? fallbackId,
-    title: asString(job.title) ?? asString(job.jobTitle) ?? "Untitled role",
-    company: resolvePortalCompanyName(job),
-    companyLogo: resolvePortalCompanyLogo(job, ""),
-    location: asNullableString(job.location),
+    id: asString(redacted.id) ?? asString(redacted._id) ?? asString(job.id) ?? asString(job._id) ?? fallbackId,
+    title: asString(redacted.title) ?? asString(redacted.jobTitle) ?? "",
+    company: String(redacted.company || resolvePortalCompanyName(redacted) || ""),
+    companyLogo: resolvePortalCompanyLogo(redacted, ""),
+    location: asNullableString(redacted.location),
     salaryMin:
-      asNullableNumber(job.salaryMin) ??
-      asNullableNumber((job.salary as { min?: unknown } | undefined)?.min),
+      asNullableNumber(redacted.salaryMin) ??
+      asNullableNumber((redacted.salary as { min?: unknown } | undefined)?.min),
     salaryMax:
-      asNullableNumber(job.salaryMax) ??
-      asNullableNumber((job.salary as { max?: unknown } | undefined)?.max),
+      asNullableNumber(redacted.salaryMax) ??
+      asNullableNumber((redacted.salary as { max?: unknown } | undefined)?.max),
     salaryCurrency:
-      asString(job.salaryCurrency) ??
-      asString((job.salary as { currency?: unknown } | undefined)?.currency) ??
+      asString(redacted.salaryCurrency) ??
+      asString((redacted.salary as { currency?: unknown } | undefined)?.currency) ??
       "USD",
     salaryAmount:
-      asString((job.salary as { amount?: unknown } | undefined)?.amount) ?? null,
+      asString((redacted.salary as { amount?: unknown } | undefined)?.amount) ?? null,
     experienceLevel:
-      asString(job.experienceRequired) ??
-      asString(job.experienceLevel) ??
-      asString(job.experience) ??
+      asString(redacted.experienceRequired) ??
+      asString(redacted.experienceLevel) ??
+      asString(redacted.experience) ??
       null,
     employmentType:
-      asString(job.type) ?? asString(job.employmentType) ?? undefined,
-    workMode: asString(job.workMode) ?? undefined,
+      asString(redacted.type) ?? asString(redacted.employmentType) ?? undefined,
+    workMode: asString(redacted.workMode) ?? undefined,
     visaSponsorship:
       typeof job.visaSponsorship === "boolean" ? job.visaSponsorship : false,
     postedAt:

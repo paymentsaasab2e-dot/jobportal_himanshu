@@ -52,6 +52,7 @@ import {
   JobDetailHeaderMeta,
   JobPostingDetailsPanel,
 } from '@/components/jobs/JobPostingDetailsPanel';
+import { redactPortalJobListing } from '@/lib/job-public-field-visibility';
 import ScreeningQuestionsDrawer from '@/components/jobs/ScreeningQuestionsDrawer';
 import { getScreeningValidationError } from '@/lib/screening-questions';
 import { AppLocale, localizePath } from '@/lib/i18n';
@@ -945,7 +946,7 @@ const ExploreJobsPageContent = () => {
             asString(job.educationalQualification) ||
             '-'
           
-          return {
+          const listing: JobListing = {
             id: jobId,
             title: job.jobTitle || job.title || 'Job Title',
             company: companyName,
@@ -998,7 +999,7 @@ const ExploreJobsPageContent = () => {
               ? toPlainJobText(asString(job.companyOverview)) ||
                 parsedText.summary ||
                 `We are a leading company in the ${job.industry || job.department || 'technology'} industry.`
-              : 'The hiring company has chosen to keep their name confidential for this role.',
+              : '',
             experienceLevel: resolveExperienceLevel(job),
             department: job.industry || job.department || undefined,
             workMode: formatWorkModeLabel(
@@ -1050,6 +1051,11 @@ const ExploreJobsPageContent = () => {
             applicationFormEnabled: !!job.applicationFormEnabled,
             screeningQuestions: parsePortalScreeningQuestionList(job.applicationFormQuestions),
           };
+
+          return redactPortalJobListing(listing, {
+            showClientNamePublicly: listing.showClientNamePublicly,
+            publicFieldVisibility: listing.publicFieldVisibility,
+          });
         })
         .filter((job) => job !== null) as JobListing[];
 
@@ -1811,7 +1817,7 @@ const ExploreJobsPageContent = () => {
 
   const JobLogoBadge = ({ job, compact = false }: { job: JobListing; compact?: boolean }) => {
     const logoSrc = job.logo && job.logo !== '/perosn_icon.png' ? job.logo : null
-    const monogram = getMonogram(job.company)
+    const monogram = job.company ? getMonogram(job.company) : ''
 
     return (
       <div
@@ -1822,16 +1828,20 @@ const ExploreJobsPageContent = () => {
         {logoSrc ? (
           <Image
             src={logoSrc}
-            alt={`${job.company} logo`}
+            alt={job.company ? `${job.company} logo` : 'Company logo'}
             fill
             className="object-contain"
             unoptimized
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(40,168,225,0.16),transparent_65%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(240,247,255,0.92))]">
-            <span className={`font-semibold tracking-[0.12em] text-slate-600 ${compact ? 'text-[12px]' : 'text-[13px]'}`}>
-              {monogram}
-            </span>
+            {monogram ? (
+              <span className={`font-semibold tracking-[0.12em] text-slate-600 ${compact ? 'text-[12px]' : 'text-[13px]'}`}>
+                {monogram}
+              </span>
+            ) : (
+              <Image src="/perosn_icon.png" alt="" width={compact ? 22 : 24} height={compact ? 22 : 24} />
+            )}
           </div>
         )}
       </div>
@@ -1858,10 +1868,12 @@ const ExploreJobsPageContent = () => {
     const isApplied = appliedJobIds.has(String(job.id))
     const skills = Array.isArray(job.skills) ? job.skills : []
     const shownSkills = skills.slice(0, isCompact ? 2 : 3)
-    const metaLocation = job.location || 'Location not specified'
-    const metaSalary = job.salary || 'Salary not specified'
-    const metaType = job.type ? job.type.replace(/_/g, ' ') : 'Role type not specified'
-    const metaMode = job.workMode ? job.workMode.replace(/_/g, ' ') : ''
+    const metaLocation = String(job.location || '').trim()
+    const metaSalary = String(job.salary || '').trim()
+    const metaType = job.type ? String(job.type).replace(/_/g, ' ') : ''
+    const metaMode = job.workMode ? String(job.workMode).replace(/_/g, ' ') : ''
+    const hasMetaLine = Boolean(metaLocation || metaSalary)
+    const hasTypeLine = Boolean(metaType || metaMode)
     const matchBadge = isPersonalized ? `AI Fit ${job.match}` : job.match
     const confidenceBadgeClasses = getConfidenceBadgeClasses(job.confidenceTag)
     const matchLabelClasses = getMatchLabelClasses(job.matchLabel)
@@ -1890,10 +1902,14 @@ const ExploreJobsPageContent = () => {
           <div className="flex min-w-0 items-start gap-3">
             <JobLogoBadge job={job} compact={isCompact} />
             <div className="min-w-0">
-              <p className="truncate text-[12px] font-semibold text-slate-500">{job.company}</p>
-              <h3 className="profile-page-value mt-0.5 line-clamp-2 font-semibold leading-snug tracking-tight">
-                {job.title}
-              </h3>
+              {job.company ? (
+                <p className="truncate text-[12px] font-semibold text-slate-500">{job.company}</p>
+              ) : null}
+              {job.title ? (
+                <h3 className="profile-page-value mt-0.5 line-clamp-2 font-semibold leading-snug tracking-tight">
+                  {job.title}
+                </h3>
+              ) : null}
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -1961,26 +1977,36 @@ const ExploreJobsPageContent = () => {
           ))}
         </div>
 
-        <div className="mt-3 space-y-1.5">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-medium text-slate-500">
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-slate-400" strokeWidth={2.1} />
-              <span className="wrap-break-word">{metaLocation}</span>
-            </span>
-            <span className="text-slate-300" aria-hidden="true">&middot;</span>
-            <span className="wrap-break-word font-semibold text-[#28A8E1]">{metaSalary}</span>
-          </div>
+        {(hasMetaLine || hasTypeLine) ? (
+          <div className="mt-3 space-y-1.5">
+            {hasMetaLine ? (
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-medium text-slate-500">
+                {metaLocation ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-slate-400" strokeWidth={2.1} />
+                    <span className="wrap-break-word">{metaLocation}</span>
+                  </span>
+                ) : null}
+                {metaLocation && metaSalary ? (
+                  <span className="text-slate-300" aria-hidden="true">&middot;</span>
+                ) : null}
+                {metaSalary ? (
+                  <span className="wrap-break-word font-semibold text-[#28A8E1]">{metaSalary}</span>
+                ) : null}
+              </div>
+            ) : null}
 
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-            <span>{metaType}</span>
-            {metaMode ? (
-              <>
-                <span className="text-slate-300" aria-hidden="true">&middot;</span>
-                <span>{metaMode}</span>
-              </>
+            {hasTypeLine ? (
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                {metaType ? <span>{metaType}</span> : null}
+                {metaType && metaMode ? (
+                  <span className="text-slate-300" aria-hidden="true">&middot;</span>
+                ) : null}
+                {metaMode ? <span>{metaMode}</span> : null}
+              </div>
             ) : null}
           </div>
-        </div>
+        ) : null}
 
         <JobCardMetaChips job={job} />
 
@@ -2106,11 +2132,17 @@ const ExploreJobsPageContent = () => {
           <div className="flex-1 min-w-0">
             <p className="profile-page-value truncate font-semibold">{job.title}</p>
             <div className="application-detail-helper mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="truncate">{job.company}</span>
-              <span className="text-gray-300">•</span>
-              <span className="truncate">{job.location}</span>
-              <span className="text-gray-300">•</span>
-              <span className="font-semibold text-blue-700 truncate">{job.salary}</span>
+              {[job.company, job.location, job.salary]
+                .map((part) => String(part || '').trim())
+                .filter(Boolean)
+                .map((part, index) => (
+                  <span key={`${part}-${index}`} className="inline-flex min-w-0 items-center gap-x-2">
+                    {index > 0 ? <span className="text-gray-300">•</span> : null}
+                    <span className={`truncate ${part === job.salary ? 'font-semibold text-blue-700' : ''}`}>
+                      {part}
+                    </span>
+                  </span>
+                ))}
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -2786,9 +2818,11 @@ const ExploreJobsPageContent = () => {
                           <div className="flex min-w-0 flex-1 items-center gap-4">
                             <JobLogoBadge job={selectedJob} />
                             <div className="min-w-0 flex-1">
-                              <h1 className="text-xl font-bold leading-tight text-slate-900 wrap-break-word sm:text-2xl">
-                                {selectedJob.title}
-                              </h1>
+                              {selectedJob.title ? (
+                                <h1 className="text-xl font-bold leading-tight text-slate-900 wrap-break-word sm:text-2xl">
+                                  {selectedJob.title}
+                                </h1>
+                              ) : null}
                               <JobDetailHeaderMeta job={selectedJob} />
                             </div>
                           </div>

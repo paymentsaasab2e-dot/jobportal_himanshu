@@ -43,7 +43,8 @@ function asString(v: unknown): string {
   return String(v).trim()
 }
 
-export const CONFIDENTIAL_COMPANY_LABEL = 'Confidential'
+/** @deprecated Hidden client names are omitted (empty), not labeled confidential. */
+export const CONFIDENTIAL_COMPANY_LABEL = ''
 
 export function isClientNamePubliclyVisible(job: Record<string, unknown>): boolean {
   if (job.showClientNamePublicly === false) return false
@@ -54,13 +55,13 @@ export function isClientNamePubliclyVisible(job: Record<string, unknown>): boole
   return true
 }
 
-/** Candidate-facing company label — never falls back to hidden client rows. */
+/** Candidate-facing company label — empty when the client is hidden from Phase 1. */
 export function resolvePortalCompanyName(
   job: Record<string, unknown>,
-  fallback = CONFIDENTIAL_COMPANY_LABEL,
+  fallback = '',
 ): string {
   if (!isClientNamePubliclyVisible(job)) {
-    return fallback
+    return ''
   }
 
   const company = job.company

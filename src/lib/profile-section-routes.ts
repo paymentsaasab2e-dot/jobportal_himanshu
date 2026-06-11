@@ -177,7 +177,7 @@ const ORDERED_SECTIONS: Array<{
   {
     slug: 'visa-work-authorization',
     label: 'Visa & Work Authorization',
-    tabId: 'job-preferences',
+    tabId: 'additional-details',
     isMissing: (_d, c) => completenessIncomplete(c, 'visaWorkAuthorization'),
   },
   {
