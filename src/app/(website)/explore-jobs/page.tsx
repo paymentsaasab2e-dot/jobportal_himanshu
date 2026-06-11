@@ -55,6 +55,7 @@ import {
 import ScreeningQuestionsDrawer from '@/components/jobs/ScreeningQuestionsDrawer';
 import { getScreeningValidationError } from '@/lib/screening-questions';
 import { AppLocale, localizePath } from '@/lib/i18n';
+import { withJobApiLocale } from '@/lib/jobApiLocale';
 
 const PAGE_BG =
   'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)';
@@ -591,7 +592,7 @@ const ExploreJobsPageContent = () => {
   useEffect(() => {
     loadJobListings()
     checkAppliedJobs()
-  }, [])
+  }, [locale])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -739,7 +740,7 @@ const ExploreJobsPageContent = () => {
         let generalSucceeded = false;
 
         try {
-          const generalResponse = await fetch(`${base}/jobs?limit=500`, {
+          const generalResponse = await fetch(withJobApiLocale(`${base}/jobs?limit=500`, locale), {
             method: 'GET',
             cache: 'no-store',
           });

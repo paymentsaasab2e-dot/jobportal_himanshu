@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Camera,
   ChevronRight,
@@ -12,7 +13,11 @@ import {
 import DashboardPanel from "./DashboardPanel";
 import ProfilePhotoModal from "./ProfilePhotoModal";
 import type { DashboardData } from "./dashboard-types";
-import { getProfileDisplayFullName } from "./dashboard-utils";
+import {
+  PROFILE_DISPLAY_ACCOUNT_PREFIX,
+  PROFILE_DISPLAY_COMPLETE_SENTINEL,
+  getProfileDisplayFullName,
+} from "./dashboard-utils";
 import {
   getAvatarInitials,
   profileAvatarInitialsClass,
@@ -64,16 +69,25 @@ export default function ProfileOverviewCard({
   onOpenProfile,
   onCompleteProfile,
 }: ProfileOverviewCardProps) {
+  const t = useTranslations("candidateDashboard");
+  const tProfile = useTranslations("candidateDashboard.profileCard");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const profileImage = useMemo(
     () => resolveProfileImage(profile?.profilePhotoUrl, apiBaseUrl),
     [apiBaseUrl, profile?.profilePhotoUrl]
   );
-  const displayFullName = useMemo(
-    () => getProfileDisplayFullName(profile),
-    [profile]
-  );
+  const displayFullName = useMemo(() => {
+    const rawName = getProfileDisplayFullName(profile);
+    if (rawName === PROFILE_DISPLAY_COMPLETE_SENTINEL) {
+      return t("completeYourProfile");
+    }
+    if (rawName.startsWith(PROFILE_DISPLAY_ACCOUNT_PREFIX)) {
+      const digits = rawName.replace(PROFILE_DISPLAY_ACCOUNT_PREFIX, "").trim();
+      return t("accountLabel", { digits });
+    }
+    return rawName;
+  }, [profile, t]);
   const profileInitials = useMemo(
     () => getAvatarInitials(profile, displayFullName),
     [profile, displayFullName]
@@ -82,10 +96,12 @@ export default function ProfileOverviewCard({
   const visibleMissingSections = missingSections.slice(0, 3);
   const completionLabel =
     completionPercentage >= 100
-      ? "Profile signal is strong"
-      : `${Math.max(1, missingSections.length)} key section${
-          missingSections.length === 1 ? "" : "s"
-        } left`;
+      ? tProfile("profileSignalStrong")
+      : missingSections.length === 1
+        ? tProfile("keySectionLeft")
+        : tProfile("keySectionsLeft", {
+            count: Math.max(1, missingSections.length),
+          });
 
   return (
     <DashboardPanel className="p-3.5 sm:p-4">
@@ -110,13 +126,13 @@ export default function ProfileOverviewCard({
               className={`group relative flex h-full w-full items-center justify-center overflow-hidden rounded-[28px] ${profileAvatarSurfaceClass} shadow-[0_18px_34px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.88)] ${
                 profileImage ? "cursor-pointer" : ""
               }`}
-              aria-label={profileImage ? "View profile photo" : "Manage profile photo"}
+              aria-label={profileImage ? tProfile("viewProfilePhoto") : tProfile("manageProfilePhoto")}
             >
               {profileImage ? (
                 <span className="relative h-full w-full overflow-hidden rounded-[28px] ring-1 ring-white/75">
                   <Image
                     src={profileImage}
-                    alt="Profile"
+                    alt={tProfile("profilePhotoAlt")}
                     fill
                     className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
                     unoptimized
@@ -139,7 +155,7 @@ export default function ProfileOverviewCard({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="absolute -bottom-1 -right-1 z-20 flex h-7 w-7 items-center justify-center rounded-[16px] border-[3px] border-white bg-[#28A8E1] text-white shadow-[0_10px_20px_rgba(40,168,225,0.24)] transition-transform duration-200 hover:scale-105"
-              aria-label="Update profile photo"
+              aria-label={tProfile("updateProfilePhoto")}
             >
               <Camera className="h-3 w-3" strokeWidth={2.05} />
             </button>
@@ -176,7 +192,7 @@ export default function ProfileOverviewCard({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
-                Profile health
+                {tProfile("profileHealth")}
               </p>
               <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <p className="profile-page-value font-semibold tracking-tight">
@@ -206,23 +222,23 @@ export default function ProfileOverviewCard({
               <span className="min-w-0 flex-1">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-accent-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-accent)]">
                   <Sparkles className="h-3 w-3" strokeWidth={2.1} />
-                  Quick win
+                  {tProfile("quickWin")}
                 </span>
                 {visibleMissingSections.length > 0 ? (
                   <span className="mt-2 flex flex-col gap-1">
                     {visibleMissingSections.map((section, index) => (
                       <span key={section} className="flex items-center gap-1.5 text-[12px] font-medium leading-5 text-slate-600">
                         <span className="h-1 w-1 rounded-full bg-[var(--brand-accent)]" />
-                        {index === 0 ? "Start with" : "Then add"} {section}
+                        {index === 0 ? tProfile("startWith") : tProfile("thenAdd")} {section}
                         {index === 0 && visibleMissingSections.length > 1 && (
-                          <span className="text-[10px] text-slate-400">(priority)</span>
+                          <span className="text-[10px] text-slate-400">{tProfile("priority")}</span>
                         )}
                       </span>
                     ))}
                   </span>
                 ) : (
                   <span className="mt-1 block text-[12px] font-medium leading-5 text-slate-600">
-                    Add the last details to improve recruiter confidence.
+                    {tProfile("addLastDetails")}
                   </span>
                 )}
               </span>
@@ -234,10 +250,10 @@ export default function ProfileOverviewCard({
         <div className="rounded-[18px] bg-slate-50/82 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.82)]">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-              Key sections left
+              {tProfile("keySectionsLeftTitle")}
             </p>
             <span className="text-[11px] font-semibold text-slate-400">
-              {completionPercentage >= 100 ? "Ready" : completionLabel}
+              {completionPercentage >= 100 ? tProfile("ready") : completionLabel}
             </span>
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -252,7 +268,7 @@ export default function ProfileOverviewCard({
               ))
             ) : (
               <span className="text-[12px] font-medium text-slate-500">
-                Everything critical is in place.
+                {tProfile("everythingCriticalInPlace")}
               </span>
             )}
           </div>
@@ -260,19 +276,19 @@ export default function ProfileOverviewCard({
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <p className="profile-page-section-title">Top skills</p>
+            <p className="profile-page-section-title">{tProfile("topSkills")}</p>
             <button
               type="button"
               onClick={onOpenProfile}
               className="text-[12px] font-semibold text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-primary-strong)]"
             >
-              Open profile
+              {tProfile("openProfile")}
             </button>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {(topSkills.length > 0
               ? topSkills.slice(0, 6)
-              : [{ name: "Add your top skills", proficiency: "" }]).map((skill) => (
+              : [{ name: tProfile("addYourTopSkills"), proficiency: "" }]).map((skill) => (
               <span
                 key={skill.name}
                 className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700"

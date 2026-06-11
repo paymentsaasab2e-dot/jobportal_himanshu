@@ -4,7 +4,10 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, Briefcase, Clock3, MapPin, Search, Sparkles } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { API_BASE_URL } from '@/lib/api-base';
+import { AppLocale } from '@/lib/i18n';
+import { withJobApiLocale } from '@/lib/jobApiLocale';
 import { resolvePortalCompanyLogo, resolvePortalCompanyName } from '@/lib/map-portal-job';
 
 type SearchJob = {
@@ -51,7 +54,7 @@ function mapJob(job: any, index: number): SearchJob {
   return {
     id: job.id || job._id || `job-${index}`,
     title: job.jobTitle || job.title || 'Untitled Job',
-    company: resolvePortalCompanyName(job),
+    company: job.company || resolvePortalCompanyName(job),
     logo: resolvePortalCompanyLogo(job, ''),
     location: job.location || 'Location not specified',
     salary: formatSalary(job),
@@ -111,6 +114,7 @@ function SearchJobsAuthModal({
 }
 
 function SearchJobsContent() {
+  const locale = useLocale() as AppLocale;
   const searchParams = useSearchParams();
   const [jobs, setJobs] = useState<SearchJob[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,7 +129,7 @@ function SearchJobsContent() {
     async function loadJobs() {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/jobs?limit=500`, { method: 'GET' });
+        const response = await fetch(withJobApiLocale(`${API_BASE_URL}/jobs?limit=500`, locale), { method: 'GET' });
         const result = await response.json();
         if (!response.ok || !result?.success) {
           throw new Error(result?.message || 'Failed to load jobs');
@@ -148,7 +152,7 @@ function SearchJobsContent() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [locale]);
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {

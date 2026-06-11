@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { ArrowUpRight, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import DashboardPanel from "./DashboardPanel";
 
@@ -27,6 +28,8 @@ export default function DashboardHero({
   stats,
   onOpenMatches,
 }: DashboardHeroProps) {
+  const t = useTranslations("candidateDashboard.greeting");
+
   return (
     <DashboardPanel className="relative overflow-hidden px-4 py-4 sm:px-5 sm:py-5">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(40,168,225,0.16),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(40,168,223,0.1),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(252,150,32,0.08),transparent_18%)]" />
@@ -37,7 +40,7 @@ export default function DashboardHero({
           type="button"
           onClick={onOpenMatches}
           className="dashboard-status-pill inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-accent-soft)] bg-white/74 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-accent)] shadow-sm transition-all duration-200 hover:cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(40,168,225,0.28)] [&>*]:relative [&>*]:z-[1]"
-          aria-label="Jump to top job matches"
+          aria-label={t("jumpToMatchesAria")}
         >
           <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
           {eyebrow}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -10,7 +10,11 @@ import { ArrowRight, ShieldCheck, Mail, AlertCircle, Sparkles, TrendingUp, Check
 import { API_BASE_URL } from '@/lib/api-base';
 import { showSuccessToast } from '@/components/common/toast/toast';
 
-import { ALL_COUNTRY_CODES, countryCodeToFlag } from '@/lib/country-codes';
+import {
+  getCountryCodesForLocale,
+  countryCodeToFlag,
+  type LocalizedCountryCodeOption,
+} from '@/lib/country-codes';
 import {
   MathCaptcha,
   validateMathCaptchaAnswer,
@@ -22,8 +26,11 @@ export default function WhatsAppLogin() {
   const router = useRouter();
   const locale = useLocale() as AppLocale;
   const t = useTranslations();
-  const [selectedCountry, setSelectedCountry] = useState(
-    ALL_COUNTRY_CODES.find((c) => c.code === "CM") || ALL_COUNTRY_CODES[0]
+  const countryOptions = useMemo(() => getCountryCodesForLocale(locale), [locale]);
+  const [selectedCountryCode, setSelectedCountryCode] = useState("CM");
+  const selectedCountry = useMemo(
+    () => countryOptions.find((c) => c.code === selectedCountryCode) ?? countryOptions[0],
+    [countryOptions, selectedCountryCode],
   );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
@@ -38,8 +45,8 @@ export default function WhatsAppLogin() {
   const [otpDisplay, setOtpDisplay] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleCountrySelect = (country: typeof ALL_COUNTRY_CODES[0]) => {
-    setSelectedCountry(country);
+  const handleCountrySelect = (country: LocalizedCountryCodeOption) => {
+    setSelectedCountryCode(country.code);
     setIsDropdownOpen(false);
     setCountrySearch("");
     setWhatsappNumberValue(""); // Clear number when country changes
@@ -70,12 +77,13 @@ export default function WhatsAppLogin() {
     }
   };
 
-  const filteredCountries = ALL_COUNTRY_CODES
+  const filteredCountries = countryOptions
     .filter((country) => {
       const query = countrySearch.trim().toLowerCase();
       if (!query) return true;
       const cleanQuery = query.replace(/\s/g, "");
       return (
+        country.displayName.toLowerCase().includes(query) ||
         country.name.toLowerCase().includes(query) ||
         country.code.toLowerCase().includes(query) ||
         country.dialCode.includes(cleanQuery) ||
@@ -101,8 +109,12 @@ export default function WhatsAppLogin() {
       if (bDialStart && !aDialStart) return 1;
       
       // Check for name starts with (priority 3)
-      const aNameStart = a.name.toLowerCase().startsWith(query);
-      const bNameStart = b.name.toLowerCase().startsWith(query);
+      const aNameStart =
+        a.displayName.toLowerCase().startsWith(query) ||
+        a.name.toLowerCase().startsWith(query);
+      const bNameStart =
+        b.displayName.toLowerCase().startsWith(query) ||
+        b.name.toLowerCase().startsWith(query);
       
       if (aNameStart && !bNameStart) return -1;
       if (bNameStart && !aNameStart) return 1;
@@ -278,10 +290,13 @@ export default function WhatsAppLogin() {
               {/* WhatsApp number input group */}
               <div>
                 <label className="block text-[12px] font-black text-slate-700 uppercase tracking-widest mb-2 ml-1">{t("whatsapp.whatsappNumber")}</label>
-                <div className="flex relative rounded-[16px] border border-slate-200 shadow-sm overflow-visible bg-white focus-within:ring-4 focus-within:ring-sky-100/50 focus-within:border-sky-400 transition-all">
+                <div
+                  className="flex relative rounded-[16px] border border-slate-200 shadow-sm overflow-visible bg-white focus-within:ring-4 focus-within:ring-sky-100/50 focus-within:border-sky-400 transition-all"
+                  ref={dropdownRef}
+                >
                   
                   {/* Country Dropdown trigger inside input */}
-                  <div className="relative flex-shrink-0" ref={dropdownRef}>
+                  <div className="relative shrink-0">
                     <button
                       type="button"
                       className="flex h-[56px] px-4 items-center gap-2 hover:bg-slate-50 transition-colors rounded-l-[16px] text-slate-700 font-medium text-[15px]"
@@ -290,10 +305,11 @@ export default function WhatsAppLogin() {
                       <span className="text-[22px] leading-none">{countryCodeToFlag(selectedCountry.code)}</span>
                       <span className="text-slate-400 text-[10px] ml-1">▼</span>
                     </button>
+                  </div>
 
                     {isDropdownOpen && (
                       <div 
-                        className="absolute top-[calc(100%+8px)] left-0 z-50 w-[260px] max-h-[320px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
+                        className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 w-full max-h-[360px] overflow-x-hidden overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
                         onKeyDown={handleDropdownKeyDown}
                         tabIndex={-1}
                       >
@@ -301,7 +317,7 @@ export default function WhatsAppLogin() {
                         <div className="sticky top-0 bg-white z-10 border-b border-slate-100">
                           <div className="px-3 py-2.5 flex items-center gap-2">
                             <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
-                              <span className="text-slate-400 text-xs">{t("whatsapp.searchLabel")}</span>
+                              <span className="shrink-0 text-slate-400 text-xs whitespace-nowrap">{t("whatsapp.searchLabel")}</span>
                               <input
                                 ref={searchInputRef}
                                 type="text"
@@ -338,9 +354,13 @@ export default function WhatsAppLogin() {
                             className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
                             onClick={() => handleCountrySelect(country)}
                           >
-                            <span className="text-[20px] leading-none">{countryCodeToFlag(country.code)}</span>
-                            <span className="font-bold text-slate-800 w-12 text-[14px]">{country.dialCode}</span>
-                            <span className="text-[13px] font-semibold text-slate-600 truncate">{country.name}</span>
+                            <span className="shrink-0 text-[20px] leading-none">{countryCodeToFlag(country.code)}</span>
+                            <span className="shrink-0 min-w-16 whitespace-nowrap font-bold text-slate-800 text-[14px] tabular-nums">
+                              {country.dialCode}
+                            </span>
+                            <span className="min-w-0 flex-1 text-[13px] font-semibold text-slate-600 leading-snug">
+                              {country.displayName}
+                            </span>
                           </div>
                         ))}
                         {filteredCountries.length === 0 && (
@@ -358,7 +378,6 @@ export default function WhatsAppLogin() {
                         </div>
                       </div>
                     )}
-                  </div>
 
                   {/* Divider inside input */}
                   <div className="w-px h-7 bg-slate-200 my-auto" />
@@ -381,7 +400,7 @@ export default function WhatsAppLogin() {
                 </div>
                 <div className="flex items-center justify-between mt-1 px-1">
                   <p className="text-[11px] font-bold text-slate-400">
-                    {t("whatsapp.digitsRequired", { country: selectedCountry.name, count: selectedCountry.phoneLength })}
+                    {t("whatsapp.digitsRequired", { country: selectedCountry.displayName, count: selectedCountry.phoneLength })}
                   </p>
                   <p className={`text-[11px] font-bold ${whatsappNumberValue.length === selectedCountry.phoneLength ? 'text-emerald-500' : 'text-slate-400'}`}>
                     {whatsappNumberValue.length}/{selectedCountry.phoneLength}

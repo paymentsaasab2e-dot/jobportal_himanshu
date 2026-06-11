@@ -6,6 +6,7 @@ import {
   SendHorizonal,
   Sparkles,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import DashboardPanel from "./DashboardPanel";
 import type { DashboardData } from "./dashboard-types";
@@ -21,6 +22,8 @@ export default function ApplicationPipelineCard({
   applicationCounts,
   onViewApplications,
 }: ApplicationPipelineCardProps) {
+  const t = useTranslations("candidateDashboard.pipeline");
+
   const reviewingCount =
     (applicationCounts?.UNDER_REVIEW || 0) +
     (applicationCounts?.SHORTLISTED || 0) +
@@ -28,27 +31,27 @@ export default function ApplicationPipelineCard({
 
   const pipeline = [
     {
-      label: "Applied",
+      label: t("applied"),
       count: stats?.totalApplications || 0,
-      helper: "Submitted roles",
+      helper: t("appliedHelper"),
       icon: SendHorizonal,
     },
     {
-      label: "Reviewing",
+      label: t("reviewing"),
       count: reviewingCount,
-      helper: "Shortlists and tests",
+      helper: t("reviewingHelper"),
       icon: SearchCheck,
     },
     {
-      label: "Interviewing",
+      label: t("interviewing"),
       count: stats?.interviews || 0,
-      helper: "Live interview stages",
+      helper: t("interviewingHelper"),
       icon: Sparkles,
     },
     {
-      label: "Offered",
+      label: t("offered"),
       count: stats?.offersReceived || 0,
-      helper: "Offers received",
+      helper: t("offeredHelper"),
       icon: Gift,
     },
   ];
@@ -59,10 +62,10 @@ export default function ApplicationPipelineCard({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="profile-page-section-title">
-              Application pipeline
+              {t("title")}
             </h2>
             <p className="application-detail-helper mt-1">
-              A compact view of where your applications are moving.
+              {t("description")}
             </p>
           </div>
 
@@ -71,7 +74,7 @@ export default function ApplicationPipelineCard({
             onClick={onViewApplications}
             className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(40,168,225,0.24)] hover:bg-[var(--brand-primary-soft)]"
           >
-            Open tracker
+            {t("openTracker")}
           </button>
         </div>
 
@@ -122,17 +125,19 @@ export default function ApplicationPipelineCard({
               </span>
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-accent-soft)]">
-                  Active momentum
+                  {t("activeMomentum")}
                 </p>
                 <p className="mt-1 text-[12px] font-medium leading-5 text-white">
                   {stats?.activeApplications
-                    ? `${stats.activeApplications} live applications are moving through your funnel.`
-                    : "No active applications yet. Start applying to light up the pipeline."}
+                    ? t("activeApplicationsMoving", {
+                        count: stats.activeApplications,
+                      })
+                    : t("noActiveApplications")}
                 </p>
               </div>
             </div>
             <p className="text-[12px] font-medium text-white/80">
-              Rejections: <span className="font-semibold text-white">{stats?.rejected || 0}</span>
+              {t("rejections", { count: stats?.rejected || 0 })}
             </p>
           </div>
         </div>

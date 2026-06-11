@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -8,6 +8,14 @@ import { useAuth } from "@/components/auth/AuthContext";
 import { API_BASE_URL, getApiBaseUrl } from "@/lib/api-base";
 import { resolvePortalCompanyLogo, resolvePortalCompanyName } from "@/lib/map-portal-job";
 import { AppLocale, localizePath } from "@/lib/i18n";
+import { withJobApiLocale } from "@/lib/jobApiLocale";
+import {
+  buildLandingJobLabels,
+  formatLandingSalary,
+  formatLandingTimeAgo,
+  resolveLandingJobType,
+  resolveLandingWorkStyle,
+} from "@/lib/landingJobDisplay";
 import {
   Search, MapPin, ChevronRight, PlayCircle, Star, ArrowRight, CheckCircle2,
   Sparkles, Award, FileText, Target, Mic2, UploadCloud, Zap, Clock, Briefcase,
@@ -113,29 +121,6 @@ const buildSearchJobsUrl = (locale: AppLocale, title: string, location: string) 
   return params.toString() ? `${basePath}?${params.toString()}` : basePath;
 };
 
-const formatTimeAgo = (locale: AppLocale, date: Date | string): string => {
-  const now = new Date();
-  const postedDate = typeof date === 'string' ? new Date(date) : date;
-  const diffInMs = now.getTime() - postedDate.getTime();
-  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-  if (diffInDays === 0) return locale === "fr" ? "A l'instant" : "Just now";
-  if (diffInDays === 1) return locale === "fr" ? "Il y a 1 jour" : "1 day ago";
-  if (diffInDays < 7) return locale === "fr" ? `Il y a ${diffInDays} jours` : `${diffInDays} days ago`;
-  if (diffInDays < 30) return `${Math.floor(diffInDays / 7)}w ago`;
-  return `${Math.floor(diffInDays / 30)}mo ago`;
-};
-
-const formatSalary = (min: number | null, max: number | null, currency: string | null, type: string | null): string => {
-  if (!min && !max) return 'Salary unspecified';
-  const sym = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : currency || '$';
-  const typeLabel = type === 'ANNUAL' ? '/yr' : '/mo';
-
-  if (min && max) return `${sym}${(min / 1000)}k - ${sym}${(max / 1000)}k${typeLabel}`;
-  if (min) return `${sym}${(min / 1000)}k+${typeLabel}`;
-  return `${sym}${(max! / 1000)}k${typeLabel}`;
-};
-
 // ----------------------------------------------------------------------
 // 2. AUTH INTERCEPT MODAL
 // ----------------------------------------------------------------------
@@ -233,9 +218,56 @@ export default function LandingPage() {
   const [authConfig, setAuthConfig] = useState({ title: "", description: "", redirectUrl: "" });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  const jobLabels = useMemo(() => buildLandingJobLabels(t), [locale, t]);
+
+  const loadJobs = useCallback(async () => {
+    try {
+      setLoadingJobs(true);
+      const res = await fetch(withJobApiLocale(`${API_BASE_URL}/jobs?limit=6`, locale));
+      if (res.ok) {
+        const result = await res.json();
+        const rawJobs = result?.data?.jobs || result?.data?.data || result?.data?.items || [];
+
+        if (rawJobs.length > 0) {
+          const formatted = rawJobs.slice(0, 6).map((job: Record<string, unknown>) => ({
+            id: String(job.id || job._id || ''),
+            title: String(job.title || jobLabels.jobTitleFallback),
+            company: String(job.company || resolvePortalCompanyName(job)),
+            location: String(job.location || jobLabels.locationUnspecified),
+            workStyle: resolveLandingWorkStyle(job, jobLabels),
+            type: resolveLandingJobType(job.type || job.employmentType, jobLabels),
+            salary: formatLandingSalary(
+              (job.salary as { min?: number } | undefined)?.min ?? (job.salaryMin as number | null),
+              (job.salary as { max?: number } | undefined)?.max ?? (job.salaryMax as number | null),
+              (job.salary as { currency?: string } | undefined)?.currency ??
+                (job.salaryCurrency as string | null) ??
+                null,
+              (job.salary as { type?: string } | undefined)?.type ??
+                (job.salaryType as string | null) ??
+                'MONTHLY',
+              jobLabels,
+            ),
+            match: `${Math.floor(Math.random() * 10) + 85}% Match`,
+            timeAgo: formatLandingTimeAgo(
+              String(job.postedDate || job.postedAt || job.createdAt || new Date()),
+              jobLabels,
+            ),
+            experience: 'Mid-Senior level',
+            logo: resolvePortalCompanyLogo(job, ''),
+          }));
+          setJobs(formatted);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch jobs for homepage", err);
+    } finally {
+      setLoadingJobs(false);
+    }
+  }, [jobLabels, locale]);
+
   useEffect(() => {
-    loadJobs();
-  }, []);
+    void loadJobs();
+  }, [loadJobs]);
 
   // Debounced Search Suggestions
   useEffect(() => {
@@ -323,38 +355,6 @@ export default function LandingPage() {
     return () => clearTimeout(timer);
   }, [heroSearch.location, searchMode]);
 
-  const loadJobs = async () => {
-    try {
-      setLoadingJobs(true);
-      const res = await fetch(`${API_BASE_URL}/jobs?limit=6`);
-      if (res.ok) {
-        const result = await res.json();
-        const rawJobs = result?.data?.jobs || result?.data?.data || result?.data?.items || [];
-
-        if (rawJobs.length > 0) {
-          const formatted = rawJobs.slice(0, 6).map((job: any) => ({
-            id: job.id || job._id,
-            title: job.title || 'Job Title',
-            company: resolvePortalCompanyName(job),
-            location: job.location || 'Location not specified',
-            workStyle: job.location?.toLowerCase().includes('remote') ? 'Remote' : 'Hybrid',
-            type: job.type === 'FULL_TIME' ? 'Full-time' : job.type === 'CONTRACT' ? 'Contract' : 'Part-time',
-            salary: formatSalary(job.salary?.min ?? job.salaryMin, job.salary?.max ?? job.salaryMax, null, null),
-            match: `${Math.floor(Math.random() * 10) + 85}% Match`,
-            timeAgo: formatTimeAgo(locale, job.postedDate || new Date()),
-            experience: 'Mid-Senior level',
-            logo: resolvePortalCompanyLogo(job, ''),
-          }));
-          setJobs(formatted);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch jobs for homepage", err);
-    } finally {
-      setLoadingJobs(false);
-    }
-  };
-
   const triggerGatedAction = (title: string, description: string, redirectUrl: string) => {
     if (isAuthenticated) {
       router.push(localizePath(redirectUrl, locale));
@@ -413,20 +413,18 @@ export default function LandingPage() {
     }
   };
 
-  const rotatingWords = locale === "fr"
-    ? ["Intitule du poste", "Competences", "Entreprise", "Roles", "Mots-cles", "Domaine specifique"]
-    : ["Job Title", "Skills", "Company", "Roles", "Keywords", "Specific Field"];
-  const rotatingLocations = locale === "fr"
-    ? ["Ville, region", "Compatible remote", "France", "Canada", "Belgique", "Remote", "International"]
-    : ["City, State", "Remote Friendly", "USA", "India", "UK", "Remote", "International"];
-  const rotatingAIPrompts = [
-    "Show me jobs for fresher React developer in Mumbai",
-    "Digital Marketing roles in New York for remote work",
-    "Graphic Design jobs in London with 2+ years exp",
-    "High paying Finance jobs in Dubai for seniors",
-    "Junior HR Manager roles in Singapore",
-    "Data Scientist jobs in San Francisco (Hybrid)"
-  ];
+  const rotatingWords = useMemo(
+    () => t.raw("landing.rotatingWords") as string[],
+    [locale, t],
+  );
+  const rotatingLocations = useMemo(
+    () => t.raw("landing.rotatingLocations") as string[],
+    [locale, t],
+  );
+  const rotatingAIPrompts = useMemo(
+    () => t.raw("landing.rotatingAiPrompts") as string[],
+    [locale, t],
+  );
   const [wordIndex, setWordIndex] = useState(0);
   const [locIndex, setLocIndex] = useState(0);
 

@@ -36,6 +36,12 @@ import { clearPendingJobApply, readPendingJobApply } from "@/lib/job-apply-flow"
 import { useTabVisibilityRefresh } from "@/hooks/useTabVisibilityRefresh";
 import { dispatchProfilePhotoUpdated } from "@/lib/profile-photo";
 import { AppLocale, localizePath } from "@/lib/i18n";
+import { withJobApiLocale } from "@/lib/jobApiLocale";
+import {
+  localizeDisplayText,
+  localizeLocationText,
+  localizeSkillName,
+} from "@/lib/displayContentLocale";
 import { ProfilePageShell } from "@/components/profile/layout";
 import ProfileMissingSectionNudge from "@/components/profile/ProfileMissingSectionNudge";
 import { getMissingProfileSections } from "@/lib/profile-section-routes";
@@ -74,46 +80,47 @@ function formatAppliedDate(locale: AppLocale, value?: string | null) {
 
 function createFallbackCourses(
   dashboardData: DashboardData | null,
-  jobs: DashboardJob[]
+  jobs: DashboardJob[],
+  t: (key: string, values?: Record<string, string | number>) => string
 ): DashboardCourse[] {
   const targetRole =
     jobs[0]?.title ||
     dashboardData?.recentApplications[0]?.jobTitle ||
-    "your next role";
+    t("yourNextRole");
 
-  const leadingSkill = dashboardData?.topSkills[0]?.name || "core product execution";
-  const secondarySkill = dashboardData?.topSkills[1]?.name || "career storytelling";
+  const leadingSkill = dashboardData?.topSkills[0]?.name || t("coreProductExecution");
+  const secondarySkill = dashboardData?.topSkills[1]?.name || t("careerStorytelling");
 
   return [
     {
       id: "career-reactivation-lab",
-      title: "Premium Resume Positioning Lab",
-      provider: "SAASA B2E Learning Studio",
+      title: t("resumeLabTitle"),
+      provider: t("providerSaasa"),
       duration: "4h 30m",
-      level: "Intermediate",
+      level: t("levelIntermediate"),
       rating: 4.9,
       imageUrl: "/lms/course-covers/premium-resume-positioning-lab.webp.png",
-      reasonLabel: "Fills a profile health gap",
+      reasonLabel: t("reasonFillsGap"),
     },
     {
       id: "skill-gap-sprint",
-      title: `${leadingSkill} Skill Sprint`,
-      provider: "Career Accelerator",
+      title: t("skillSprintTitle", { skill: leadingSkill }),
+      provider: t("providerAccelerator"),
       duration: "6h 10m",
-      level: "Intermediate",
+      level: t("levelIntermediate"),
       rating: 4.8,
       imageUrl: "/lms/course-covers/javascript-skill-sprint.webp.png",
-      reasonLabel: `Required for ${targetRole}`,
+      reasonLabel: t("reasonRequiredFor", { role: targetRole }),
     },
     {
       id: "confidence-stack",
-      title: `Communicate ${secondarySkill} With Impact`,
-      provider: "Interview Readiness Hub",
+      title: t("communicateSkillTitle", { skill: secondarySkill }),
+      provider: t("providerInterview"),
       duration: "3h 45m",
-      level: "Beginner",
+      level: t("levelBeginner"),
       rating: 4.7,
       imageUrl: "/lms/course-covers/communicate-typescript-with-impact.webp.png",
-      reasonLabel: "Boosts recruiter confidence",
+      reasonLabel: t("reasonBoostsConfidence"),
     },
   ];
 }
@@ -121,7 +128,7 @@ function createFallbackCourses(
 function mapJobRecord(job: Record<string, unknown>, fallbackId: string): DashboardJob {
   return {
     id: asString(job.id) ?? asString(job._id) ?? fallbackId,
-    title: asString(job.jobTitle) ?? asString(job.title) ?? "Untitled role",
+    title: asString(job.title) ?? asString(job.jobTitle) ?? "Untitled role",
     company: resolvePortalCompanyName(job),
     companyLogo: resolvePortalCompanyLogo(job, ""),
     location: asNullableString(job.location),
@@ -163,6 +170,9 @@ export default function CandidateDashboardPage() {
   const router = useRouter();
   const locale = useLocale() as AppLocale;
   const t = useTranslations();
+  const tGreeting = useTranslations("candidateDashboard.greeting");
+  const tCourses = useTranslations("candidateDashboard.courses");
+  const tProfileSections = useTranslations("candidateDashboard.profileSections");
   const jobMatchesRef = useRef<HTMLDivElement>(null);
   const matchesHighlightTimeoutRef = useRef<number | null>(null);
   const matchesArrivalTimeoutRef = useRef<number | null>(null);
@@ -295,10 +305,13 @@ export default function CandidateDashboardPage() {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/cv/dashboard/${targetId}`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-      });
+      const response = await fetch(
+        withJobApiLocale(`${API_BASE_URL}/cv/dashboard/${targetId}`, locale),
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+        }
+      );
 
       const result = (await response.json()) as {
         success?: boolean;
@@ -315,7 +328,7 @@ export default function CandidateDashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [candidateId, user?.id]);
+  }, [candidateId, user?.id, locale]);
 
   useEffect(() => {
     if (!candidateId) return;
@@ -520,7 +533,7 @@ export default function CandidateDashboardPage() {
          * highly enough to keep it in /jobs/personalized. Personalized matches, when
          * available, are placed first and their scores overlay onto the general row.
          */
-        const generalResponse = await fetch(`${API_BASE_URL}/jobs?limit=200`, {
+        const generalResponse = await fetch(withJobApiLocale(`${API_BASE_URL}/jobs?limit=200`, locale), {
           method: "GET",
         });
         let generalRawJobs: unknown[] = [];
@@ -541,7 +554,10 @@ export default function CandidateDashboardPage() {
         let personalizedRawJobs: unknown[] = [];
         try {
           const personalizedResponse = await fetch(
-            `${API_BASE_URL}/jobs/personalized?candidateId=${candidateId}`,
+            withJobApiLocale(
+              `${API_BASE_URL}/jobs/personalized?candidateId=${candidateId}`,
+              locale
+            ),
             { method: "GET" }
           );
           if (personalizedResponse.ok) {
@@ -590,7 +606,21 @@ export default function CandidateDashboardPage() {
           const personalizedMatch = personalizedById.get(id);
           merged.push(
             personalizedMatch
-              ? { ...(job as Record<string, unknown>), ...personalizedMatch }
+              ? {
+                  ...(job as Record<string, unknown>),
+                  ...personalizedMatch,
+                  title:
+                    asString((job as Record<string, unknown>).title) ??
+                    asString(personalizedMatch.title) ??
+                    asString(personalizedMatch.jobTitle),
+                  jobTitle:
+                    asString((job as Record<string, unknown>).title) ??
+                    asString(personalizedMatch.title) ??
+                    asString(personalizedMatch.jobTitle),
+                  location:
+                    asNullableString((job as Record<string, unknown>).location) ??
+                    asNullableString(personalizedMatch.location),
+                }
               : (job as Record<string, unknown>)
           );
         }
@@ -615,7 +645,7 @@ export default function CandidateDashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [candidateId]);
+  }, [candidateId, locale]);
 
   useEffect(() => {
     if (!candidateId) return;
@@ -884,9 +914,28 @@ export default function CandidateDashboardPage() {
     return nextJobs.slice(0, 8);
   }, [activeFilters, topOpenJobMatches]);
 
+  const localizedJobMatches = useMemo(() => {
+    if (locale !== "fr") return filteredJobMatches;
+    return filteredJobMatches.map((job) => ({
+      ...job,
+      title: localizeDisplayText(job.title, locale),
+      company: localizeDisplayText(job.company, locale),
+      location: job.location ? localizeLocationText(job.location, locale) : job.location,
+    }));
+  }, [filteredJobMatches, locale]);
+
+  const localizedTopSkills = useMemo(() => {
+    const skills = dashboardData?.topSkills || [];
+    if (locale !== "fr") return skills;
+    return skills.map((skill) => ({
+      ...skill,
+      name: localizeSkillName(skill.name, locale),
+    }));
+  }, [dashboardData?.topSkills, locale]);
+
   const recommendedCourses = useMemo(
-    () => createFallbackCourses(dashboardData, filteredJobMatches),
-    [dashboardData, filteredJobMatches]
+    () => createFallbackCourses(dashboardData, localizedJobMatches, tCourses),
+    [dashboardData, localizedJobMatches, tCourses]
   );
 
   const profileCompletionPercentage =
@@ -907,7 +956,18 @@ export default function CandidateDashboardPage() {
     dashboardData?.profile || 
     (profileCompletionDetails ? { fullName: "Candidate" } : null)
   );
-  const greeting = getDynamicGreeting(dashboardName, filteredJobMatches.length);
+  const greeting = useMemo(
+    () => getDynamicGreeting(dashboardName, filteredJobMatches.length, tGreeting),
+    [dashboardName, filteredJobMatches.length, tGreeting]
+  );
+
+  const translatedMissingSectionLabels = useMemo(
+    () =>
+      missingProfileSections.map((section) =>
+        tProfileSections(section.slug as Parameters<typeof tProfileSections>[0])
+      ),
+    [missingProfileSections, tProfileSections]
+  );
 
   const heroStats: DashboardHeroStat[] = [
     {
@@ -1004,9 +1064,9 @@ export default function CandidateDashboardPage() {
             <div className="space-y-3">
               <ProfileOverviewCard
                 profile={dashboardData?.profile || null}
-                topSkills={dashboardData?.topSkills || []}
+                topSkills={localizedTopSkills}
                 completionPercentage={profileCompletionPercentage}
-                missingSections={missingProfileSections.map((section) => section.label)}
+                missingSections={translatedMissingSectionLabels}
                 apiBaseUrl={API_BASE_URL}
                 isUploadingPhoto={isUploadingPhoto}
                 isDeletingPhoto={isDeletingPhoto}
@@ -1026,7 +1086,7 @@ export default function CandidateDashboardPage() {
             <div className="space-y-3">
               <div ref={jobMatchesRef} className="scroll-mt-28">
                 <JobMatchesPanel
-                  jobs={filteredJobMatches}
+                  jobs={localizedJobMatches}
                   loading={jobsLoading}
                   savedJobIds={savedJobIds}
                   activeFilters={activeFilters}
