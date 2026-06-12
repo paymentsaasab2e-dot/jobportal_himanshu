@@ -17,9 +17,11 @@ import {
   WorkspaceSectionCard,
   ProfileWorkspaceTabs,
   ProfileWorkspaceRail,
+  ProfileResumeVersionsPanel,
   useProfileTabNavigation,
   type WorkspaceTabItem,
 } from '@/components/profile/workspace';
+import { fetchResumeRoleVersions, type ResumeVersionsResponse } from '@/app/lms/api/client';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 import type { ProfileSectionGroup } from '@/components/profile/workspace/useProfileTabNavigation';
 import {
@@ -322,6 +324,7 @@ export default function ProfilePage() {
   const [visaWorkAuthorizationData, setVisaWorkAuthorizationData] = useState<VisaWorkAuthorizationData | undefined>();
   const [vaccinationData, setVaccinationData] = useState<VaccinationData | undefined>();
   const [resumeData, setResumeData] = useState<ResumeData | undefined>(undefined);
+  const [resumeVersionsData, setResumeVersionsData] = useState<ResumeVersionsResponse | null>(null);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const [cvAnalysis, setCvAnalysis] = useState<{
     cv_score: number;
@@ -855,6 +858,15 @@ export default function ProfilePage() {
     }
   };
 
+  const loadResumeVersions = useCallback(async () => {
+    try {
+      const data = await fetchResumeRoleVersions();
+      if (data) setResumeVersionsData(data);
+    } catch (error) {
+      console.warn('Could not load resume CV versions', error);
+    }
+  }, []);
+
   const refreshProfileDataRef = useRef(refreshProfileData);
   refreshProfileDataRef.current = refreshProfileData;
 
@@ -891,6 +903,7 @@ export default function ProfilePage() {
         setIsLoadingProfile(true);
         if (await refreshProfileData(candidateId)) {
           console.log('✅ Profile data loaded from database');
+          await loadResumeVersions();
         } else {
           console.error('Failed to fetch profile data');
         }
@@ -1647,35 +1660,53 @@ export default function ProfilePage() {
                   onEdit={() => handleEditClick('RESUME', 'Resume')}
                   onAdd={() => handleAddClick('RESUME', 'Resume')}
                   showEdit={false}
-                  showAdd={!resumeData?.fileName && !resumeData?.fileUrl}
+                  showAdd={
+                    !resumeData?.fileName &&
+                    !resumeData?.fileUrl &&
+                    !(resumeVersionsData?.versions?.length ?? 0)
+                  }
                   addEmphasized={
-                    !resumeData?.fileName && !resumeData?.fileUrl
+                    !resumeData?.fileName &&
+                    !resumeData?.fileUrl &&
+                    !(resumeVersionsData?.versions?.length ?? 0)
                   }
                 >
-                  {resumeData?.fileName || resumeData?.fileUrl ? (
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={(event) => {
-                        if (shouldIgnoreDetailsOpen(event.target)) return;
-                        handleEditClick('RESUME', 'Resume');
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          handleEditClick('RESUME', 'Resume');
-                        }
-                      }}
-                      className="w-full cursor-pointer text-left"
-                    >
-                      <ProfileResumeFilled
-                        resumeData={resumeData}
-                        scorePercent={
-                          cvAnalysis?.cv_score ??
-                          resumeData?.atsScore ??
-                          0
-                        }
-                        onReplace={() => setIsResumeModalOpen(true)}
+                  {resumeData?.fileName ||
+                  resumeData?.fileUrl ||
+                  (resumeVersionsData?.versions?.length ?? 0) > 0 ? (
+                    <div className="space-y-0">
+                      {resumeData?.fileName || resumeData?.fileUrl ? (
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(event) => {
+                            if (shouldIgnoreDetailsOpen(event.target)) return;
+                            handleEditClick('RESUME', 'Resume');
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              handleEditClick('RESUME', 'Resume');
+                            }
+                          }}
+                          className="w-full cursor-pointer text-left"
+                        >
+                          <ProfileResumeFilled
+                            resumeData={resumeData}
+                            scorePercent={
+                              cvAnalysis?.cv_score ??
+                              resumeData?.atsScore ??
+                              0
+                            }
+                            onReplace={() => setIsResumeModalOpen(true)}
+                          />
+                        </div>
+                      ) : null}
+                      <ProfileResumeVersionsPanel
+                        locale={locale}
+                        versionsData={resumeVersionsData}
+                        hideOriginal={Boolean(resumeData?.fileName || resumeData?.fileUrl)}
+                        onOpenOriginal={() => setIsResumeModalOpen(true)}
                       />
                     </div>
                   ) : (
@@ -4524,6 +4555,7 @@ export default function ProfilePage() {
               }
 
               await refreshProfileData(candidateId);
+              await loadResumeVersions();
               setIsResumeModalOpen(false);
               showAlert('Resume replaced successfully');
             } else if (data.fileName && !data.file) {
@@ -4546,6 +4578,7 @@ export default function ProfilePage() {
               }
 
               await refreshProfileData(candidateId);
+              await loadResumeVersions();
               setIsResumeModalOpen(false);
               showAlert('Resume updated');
             } else {

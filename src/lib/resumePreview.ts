@@ -1,3 +1,26 @@
+import { wrapResumeStudioHtmlDocument } from '@/lib/resumeStudioBrand';
+
+export function openResumeStudioHtmlInNewTab(html: string, title = 'CV'): void {
+  const body = String(html || '').trim();
+  if (!body) return;
+  const doc = wrapResumeStudioHtmlDocument(body, title);
+  const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+export function downloadBlobFile(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.rel = 'noopener';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 export function isResumeHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(String(value || '').trim());
 }

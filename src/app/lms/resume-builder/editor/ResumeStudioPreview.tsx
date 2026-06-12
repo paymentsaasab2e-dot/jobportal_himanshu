@@ -28,6 +28,59 @@ import {
   type SectionId,
 } from './studio-config';
 
+const SAASA_WATERMARK_SRC = '/SAASA%20Logo.png';
+
+function CvBrandOverlay() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20">
+      <div className="absolute inset-0 flex items-center justify-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={SAASA_WATERMARK_SRC}
+          alt=""
+          className="max-h-[54%] max-w-[70%] select-none object-contain opacity-[0.13]"
+          draggable={false}
+        />
+      </div>
+      <div className="absolute bottom-5 right-5 sm:bottom-7 sm:right-7">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={SAASA_WATERMARK_SRC}
+          alt=""
+          className="h-7 w-auto max-w-[88px] select-none object-contain opacity-80 sm:h-8 sm:max-w-[96px]"
+          draggable={false}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ResumePaperShell({
+  contentId,
+  paperRef,
+  style,
+  className = '',
+  children,
+}: {
+  contentId: string;
+  paperRef?: Ref<HTMLDivElement>;
+  style?: CSSProperties;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      id={contentId}
+      ref={paperRef}
+      style={style}
+      className={`relative overflow-hidden ${className}`}
+    >
+      <div className="relative">{children}</div>
+      <CvBrandOverlay />
+    </div>
+  );
+}
+
 function DocumentSection({
   active,
   title,
@@ -97,25 +150,40 @@ export function ResumeDocumentPaper({
 
   if (template === 'arctic') {
     return (
-      <div id={contentId} ref={paperRef} style={style} className={`mx-auto w-full max-w-[840px] shadow-none ${className}`}>
+      <ResumePaperShell
+        contentId={contentId}
+        paperRef={paperRef}
+        style={style}
+        className={`mx-auto w-full max-w-[840px] shadow-none ${className}`}
+      >
         <ArcticTemplate data={templateData} />
-      </div>
+      </ResumePaperShell>
     );
   }
 
   if (template === 'obsidian') {
     return (
-      <div id={contentId} ref={paperRef} style={style} className={`mx-auto w-full max-w-[840px] shadow-none ${className}`}>
+      <ResumePaperShell
+        contentId={contentId}
+        paperRef={paperRef}
+        style={style}
+        className={`mx-auto w-full max-w-[840px] shadow-none ${className}`}
+      >
         <ObsidianTemplate data={templateData} />
-      </div>
+      </ResumePaperShell>
     );
   }
 
   if (template === 'serif-classic') {
     return (
-      <div id={contentId} ref={paperRef} style={style} className={`mx-auto w-full max-w-[840px] shadow-none ${className}`}>
+      <ResumePaperShell
+        contentId={contentId}
+        paperRef={paperRef}
+        style={style}
+        className={`mx-auto w-full max-w-[840px] shadow-none ${className}`}
+      >
         <SerifClassicTemplate data={templateData} />
-      </div>
+      </ResumePaperShell>
     );
   }
 
@@ -127,9 +195,9 @@ export function ResumeDocumentPaper({
         : 'border-b border-slate-300 pb-5';
 
   return (
-    <div
-      id={contentId}
-      ref={paperRef}
+    <ResumePaperShell
+      contentId={contentId}
+      paperRef={paperRef}
       style={style}
       className={`mx-auto min-h-[1123px] w-[840px] bg-white px-7 py-8 text-slate-900 shadow-none sm:px-10 sm:py-10 ${fontClass} ${className}`}
     >
@@ -253,7 +321,7 @@ export function ResumeDocumentPaper({
           </DocumentSection>
         ) : null}
       </div>
-    </div>
+    </ResumePaperShell>
   );
 }
 

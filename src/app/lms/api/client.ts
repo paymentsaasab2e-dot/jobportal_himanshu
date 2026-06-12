@@ -164,6 +164,64 @@ export async function fetchResumeDraft() {
   const data = await res.json(); return data.data;
 }
 
+export type ResumeRoleVersionItem = {
+  id: string;
+  label: string;
+  versionType: string;
+  jobId?: string | null;
+  jobTitle?: string | null;
+  company?: string | null;
+  templateId?: string | null;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  hasResumeHtml?: boolean;
+  resumeHtml?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type ResumeVersionsResponse = {
+  original: {
+    id: string;
+    label: string;
+    versionType: string;
+    fileName?: string;
+    fileUrl?: string;
+    fileSize?: number;
+    mimeType?: string;
+    atsScore?: number;
+    uploadedAt?: string;
+    updatedAt?: string;
+  } | null;
+  versions: ResumeRoleVersionItem[];
+};
+
+export async function fetchResumeRoleVersions(): Promise<ResumeVersionsResponse | null> {
+  const res = await lmsFetch(`${LMS_API_BASE}/resume/versions`, { method: 'GET' });
+  if (!res) return null;
+  if (!res.ok) {
+    if (res.status === 404) return { original: null, versions: [] };
+    throw new Error('Failed to fetch resume versions');
+  }
+  const data = await res.json();
+  return data.data as ResumeVersionsResponse;
+}
+
+export async function fetchResumeRoleVersion(versionId: string): Promise<ResumeRoleVersionItem | null> {
+  const id = String(versionId || '').trim();
+  if (!id) return null;
+  const res = await lmsFetch(`${LMS_API_BASE}/resume/versions/${encodeURIComponent(id)}`, {
+    method: 'GET',
+  });
+  if (!res) return null;
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to fetch CV version');
+  }
+  const data = await res.json();
+  return data.data as ResumeRoleVersionItem;
+}
+
 export async function updateResumeDraft(payload: any) {
   const res = await lmsFetch(`${LMS_API_BASE}/resume/draft`, { method: 'POST', body: JSON.stringify(payload) });
   if (!res) throw new Error('No authentication token found. Please log in again.');
@@ -186,6 +244,27 @@ export async function generateResumeSummary(headline: string) {
   if (!res) return null;
   if (!res.ok) throw new Error('Failed to generate summary');
   const data = await res.json(); return data.data.summary;
+}
+
+export async function tailorResumeSummaryForJob(payload: {
+  existingSummary?: string;
+  jobTitle: string;
+  company: string;
+  experienceLevel?: string;
+  matchedSkills?: string[];
+  missingSkills?: string[];
+}) {
+  const res = await lmsFetch(`${LMS_API_BASE}/resume/tailor-summary`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  if (!res) return null;
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to tailor summary');
+  }
+  const data = await res.json();
+  return data.data.summary as string;
 }
 
 export async function analyzeResumeDraft() {
@@ -261,21 +340,54 @@ export async function exportResumePdf(resumeHtml: string) {
   const headers = getAuthHeaders();
   if (!headers) return null;
 
-  const res = await fetch(`${CV_API_BASE}/export`, {
-    method: 'POST',
-    headers: { ...(headers as any) },
-    body: JSON.stringify({ candidateId, resume_html: resumeHtml })
-  });
+  const { normalizeResumeStudioHtml } = await import('@/lib/resumeStudioBrand');
+  const normalizedHtml = normalizeResumeStudioHtml(resumeHtml, { ensureWatermark: true });
 
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    const errorMessage = errorData.message || errorData.error || 'Failed to export PDF';
-    console.error('❌ [PDF Export] Backend returned error:', {
-      status: res.status,
-      statusText: res.statusText,
-      errorData
+  let serverError: string | null = null;
+
+  try {
+    const res = await fetch(`${CV_API_BASE}/export`, {
+      method: 'POST',
+      headers: { ...(headers as Record<string, string>) },
+      body: JSON.stringify({ candidateId, resume_html: normalizedHtml }),
     });
-    throw new Error(errorMessage);
+
+    if (res.ok) {
+      const blob = await res.blob();
+      const type = String(blob.type || '').toLowerCase();
+      if (!type || type.includes('pdf') || type.includes('octet-stream')) {
+        return blob;
+      }
+      serverError = 'Server did not return a PDF file.';
+    } else {
+      const raw = await res.text().catch(() => '');
+      let errorData: Record<string, unknown> = {};
+      try {
+        errorData = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+      } catch {
+        errorData = raw ? { message: raw } : {};
+      }
+      serverError =
+        (typeof errorData.message === 'string' && errorData.message) ||
+        (typeof errorData.error === 'string' && errorData.error) ||
+        `PDF export failed (${res.status})`;
+      console.warn('❌ [PDF Export] Backend returned error:', {
+        status: res.status,
+        statusText: res.statusText,
+        errorData,
+      });
+    }
+  } catch (fetchErr) {
+    serverError = fetchErr instanceof Error ? fetchErr.message : 'PDF export request failed';
+    console.warn('❌ [PDF Export] Backend request failed:', fetchErr);
   }
-  return await res.blob();
+
+  try {
+    const { exportResumeHtmlToPdfBlob } = await import('@/lib/resumeStudioExport');
+    console.info('[PDF Export] Using client-side PDF fallback');
+    return await exportResumeHtmlToPdfBlob(normalizedHtml, 'CV');
+  } catch (clientErr) {
+    const clientMessage = clientErr instanceof Error ? clientErr.message : 'Client PDF export failed';
+    throw new Error(serverError ? `${serverError} ${clientMessage}` : clientMessage);
+  }
 }

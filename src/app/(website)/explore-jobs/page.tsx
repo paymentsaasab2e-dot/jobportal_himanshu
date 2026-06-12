@@ -32,6 +32,14 @@ import { showInfoToast, showSuccessToast } from '@/components/common/toast/toast
 import { notifyBellRefresh } from '@/lib/notifications';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 import {
+  createInitialMatchScoreState,
+  formatExploreEmploymentType,
+  formatExploreMatchLabel,
+  formatExploreTimeAgo,
+  MATCH_SCORE_FILTER_KEYS,
+  translateFitLabel,
+} from '@/lib/explore-jobs-i18n';
+import {
   buildJobLocationFacets,
   countJobsForLocationFacet,
   countrySearchHasNoJobs,
@@ -48,7 +56,6 @@ import {
   resolvePortalCompanyName,
 } from '@/lib/map-portal-job';
 import {
-  JobCardMetaChips,
   JobDetailHeaderMeta,
   JobPostingDetailsPanel,
 } from '@/components/jobs/JobPostingDetailsPanel';
@@ -60,6 +67,16 @@ import {
 import ScreeningQuestionsDrawer from '@/components/jobs/ScreeningQuestionsDrawer';
 import { getScreeningValidationError } from '@/lib/screening-questions';
 import { AppLocale, localizePath } from '@/lib/i18n';
+import { fetchResumeDraft, fetchResumeHtml } from '@/app/lms/api/client';
+import {
+  buildJobCvTailorContext,
+  computeExploreJobCvMatch,
+  htmlResumeToPlainText,
+  normalizeResumeDraftToSections,
+  resumeSectionsHaveContent,
+  saveJobCvTailorContext,
+  type CvResumeSections,
+} from '@/lib/job-cv-tailor';
 import { withJobApiLocale } from '@/lib/jobApiLocale';
 
 const PAGE_BG =
@@ -114,6 +131,7 @@ interface JobListing {
   topMissingSkills?: string[]
   matchLabel?: string
   scoreColorHint?: 'high' | 'medium' | 'low' | string
+  matchSource?: 'cv' | 'profile'
   whyNotMatched?: string | null
   transferableSkills?: string[]
   skillGaps?: string[]
@@ -451,6 +469,35 @@ function getMatchLabelClasses(matchLabel?: string) {
   return 'border-slate-200 bg-slate-50 text-slate-600'
 }
 
+/** One fit label on cards — avoid showing both matchLabel and confidenceTag. */
+function resolveCardFitLabel(job: Pick<JobListing, 'matchLabel' | 'confidenceTag'>) {
+  const matchLabel = String(job.matchLabel || '').trim()
+  const confidenceTag = String(job.confidenceTag || '').trim()
+  if (matchLabel && confidenceTag && matchLabel.toLowerCase() !== confidenceTag.toLowerCase()) {
+    return matchLabel
+  }
+  return confidenceTag || matchLabel
+}
+
+function getCardFitLabelClasses(label?: string) {
+  const normalized = (label || '').toLowerCase()
+  if (
+    normalized.includes('weak') ||
+    normalized.includes('reject') ||
+    normalized.includes('gap') ||
+    normalized.includes('low')
+  ) {
+    return 'border-rose-200 bg-rose-50 text-rose-700'
+  }
+  if (normalized.includes('partial') || normalized.includes('potential')) {
+    return getConfidenceBadgeClasses(label)
+  }
+  if (normalized.includes('excellent') || normalized.includes('strong')) {
+    return getMatchLabelClasses(label)
+  }
+  return getMatchLabelClasses(label)
+}
+
 function getScoreBadgeClasses(scoreColorHint?: string) {
   if (scoreColorHint === 'high') {
     return 'border-emerald-200 bg-emerald-50 text-emerald-700'
@@ -467,11 +514,14 @@ const ExploreJobsPageContent = () => {
   const router = useRouter()
   const locale = useLocale() as AppLocale
   const t = useTranslations()
+  const te = useTranslations('exploreJobs')
+  const tJobs = useTranslations('candidateDashboard.jobs')
   const searchParams = useSearchParams()
   const detailsRef = useRef<HTMLDivElement | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null)
   const [jobListings, setJobListings] = useState<JobListing[]>([])
+  const [cvResumeSections, setCvResumeSections] = useState<CvResumeSections | null>(null)
   const [loading, setLoading] = useState(true)
   const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false)
 
@@ -479,6 +529,58 @@ const ExploreJobsPageContent = () => {
     const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500)
     return () => clearTimeout(timer)
   }, [])
+
+  useEffect(() => {
+    const loadCandidateCv = async () => {
+      try {
+        let sections: CvResumeSections | null = null
+        const draft = await fetchResumeDraft()
+        if (draft) {
+          sections = normalizeResumeDraftToSections(draft as Record<string, unknown>)
+        }
+        if (!resumeSectionsHaveContent(sections)) {
+          const htmlData = await fetchResumeHtml()
+          const plain = htmlData?.resume_html ? htmlResumeToPlainText(htmlData.resume_html) : ''
+          if (plain.length > 80) {
+            sections = sections || normalizeResumeDraftToSections(null)
+            sections = {
+              ...sections,
+              summary: [sections.summary, plain].filter(Boolean).join('\n\n'),
+            }
+          }
+        }
+        if (resumeSectionsHaveContent(sections)) {
+          setCvResumeSections(sections)
+        }
+      } catch {
+        // Keep profile-based scores when CV cannot be loaded.
+      }
+    }
+    void loadCandidateCv()
+  }, [])
+
+  const usesCvMatchScore = resumeSectionsHaveContent(cvResumeSections)
+
+  const scoredJobListings = useMemo(() => {
+    if (!usesCvMatchScore || !cvResumeSections) return jobListings
+    return jobListings.map((job) => {
+      const cvMatch = computeExploreJobCvMatch(job, cvResumeSections)
+      return {
+        ...job,
+        matchScore: cvMatch.matchScore,
+        match: te('cvFitPercent', { score: cvMatch.matchScore }),
+        confidenceTag: cvMatch.confidenceTag,
+        matchedSkills: cvMatch.matchedSkills,
+        missingSkills: cvMatch.missingSkills,
+        reasoning: cvMatch.reasoning,
+        scoreColorHint: cvMatch.scoreColorHint,
+        topMatchedSkills: cvMatch.matchedSkills.slice(0, 3),
+        topMissingSkills: cvMatch.missingSkills.slice(0, 3),
+        matchSource: 'cv' as const,
+      }
+    })
+  }, [jobListings, cvResumeSections, usesCvMatchScore, te])
+
   const [viewMode, setViewMode] = useState<'grid' | 'detail'>('grid')
   const [displayMode, setDisplayMode] = useState<'grid' | 'list'>('grid')
   const [isScreeningModalOpen, setIsScreeningModalOpen] = useState(false)
@@ -535,11 +637,7 @@ const ExploreJobsPageContent = () => {
   const [salaryFilterCurrency, setSalaryFilterCurrency] = useState<string>('INR')
   const [salaryFilterMin, setSalaryFilterMin] = useState('')
   const [salaryFilterMax, setSalaryFilterMax] = useState('')
-  const [matchScore, setMatchScore] = useState<Record<string, boolean>>({
-    '80%+ Match': false,
-    '70%+ Match': false,
-    '60%+ Match': false,
-  })
+  const [matchScore, setMatchScore] = useState<Record<string, boolean>>(createInitialMatchScoreState)
   const [industry, setIndustry] = useState<Record<string, boolean>>({
     'IT Services & Consulting': false,
     'Software Product': false,
@@ -569,11 +667,20 @@ const ExploreJobsPageContent = () => {
     const jobId = searchParams.get('job')?.trim()
     if (!jobId || jobListings.length === 0) return
     if (selectedJob?.id === jobId && viewMode === 'detail') return
-    const job = jobListings.find((j) => String(j.id) === jobId)
+    const job = scoredJobListings.find((j) => String(j.id) === jobId)
     if (!job) return
     setSelectedJob(job)
     setViewMode('detail')
-  }, [loading, jobListings, searchParams, selectedJob?.id, viewMode])
+  }, [loading, scoredJobListings, searchParams, selectedJob?.id, viewMode])
+
+  useEffect(() => {
+    if (!selectedJob) return
+    const updated = scoredJobListings.find((job) => job.id === selectedJob.id)
+    if (updated && updated.matchScore !== selectedJob.matchScore) {
+      setSelectedJob(updated)
+    }
+  }, [scoredJobListings, selectedJob])
+
   const resetFilters = () => {
     setSearchQuery('')
     setSmartFilterSkills(false)
@@ -584,7 +691,7 @@ const ExploreJobsPageContent = () => {
     setSalaryFilterCurrency('INR')
     setSalaryFilterMin('')
     setSalaryFilterMax('')
-    setMatchScore({ '80%+ Match': false, '70%+ Match': false, '60%+ Match': false })
+    setMatchScore(createInitialMatchScoreState())
     setIndustry({ 'IT Services & Consulting': false, 'Software Product': false, 'Recruitment / Staffing': false, 'Miscellaneous': false, 'Banking & Finance': false, 'Healthcare & Pharma': false, 'E-commerce & Retail': false, 'Manufacturing': false, 'Education & Training': false, 'Media & Entertainment': false, 'Telecommunications': false })
     setSelectedCountry('')
     setSelectedCities({})
@@ -648,29 +755,19 @@ const ExploreJobsPageContent = () => {
     return () => clearTimeout(t)
   }, [viewMode, selectedJob?.id])
 
-  const formatTimeAgo = (date: Date | string): string => {
-    const now = new Date();
-    const postedDate = typeof date === 'string' ? new Date(date) : date;
-    const diffInMs = now.getTime() - postedDate.getTime();
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    
-    if (diffInDays === 0) return 'Just now';
-    if (diffInDays === 1) return '1 day ago';
-    if (diffInDays < 7) return `${diffInDays} days ago`;
-    if (diffInDays < 30) {
-      const weeks = Math.floor(diffInDays / 7);
-      return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
-    }
-    if (diffInDays < 365) {
-      const months = Math.floor(diffInDays / 30);
-      return `${months} month${months > 1 ? 's' : ''} ago`;
-    }
-    const years = Math.floor(diffInDays / 365);
-    return `${years} year${years > 1 ? 's' : ''} ago`;
-  };
+  const formatTimeAgo = (date: Date | string): string => formatExploreTimeAgo(te, date)
+
+  const formatWorkModeLocalized = (value: unknown) => {
+    const key = normalizeWorkModeValue(value)
+    if (key === 'remote') return tJobs('remote')
+    if (key === 'hybrid') return tJobs('hybrid')
+    if (key === 'onsite') return tJobs('onsite')
+    const fallback = asString(value)
+    return fallback ? fallback.replace(/_/g, ' ') : tJobs('onsite')
+  }
 
   const formatSalary = (min: number | null, max: number | null, currency: string | null, type: string | null, amount?: string | null): string => {
-    const typeLabel = type === 'ANNUAL' ? '/year' : type === 'MONTHLY' ? '/month' : type === 'HOURLY' ? '/hour' : ''
+    const typeLabel = type === 'ANNUAL' ? te('perYear') : type === 'MONTHLY' ? te('perMonth') : type === 'HOURLY' ? te('perHour') : ''
     const cur = asString(currency)
     const toFinite = (v: unknown): number | null => {
       if (v === null || v === undefined) return null
@@ -681,13 +778,30 @@ const ExploreJobsPageContent = () => {
     const nMax = toFinite(max)
     const amountStr = asString(amount)
 
-    // Single amount (e.g. Phase 2 JSON salary: { amount, currency: "Rupees (₹ - India)" }) — always show currency when present
+    // Single amount (e.g. Phase 2 JSON salary: { amount, currency: "Rupees (₹ - India)" })
     if (amountStr) {
-      if (cur) return `${amountStr} · ${cur}`
+      if (cur) {
+        const curNorm = cur.toUpperCase()
+        const amountUpper = amountStr.toUpperCase()
+        const currencyAlreadyInAmount =
+          amountUpper.includes(curNorm) ||
+          (curNorm === 'USD' && amountStr.includes('$')) ||
+          (curNorm === 'EUR' && amountStr.includes('€')) ||
+          (curNorm === 'GBP' && amountStr.includes('£')) ||
+          (/₹|rupee/i.test(cur) && amountStr.includes('₹'))
+        if (currencyAlreadyInAmount) return amountStr
+        return `${amountStr} · ${cur}`
+      }
       return amountStr
     }
 
-    if (nMin == null && nMax == null) return 'Salary not specified'
+    if (nMin == null && nMax == null) return te('salaryNotSpecified')
+
+    let rangeMin = nMin
+    let rangeMax = nMax
+    if (rangeMin != null && rangeMax != null && rangeMin > rangeMax) {
+      ;[rangeMin, rangeMax] = [rangeMax, rangeMin]
+    }
 
     // Short ISO-style codes / symbols → prefix; long labels (Rupees (₹ - India), etc.) → suffix
     const sym = (() => {
@@ -703,18 +817,18 @@ const ExploreJobsPageContent = () => {
     })()
 
     if (sym) {
-      if (nMin != null && nMax != null) {
-        return `${sym}${nMin.toLocaleString()} – ${sym}${nMax.toLocaleString()}${typeLabel}`
+      if (rangeMin != null && rangeMax != null) {
+        return `${sym}${rangeMin.toLocaleString()} – ${sym}${rangeMax.toLocaleString()}${typeLabel}`
       }
-      if (nMin != null) return `${sym}${nMin.toLocaleString()}+${typeLabel}`
-      return `${sym}${nMax!.toLocaleString()}${typeLabel}`
+      if (rangeMin != null) return `${sym}${rangeMin.toLocaleString()}+${typeLabel}`
+      return `${sym}${rangeMax!.toLocaleString()}${typeLabel}`
     }
 
-    if (nMin != null && nMax != null) {
-      return `${nMin.toLocaleString()} – ${nMax.toLocaleString()} ${cur}${typeLabel}`.trim()
+    if (rangeMin != null && rangeMax != null) {
+      return `${rangeMin.toLocaleString()} – ${rangeMax.toLocaleString()} ${cur}${typeLabel}`.trim()
     }
-    if (nMin != null) return `${nMin.toLocaleString()}+ ${cur}${typeLabel}`.trim()
-    return `${nMax!.toLocaleString()} ${cur}${typeLabel}`.trim()
+    if (rangeMin != null) return `${rangeMin.toLocaleString()}+ ${cur}${typeLabel}`.trim()
+    return `${rangeMax!.toLocaleString()} ${cur}${typeLabel}`.trim()
   };
 
   const formatDate = (date: Date | string): string => {
@@ -1005,13 +1119,17 @@ const ExploreJobsPageContent = () => {
                   job.salary?.amount || asString(job.expectedSalary) || parsedText.expectedSalary || asString(job.compensation),
                 )
               : '',
-            type: fieldVisible('employmentType') ? resolvedType : '',
+            type: fieldVisible('employmentType')
+              ? formatExploreEmploymentType(resolvedType, tJobs)
+              : '',
             skills: fieldVisible('skills')
               ? Array.isArray(job.skills)
                 ? job.skills
                 : (job.matchedSkills || [])
               : [],
-            match: hasRealMatchScore ? `${matchScore}% Match` : 'Not scored yet',
+            match: hasRealMatchScore
+              ? te('percentMatch', { score: matchScore })
+              : te('notScoredYet'),
             matchScore: hasRealMatchScore ? matchScore : undefined,
             normalizedScore:
               typeof job.normalizedScore === 'number'
@@ -1049,7 +1167,7 @@ const ExploreJobsPageContent = () => {
               : '',
             experienceLevel: resolveExperienceLevel(job),
             department: job.industry || job.department || undefined,
-            workMode: formatWorkModeLabel(
+            workMode: formatWorkModeLocalized(
               job.jobLocationType ||
                 job.workMode ||
                 job.normalizedJobProfile?.workMode ||
@@ -1090,7 +1208,7 @@ const ExploreJobsPageContent = () => {
               : Array.isArray(job.missingSkills)
               ? job.missingSkills.slice(0, 3)
               : [],
-            matchLabel: job.matchLabel || job.confidenceTag,
+            matchLabel: job.matchLabel,
             scoreColorHint: job.scoreColorHint || (matchScore >= 85 ? 'high' : matchScore >= 55 ? 'medium' : 'low'),
             whyNotMatched: typeof job.whyNotMatched === 'string' ? job.whyNotMatched : null,
             transferableSkills: job.transferableSkills,
@@ -1324,6 +1442,28 @@ const ExploreJobsPageContent = () => {
         return mergeListingWithApiJob(prev, detail)
       })
     })()
+  }
+
+  const handleOptimizeCv = (job: JobListing) => {
+    const rawJob = jobListings.find((listing) => listing.id === job.id) ?? job
+    const baseCtx = buildJobCvTailorContext(rawJob)
+    if (usesCvMatchScore && cvResumeSections) {
+      const cvMatch = computeExploreJobCvMatch(rawJob, cvResumeSections)
+      saveJobCvTailorContext({
+        ...baseCtx,
+        profileMatchScore: typeof rawJob.matchScore === 'number' ? rawJob.matchScore : undefined,
+        matchScore: cvMatch.matchScore,
+        confidenceTag: cvMatch.confidenceTag,
+        matchLabel: cvMatch.confidenceTag,
+        reasoning: cvMatch.reasoning,
+        matchedSkills: cvMatch.matchedSkills,
+        missingSkills: cvMatch.missingSkills,
+      })
+    } else {
+      saveJobCvTailorContext(baseCtx)
+    }
+    const jobId = encodeURIComponent(String(job.id))
+    router.push(localizePath(`/lms/resume-builder/editor?job=${jobId}&tailor=1`, locale))
   }
 
   const handleApplyNow = async () => {
@@ -1638,7 +1778,7 @@ const ExploreJobsPageContent = () => {
   }, [selectedCountry, locationFacets])
 
   const filteredJobs = useMemo(() => {
-    let jobs = jobListings;
+    let jobs = scoredJobListings;
 
     // Filter out already applied jobs
     if (appliedJobIds.size > 0) {
@@ -1717,7 +1857,7 @@ const ExploreJobsPageContent = () => {
     // Match score filter
     const activeMatchScores = Object.entries(matchScore)
       .filter(([, v]) => v)
-      .map(([k]) => parseInt(k.replace('%+ Match', ''), 10));
+      .map(([k]) => parseInt(k, 10));
     if (activeMatchScores.length > 0) {
       const minRequired = Math.min(...activeMatchScores);
       jobs = jobs.filter((j) => (j.matchScore || 0) >= minRequired);
@@ -1755,7 +1895,7 @@ const ExploreJobsPageContent = () => {
 
     return jobs;
   }, [
-    jobListings,
+    scoredJobListings,
     searchQuery,
     smartFilterSkills,
     smartFilterLikelyRespond,
@@ -1838,24 +1978,31 @@ const ExploreJobsPageContent = () => {
     return counts
   }, [jobListings, industry, locationFacets, selectedCountry])
 
-  const selectedJobMatchValue = selectedJob
-    ? parseMatchPercentage(selectedJob.match, selectedJob.matchScore)
+  const detailJob = useMemo(() => {
+    if (!selectedJob) return null
+    return scoredJobListings.find((job) => job.id === selectedJob.id) || selectedJob
+  }, [selectedJob, scoredJobListings])
+
+  const selectedJobMatchValue = detailJob
+    ? parseMatchPercentage(detailJob.match, detailJob.matchScore)
     : 0
 
-  const selectedJobMatchedSkills = selectedJob
-    ? selectedJob.matchedSkills?.length
-      ? selectedJob.matchedSkills
-      : selectedJob.skills?.slice(0, 4) || []
+  const selectedJobMatchedSkills = detailJob
+    ? detailJob.matchedSkills?.length
+      ? detailJob.matchedSkills
+      : detailJob.skills?.slice(0, 4) || []
     : []
 
-  const selectedJobMissingSkills = selectedJob
-    ? selectedJob.missingSkills?.length
-      ? selectedJob.missingSkills
+  const selectedJobMissingSkills = detailJob
+    ? detailJob.missingSkills?.length
+      ? detailJob.missingSkills
       : ['Advanced Scaling', 'System Optimization']
     : []
 
   const selectedJobConfidenceTag =
-    selectedJob?.confidenceTag || (selectedJobMatchValue >= 85 ? 'Excellent Match' : 'Partial Match')
+    detailJob?.confidenceTag || (selectedJobMatchValue >= 85 ? 'Excellent Match' : 'Partial Match')
+
+  const insightUsesCvScore = detailJob?.matchSource === 'cv' || usesCvMatchScore
 
   const Pill = ({
     label,
@@ -1927,7 +2074,7 @@ const ExploreJobsPageContent = () => {
         {logoSrc ? (
           <Image
             src={logoSrc}
-            alt={job.company ? `${job.company} logo` : 'Company logo'}
+            alt={job.company ? te('companyLogoAlt', { company: job.company }) : te('companyLogo')}
             fill
             className="object-contain"
             unoptimized
@@ -1978,9 +2125,15 @@ const ExploreJobsPageContent = () => {
     const metaMode = job.workMode ? String(job.workMode).replace(/_/g, ' ') : ''
     const hasMetaLine = Boolean(metaLocation || metaSalary)
     const hasTypeLine = Boolean(metaType || metaMode)
-    const matchBadge = isPersonalized ? `AI Fit ${job.match}` : job.match
-    const confidenceBadgeClasses = getConfidenceBadgeClasses(job.confidenceTag)
-    const matchLabelClasses = getMatchLabelClasses(job.matchLabel)
+    const matchBadge = formatExploreMatchLabel(
+      te,
+      job.match,
+      job.matchScore,
+      isPersonalized,
+      job.matchSource === 'cv',
+    )
+    const cardFitLabel = translateFitLabel(resolveCardFitLabel(job), te)
+    const cardFitLabelClasses = getCardFitLabelClasses(cardFitLabel)
     const scoreBadgeClasses = getScoreBadgeClasses(job.scoreColorHint)
     const topMatchedSkills = Array.isArray(job.topMatchedSkills) ? job.topMatchedSkills.slice(0, isCompact ? 2 : 3) : []
     const topMissingSkills = Array.isArray(job.topMissingSkills) ? job.topMissingSkills.slice(0, isCompact ? 2 : 3) : []
@@ -2024,7 +2177,7 @@ const ExploreJobsPageContent = () => {
                 e.stopPropagation()
                 handleSaveJob(job)
               }}
-              aria-label={isSaved ? 'Remove saved job' : 'Save job'}
+              aria-label={isSaved ? te('removeSavedJob') : te('saveJob')}
               className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition-all duration-200 ${
                 isSaved
                   ? 'border-[rgba(40,168,225,0.24)] bg-[rgba(40,168,225,0.12)] text-[#28A8E1]'
@@ -2112,8 +2265,6 @@ const ExploreJobsPageContent = () => {
           </div>
         ) : null}
 
-        <JobCardMetaChips job={job} />
-
         <div className={`mt-3 flex flex-wrap gap-1.5 ${isCompact ? '' : 'mb-1'}`}>
           {shownSkills.map((skill, index) => (
             <span
@@ -2129,7 +2280,7 @@ const ExploreJobsPageContent = () => {
           <div className="mt-3 space-y-2">
             {topMatchedSkills.length > 0 ? (
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">Matched</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">{te('matched')}</span>
                 {topMatchedSkills.map((skill, index) => (
                   <span
                     key={`${job.id}-top-matched-${index}`}
@@ -2143,7 +2294,7 @@ const ExploreJobsPageContent = () => {
 
             {topMissingSkills.length > 0 ? (
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">Missing</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">{te('missing')}</span>
                 {topMissingSkills.map((skill, index) => (
                   <span
                     key={`${job.id}-top-missing-${index}`}
@@ -2157,33 +2308,20 @@ const ExploreJobsPageContent = () => {
           </div>
         ) : null}
 
-        {job.reasoning || job.whyNotMatched ? (
-          <div className="mt-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 px-3 py-2.5">
-            <p className="text-[11px] leading-relaxed text-slate-600">
-              {job.whyNotMatched && (job.matchScore || 0) < 55 ? job.whyNotMatched : job.reasoning}
-            </p>
-          </div>
-        ) : null}
-
         <div className={`mt-4 flex items-end justify-between gap-3 ${isCompact ? '' : 'mt-auto'}`}>
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold ${scoreBadgeClasses}`}>
                 {matchBadge}
               </span>
-              {job.matchLabel ? (
-                <span className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-semibold ${matchLabelClasses}`}>
-                  {job.matchLabel}
-                </span>
-              ) : null}
-              {job.confidenceTag ? (
-                <span className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-semibold ${confidenceBadgeClasses}`}>
-                  {job.confidenceTag}
+              {cardFitLabel ? (
+                <span className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-semibold ${cardFitLabelClasses}`}>
+                  {cardFitLabel}
                 </span>
               ) : null}
               {isApplied ? (
                 <span className="inline-flex rounded-full border border-emerald-200/80 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
-                  Applied
+                  {te('applied')}
                 </span>
               ) : null}
             </div>
@@ -2199,16 +2337,16 @@ const ExploreJobsPageContent = () => {
         <div className={`mt-4 hidden ${isCompact ? '' : 'mt-auto'}`}>
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center rounded-full bg-[rgba(40,168,225,0.10)] px-3 py-1 text-[11px] font-semibold text-[#28A8E1]">
-              {isPersonalized ? `AI Fit ${job.match}` : job.match}
+              {formatExploreMatchLabel(te, job.match, job.matchScore, isPersonalized, job.matchSource === 'cv')}
             </span>
             {job.confidenceTag ? (
               <span className="inline-flex rounded-full bg-[rgba(252,150,32,0.12)] px-3 py-1 text-[11px] font-semibold text-[#FC9620]">
-                {job.confidenceTag}
+                {translateFitLabel(job.confidenceTag, te)}
               </span>
             ) : null}
             {isApplied ? (
               <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200/80">
-                Applied
+                {te('applied')}
               </span>
             ) : null}
           </div>
@@ -2280,7 +2418,7 @@ const ExploreJobsPageContent = () => {
             </div>
 
             <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-black text-emerald-700 shadow-sm">
-              {isPersonalized ? `AI Fit ${job.match}` : job.match}
+              {formatExploreMatchLabel(te, job.match, job.matchScore, isPersonalized, job.matchSource === 'cv')}
             </span>
           </div>
         </div>
@@ -2308,7 +2446,7 @@ const ExploreJobsPageContent = () => {
                     <div className="max-w-3xl min-w-0 space-y-4">
                       <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(40,168,225,0.18)] bg-white/78 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#28A8E1]">
                         <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
-                        {isPersonalized ? 'Profile matched roles' : 'Jobs discovery'}
+                        {isPersonalized ? te('profileMatchedRoles') : te('jobsDiscovery')}
                       </div>
 
                       <div className="space-y-2">
@@ -2336,15 +2474,13 @@ const ExploreJobsPageContent = () => {
                           </h1>
                           {isPersonalized ? (
                             <span className="inline-flex items-center rounded-full bg-[rgba(40,168,225,0.10)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#28A8E1]">
-                              Profile matched
+                              {te('profileMatchedBadge')}
                             </span>
                           ) : null}
                         </div>
 
                         <p className="application-detail-helper max-w-2xl">
-                          {isPersonalized
-                            ? 'Curated roles based on your current profile, experience signals, and application intent.'
-                            : 'Search the current market, compare fit signals, and jump into the roles worth your time.'}
+                          {isPersonalized ? te('personalizedSubtitle') : te('discoverySubtitle')}
                         </p>
                       </div>
 
@@ -2403,7 +2539,7 @@ const ExploreJobsPageContent = () => {
                 <div className="dashboard-surface rounded-[24px] border border-white/80 p-6 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      <p className="profile-page-section-title">Filters</p>
+                      <p className="profile-page-section-title">{te('filters')}</p>
                       <span className="inline-flex rounded-full bg-[rgba(40,168,225,0.10)] px-2.5 py-1 text-[11px] font-semibold text-[#28A8E1]">
                         {activeFilterCount}
                       </span>
@@ -2413,7 +2549,7 @@ const ExploreJobsPageContent = () => {
                       onClick={handleResetFilters}
                       className="text-[0.8125rem] font-medium text-blue-600 hover:text-blue-700"
                     >
-                      Reset Filters
+                      {te('resetFilters')}
                     </button>
                   </div>
 
@@ -2421,25 +2557,25 @@ const ExploreJobsPageContent = () => {
                     {/* Smart Filters */}
                     <div className="space-y-4">
                       <SectionHeader
-                        title="Smart Filters"
+                        title={te('smartFilters')}
                         open={smartFiltersOpen}
                         onToggle={() => setSmartFiltersOpen((v) => !v)}
                       />
                       {smartFiltersOpen ? (
                         <div className="space-y-3">
                           {[
-                            { label: 'Jobs matching my skills', value: smartFilterSkills, onChange: setSmartFilterSkills },
-                            { label: 'Companies likely to respond', value: smartFilterLikelyRespond, onChange: setSmartFilterLikelyRespond },
-                            { label: 'Remote-friendly companies', value: smartFilterRemoteFriendly, onChange: setSmartFilterRemoteFriendly },
+                            { key: 'smartFilterSkills', value: smartFilterSkills, onChange: setSmartFilterSkills },
+                            { key: 'smartFilterLikelyRespond', value: smartFilterLikelyRespond, onChange: setSmartFilterLikelyRespond },
+                            { key: 'smartFilterRemoteFriendly', value: smartFilterRemoteFriendly, onChange: setSmartFilterRemoteFriendly },
                           ].map((row) => (
-                            <label key={row.label} className="flex items-center gap-3">
+                            <label key={row.key} className="flex items-center gap-3">
                               <input
                                 type="checkbox"
                                 checked={row.value}
                                 onChange={(e) => row.onChange(e.target.checked)}
                                 className="h-4 w-4"
                               />
-                              <span className="profile-page-value">{row.label}</span>
+                              <span className="profile-page-value">{te(row.key)}</span>
                             </label>
                           ))}
                         </div>
@@ -2448,28 +2584,28 @@ const ExploreJobsPageContent = () => {
 
                     {/* Work Mode */}
                     <div className="space-y-3">
-                      <p className="profile-page-section-title">Work Mode</p>
+                      <p className="profile-page-section-title">{te('workMode')}</p>
                       <div className="flex flex-wrap gap-2">
-                        <Pill label="Remote" active={workMode === 'Remote'} onClick={() => setWorkMode(workMode === 'Remote' ? null : 'Remote')} />
-                        <Pill label="Hybrid" active={workMode === 'Hybrid'} onClick={() => setWorkMode(workMode === 'Hybrid' ? null : 'Hybrid')} />
-                        <Pill label="On-site" active={workMode === 'On-site'} onClick={() => setWorkMode(workMode === 'On-site' ? null : 'On-site')} />
+                        <Pill label={tJobs('remote')} active={workMode === 'Remote'} onClick={() => setWorkMode(workMode === 'Remote' ? null : 'Remote')} />
+                        <Pill label={tJobs('hybrid')} active={workMode === 'Hybrid'} onClick={() => setWorkMode(workMode === 'Hybrid' ? null : 'Hybrid')} />
+                        <Pill label={tJobs('onsite')} active={workMode === 'On-site'} onClick={() => setWorkMode(workMode === 'On-site' ? null : 'On-site')} />
                       </div>
                     </div>
 
                     {/* Experience */}
                     <div className="space-y-3">
-                      <SectionHeader title="Experience" open={experienceOpen} onToggle={() => setExperienceOpen((v) => !v)} />
+                      <SectionHeader title={te('experience')} open={experienceOpen} onToggle={() => setExperienceOpen((v) => !v)} />
                       {experienceOpen ? (
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <span className="text-[13px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
-                              {experienceYears === 20 ? 'Any Experience' : `${experienceYears} Yrs Max`}
+                              {experienceYears === 20 ? te('anyExperience') : te('yrsMax', { years: experienceYears })}
                             </span>
                           </div>
                           <div className="space-y-2">
                             <div className="flex items-center justify-between text-[11px] text-gray-400 font-bold uppercase tracking-wider">
-                              <span>0 Yrs</span>
-                              <span>Any</span>
+                              <span>{te('yrsZero')}</span>
+                              <span>{te('yrsAny')}</span>
                             </div>
                             <input
                               type="range"
@@ -2486,11 +2622,11 @@ const ExploreJobsPageContent = () => {
 
                     {/* Salary */}
                     <div className="space-y-3">
-                      <SectionHeader title="Salary" open={salaryOpen} onToggle={() => setSalaryOpen((v) => !v)} />
+                      <SectionHeader title={te('salary')} open={salaryOpen} onToggle={() => setSalaryOpen((v) => !v)} />
                       {salaryOpen ? (
                         <div className="space-y-3">
                           <div>
-                            <label className="mb-1 block text-xs font-medium text-gray-500">Currency</label>
+                            <label className="mb-1 block text-xs font-medium text-gray-500">{te('currency')}</label>
                             <select
                               value={salaryFilterCurrency}
                               onChange={(e) => setSalaryFilterCurrency(e.target.value)}
@@ -2506,7 +2642,7 @@ const ExploreJobsPageContent = () => {
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-500">Min salary</label>
+                              <label className="mb-1 block text-xs font-medium text-gray-500">{te('minSalary')}</label>
                               <input
                                 type="number"
                                 min={0}
@@ -2514,12 +2650,12 @@ const ExploreJobsPageContent = () => {
                                 inputMode="numeric"
                                 value={salaryFilterMin}
                                 onChange={(e) => setSalaryFilterMin(e.target.value)}
-                                placeholder="Min"
+                                placeholder={te('min')}
                                 className="profile-modal-field h-10 w-full rounded-lg border border-gray-200 px-3 text-[0.8125rem] text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                               />
                             </div>
                             <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-500">Max salary</label>
+                              <label className="mb-1 block text-xs font-medium text-gray-500">{te('maxSalary')}</label>
                               <input
                                 type="number"
                                 min={0}
@@ -2527,13 +2663,13 @@ const ExploreJobsPageContent = () => {
                                 inputMode="numeric"
                                 value={salaryFilterMax}
                                 onChange={(e) => setSalaryFilterMax(e.target.value)}
-                                placeholder="Max"
+                                placeholder={te('max')}
                                 className="profile-modal-field h-10 w-full rounded-lg border border-gray-200 px-3 text-[0.8125rem] text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                               />
                             </div>
                           </div>
                           <p className="text-xs text-gray-500">
-                            Enter amounts in {salaryFilterCurrency}. Leave min or max empty for no limit.
+                            {te('salaryHint', { currency: salaryFilterCurrency })}
                           </p>
                           {salaryFilterMin.trim() &&
                             salaryFilterMax.trim() &&
@@ -2541,7 +2677,7 @@ const ExploreJobsPageContent = () => {
                             parseSalaryFilterInput(salaryFilterMax) != null &&
                             (parseSalaryFilterInput(salaryFilterMin) ?? 0) >
                               (parseSalaryFilterInput(salaryFilterMax) ?? 0) && (
-                            <p className="text-xs text-red-600">Min cannot be greater than max.</p>
+                            <p className="text-xs text-red-600">{te('salaryMinGreaterThanMax')}</p>
                           )}
                         </div>
                       ) : null}
@@ -2549,18 +2685,18 @@ const ExploreJobsPageContent = () => {
 
                     {/* Match Score */}
                     <div className="space-y-3">
-                      <SectionHeader title="Match Score" open={matchOpen} onToggle={() => setMatchOpen((v) => !v)} />
+                      <SectionHeader title={te('matchScore')} open={matchOpen} onToggle={() => setMatchOpen((v) => !v)} />
                       {matchOpen ? (
                         <div className="space-y-3">
-                          {['80%+ Match', '70%+ Match', '60%+ Match'].map((label) => (
-                            <label key={label} className="flex items-center gap-3">
+                          {MATCH_SCORE_FILTER_KEYS.map((key) => (
+                            <label key={key} className="flex items-center gap-3">
                               <input
                                 type="checkbox"
-                                checked={Boolean(matchScore[label])}
-                                onChange={(e) => setMatchScore((prev) => ({ ...prev, [label]: e.target.checked }))}
+                                checked={Boolean(matchScore[key])}
+                                onChange={(e) => setMatchScore((prev) => ({ ...prev, [key]: e.target.checked }))}
                                 className="h-4 w-4"
                               />
-                              <span className="profile-page-value">{label}</span>
+                              <span className="profile-page-value">{te(`match${key}` as 'match80')}</span>
                             </label>
                           ))}
                         </div>
@@ -2569,7 +2705,7 @@ const ExploreJobsPageContent = () => {
 
                     {/* Industry */}
                     <div className="space-y-3">
-                      <SectionHeader title="Industry" open={industryOpen} onToggle={() => setIndustryOpen((v) => !v)} />
+                      <SectionHeader title={te('industry')} open={industryOpen} onToggle={() => setIndustryOpen((v) => !v)} />
                       {industryOpen ? (
                         <div className="space-y-3">
                           {Object.entries(industry)
@@ -2594,7 +2730,7 @@ const ExploreJobsPageContent = () => {
                               onClick={() => setShowMoreIndustry(!showMoreIndustry)}
                               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                             >
-                              {showMoreIndustry ? 'View Less' : 'View More'}
+                              {showMoreIndustry ? te('viewLess') : te('viewMore')}
                             </button>
                           )}
                         </div>
@@ -2604,7 +2740,7 @@ const ExploreJobsPageContent = () => {
                     {/* Cities */}
                     <div className="space-y-3">
                       <SectionHeader
-                        title="Country"
+                        title={te('country')}
                         open={locationCountryOpen}
                         onToggle={() => setLocationCountryOpen((v) => !v)}
                       />
@@ -2616,7 +2752,7 @@ const ExploreJobsPageContent = () => {
                               type="text"
                               value={countrySearch}
                               autoComplete="off"
-                              placeholder="Search country…"
+                              placeholder={te('searchCountry')}
                               onChange={(e) => {
                                 setCountrySearch(e.target.value)
                                 setCountryPickerOpen(true)
@@ -2628,7 +2764,7 @@ const ExploreJobsPageContent = () => {
                             {(selectedCountry || countrySearch) ? (
                               <button
                                 type="button"
-                                aria-label="Clear country"
+                                aria-label={te('clearCountry')}
                                 onClick={() => {
                                   setSelectedCountry('')
                                   setCountrySearch('')
@@ -2643,23 +2779,29 @@ const ExploreJobsPageContent = () => {
                           {countryPickerOpen ? (
                             <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-md">
                               <p className="border-b border-gray-100 px-3 py-2 text-xs text-gray-500">
-                                {locationFacets.totalJobs} jobs ·{' '}
-                                {locationFacets.countries.length}{' '}
-                                {locationFacets.countries.length === 1 ? 'country' : 'countries'} with
-                                listings
+                                {te('countriesJobs', {
+                                  jobs: locationFacets.totalJobs,
+                                  count: locationFacets.countries.length,
+                                  countryWord:
+                                    locationFacets.countries.length === 1
+                                      ? te('countrySingular')
+                                      : te('countryPlural'),
+                                })}
                                 {locationFacets.jobsWithoutCountry > 0
-                                  ? ` · ${locationFacets.jobsWithoutCountry} without country set`
+                                  ? te('withoutCountrySet', {
+                                      count: locationFacets.jobsWithoutCountry,
+                                    })
                                   : ''}
                               </p>
                               {countrySearchNoJobs ? (
                                 <p className="px-3 py-2 text-xs font-medium text-amber-700">
-                                  No jobs found for this country
+                                  {te('noJobsForCountry')}
                                 </p>
                               ) : filteredCountriesForPicker.length === 0 ? (
                                 <p className="px-3 py-2 text-xs text-gray-500">
                                   {countrySearch.trim()
-                                    ? 'No matching countries with jobs'
-                                    : 'No countries with jobs yet'}
+                                    ? te('noMatchingCountries')
+                                    : te('noCountriesWithJobs')}
                                 </p>
                               ) : (
                                 filteredCountriesForPicker.map((facet) => (
@@ -2686,7 +2828,7 @@ const ExploreJobsPageContent = () => {
                             </div>
                           ) : null}
                           {locationFacets.countries.length === 0 && !countrySearch.trim() ? (
-                            <p className="text-xs text-gray-500">No countries with jobs in the database yet</p>
+                            <p className="text-xs text-gray-500">{te('noCountriesInDb')}</p>
                           ) : null}
                             </div>
                       ) : null}
@@ -2695,14 +2837,14 @@ const ExploreJobsPageContent = () => {
                     {selectedCountry ? (
                       <div className="space-y-3">
                         <SectionHeader
-                          title="Cities"
+                          title={te('cities')}
                           open={locationCitiesOpen}
                           onToggle={() => setLocationCitiesOpen((v) => !v)}
                         />
                         {locationCitiesOpen ? (
                           <div className="space-y-3">
                             {availableCitiesForCountry.length === 0 ? (
-                              <p className="text-xs text-gray-500">No cities in database for this country</p>
+                              <p className="text-xs text-gray-500">{te('noCitiesForCountry')}</p>
                             ) : (
                               availableCitiesForCountry
                                 .slice(0, showMoreCities ? undefined : 6)
@@ -2734,14 +2876,14 @@ const ExploreJobsPageContent = () => {
                                 onClick={() => setShowMoreCities(!showMoreCities)}
                                 className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                               >
-                                {showMoreCities ? 'View Less' : 'View More'}
+                                {showMoreCities ? te('viewLess') : te('viewMore')}
                               </button>
                             ) : null}
                           </div>
                         ) : null}
                       </div>
                     ) : (
-                      <p className="text-xs text-gray-500">Select a country to filter by city</p>
+                      <p className="text-xs text-gray-500">{te('selectCountryForCity')}</p>
                     )}
                   </div>
                 </div>
@@ -2755,10 +2897,12 @@ const ExploreJobsPageContent = () => {
                     <div>
                       <p className="profile-page-label flex items-center gap-2 text-[#28A8DF]">
                         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM11 16h2v2h-2v-2zm0-10h2v8h-2V6z"/></svg>
-                        {isPersonalized ? "Elite AI Matches for your Profile" : "Recommended for you"}
+                        {isPersonalized ? te('eliteAiMatches') : te('recommendedForYou')}
                       </p>
                       <p className="profile-page-value mt-1 font-semibold">
-                        {loading ? 'Analyzing your profile…' : `Identified ${filteredJobs.length} potential career matches`}
+                        {loading
+                          ? te('analyzingProfile')
+                          : te('identifiedMatches', { count: filteredJobs.length })}
                       </p>
                     </div>
 
@@ -2769,7 +2913,7 @@ const ExploreJobsPageContent = () => {
                           className={`p-2 rounded-lg transition-all ${
                             displayMode === 'grid' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'
                           }`}
-                          title="Grid View"
+                          title={te('gridView')}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H18a2.25 2.25 0 01-2.25-2.25v-2.25z" />
@@ -2780,7 +2924,7 @@ const ExploreJobsPageContent = () => {
                           className={`p-2 rounded-lg transition-all ${
                             displayMode === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'
                           }`}
-                          title="List View"
+                          title={te('listView')}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -2894,7 +3038,7 @@ const ExploreJobsPageContent = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: "clamp(14px, 1.8vw, 20px)", height: "clamp(14px, 1.8vw, 20px)" }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                 </svg>
-                <span className="wrap-break-word">Back </span>
+                <span className="wrap-break-word">{te('back')}</span>
               </button>
 
               <div className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)] min-w-0">
@@ -2903,20 +3047,20 @@ const ExploreJobsPageContent = () => {
                   <div className="sticky top-[calc(var(--app-header-height,92px)+8px)] w-full max-w-full self-start rounded-[28px] border border-white/80 bg-white/82 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur-md sm:p-5 lg:p-6 xl:p-7">
                     <div className="mb-4 flex items-center justify-between gap-3 px-1 min-w-0">
                       <div className="min-w-0">
-                        <h2 className="profile-page-section-title truncate">Most Recent Jobs</h2>
-                        <p className="profile-page-empty mt-1">{filteredJobs.length} roles in this view</p>
+                        <h2 className="profile-page-section-title truncate">{te('mostRecentJobs')}</h2>
+                        <p className="profile-page-empty mt-1">{te('rolesInView', { count: filteredJobs.length })}</p>
                       </div>
                       <button
                         type="button"
                         onClick={handleBackToGrid}
                         className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition-all duration-200 hover:border-[rgba(40,168,225,0.24)] hover:text-[#28A8E1]"
                       >
-                        View All
+                        {te('viewAll')}
                       </button>
                     </div>
 
                     <div className="space-y-3 pr-1">
-                      {jobListings.map(job => renderJobCard(job, true))}
+                      {filteredJobs.map(job => renderJobCard(job, true))}
                     </div>
                   </div>
                 </div>
@@ -2946,13 +3090,13 @@ const ExploreJobsPageContent = () => {
                               onClick={() => void handleApplyNow()}
                               className="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(40,168,225,0.25)] transition-all duration-200 hover:bg-[#28A8DF] disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                              {applyPreflightLoading ? 'Loading…' : 'Apply Now'}
+                              {applyPreflightLoading ? te('loading') : te('applyNow')}
                             </button>
                             <button
                               onClick={() => handleSaveJob(selectedJob)}
                               className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-[#28A8E1] transition-all duration-200 hover:bg-slate-50"
                             >
-                              {isSavedJob(selectedJob.id) ? 'Saved' : 'Save Job'}
+                              {isSavedJob(selectedJob.id) ? te('savedButton') : te('saveJobButton')}
                             </button>
                           </div>
                         </div>
@@ -2963,12 +3107,14 @@ const ExploreJobsPageContent = () => {
 
                         {/* AI Match Analysis Matrix (Global AI Assistant Integrated) */}
                         {(() => {
-                          const selectedJobMatchValue = parseMatchPercentage(selectedJob.match, selectedJob.matchScore);
-                          const selectedJobConfidenceTag = selectedJob.confidenceTag || (selectedJobMatchValue >= 85 ? 'Excellent Alignment' : selectedJobMatchValue >= 60 ? 'Partial Match' : 'Gap Identified');
-                          const selectedJobMatchedSkills = selectedJob.matchedSkills || [];
-                          const selectedJobMissingSkills = selectedJob.missingSkills || [];
+                          const insightJob = detailJob || selectedJob
+                          if (!insightJob) return null
+                          const insightMatchValue = parseMatchPercentage(insightJob.match, insightJob.matchScore);
+                          const insightConfidenceTag = insightJob.confidenceTag || (insightMatchValue >= 85 ? 'Excellent Alignment' : insightMatchValue >= 60 ? 'Partial Match' : 'Gap Identified');
+                          const insightMatchedSkills = insightJob.matchedSkills || [];
+                          const insightMissingSkills = insightJob.missingSkills || [];
 
-                          return (selectedJob.reasoning || selectedJob.matchScore) ? (
+                          return (insightJob.reasoning || insightJob.matchScore) ? (
                             <section className="mt-8 w-full">
                               <div
                                 className="rounded-3xl p-px bg-linear-to-br from-[#28A8E1] via-[#28A8DF] to-[#FC9620]"
@@ -2982,22 +3128,22 @@ const ExploreJobsPageContent = () => {
                                       <div className="relative flex flex-col items-center gap-2.5">
                                         {/* 1. Partial Match Tag - Centered */}
                                         <div className="flex justify-center">
-                                          <div className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] shadow-sm ${getConfidenceBadgeClasses(selectedJobConfidenceTag)}`}>
-                                            {selectedJobConfidenceTag}
+                                          <div className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] shadow-sm ${getConfidenceBadgeClasses(insightConfidenceTag)}`}>
+                                            {translateFitLabel(insightConfidenceTag, te)}
                                           </div>
                                         </div>
 
                                         {/* 2. Description - Below Tag, Centered */}
                                         <div className="flex justify-center">
                                           <p className="max-w-[280px] text-center text-[12px] font-medium leading-relaxed text-slate-500">
-                                            Your strongest overlap comes from matching core profile health metrics.
+                                            {insightUsesCvScore ? te('cvOverlapDescription') : te('overlapDescription')}
                                           </p>
                                         </div>
 
                                         {/* 3. Market Alignment Tag - Centered */}
                                         <div className="mt-1 text-center">
                                           <div className="inline-flex rounded-full border border-[rgba(40,168,225,0.20)] bg-white/80 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#28A8E1]">
-                                            Market alignment
+                                            {te('marketAlignment')}
                                           </div>
                                         </div>
 
@@ -3013,23 +3159,23 @@ const ExploreJobsPageContent = () => {
                                               strokeWidth="12"
                                               fill="transparent"
                                               strokeDasharray={314}
-                                              strokeDashoffset={314 - (314 * selectedJobMatchValue) / 100}
+                                              strokeDashoffset={314 - (314 * insightMatchValue) / 100}
                                               strokeLinecap="round"
                                               className="text-[#28A8E1]"
                                             />
                                           </svg>
                                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span className="application-detail-title leading-none">{selectedJobMatchValue}%</span>
-                                            <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500 mt-0.5">Match</span>
+                                            <span className="application-detail-title leading-none">{insightMatchValue}%</span>
+                                            <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500 mt-0.5">{te('matchLabel')}</span>
                                           </div>
                                         </div>
 
                                         {/* 5. Button - Centered */}
                                         <button
-                                          onClick={() => router.push(localizePath('/lms/resume-builder/editor', locale))}
+                                          onClick={() => handleOptimizeCv(insightJob)}
                                           className="mt-2 relative inline-flex h-fit w-full items-center justify-center rounded-xl bg-[#28A8E1] px-4 py-2.5 text-[12px] font-bold text-white shadow-[0_10px_20px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF] active:scale-[0.99]"
                                         >
-                                          {t("exploreJobs.optimizeCv")}
+                                          {te('optimizeCv')}
                                         </button>
                                       </div>
                                     </div>
@@ -3038,17 +3184,18 @@ const ExploreJobsPageContent = () => {
                                       <div className="flex flex-wrap items-center gap-3">
                                         <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(40,168,225,0.16)] bg-[rgba(40,168,225,0.08)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#28A8E1]">
                                           <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
-                                          AI Matching Insight
+                                          {te('aiMatchingInsight')}
                                         </div>
                                         <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-500">
-                                          Score signal: {selectedJob.match}
+                                          {insightUsesCvScore
+                                            ? te('cvScoreSignal', { score: insightJob.match })
+                                            : te('scoreSignal', { score: insightJob.match })}
                                         </div>
                                       </div>
 
                                       <p className="application-detail-helper max-w-3xl">
                                         &ldquo;
-                                        {selectedJob.reasoning ||
-                                          'Based on your technical background and experience, you are a competitive candidate for this role. Key overlaps found in core technical stacks.'}
+                                        {insightJob.reasoning || te('defaultReasoning')}
                                         &rdquo;
                                       </p>
 
@@ -3056,15 +3203,15 @@ const ExploreJobsPageContent = () => {
                                           <div className="rounded-[20px] border border-emerald-100 bg-emerald-50/60 p-3">
                                             <div className="flex items-center gap-2">
                                               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.2} />
-                                              <h5 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Where You Align</h5>
+                                              <h5 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">{te('whereYouAlign')}</h5>
                                             </div>
                                             <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500">
-                                              Profile health metrics that likely strengthen your shortlist ranking.
+                                              {insightUsesCvScore ? te('cvWhereYouAlignHelper') : te('whereYouAlignHelper')}
                                             </p>
                                           <div className="mt-4 flex flex-wrap gap-2">
-                                            {selectedJobMatchedSkills.map((skill, index) => (
+                                            {insightMatchedSkills.map((skill, index) => (
                                               <span
-                                                key={`${selectedJob.id}-matched-${index}`}
+                                                key={`${insightJob.id}-matched-${index}`}
                                                 className="inline-flex rounded-full border border-emerald-200 bg-white/85 px-3 py-1.5 text-[11px] font-semibold text-emerald-700"
                                               >
                                                 {skill}
@@ -3076,15 +3223,15 @@ const ExploreJobsPageContent = () => {
                                           <div className="rounded-[20px] border border-[rgba(252,150,32,0.18)] bg-[rgba(252,150,32,0.08)] p-3">
                                             <div className="flex items-center gap-2">
                                               <AlertTriangle className="h-3.5 w-3.5 text-[#FC9620]" strokeWidth={2.2} />
-                                              <h5 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#d97706]">Strengthen Next</h5>
+                                              <h5 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#d97706]">{te('strengthenNext')}</h5>
                                             </div>
                                             <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500">
-                                              Focus areas worth tightening to improve alignment.
+                                              {insightUsesCvScore ? te('cvStrengthenNextHelper') : te('strengthenNextHelper')}
                                             </p>
                                           <div className="mt-4 flex flex-wrap gap-2">
-                                            {selectedJobMissingSkills.map((skill, index) => (
+                                            {insightMissingSkills.map((skill, index) => (
                                               <span
-                                                key={`${selectedJob.id}-gap-${index}`}
+                                                key={`${insightJob.id}-gap-${index}`}
                                                 className="inline-flex rounded-full border border-[rgba(252,150,32,0.18)] bg-white/85 px-3 py-1.5 text-[11px] font-semibold text-[#c2410c]"
                                               >
                                                 {skill}

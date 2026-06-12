@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import {
   AlertTriangle,
   FileText,
@@ -18,7 +19,8 @@ import {
   fetchResumeHtml, 
   saveResumeHtml, 
   improveResumeText, 
-  exportResumePdf 
+  exportResumePdf,
+  tailorResumeSummaryForJob,
 } from '../../api/client';
 import {
   ResumeEducation,
@@ -26,7 +28,27 @@ import {
   useLmsState,
 } from '../../state/LmsStateProvider';
 import { resumeAtsRisks, resumeJobMatch, resumeRecruiterSimulation } from '../../data/ai-mock';
-import { ResumeStudioNavigator } from './ResumeStudioNavigator';
+import { JobCvTailorPanel } from '@/components/resume/JobCvTailorPanel';
+import ScreeningQuestionsDrawer from '@/components/jobs/ScreeningQuestionsDrawer';
+import {
+  applyJobTailorSuggestions,
+  buildTailorSuggestions,
+  computeCvJdMatchScore,
+  getMissingJdKeywords,
+  loadJobCvTailorContext,
+  sanitizeTailoredSummary,
+  tailorSummaryForJob,
+  type JobCvTailorContext,
+} from '@/lib/job-cv-tailor';
+import {
+  fetchJobDetailForApplication,
+  parseApplicationFormQuestions,
+  submitJobApplication,
+} from '@/lib/job-application';
+import { normalizeResumeStudioHtml } from '@/lib/resumeStudioBrand';
+import { getScreeningValidationError } from '@/lib/screening-questions';
+import type { ScreeningQuestion } from '@/lib/screening-questions';
+import { AppLocale, localizePath } from '@/lib/i18n';
 import { ResumeStudioPreview } from './ResumeStudioPreview';
 import {
   ResumeStudioBasicsSection,
@@ -34,7 +56,6 @@ import {
   ResumeStudioSummarySection,
 } from './ResumeStudioPrimarySections';
 import {
-  ResumeStudioCompletionSection,
   ResumeStudioEducationSection,
   ResumeStudioExperienceSection,
   ResumeStudioLayoutSection,
@@ -53,6 +74,8 @@ type CollapsibleSectionId = Exclude<SectionId, 'completion'>;
 
 export function ResumeStudioPageClient() {
   const search = useSearchParams();
+  const router = useRouter();
+  const locale = useLocale() as AppLocale;
   const toast = useLmsToast();
   const {
     state,
@@ -69,6 +92,8 @@ export function ResumeStudioPageClient() {
 
   const template = search.get('template');
   const focus = search.get('focus');
+  const jobIdParam = search.get('job')?.trim() || '';
+  const tailorMode = search.get('tailor') === '1' || Boolean(jobIdParam);
 
   const draft = state.resumeDraft;
   const sections = draft.sections;
@@ -100,6 +125,45 @@ export function ResumeStudioPageClient() {
   const editorScrollRef = useRef<HTMLElement | null>(null);
   const previewShellRef = useRef<HTMLElement | null>(null);
   const [editorPanelHeight, setEditorPanelHeight] = useState<number | undefined>(undefined);
+  const [jobTailor, setJobTailor] = useState<JobCvTailorContext | null>(null);
+
+  const captureStudioPreviewHtml = useCallback((): string | undefined => {
+    if (typeof document === 'undefined') return undefined;
+    const previewElement =
+      document.getElementById('resume-preview') ||
+      document.getElementById('resume-preview-expanded') ||
+      document.querySelector('[id*="resume-preview"]');
+    if (!previewElement) return undefined;
+
+    const clone = previewElement.cloneNode(true) as HTMLElement;
+    clone.style.transform = 'none';
+    clone.style.transformOrigin = 'unset';
+    clone.style.width = '100%';
+    clone.style.maxWidth = 'none';
+    clone.style.margin = '0';
+    clone.style.padding = '0';
+    clone.style.boxShadow = 'none';
+    const html = normalizeResumeStudioHtml(clone.outerHTML.trim(), { ensureWatermark: true });
+    return html.length > 80 ? html : undefined;
+  }, []);
+
+  const buildTailorSyncOptions = useCallback(() => {
+    if (!jobTailor) return undefined;
+    const studioHtml = editorMode === 'studio' ? captureStudioPreviewHtml() : undefined;
+    const aiHtml = editorMode === 'ai' && resumeHtml.trim() ? resumeHtml : undefined;
+    return {
+      jobTailorJobId: jobTailor.jobId,
+      jobTitle: jobTailor.title,
+      company: jobTailor.company,
+      resumeHtml: studioHtml || aiHtml,
+    };
+  }, [jobTailor, editorMode, resumeHtml, captureStudioPreviewHtml]);
+  const [isTailorSaving, setIsTailorSaving] = useState(false);
+  const [isTailorApplying, setIsTailorApplying] = useState(false);
+  const [isApplyingSuggestions, setIsApplyingSuggestions] = useState(false);
+  const [screeningOpen, setScreeningOpen] = useState(false);
+  const [screeningQuestions, setScreeningQuestions] = useState<ScreeningQuestion[]>([]);
+  const [screeningAnswers, setScreeningAnswers] = useState<Record<string, string | number | null>>({});
 
   useEffect(() => {
     const previewShell = previewShellRef.current;
@@ -208,6 +272,67 @@ export function ResumeStudioPageClient() {
   }, [setResumeTemplate, template]);
 
   useEffect(() => {
+    if (!jobIdParam) {
+      setJobTailor(null);
+      return;
+    }
+    const ctx = loadJobCvTailorContext(jobIdParam);
+    if (ctx) {
+      setJobTailor(ctx);
+      if (!sections.basics.headline.trim() && ctx.title) {
+        setResumeDraftSections({
+          basics: { ...sections.basics, headline: ctx.title },
+        });
+      }
+      return;
+    }
+    void (async () => {
+      const detail = await fetchJobDetailForApplication(jobIdParam);
+      if (!detail) return;
+      const fallbackCtx: JobCvTailorContext = {
+        jobId: jobIdParam,
+        title: String(detail.title || 'Role'),
+        company: String(detail.company || detail.clientName || 'Company'),
+        matchScore: typeof detail.matchScore === 'number' ? detail.matchScore : undefined,
+        reasoning: typeof detail.reasoning === 'string' ? detail.reasoning : undefined,
+        matchedSkills: Array.isArray(detail.matchedSkills) ? detail.matchedSkills.map(String) : [],
+        missingSkills: Array.isArray(detail.missingSkills) ? detail.missingSkills.map(String) : [],
+        skills: Array.isArray(detail.skills) ? detail.skills.map(String) : [],
+        requiredSkills: Array.isArray(detail.requiredSkills) ? detail.requiredSkills.map(String) : [],
+        jdKeywords: [],
+        jdSkillPool: [],
+        description: String(detail.description || detail.jobDescription || ''),
+        experienceLevel: typeof detail.experienceLevel === 'string' ? detail.experienceLevel : undefined,
+        savedAt: new Date().toISOString(),
+      };
+      fallbackCtx.jdKeywords = [...fallbackCtx.skills, ...fallbackCtx.requiredSkills];
+      fallbackCtx.jdSkillPool = [
+        ...fallbackCtx.skills,
+        ...fallbackCtx.requiredSkills,
+        ...fallbackCtx.matchedSkills,
+        ...fallbackCtx.missingSkills,
+      ];
+      setJobTailor(fallbackCtx);
+    })();
+  }, [jobIdParam]);
+
+  useEffect(() => {
+    if (!tailorMode || !jobTailor) return;
+    const frame = window.requestAnimationFrame(() => {
+      scrollToSection('skills');
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [jobTailor?.jobId, tailorMode]);
+
+  useEffect(() => {
+    if (!jobTailor || !sections.summary.trim()) return;
+    const cleaned = sanitizeTailoredSummary(sections.summary);
+    if (cleaned && cleaned !== sections.summary) {
+      setResumeDraftSections({ summary: cleaned });
+    }
+  }, [jobTailor?.jobId]);
+
+  useEffect(() => {
     if (!focus) return;
     if (!SECTION_DEFINITIONS.some((section) => section.id === focus)) return;
 
@@ -248,12 +373,26 @@ export function ResumeStudioPageClient() {
     .map((entry) => `${entry.role} ${entry.company} ${entry.bullets}`)
     .join('\n')}`.toLowerCase();
 
-  const missingKeywords = useMemo(
-    () =>
-      resumeRecruiterSimulation.missingKeywords.filter(
-        (keyword) => !draftText.includes(keyword.toLowerCase())
-      ),
-    [draftText]
+  const keywordSource = useMemo(
+    () => (jobTailor ? getMissingJdKeywords(jobTailor, '') : resumeRecruiterSimulation.missingKeywords),
+    [jobTailor],
+  );
+
+  const missingKeywords = useMemo(() => {
+    if (jobTailor) {
+      return getMissingJdKeywords(jobTailor, draftText);
+    }
+    return keywordSource.filter((keyword) => !draftText.includes(keyword.toLowerCase()));
+  }, [draftText, jobTailor, keywordSource]);
+
+  const tailorSuggestions = useMemo(
+    () => (jobTailor ? buildTailorSuggestions(jobTailor) : []),
+    [jobTailor],
+  );
+
+  const cvJdMatchBreakdown = useMemo(
+    () => (jobTailor ? computeCvJdMatchScore(jobTailor, sections) : null),
+    [jobTailor, sections],
   );
 
   const basicsMissing = useMemo(() => {
@@ -407,9 +546,9 @@ export function ResumeStudioPageClient() {
   }, [sectionStates]);
 
   const keywordCoverage = useMemo(() => {
-    const total = resumeRecruiterSimulation.missingKeywords.length || 1;
+    const total = (jobTailor ? getMissingJdKeywords(jobTailor, '').length : resumeRecruiterSimulation.missingKeywords.length) || 1;
     return clampPct(((total - missingKeywords.length) / total) * 100);
-  }, [missingKeywords.length]);
+  }, [jobTailor, missingKeywords.length]);
 
   const atsReadiness = useMemo(
     () => clampPct(editorProgress * 0.7 + keywordCoverage * 0.3),
@@ -502,6 +641,231 @@ export function ResumeStudioPageClient() {
       message: 'Use this for formal education, bootcamps, or certifications.',
       tone: 'info',
     });
+  };
+
+  const resolveTailoredSummary = async (ctx: JobCvTailorContext): Promise<string> => {
+    const cleaned = sanitizeTailoredSummary(sections.summary);
+    try {
+      const aiSummary = await tailorResumeSummaryForJob({
+        existingSummary: cleaned,
+        jobTitle: ctx.title,
+        company: ctx.company,
+        experienceLevel: ctx.experienceLevel,
+        matchedSkills: ctx.matchedSkills,
+        missingSkills: ctx.missingSkills,
+      });
+      if (aiSummary?.trim()) return aiSummary.trim();
+    } catch {
+      // Fall back to local rewriter when AI is unavailable.
+    }
+    return tailorSummaryForJob(ctx, cleaned);
+  };
+
+  const handleApplyAllSuggestions = async () => {
+    if (!jobTailor) return;
+
+    setIsApplyingSuggestions(true);
+    try {
+      const tailoredSummary = await resolveTailoredSummary(jobTailor);
+      const { updates, appliedItems } = applyJobTailorSuggestions(jobTailor, sections, {
+        summaryOverride: tailoredSummary,
+      });
+
+      if (appliedItems.length === 0) {
+        toast.push({
+          title: 'CV already aligned',
+          message: 'Your draft already reflects the current JD suggestions.',
+          tone: 'info',
+        });
+        return;
+      }
+
+      const mergedPatch: Partial<typeof sections> = {
+        ...(updates.basics ? { basics: updates.basics } : {}),
+        ...(updates.summary ? { summary: updates.summary } : {}),
+        ...(updates.skills ? { skills: updates.skills } : {}),
+        ...(updates.experience ? { experience: updates.experience } : {}),
+      };
+
+      setResumeDraftSections(mergedPatch);
+
+      try {
+        await syncResumeDraftToBackend(mergedPatch, buildTailorSyncOptions());
+        toast.push({
+          title: 'Suggestions applied & saved',
+          message: `${appliedItems.join(' · ')} — persisted to your resume draft.`,
+          tone: 'success',
+        });
+      } catch {
+        toast.push({
+          title: 'Suggestions applied locally',
+          message: `${appliedItems.join(' · ')} — could not reach server; use Save CV to retry.`,
+          tone: 'warning',
+        });
+      }
+
+      window.requestAnimationFrame(() => {
+        scrollToSection(updates.summary ? 'summary' : updates.skills ? 'skills' : 'experience');
+      });
+    } finally {
+      setIsApplyingSuggestions(false);
+    }
+  };
+
+  const handleTailorSummaryForJob = async () => {
+    if (!jobTailor) {
+      handleImproveSummary();
+      return;
+    }
+    try {
+      const nextSummary = await resolveTailoredSummary(jobTailor);
+      setResumeDraftSections({ summary: nextSummary });
+      toast.push({
+        title: 'Summary tailored',
+        message: `AI reframed your professional summary for ${jobTailor.title} at ${jobTailor.company}.`,
+        tone: 'success',
+      });
+    } catch {
+      toast.push({
+        title: 'Could not tailor summary',
+        message: 'Please try again or edit the summary manually.',
+        tone: 'warning',
+      });
+    }
+  };
+
+  const persistCvBeforeApply = async () => {
+    await syncResumeDraftToBackend(undefined, buildTailorSyncOptions());
+    if (editorMode === 'ai' && resumeHtml.trim()) {
+      await saveResumeHtml(resumeHtml);
+    }
+    markResumeSaved();
+  };
+
+  const buildScreeningPayload = (questions: ScreeningQuestion[]) => {
+    const payload: Record<string, { label: string; type: string; value: string | number | null }> = {};
+    questions.forEach((q) => {
+      const raw = screeningAnswers[q.id];
+      payload[q.id] = {
+        label: q.label,
+        type: q.type,
+        value: raw === undefined ? null : raw,
+      };
+    });
+    return payload;
+  };
+
+  const finalizeJobApplication = async (
+    answersPayload: Record<string, { label: string; type: string; value: string | number | null }>,
+  ) => {
+    if (!jobTailor) return;
+    const candidateId = sessionStorage.getItem('candidateId');
+    if (!candidateId) {
+      toast.push({ title: 'Sign in required', message: 'Please log in to apply for jobs.', tone: 'warning' });
+      return;
+    }
+
+    setIsTailorApplying(true);
+    try {
+      await persistCvBeforeApply();
+      const result = await submitJobApplication({
+        candidateId,
+        jobId: jobTailor.jobId,
+        screeningAnswers: {
+          ...answersPayload,
+          submittedVia: { label: 'Source', type: 'text', value: 'tailor-cv-editor' },
+          tailorJobTitle: { label: 'Role', type: 'text', value: jobTailor.title },
+        },
+      });
+
+      if (!result.ok) {
+        if (result.alreadyApplied) {
+          toast.push({
+            title: 'Already applied',
+            message: 'This role is already in your applications.',
+            tone: 'info',
+          });
+          router.push(localizePath('/applications', locale));
+          return;
+        }
+        throw new Error(result.message);
+      }
+
+      setScreeningOpen(false);
+      toast.push({
+        title: 'Application submitted',
+        message: `Your tailored CV was saved and your application to ${jobTailor.title} was sent.`,
+        tone: 'success',
+      });
+      router.push(localizePath('/applications', locale));
+    } catch (err: unknown) {
+      toast.push({
+        title: 'Application failed',
+        message: err instanceof Error ? err.message : 'Could not submit your application.',
+        tone: 'error',
+      });
+    } finally {
+      setIsTailorApplying(false);
+    }
+  };
+
+  const handleApplyToJob = async () => {
+    if (!jobTailor) return;
+    const candidateId = sessionStorage.getItem('candidateId');
+    if (!candidateId) {
+      toast.push({ title: 'Sign in required', message: 'Please log in to apply for jobs.', tone: 'warning' });
+      return;
+    }
+
+    setIsTailorApplying(true);
+    try {
+      const detail = await fetchJobDetailForApplication(jobTailor.jobId);
+      const questions = parseApplicationFormQuestions(detail?.applicationFormQuestions);
+      if (questions.length > 0) {
+        setScreeningQuestions(questions);
+        const defaults: Record<string, string | number | null> = {};
+        questions.forEach((q) => {
+          defaults[q.id] = q.type === 'slider' ? (typeof q.min === 'number' ? q.min : 0) : '';
+        });
+        setScreeningAnswers(defaults);
+        setScreeningOpen(true);
+        return;
+      }
+      await finalizeJobApplication({});
+    } finally {
+      setIsTailorApplying(false);
+    }
+  };
+
+  const handleSaveCvForJob = async () => {
+    setIsTailorSaving(true);
+    try {
+      await persistCvBeforeApply();
+      toast.push({
+        title: 'CV saved',
+        message: jobTailor
+          ? `Draft stored for ${jobTailor.title}. You can keep editing before applying.`
+          : 'Your resume draft was saved.',
+        tone: 'success',
+      });
+    } catch (err: unknown) {
+      toast.push({
+        title: 'Save failed',
+        message: err instanceof Error ? err.message : 'Could not save your CV.',
+        tone: 'error',
+      });
+    } finally {
+      setIsTailorSaving(false);
+    }
+  };
+
+  const handleSubmitScreeningFromEditor = async () => {
+    const validationError = getScreeningValidationError(screeningQuestions, screeningAnswers);
+    if (validationError) {
+      toast.push({ title: 'Missing answer', message: validationError, tone: 'warning' });
+      return;
+    }
+    await finalizeJobApplication(buildScreeningPayload(screeningQuestions));
   };
 
   const handleImproveSummary = () => {
@@ -733,21 +1097,25 @@ export function ResumeStudioPageClient() {
 
       <div className="w-full min-w-0 max-w-full space-y-6 overflow-x-hidden pb-12">
         <div className="space-y-6">
+          {jobTailor && cvJdMatchBreakdown ? (
+            <JobCvTailorPanel
+              context={jobTailor}
+              cvMatchBreakdown={cvJdMatchBreakdown}
+              missingKeywords={missingKeywords}
+              suggestions={tailorSuggestions}
+              isSaving={isTailorSaving}
+              isApplying={isTailorApplying}
+              isApplyingSuggestions={isApplyingSuggestions}
+              onAppendKeyword={handleAppendKeyword}
+              onTailorSummary={handleTailorSummaryForJob}
+              onApplySuggestions={handleApplyAllSuggestions}
+              onSaveCv={() => void handleSaveCvForJob()}
+              onApply={() => void handleApplyToJob()}
+            />
+          ) : null}
+
           {editorMode === 'studio' ? (
             <>
-              <section className="hide-on-print">
-                <ResumeStudioNavigator
-                  activeSection={activeSection}
-                  completionState={completionState}
-                  editorProgress={editorProgress}
-                  keywordCoverage={keywordCoverage}
-                  atsReadiness={atsReadiness}
-                  onSelect={scrollToSection}
-                  sectionStates={sectionStates}
-                  analysis={draft.analysis}
-                />
-              </section>
-
               <div className="grid min-w-0 grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] xl:items-start xl:gap-6 2xl:grid-cols-[minmax(0,1fr)_480px] 2xl:gap-8">
                 <aside
                   id="resume-preview-shell"
@@ -844,20 +1212,6 @@ export function ResumeStudioPageClient() {
                     sections={sections}
                   />
 
-                  <ResumeStudioCompletionSection
-                    sectionRef={(node) => (sectionRefs.current.completion = node)}
-                    completionState={sectionStates.completion}
-                    editorProgress={editorProgress}
-                    atsReadiness={atsReadiness}
-                    keywordCoverage={keywordCoverage}
-                    readinessHighlights={readinessHighlights}
-                    draftStatus={draft.updatedAtLabel}
-                    targetRole={targetRole}
-                    analysis={draft.analysis}
-                    isAnalyzing={draft.isAnalyzing}
-                    onAnalyze={handleAnalyzeResume}
-                    onSync={handleSyncResume}
-                  />
                 </main>
               </div>
             </>
@@ -895,6 +1249,21 @@ export function ResumeStudioPageClient() {
           )}
         </div>
       </div>
+
+      {jobTailor ? (
+        <ScreeningQuestionsDrawer
+          isOpen={screeningOpen}
+          onClose={() => setScreeningOpen(false)}
+          jobTitle={jobTailor.title}
+          company={jobTailor.company}
+          questions={screeningQuestions}
+          answers={screeningAnswers}
+          onAnswerChange={(questionId, value) =>
+            setScreeningAnswers((prev) => ({ ...prev, [questionId]: value }))
+          }
+          onSubmit={() => void handleSubmitScreeningFromEditor()}
+        />
+      ) : null}
     </>
   );
 }

@@ -416,7 +416,6 @@ export function ResumeStudioLayoutSection({
                     />
                   </div>
                 </div>
-                <div className="absolute inset-0 bg-white/5 backdrop-blur-[0.5px]" />
               </div>
 
               <div className="my-1.5 flex flex-col items-center px-1">
