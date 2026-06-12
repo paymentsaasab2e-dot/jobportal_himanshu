@@ -73,7 +73,7 @@ function ResumePaperShell({
       id={contentId}
       ref={paperRef}
       style={style}
-      className={`relative overflow-hidden ${className}`}
+      className={`relative overflow-visible ${className}`}
     >
       <div className="relative">{children}</div>
       <CvBrandOverlay />
@@ -199,7 +199,7 @@ export function ResumeDocumentPaper({
       contentId={contentId}
       paperRef={paperRef}
       style={style}
-      className={`mx-auto min-h-[1123px] w-[840px] bg-white px-7 py-8 text-slate-900 shadow-none sm:px-10 sm:py-10 ${fontClass} ${className}`}
+      className={`mx-auto w-[840px] bg-white px-7 py-8 pb-12 text-slate-900 shadow-none sm:px-10 sm:py-10 sm:pb-14 ${fontClass} ${className}`}
     >
       <header className={headerClass}>
         <h1
@@ -343,33 +343,37 @@ export function ResumeStudioPreview({
   const inlineFrameRef = useRef<HTMLDivElement | null>(null);
   const inlinePaperRef = useRef<HTMLDivElement | null>(null);
   const [inlineScale, setInlineScale] = useState(0.42);
-  const [inlinePaperHeight, setInlinePaperHeight] = useState(1080);
   const inlinePaperWidth = 840;
 
   useEffect(() => {
     const frame = inlineFrameRef.current;
     const paper = inlinePaperRef.current;
-    if (!frame || !paper || typeof ResizeObserver === 'undefined') return;
+    if (!frame || typeof ResizeObserver === 'undefined') return;
 
     const measure = () => {
       const availableWidth = Math.max(240, frame.clientWidth - 18);
       const nextScale = Math.min(1, availableWidth / inlinePaperWidth);
       setInlineScale(nextScale);
-      setInlinePaperHeight(paper.scrollHeight);
     };
 
     measure();
 
     const frameObserver = new ResizeObserver(measure);
-    const paperObserver = new ResizeObserver(measure);
     frameObserver.observe(frame);
-    paperObserver.observe(paper);
+    if (paper) {
+      const paperObserver = new ResizeObserver(measure);
+      paperObserver.observe(paper);
+      window.addEventListener('resize', measure);
+      return () => {
+        frameObserver.disconnect();
+        paperObserver.disconnect();
+        window.removeEventListener('resize', measure);
+      };
+    }
 
     window.addEventListener('resize', measure);
-
     return () => {
       frameObserver.disconnect();
-      paperObserver.disconnect();
       window.removeEventListener('resize', measure);
     };
   }, [sections, template, activeSection]);
@@ -394,7 +398,10 @@ export function ResumeStudioPreview({
   }, [isExpanded]);
 
   const inlineScaledWidth = inlinePaperWidth * inlineScale;
-  const inlineScaledHeight = inlinePaperHeight * inlineScale;
+  const inlinePaperStyle: CSSProperties = {
+    width: inlinePaperWidth,
+    zoom: inlineScale,
+  };
 
   return (
     <>
@@ -441,23 +448,13 @@ export function ResumeStudioPreview({
             ref={inlineFrameRef}
             className="overflow-visible bg-[linear-gradient(180deg,#ffffff_0%,#ffffff_78%,#f8fafc_100%)] py-4"
           >
-            <div
-              className="mx-auto"
-              style={{
-                width: inlineScaledWidth,
-                height: inlineScaledHeight,
-              }}
-            >
+            <div className="mx-auto overflow-visible" style={{ width: inlineScaledWidth }}>
               <ResumeDocumentPaper
                 activeSection={activeSection}
                 contentId="resume-preview"
                 paperRef={inlinePaperRef}
                 className="!mx-0 !max-w-none"
-                style={{
-                  width: inlinePaperWidth,
-                  transform: `scale(${inlineScale})`,
-                  transformOrigin: 'top left',
-                }}
+                style={inlinePaperStyle}
                 sections={sections}
                 template={template}
               />

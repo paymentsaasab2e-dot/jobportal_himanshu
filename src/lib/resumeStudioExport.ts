@@ -9,8 +9,8 @@ export async function exportResumeHtmlToPdfBlob(html: string, title = 'CV'): Pro
   iframe.style.position = 'fixed';
   iframe.style.left = '-10000px';
   iframe.style.top = '0';
-  iframe.style.width = '794px';
-  iframe.style.height = '1123px';
+  iframe.style.width = '840px';
+  iframe.style.height = '2000px';
   iframe.style.border = '0';
   iframe.srcdoc = docHtml;
   document.body.appendChild(iframe);
@@ -29,10 +29,14 @@ export async function exportResumeHtmlToPdfBlob(html: string, title = 'CV'): Pro
     const doc = iframe.contentDocument;
     const target =
       (doc?.querySelector('.resume-studio-preview-root') as HTMLElement | null) ||
+      (doc?.querySelector('.resume-container') as HTMLElement | null) ||
       (doc?.body as HTMLElement | null);
     if (!target) {
       throw new Error('Could not render CV for PDF export');
     }
+
+    const contentHeight = Math.max(target.scrollHeight, target.offsetHeight, 1123);
+    iframe.style.height = `${contentHeight + 48}px`;
 
     const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
       import('jspdf'),

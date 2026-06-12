@@ -175,6 +175,7 @@ export type ResumeRoleVersionItem = {
   fileUrl?: string | null;
   fileName?: string | null;
   hasResumeHtml?: boolean;
+  hasStoredVersion?: boolean;
   resumeHtml?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -220,6 +221,20 @@ export async function fetchResumeRoleVersion(versionId: string): Promise<ResumeR
   }
   const data = await res.json();
   return data.data as ResumeRoleVersionItem;
+}
+
+export async function deleteResumeRoleVersion(versionId: string): Promise<void> {
+  const id = String(versionId || '').trim();
+  if (!id) throw new Error('CV version id is required');
+
+  const res = await lmsFetch(`${LMS_API_BASE}/resume/versions/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  if (!res) throw new Error('No authentication token found. Please log in again.');
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to delete CV version');
+  }
 }
 
 export async function updateResumeDraft(payload: any) {

@@ -1,6 +1,6 @@
 'use client';
 import { Suspense, useMemo, useState, useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 
 import Image from 'next/image';
@@ -66,6 +66,14 @@ import {
 } from '@/lib/job-public-field-visibility';
 import ScreeningQuestionsDrawer from '@/components/jobs/ScreeningQuestionsDrawer';
 import { getScreeningValidationError } from '@/lib/screening-questions';
+import {
+  assessmentBannerMessage,
+  buildBeforeSubmitAssessmentRedirect,
+  buildFirstAssessmentRedirect,
+  parseJobAssessmentList,
+  PENDING_APPLY_STORAGE_KEY,
+  resolveJobAssessmentsForApply,
+} from '@/lib/pre-screen-assessment-flow';
 import { AppLocale, localizePath } from '@/lib/i18n';
 import { fetchResumeDraft, fetchResumeHtml } from '@/app/lms/api/client';
 import {
@@ -140,6 +148,8 @@ interface JobListing {
   normalizedJobProfile?: any
   applicationFormEnabled?: boolean
   screeningQuestions?: PortalScreeningQuestion[]
+  preScreenAssessments?: ReturnType<typeof parseJobAssessmentList>
+  tenantDbName?: string
   nationality?: string
   priority?: string
   openings?: number
@@ -230,6 +240,8 @@ interface AppliedJobSummary {
   appliedDate: string
   jobId?: string | number
   applicationId?: string
+  assessmentRedirectPath?: string | null
+  pendingAssessmentTitle?: string | null
 }
 
 function asString(value: unknown): string | null {
@@ -512,6 +524,7 @@ function getScoreBadgeClasses(scoreColorHint?: string) {
 
 const ExploreJobsPageContent = () => {
   const router = useRouter()
+  const pathname = usePathname()
   const locale = useLocale() as AppLocale
   const t = useTranslations()
   const te = useTranslations('exploreJobs')
@@ -705,6 +718,29 @@ const ExploreJobsPageContent = () => {
     loadJobListings()
     checkAppliedJobs()
   }, [locale])
+
+  // After BEFORE_SUBMIT assessment chain, auto-submit the application.
+  useEffect(() => {
+    const pendingJobId = String(searchParams.get('pendingApply') || '').trim()
+    if (!pendingJobId) return
+    const stored = sessionStorage.getItem(PENDING_APPLY_STORAGE_KEY)
+    if (stored !== pendingJobId) return
+
+    const job = jobListings.find((j) => String(j.id) === pendingJobId)
+    if (!job) return
+
+    sessionStorage.removeItem(PENDING_APPLY_STORAGE_KEY)
+    setSelectedJob(job)
+
+    const sp = new URLSearchParams(searchParams.toString())
+    sp.delete('pendingApply')
+    const qs = sp.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+
+    showInfoToast('Assessment complete', 'Submitting your application…')
+    void submitApplication({}, job)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, jobListings, pathname])
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -1217,6 +1253,8 @@ const ExploreJobsPageContent = () => {
             normalizedJobProfile: job.normalizedJobProfile,
             applicationFormEnabled: !!job.applicationFormEnabled,
             screeningQuestions: parsePortalScreeningQuestionList(job.applicationFormQuestions),
+            preScreenAssessments: parseJobAssessmentList(job.preScreenAssessments),
+            tenantDbName: asString(job.tenantDbName) || undefined,
           };
 
           return redactPortalJobListing(listing, {
@@ -1422,6 +1460,18 @@ const ExploreJobsPageContent = () => {
       priority: fieldVisible('priority') ? portalMeta.priority : undefined,
       openings: fieldVisible('openings') ? portalMeta.openings : undefined,
       targetHireDate: fieldVisible('targetHireDate') ? portalMeta.targetHireDate : undefined,
+      applicationFormEnabled:
+        apiJob.applicationFormEnabled != null
+          ? !!apiJob.applicationFormEnabled
+          : prev.applicationFormEnabled,
+      screeningQuestions:
+        apiJob.applicationFormQuestions != null
+          ? parsePortalScreeningQuestionList(apiJob.applicationFormQuestions)
+          : prev.screeningQuestions,
+      preScreenAssessments: parseJobAssessmentList(apiJob.preScreenAssessments).length
+        ? parseJobAssessmentList(apiJob.preScreenAssessments)
+        : prev.preScreenAssessments,
+      tenantDbName: asString(apiJob.tenantDbName) || prev.tenantDbName,
     }
 
     return redactPortalJobListing(merged, {
@@ -1469,31 +1519,69 @@ const ExploreJobsPageContent = () => {
   const handleApplyNow = async () => {
     if (!selectedJob) return
     const selectedJobId = String(selectedJob.id || '').trim()
-    let questions = Array.isArray(selectedJob.screeningQuestions) ? selectedJob.screeningQuestions : []
+    const candidateId = sessionStorage.getItem('candidateId')
+    if (!candidateId) {
+      alert('Please log in to apply for jobs')
+      return
+    }
 
-    // List/personalized responses often omit or stale `applicationFormQuestions` — always refresh from GET /jobs/:id before skipping the modal.
-    if (questions.length === 0) {
-      setApplyPreflightLoading(true)
-      try {
-        const detail = await fetchJobDetailForApply(selectedJobId, String(API_BASE_URL))
-        if (detail?.applicationFormQuestions != null) {
-          const parsed = parsePortalScreeningQuestionList(detail.applicationFormQuestions)
-          if (parsed.length > 0) {
-            questions = parsed
-            setSelectedJob((prev) =>
-              prev && String(prev.id) === selectedJobId
-                ? {
-                    ...prev,
-                    screeningQuestions: parsed,
-                    applicationFormEnabled: !!detail.applicationFormEnabled,
-                  }
-                : prev,
-            )
-          }
+    setApplyPreflightLoading(true)
+    let questions = Array.isArray(selectedJob.screeningQuestions) ? selectedJob.screeningQuestions : []
+    let jobDetail: Record<string, unknown> | null = null
+
+    try {
+      jobDetail = await fetchJobDetailForApply(selectedJobId, String(API_BASE_URL))
+      if (jobDetail?.applicationFormQuestions != null) {
+        const parsed = parsePortalScreeningQuestionList(jobDetail.applicationFormQuestions)
+        if (parsed.length > 0) {
+          questions = parsed
+          setSelectedJob((prev) =>
+            prev && String(prev.id) === selectedJobId
+              ? {
+                  ...prev,
+                  screeningQuestions: parsed,
+                  applicationFormEnabled: !!jobDetail?.applicationFormEnabled,
+                  preScreenAssessments: parseJobAssessmentList(jobDetail?.preScreenAssessments).length
+                    ? parseJobAssessmentList(jobDetail?.preScreenAssessments)
+                    : prev.preScreenAssessments,
+                  tenantDbName:
+                    asString(jobDetail?.tenantDbName) || prev.tenantDbName,
+                }
+              : prev,
+          )
         }
-      } finally {
-        setApplyPreflightLoading(false)
       }
+
+      const tenantDbName =
+        asString(jobDetail?.tenantDbName) ||
+        asString(selectedJob.tenantDbName) ||
+        undefined
+      const { assessments, tenantDbName: resolvedTenant } = await resolveJobAssessmentsForApply(
+        selectedJobId,
+        jobDetail,
+        tenantDbName,
+      )
+      const assessmentList =
+        assessments.length > 0 ? assessments : selectedJob.preScreenAssessments || []
+      const beforeSubmitPath = buildBeforeSubmitAssessmentRedirect({
+        jobId: selectedJobId,
+        candidateId,
+        tenantDbName: resolvedTenant || tenantDbName,
+        assessments: assessmentList,
+      })
+      if (beforeSubmitPath) {
+        sessionStorage.setItem(PENDING_APPLY_STORAGE_KEY, selectedJobId)
+        showInfoToast(
+          'Pre-screen assessment',
+          'Complete the assessment, then your application will be submitted.',
+        )
+        router.push(beforeSubmitPath)
+        return
+      }
+    } catch (assessmentErr) {
+      console.warn('Pre-screen preflight failed:', assessmentErr)
+    } finally {
+      setApplyPreflightLoading(false)
     }
 
     if (questions.length === 0) {
@@ -1532,6 +1620,7 @@ const ExploreJobsPageContent = () => {
 
   const submitApplication = async (
     answersPayload: Record<string, { label: string; type: PortalScreeningType; value: string | number | null }> | Record<string, never>,
+    jobOverride?: JobListing | null,
   ) => {
     const candidateId = sessionStorage.getItem('candidateId');
     if (!candidateId) {
@@ -1539,12 +1628,13 @@ const ExploreJobsPageContent = () => {
       return;
     }
 
-    if (!selectedJob) {
+    const activeJob = jobOverride ?? selectedJob;
+    if (!activeJob) {
       alert('No job selected');
       return;
     }
 
-    const selectedJobId = String(selectedJob.id || '').trim();
+    const selectedJobId = String(activeJob.id || '').trim();
     if (!isValidMongoObjectId(candidateId) || !isValidMongoObjectId(selectedJobId)) {
       showInfoToast('Cannot apply', 'This job has an invalid identifier. Please refresh and try another role.');
       return;
@@ -1552,8 +1642,8 @@ const ExploreJobsPageContent = () => {
 
     const payloadKeyCount = Object.keys(answersPayload || {}).length
     let resolvedQuestions =
-      Array.isArray(selectedJob.screeningQuestions) && selectedJob.screeningQuestions.length > 0
-        ? selectedJob.screeningQuestions
+      Array.isArray(activeJob.screeningQuestions) && activeJob.screeningQuestions.length > 0
+        ? activeJob.screeningQuestions
         : []
 
     if (resolvedQuestions.length === 0 && payloadKeyCount === 0) {
@@ -1634,8 +1724,8 @@ const ExploreJobsPageContent = () => {
         // Backend can return a non-200 when the candidate already applied.
         // Treat this as a normal outcome so we don't show console errors.
         if (lower.includes('already applied')) {
-          const fallbackTitle = selectedJob.title || 'Job'
-          const fallbackCompany = selectedJob.company || 'Company'
+          const fallbackTitle = activeJob.title || 'Job'
+          const fallbackCompany = activeJob.company || 'Company'
           const existingApplicationId = asString((result?.data as Record<string, unknown> | undefined)?.applicationId) || undefined
           handleCloseModal();
           setAppliedJobSummary({
@@ -1661,18 +1751,69 @@ const ExploreJobsPageContent = () => {
         const appliedAtDate =
           data?.appliedAt ? formatDate(new Date(String(data.appliedAt))) : formatDate(new Date())
         const backendJob = data?.job as Record<string, unknown> | undefined
-        const modalJobTitle = asString(backendJob?.title) || selectedJob.title || 'Job'
-        const modalCompany = asString(backendJob?.company) || selectedJob.company || 'Company'
+        const modalJobTitle = asString(backendJob?.title) || activeJob.title || 'Job'
+        const modalCompany = asString(backendJob?.company) || activeJob.company || 'Company'
         const modalJobId = asString(backendJob?.id) || selectedJobId
         const modalApplicationId = asString(data?.applicationId) || undefined
+        let resolvedTenant =
+          asString(backendJob?.tenantDbName) ||
+          asString(activeJob.tenantDbName) ||
+          undefined
+        let assessmentRedirectPath: string | null = null
+        let pendingAssessmentTitle: string | null = null
+        try {
+          const jobDetail =
+            backendJob ||
+            (await fetchJobDetailForApply(modalJobId, String(API_BASE_URL))) ||
+            null
+          if (!resolvedTenant && jobDetail && typeof jobDetail.tenantDbName === 'string') {
+            resolvedTenant = jobDetail.tenantDbName.trim() || undefined
+          }
+          const { assessments, tenantDbName: tenantFromResolve } = await resolveJobAssessmentsForApply(
+            modalJobId,
+            jobDetail,
+            resolvedTenant || undefined,
+          )
+          const effectiveTenant = tenantFromResolve || resolvedTenant
+          const assessmentList =
+            assessments.length > 0 ? assessments : activeJob.preScreenAssessments || []
+          assessmentRedirectPath = buildFirstAssessmentRedirect({
+            jobId: modalJobId,
+            candidateId,
+            applicationId: modalApplicationId,
+            tenantDbName: effectiveTenant || undefined,
+            assessments: assessmentList,
+          })
+          if (assessmentRedirectPath) {
+            const first = assessmentList[0]
+            pendingAssessmentTitle = first?.title || 'Pre-screen assessment'
+          }
+        } catch (assessmentErr) {
+          console.warn('Could not resolve pre-screen assessments:', assessmentErr)
+        }
 
         handleCloseModal();
+
+        if (assessmentRedirectPath) {
+          showInfoToast(
+            'Pre-screen assessment',
+            `Complete "${pendingAssessmentTitle || 'your assessment'}" to continue.`,
+          )
+          router.push(assessmentRedirectPath)
+          loadJobListings()
+          checkAppliedJobs()
+          notifyBellRefresh()
+          return
+        }
+
         setAppliedJobSummary({
           jobTitle: modalJobTitle,
           company: modalCompany,
           appliedDate: appliedAtDate,
           jobId: modalJobId,
           applicationId: modalApplicationId,
+          assessmentRedirectPath,
+          pendingAssessmentTitle,
         });
         setIsSuccessModalOpen(true);
         // Reload job listings and check applied status
@@ -3101,6 +3242,16 @@ const ExploreJobsPageContent = () => {
                           </div>
                         </div>
 
+                        {Array.isArray(selectedJob.preScreenAssessments) &&
+                        selectedJob.preScreenAssessments.length > 0 ? (
+                          <div className="mt-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3">
+                            <p className="text-sm font-semibold text-violet-900">Pre-screen assessment</p>
+                            <p className="mt-1 text-xs text-violet-800">
+                              {assessmentBannerMessage(selectedJob.preScreenAssessments)}
+                            </p>
+                          </div>
+                        ) : null}
+
                         <div className="my-5 h-px w-full bg-slate-200" />
 
                         <JobPostingDetailsPanel job={selectedJob} />
@@ -3293,6 +3444,8 @@ const ExploreJobsPageContent = () => {
           appliedDate={appliedJobSummary?.appliedDate || formatDate(new Date())}
           jobId={appliedJobSummary?.jobId || selectedJob?.id}
           applicationId={appliedJobSummary?.applicationId}
+          assessmentRedirectPath={appliedJobSummary?.assessmentRedirectPath}
+          pendingAssessmentTitle={appliedJobSummary?.pendingAssessmentTitle}
         />
       )}
 

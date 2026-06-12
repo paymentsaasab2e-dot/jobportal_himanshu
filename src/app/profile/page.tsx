@@ -1707,6 +1707,7 @@ export default function ProfilePage() {
                         versionsData={resumeVersionsData}
                         hideOriginal={Boolean(resumeData?.fileName || resumeData?.fileUrl)}
                         onOpenOriginal={() => setIsResumeModalOpen(true)}
+                        onVersionsChanged={loadResumeVersions}
                       />
                     </div>
                   ) : (

@@ -1,9 +1,10 @@
 'use client';
 
-import { Download, Eye, FileText, Loader2, Pencil, Sparkles } from 'lucide-react';
+import { Download, Eye, FileText, Loader2, Pencil, Sparkles, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 import {
+  deleteResumeRoleVersion,
   exportResumePdf,
   fetchResumeRoleVersion,
   type ResumeRoleVersionItem,
@@ -48,6 +49,7 @@ function VersionCard({
   onView,
   onDownloadPdf,
   onEditHref,
+  onDelete,
   busy,
   canView,
   canDownloadPdf,
@@ -61,6 +63,7 @@ function VersionCard({
   onView: () => void;
   onDownloadPdf: () => void;
   onEditHref?: string;
+  onDelete?: () => void;
   busy?: boolean;
   canView?: boolean;
   canDownloadPdf?: boolean;
@@ -99,8 +102,8 @@ function VersionCard({
         <button
           type="button"
           onClick={onView}
-          disabled={busy || !canView}
-          className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-45 sm:flex-none sm:px-2.5"
+        disabled={busy}
+        className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-2.5"
           title="View CV"
         >
           {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Eye className="h-3 w-3" />}
@@ -109,8 +112,8 @@ function VersionCard({
         <button
           type="button"
           onClick={onDownloadPdf}
-          disabled={busy || !canDownloadPdf}
-          className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-orange-200 bg-orange-50/80 px-2 py-1 text-[10px] font-semibold text-orange-700 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-45 sm:flex-none sm:px-2.5"
+        disabled={busy}
+        className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-orange-200 bg-orange-50/80 px-2 py-1 text-[10px] font-semibold text-orange-700 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-2.5"
           title="Download as PDF"
         >
           {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
@@ -126,6 +129,18 @@ function VersionCard({
             Edit
           </Link>
         ) : null}
+        {onDelete ? (
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={busy}
+            className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-red-200 bg-red-50/80 px-2 py-1 text-[10px] font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-2.5"
+            title="Delete this CV version"
+          >
+            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+            Delete
+          </button>
+        ) : null}
       </div>
     </article>
   );
@@ -136,21 +151,22 @@ export function ProfileResumeVersionsPanel({
   versionsData,
   hideOriginal = false,
   onOpenOriginal,
+  onVersionsChanged,
 }: {
   locale: string;
   versionsData: ResumeVersionsResponse | null;
   hideOriginal?: boolean;
   onOpenOriginal?: () => void;
+  onVersionsChanged?: () => void | Promise<void>;
 }) {
   const [busyVersionId, setBusyVersionId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const resolveVersionDetail = useCallback(async (item: ResumeRoleVersionItem) => {
-    if (item.fileUrl || item.resumeHtml) return item;
-    if (item.hasResumeHtml || !item.fileUrl) {
-      return fetchResumeRoleVersion(item.id);
-    }
-    return item;
+    if (item.resumeHtml?.trim()) return item;
+    if (item.fileUrl && !item.hasStoredVersion) return item;
+    const fetched = await fetchResumeRoleVersion(item.id);
+    return fetched || item;
   }, []);
 
   const handleViewVersion = useCallback(
@@ -215,6 +231,27 @@ export function ProfileResumeVersionsPanel({
     [resolveVersionDetail],
   );
 
+  const handleDeleteVersion = useCallback(
+    async (item: ResumeRoleVersionItem) => {
+      const confirmed = window.confirm(
+        `Delete "${item.label}"? This tailored CV version will be removed permanently.`,
+      );
+      if (!confirmed) return;
+
+      setActionError(null);
+      setBusyVersionId(item.id);
+      try {
+        await deleteResumeRoleVersion(item.id);
+        await onVersionsChanged?.();
+      } catch (error) {
+        setActionError(error instanceof Error ? error.message : 'Could not delete CV version');
+      } finally {
+        setBusyVersionId(null);
+      }
+    },
+    [onVersionsChanged],
+  );
+
   if (!versionsData) return null;
 
   const roleVersions = (versionsData.versions || []).filter(
@@ -236,7 +273,7 @@ export function ProfileResumeVersionsPanel({
           locale as 'en' | 'fr',
         )
       : localizePath('/lms/resume-builder/editor', locale as 'en' | 'fr');
-    const canPreview = Boolean(item.fileUrl || item.hasResumeHtml);
+    const canPreview = Boolean(item.hasStoredVersion ?? true);
     const canDownloadPdf = canPreview;
     const busy = busyVersionId === item.id;
 
@@ -254,6 +291,7 @@ export function ProfileResumeVersionsPanel({
         onView={() => void handleViewVersion(item)}
         onDownloadPdf={() => void handleDownloadVersionPdf(item)}
         onEditHref={editorHref}
+        onDelete={() => void handleDeleteVersion(item)}
         downloadLabel="PDF"
       />
     );
