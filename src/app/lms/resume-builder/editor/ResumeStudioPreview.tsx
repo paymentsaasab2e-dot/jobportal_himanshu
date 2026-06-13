@@ -28,6 +28,59 @@ import {
   type SectionId,
 } from './studio-config';
 
+const SAASA_WATERMARK_SRC = '/SAASA%20Logo.png';
+
+function CvBrandOverlay() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20">
+      <div className="absolute inset-0 flex items-center justify-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={SAASA_WATERMARK_SRC}
+          alt=""
+          className="max-h-[54%] max-w-[70%] select-none object-contain opacity-[0.13]"
+          draggable={false}
+        />
+      </div>
+      <div className="absolute bottom-5 right-5 sm:bottom-7 sm:right-7">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={SAASA_WATERMARK_SRC}
+          alt=""
+          className="h-7 w-auto max-w-[88px] select-none object-contain opacity-80 sm:h-8 sm:max-w-[96px]"
+          draggable={false}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ResumePaperShell({
+  contentId,
+  paperRef,
+  style,
+  className = '',
+  children,
+}: {
+  contentId: string;
+  paperRef?: Ref<HTMLDivElement>;
+  style?: CSSProperties;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      id={contentId}
+      ref={paperRef}
+      style={style}
+      className={`relative overflow-visible ${className}`}
+    >
+      <div className="relative">{children}</div>
+      <CvBrandOverlay />
+    </div>
+  );
+}
+
 function DocumentSection({
   active,
   title,
@@ -97,25 +150,40 @@ export function ResumeDocumentPaper({
 
   if (template === 'arctic') {
     return (
-      <div id={contentId} ref={paperRef} style={style} className={`mx-auto w-full max-w-[840px] shadow-none ${className}`}>
+      <ResumePaperShell
+        contentId={contentId}
+        paperRef={paperRef}
+        style={style}
+        className={`mx-auto w-full max-w-[840px] shadow-none ${className}`}
+      >
         <ArcticTemplate data={templateData} />
-      </div>
+      </ResumePaperShell>
     );
   }
 
   if (template === 'obsidian') {
     return (
-      <div id={contentId} ref={paperRef} style={style} className={`mx-auto w-full max-w-[840px] shadow-none ${className}`}>
+      <ResumePaperShell
+        contentId={contentId}
+        paperRef={paperRef}
+        style={style}
+        className={`mx-auto w-full max-w-[840px] shadow-none ${className}`}
+      >
         <ObsidianTemplate data={templateData} />
-      </div>
+      </ResumePaperShell>
     );
   }
 
   if (template === 'serif-classic') {
     return (
-      <div id={contentId} ref={paperRef} style={style} className={`mx-auto w-full max-w-[840px] shadow-none ${className}`}>
+      <ResumePaperShell
+        contentId={contentId}
+        paperRef={paperRef}
+        style={style}
+        className={`mx-auto w-full max-w-[840px] shadow-none ${className}`}
+      >
         <SerifClassicTemplate data={templateData} />
-      </div>
+      </ResumePaperShell>
     );
   }
 
@@ -127,11 +195,11 @@ export function ResumeDocumentPaper({
         : 'border-b border-slate-300 pb-5';
 
   return (
-    <div
-      id={contentId}
-      ref={paperRef}
+    <ResumePaperShell
+      contentId={contentId}
+      paperRef={paperRef}
       style={style}
-      className={`mx-auto min-h-[1123px] w-[840px] bg-white px-7 py-8 text-slate-900 shadow-none sm:px-10 sm:py-10 ${fontClass} ${className}`}
+      className={`mx-auto w-[840px] bg-white px-7 py-8 pb-12 text-slate-900 shadow-none sm:px-10 sm:py-10 sm:pb-14 ${fontClass} ${className}`}
     >
       <header className={headerClass}>
         <h1
@@ -253,7 +321,7 @@ export function ResumeDocumentPaper({
           </DocumentSection>
         ) : null}
       </div>
-    </div>
+    </ResumePaperShell>
   );
 }
 
@@ -275,33 +343,37 @@ export function ResumeStudioPreview({
   const inlineFrameRef = useRef<HTMLDivElement | null>(null);
   const inlinePaperRef = useRef<HTMLDivElement | null>(null);
   const [inlineScale, setInlineScale] = useState(0.42);
-  const [inlinePaperHeight, setInlinePaperHeight] = useState(1080);
   const inlinePaperWidth = 840;
 
   useEffect(() => {
     const frame = inlineFrameRef.current;
     const paper = inlinePaperRef.current;
-    if (!frame || !paper || typeof ResizeObserver === 'undefined') return;
+    if (!frame || typeof ResizeObserver === 'undefined') return;
 
     const measure = () => {
       const availableWidth = Math.max(240, frame.clientWidth - 18);
       const nextScale = Math.min(1, availableWidth / inlinePaperWidth);
       setInlineScale(nextScale);
-      setInlinePaperHeight(paper.scrollHeight);
     };
 
     measure();
 
     const frameObserver = new ResizeObserver(measure);
-    const paperObserver = new ResizeObserver(measure);
     frameObserver.observe(frame);
-    paperObserver.observe(paper);
+    if (paper) {
+      const paperObserver = new ResizeObserver(measure);
+      paperObserver.observe(paper);
+      window.addEventListener('resize', measure);
+      return () => {
+        frameObserver.disconnect();
+        paperObserver.disconnect();
+        window.removeEventListener('resize', measure);
+      };
+    }
 
     window.addEventListener('resize', measure);
-
     return () => {
       frameObserver.disconnect();
-      paperObserver.disconnect();
       window.removeEventListener('resize', measure);
     };
   }, [sections, template, activeSection]);
@@ -326,7 +398,10 @@ export function ResumeStudioPreview({
   }, [isExpanded]);
 
   const inlineScaledWidth = inlinePaperWidth * inlineScale;
-  const inlineScaledHeight = inlinePaperHeight * inlineScale;
+  const inlinePaperStyle: CSSProperties = {
+    width: inlinePaperWidth,
+    zoom: inlineScale,
+  };
 
   return (
     <>
@@ -373,23 +448,13 @@ export function ResumeStudioPreview({
             ref={inlineFrameRef}
             className="overflow-visible bg-[linear-gradient(180deg,#ffffff_0%,#ffffff_78%,#f8fafc_100%)] py-4"
           >
-            <div
-              className="mx-auto"
-              style={{
-                width: inlineScaledWidth,
-                height: inlineScaledHeight,
-              }}
-            >
+            <div className="mx-auto overflow-visible" style={{ width: inlineScaledWidth }}>
               <ResumeDocumentPaper
                 activeSection={activeSection}
                 contentId="resume-preview"
                 paperRef={inlinePaperRef}
                 className="!mx-0 !max-w-none"
-                style={{
-                  width: inlinePaperWidth,
-                  transform: `scale(${inlineScale})`,
-                  transformOrigin: 'top left',
-                }}
+                style={inlinePaperStyle}
                 sections={sections}
                 template={template}
               />

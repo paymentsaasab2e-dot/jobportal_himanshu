@@ -92,7 +92,7 @@ function getStatusColor(status: string) {
   const value = (status || '').toLowerCase();
   if (value.includes('selected')) return 'text-green-600';
   if (value.includes('shortlisted')) return 'text-purple-600';
-  if (value.includes('review')) return 'text-blue-600';
+  if (value.includes('screen') || value.includes('review')) return 'text-blue-600';
   if (value.includes('rejected')) return 'text-red-600';
   return 'text-gray-600';
 }
@@ -102,7 +102,9 @@ function getStatusMessage(status: string) {
   if (value.includes('selected')) return 'Congratulations! Offer inbound';
   if (value.includes('shortlisted')) return 'Great progress! Interview stage';
   if (value.includes('interview')) return 'Use Interview details for time, format, and meeting link.';
+  if (value.includes('screen')) return 'Your application is in the screening stage.';
   if (value.includes('review')) return 'Your application is being reviewed';
+  if (value.includes('applied') || value.includes('submit')) return 'Your application has been received.';
   if (value.includes('rejected')) return 'Application not selected';
   return 'Application submitted';
 }
@@ -113,13 +115,13 @@ const PORTAL_STAGE_CARD: Record<
   { title: string; message: string; colorClass: string }
 > = {
   SUBMITTED: {
-    title: 'Submitted',
+    title: 'Applied',
     message: 'Your application has been received.',
     colorClass: 'text-gray-600',
   },
   UNDER_REVIEW: {
-    title: 'Under Review',
-    message: 'Your application is being reviewed by the hiring team.',
+    title: 'Screening',
+    message: 'Your application is in the screening stage with the hiring team.',
     colorClass: 'text-blue-600',
   },
   SHORTLISTED: {
@@ -173,6 +175,113 @@ function normalizeStage(value: string) {
     .replace(/[_-]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function isEarlyPipelineStageLabel(value: string) {
+  const n = normalizeStage(value);
+  return !n || n.includes('applied') || n.includes('submit');
+}
+
+/** Prefer CRM-synced status when portal pipeline entry is still on Applied/Submitted. */
+function resolveEffectiveStageLabel(application: ApplicationDetail) {
+  const code = String(application.statusCode || '').trim().toUpperCase();
+  const pipelineLabel = String(application.pipelineStage || '').trim();
+  const statusLabel = String(application.status || '').trim();
+
+  if (code === 'UNDER_REVIEW') {
+    if (pipelineLabel && !isEarlyPipelineStageLabel(pipelineLabel)) return pipelineLabel;
+    if (statusLabel && !isEarlyPipelineStageLabel(statusLabel)) return statusLabel;
+    return PORTAL_STAGE_CARD.UNDER_REVIEW.title;
+  }
+
+  if (code === 'SUBMITTED') {
+    if (pipelineLabel && normalizeStage(pipelineLabel).includes('applied')) return pipelineLabel;
+    if (statusLabel && normalizeStage(statusLabel).includes('applied')) return statusLabel;
+    return PORTAL_STAGE_CARD.SUBMITTED.title;
+  }
+
+  if (pipelineLabel) return pipelineLabel;
+  if (statusLabel) return statusLabel;
+  if (code && PORTAL_STAGE_CARD[code]) return PORTAL_STAGE_CARD[code].title;
+  return statusLabel;
+}
+
+function dedupePipelineStageFlow(stages: string[]) {
+  const result: string[] = [];
+  for (const stage of stages) {
+    const trimmed = String(stage || '').trim();
+    if (!trimmed) continue;
+    if (result.some((existing) => pipelineStagesEquivalent(existing, trimmed))) continue;
+    result.push(trimmed);
+  }
+  return result;
+}
+
+/** Match CRM pipeline pill names to portal status / pipelineStage labels. */
+function pipelineStagesEquivalent(stageA: string, stageB: string) {
+  const a = normalizeStage(stageA);
+  const b = normalizeStage(stageB);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (
+    (a.includes('applied') || a.includes('submit')) &&
+    (b.includes('applied') || b.includes('submit'))
+  ) {
+    return true;
+  }
+  if (
+    (a.includes('screen') || a.includes('review') || a.includes('assessment')) &&
+    (b.includes('screen') || b.includes('review') || b.includes('assessment'))
+  ) {
+    return true;
+  }
+  if (a.includes('interview') && b.includes('interview')) return true;
+  if (
+    (a.includes('offer') || a.includes('final decision') || a.includes('final')) &&
+    (b.includes('offer') || b.includes('final decision') || b.includes('final'))
+  ) {
+    return true;
+  }
+  if (
+    (a.includes('hire') || a.includes('select') || a.includes('placed')) &&
+    (b.includes('hire') || b.includes('select') || b.includes('placed'))
+  ) {
+    return true;
+  }
+  if (a.includes('reject') && b.includes('reject')) return true;
+  return false;
+}
+
+function resolveCurrentPipelineIndex(
+  flow: string[],
+  application: ApplicationDetail,
+): number {
+  if (!flow.length || !application) return -1;
+
+  const candidates = [
+    resolveEffectiveStageLabel(application),
+    application.pipelineStage,
+    application.status,
+    application.statusCode ? PORTAL_STAGE_CARD[String(application.statusCode).toUpperCase()]?.title : null,
+    application.statusCode,
+  ]
+    .map((v) => String(v || '').trim())
+    .filter(Boolean);
+
+  for (const candidate of candidates) {
+    const exactIdx = flow.findIndex((stage) => normalizeStage(stage) === normalizeStage(candidate));
+    if (exactIdx >= 0) return exactIdx;
+
+    const fuzzyIdx = flow.findIndex((stage) => pipelineStagesEquivalent(stage, candidate));
+    if (fuzzyIdx >= 0) return fuzzyIdx;
+  }
+
+  if (isRejectedApplicationStatus(application.status, application.statusCode)) {
+    const rejectIdx = flow.findIndex((stage) => normalizeStage(stage).includes('reject'));
+    if (rejectIdx >= 0) return rejectIdx;
+  }
+
+  return 0;
 }
 
 /** Hired / offer-accepted style outcomes (portal enums + common labels). */
@@ -543,42 +652,31 @@ export default function ApplicationStatusPage() {
   const pipelineStageFlow = useMemo(() => {
     if (!application) return [] as string[];
     const base = Array.isArray(application.pipelineStages) ? application.pipelineStages : [];
-    const sequence = base.filter((stage) => String(stage || '').trim().length > 0);
+    let sequence = dedupePipelineStageFlow(
+      base.filter((stage) => String(stage || '').trim().length > 0),
+    );
     const normalized = new Set(sequence.map((s) => normalizeStage(s)).filter(Boolean));
-    if (!normalized.has('applied')) {
+    if (!normalized.has('applied') && ![...normalized].some((n) => n.includes('submit'))) {
       sequence.unshift('Applied');
       normalized.add('applied');
     }
     const preferAppForCurrent = statusCodeAuthoritativeForDisplay(application.statusCode);
     const currentStage = String(
       preferAppForCurrent
-        ? application.status || application.pipelineStage || ''
-        : application.pipelineStage || application.status || ''
+        ? resolveEffectiveStageLabel(application) || application.status || application.pipelineStage || ''
+        : resolveEffectiveStageLabel(application) || application.pipelineStage || application.status || ''
     ).trim();
-    const normalizedCurrent = normalizeStage(currentStage);
-    if (currentStage && normalizedCurrent && !normalized.has(normalizedCurrent)) {
+    if (
+      currentStage &&
+      !sequence.some((stage) => pipelineStagesEquivalent(stage, currentStage))
+    ) {
       sequence.push(currentStage);
     }
-    return enrichPipelineStagesWithInterview(sequence, application);
+    return enrichPipelineStagesWithInterview(dedupePipelineStageFlow(sequence), application);
   }, [application]);
   const currentPipelineIndex = useMemo(() => {
     if (!application || pipelineStageFlow.length === 0) return -1;
-    const preferApp = statusCodeAuthoritativeForDisplay(application.statusCode);
-    const raw = preferApp
-      ? String(application.status || application.pipelineStage || '').trim()
-      : String(application.pipelineStage || application.status || '').trim();
-    let current = normalizeStage(raw);
-    if (!current) return -1;
-    let idx = pipelineStageFlow.findIndex((stage) => normalizeStage(stage) === current);
-    if (idx < 0) {
-      const code = String(application.statusCode || '').trim().toUpperCase();
-      const card = code ? PORTAL_STAGE_CARD[code] : null;
-      if (card?.title) {
-        current = normalizeStage(card.title);
-        idx = pipelineStageFlow.findIndex((stage) => normalizeStage(stage) === current);
-      }
-    }
-    return idx;
+    return resolveCurrentPipelineIndex(pipelineStageFlow, application);
   }, [application, pipelineStageFlow]);
   const stageProgressCards = useMemo(() => {
     if (!application || pipelineStageFlow.length === 0 || currentPipelineIndex < 0) return [] as string[];
@@ -621,6 +719,15 @@ export default function ApplicationStatusPage() {
       return { title: '', message: '', colorClass: 'text-gray-600' };
     }
     const code = String(application.statusCode || '').trim().toUpperCase();
+    const effectiveLabel = resolveEffectiveStageLabel(application);
+    if (effectiveLabel) {
+      const card = code && PORTAL_STAGE_CARD[code] ? PORTAL_STAGE_CARD[code] : null;
+      return {
+        title: effectiveLabel,
+        message: card?.message || getStatusMessage(effectiveLabel),
+        colorClass: card?.colorClass || getStatusColor(effectiveLabel),
+      };
+    }
     if (code && PORTAL_STAGE_CARD[code]) {
       return PORTAL_STAGE_CARD[code];
     }
@@ -641,7 +748,7 @@ export default function ApplicationStatusPage() {
 
   const currentPipelineStageLabel = useMemo(() => {
     if (!application) return '';
-    const base = stagePresentation.title;
+    const base = resolveEffectiveStageLabel(application) || stagePresentation.title;
     const code = String(application.statusCode || '').trim().toUpperCase();
     const inInterview =
       code === 'INTERVIEW' ||
@@ -845,17 +952,17 @@ export default function ApplicationStatusPage() {
                           pipelineStageFlow,
                           interviewRoundsStack
                         );
-                        const isCompleted = currentPipelineIndex >= 0 && index <= currentPipelineIndex;
                         const isCurrent = currentPipelineIndex === index;
+                        const isPast = currentPipelineIndex >= 0 && index < currentPipelineIndex;
                         return (
                           <div key={`${stage}-${index}`} className="flex items-center gap-2">
                             <span
-                              className={`application-pipeline-pill rounded-xl border px-2.5 py-1.5 text-left leading-snug whitespace-normal max-w-[min(100%,18rem)] sm:max-w-88 ${
+                              className={`application-pipeline-pill rounded-xl border px-2.5 py-1.5 text-left text-[0.75rem] font-semibold leading-snug whitespace-normal max-w-[min(100%,18rem)] sm:max-w-88 ${
                                 isCurrent
-                                  ? 'bg-blue-100 text-blue-700 border-blue-200'
-                                  : isCompleted
-                                    ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                                    : 'bg-gray-50 text-gray-500 border-gray-200'
+                                  ? 'application-pipeline-pill--current border-[#fdba74] bg-[#ffedd5] text-[#c2410c]'
+                                  : isPast
+                                    ? 'application-pipeline-pill--past border-[#93c5fd] bg-[#dbeafe] text-[#1d4ed8]'
+                                    : 'application-pipeline-pill--future border-gray-200 bg-white text-gray-500'
                               }`}
                               title={pillLabel}
                             >

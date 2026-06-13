@@ -985,6 +985,25 @@ input[type="range"]::-moz-range-thumb {
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.45;
+  color-scheme: light;
+}
+
+.profile-page-typography.application-detail-page .application-pipeline-pill--current {
+  color: #c2410c !important;
+  background-color: #ffedd5 !important;
+  border-color: #fdba74 !important;
+}
+
+.profile-page-typography.application-detail-page .application-pipeline-pill--past {
+  color: #1d4ed8 !important;
+  background-color: #dbeafe !important;
+  border-color: #93c5fd !important;
+}
+
+.profile-page-typography.application-detail-page .application-pipeline-pill--future {
+  color: #6b7280 !important;
+  background-color: #ffffff !important;
+  border-color: #e5e7eb !important;
 }
 
 /* View-details drawer body */
@@ -1381,4 +1400,31 @@ input[type="range"]::-moz-range-thumb {
 
 .lms-ai-glow {
   animation: lms-ai-glow-key 4s ease-in-out infinite;
+}
+
+/* Candidate assessment — always light UI with readable black text (fixes dark OS theme bleed) */
+.assessment-attempt-page {
+  color-scheme: light;
+  color: #111827;
+}
+
+.assessment-attempt-page label,
+.assessment-attempt-page span,
+.assessment-attempt-page p,
+.assessment-attempt-page pre {
+  color: #111827;
+}
+
+.assessment-attempt-page input:not([type='radio']):not([type='checkbox']),
+.assessment-attempt-page textarea {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827;
+  background-color: #ffffff;
+  caret-color: #111827;
+}
+
+.assessment-attempt-page input::placeholder,
+.assessment-attempt-page textarea::placeholder {
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af;
 }

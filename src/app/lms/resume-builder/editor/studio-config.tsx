@@ -65,7 +65,6 @@ export const SECTION_DEFINITIONS: SectionDescriptor[] = [
   { id: 'education', label: 'Education', helper: 'Degree and timeline', icon: GraduationCap },
   { id: 'skills', label: 'Skills', helper: 'ATS keywords and strengths', icon: Sparkles },
   { id: 'layout', label: 'Layout', helper: 'Template and presentation', icon: LayoutTemplate },
-  { id: 'completion', label: 'Finish', helper: 'Readiness and sync', icon: CheckCircle2 },
 ] as const;
 
 export const TEMPLATE_OPTIONS = [

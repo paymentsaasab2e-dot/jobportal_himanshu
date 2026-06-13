@@ -10,6 +10,9 @@ interface ApplicationSuccessModalProps {
   appliedDate: string;
   jobId?: number | string;
   applicationId?: string;
+  assessmentRedirectPath?: string | null;
+  pendingAssessmentTitle?: string | null;
+  allAssessmentsComplete?: boolean;
 }
 
 export default function ApplicationSuccessModal({
@@ -19,8 +22,18 @@ export default function ApplicationSuccessModal({
   company,
   appliedDate,
   applicationId,
+  assessmentRedirectPath,
+  pendingAssessmentTitle,
+  allAssessmentsComplete = false,
 }: ApplicationSuccessModalProps) {
   const router = useRouter();
+
+  const handleStartAssessment = () => {
+    onClose();
+    if (assessmentRedirectPath) {
+      router.push(assessmentRedirectPath);
+    }
+  };
 
   const handleTrackApplication = () => {
     onClose();
@@ -79,9 +92,31 @@ export default function ApplicationSuccessModal({
               Application submitted successfully
             </h2>
             <p className="application-detail-helper mt-2">
-              You will receive updates via email and WhatsApp.
+              {allAssessmentsComplete
+                ? 'You have completed all pre-screen assessments. Your application is now submitted.'
+                : assessmentRedirectPath
+                  ? 'Complete the pre-screen assessment to continue your application.'
+                  : 'You will receive updates via email and WhatsApp.'}
             </p>
           </div>
+
+          {allAssessmentsComplete ? (
+            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left">
+              <p className="text-[0.8125rem] font-medium text-emerald-900">All assessments complete</p>
+              <p className="mt-1 text-[0.75rem] text-emerald-800">
+                Thank you for finishing the screening tests for this role.
+              </p>
+            </div>
+          ) : null}
+
+          {assessmentRedirectPath && !allAssessmentsComplete ? (
+            <div className="mb-4 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-left">
+              <p className="text-[0.8125rem] font-medium text-violet-900">Pre-screen assessment required</p>
+              <p className="mt-1 text-[0.75rem] text-violet-800">
+                {pendingAssessmentTitle || 'Timed assessment'} · Monitored attempt (tab switches are logged)
+              </p>
+            </div>
+          ) : null}
 
           <div className="mb-4 rounded-xl border border-slate-200/80 bg-slate-50/90 px-4 py-3">
             <h3 className="profile-page-section-title mb-2 text-[#111827]">Job summary</h3>
@@ -102,13 +137,23 @@ export default function ApplicationSuccessModal({
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <button
-              type="button"
-              onClick={handleTrackApplication}
-              className="profile-modal-btn flex-1 rounded-lg bg-[#28A8E1] px-4 py-2.5 text-[0.8125rem] font-medium text-white transition-colors hover:bg-[#1e96cc]"
-            >
-              Track application
-            </button>
+            {assessmentRedirectPath && !allAssessmentsComplete ? (
+              <button
+                type="button"
+                onClick={handleStartAssessment}
+                className="profile-modal-btn flex-1 rounded-lg bg-violet-600 px-4 py-2.5 text-[0.8125rem] font-medium text-white transition-colors hover:bg-violet-700"
+              >
+                Start assessment
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleTrackApplication}
+                className="profile-modal-btn flex-1 rounded-lg bg-[#28A8E1] px-4 py-2.5 text-[0.8125rem] font-medium text-white transition-colors hover:bg-[#1e96cc]"
+              >
+                Track application
+              </button>
+            )}
             <button
               type="button"
               onClick={handleBrowseMoreJobs}

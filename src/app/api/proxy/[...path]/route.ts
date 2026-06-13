@@ -15,6 +15,10 @@ const PHASE2_PUBLIC_APPLY_BASE =
   process.env.NODE_ENV === 'development'
     ? 'http://localhost:5001/api/v1/jobs/public/apply'
     : 'https://api2.hryantra.com/api/v1/jobs/public/apply';
+const PHASE2_PRE_SCREEN_ASSESSMENTS_BASE =
+  process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5001/api/v1/pre-screen-assessments'
+    : 'https://api2.hryantra.com/api/v1/pre-screen-assessments';
 
 const defaultBackendBase =
   process.env.NODE_ENV === 'development' ? LOCAL_BACKEND_BASE : HOSTED_BACKEND_BASE;
@@ -30,6 +34,15 @@ const buildTargetUrl = (req: NextRequest, pathParts: string[]) => {
     const token = encodeURIComponent(String(pathParts[1] || '').trim());
     const query = req.nextUrl.search || '';
     return `${process.env.PHASE2_PUBLIC_APPLY_URL || PHASE2_PUBLIC_APPLY_BASE}/${token}${query}`;
+  }
+  if (pathParts[0] === 'phase2-pre-screen-assessments') {
+    const subPath = pathParts.slice(1).join('/');
+    const query = req.nextUrl.search || '';
+    const base = (process.env.PHASE2_PRE_SCREEN_ASSESSMENTS_URL || PHASE2_PRE_SCREEN_ASSESSMENTS_BASE).replace(
+      /\/$/,
+      '',
+    );
+    return `${base}/${subPath}${query}`;
   }
 
   const pathname = pathParts.join('/');
@@ -54,10 +67,16 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
 
   // Public feed is anonymous on Phase 2; strip caller JWT so tenant middleware does not
   // pick the wrong DB from a candidate token. Prefer explicit tenant header + env.
-  if (pathParts[0] === 'phase2-public-jobs' || pathParts[0] === 'phase2-public-apply') {
+  if (
+    pathParts[0] === 'phase2-public-jobs' ||
+    pathParts[0] === 'phase2-public-apply' ||
+    pathParts[0] === 'phase2-pre-screen-assessments'
+  ) {
     headers.delete('authorization');
-    if (PHASE2_PUBLIC_FEED_TENANT_DB) {
-      headers.set('x-tenant-db-name', PHASE2_PUBLIC_FEED_TENANT_DB);
+    const tenantFromQuery = req.nextUrl.searchParams.get('tenantDbName')?.trim();
+    const tenantHeader = tenantFromQuery || PHASE2_PUBLIC_FEED_TENANT_DB;
+    if (tenantHeader) {
+      headers.set('x-tenant-db-name', tenantHeader);
     }
   }
 
@@ -94,6 +113,9 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
     }
     if (pathParts[0] === 'phase2-public-apply') {
       return NextResponse.json({ success: false, message: 'Apply page unavailable' }, { status: 503 });
+    }
+    if (pathParts[0] === 'phase2-pre-screen-assessments') {
+      return NextResponse.json({ success: true, data: [] }, { status: 200 });
     }
     return NextResponse.json({ error: 'Backend service unavailable' }, { status: 503 });
   }

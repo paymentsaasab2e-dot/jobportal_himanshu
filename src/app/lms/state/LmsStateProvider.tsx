@@ -77,6 +77,7 @@ export type LmsResumeDraftState = {
   sections: ResumeSections;
   updatedAtLabel: string;
   isHydrated: boolean;
+  backendHydrated: boolean;
   isSaving: boolean;
   analysis?: LmsResumeAnalysisResult;
   isAnalyzing: boolean;
@@ -166,6 +167,7 @@ const initialResumeDraft: LmsResumeDraftState = {
   template: null,
   updatedAtLabel: 'Not saved yet',
   isHydrated: false,
+  backendHydrated: false,
   isSaving: false,
   isAnalyzing: false,
   sections: {
@@ -317,6 +319,7 @@ function sanitizeResumeDraft(value: unknown): LmsResumeDraftState {
     template: typeof value.template === 'string' ? value.template : null,
     updatedAtLabel: typeof value.updatedAtLabel === 'string' ? value.updatedAtLabel : initialResumeDraft.updatedAtLabel,
     isHydrated: value.isHydrated === true,
+    backendHydrated: value.backendHydrated === true,
     isSaving: value.isSaving === true,
     isAnalyzing: value.isAnalyzing === true,
     analysis: isRecord(value.analysis) ? (value.analysis as LmsResumeAnalysisResult) : undefined,
@@ -586,10 +589,30 @@ function reducer(state: LmsState, action: Action): LmsState {
     case 'markResumeSaved':
       return syncCareerPathState({
         ...state,
-        resumeDraft: { ...state.resumeDraft, updatedAtLabel: 'Just now' },
+        resumeDraft: {
+          ...state.resumeDraft,
+          updatedAtLabel: 'Just now',
+          backendHydrated: true,
+        },
       });
-    case 'resumeHydrate':
-      return syncCareerPathState({ ...state, resumeDraft: { ...state.resumeDraft, ...action.draft } });
+    case 'resumeHydrate': {
+      if (state.resumeDraft.backendHydrated) return state;
+      const localLabel = state.resumeDraft.updatedAtLabel;
+      if (localLabel === 'Unsaved changes' || localLabel === 'Just now') {
+        return syncCareerPathState({
+          ...state,
+          resumeDraft: { ...state.resumeDraft, backendHydrated: true },
+        });
+      }
+      return syncCareerPathState({
+        ...state,
+        resumeDraft: {
+          ...state.resumeDraft,
+          ...action.draft,
+          backendHydrated: true,
+        },
+      });
+    }
     case 'setResumeAnalyzing':
       return { ...state, resumeDraft: { ...state.resumeDraft, isAnalyzing: action.isAnalyzing } };
     case 'setResumeAnalysis':
@@ -661,7 +684,10 @@ type LmsStateApi = {
   setResumeDraftSections: (sections: Partial<LmsState['resumeDraft']['sections']>) => void;
   resetResumeDraft: () => void;
   markResumeSaved: () => void;
-  syncResumeDraftToBackend: () => Promise<void>;
+  syncResumeDraftToBackend: (
+    sectionsOverride?: Partial<ResumeSections>,
+    options?: { jobTailorJobId?: string; jobTitle?: string; company?: string; resumeHtml?: string },
+  ) => Promise<void>;
   syncResumeToCareerPath: () => Promise<void>;
   generateResumeSummaryWithAi: (headline: string) => Promise<void>;
   analyzeResumeWithAi: () => Promise<void>;
@@ -728,19 +754,36 @@ export function LmsStateProvider({ children }: { children: ReactNode }) {
     load();
   }, []);
 
-  const syncResumeDraftToBackend = useCallback(async () => {
+  const syncResumeDraftToBackend = useCallback(async (
+    sectionsOverride?: Partial<ResumeSections>,
+    options?: { jobTailorJobId?: string; jobTitle?: string; company?: string; resumeHtml?: string },
+  ) => {
      try {
        const { sections, template } = state.resumeDraft;
-       // Map frontend sections to backend expected format
+       const mergedSections: ResumeSections = {
+         basics: sectionsOverride?.basics
+           ? { ...sections.basics, ...sectionsOverride.basics }
+           : sections.basics,
+         summary: sectionsOverride?.summary ?? sections.summary,
+         skills: sectionsOverride?.skills ?? sections.skills,
+         experience: sectionsOverride?.experience ?? sections.experience,
+         education: sectionsOverride?.education ?? sections.education,
+       };
        const payload = {
          templateId: template || 'modern',
-         basics: sections.basics || {},
-          summary: sections.summary || '',
-         skills: sections.skills ? sections.skills.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
-         experience: sections.experience || [],
-         education: sections.education || [],
+         basics: mergedSections.basics || {},
+         summary: mergedSections.summary || '',
+         skills: mergedSections.skills
+           ? mergedSections.skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+           : [],
+         experience: mergedSections.experience || [],
+         education: mergedSections.education || [],
          certifications: [],
-         layoutMatrix: 'standard'
+         layoutMatrix: 'standard',
+         jobTailorJobId: options?.jobTailorJobId,
+         jobTitle: options?.jobTitle,
+         company: options?.company,
+         resumeHtml: options?.resumeHtml,
        };
        await updateResumeDraft(payload);
        dispatch({ type: 'markResumeSaved' });
