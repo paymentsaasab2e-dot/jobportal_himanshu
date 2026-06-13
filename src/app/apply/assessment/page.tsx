@@ -15,6 +15,15 @@ type McqQuestion = {
   options: Array<{ id: string; text: string }>;
 };
 
+type CodingQuestion = {
+  id: string;
+  title?: string;
+  prompt: string;
+  sampleInput?: string;
+  sampleOutput?: string;
+  marks?: number;
+};
+
 function AssessmentAttemptContent() {
   const router = useRouter();
   const params = useSearchParams();
@@ -40,6 +49,8 @@ function AssessmentAttemptContent() {
   const type = String(assessment.type || 'MCQ').toUpperCase();
   const config = (assessment.config || {}) as Record<string, unknown>;
   const mcqQuestions = (Array.isArray(config.questions) ? config.questions : []) as McqQuestion[];
+  const codingQuestions = (Array.isArray(config.questions) ? config.questions : []) as CodingQuestion[];
+  const hasMultiCoding = type === 'CODING' && codingQuestions.length > 0;
   const accessToken = String(session?.accessToken || '');
 
   const loadSession = useCallback(async () => {
@@ -114,14 +125,18 @@ function AssessmentAttemptContent() {
     try {
       let payload: Record<string, unknown> = answers;
       if (type === 'ESSAY') payload = { essay: essayText };
-      if (type === 'CODING') payload = { code: essayText };
+      if (type === 'CODING' && !hasMultiCoding) payload = { code: essayText };
       if (type === 'VIDEO') payload = { videoNote: essayText };
       const result = await submitAssessmentSession(accessToken, payload, tenantDbName || undefined);
       const next = String(params.get('next') || '');
       if (next) {
         router.push(next);
       } else {
-        router.push(`/applications${applicationId ? `/${applicationId}` : ''}`);
+        const successQ = new URLSearchParams();
+        successQ.set('applicationSubmitted', '1');
+        if (jobId) successQ.set('jobId', jobId);
+        if (applicationId) successQ.set('applicationId', applicationId);
+        router.push(`/explore-jobs?${successQ.toString()}`);
       }
       return result;
     } catch (e) {
@@ -160,15 +175,15 @@ function AssessmentAttemptContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8">
-      <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="assessment-attempt-page min-h-screen bg-slate-50 px-4 py-8 text-gray-900">
+      <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm text-gray-900">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div>
-            <h1 className="text-lg font-semibold text-slate-900">{String(assessment.title || 'Assessment')}</h1>
-            <p className="text-xs text-slate-500">{type} · Monitored attempt</p>
+            <h1 className="text-lg font-semibold text-gray-900">{String(assessment.title || 'Assessment')}</h1>
+            <p className="text-xs text-gray-600">{type} · Monitored attempt</p>
           </div>
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold tabular-nums">
-            <Clock className="size-4" /> {timerLabel}
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold tabular-nums text-gray-900">
+            <Clock className="size-4 text-gray-800" /> {timerLabel}
           </div>
         </div>
 
@@ -190,22 +205,23 @@ function AssessmentAttemptContent() {
           {type === 'MCQ'
             ? mcqQuestions.map((q, qi) => (
                 <div key={q.id}>
-                  <p className="text-sm font-medium text-slate-800">
+                  <p className="text-sm font-medium text-gray-900">
                     {qi + 1}. {q.prompt}
                   </p>
                   <div className="mt-2 space-y-2">
                     {(q.options || []).map((opt) => (
                       <label
                         key={opt.id}
-                        className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
+                        className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 hover:bg-slate-50"
                       >
                         <input
                           type="radio"
                           name={q.id}
+                          className="shrink-0 text-[#28A8E1]"
                           checked={answers[q.id] === opt.id}
                           onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.id }))}
                         />
-                        {opt.text}
+                        <span className="text-gray-900">{opt.text}</span>
                       </label>
                     ))}
                   </div>
@@ -213,26 +229,77 @@ function AssessmentAttemptContent() {
               ))
             : null}
 
-          {type === 'ESSAY' || type === 'CODING' ? (
+          {type === 'ESSAY' ? (
             <div>
-              <p className="text-sm text-slate-700 mb-2">{String(config.prompt || 'Your response')}</p>
+              <p className="text-sm text-gray-900 mb-2">{String(config.prompt || 'Your response')}</p>
               <textarea
-                className="min-h-[200px] w-full rounded-xl border border-slate-200 p-3 text-sm"
+                className="min-h-[200px] w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-gray-900 placeholder:text-gray-400 caret-gray-900"
                 value={essayText}
                 onChange={(e) => setEssayText(e.target.value)}
-                placeholder={type === 'CODING' ? 'Write your code here…' : 'Write your essay here…'}
+                placeholder="Write your essay here…"
+              />
+            </div>
+          ) : null}
+
+          {type === 'CODING' && hasMultiCoding
+            ? codingQuestions.map((q, qi) => (
+                <div key={q.id} className="rounded-xl border border-slate-200 p-4 space-y-3 text-gray-900">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      Question {qi + 1}
+                      {q.title ? ` — ${q.title}` : ''}
+                    </p>
+                    <p className="mt-2 text-sm text-gray-900 whitespace-pre-wrap">{q.prompt}</p>
+                  </div>
+                  {q.sampleInput ? (
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase text-gray-700">Sample input</p>
+                      <pre className="mt-1 rounded-lg bg-slate-50 p-2 text-xs text-gray-900 overflow-x-auto">
+                        {q.sampleInput}
+                      </pre>
+                    </div>
+                  ) : null}
+                  {q.sampleOutput ? (
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase text-gray-700">Sample output</p>
+                      <pre className="mt-1 rounded-lg bg-slate-50 p-2 text-xs text-gray-900 overflow-x-auto">
+                        {q.sampleOutput}
+                      </pre>
+                    </div>
+                  ) : null}
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase text-gray-700 mb-1">Your code</p>
+                    <textarea
+                      className="min-h-[160px] w-full rounded-xl border border-slate-200 bg-white p-3 font-mono text-sm text-gray-900 placeholder:text-gray-400 caret-gray-900"
+                      value={answers[q.id] || ''}
+                      onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                      placeholder="Write your solution here…"
+                    />
+                  </div>
+                </div>
+              ))
+            : null}
+
+          {type === 'CODING' && !hasMultiCoding ? (
+            <div>
+              <p className="text-sm text-gray-900 mb-2">{String(config.prompt || 'Your response')}</p>
+              <textarea
+                className="min-h-[200px] w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-mono text-gray-900 placeholder:text-gray-400 caret-gray-900"
+                value={essayText}
+                onChange={(e) => setEssayText(e.target.value)}
+                placeholder="Write your code here…"
               />
             </div>
           ) : null}
 
           {type === 'VIDEO' ? (
             <div>
-              <p className="text-sm text-slate-700 mb-2">{String(config.prompt || 'Video response')}</p>
-              <p className="text-xs text-slate-500 mb-2">
+              <p className="text-sm text-gray-900 mb-2">{String(config.prompt || 'Video response')}</p>
+              <p className="text-xs text-gray-600 mb-2">
                 Video upload recording will be enabled in a follow-up release. For now, paste a video link or notes.
               </p>
               <input
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 caret-gray-900"
                 value={essayText}
                 onChange={(e) => setEssayText(e.target.value)}
                 placeholder="Video URL or notes"

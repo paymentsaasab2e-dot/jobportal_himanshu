@@ -12,6 +12,7 @@ interface ApplicationSuccessModalProps {
   applicationId?: string;
   assessmentRedirectPath?: string | null;
   pendingAssessmentTitle?: string | null;
+  allAssessmentsComplete?: boolean;
 }
 
 export default function ApplicationSuccessModal({
@@ -23,6 +24,7 @@ export default function ApplicationSuccessModal({
   applicationId,
   assessmentRedirectPath,
   pendingAssessmentTitle,
+  allAssessmentsComplete = false,
 }: ApplicationSuccessModalProps) {
   const router = useRouter();
 
@@ -90,13 +92,24 @@ export default function ApplicationSuccessModal({
               Application submitted successfully
             </h2>
             <p className="application-detail-helper mt-2">
-              {assessmentRedirectPath
-                ? 'Complete the pre-screen assessment to continue your application.'
-                : 'You will receive updates via email and WhatsApp.'}
+              {allAssessmentsComplete
+                ? 'You have completed all pre-screen assessments. Your application is now submitted.'
+                : assessmentRedirectPath
+                  ? 'Complete the pre-screen assessment to continue your application.'
+                  : 'You will receive updates via email and WhatsApp.'}
             </p>
           </div>
 
-          {assessmentRedirectPath ? (
+          {allAssessmentsComplete ? (
+            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left">
+              <p className="text-[0.8125rem] font-medium text-emerald-900">All assessments complete</p>
+              <p className="mt-1 text-[0.75rem] text-emerald-800">
+                Thank you for finishing the screening tests for this role.
+              </p>
+            </div>
+          ) : null}
+
+          {assessmentRedirectPath && !allAssessmentsComplete ? (
             <div className="mb-4 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-left">
               <p className="text-[0.8125rem] font-medium text-violet-900">Pre-screen assessment required</p>
               <p className="mt-1 text-[0.75rem] text-violet-800">
@@ -124,7 +137,7 @@ export default function ApplicationSuccessModal({
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            {assessmentRedirectPath ? (
+            {assessmentRedirectPath && !allAssessmentsComplete ? (
               <button
                 type="button"
                 onClick={handleStartAssessment}

@@ -97,11 +97,26 @@ export function buildBeforeSubmitAssessmentRedirect(params: {
   candidateId: string;
   tenantDbName?: string;
   assessments: JobAssessmentLink[];
+  /** Where to land after the last BEFORE_SUBMIT test (default: explore-jobs pending apply). */
+  finalPath?: string;
 }): string | null {
   const before = assessmentsBeforeSubmit(params.assessments);
   if (!before.length) return null;
-  const finalPath = `/explore-jobs?pendingApply=${encodeURIComponent(params.jobId)}`;
+  const finalPath =
+    params.finalPath ||
+    `/explore-jobs?pendingApply=${encodeURIComponent(params.jobId)}`;
   return buildAssessmentChain({ ...params, assessments: before, finalPath });
+}
+
+export function buildPostAssessmentSuccessPath(params: {
+  jobId: string;
+  applicationId?: string;
+}): string {
+  const q = new URLSearchParams();
+  q.set('applicationSubmitted', '1');
+  q.set('jobId', params.jobId);
+  if (params.applicationId) q.set('applicationId', params.applicationId);
+  return `/explore-jobs?${q.toString()}`;
 }
 
 /** Redirect after application submitted (timing = AFTER_APPLY, or fallback all). */
@@ -113,9 +128,10 @@ export function buildFirstAssessmentRedirect(params: {
   assessments: JobAssessmentLink[];
 }): string | null {
   const list = assessmentsForPostApplyRedirect(params.assessments);
-  const finalPath = params.applicationId
-    ? `/applications/${params.applicationId}`
-    : '/applications';
+  const finalPath = buildPostAssessmentSuccessPath({
+    jobId: params.jobId,
+    applicationId: params.applicationId,
+  });
   return buildAssessmentChain({ ...params, assessments: list, finalPath });
 }
 

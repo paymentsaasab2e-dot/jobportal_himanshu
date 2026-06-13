@@ -242,6 +242,7 @@ interface AppliedJobSummary {
   applicationId?: string
   assessmentRedirectPath?: string | null
   pendingAssessmentTitle?: string | null
+  allAssessmentsComplete?: boolean
 }
 
 function asString(value: unknown): string | null {
@@ -531,6 +532,7 @@ const ExploreJobsPageContent = () => {
   const tJobs = useTranslations('candidateDashboard.jobs')
   const searchParams = useSearchParams()
   const detailsRef = useRef<HTMLDivElement | null>(null)
+  const applicationSubmittedHandledRef = useRef(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null)
   const [jobListings, setJobListings] = useState<JobListing[]>([])
@@ -738,7 +740,45 @@ const ExploreJobsPageContent = () => {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
 
     showInfoToast('Assessment complete', 'Submitting your application…')
-    void submitApplication({}, job)
+    void submitApplication({}, job, { assessmentsJustCompleted: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, jobListings, pathname])
+
+  // After the last post-apply assessment, show the application submitted modal.
+  useEffect(() => {
+    if (searchParams.get('applicationSubmitted') !== '1') return
+    if (applicationSubmittedHandledRef.current) return
+
+    const jobId = String(searchParams.get('jobId') || '').trim()
+    const applicationId = String(searchParams.get('applicationId') || '').trim() || undefined
+
+    if (jobId && jobListings.length === 0) return
+
+    applicationSubmittedHandledRef.current = true
+
+    const sp = new URLSearchParams(searchParams.toString())
+    sp.delete('applicationSubmitted')
+    sp.delete('jobId')
+    sp.delete('applicationId')
+    const qs = sp.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+
+    const job = jobListings.find((j) => String(j.id) === jobId)
+    if (job) setSelectedJob(job)
+
+    setAppliedJobSummary({
+      jobTitle: job?.title || 'Job',
+      company: job?.company || 'Company',
+      appliedDate: formatDate(new Date()),
+      jobId: jobId || undefined,
+      applicationId,
+      allAssessmentsComplete: true,
+    })
+    setIsSuccessModalOpen(true)
+    showSuccessToast('Application submitted successfully')
+    void loadJobListings()
+    checkAppliedJobs()
+    notifyBellRefresh()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, jobListings, pathname])
 
@@ -1621,6 +1661,7 @@ const ExploreJobsPageContent = () => {
   const submitApplication = async (
     answersPayload: Record<string, { label: string; type: PortalScreeningType; value: string | number | null }> | Record<string, never>,
     jobOverride?: JobListing | null,
+    options?: { assessmentsJustCompleted?: boolean },
   ) => {
     const candidateId = sessionStorage.getItem('candidateId');
     if (!candidateId) {
@@ -1814,6 +1855,7 @@ const ExploreJobsPageContent = () => {
           applicationId: modalApplicationId,
           assessmentRedirectPath,
           pendingAssessmentTitle,
+          allAssessmentsComplete: !assessmentRedirectPath && Boolean(options?.assessmentsJustCompleted),
         });
         setIsSuccessModalOpen(true);
         // Reload job listings and check applied status
@@ -3446,6 +3488,7 @@ const ExploreJobsPageContent = () => {
           applicationId={appliedJobSummary?.applicationId}
           assessmentRedirectPath={appliedJobSummary?.assessmentRedirectPath}
           pendingAssessmentTitle={appliedJobSummary?.pendingAssessmentTitle}
+          allAssessmentsComplete={appliedJobSummary?.allAssessmentsComplete}
         />
       )}
 

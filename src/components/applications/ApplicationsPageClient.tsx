@@ -28,7 +28,8 @@ import { API_BASE_URL } from '@/lib/profile-completion';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 
 type ApplicationStatus =
-  | 'Under Review'
+  | 'Applied'
+  | 'Screening'
   | 'Submitted'
   | 'Shortlisted'
   | 'Selected'
@@ -73,7 +74,8 @@ type StatusMeta = {
 
 const STATUS_OPTIONS: string[] = [
   'All',
-  'Under Review',
+  'Applied',
+  'Screening',
   'Submitted',
   'Shortlisted',
   'Assessment',
@@ -110,7 +112,7 @@ const MOCK_APPLICATIONS: Application[] = [
     id: 'mock-app-2',
     jobTitle: 'UI Engineer',
     company: 'NovaTech',
-    status: 'Under Review',
+    status: 'Screening',
     appliedDate: '2026-03-10',
     matchScore: 76,
   },
@@ -125,10 +127,20 @@ const MOCK_APPLICATIONS: Application[] = [
 ];
 
 const APPLICATION_STATUS_META: Record<string, StatusMeta> = {
+  Applied: {
+    chip: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200/80',
+    progress: 'bg-slate-500',
+    spotlight: 'bg-slate-50 text-slate-700',
+  },
   Submitted: {
     chip: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200/80',
     progress: 'bg-slate-500',
     spotlight: 'bg-slate-50 text-slate-700',
+  },
+  Screening: {
+    chip: 'bg-sky-100 text-sky-800 ring-1 ring-sky-200/80',
+    progress: 'bg-[#28A8E1]',
+    spotlight: 'bg-sky-50 text-sky-800',
   },
   'Under Review': {
     chip: 'bg-sky-100 text-sky-800 ring-1 ring-sky-200/80',
@@ -350,7 +362,7 @@ function getApplicationScoreLabel(matchScore: number | null | undefined) {
 function getApplicationPipelineIndex(status: string) {
   const s = status.toLowerCase();
   if (s === 'submitted' || s === 'applied') return 0;
-  if (s === 'under review') return 1;
+  if (s === 'screening' || s === 'under review') return 1;
   if (s === 'shortlisted' || s === 'assessment') return 2;
   if (s === 'interview') return 3;
   if (s === 'final decision' || s === 'selected' || s === 'rejected') return 4;
@@ -404,6 +416,7 @@ function getApplicationAction(
         detail: 'Review this application detail page and use it to refine the next one.',
         tone: 'bg-rose-50 text-rose-800',
       };
+    case 'Screening':
     case 'Under Review':
     case 'Shortlisted':
       return {
@@ -925,7 +938,7 @@ export default function ApplicationsPageClient() {
     return {
       total: applications.length,
       reviewing: applications.filter((application) =>
-        ['Under Review', 'Shortlisted', 'Assessment'].includes(application.status)
+        ['Screening', 'Under Review', 'Shortlisted', 'Assessment'].includes(application.status)
       ).length,
       interviews: applications.filter((application) => application.status === 'Interview').length,
       selected: applications.filter((application) => application.status === 'Selected').length,
@@ -1077,7 +1090,7 @@ export default function ApplicationsPageClient() {
 
     return (
       filteredApplications.find((application) =>
-        ['Assessment', 'Interview', 'Final Decision', 'Under Review', 'Shortlisted'].includes(
+        ['Assessment', 'Interview', 'Final Decision', 'Screening', 'Under Review', 'Shortlisted'].includes(
           application.status
         )
       ) ?? filteredApplications[0]

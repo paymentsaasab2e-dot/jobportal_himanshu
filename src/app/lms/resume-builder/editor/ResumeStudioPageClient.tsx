@@ -41,6 +41,12 @@ import {
   type JobCvTailorContext,
 } from '@/lib/job-cv-tailor';
 import {
+  buildBeforeSubmitAssessmentRedirect,
+  buildFirstAssessmentRedirect,
+  PENDING_APPLY_STORAGE_KEY,
+  resolveJobAssessmentsForApply,
+} from '@/lib/pre-screen-assessment-flow';
+import {
   fetchJobDetailForApplication,
   parseApplicationFormQuestions,
   submitJobApplication,
@@ -126,6 +132,7 @@ export function ResumeStudioPageClient() {
   const previewShellRef = useRef<HTMLElement | null>(null);
   const [editorPanelHeight, setEditorPanelHeight] = useState<number | undefined>(undefined);
   const [jobTailor, setJobTailor] = useState<JobCvTailorContext | null>(null);
+  const pendingApplyHandledRef = useRef(false);
 
   const captureStudioPreviewHtml = useCallback((): string | undefined => {
     if (typeof document === 'undefined') return undefined;
@@ -791,19 +798,59 @@ export function ResumeStudioPageClient() {
             message: 'This role is already in your applications.',
             tone: 'info',
           });
-          router.push(localizePath('/applications', locale));
+          router.push(
+            localizePath(
+              `/explore-jobs?applicationSubmitted=1&jobId=${encodeURIComponent(jobTailor.jobId)}`,
+              locale,
+            ),
+          );
           return;
         }
         throw new Error(result.message);
       }
 
       setScreeningOpen(false);
+      const applicationId = String(result.data?.applicationId || '').trim() || undefined;
+
+      try {
+        const detail = await fetchJobDetailForApplication(jobTailor.jobId);
+        const tenantDbName =
+          typeof detail?.tenantDbName === 'string' ? detail.tenantDbName.trim() : undefined;
+        const { assessments, tenantDbName: resolvedTenant } = await resolveJobAssessmentsForApply(
+          jobTailor.jobId,
+          detail,
+          tenantDbName,
+        );
+        const assessmentRedirectPath = buildFirstAssessmentRedirect({
+          jobId: jobTailor.jobId,
+          candidateId,
+          applicationId,
+          tenantDbName: resolvedTenant || tenantDbName,
+          assessments,
+        });
+        if (assessmentRedirectPath) {
+          toast.push({
+            title: 'Application submitted',
+            message: `Complete your pre-screen assessment for ${jobTailor.title}.`,
+            tone: 'success',
+          });
+          router.push(assessmentRedirectPath);
+          return;
+        }
+      } catch (assessmentErr) {
+        console.warn('Could not resolve post-apply assessments:', assessmentErr);
+      }
+
       toast.push({
         title: 'Application submitted',
         message: `Your tailored CV was saved and your application to ${jobTailor.title} was sent.`,
         tone: 'success',
       });
-      router.push(localizePath('/applications', locale));
+      const successQuery = new URLSearchParams();
+      successQuery.set('applicationSubmitted', '1');
+      successQuery.set('jobId', jobTailor.jobId);
+      if (applicationId) successQuery.set('applicationId', applicationId);
+      router.push(localizePath(`/explore-jobs?${successQuery.toString()}`, locale));
     } catch (err: unknown) {
       toast.push({
         title: 'Application failed',
@@ -826,6 +873,33 @@ export function ResumeStudioPageClient() {
     setIsTailorApplying(true);
     try {
       const detail = await fetchJobDetailForApplication(jobTailor.jobId);
+      const tenantDbName =
+        typeof detail?.tenantDbName === 'string' ? detail.tenantDbName.trim() : undefined;
+      const { assessments, tenantDbName: resolvedTenant } = await resolveJobAssessmentsForApply(
+        jobTailor.jobId,
+        detail,
+        tenantDbName,
+      );
+      const tailorReturnPath = `/lms/resume-builder/editor?job=${encodeURIComponent(jobTailor.jobId)}&tailor=1&pendingApply=${encodeURIComponent(jobTailor.jobId)}`;
+      const beforeSubmitPath = buildBeforeSubmitAssessmentRedirect({
+        jobId: jobTailor.jobId,
+        candidateId,
+        tenantDbName: resolvedTenant || tenantDbName,
+        assessments,
+        finalPath: tailorReturnPath,
+      });
+      if (beforeSubmitPath) {
+        await persistCvBeforeApply();
+        sessionStorage.setItem(PENDING_APPLY_STORAGE_KEY, jobTailor.jobId);
+        toast.push({
+          title: 'Pre-screen assessment',
+          message: 'Complete the assessment, then your application will be submitted.',
+          tone: 'info',
+        });
+        router.push(beforeSubmitPath);
+        return;
+      }
+
       const questions = parseApplicationFormQuestions(detail?.applicationFormQuestions);
       if (questions.length > 0) {
         setScreeningQuestions(questions);
@@ -842,6 +916,69 @@ export function ResumeStudioPageClient() {
       setIsTailorApplying(false);
     }
   };
+
+  useEffect(() => {
+    pendingApplyHandledRef.current = false;
+  }, [jobIdParam]);
+
+  useEffect(() => {
+    const pendingJobId = String(search.get('pendingApply') || '').trim();
+    if (!pendingJobId || pendingJobId !== jobIdParam) return;
+    if (pendingApplyHandledRef.current) return;
+    const stored = sessionStorage.getItem(PENDING_APPLY_STORAGE_KEY);
+    if (stored !== pendingJobId) return;
+
+    pendingApplyHandledRef.current = true;
+    sessionStorage.removeItem(PENDING_APPLY_STORAGE_KEY);
+
+    const sp = new URLSearchParams(search.toString());
+    sp.delete('pendingApply');
+    const qs = sp.toString();
+    router.replace(
+      localizePath(`/lms/resume-builder/editor${qs ? `?${qs}` : ''}`, locale),
+      { scroll: false },
+    );
+
+    toast.push({
+      title: 'Assessment complete',
+      message: 'Submitting your application…',
+      tone: 'success',
+    });
+
+    void (async () => {
+      const candidateId = sessionStorage.getItem('candidateId');
+      if (!candidateId) {
+        toast.push({ title: 'Sign in required', message: 'Please log in to apply for jobs.', tone: 'warning' });
+        return;
+      }
+      setIsTailorApplying(true);
+      try {
+        await persistCvBeforeApply();
+        const detail = await fetchJobDetailForApplication(pendingJobId);
+        const questions = parseApplicationFormQuestions(detail?.applicationFormQuestions);
+        if (questions.length > 0) {
+          setScreeningQuestions(questions);
+          const defaults: Record<string, string | number | null> = {};
+          questions.forEach((q) => {
+            defaults[q.id] = q.type === 'slider' ? (typeof q.min === 'number' ? q.min : 0) : '';
+          });
+          setScreeningAnswers(defaults);
+          setScreeningOpen(true);
+          return;
+        }
+        await finalizeJobApplication({});
+      } catch (err: unknown) {
+        toast.push({
+          title: 'Application failed',
+          message: err instanceof Error ? err.message : 'Could not submit after assessment.',
+          tone: 'error',
+        });
+      } finally {
+        setIsTailorApplying(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, jobIdParam, locale, router, toast]);
 
   const handleSaveCvForJob = async () => {
     setIsTailorSaving(true);
