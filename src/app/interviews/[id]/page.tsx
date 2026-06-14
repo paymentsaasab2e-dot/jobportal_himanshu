@@ -17,9 +17,14 @@ type InterviewDetailsPayload = {
   notes: string | null;
   interviewerNames?: string[];
   recruiterName?: string | null;
+  isCompleted?: boolean;
+  outcome?: string | null;
+  remark?: string | null;
+  overallRating?: number | null;
+  completedAt?: string | null;
 };
 
-type InterviewRoundPayload = InterviewDetailsPayload & { timelineId?: string };
+type InterviewRoundPayload = InterviewDetailsPayload & { timelineId?: string | null };
 
 interface ApplicationDetail {
   id: string;
@@ -152,6 +157,21 @@ function formatModeFromInterview(iv: InterviewDetailsPayload): string {
   return iv.format || '—';
 }
 
+function outcomeBadgeClass(outcome: string | null | undefined): string {
+  const value = String(outcome || '').trim().toLowerCase();
+  if (value === 'pass') return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+  if (value === 'failed' || value === 'fail' || value === 'reject') return 'bg-red-100 text-red-800 border-red-200';
+  if (value === 'on hold' || value === 'hold') return 'bg-amber-100 text-amber-800 border-amber-200';
+  return 'bg-slate-100 text-slate-700 border-slate-200';
+}
+
+function formatOutcomeLabel(outcome: string | null | undefined): string {
+  const value = String(outcome || '').trim();
+  if (!value) return 'Pending';
+  if (value.toLowerCase() === 'failed') return 'Failed';
+  return value;
+}
+
 export default function InterviewDetailsPage() {
   const router = useRouter();
   const params = useParams();
@@ -207,7 +227,14 @@ export default function InterviewDetailsPage() {
 
   const latest = useMemo(() => (application ? effectiveLatestInterview(application) : null), [application]);
 
-  const joinUrl = latest?.meetingLink?.trim() || '';
+  const activeRound = useMemo(() => {
+    if (!rounds.length) return latest;
+    const completed = [...rounds].reverse().find((round) => round.isCompleted);
+    return completed || rounds[rounds.length - 1] || latest;
+  }, [rounds, latest]);
+
+  const joinUrl = activeRound?.meetingLink?.trim() || latest?.meetingLink?.trim() || '';
+  const interviewCompleted = Boolean(activeRound?.isCompleted && activeRound?.outcome);
 
   if (loading) {
     return (
@@ -245,11 +272,13 @@ export default function InterviewDetailsPage() {
     );
   }
 
-  const { date: dateLabel, time: timeLabel } = latest?.scheduledAt
-    ? formatDateTime(latest.scheduledAt)
-    : { date: '—', time: '—' };
+  const { date: dateLabel, time: timeLabel } = activeRound?.scheduledAt
+    ? formatDateTime(activeRound.scheduledAt)
+    : latest?.scheduledAt
+      ? formatDateTime(latest.scheduledAt)
+      : { date: '—', time: '—' };
 
-  const statusDisplay = application.status || 'Interview';
+  const statusDisplay = interviewCompleted ? 'Interview completed' : application.status || 'Interview';
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: PAGE_BG }}>
@@ -286,7 +315,9 @@ export default function InterviewDetailsPage() {
                   <p className="text-sm text-gray-500 mt-1">{application.job.location}</p>
                 ) : null}
               </div>
-              <span className="inline-block px-3 py-1.5 rounded-full text-sm font-medium bg-sky-100 text-sky-800">
+              <span className={`inline-block px-3 py-1.5 rounded-full text-sm font-medium ${
+                interviewCompleted ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-800'
+              }`}>
                 {statusDisplay}
               </span>
             </div>
@@ -306,18 +337,50 @@ export default function InterviewDetailsPage() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
               <div className="lg:col-span-7 space-y-6">
+                {interviewCompleted && activeRound ? (
+                  <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">Interview result</h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {activeRound.roundLabel || activeRound.timelineTitle || 'Interview round'}
+                        </p>
+                      </div>
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${outcomeBadgeClass(
+                          activeRound.outcome
+                        )}`}
+                      >
+                        {formatOutcomeLabel(activeRound.outcome)}
+                      </span>
+                    </div>
+                    {activeRound.overallRating != null ? (
+                      <p className="mt-4 text-sm text-gray-700">
+                        <span className="font-semibold text-gray-900">Overall rating:</span>{' '}
+                        {activeRound.overallRating}/5
+                      </p>
+                    ) : null}
+                    {activeRound.remark ? (
+                      <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                        <p className="text-sm font-semibold text-gray-900">Recruiter remark</p>
+                        <p className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">{activeRound.remark}</p>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Interview information</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">Round</p>
                       <p className="font-medium text-gray-900">
-                        {latest.roundLabel || latest.timelineTitle || 'Interview'}
+                        {activeRound?.roundLabel || activeRound?.timelineTitle || latest?.roundLabel || latest?.timelineTitle || 'Interview'}
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-500">Format</p>
-                      <p className="font-medium text-gray-900">{latest.format || '—'}</p>
+                      <p className="font-medium text-gray-900">{activeRound?.format || latest?.format || '—'}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Date</p>
@@ -329,14 +392,16 @@ export default function InterviewDetailsPage() {
                     </div>
                     <div>
                       <p className="text-gray-500">Mode</p>
-                      <p className="font-medium text-gray-900">{formatModeFromInterview(latest)}</p>
+                      <p className="font-medium text-gray-900">
+                        {formatModeFromInterview(activeRound || latest || { format: null, meetingLink: null, location: null, timelineTitle: 'Interview', scheduledAt: '', roundLabel: null, notes: null })}
+                      </p>
                     </div>
                     <div>
                       <p className="text-gray-500">Location</p>
-                      <p className="font-medium text-gray-900">{latest.location || '—'}</p>
+                      <p className="font-medium text-gray-900">{activeRound?.location || latest?.location || '—'}</p>
                     </div>
                   </div>
-                  {joinUrl ? (
+                  {!interviewCompleted && joinUrl ? (
                     <div className="mt-4 pt-4 border-t border-gray-100">
                       <p className="text-gray-500 text-sm mb-2">Meeting link</p>
                       <a
@@ -351,21 +416,21 @@ export default function InterviewDetailsPage() {
                   ) : null}
                 </div>
 
-                {(latest.interviewerNames?.length || latest.recruiterName) ? (
+                {(activeRound?.interviewerNames?.length || activeRound?.recruiterName || latest?.interviewerNames?.length || latest?.recruiterName) ? (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">People</h3>
                     <div className="space-y-3 text-sm">
-                      {latest.recruiterName ? (
+                      {(activeRound?.recruiterName || latest?.recruiterName) ? (
                         <div>
                           <p className="text-gray-500">Recruiter</p>
-                          <p className="font-medium text-gray-900">{latest.recruiterName}</p>
+                          <p className="font-medium text-gray-900">{activeRound?.recruiterName || latest?.recruiterName}</p>
                         </div>
                       ) : null}
-                      {latest.interviewerNames && latest.interviewerNames.length > 0 ? (
+                      {(activeRound?.interviewerNames || latest?.interviewerNames || []).length > 0 ? (
                         <div>
                           <p className="text-gray-500">Interviewers</p>
                           <ul className="list-disc pl-5 text-gray-900">
-                            {latest.interviewerNames.map((name) => (
+                            {(activeRound?.interviewerNames || latest?.interviewerNames || []).map((name) => (
                               <li key={name}>{name}</li>
                             ))}
                           </ul>
@@ -375,28 +440,44 @@ export default function InterviewDetailsPage() {
                   </div>
                 ) : null}
 
-                {latest.notes ? (
+                {!interviewCompleted && (activeRound?.notes || latest?.notes) ? (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Notes from the employer</h3>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{latest.notes}</p>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{activeRound?.notes || latest?.notes}</p>
                   </div>
                 ) : null}
 
-                {rounds.length > 1 ? (
+                {rounds.length > 0 ? (
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">All scheduled rounds</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">All interview rounds</h3>
                     <ol className="space-y-4 list-decimal pl-5 text-sm">
                       {rounds.map((r, idx) => {
-                        const dt = formatDateTime(r.scheduledAt);
+                        const dt = r.scheduledAt ? formatDateTime(r.scheduledAt) : null;
                         return (
                           <li key={r.timelineId || idx} className="text-gray-800 pl-1">
-                            <span className="font-medium">
-                              {r.roundLabel || r.timelineTitle || `Round ${idx + 1}`}
-                            </span>
-                            <span className="text-gray-500">
-                              {' '}
-                              — {dt.date} at {dt.time}
-                            </span>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium">
+                                {r.roundLabel || r.timelineTitle || `Round ${idx + 1}`}
+                              </span>
+                              {r.isCompleted && r.outcome ? (
+                                <span
+                                  className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${outcomeBadgeClass(
+                                    r.outcome
+                                  )}`}
+                                >
+                                  {formatOutcomeLabel(r.outcome)}
+                                </span>
+                              ) : null}
+                            </div>
+                            {dt ? (
+                              <span className="text-gray-500">
+                                {' '}
+                                — {dt.date} at {dt.time}
+                              </span>
+                            ) : null}
+                            {r.remark ? (
+                              <p className="mt-2 text-gray-600 whitespace-pre-wrap">{r.remark}</p>
+                            ) : null}
                           </li>
                         );
                       })}
@@ -407,13 +488,25 @@ export default function InterviewDetailsPage() {
 
               <div className="lg:col-span-3">
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sticky top-24">
-                  <div className="rounded-xl bg-blue-50 border border-blue-100 p-4">
-                    <p className="text-sm font-semibold text-blue-800">Ready for your interview</p>
-                    <p className="text-xs text-blue-700 mt-1">Join on time and keep your documents ready.</p>
+                  <div className={`rounded-xl border p-4 ${
+                    interviewCompleted ? 'bg-emerald-50 border-emerald-100' : 'bg-blue-50 border-blue-100'
+                  }`}>
+                    <p className={`text-sm font-semibold ${
+                      interviewCompleted ? 'text-emerald-800' : 'text-blue-800'
+                    }`}>
+                      {interviewCompleted ? 'Interview completed' : 'Ready for your interview'}
+                    </p>
+                    <p className={`text-xs mt-1 ${
+                      interviewCompleted ? 'text-emerald-700' : 'text-blue-700'
+                    }`}>
+                      {interviewCompleted
+                        ? 'Your recruiter has shared the outcome for this round.'
+                        : 'Join on time and keep your documents ready.'}
+                    </p>
                   </div>
 
                   <div className="mt-4 space-y-3">
-                    {joinUrl ? (
+                    {!interviewCompleted && joinUrl ? (
                       <a
                         href={joinUrl}
                         target="_blank"

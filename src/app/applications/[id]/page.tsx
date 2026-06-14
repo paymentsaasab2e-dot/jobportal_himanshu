@@ -28,9 +28,40 @@ type InterviewDetailsPayload = {
   interviewerNames?: string[];
   /** Recruiter / scheduler name. */
   recruiterName?: string | null;
+  isCompleted?: boolean;
+  outcome?: string | null;
+  recommendationLabel?: string | null;
+  remark?: string | null;
+  comments?: string | null;
+  companyName?: string | null;
+  technicalScore?: number | null;
+  communicationScore?: number | null;
+  problemSolvingScore?: number | null;
+  cultureFitScore?: number | null;
+  experienceMatchScore?: number | null;
+  strengths?: string | null;
+  weaknesses?: string | null;
+  overallRating?: number | null;
+  completedAt?: string | null;
 };
 
 type InterviewRoundPayload = InterviewDetailsPayload & { timelineId?: string };
+
+type InterviewFeedbackModalPayload = {
+  companyName: string;
+  roundLabel: string;
+  submittedAt: string;
+  recommendationLabel: string;
+  technicalScore?: number | null;
+  communicationScore?: number | null;
+  problemSolvingScore?: number | null;
+  cultureFitScore?: number | null;
+  experienceMatchScore?: number | null;
+  overallRating?: number | null;
+  strengths?: string | null;
+  weaknesses?: string | null;
+  comments?: string | null;
+};
 
 interface ApplicationDetail {
   id: string;
@@ -54,11 +85,19 @@ interface ApplicationDetail {
   placementStatus?: string | null;
   offerResponse?: string | null;
   offerRespondedAt?: string | null;
+  offerRejectionRemark?: string | null;
+  offerResentAt?: string | null;
   joiningDate?: string | null;
   reportingToName?: string | null;
   reportingToTitle?: string | null;
   reportingToEmail?: string | null;
   joiningNotes?: string | null;
+  rejectionDetails?: {
+    reason: string | null;
+    feedback: string | null;
+    sharedAt: string | null;
+    title?: string | null;
+  } | null;
   interviewDetails?: InterviewDetailsPayload | null;
   /** All CRM-scheduled interview rounds for this application (chronological). */
   interviewRounds?: InterviewRoundPayload[];
@@ -88,8 +127,135 @@ interface ApplicationDetail {
   }>;
 }
 
+function resolveOfferResponseState(application: ApplicationDetail): 'ACCEPTED' | 'REJECTED' | null {
+  const response = String(application.offerResponse || '').trim().toUpperCase();
+  if (response === 'ACCEPTED' || response === 'REJECTED') return response;
+  if (response === 'PENDING') return null;
+
+  const placement = String(application.placementStatus || '').trim().toUpperCase();
+  if (placement === 'OFFER_ACCEPTED') return 'ACCEPTED';
+  if (placement === 'OFFER_REJECTED') return 'REJECTED';
+  return null;
+}
+
+function isOfferResentPending(application: ApplicationDetail): boolean {
+  if (!isInPlacementOfferFlow(application)) return false;
+  const response = String(application.offerResponse || '').trim().toUpperCase();
+  return Boolean(application.offerResentAt) && (response === 'PENDING' || !response);
+}
+
+function hasOfferBeenResent(application: ApplicationDetail): boolean {
+  return isInPlacementOfferFlow(application) && Boolean(application.offerResentAt);
+}
+
+function isInPlacementOfferFlow(application: ApplicationDetail): boolean {
+  const placementStatus = String(application.placementStatus || '').trim().toUpperCase();
+  return Boolean(
+    application.offerLetterUrl ||
+    ['OFFER_SENT', 'OFFER_ACCEPTED', 'OFFER_REJECTED', 'JOINING_SCHEDULED', 'JOINED'].includes(
+      placementStatus
+    ) ||
+    application.offerResponse === 'ACCEPTED' ||
+    application.offerResponse === 'REJECTED' ||
+    application.offerResponse === 'PENDING'
+  );
+}
+
+function resolvePreOfferReachStage(
+  application: ApplicationDetail
+): (typeof PRE_OFFER_BASE_PIPELINE)[number] {
+  if (isInPlacementOfferFlow(application)) return 'Interview';
+
+  const code = String(application.statusCode || '').trim().toUpperCase();
+  if (code === 'INTERVIEW' || code === 'SHORTLISTED' || code === 'ASSESSMENT') return 'Interview';
+  if (hasInterviewEvidence(application) && ['SELECTED', 'FINAL_DECISION'].includes(code)) {
+    return 'Interview';
+  }
+  if (code === 'UNDER_REVIEW') return 'Screening';
+
+  const label = String(application.pipelineStage || application.status || '').trim();
+  const n = normalizeStage(label);
+  if (n.includes('interview')) return 'Interview';
+  if (n.includes('screen') || n.includes('review') || n.includes('shortlist')) return 'Screening';
+
+  return 'Applied';
+}
+
+function appendPostOfferSuccessStages(flow: string[], application: ApplicationDetail) {
+  const placementStatus = String(application.placementStatus || '').trim().toUpperCase();
+  flow.push('Offer Accepted');
+  if (placementStatus === 'JOINING_SCHEDULED' || application.joiningDate) {
+    flow.push('Joining Scheduled');
+  }
+  if (placementStatus === 'JOINED') {
+    flow.push('Joined');
+  }
+}
+
+/**
+ * Build the visible pipeline for the four documented flows:
+ * 1) Offer accepted  2) Offer rejected  3) Joined  4) Re-offer sent (accept or reject again)
+ */
+function buildApplicationPipelineFlow(application: ApplicationDetail): string[] {
+  if (isApplicationRejectedOutcome(application) && !isInPlacementOfferFlow(application)) {
+    const preOfferIdx = PRE_OFFER_BASE_PIPELINE.indexOf(resolvePreOfferReachStage(application));
+    return [...PRE_OFFER_BASE_PIPELINE.slice(0, preOfferIdx + 1), 'Rejected'];
+  }
+
+  if (!isInPlacementOfferFlow(application)) {
+    const preOfferIdx = PRE_OFFER_BASE_PIPELINE.indexOf(resolvePreOfferReachStage(application));
+    return [...PRE_OFFER_BASE_PIPELINE.slice(0, preOfferIdx + 1)];
+  }
+
+  const flow: string[] = [...PRE_OFFER_BASE_PIPELINE];
+  const placementStatus = String(application.placementStatus || '').trim().toUpperCase();
+  const offerResponse = String(application.offerResponse || '').trim().toUpperCase();
+  const resentPending = isOfferResentPending(application);
+  const hasResent = hasOfferBeenResent(application);
+  const accepted =
+    offerResponse === 'ACCEPTED' || placementStatus === 'OFFER_ACCEPTED';
+  const rejected =
+    !resentPending &&
+    (offerResponse === 'REJECTED' || placementStatus === 'OFFER_REJECTED');
+
+  flow.push('Offer Sent');
+
+  if (hasResent) {
+    flow.push('Offer Rejected');
+    flow.push('Offer Re-Sent');
+    if (accepted) {
+      appendPostOfferSuccessStages(flow, application);
+    } else if (rejected) {
+      flow.push('Offer Rejected');
+    }
+    return flow;
+  }
+
+  if (accepted) {
+    appendPostOfferSuccessStages(flow, application);
+    return flow;
+  }
+
+  if (rejected) {
+    flow.push('Offer Rejected');
+  }
+
+  return flow;
+}
+
+function hasRespondedToOffer(application: ApplicationDetail): boolean {
+  return resolveOfferResponseState(application) !== null;
+}
+
 function getStatusColor(status: string) {
   const value = (status || '').toLowerCase();
+  if (value.includes('joined')) return 'text-green-700';
+  if (value.includes('joining scheduled')) return 'text-amber-700';
+  if (value.includes('offer accepted')) return 'text-blue-700';
+  if (value.includes('offer re sent') || value.includes('offer resent')) return 'text-indigo-700';
+  if (value.includes('offer sent')) return 'text-indigo-700';
+  if (value.includes('offer rejected')) return 'text-red-600';
+  if (value === 'offer' || (value.includes('offer') && !value.includes('offer '))) return 'text-violet-700';
   if (value.includes('selected')) return 'text-green-600';
   if (value.includes('shortlisted')) return 'text-purple-600';
   if (value.includes('screen') || value.includes('review')) return 'text-blue-600';
@@ -99,6 +265,17 @@ function getStatusColor(status: string) {
 
 function getStatusMessage(status: string) {
   const value = (status || '').toLowerCase();
+  if (value.includes('joined')) return 'Congratulations! You have joined the organization.';
+  if (value.includes('joining scheduled')) return 'Your joining date and reporting contact are listed below.';
+  if (value.includes('offer accepted')) return 'You accepted the offer. Joining details will appear once scheduled.';
+  if (value.includes('offer re sent') || value.includes('offer resent')) {
+    return 'A revised offer letter is ready. Review and respond below.';
+  }
+  if (value.includes('offer sent')) return 'Your offer letter is ready. Review and respond below.';
+  if (value.includes('offer rejected')) return 'You declined this offer.';
+  if (value === 'offer' || (value.includes('offer') && !value.includes('offer '))) {
+    return 'You have been selected. An offer is being prepared.';
+  }
   if (value.includes('selected')) return 'Congratulations! Offer inbound';
   if (value.includes('shortlisted')) return 'Great progress! Interview stage';
   if (value.includes('interview')) return 'Use Interview details for time, format, and meeting link.';
@@ -107,6 +284,433 @@ function getStatusMessage(status: string) {
   if (value.includes('applied') || value.includes('submit')) return 'Your application has been received.';
   if (value.includes('rejected')) return 'Application not selected';
   return 'Application submitted';
+}
+
+const PRE_OFFER_BASE_PIPELINE = ['Applied', 'Screening', 'Interview'] as const;
+
+const PLACEMENT_STATUS_LABELS: Record<string, string> = {
+  OFFER_SENT: 'Offer Sent',
+  OFFER_ACCEPTED: 'Offer Accepted',
+  OFFER_REJECTED: 'Offer Rejected',
+  JOINING_SCHEDULED: 'Joining Scheduled',
+  JOINED: 'Joined',
+};
+
+const CANONICAL_STAGE_CARD: Record<
+  string,
+  { title: string; message: string; colorClass: string }
+> = {
+  Applied: {
+    title: 'Applied',
+    message: 'Your application has been received.',
+    colorClass: 'text-gray-600',
+  },
+  Screening: {
+    title: 'Screening',
+    message: 'Your application is in the screening stage with the hiring team.',
+    colorClass: 'text-blue-600',
+  },
+  Interview: {
+    title: 'Interview',
+    message: 'Use Interview details for time, format, and meeting link.',
+    colorClass: 'text-sky-700',
+  },
+  Interviewing: {
+    title: 'Interview',
+    message: 'Use Interview details for time, format, and meeting link.',
+    colorClass: 'text-sky-700',
+  },
+  'Offer Sent': {
+    title: 'Offer Sent',
+    message: 'Your offer letter is ready. Review and respond below.',
+    colorClass: 'text-indigo-700',
+  },
+  'Offer Re-Sent': {
+    title: 'Offer Re-Sent',
+    message: 'A revised offer letter is ready. Review and respond below.',
+    colorClass: 'text-indigo-700',
+  },
+  'Offer Accepted': {
+    title: 'Offer Accepted',
+    message: 'You accepted the offer. Joining details will appear once scheduled.',
+    colorClass: 'text-blue-700',
+  },
+  'Offer Rejected': {
+    title: 'Offer Rejected',
+    message: 'You declined this offer.',
+    colorClass: 'text-red-600',
+  },
+  'Joining Scheduled': {
+    title: 'Joining Scheduled',
+    message: 'Your joining date and reporting contact are listed below.',
+    colorClass: 'text-amber-700',
+  },
+  Joined: {
+    title: 'Joined',
+    message: 'Congratulations! You have joined the organization.',
+    colorClass: 'text-green-700',
+  },
+  Rejected: {
+    title: 'Rejected',
+    message: 'This application was not selected to move forward.',
+    colorClass: 'text-red-600',
+  },
+};
+
+/** @deprecated Use CANONICAL_STAGE_CARD */
+const PLACEMENT_STAGE_CARD = CANONICAL_STAGE_CARD;
+
+function isOfferRejectedApplication(application: ApplicationDetail): boolean {
+  if (isOfferResentPending(application)) return false;
+  return (
+    application.offerResponse === 'REJECTED' ||
+    String(application.placementStatus || '').toUpperCase() === 'OFFER_REJECTED'
+  );
+}
+
+function isApplicationRejectedOutcome(application: ApplicationDetail): boolean {
+  if (isInPlacementOfferFlow(application)) return false;
+
+  const code = String(application.statusCode || '').trim().toUpperCase();
+  if (['INTERVIEW', 'SHORTLISTED', 'ASSESSMENT', 'UNDER_REVIEW', 'SUBMITTED'].includes(code)) {
+    return false;
+  }
+
+  const status = normalizeStage(application.status);
+  return code === 'REJECTED' || (status.includes('reject') && !status.includes('offer'));
+}
+
+function resolveCanonicalCurrentStage(application: ApplicationDetail): string {
+  const placementLabel = resolvePlacementStageLabel(application);
+  if (placementLabel) return placementLabel;
+
+  const placementStatus = String(application.placementStatus || '').trim().toUpperCase();
+  if (placementStatus === 'JOINED') return 'Joined';
+  if (placementStatus === 'JOINING_SCHEDULED' || application.joiningDate) {
+    return 'Joining Scheduled';
+  }
+
+  if (isApplicationRejectedOutcome(application) && !isInPlacementOfferFlow(application)) {
+    return 'Rejected';
+  }
+
+  return resolvePreOfferReachStage(application);
+}
+
+function resolveCanonicalPipelineIndex(
+  flow: string[],
+  application: ApplicationDetail,
+): number {
+  if (!flow.length || !application) return -1;
+
+  const current = resolveCanonicalCurrentStage(application);
+  let lastExact = -1;
+  let lastFuzzy = -1;
+
+  for (let i = 0; i < flow.length; i++) {
+    if (normalizeStage(flow[i]) === normalizeStage(current)) lastExact = i;
+    if (pipelineStagesEquivalent(flow[i], current)) lastFuzzy = i;
+  }
+
+  if (lastExact >= 0) return lastExact;
+  if (lastFuzzy >= 0) return lastFuzzy;
+
+  const preOfferStage = resolvePreOfferReachStage(application);
+  const preOfferIdx = flow.findIndex((stage) => pipelineStagesEquivalent(stage, preOfferStage));
+  if (preOfferIdx >= 0) return preOfferIdx;
+
+  return 0;
+}
+
+function formatInterviewPillLabel(
+  pillIndex: number,
+  flow: string[],
+  rounds: InterviewRoundPayload[]
+): string {
+  const stepIdx = interviewPipelineStepIndex(flow, pillIndex);
+  const round = rounds[stepIdx] ?? rounds[rounds.length - 1];
+  const typeLabel = resolveInterviewTypeLabel(round ?? null);
+  const roundLabel =
+    typeLabel ||
+    (stepIdx === 0 ? 'round one' : `round ${stepIdx + 1}`);
+  return `Interview — ${roundLabel}`;
+}
+
+function roundHasFeedbackDetails(round: InterviewRoundPayload | null | undefined): boolean {
+  if (!round) return false;
+  if (round.isCompleted && (round.recommendationLabel || round.outcome)) return true;
+  if (round.recommendationLabel) return true;
+  if (
+    round.technicalScore != null ||
+    round.communicationScore != null ||
+    round.problemSolvingScore != null ||
+    round.cultureFitScore != null ||
+    round.experienceMatchScore != null ||
+    round.overallRating != null
+  ) {
+    return true;
+  }
+  return Boolean(round.strengths?.trim() || round.weaknesses?.trim());
+}
+
+function mergeInterviewRoundWithFeedback(
+  base: InterviewRoundPayload,
+  feedback: InterviewRoundPayload
+): InterviewRoundPayload {
+  return {
+    ...base,
+    isCompleted: feedback.isCompleted ?? base.isCompleted ?? true,
+    outcome: feedback.outcome ?? base.outcome ?? null,
+    recommendationLabel: feedback.recommendationLabel ?? base.recommendationLabel ?? null,
+    remark: feedback.remark ?? base.remark ?? null,
+    comments: feedback.comments ?? feedback.remark ?? base.comments ?? base.remark ?? null,
+    companyName: feedback.companyName ?? base.companyName ?? null,
+    technicalScore: feedback.technicalScore ?? base.technicalScore ?? null,
+    communicationScore: feedback.communicationScore ?? base.communicationScore ?? null,
+    problemSolvingScore: feedback.problemSolvingScore ?? base.problemSolvingScore ?? null,
+    cultureFitScore: feedback.cultureFitScore ?? base.cultureFitScore ?? null,
+    experienceMatchScore: feedback.experienceMatchScore ?? base.experienceMatchScore ?? null,
+    overallRating: feedback.overallRating ?? base.overallRating ?? null,
+    strengths: feedback.strengths ?? base.strengths ?? null,
+    weaknesses: feedback.weaknesses ?? base.weaknesses ?? null,
+    completedAt: feedback.completedAt ?? base.completedAt ?? null,
+  };
+}
+
+function resolveInterviewRoundForPipelinePill(
+  stepIdx: number,
+  rounds: InterviewRoundPayload[]
+): InterviewRoundPayload | null {
+  if (!rounds.length) return null;
+
+  const direct = rounds[stepIdx] ?? rounds[rounds.length - 1];
+  if (roundHasFeedbackDetails(direct)) return direct;
+
+  const completedRounds = rounds.filter((round) => roundHasFeedbackDetails(round));
+  if (!completedRounds.length) return direct;
+
+  const byIndex = completedRounds[stepIdx] ?? completedRounds[completedRounds.length - 1];
+  if (direct && !direct.isCompleted) {
+    return mergeInterviewRoundWithFeedback(direct, byIndex);
+  }
+  return byIndex;
+}
+
+function reconcileInterviewRoundsClient(rounds: InterviewRoundPayload[]): InterviewRoundPayload[] {
+  if (rounds.length <= 1) return rounds;
+
+  const scheduled = rounds.filter((round) => !round.isCompleted);
+  const completed = rounds.filter((round) => roundHasFeedbackDetails(round));
+  if (!completed.length) return rounds;
+
+  if (!scheduled.length) {
+    const sorted = [...completed].sort(
+      (a, b) => interviewRoundFeedbackRichness(b) - interviewRoundFeedbackRichness(a)
+    );
+    let merged = { ...sorted[0] };
+    for (let index = 1; index < sorted.length; index += 1) {
+      merged = mergeInterviewRoundWithFeedback(merged, sorted[index]);
+    }
+    return [merged];
+  }
+
+  const merged = scheduled.map((sched, index) => {
+    const labelMatch = completed.find((comp) =>
+      interviewRoundLabelsEquivalent(sched.roundLabel, comp.roundLabel)
+    );
+    const source = pickRichestInterviewRound([labelMatch, completed[index], ...completed]);
+    return source && !roundHasFeedbackDetails(sched)
+      ? mergeInterviewRoundWithFeedback(sched, source)
+      : sched;
+  });
+
+  completed.forEach((comp, index) => {
+    if (index >= scheduled.length) merged.push(comp);
+  });
+
+  return merged.sort(
+    (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+  );
+}
+
+function interviewRoundFeedbackRichness(round: InterviewRoundPayload = {} as InterviewRoundPayload): number {
+  let score = 0;
+  if (round.technicalScore != null) score += 12;
+  if (round.communicationScore != null) score += 8;
+  if (round.problemSolvingScore != null) score += 8;
+  if (round.cultureFitScore != null) score += 8;
+  if (round.experienceMatchScore != null) score += 8;
+  if (round.overallRating != null) score += 6;
+  if (round.strengths) score += 5;
+  if (round.weaknesses) score += 5;
+  if (round.recommendationLabel || round.outcome) score += 3;
+  if (round.comments || round.remark) score += 2;
+  return score;
+}
+
+function pickRichestInterviewRound(
+  candidates: Array<InterviewRoundPayload | null | undefined>
+): InterviewRoundPayload | null {
+  const list = candidates.filter(Boolean) as InterviewRoundPayload[];
+  if (!list.length) return null;
+  return [...list].sort(
+    (a, b) => interviewRoundFeedbackRichness(b) - interviewRoundFeedbackRichness(a)
+  )[0];
+}
+
+function interviewRoundLabelsEquivalent(a: string | null | undefined, b: string | null | undefined): boolean {
+  const left = String(a || '').trim().toLowerCase();
+  const right = String(b || '').trim().toLowerCase();
+  if (!left || !right) return false;
+  return left === right || left.includes(right) || right.includes(left);
+}
+
+function isInterviewRoundCompleted(round: InterviewRoundPayload): boolean {
+  return Boolean(round.isCompleted || roundHasFeedbackDetails(round));
+}
+
+function resolveInterviewRoundTypeLabel(
+  round: InterviewRoundPayload,
+  index: number,
+  total: number
+): string {
+  const fromRound = round.roundLabel?.trim();
+  const fromTitle = round.timelineTitle?.trim();
+  const titleIsGeneric =
+    !fromTitle || /^interview(ing)?$/i.test(fromTitle) || /^interview completed/i.test(fromTitle);
+
+  if (fromRound) return fromRound;
+  if (fromTitle && !titleIsGeneric) return fromTitle;
+  return total > 1 ? `Round ${index + 1}` : 'round one';
+}
+
+function formatInterviewOutcomeDisplay(round: InterviewRoundPayload): string | null {
+  if (round.recommendationLabel?.trim()) return round.recommendationLabel.trim();
+  const outcome = String(round.outcome || '').trim();
+  if (!outcome) return null;
+  const key = outcome.toLowerCase();
+  if (key === 'failed' || key === 'fail' || key === 'reject') return 'Reject';
+  if (key === 'pass') return 'Pass';
+  if (key === 'on hold' || key === 'hold') return 'Hold';
+  return outcome;
+}
+
+function interviewOutcomeBadgeClass(label: string | null | undefined): string {
+  const value = String(label || '').trim().toLowerCase();
+  if (value === 'pass') return 'border-emerald-200 bg-emerald-50 text-emerald-800';
+  if (value === 'reject' || value === 'failed' || value === 'fail') {
+    return 'border-red-200 bg-red-50 text-red-800';
+  }
+  return 'border-amber-200 bg-amber-50 text-amber-800';
+}
+
+function buildInterviewFeedbackModalPayload(
+  round: InterviewRoundPayload,
+  application: ApplicationDetail
+): InterviewFeedbackModalPayload {
+  return {
+    companyName: round.companyName || application.job.company || 'Recruiter',
+    roundLabel: round.roundLabel || round.timelineTitle || 'Interview',
+    submittedAt: round.completedAt || round.scheduledAt || new Date().toISOString(),
+    recommendationLabel:
+      round.recommendationLabel ||
+      (String(round.outcome || '').toLowerCase() === 'failed' ? 'Reject' : round.outcome || 'Hold'),
+    technicalScore: round.technicalScore ?? null,
+    communicationScore: round.communicationScore ?? null,
+    problemSolvingScore: round.problemSolvingScore ?? null,
+    cultureFitScore: round.cultureFitScore ?? null,
+    experienceMatchScore: round.experienceMatchScore ?? null,
+    overallRating: round.overallRating ?? null,
+    strengths: round.strengths ?? null,
+    weaknesses: round.weaknesses ?? null,
+    comments: round.comments || round.remark || null,
+  };
+}
+
+function recommendationBadgeClass(label: string): string {
+  const value = String(label || '').trim().toLowerCase();
+  if (value === 'pass') return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+  if (value === 'reject' || value === 'failed') return 'bg-red-100 text-red-800 border-red-200';
+  return 'bg-amber-100 text-amber-800 border-amber-200';
+}
+
+function formatFeedbackSubmittedAt(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
+function FeedbackScoreStars({ score }: { score: number | null | undefined }) {
+  const value =
+    score != null && !Number.isNaN(Number(score))
+      ? Math.max(0, Math.min(5, Math.round(Number(score))))
+      : 0;
+  return (
+    <div className="flex items-center gap-0.5" aria-hidden>
+      {Array.from({ length: 5 }, (_, index) => (
+        <svg
+          key={index}
+          className={`h-3.5 w-3.5 ${index < value ? 'text-amber-400' : 'text-gray-300'}`}
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.178c.969 0 1.371 1.24.588 1.81l-3.385 2.46a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.538 1.118l-3.385-2.46a1 1 0 00-1.176 0l-3.385 2.46c-.783.57-1.838-.196-1.538-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.047 9.394c-.783-.57-.38-1.81.588-1.81h4.178a1 1 0 00.95-.69l1.286-3.967z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+function formatCanonicalPipelinePillLabel(
+  stage: string,
+  pillIndex: number,
+  flow: string[],
+  rounds: InterviewRoundPayload[],
+  application: ApplicationDetail
+): string {
+  if (normalizeStage(stage) === 'rejected') {
+    return 'Rejected';
+  }
+  if (isInterviewPipelineStageName(stage)) {
+    return formatInterviewPillLabel(pillIndex, flow, rounds);
+  }
+  return stage;
+}
+
+function resolveCanonicalStagePresentation(application: ApplicationDetail) {
+  const current = resolveCanonicalCurrentStage(application);
+  return CANONICAL_STAGE_CARD[current] || {
+    title: current,
+    message: getStatusMessage(current),
+    colorClass: getStatusColor(current),
+  };
+}
+
+function mapPlacementStatusToLabel(status: string | null | undefined): string | null {
+  const key = String(status || '').trim().toUpperCase();
+  return PLACEMENT_STATUS_LABELS[key] || null;
+}
+
+function resolvePlacementStageLabel(application: ApplicationDetail): string | null {
+  if (!isInPlacementOfferFlow(application)) return null;
+  if (isOfferResentPending(application)) return 'Offer Re-Sent';
+
+  const fromStatus = mapPlacementStatusToLabel(application.placementStatus);
+  if (fromStatus) return fromStatus;
+
+  if (application.offerLetterUrl) {
+    if (application.offerResponse === 'ACCEPTED') return 'Offer Accepted';
+    if (application.offerResponse === 'REJECTED') return 'Offer Rejected';
+    return 'Offer Sent';
+  }
+  return null;
 }
 
 /** Prefer raw portal enum from API so the hero card never shows a stale recruiter match label (e.g. Under Review). */
@@ -156,6 +760,70 @@ const PORTAL_STAGE_CARD: Record<
   },
 };
 
+function parseRejectionDescriptionText(description: string | null | undefined) {
+  const text = String(description || '').trim();
+  if (!text) return { reason: null as string | null, feedback: null as string | null };
+
+  const reasonLine = text.split(/\r?\n/).find((line) => /^reason\s*:/i.test(line.trim()));
+  const feedbackLine = text.split(/\r?\n/).find((line) => /^feedback\s*:/i.test(line.trim()));
+
+  if (reasonLine || feedbackLine) {
+    return {
+      reason: reasonLine ? reasonLine.replace(/^reason\s*:/i, '').trim() || null : null,
+      feedback: feedbackLine ? feedbackLine.replace(/^feedback\s*:/i, '').trim() || null : null,
+    };
+  }
+
+  const legacyParts = text.split(' — ').map((part) => part.trim()).filter(Boolean);
+  if (legacyParts.length >= 2) {
+    return {
+      reason: legacyParts[0] || null,
+      feedback: legacyParts.slice(1).join(' — ') || null,
+    };
+  }
+
+  return { reason: null, feedback: text };
+}
+
+function resolveApplicationRejectionDetails(
+  application: ApplicationDetail
+): ApplicationDetail['rejectionDetails'] {
+  if (application.rejectionDetails?.reason || application.rejectionDetails?.feedback) {
+    return application.rejectionDetails;
+  }
+
+  const rejectedRow = [...(application.timeline || [])]
+    .filter((row) => isRejectedTimelineRow(row))
+    .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())[0];
+
+  if (!rejectedRow) return null;
+
+  const parsed = parseRejectionDescriptionText(rejectedRow.description);
+  if (!parsed.reason && !parsed.feedback) return null;
+
+  return {
+    reason: parsed.reason,
+    feedback: parsed.feedback,
+    sharedAt: rejectedRow.occurredAt,
+    title: rejectedRow.title || 'Not selected',
+  };
+}
+
+function buildRejectionStatusMessage(
+  rejectionDetails: NonNullable<ApplicationDetail['rejectionDetails']>
+): string {
+  if (rejectionDetails.reason && rejectionDetails.feedback) {
+    return `Reason: ${rejectionDetails.reason}. ${rejectionDetails.feedback}`;
+  }
+  if (rejectionDetails.reason) {
+    return `Reason: ${rejectionDetails.reason}`;
+  }
+  if (rejectionDetails.feedback) {
+    return rejectionDetails.feedback;
+  }
+  return 'This application was not selected to move forward.';
+}
+
 function statusCodeAuthoritativeForDisplay(code: string | undefined | null) {
   const u = String(code || '').trim().toUpperCase();
   return ['INTERVIEW', 'FINAL_DECISION', 'SELECTED', 'REJECTED', 'SHORTLISTED', 'ASSESSMENT'].includes(u);
@@ -184,26 +852,7 @@ function isEarlyPipelineStageLabel(value: string) {
 
 /** Prefer CRM-synced status when portal pipeline entry is still on Applied/Submitted. */
 function resolveEffectiveStageLabel(application: ApplicationDetail) {
-  const code = String(application.statusCode || '').trim().toUpperCase();
-  const pipelineLabel = String(application.pipelineStage || '').trim();
-  const statusLabel = String(application.status || '').trim();
-
-  if (code === 'UNDER_REVIEW') {
-    if (pipelineLabel && !isEarlyPipelineStageLabel(pipelineLabel)) return pipelineLabel;
-    if (statusLabel && !isEarlyPipelineStageLabel(statusLabel)) return statusLabel;
-    return PORTAL_STAGE_CARD.UNDER_REVIEW.title;
-  }
-
-  if (code === 'SUBMITTED') {
-    if (pipelineLabel && normalizeStage(pipelineLabel).includes('applied')) return pipelineLabel;
-    if (statusLabel && normalizeStage(statusLabel).includes('applied')) return statusLabel;
-    return PORTAL_STAGE_CARD.SUBMITTED.title;
-  }
-
-  if (pipelineLabel) return pipelineLabel;
-  if (statusLabel) return statusLabel;
-  if (code && PORTAL_STAGE_CARD[code]) return PORTAL_STAGE_CARD[code].title;
-  return statusLabel;
+  return resolveCanonicalCurrentStage(application);
 }
 
 function dedupePipelineStageFlow(stages: string[]) {
@@ -236,19 +885,45 @@ function pipelineStagesEquivalent(stageA: string, stageB: string) {
     return true;
   }
   if (a.includes('interview') && b.includes('interview')) return true;
+  const aIsReSent = a.includes('offer re sent') || a.includes('offer resent');
+  const bIsReSent = b.includes('offer re sent') || b.includes('offer resent');
+  if (aIsReSent && bIsReSent) return true;
+  const aIsOfferSent = a.includes('offer sent') && !aIsReSent;
+  const bIsOfferSent = b.includes('offer sent') && !bIsReSent;
+  if (aIsOfferSent && bIsOfferSent) return true;
+  if (a.includes('offer accepted') && b.includes('offer accepted')) return true;
+  if (a.includes('offer rejected') && b.includes('offer rejected')) return true;
+  if (a.includes('joining scheduled') && b.includes('joining scheduled')) return true;
+  if ((a === 'joined' || a.includes('joined')) && (b === 'joined' || b.includes('joined'))) return true;
+  if (a.includes('hired/rejected') && b.includes('hired/rejected')) return true;
   if (
-    (a.includes('offer') || a.includes('final decision') || a.includes('final')) &&
-    (b.includes('offer') || b.includes('final decision') || b.includes('final'))
+    (a === 'offer' || a.includes('selected') || a.includes('final decision')) &&
+    (b === 'offer' || b.includes('selected') || b.includes('final decision')) &&
+    !a.includes('offer sent') &&
+    !a.includes('offer accepted') &&
+    !a.includes('offer rejected') &&
+    !b.includes('offer sent') &&
+    !b.includes('offer accepted') &&
+    !b.includes('offer rejected')
   ) {
     return true;
   }
   if (
-    (a.includes('hire') || a.includes('select') || a.includes('placed')) &&
-    (b.includes('hire') || b.includes('select') || b.includes('placed'))
+    (a.includes('hire') || a.includes('placed')) &&
+    (b.includes('hire') || b.includes('placed')) &&
+    !a.includes('hired/rejected') &&
+    !b.includes('hired/rejected')
   ) {
     return true;
   }
-  if (a.includes('reject') && b.includes('reject')) return true;
+  if (
+    a.includes('reject') &&
+    b.includes('reject') &&
+    !a.includes('offer') &&
+    !b.includes('offer')
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -256,32 +931,7 @@ function resolveCurrentPipelineIndex(
   flow: string[],
   application: ApplicationDetail,
 ): number {
-  if (!flow.length || !application) return -1;
-
-  const candidates = [
-    resolveEffectiveStageLabel(application),
-    application.pipelineStage,
-    application.status,
-    application.statusCode ? PORTAL_STAGE_CARD[String(application.statusCode).toUpperCase()]?.title : null,
-    application.statusCode,
-  ]
-    .map((v) => String(v || '').trim())
-    .filter(Boolean);
-
-  for (const candidate of candidates) {
-    const exactIdx = flow.findIndex((stage) => normalizeStage(stage) === normalizeStage(candidate));
-    if (exactIdx >= 0) return exactIdx;
-
-    const fuzzyIdx = flow.findIndex((stage) => pipelineStagesEquivalent(stage, candidate));
-    if (fuzzyIdx >= 0) return fuzzyIdx;
-  }
-
-  if (isRejectedApplicationStatus(application.status, application.statusCode)) {
-    const rejectIdx = flow.findIndex((stage) => normalizeStage(stage).includes('reject'));
-    if (rejectIdx >= 0) return rejectIdx;
-  }
-
-  return 0;
+  return resolveCanonicalPipelineIndex(flow, application);
 }
 
 /** Hired / offer-accepted style outcomes (portal enums + common labels). */
@@ -294,6 +944,8 @@ function isTerminalSuccessStage(value: string) {
     n.includes('placed') ||
     n.includes('hired') ||
     n.includes('offer accepted') ||
+    n.includes('joining scheduled') ||
+    n === 'joined' ||
     n === 'final decision'
   );
 }
@@ -507,22 +1159,36 @@ function formatPipelineStagePillLabel(
 
 function isRejectedTimelineRow(row: { status: string; title: string }) {
   const blob = `${row.status} ${row.title}`.toLowerCase();
-  return blob.includes('reject');
+  return blob.includes('reject') || blob.includes('not selected');
 }
 
 type RejectionModalPayload = {
   title: string;
   occurredAt: string;
-  feedback: string;
+  reason: string | null;
+  feedback: string | null;
 };
 
 function buildRejectionPayloadFromRow(row: ApplicationDetail['timeline'][number]): RejectionModalPayload {
+  const parsed = parseRejectionDescriptionText(row.description);
   return {
     title: row.title || 'Application update',
     occurredAt: row.occurredAt,
+    reason: parsed.reason,
     feedback:
-      String(row.description || '').trim() ||
-      'No written feedback was provided for this decision.',
+      parsed.feedback ||
+      (!parsed.reason ? String(row.description || '').trim() || null : null),
+  };
+}
+
+function buildRejectionPayloadFromDetails(
+  details: NonNullable<ApplicationDetail['rejectionDetails']>
+): RejectionModalPayload {
+  return {
+    title: details.title || 'Not selected',
+    occurredAt: details.sharedAt || new Date().toISOString(),
+    reason: details.reason,
+    feedback: details.feedback,
   };
 }
 
@@ -536,12 +1202,17 @@ export default function ApplicationStatusPage() {
   const [application, setApplication] = useState<ApplicationDetail | null>(null);
   const [interviewModalOpen, setInterviewModalOpen] = useState(false);
   const [interviewModalPayload, setInterviewModalPayload] = useState<InterviewDetailsPayload | null>(null);
+  const [interviewFeedbackModalOpen, setInterviewFeedbackModalOpen] = useState(false);
+  const [interviewFeedbackPayload, setInterviewFeedbackPayload] =
+    useState<InterviewFeedbackModalPayload | null>(null);
   const [rejectionModalOpen, setRejectionModalOpen] = useState(false);
   const [rejectionModalPayload, setRejectionModalPayload] = useState<RejectionModalPayload | null>(null);
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false);
   const [offerResponding, setOfferResponding] = useState(false);
+  const [offerRejectModalOpen, setOfferRejectModalOpen] = useState(false);
+  const [offerRejectRemark, setOfferRejectRemark] = useState('');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -594,18 +1265,22 @@ export default function ApplicationStatusPage() {
   /** Stack of interview rounds (API or derived from timeline). Chronological: round 1 → round 2. */
   const interviewRoundsStack = useMemo((): InterviewRoundPayload[] => {
     if (!application) return [];
+    let rounds: InterviewRoundPayload[] = [];
     if (Array.isArray(application.interviewRounds) && application.interviewRounds.length > 0) {
-      return application.interviewRounds;
+      rounds = application.interviewRounds;
+    } else {
+      const rows = [...(application.timeline || [])].sort(
+        (a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime()
+      );
+      rounds = rows
+        .filter((row) => isInterviewTimelineRow(row))
+        .map((row) => ({
+          timelineId: row.id,
+          ...buildInterviewDetailsFromTimelineRow(row),
+        }));
     }
-    const rows = [...(application.timeline || [])].sort(
-      (a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime()
-    );
-    return rows
-      .filter((row) => isInterviewTimelineRow(row))
-      .map((row) => ({
-        timelineId: row.id,
-        ...buildInterviewDetailsFromTimelineRow(row),
-      }));
+
+    return reconcileInterviewRoundsClient(rounds);
   }, [application]);
 
   /** Avoid duplicate copy: interview rounds are shown in the stacked section above. */
@@ -651,28 +1326,7 @@ export default function ApplicationStatusPage() {
   const defaultAppliedAt = application?.appliedAt ? formatDateTime(application.appliedAt).date : '';
   const pipelineStageFlow = useMemo(() => {
     if (!application) return [] as string[];
-    const base = Array.isArray(application.pipelineStages) ? application.pipelineStages : [];
-    let sequence = dedupePipelineStageFlow(
-      base.filter((stage) => String(stage || '').trim().length > 0),
-    );
-    const normalized = new Set(sequence.map((s) => normalizeStage(s)).filter(Boolean));
-    if (!normalized.has('applied') && ![...normalized].some((n) => n.includes('submit'))) {
-      sequence.unshift('Applied');
-      normalized.add('applied');
-    }
-    const preferAppForCurrent = statusCodeAuthoritativeForDisplay(application.statusCode);
-    const currentStage = String(
-      preferAppForCurrent
-        ? resolveEffectiveStageLabel(application) || application.status || application.pipelineStage || ''
-        : resolveEffectiveStageLabel(application) || application.pipelineStage || application.status || ''
-    ).trim();
-    if (
-      currentStage &&
-      !sequence.some((stage) => pipelineStagesEquivalent(stage, currentStage))
-    ) {
-      sequence.push(currentStage);
-    }
-    return enrichPipelineStagesWithInterview(dedupePipelineStageFlow(sequence), application);
+    return buildApplicationPipelineFlow(application);
   }, [application]);
   const currentPipelineIndex = useMemo(() => {
     if (!application || pipelineStageFlow.length === 0) return -1;
@@ -714,10 +1368,31 @@ export default function ApplicationStatusPage() {
 
   const showInterviewDetailsButton = Boolean(effectiveInterviewDetails);
 
+  const rejectionDetails = useMemo(
+    () => (application ? resolveApplicationRejectionDetails(application) : null),
+    [application]
+  );
+
   const stagePresentation = useMemo(() => {
     if (!application) {
       return { title: '', message: '', colorClass: 'text-gray-600' };
     }
+
+    const canonical = resolveCanonicalStagePresentation(application);
+    if (canonical.title) {
+      if (
+        isApplicationRejectedOutcome(application) &&
+        rejectionDetails &&
+        (rejectionDetails.reason || rejectionDetails.feedback)
+      ) {
+        return {
+          ...canonical,
+          message: buildRejectionStatusMessage(rejectionDetails),
+        };
+      }
+      return canonical;
+    }
+
     const code = String(application.statusCode || '').trim().toUpperCase();
     const effectiveLabel = resolveEffectiveStageLabel(application);
     if (effectiveLabel) {
@@ -744,47 +1419,86 @@ export default function ApplicationStatusPage() {
       message: getStatusMessage(status),
       colorClass: getStatusColor(status),
     };
-  }, [application, showInterviewDetailsButton]);
+  }, [application, showInterviewDetailsButton, rejectionDetails]);
 
   const currentPipelineStageLabel = useMemo(() => {
     if (!application) return '';
-    const base = resolveEffectiveStageLabel(application) || stagePresentation.title;
-    const code = String(application.statusCode || '').trim().toUpperCase();
-    const inInterview =
-      code === 'INTERVIEW' ||
-      normalizeStage(base).includes('interview') ||
-      normalizeStage(application.pipelineStage || '').includes('interview') ||
-      normalizeStage(application.status || '').includes('interview');
-    if (!inInterview || interviewRoundsStack.length === 0) return base;
-    const activeRound =
-      interviewRoundsStack[interviewRoundsStack.length - 1] ?? interviewRoundsStack[0];
-    const typeLabel = resolveInterviewTypeLabel(activeRound);
-    if (!typeLabel) return base;
-    return `${base} — ${typeLabel}`;
-  }, [application, stagePresentation, interviewRoundsStack]);
+
+    const current = resolveCanonicalCurrentStage(application);
+    if (current === 'Interview' && interviewRoundsStack.length > 0) {
+      const activeRound =
+        interviewRoundsStack[interviewRoundsStack.length - 1] ?? interviewRoundsStack[0];
+      const typeLabel = resolveInterviewTypeLabel(activeRound);
+      const roundLabel =
+        typeLabel ||
+        (interviewRoundsStack.length === 1 ? 'round one' : `round ${interviewRoundsStack.length}`);
+      return `Interview — ${roundLabel}`;
+    }
+    return current;
+  }, [application, interviewRoundsStack]);
 
   useEffect(() => {
-    if (!interviewModalOpen && !rejectionModalOpen && !withdrawConfirmOpen) return;
+    if (!interviewModalOpen && !interviewFeedbackModalOpen && !rejectionModalOpen && !withdrawConfirmOpen && !offerRejectModalOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       setInterviewModalOpen(false);
       setInterviewModalPayload(null);
+      setInterviewFeedbackModalOpen(false);
+      setInterviewFeedbackPayload(null);
       setRejectionModalOpen(false);
       setRejectionModalPayload(null);
       setWithdrawConfirmOpen(false);
+      setOfferRejectModalOpen(false);
+      setOfferRejectRemark('');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [interviewModalOpen, rejectionModalOpen, withdrawConfirmOpen]);
+  }, [interviewModalOpen, interviewFeedbackModalOpen, rejectionModalOpen, withdrawConfirmOpen, offerRejectModalOpen]);
 
   const closeInterviewModal = () => {
     setInterviewModalOpen(false);
     setInterviewModalPayload(null);
   };
 
+  const closeInterviewFeedbackModal = () => {
+    setInterviewFeedbackModalOpen(false);
+    setInterviewFeedbackPayload(null);
+  };
+
+  const openInterviewFromPipelinePill = (pillIndex: number) => {
+    if (!application) return;
+    const stepIdx = interviewPipelineStepIndex(pipelineStageFlow, pillIndex);
+    const linkedRound = resolveInterviewRoundForPipelinePill(stepIdx, interviewRoundsStack);
+    if (!linkedRound) return;
+    if (roundHasFeedbackDetails(linkedRound)) {
+      setInterviewFeedbackPayload(buildInterviewFeedbackModalPayload(linkedRound, application));
+      setInterviewFeedbackModalOpen(true);
+      return;
+    }
+    setInterviewModalPayload(linkedRound);
+    setInterviewModalOpen(true);
+  };
+
   const closeRejectionModal = () => {
     setRejectionModalOpen(false);
     setRejectionModalPayload(null);
+  };
+
+  const openRejectionDetails = () => {
+    if (!application) return;
+    const details = resolveApplicationRejectionDetails(application);
+    if (details) {
+      setRejectionModalPayload(buildRejectionPayloadFromDetails(details));
+      setRejectionModalOpen(true);
+      return;
+    }
+    const rejectedRow = [...(application.timeline || [])]
+      .filter((row) => isRejectedTimelineRow(row))
+      .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())[0];
+    if (rejectedRow) {
+      setRejectionModalPayload(buildRejectionPayloadFromRow(rejectedRow));
+      setRejectionModalOpen(true);
+    }
   };
 
   const closeWithdrawConfirm = () => {
@@ -801,14 +1515,26 @@ export default function ApplicationStatusPage() {
     }
   };
 
-  const respondToOffer = async (decision: 'accept' | 'reject') => {
+  const respondToOffer = async (decision: 'accept' | 'reject', remark?: string) => {
     if (!application || !candidateId) {
       showErrorToast('Sign in required', 'Please log in as the candidate to respond to the offer.');
+      return;
+    }
+    if (hasRespondedToOffer(application)) {
+      setOfferRejectModalOpen(false);
+      setOfferRejectRemark('');
       return;
     }
     if (application.candidateId && application.candidateId !== candidateId) {
       showErrorToast('Not allowed', 'This offer belongs to another account.');
       return;
+    }
+    if (decision === 'reject') {
+      const trimmedRemark = String(remark || '').trim();
+      if (!trimmedRemark) {
+        showErrorToast('Remark required', 'Please share a brief reason for declining the offer.');
+        return;
+      }
     }
     setOfferResponding(true);
     try {
@@ -817,19 +1543,57 @@ export default function ApplicationStatusPage() {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ candidateId, decision }),
+          body: JSON.stringify({
+            candidateId,
+            decision,
+            ...(decision === 'reject' ? { remark: String(remark || '').trim() } : {}),
+          }),
         }
       );
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result?.success) {
-        throw new Error(result?.message || 'Could not submit your response');
+        const message = typeof result?.message === 'string' ? result.message : 'Could not submit your response';
+        if (message.toLowerCase().includes('already responded')) {
+          setOfferRejectModalOpen(false);
+          setOfferRejectRemark('');
+          setApplication((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  offerResponse: prev.offerResponse || 'REJECTED',
+                  placementStatus: prev.placementStatus || 'OFFER_REJECTED',
+                }
+              : prev
+          );
+          await reloadApplication();
+          showSuccessToast('Offer declined', 'Your response was already recorded.');
+          return;
+        }
+        throw new Error(message);
       }
+
+      const respondedAt = new Date().toISOString();
+      setApplication((prev) =>
+        prev
+          ? {
+              ...prev,
+              offerResponse: decision === 'accept' ? 'ACCEPTED' : 'REJECTED',
+              placementStatus: decision === 'accept' ? 'OFFER_ACCEPTED' : 'OFFER_REJECTED',
+              offerRespondedAt: respondedAt,
+              ...(decision === 'reject' && remark
+                ? { offerRejectionRemark: String(remark).trim() }
+                : {}),
+            }
+          : prev
+      );
       showSuccessToast(
         decision === 'accept' ? 'Offer accepted' : 'Offer declined',
         decision === 'accept'
           ? 'The recruiter has been notified. Joining details will appear here once scheduled.'
           : 'The recruiter has been notified of your decision.'
       );
+      setOfferRejectModalOpen(false);
+      setOfferRejectRemark('');
       await reloadApplication();
     } catch (err: unknown) {
       showErrorToast(
@@ -914,7 +1678,15 @@ export default function ApplicationStatusPage() {
                     </p>
                     <p className="application-detail-helper">{stagePresentation.message}</p>
                   </div>
-                  {showInterviewDetailsButton && effectiveInterviewDetails && interviewRoundsStack.length === 0 ? (
+                  {isApplicationRejectedOutcome(application) && rejectionDetails ? (
+                    <button
+                      type="button"
+                      onClick={openRejectionDetails}
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-rose-300 bg-white px-3.5 py-2 text-[0.8125rem] font-medium text-rose-900 shadow-sm hover:bg-rose-50"
+                    >
+                      Why not selected?
+                    </button>
+                  ) : showInterviewDetailsButton && effectiveInterviewDetails && interviewRoundsStack.length === 0 ? (
                     <button
                       type="button"
                       onClick={() => router.push(`/interviews/${encodeURIComponent(applicationId)}`)}
@@ -937,6 +1709,41 @@ export default function ApplicationStatusPage() {
                 </div>
               </ApplicationDetailSectionCard>
 
+              {isApplicationRejectedOutcome(application) && rejectionDetails ? (
+                <ApplicationDetailSectionCard title="Why you weren't selected" className="border-rose-100">
+                  <p className="application-detail-helper mb-3">
+                    Your recruiter shared the reason this application did not move forward.
+                  </p>
+                  <div className="space-y-3">
+                    {rejectionDetails.reason ? (
+                      <div className="rounded-xl border border-rose-100 bg-rose-50/80 px-3.5 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-rose-800/90">
+                          Reason
+                        </p>
+                        <p className="mt-2 text-sm text-gray-900">{rejectionDetails.reason}</p>
+                      </div>
+                    ) : null}
+                    {rejectionDetails.feedback ? (
+                      <div className="rounded-xl border border-rose-100 bg-rose-50/80 px-3.5 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-rose-800/90">
+                          Feedback
+                        </p>
+                        <p className="mt-2 whitespace-pre-wrap text-sm text-gray-900">
+                          {rejectionDetails.feedback}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={openRejectionDetails}
+                    className="mt-3 inline-flex items-center justify-center rounded-lg border border-rose-300 bg-white px-3.5 py-2 text-[0.8125rem] font-medium text-rose-900 shadow-sm hover:bg-rose-50"
+                  >
+                    View full details
+                  </button>
+                </ApplicationDetailSectionCard>
+              ) : null}
+
               <ApplicationDetailSectionCard title="Pipeline Stage">
                 {pipelineStageFlow.length > 0 ? (
                   <div className="space-y-3">
@@ -946,28 +1753,49 @@ export default function ApplicationStatusPage() {
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
                       {pipelineStageFlow.map((stage, index) => {
-                        const pillLabel = formatPipelineStagePillLabel(
+                        const pillLabel = formatCanonicalPipelinePillLabel(
                           stage,
                           index,
                           pipelineStageFlow,
-                          interviewRoundsStack
+                          interviewRoundsStack,
+                          application
                         );
                         const isCurrent = currentPipelineIndex === index;
                         const isPast = currentPipelineIndex >= 0 && index < currentPipelineIndex;
+                        const isInterviewPill = isInterviewPipelineStageName(stage);
+                        const linkedRoundIndex = isInterviewPill
+                          ? interviewPipelineStepIndex(pipelineStageFlow, index)
+                          : -1;
+                        const linkedRound =
+                          linkedRoundIndex >= 0
+                            ? resolveInterviewRoundForPipelinePill(linkedRoundIndex, interviewRoundsStack)
+                            : null;
+                        const pillHasFeedback = roundHasFeedbackDetails(linkedRound);
+                        const PillTag = isInterviewPill ? 'button' : 'span';
                         return (
                           <div key={`${stage}-${index}`} className="flex items-center gap-2">
-                            <span
+                            <PillTag
+                              type={isInterviewPill ? 'button' : undefined}
+                              onClick={
+                                isInterviewPill ? () => openInterviewFromPipelinePill(index) : undefined
+                              }
                               className={`application-pipeline-pill rounded-xl border px-2.5 py-1.5 text-left text-[0.75rem] font-semibold leading-snug whitespace-normal max-w-[min(100%,18rem)] sm:max-w-88 ${
                                 isCurrent
                                   ? 'application-pipeline-pill--current border-[#fdba74] bg-[#ffedd5] text-[#c2410c]'
                                   : isPast
                                     ? 'application-pipeline-pill--past border-[#93c5fd] bg-[#dbeafe] text-[#1d4ed8]'
                                     : 'application-pipeline-pill--future border-gray-200 bg-white text-gray-500'
-                              }`}
-                              title={pillLabel}
+                              } ${isInterviewPill ? 'cursor-pointer transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#28A8E1]/40' : ''}`}
+                              title={
+                                isInterviewPill
+                                  ? pillHasFeedback
+                                    ? `${pillLabel} — view interview feedback`
+                                    : `${pillLabel} — view interview details`
+                                  : pillLabel
+                              }
                             >
                               {pillLabel}
-                            </span>
+                            </PillTag>
                             {index < pipelineStageFlow.length - 1 ? (
                               <span className="text-[#cbd5e1] text-[0.75rem]">→</span>
                             ) : null}
@@ -982,60 +1810,104 @@ export default function ApplicationStatusPage() {
               </ApplicationDetailSectionCard>
 
               {interviewRoundsStack.length > 0 ? (
-                <ApplicationDetailSectionCard title="Scheduled interviews">
+                <ApplicationDetailSectionCard
+                  title={
+                    interviewRoundsStack.some((round) => isInterviewRoundCompleted(round))
+                      ? 'Interviews'
+                      : 'Scheduled interviews'
+                  }
+                >
                   <p className="application-detail-helper mb-3">
-                    Each round is listed in order (latest scheduling at the bottom). Open a card for meeting link, time,
-                    and format.
+                    {interviewRoundsStack.some((round) => isInterviewRoundCompleted(round))
+                      ? 'Completed rounds show the recruiter outcome. Open a card to view full feedback or scheduled details.'
+                      : 'Each round is listed in order (latest scheduling at the bottom). Open a card for meeting link, time, and format.'}
                   </p>
                   <div className="flex flex-col gap-3">
                     {interviewRoundsStack.map((round, index) => {
-                      const when = formatDateTime(round.scheduledAt);
-                      const headline =
-                        round.roundLabel?.trim() ||
-                        round.timelineTitle?.trim() ||
-                        `Interview — Round ${index + 1}`;
-                      const sub =
-                        round.roundLabel?.trim() && round.timelineTitle?.trim() && round.roundLabel !== round.timelineTitle
-                          ? round.timelineTitle
-                          : null;
+                      const completed = isInterviewRoundCompleted(round);
+                      const when = formatDateTime(
+                        completed && round.completedAt ? round.completedAt : round.scheduledAt
+                      );
+                      const roundTypeLabel = resolveInterviewRoundTypeLabel(
+                        round,
+                        index,
+                        interviewRoundsStack.length
+                      );
+                      const outcomeLabel = completed ? formatInterviewOutcomeDisplay(round) : null;
+                      const headline = completed ? 'Interview completed' : roundTypeLabel;
+                      const sub = completed ? roundTypeLabel : null;
+                      const cardTone = completed
+                        ? 'border-slate-200/90 bg-linear-to-br from-slate-50 to-white'
+                        : 'border-emerald-200/90 bg-linear-to-br from-emerald-50 to-white';
+                      const roundTone = completed ? 'text-slate-700' : 'text-emerald-800';
+                      const buttonTone = completed
+                        ? 'border-slate-300/60 text-slate-800 hover:bg-slate-50'
+                        : 'border-emerald-600/40 text-emerald-900 hover:bg-emerald-50';
                       return (
                         <div
                           key={round.timelineId || `round-${index}-${round.scheduledAt}`}
-                          className="flex flex-col gap-3 rounded-xl border border-emerald-200/90 bg-linear-to-br from-emerald-50 to-white p-3.5 shadow-sm sm:flex-row sm:items-start sm:justify-between"
+                          className={`flex flex-col gap-3 rounded-xl border p-3.5 shadow-sm sm:flex-row sm:items-start sm:justify-between ${cardTone}`}
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="text-[0.75rem] font-semibold uppercase tracking-wide text-emerald-800">
+                            <p className={`text-[0.75rem] font-semibold uppercase tracking-wide ${roundTone}`}>
                               Round {index + 1}
                               {interviewRoundsStack.length > 1 ? ` of ${interviewRoundsStack.length}` : ''}
+                              {completed ? ' · Completed' : ''}
                             </p>
                             <h3 className="profile-page-section-title mt-0.5">{headline}</h3>
                             {sub ? <p className="application-detail-helper mt-0.5">{sub}</p> : null}
                             <p className="profile-page-value mt-2">
-                              {when.date} · {when.time}
+                              {completed ? 'Completed' : 'Scheduled'} {when.date} · {when.time}
                             </p>
-                            {round.format ? (
+                            {!completed && round.format ? (
                               <p className="application-detail-helper mt-1">Format: {round.format}</p>
                             ) : null}
-                            {Array.isArray(round.interviewerNames) && round.interviewerNames.length > 0 ? (
+                            {!completed &&
+                            Array.isArray(round.interviewerNames) &&
+                            round.interviewerNames.length > 0 ? (
                               <p className="application-detail-helper mt-1">
-                                Interviewer{round.interviewerNames.length > 1 ? 's' : ''}: {round.interviewerNames.join(', ')}
+                                Interviewer{round.interviewerNames.length > 1 ? 's' : ''}:{' '}
+                                {round.interviewerNames.join(', ')}
                               </p>
                             ) : null}
-                            {round.recruiterName ? (
-                              <p className="application-detail-helper mt-1">Recruiter: {round.recruiterName}</p>
+                            {!completed && round.recruiterName ? (
+                              <p className="application-detail-helper mt-1">
+                                Recruiter: {round.recruiterName}
+                              </p>
+                            ) : null}
+                            {completed && outcomeLabel ? (
+                              <p className="profile-page-value mt-2">
+                                <span
+                                  className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${interviewOutcomeBadgeClass(
+                                    outcomeLabel
+                                  )}`}
+                                >
+                                  {outcomeLabel}
+                                </span>
+                              </p>
                             ) : null}
                           </div>
                           <button
                             type="button"
-                            onClick={() => router.push(`/interviews/${encodeURIComponent(applicationId)}`)}
-                            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-emerald-600/40 bg-white px-3.5 py-2 text-[0.8125rem] font-medium text-emerald-900 shadow-sm hover:bg-emerald-50"
+                            onClick={() => {
+                              if (roundHasFeedbackDetails(round)) {
+                                setInterviewFeedbackPayload(
+                                  buildInterviewFeedbackModalPayload(round, application)
+                                );
+                                setInterviewFeedbackModalOpen(true);
+                                return;
+                              }
+                              setInterviewModalPayload(round);
+                              setInterviewModalOpen(true);
+                            }}
+                            className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border bg-white px-3.5 py-2 text-[0.8125rem] font-medium shadow-sm ${buttonTone}`}
                           >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                               <rect width="18" height="18" x="3" y="4" rx="2" />
                               <path d="M3 10h18" />
                               <path d="M8 2v4M16 2v4" />
                             </svg>
-                            Interview details
+                            {completed ? 'View feedback' : 'Interview details'}
                           </button>
                         </div>
                       );
@@ -1047,8 +1919,9 @@ export default function ApplicationStatusPage() {
               {application.offerLetterUrl ? (
                 <ApplicationDetailSectionCard title="Offer Letter" className="border-emerald-100">
                   <p className="application-detail-helper">
-                    Congratulations — your offer letter has been shared by the recruiter. Open it to review the
-                    details, or save a copy for your records.
+                    {isOfferResentPending(application)
+                      ? 'Your recruiter has shared a revised offer letter (Offer Re-Sent). Open it to review the updated details, then accept or decline below.'
+                      : 'Congratulations — your offer letter has been shared by the recruiter. Open it to review the details, or save a copy for your records.'}
                   </p>
                   {application.offerLetterUploadedAt
                     ? (() => {
@@ -1109,15 +1982,26 @@ export default function ApplicationStatusPage() {
                     </div>
                   </div>
 
-                  {application.offerResponse === 'ACCEPTED' ||
-                  application.offerResponse === 'REJECTED' ? (
-                    <p className="profile-page-value mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5">
-                      You {application.offerResponse === 'ACCEPTED' ? 'accepted' : 'declined'} this offer
-                      {application.offerRespondedAt
-                        ? ` on ${formatDateTime(application.offerRespondedAt).date}`
-                        : ''}
-                      .
-                    </p>
+                  {(() => {
+                    const offerResponseState = application
+                      ? resolveOfferResponseState(application)
+                      : null;
+                    return offerResponseState ? (
+                    <div className="profile-page-value mt-3 space-y-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5">
+                      <p>
+                        You {offerResponseState === 'ACCEPTED' ? 'accepted' : 'declined'} this offer
+                        {application.offerRespondedAt
+                          ? ` on ${formatDateTime(application.offerRespondedAt).date}`
+                          : ''}
+                        .
+                      </p>
+                      {offerResponseState === 'REJECTED' && application.offerRejectionRemark ? (
+                        <p className="whitespace-pre-wrap text-sm text-slate-600">
+                          <span className="font-semibold text-slate-700">Your remark:</span>{' '}
+                          {application.offerRejectionRemark}
+                        </p>
+                      ) : null}
+                    </div>
                   ) : (
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
@@ -1131,13 +2015,17 @@ export default function ApplicationStatusPage() {
                       <button
                         type="button"
                         disabled={offerResponding}
-                        onClick={() => void respondToOffer('reject')}
+                        onClick={() => {
+                          setOfferRejectRemark('');
+                          setOfferRejectModalOpen(true);
+                        }}
                         className="inline-flex min-w-[140px] flex-1 items-center justify-center rounded-lg border border-red-200 bg-white px-3.5 py-2 text-[0.8125rem] font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
                       >
                         Reject offer
                       </button>
                     </div>
-                  )}
+                  );
+                  })()}
                 </ApplicationDetailSectionCard>
               ) : null}
 
@@ -1190,6 +2078,9 @@ export default function ApplicationStatusPage() {
                   {timelineRowsForDisplay.map((row) => {
                     const rejectedRow = isRejectedTimelineRow(row);
                     const interviewRow = !rejectedRow && isInterviewTimelineRow(row);
+                    const rejectionPreview = rejectedRow
+                      ? parseRejectionDescriptionText(row.description)
+                      : null;
                     const { date, time } = formatDateTime(row.occurredAt);
                     const cardBorder = rejectedRow
                       ? 'border-rose-200 bg-rose-50/90'
@@ -1204,7 +2095,22 @@ export default function ApplicationStatusPage() {
                             <p className="profile-page-empty mt-1">
                               {date}, {time}
                             </p>
-                            {row.description ? (
+                            {rejectedRow && rejectionPreview ? (
+                              <div className="profile-page-value mt-2 space-y-2">
+                                {rejectionPreview.reason ? (
+                                  <p>
+                                    <span className="font-semibold text-rose-900">Reason:</span>{' '}
+                                    {rejectionPreview.reason}
+                                  </p>
+                                ) : null}
+                                {rejectionPreview.feedback ? (
+                                  <p className="whitespace-pre-wrap">
+                                    <span className="font-semibold text-rose-900">Feedback:</span>{' '}
+                                    {rejectionPreview.feedback}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ) : row.description ? (
                               <p className="profile-page-value mt-2 line-clamp-4">{row.description}</p>
                             ) : (
                               <p className="application-detail-helper mt-2 italic">No additional notes for this step.</p>
@@ -1493,6 +2399,109 @@ export default function ApplicationStatusPage() {
         </div>
       ) : null}
 
+      {interviewFeedbackModalOpen && interviewFeedbackPayload ? (
+        <div
+          className="fixed inset-0 z-[10040] flex items-center justify-center p-3 sm:p-4"
+          style={{ paddingTop: 'calc(var(--app-header-height, 5.75rem) + 0.5rem)' }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="interview-feedback-title"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
+            aria-label="Close dialog"
+            onClick={closeInterviewFeedbackModal}
+          />
+          <div className="profile-modal-typography relative z-[10041] w-full max-w-md max-h-[calc(100vh-var(--app-header-height,5.75rem)-2rem)] overflow-y-auto rounded-xl border border-gray-100 bg-white p-3.5 shadow-2xl sm:p-4">
+            <div className="mb-3 flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <h2 id="interview-feedback-title" className="text-lg font-semibold text-gray-900">
+                  {interviewFeedbackPayload.companyName}
+                </h2>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  {formatFeedbackSubmittedAt(interviewFeedbackPayload.submittedAt)}
+                </p>
+                <p className="text-xs text-gray-500">{interviewFeedbackPayload.roundLabel}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <span
+                  className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${recommendationBadgeClass(
+                    interviewFeedbackPayload.recommendationLabel
+                  )}`}
+                >
+                  {interviewFeedbackPayload.recommendationLabel}
+                </span>
+                <button
+                  type="button"
+                  onClick={closeInterviewFeedbackModal}
+                  className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                  aria-label="Close"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              {[
+                ['Technical Skills', interviewFeedbackPayload.technicalScore],
+                ['Communication', interviewFeedbackPayload.communicationScore],
+                ['Problem Solving', interviewFeedbackPayload.problemSolvingScore],
+                ['Culture Fit', interviewFeedbackPayload.cultureFitScore],
+                ['Experience Match', interviewFeedbackPayload.experienceMatchScore],
+                ['Overall Rating', interviewFeedbackPayload.overallRating],
+              ].map(([label, score]) => (
+                <div key={String(label)} className="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2">
+                  <p className="text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <FeedbackScoreStars score={score as number | null | undefined} />
+                    {score != null ? (
+                      <span className="text-[0.6875rem] font-medium text-gray-500">{score}/5</span>
+                    ) : (
+                      <span className="text-[0.6875rem] font-medium text-gray-400">Not rated</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 space-y-2">
+              <div className="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2">
+                <p className="text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500">Strengths</p>
+                <p className="mt-1 whitespace-pre-wrap text-[0.8125rem] text-gray-800">
+                  {interviewFeedbackPayload.strengths?.trim() || '—'}
+                </p>
+              </div>
+              <div className="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2">
+                <p className="text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500">Weaknesses</p>
+                <p className="mt-1 whitespace-pre-wrap text-[0.8125rem] text-gray-800">
+                  {interviewFeedbackPayload.weaknesses?.trim() || '—'}
+                </p>
+              </div>
+              <div className="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2">
+                <p className="text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500">Comments</p>
+                <p className="mt-1 whitespace-pre-wrap text-[0.8125rem] text-gray-800">
+                  {interviewFeedbackPayload.comments?.trim() || '—'}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={closeInterviewFeedbackModal}
+                className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {withdrawConfirmOpen ? (
         <div
           className="fixed inset-0 z-100 flex items-center justify-center p-4"
@@ -1535,9 +2544,73 @@ export default function ApplicationStatusPage() {
         </div>
       ) : null}
 
-      {rejectionModalOpen && rejectionModalPayload ? (
+      {offerRejectModalOpen ? (
         <div
           className="fixed inset-0 z-100 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="offer-reject-title"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
+            aria-label="Close dialog"
+            onClick={() => {
+              if (offerResponding) return;
+              setOfferRejectModalOpen(false);
+              setOfferRejectRemark('');
+            }}
+          />
+          <div className="profile-modal-typography relative z-101 w-full max-w-md rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl">
+            <h2 id="offer-reject-title" className="profile-modal-title">
+              Decline this offer?
+            </h2>
+            <p className="profile-modal-helper mt-3">
+              Please share a brief reason so the recruiter understands your decision.
+            </p>
+            <label className="mt-4 block text-sm font-medium text-gray-700" htmlFor="offer-reject-remark">
+              Remark <span className="text-red-600">*</span>
+            </label>
+            <textarea
+              id="offer-reject-remark"
+              value={offerRejectRemark}
+              onChange={(event) => setOfferRejectRemark(event.target.value)}
+              rows={4}
+              maxLength={2000}
+              placeholder="e.g. Compensation does not meet expectations, joining another company..."
+              className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+            />
+            <p className="mt-1 text-xs text-gray-500">{offerRejectRemark.trim().length}/2000</p>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  if (offerResponding) return;
+                  setOfferRejectModalOpen(false);
+                  setOfferRejectRemark('');
+                }}
+                disabled={offerResponding}
+                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void respondToOffer('reject', offerRejectRemark)}
+                disabled={offerResponding || !offerRejectRemark.trim()}
+                className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
+              >
+                {offerResponding ? 'Submitting…' : 'Submit decline'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {rejectionModalOpen && rejectionModalPayload ? (
+        <div
+          className="fixed inset-0 z-[10040] flex items-center justify-center p-3 sm:p-4"
+          style={{ paddingTop: 'calc(var(--app-header-height, 5.75rem) + 0.5rem)' }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="rejection-feedback-title"
@@ -1548,13 +2621,13 @@ export default function ApplicationStatusPage() {
             aria-label="Close dialog"
             onClick={closeRejectionModal}
           />
-          <div className="profile-modal-typography relative z-101 w-full max-w-lg rounded-2xl border border-rose-100 bg-white p-5 shadow-2xl">
-            <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="profile-modal-typography relative z-[10041] w-full max-w-md max-h-[calc(100vh-var(--app-header-height,5.75rem)-2rem)] overflow-y-auto rounded-xl border border-rose-100 bg-white p-4 shadow-2xl">
+            <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <h2 id="rejection-feedback-title" className="profile-modal-title">
+                <h2 id="rejection-feedback-title" className="text-lg font-semibold text-gray-900">
                   {rejectionModalPayload.title}
                 </h2>
-                <p className="profile-modal-helper mt-1">
+                <p className="mt-0.5 text-xs text-gray-500">
                   {application?.job.title} · {application?.job.company}
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
@@ -1569,23 +2642,42 @@ export default function ApplicationStatusPage() {
               <button
                 type="button"
                 onClick={closeRejectionModal}
-                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                 aria-label="Close"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 6 6 18M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <div className="rounded-xl border border-rose-100 bg-rose-50/80 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-rose-800/90">Feedback</p>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-900">{rejectionModalPayload.feedback}</p>
+            <div className="space-y-3">
+              {rejectionModalPayload.reason ? (
+                <div className="rounded-xl border border-rose-100 bg-rose-50/80 p-3.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-rose-800/90">Reason</p>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-900">{rejectionModalPayload.reason}</p>
+                </div>
+              ) : null}
+              {rejectionModalPayload.feedback ? (
+                <div className="rounded-xl border border-rose-100 bg-rose-50/80 p-3.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-rose-800/90">Feedback</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-900">
+                    {rejectionModalPayload.feedback}
+                  </p>
+                </div>
+              ) : null}
+              {!rejectionModalPayload.reason && !rejectionModalPayload.feedback ? (
+                <div className="rounded-xl border border-rose-100 bg-rose-50/80 p-3.5">
+                  <p className="text-sm leading-relaxed text-gray-900">
+                    No written feedback was provided for this decision.
+                  </p>
+                </div>
+              ) : null}
             </div>
-            <div className="mt-6 flex justify-end">
+            <div className="mt-4 flex justify-end">
               <button
                 type="button"
                 onClick={closeRejectionModal}
-                className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
               >
                 Close
               </button>
