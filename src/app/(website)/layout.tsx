@@ -15,13 +15,10 @@ export default function WebsiteSiteLayout({
   const normalizedPath = stripLocaleFromPathname(pathname || "/");
   const { isAuthenticated, user } = useAuth();
 
+  const isCandMainHome = normalizedPath === "/";
+
   // Pages under (website) that must always show the marketing Navbar
-  // (the same one used on /employers) — regardless of auth state. Without
-  // this, an authenticated user landing on `/` would get the old Header
-  // ("Jobseeker / Courses / Services / For Employers / Log In / Sign Up")
-  // overlapping the marketing nav.
   const marketingNavbarPaths = new Set<string>([
-    "/",
     "/employers",
     "/services",
     "/aboutus",
@@ -37,6 +34,10 @@ export default function WebsiteSiteLayout({
     marketingNavbarPaths.has(normalizedPath) ||
     normalizedPath.startsWith("/employers/") ||
     normalizedPath.startsWith("/services/");
+
+  if (isCandMainHome) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="flex flex-col min-h-screen selection:bg-[#28A8DF] selection:text-white">

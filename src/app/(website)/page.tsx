@@ -1,11 +1,12 @@
-import { Metadata } from "next";
-import LandingPage from "./LandingPageClient";
+import type { Metadata } from 'next';
+import { CandMainLandingPage } from '@/components/candmain/CandMainLandingPage';
 
 export const metadata: Metadata = {
-  title: "Jobs",
-  description: "Find the job that fits you perfectly with HR Yantra AI.",
+  title: 'HR Yantra — AI-Powered Job Search',
+  description:
+    'Find the job that fits you perfectly. HR Yantra AI matches you to roles that suit your skills, experience, and goals.',
 };
 
 export default function Page() {
-  return <LandingPage />;
+  return <CandMainLandingPage />;
 }

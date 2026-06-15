@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import Navbar from '@candmain/components/shared/Navbar';
+import { usePathname } from 'next/navigation';
+import '@/app/candmain/candmain-landing.css';
+import WebsiteNavbar from '@/app/(website)/_components/Navbar';
+import { PortalSearchHero } from '@/app/(website)/_components/PortalSearchHero';
 import Footer from '@candmain/components/shared/Footer';
-import HeroSection from '@candmain/components/hero/HeroSection';
+import { stripLocaleFromPathname } from '@/lib/i18n';
 import CommandCenter from '@candmain/components/command-center/CommandCenter';
 import ActivityStream from '@candmain/components/activity-stream/ActivityStream';
 import HiringHierarchy from '@candmain/components/hiring-hierarchy/HiringHierarchy';
@@ -15,6 +18,10 @@ import WhyHire from '@candmain/components/why-hire/WhyHire';
 import CTASection from '@candmain/components/cta/CTASection';
 
 export function CandMainLandingPage() {
+  const pathname = usePathname();
+  const normalizedPath = stripLocaleFromPathname(pathname || '/');
+  const isHome = normalizedPath === '/';
+
   useEffect(() => {
     let lenis: { raf: (time: number) => void; destroy: () => void } | null = null;
     let animId = 0;
@@ -33,7 +40,7 @@ export function CandMainLandingPage() {
         };
         animId = requestAnimationFrame(raf);
       } catch {
-        // Lenis optional — page still works without smooth scroll
+        // Lenis optional
       }
     };
 
@@ -45,21 +52,23 @@ export function CandMainLandingPage() {
   }, []);
 
   return (
-    <div className="candmain-landing relative min-h-screen bg-bg-base text-text-primary antialiased">
-      <main className="relative">
-        <Navbar />
-        <HeroSection />
-        <CommandCenter />
-        <ActivityStream />
-        <HiringHierarchy />
-        <ImpactDashboard />
-        <CaseStudies />
-        <SkillsNetwork />
-        <ExperienceTimeline />
-        <WhyHire />
-        <CTASection />
-        <Footer />
-      </main>
+    <div className="relative min-h-screen bg-[#FCFDFE] text-text-primary antialiased">
+      <WebsiteNavbar />
+      <PortalSearchHero />
+      <div className="candmain-landing relative">
+        <main className="relative">
+          <CommandCenter />
+          <ActivityStream />
+          <HiringHierarchy />
+          <ImpactDashboard />
+          <CaseStudies />
+          <SkillsNetwork />
+          <ExperienceTimeline />
+          <WhyHire />
+          <CTASection />
+          {!isHome && <Footer />}
+        </main>
+      </div>
     </div>
   );
 }
