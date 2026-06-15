@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { ArrowLeft } from "lucide-react";
 import { LMS_PAGE_SUBTITLE } from "../../../constants";
+import { LmsSkeleton } from "../../../components/states/LmsSkeleton";
 import { QuizResultClient } from "./quiz-result-client";
 
 export default async function LmsQuizResultPage({
@@ -24,11 +26,13 @@ export default async function LmsQuizResultPage({
           Results
         </h1>
         <p className={LMS_PAGE_SUBTITLE}>
-          Review your answers (frontend-only mock).
+          Review your selected answers and the correct answers for each question.
         </p>
       </div>
 
-      <QuizResultClient quizId={id} />
+      <Suspense fallback={<LmsSkeleton lines={10} />}>
+        <QuizResultClient quizId={id} />
+      </Suspense>
     </div>
   );
 }
