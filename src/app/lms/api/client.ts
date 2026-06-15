@@ -159,6 +159,42 @@ export async function submitQuizAttempt(
   return data.data;
 }
 
+export type QuizAttemptBreakdownItem = {
+  id: string;
+  text: string;
+  options: string[];
+  chosenIndex?: number;
+  correctOptionIndex: number;
+  explanation?: string;
+  isCorrect: boolean;
+};
+
+export type QuizAttemptResult = {
+  id: string;
+  quizId: string;
+  score: number;
+  correctCount: number;
+  totalQuestions: number;
+  timeTakenSeconds: number;
+  completedAt: string;
+  quizTitle: string;
+  breakdown: QuizAttemptBreakdownItem[];
+};
+
+export async function fetchAttemptResult(quizId: string, attemptId: string) {
+  const res = await lmsFetch(
+    `${LMS_API_BASE}/quizzes/${encodeURIComponent(quizId)}/result/${encodeURIComponent(attemptId)}`,
+    { method: 'GET' }
+  );
+  if (!res) return null;
+  if (!res.ok) {
+    if (res.status === 404) return null;
+    throw new Error('Failed to fetch quiz result');
+  }
+  const data = await res.json();
+  return data.data as QuizAttemptResult;
+}
+
 export async function fetchNotes() {
   const res = await lmsFetch(`${LMS_API_BASE}/notes`, { method: 'GET' });
   if (!res) return [];
