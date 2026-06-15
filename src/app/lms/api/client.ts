@@ -78,11 +78,85 @@ export async function unregisterFromEvent(eventId: string) {
   const data = await res.json(); return data.data;
 }
 
+export async function fetchCompletedQuizzes() {
+  const res = await lmsFetch(`${LMS_API_BASE}/quizzes/completed`, { method: 'GET' });
+  if (!res) return [];
+  if (!res.ok) throw new Error('Failed to fetch completed quizzes');
+  const data = await res.json();
+  return data.data;
+}
+
 export async function fetchQuizzes() {
   const res = await lmsFetch(`${LMS_API_BASE}/quizzes`, { method: 'GET' });
   if (!res) return [];
   if (!res.ok) throw new Error('Failed to fetch quizzes');
   const data = await res.json(); return data.data;
+}
+
+export async function fetchQuizTopicSuggestions(query: string) {
+  if (!query || query.trim().length < 2) return [];
+  const res = await lmsFetch(
+    `${LMS_API_BASE}/quizzes/topic-suggestions?q=${encodeURIComponent(query.trim())}`,
+    { method: 'GET' }
+  );
+  if (!res) return [];
+  if (!res.ok) throw new Error('Failed to fetch topic suggestions');
+  const data = await res.json();
+  return Array.isArray(data.data) ? data.data.filter((item: unknown) => typeof item === 'string') : [];
+}
+
+export type GeneratedQuizSummary = {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: string;
+  estimatedMinutes?: number;
+  durationMinutes?: number;
+  totalQuestions?: number;
+  questionsCount?: number;
+  topic?: string;
+  skill?: string;
+  isAiGenerated?: boolean;
+};
+
+export async function generateQuizzesFromTopic(topic: string) {
+  const res = await lmsFetch(`${LMS_API_BASE}/quizzes/generate`, {
+    method: 'POST',
+    body: JSON.stringify({ topic: topic.trim() }),
+  });
+  if (!res) throw new Error('No authentication token found. Please log in again.');
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.message || 'Failed to generate quizzes');
+  }
+  return data.data as { topic: string; quizzes: GeneratedQuizSummary[] };
+}
+
+export async function fetchQuizDetail(quizId: string) {
+  const res = await lmsFetch(`${LMS_API_BASE}/quizzes/${encodeURIComponent(quizId)}`, { method: 'GET' });
+  if (!res) return null;
+  if (!res.ok) {
+    if (res.status === 404) return null;
+    throw new Error('Failed to fetch quiz details');
+  }
+  const data = await res.json();
+  return data.data;
+}
+
+export async function submitQuizAttempt(
+  quizId: string,
+  payload: { answerMap: Record<string, number>; timeTakenSeconds: number }
+) {
+  const res = await lmsFetch(`${LMS_API_BASE}/quizzes/${encodeURIComponent(quizId)}/attempt`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  if (!res) throw new Error('No authentication token found. Please log in again.');
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.message || 'Failed to submit quiz');
+  }
+  return data.data;
 }
 
 export async function fetchNotes() {

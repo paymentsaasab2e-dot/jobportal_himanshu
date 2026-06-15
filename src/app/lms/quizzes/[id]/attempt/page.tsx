@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { LMS_PAGE_SUBTITLE } from "../../../constants";
-import { lmsQuizBank } from "../../../data/ai-mock";
 import { QuizAttemptClient } from "./quiz-attempt-client";
 
 export default async function LmsQuizAttemptPage({
@@ -10,7 +9,6 @@ export default async function LmsQuizAttemptPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const quiz = lmsQuizBank[id];
 
   return (
     <div className="space-y-8">
@@ -22,12 +20,9 @@ export default async function LmsQuizAttemptPage({
           <ArrowLeft className="h-4 w-4" strokeWidth={2} />
           Back to quizzes
         </Link>
-        <h1 className="application-detail-title mt-3">
-          {quiz?.title ?? "Quiz Attempt"}
-        </h1>
+        <h1 className="application-detail-title mt-3">Quiz Attempt</h1>
         <p className={LMS_PAGE_SUBTITLE}>
-          Frontend-only quiz attempt (mock). Your answers are stored locally for
-          review.
+          Answer all questions and submit to save your score.
         </p>
       </div>
 
