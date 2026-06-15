@@ -18,7 +18,7 @@ interface Stage {
   border: string
   duration: string
   passRate: string
-  tip: string
+  tip?: string
   companies: string[]
   liveCount: number
 }
@@ -90,7 +90,6 @@ const hiringStages: Stage[] = [
     border: 'rgba(124,58,237,0.24)',
     duration: '1–3 hrs',
     passRate: '~40%',
-    tip: 'Show proof of skills through clear examples.',
     companies: ['Skill Test', 'Case Study', 'Portfolio'],
     liveCount: 750,
   },
@@ -272,7 +271,7 @@ function StageCard({ stage, index, isActive, onClick }: {
 
       {/* Pro tip - expandable */}
       <AnimatePresence>
-        {isActive && (
+        {isActive && stage.tip && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
