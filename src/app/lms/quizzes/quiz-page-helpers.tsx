@@ -136,7 +136,7 @@ export function QuizPreviewSection({
             <div>
               <p className="text-sm font-bold text-gray-900">Weak areas addressed</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                {quiz.weakConcepts.map((concept) => (
+                {(quiz.weakConcepts ?? []).map((concept) => (
                   <span
                     key={concept}
                     className="rounded-full border border-sky-100 bg-white px-3 py-1 text-xs font-semibold text-gray-700"

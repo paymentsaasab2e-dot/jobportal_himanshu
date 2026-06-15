@@ -11,6 +11,15 @@ import {
 
 export type QuizPreviewSource = 'recommended' | 'retry' | 'catalog' | 'skill' | 'mastery' | 'recent' | 'result';
 
+export function formatQuizDifficulty(
+  difficulty: string | null | undefined
+): 'Easy' | 'Medium' | 'Hard' {
+  const value = String(difficulty || '').toLowerCase();
+  if (value === 'beginner' || value === 'easy') return 'Easy';
+  if (value === 'advanced' || value === 'hard') return 'Hard';
+  return 'Medium';
+}
+
 function withHash(path: string, hash?: string) {
   if (!hash) return path;
   return `${path}${hash.startsWith('#') ? hash : `#${hash}`}`;
