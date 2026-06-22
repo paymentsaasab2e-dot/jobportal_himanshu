@@ -2,185 +2,243 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import LanguageSwitcher from "@/components/common/LanguageSwitcher";
+import { LANDING_SCROLL_EVENT } from "@/hooks/useLandingSmoothScroll";
 import { AppLocale, localizePath, stripLocaleFromPathname } from "@/lib/i18n";
 
 const navLinks = [
   { key: "exploreJobs", href: "/" },
-  // { name: "Courses", href: "/explore-jobs" },
   { key: "employers", href: "/employers" },
   { key: "services", href: "/services" },
-];
+] as const;
+
+const MARKETING_NAV_PILL_ID = "website-nav-marketing-pill";
+
+function isNavLinkActive(normalizedPath: string, href: string) {
+  if (href === "/") return normalizedPath === "/";
+  return normalizedPath === href || normalizedPath.startsWith(`${href}/`);
+}
+
+function navPillClass(linkKey: (typeof navLinks)[number]["key"]) {
+  return linkKey === "employers"
+    ? "from-[#E8770E] to-[#FC9620] shadow-[0_8px_22px_rgba(252,150,32,0.38)]"
+    : "from-[#08428c] to-[#28a8e1] shadow-[0_8px_22px_rgba(8,66,140,0.35)]";
+}
 
 export default function WebsiteNavbar() {
   const pathname = usePathname();
   const locale = useLocale() as AppLocale;
   const t = useTranslations();
   const normalizedPath = stripLocaleFromPathname(pathname || "/");
-  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const employersLoginHref = "https://employers.hryantra.com/login?redirect=%2Fleads";
   const isEmployersPage = normalizedPath === "/employers" || normalizedPath.startsWith("/employers/");
+  const isEmployersLandingPage = normalizedPath === "/employers";
   const isServicesPage = normalizedPath === "/services" || normalizedPath.startsWith("/services/");
   const loginSignupHref = isEmployersPage ? employersLoginHref : localizePath("/whatsapp", locale);
 
-  // Sliding pill state
-  const [pillStyle, setPillStyle] = useState({ left: 0, width: 0 });
-  const [isReady, setIsReady] = useState(false);
-  const navRef = useRef<HTMLDivElement>(null);
-  const linkRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const isHomePage = normalizedPath === "/";
+  const activeIndex = navLinks.findIndex((l) => isNavLinkActive(normalizedPath, l.href));
+  const currentIndex = activeIndex;
+  const isTopOfPage = !isScrolled;
+  const isEmployersTransparent = isEmployersLandingPage && isTopOfPage;
+  const isHomeTransparent = isHomePage && isTopOfPage;
+  const isLightMarketingNav = isHomeTransparent || (isEmployersPage && !isEmployersLandingPage);
+  const isNavbarShellTransparent = isEmployersTransparent || isHomeTransparent;
+  const hasMountedPath = useRef(false);
 
-  const activeIndex = navLinks.findIndex((l) => normalizedPath === l.href);
-  const currentIndex = activeIndex; // Remove the default to 0
-  const hasActiveTab = currentIndex !== -1;
-
-  // Update pill position whenever active tab or layout changes
-  const updatePill = () => {
-    const el = linkRefs.current[currentIndex];
-    const container = navRef.current;
-    if (!hasActiveTab || !el || !container) {
-      setIsReady(false);
-      return;
-    }
-    const containerRect = container.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    setPillStyle({
-      left: elRect.left - containerRect.left,
-      width: elRect.width,
-    });
-    setIsReady(true);
+  const navLinkTextClass = (isActive: boolean) => {
+    if (isActive) return "text-white";
+    if (isEmployersTransparent) return "!text-white/80 hover:!text-white";
+    return "text-slate-700 hover:text-slate-900";
   };
 
   useEffect(() => {
-    updatePill();
-  }, [currentIndex, pathname]);
+    const updateScrolled = (scrollTop: number) => setIsScrolled(scrollTop > 24);
 
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", updatePill);
+    const handleWindowScroll = () => updateScrolled(window.scrollY);
+    const handleLenisScroll = (event: Event) => {
+      const detail = (event as CustomEvent<{ scroll: number }>).detail;
+      updateScrolled(detail?.scroll ?? window.scrollY);
+    };
+
+    updateScrolled(window.scrollY);
+    window.addEventListener("scroll", handleWindowScroll, { passive: true });
+    window.addEventListener(LANDING_SCROLL_EVENT, handleLenisScroll as EventListener);
+
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", updatePill);
+      window.removeEventListener("scroll", handleWindowScroll);
+      window.removeEventListener(LANDING_SCROLL_EVENT, handleLenisScroll as EventListener);
     };
   }, []);
 
+  useEffect(() => {
+    if (!hasMountedPath.current) {
+      hasMountedPath.current = true;
+      return;
+    }
+
+    try {
+      const lenis = window.__landingLenis;
+      if (lenis && typeof lenis.scrollTo === "function") {
+        lenis.scrollTo(0, { immediate: true });
+        return;
+      }
+    } catch {
+      // fall through to native scroll
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [normalizedPath]);
+
+  useEffect(() => {
+    const lenis = window.__landingLenis;
+    if (!lenis) return;
+    if (isMobileMenuOpen) lenis.stop();
+    else lenis.start();
+  }, [isMobileMenuOpen]);
+
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-[500] transition-all duration-500 ${
-        isScrolled
-          ? "bg-white/80 backdrop-blur-xl border-b border-slate-200 py-2 shadow-sm"
-          : "bg-transparent py-2.5"
+      className={`fixed top-0 left-0 right-0 z-[500] flex justify-center px-3 sm:px-4 transition-all duration-500 ease-out ${
+        isScrolled ? "py-2" : "py-2.5"
       }`}
     >
-      <div className="mx-auto flex max-w-[1180px] items-center justify-between px-4 sm:px-5 lg:px-6">
-
-        {/* Logo */}
-        <div className="flex-1">
+      <div
+        className={`relative grid grid-cols-[1fr_auto_1fr] items-center rounded-[26px] border transition-[width,padding,box-shadow,border-color,background,backdrop-filter] duration-500 ease-out ${
+          isNavbarShellTransparent
+            ? "w-[min(1680px,96vw)] px-4 sm:px-5 lg:px-8 border-transparent bg-transparent shadow-none backdrop-blur-none"
+            : isScrolled
+              ? "w-[min(880px,78vw)] px-3 sm:px-4 border-white/75 bg-white/50 backdrop-blur-2xl shadow-[0_14px_40px_rgba(8,66,140,0.14),inset_0_1px_0_rgba(255,255,255,0.92)]"
+              : "w-[min(1680px,96vw)] px-4 sm:px-5 lg:px-8 border-white/55 bg-white/28 backdrop-blur-xl shadow-[0_10px_34px_rgba(40,168,225,0.1),inset_0_1px_0_rgba(255,255,255,0.8)]"
+        }`}
+      >
+        <div className="justify-self-start shrink-0">
           <Link href={localizePath("/", locale)} className="relative flex items-center group w-fit">
-            <div className="relative h-9 w-32">
+            <div
+              className={`relative transition-all duration-500 ${
+                isScrolled ? "h-8 w-28" : "h-9 w-32"
+              }`}
+            >
               <Image
                 src="/SAASA%20Logo.png"
                 alt="SAASA B2E"
                 fill
-                className="object-contain"
+                className="object-contain object-left"
                 priority
               />
             </div>
           </Link>
         </div>
 
-        {/* Desktop Nav with Sliding Pill */}
-        <div ref={navRef} className="hidden md:flex items-center relative">
-          {/* Sliding black pill — absolutely positioned inside nav container */}
-          {isReady && hasActiveTab && (
-            <div
-              className="absolute top-0 bottom-0 rounded-full bg-slate-900 shadow-lg pointer-events-none"
-              style={{
-                left: pillStyle.left,
-                width: pillStyle.width,
-                transition: "left 0.35s cubic-bezier(0.4, 0, 0.2, 1), width 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}
-            />
-          )}
-
+        <div
+          className={`hidden md:inline-flex items-center relative rounded-full transition-all duration-500 justify-self-center ${
+            isEmployersTransparent
+              ? "border border-white/15 bg-white/5 backdrop-blur-sm p-1.5"
+              : isLightMarketingNav
+                ? "border border-slate-200/80 bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl p-1.5"
+                : `border border-white/65 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-xl ${isScrolled ? "p-1" : "p-1.5"}`
+          }`}
+        >
           {navLinks.map((link, i) => {
             const isActive = currentIndex === i;
+            const href = localizePath(link.href, locale);
             return (
-              <button
+              <Link
                 key={link.key}
-                ref={(el) => { linkRefs.current[i] = el; }}
-                onClick={() => router.push(localizePath(link.href, locale))}
-                className={`relative z-10 px-5 py-2 rounded-full text-[15px] font-medium transition-colors duration-200 ${
-                  isActive ? "text-white" : "text-black hover:text-slate-700"
-                }`}
+                href={href}
+                prefetch
+                className={`relative z-10 inline-flex items-center justify-center rounded-full font-semibold whitespace-nowrap text-center transition-colors duration-300 ${
+                  isScrolled ? "min-h-[34px] px-4 text-[14px]" : "min-h-[38px] px-5 text-[15px]"
+                } ${navLinkTextClass(isActive)}`}
               >
-                {t(`nav.${link.key}`)}
-              </button>
+                {isActive && (
+                  <motion.span
+                    layoutId={MARKETING_NAV_PILL_ID}
+                    className={`absolute inset-0 rounded-full bg-gradient-to-r ${navPillClass(link.key)}`}
+                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  />
+                )}
+                <span className="relative z-10 leading-none">{t(`nav.${link.key}`)}</span>
+              </Link>
             );
           })}
         </div>
 
-        {/* Desktop Actions */}
-        <div className="flex-1 hidden md:flex justify-end">
+        <div className="hidden md:flex items-center justify-end justify-self-end gap-2">
           {!isServicesPage && (
-            <div className="flex items-center gap-4">
-              <Link
-                href={loginSignupHref}
-                className="border-2 border-black !text-black px-6 py-2 rounded-full text-[15px] font-bold hover:bg-black hover:!text-white transition-all"
-              >
-                {t("common.login")}
-              </Link>
-            </div>
+            <Link
+              href={loginSignupHref}
+              className={`rounded-full font-bold backdrop-blur-xl transition-all duration-500 ${
+                isScrolled ? "px-4 py-1.5 text-[14px]" : "px-6 py-2 text-[15px]"
+              } ${
+                isEmployersTransparent
+                  ? "border border-white/30 bg-white/10 !text-white shadow-none hover:bg-white/20 hover:!text-white"
+                  : "border border-white/75 bg-white/40 !text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] hover:bg-white/65 hover:!text-[#08428c]"
+              }`}
+            >
+              {t("common.login")}
+            </Link>
           )}
-          <div className="ml-3">
-            <LanguageSwitcher />
-          </div>
+          <LanguageSwitcher
+            className={
+              isEmployersTransparent
+                ? "inline-flex min-w-[4.25rem] items-center justify-center gap-1 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:border-white/50 hover:bg-white/15"
+                : undefined
+            }
+          />
         </div>
 
-        {/* Mobile Toggle */}
         <button
-          className="md:hidden p-2 text-slate-700 hover:text-slate-900 transition-colors"
+          type="button"
+          className={`md:hidden justify-self-end col-start-3 p-2 transition-colors ${
+            isEmployersTransparent
+              ? "text-white hover:text-white/80"
+              : "text-slate-700 hover:text-[#08428c]"
+          }`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
-      </div>
 
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-t border-slate-100 shadow-2xl p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300 h-[calc(100vh-80px)] overflow-y-auto">
-          {navLinks.map((link) => (
-            <div key={link.key} className="flex flex-col gap-2">
-              <Link
-                href={localizePath(link.href, locale)}
-                className={`text-lg font-bold ${normalizedPath === link.href ? "text-blue-600" : "text-slate-800"}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {t(`nav.${link.key}`)}
-              </Link>
-            </div>
-          ))}
-          <div className="h-px bg-slate-100 my-2" />
-          {!isServicesPage && (
-            <div className="flex flex-col gap-3 mt-2">
-              <Link
-                href={loginSignupHref}
-                className="border-2 border-black !text-black text-center py-4 rounded-[18px] font-bold text-lg hover:bg-black hover:!text-white transition-all"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {t("common.login")}
-              </Link>
-            </div>
-          )}
-          <LanguageSwitcher />
-        </div>
-      )}
+        {isMobileMenuOpen && (
+          <div
+            data-lenis-prevent
+            className="md:hidden absolute top-[calc(100%+8px)] left-0 right-0 rounded-[24px] border border-white/65 bg-white/45 backdrop-blur-2xl shadow-[0_18px_40px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300 max-h-[calc(100vh-90px)] overflow-y-auto"
+          >
+            {navLinks.map((link) => (
+              <div key={link.key} className="flex flex-col gap-2">
+                <Link
+                  href={localizePath(link.href, locale)}
+                  prefetch
+                  className={`text-lg font-bold ${isNavLinkActive(normalizedPath, link.href) ? (link.key === "employers" ? "text-[#E8770E]" : "text-[#08428c]") : "text-slate-800"}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {t(`nav.${link.key}`)}
+                </Link>
+              </div>
+            ))}
+            <div className="h-px bg-white/70 my-2" />
+            {!isServicesPage && (
+              <div className="flex flex-col gap-3 mt-2">
+                <Link
+                  href={loginSignupHref}
+                  className="border border-white/80 bg-white/55 !text-slate-900 text-center py-4 rounded-[18px] font-bold text-lg backdrop-blur-xl hover:bg-white/80 hover:!text-[#08428c] transition-all"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {t("common.login")}
+                </Link>
+              </div>
+            )}
+            <LanguageSwitcher />
+          </div>
+        )}
+      </div>
     </nav>
   );
 }

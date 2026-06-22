@@ -7,68 +7,47 @@ import {
 } from 'recharts'
 import { impactChartData } from '@candmain/lib/data'
 import { useCountUp } from '@candmain/hooks/useCountUp'
+import { useCandmainLandingContent } from '@/lib/candmain-landing'
 import { TrendingUp } from 'lucide-react'
 
-const tabs = [
-  {
-    id: 'users',
-    label: 'Recruiter Views',
-    color: '#2563EB',
-    key: 'users' as const,
-    unit: '',
-    insight: 'How often recruiters are finding and opening candidate profiles.',
-    plain: 'More views means stronger visibility in recruiter searches.',
-  },
-  {
-    id: 'revenue',
-    label: 'Active Openings',
-    color: '#F97316',
-    key: 'revenue' as const,
-    unit: '',
-    insight: 'How many open roles are being matched across the platform.',
-    plain: 'More openings means more chances to find a relevant role.',
-  },
-  {
-    id: 'adoption',
-    label: 'Job Match Rate',
-    color: '#10B981',
-    key: 'adoption' as const,
-    unit: '%',
-    insight: 'How closely candidate profiles match available jobs.',
-    plain: 'Higher match rate means better role fit and less wasted applying.',
-  },
-  {
-    id: 'conversion',
-    label: 'Interview Rate',
-    color: '#8B5CF6',
-    key: 'conversion' as const,
-    unit: '%',
-    insight: 'How often matched candidates convert into interviews.',
-    plain: 'Higher interview rate means the profile is getting real traction.',
-  },
+const tabColors = [
+  { id: 'users', color: '#2563EB', key: 'users' as const },
+  { id: 'revenue', color: '#F97316', key: 'revenue' as const },
+  { id: 'adoption', color: '#10B981', key: 'adoption' as const },
+  { id: 'conversion', color: '#8B5CF6', key: 'conversion' as const },
 ]
 
-const formatMetricValue = (value: number, activeTab: string) => {
-  if (activeTab === 'revenue') return `${(value * 100).toLocaleString()} openings`
+const formatMetricValue = (value: number, activeTab: string, format: { openings: string; views: string }) => {
+  if (activeTab === 'revenue') return `${(value * 100).toLocaleString()} ${format.openings}`
   if (activeTab === 'adoption' || activeTab === 'conversion') return `${value}%`
-  return `${value.toLocaleString()} views`
+  return `${value.toLocaleString()} ${format.views}`
 }
 
-const CustomTooltip = ({ active, payload, label, tab }: any) => {
+const CustomTooltip = ({ active, payload, label, tab, format }: any) => {
   if (!active || !payload?.length) return null
   const value = payload[0]?.value ?? 0
   return (
     <div className="bg-[#0F172A] text-white px-4 py-3 rounded-xl shadow-xl text-xs max-w-[230px]">
-      <div className="font-semibold mb-1">{label} live reading</div>
+      <div className="font-semibold mb-1">{label} {tab.liveReading}</div>
       <div className="text-lg font-black" style={{ color: tab.color }}>
-        {formatMetricValue(value, tab.id)}
+        {formatMetricValue(value, tab.id, format)}
       </div>
       <div className="text-white/65 mt-1 leading-relaxed">{tab.plain}</div>
     </div>
   )
 }
 
-function ImpactChart({ activeTab, chartData }: { activeTab: string; chartData: typeof impactChartData }) {
+function ImpactChart({
+  activeTab,
+  chartData,
+  tabs,
+  format,
+}: {
+  activeTab: string
+  chartData: typeof impactChartData
+  tabs: Array<{ id: string; color: string; key: 'users' | 'revenue' | 'adoption' | 'conversion'; liveReading?: string; plain: string }>
+  format: { openings: string; views: string }
+}) {
   const tab = tabs.find((t) => t.id === activeTab) ?? tabs[0]
 
   return (
@@ -94,7 +73,7 @@ function ImpactChart({ activeTab, chartData }: { activeTab: string; chartData: t
             tickLine={false}
             tickFormatter={(v) => activeTab === 'revenue' ? `${v * 100}` : activeTab === 'users' ? `${v}` : `${v}%`}
           />
-          <Tooltip content={<CustomTooltip tab={tab} />} />
+          <Tooltip content={<CustomTooltip tab={tab} format={format} />} />
           <Area
             type="monotone"
             dataKey={tab.key}
@@ -147,6 +126,14 @@ function TopMetricCard({ metric, index }: TopMetricCardProps) {
 }
 
 export default function ImpactDashboard() {
+  const content = useCandmainLandingContent()
+  const imp = content.impact
+  const tabs = imp.tabs.map((tab, i) => ({
+    ...tab,
+    ...tabColors[i],
+    liveReading: imp.liveReading,
+  }))
+
   const [activeTab, setActiveTab] = useState('users')
   const [chartData, setChartData] = useState(impactChartData)
   const [lastUpdated, setLastUpdated] = useState('')
@@ -158,16 +145,19 @@ export default function ImpactDashboard() {
   const delta = latestValue - previousValue
   const trendLabel = delta >= 0 ? `+${delta.toLocaleString()}` : delta.toLocaleString()
 
-  const liveMetrics = useMemo(() => [
-    { label: 'Recruiter Views', value: latest.users, suffix: '', prefix: '', color: '#2563EB', detail: 'Live profile discovery' },
-    { label: 'Active Jobs Sourced', value: latest.revenue * 100, suffix: '+', prefix: '', color: '#F97316', detail: 'Open roles tracked now' },
-    { label: 'Job Match Accuracy', value: latest.adoption, suffix: '%', prefix: '', color: '#10B981', detail: 'AI role-fit validation' },
-    { label: 'Interview Rate', value: latest.conversion, suffix: '%', prefix: '', color: '#8B5CF6', detail: 'Application to interview flow' },
-  ], [latest])
+  const liveMetrics = useMemo(
+    () => [
+      { label: imp.metrics[0].label, value: latest.users, suffix: '', prefix: '', color: '#2563EB', detail: imp.metrics[0].detail },
+      { label: imp.metrics[1].label, value: latest.revenue * 100, suffix: '+', prefix: '', color: '#F97316', detail: imp.metrics[1].detail },
+      { label: imp.metrics[2].label, value: latest.adoption, suffix: '%', prefix: '', color: '#10B981', detail: imp.metrics[2].detail },
+      { label: imp.metrics[3].label, value: latest.conversion, suffix: '%', prefix: '', color: '#8B5CF6', detail: imp.metrics[3].detail },
+    ],
+    [latest, imp.metrics]
+  )
 
   useEffect(() => {
     const update = () => {
-      setLastUpdated(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+      setLastUpdated(new Date().toLocaleTimeString(content.dateLocale, { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
     }
 
     update()
@@ -214,16 +204,13 @@ export default function ImpactDashboard() {
           className="text-center mb-16"
         >
           <div className="tag-pill tag-blue inline-flex mb-4">
-            <span>Career Outcomes</span>
+            <span>{imp.tag}</span>
           </div>
           <h2 className="text-display-xl text-text-primary mb-4">
-            The{' '}
-            <span className="gradient-text-blue">Career Growth Dashboard</span>
+            {imp.title}{' '}
+            <span className="gradient-text-blue">{imp.titleAccent}</span>
           </h2>
-          <p className="text-text-muted text-lg max-w-2xl mx-auto">
-            Every application milestone, recruiter callback, match rating, and funnel conversion metric — 
-            tracked and updated in real-time.
-          </p>
+          <p className="text-text-muted text-lg max-w-2xl mx-auto">{imp.subtitle}</p>
         </motion.div>
 
         {/* Top metric cards */}
@@ -244,9 +231,9 @@ export default function ImpactDashboard() {
           {/* Chart header */}
           <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-5 border-b border-[rgba(15,23,42,0.06)]">
             <div>
-              <h3 className="font-bold text-text-primary">Hiring Funnel Trajectory</h3>
+              <h3 className="font-bold text-text-primary">{imp.chartTitle}</h3>
               <p className="text-xs text-text-muted mt-0.5">
-                Automated live view - updated {lastUpdated || 'now'} - tabs rotate every few seconds
+                {imp.chartUpdated} {lastUpdated || 'now'}
               </p>
             </div>
 
@@ -275,20 +262,20 @@ export default function ImpactDashboard() {
             >
               <div>
                 <div className="text-[10px] uppercase font-bold tracking-wider" style={{ color: activeTabMeta.color }}>
-                  What this graph means
+                  {imp.graphMeaning}
                 </div>
                 <div className="text-sm font-bold text-text-primary mt-1">{activeTabMeta.insight}</div>
                 <div className="text-xs text-text-muted mt-1">{activeTabMeta.plain}</div>
               </div>
               <div className="grid grid-cols-2 gap-2 min-w-[210px]">
                 <div className="rounded-xl bg-white px-3 py-2 shadow-sm">
-                  <div className="text-[9px] uppercase font-bold text-text-muted">Latest</div>
+                  <div className="text-[9px] uppercase font-bold text-text-muted">{imp.latest}</div>
                   <div className="text-lg font-black" style={{ color: activeTabMeta.color }}>
-                    {formatMetricValue(latestValue, activeTab)}
+                    {formatMetricValue(latestValue, activeTab, imp.format)}
                   </div>
                 </div>
                 <div className="rounded-xl bg-white px-3 py-2 shadow-sm">
-                  <div className="text-[9px] uppercase font-bold text-text-muted">Change</div>
+                  <div className="text-[9px] uppercase font-bold text-text-muted">{imp.change}</div>
                   <div className="text-lg font-black text-emerald-600">
                     {activeTab === 'revenue' ? `${Number(delta * 100).toLocaleString()}` : trendLabel}
                   </div>
@@ -296,7 +283,7 @@ export default function ImpactDashboard() {
               </div>
             </div>
 
-            <ImpactChart activeTab={activeTab} chartData={chartData} />
+            <ImpactChart activeTab={activeTab} chartData={chartData} tabs={tabs} format={imp.format} />
           </div>
         </motion.div>
       </div>

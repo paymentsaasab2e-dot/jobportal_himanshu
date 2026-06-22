@@ -2,36 +2,21 @@
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import {
-  Activity, Cpu, Globe, Shield, TrendingUp, Users, Target, Wifi
+  Activity, Cpu, Globe, Shield, TrendingUp, Users, Target, Wifi, ChevronDown
 } from 'lucide-react'
-import { commandCenterStats } from '@candmain/lib/data'
-
-const statusColors: Record<string, string> = {
-  live: '#10B981',
-  active: '#2563EB',
-  excellent: '#10B981',
-  good: '#3B82F6',
-  growing: '#2563EB',
-}
+import { useCandmainLandingContent } from '@/lib/candmain-landing'
+import type { CandmainStat } from '@/lib/candmain-landing'
 
 const icons = [Activity, Cpu, Globe, Shield, TrendingUp, Users, Target, Wifi]
 
-function StatCard({
-  stat,
-  index,
-}: {
-  stat: (typeof commandCenterStats)[0]
-  index: number
-}) {
+function StatCard({ stat, index }: { stat: CandmainStat; index: number }) {
   const [displayValue, setDisplayValue] = useState(
     typeof stat.value === 'number' ? 0 : stat.value
   )
   const Icon = icons[index % icons.length]
-  const color = statusColors[stat.status] ?? '#64748B'
 
   useEffect(() => {
     if (typeof stat.value !== 'number') return
-    let start = 0
     const target = stat.value
     const duration = 1500 + index * 100
     const startTime = performance.now()
@@ -40,7 +25,7 @@ function StatCard({
       const elapsed = now - startTime
       const progress = Math.min(elapsed / duration, 1)
       const eased = 1 - Math.pow(1 - progress, 3)
-      const current = start + (target - start) * eased
+      const current = target * eased
       setDisplayValue(parseFloat(current.toFixed(1)))
       if (progress < 1) requestAnimationFrame(animate)
     }
@@ -48,94 +33,53 @@ function StatCard({
     return () => cancelAnimationFrame(id)
   }, [stat.value, index])
 
+  const formattedValue =
+    typeof stat.value === 'number'
+      ? `${typeof displayValue === 'number' ? displayValue.toFixed(displayValue % 1 === 0 ? 0 : 1) : displayValue}`
+      : stat.value
+
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
-      transition={{ delay: index * 0.07, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="relative overflow-hidden rounded-2xl p-5 bg-white border border-[rgba(15,23,42,0.07)] shadow-card hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 group"
+      transition={{ delay: index * 0.07, duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+      className={`outcome-card-parent outcome-card-parent--${stat.id}`}
     >
-      {/* Top row */}
-      <div className="flex items-start justify-between mb-4">
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ background: `${color}12` }}
-        >
-          <Icon className="w-4.5 h-4.5" style={{ color }} />
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <span
-            className="relative flex h-1.5 w-1.5"
-          >
-            <span
-              className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-              style={{ background: color }}
-            />
-            <span
-              className="relative inline-flex rounded-full h-1.5 w-1.5"
-              style={{ background: color }}
-            />
-          </span>
-          <span
-            className="text-[10px] font-semibold uppercase tracking-wider"
-            style={{ color }}
-          >
-            {stat.status}
+      <div className="outcome-card">
+        <div className="outcome-card-logo" aria-hidden>
+          <span className="circle circle1" />
+          <span className="circle circle2" />
+          <span className="circle circle3" />
+          <span className="circle circle4" />
+          <span className="circle circle5">
+            <Icon className="w-5 h-5 text-white" strokeWidth={2.25} />
           </span>
         </div>
-      </div>
 
-      {/* Value */}
-      <div className="text-3xl font-bold tracking-tight text-text-primary mb-1 metric-value">
-        {typeof stat.value === 'number'
-          ? `${typeof displayValue === 'number' ? displayValue.toFixed(displayValue % 1 === 0 ? 0 : 1) : displayValue}${stat.unit ?? ''}`
-          : stat.value}
-      </div>
+        <div className="outcome-card-glass" />
 
-      {/* Label */}
-      <div className="text-xs font-medium text-text-muted mb-3">{stat.label}</div>
-
-      {/* Trend */}
-      <div className="flex items-center gap-1.5 pt-3 border-t border-[rgba(15,23,42,0.05)]">
-        <TrendingUp className="w-3 h-3" style={{ color }} />
-        <span className="text-xs font-medium" style={{ color }}>
-          {stat.trend}
-        </span>
-      </div>
-
-      {/* Progress bar for percentages */}
-      {stat.unit === '%' && typeof stat.value === 'number' && (
-        <div className="absolute bottom-0 left-0 h-0.5 w-full bg-[rgba(15,23,42,0.04)]">
-          <motion.div
-            initial={{ scaleX: 0 }}
-            whileInView={{ scaleX: stat.value / 100 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.5 + index * 0.07, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            style={{ background: color, transformOrigin: 'left' }}
-            className="h-full"
-          />
+        <div className="outcome-card-content">
+          <span className="outcome-card-value metric-value">{formattedValue}</span>
+          <span className="outcome-card-label">{stat.label}</span>
         </div>
-      )}
+
+        <div className="outcome-card-bottom">
+          <span className={`outcome-card-status outcome-card-status--${stat.status}`}>
+            <span className="outcome-card-status-dot" style={{ background: 'var(--outcome-brand-bright)' }} />
+            {stat.statusLabel}
+          </span>
+          <div className="outcome-card-more">
+            <span className="outcome-card-more-text line-clamp-2">{stat.trend}</span>
+            <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-70" strokeWidth={2.5} style={{ color: 'var(--outcome-brand)' }} />
+          </div>
+        </div>
+      </div>
     </motion.div>
   )
 }
 
-// Live ticker bar
-function TickerBar() {
-  const items = [
-    'Recruiter viewed profile - Operations Manager role',
-    'Interview scheduled - Finance Analyst opening',
-    'Resume shortlisted - Healthcare Coordinator role',
-    'Profile quality improved to 94%',
-    'New certification verified - Project Management',
-    'Skill check completed - Communication and reporting',
-    'Application moved to hiring manager review',
-    'New role match found with 92% fit',
-    'Offer activity detected - Customer Success role',
-  ]
-
+function TickerBar({ items, label }: { items: string[]; label: string }) {
   return (
     <div className="overflow-hidden rounded-xl bg-[#0F172A] px-6 py-3 flex items-center gap-4">
       <span className="flex-shrink-0 flex items-center gap-2 text-xs font-bold text-white uppercase tracking-widest">
@@ -143,7 +87,7 @@ function TickerBar() {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
           <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-400" />
         </span>
-        Live Feed
+        {label}
       </span>
       <div className="overflow-hidden flex-1">
         <motion.div
@@ -164,10 +108,12 @@ function TickerBar() {
 }
 
 export default function CommandCenter() {
+  const content = useCandmainLandingContent()
+  const { commandCenter: c } = content
+
   return (
-    <section className="section bg-[#FAFBFC]" id="command">
-      <div className="container">
-        {/* Section Header */}
+    <section className="section command-center-section bg-[#FAFBFC]" id="command">
+      <div className="container relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -176,27 +122,22 @@ export default function CommandCenter() {
           className="text-center mb-16"
         >
           <div className="tag-pill tag-blue inline-flex mb-4">
-            <span>Platform Outcomes</span>
+            <span>{c.tag}</span>
           </div>
           <h2 className="text-display-xl text-text-primary mb-4">
-            Trusted Outcomes.{' '}
-            <span className="gradient-text-blue">Measurable Career Growth.</span>
+            {c.title}{' '}
+            <span className="gradient-text-blue">{c.titleAccent}</span>
           </h2>
-          <p className="text-text-muted text-lg max-w-2xl mx-auto">
-            Join an AI-based platform designed to help candidates get discovered, secure interviews,
-            and accelerate career growth through AI-powered matching and recruiter visibility.
-          </p>
+          <p className="text-text-muted text-lg max-w-2xl mx-auto">{c.subtitle}</p>
         </motion.div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {commandCenterStats.map((stat, i) => (
+        <div className="command-center-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 mb-10 py-4">
+          {c.stats.map((stat, i) => (
             <StatCard key={stat.id} stat={stat} index={i} />
           ))}
         </div>
 
-        {/* Live Ticker */}
-        <TickerBar />
+        <TickerBar items={c.ticker} label={c.liveFeed} />
       </div>
     </section>
   )

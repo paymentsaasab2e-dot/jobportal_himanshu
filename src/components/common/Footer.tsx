@@ -56,7 +56,8 @@ export default function Footer() {
   const t = useTranslations();
   const normalizedPath = stripLocaleFromPathname(pathname || "/");
   const isLandingPage = normalizedPath === "/";
-  const isEmployersPage = normalizedPath === "/employers";
+  const isEmployersPage =
+    normalizedPath === "/employers" || normalizedPath.startsWith("/employers/");
 
   const platformLinks = (isLoggedIn && !isLandingPage && !isEmployersPage) ? [
     { href: "/candidate-dashboard", label: t("nav.dashboard") },
@@ -97,7 +98,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-transparent font-sans text-slate-600">
-      <div className="mx-auto max-w-[1240px] px-6 py-10">
+      <div className="mx-auto max-w-[1680px] px-6 py-10">
         <div className="flex flex-col gap-10 lg:flex-row lg:justify-between">
           <div className="flex max-w-sm flex-col gap-4">
             <Link href={localizePath("/", locale)} className="inline-flex transition-opacity hover:opacity-90">
@@ -143,7 +144,7 @@ export default function Footer() {
                       href={localizePath(item.href, locale)}
                       target={item.external ? "_blank" : undefined}
                       rel={item.external ? "noopener noreferrer" : undefined}
-                      className="text-[14px] font-medium transition-colors hover:text-[var(--brand-primary)]"
+                      className="text-[14px] font-medium transition-colors hover:text-(--brand-primary)"
                     >
                       {item.label}
                     </Link>
@@ -155,13 +156,15 @@ export default function Footer() {
         </div>
       </div>
 
+      {!isEmployersPage && (
       <div className="border-t border-slate-200/70 bg-white/40">
-        <div className="mx-auto flex max-w-[1240px] items-center justify-center px-6 py-4 text-center">
+        <div className="mx-auto flex max-w-[1680px] items-center justify-center px-6 py-4 text-center">
           <p className="text-[13px] font-medium">
             (c) {currentYear} SAASA B2E. {t("footer.rightsReserved")}
           </p>
         </div>
       </div>
+      )}
     </footer>
   );
 }

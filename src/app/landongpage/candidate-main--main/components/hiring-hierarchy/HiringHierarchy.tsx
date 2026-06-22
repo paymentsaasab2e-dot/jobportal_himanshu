@@ -1,26 +1,15 @@
 'use client'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import {
-  FileText, Search, MessageSquare, Code2, Users, Trophy,
-  CheckCircle2, Clock, Zap, TrendingUp, ArrowDown, Building2, Star
+  FileText, MessageSquare, Code2, Users, Trophy,
+  CheckCircle2, Clock, TrendingUp, ArrowDown, Building2
 } from 'lucide-react'
+import { useCandmainLandingContent } from '@/lib/candmain-landing'
+import type { CandmainHiringStage } from '@/lib/candmain-landing'
 
-// ─── Types ───────────────────────────────
-interface Stage {
-  id: string
-  step: number
-  title: string
-  subtitle: string
-  icon: any
-  color: string
-  bg: string
-  border: string
-  duration: string
-  passRate: string
-  tip?: string
-  companies: string[]
-  liveCount: number
+interface Stage extends CandmainHiringStage {
+  icon: typeof FileText
 }
 
 interface FunnelMetric {
@@ -47,98 +36,14 @@ const funnelGradients = [
   ['#059669', '#34D399'],
 ]
 
-// ─── Hiring Stages Data ──────────────────
-const hiringStages: Stage[] = [
-  {
-    id: 'application',
-    step: 1,
-    title: 'Resume Screening',
-    subtitle: 'AI checks resume fit, keywords, and role match.',
-    icon: FileText,
-    color: '#2563EB',
-    bg: 'rgba(37,99,235,0.06)',
-    border: 'rgba(37,99,235,0.18)',
-    duration: '24–72 hrs',
-    passRate: '~15%',
-    tip: 'Improve keywords and keep resume format clean.',
-    companies: ['Resume Scan', 'Role Match', 'Clear Fit'],
-    liveCount: 12500,
-  },
-  {
-    id: 'recruiter',
-    step: 2,
-    title: 'Recruiter Screen',
-    subtitle: 'Recruiter checks interest, salary range, and availability.',
-    icon: MessageSquare,
-    color: '#0EA5E9',
-    bg: 'rgba(14,165,233,0.08)',
-    border: 'rgba(14,165,233,0.24)',
-    duration: '30–45 min',
-    passRate: '~60%',
-    tip: 'Prepare your pitch, salary range, and availability.',
-    companies: ['Intent', 'Salary Fit', 'Availability'],
-    liveCount: 1875,
-  },
-  {
-    id: 'technical',
-    step: 3,
-    title: 'Skill Assessment',
-    subtitle: 'Skills are tested through tasks, case work, or portfolio review.',
-    icon: Code2,
-    color: '#7C3AED',
-    bg: 'rgba(124,58,237,0.08)',
-    border: 'rgba(124,58,237,0.24)',
-    duration: '1–3 hrs',
-    passRate: '~40%',
-    companies: ['Skill Test', 'Case Study', 'Portfolio'],
-    liveCount: 750,
-  },
-  {
-    id: 'hiring-manager',
-    step: 4,
-    title: 'Manager Interview',
-    subtitle: 'Manager reviews experience, team fit, and business impact.',
-    icon: Users,
-    color: '#F97316',
-    bg: 'rgba(249,115,22,0.08)',
-    border: 'rgba(249,115,22,0.24)',
-    duration: '45–60 min',
-    passRate: '~55%',
-    tip: 'Use numbers to explain business impact.',
-    companies: ['Impact', 'Team Fit', 'Leadership'],
-    liveCount: 412,
-  },
-  {
-    id: 'panel',
-    step: 5,
-    title: 'Panel Interviews',
-    subtitle: 'Final team rounds validate consistency and collaboration.',
-    icon: Building2,
-    color: '#EC4899',
-    bg: 'rgba(236,72,153,0.08)',
-    border: 'rgba(236,72,153,0.24)',
-    duration: '3–6 hrs',
-    passRate: '~70%',
-    tip: 'Keep answers consistent across all rounds.',
-    companies: ['Team Loop', 'Culture Fit', 'Final Review'],
-    liveCount: 289,
-  },
-  {
-    id: 'offer',
-    step: 6,
-    title: 'Offer & Onboarding',
-    subtitle: 'Offer, background check, negotiation, and joining steps.',
-    icon: Trophy,
-    color: '#059669',
-    bg: 'rgba(5,150,105,0.06)',
-    border: 'rgba(5,150,105,0.18)',
-    duration: '1–2 weeks',
-    passRate: '~85%',
-    tip: 'Review offer, negotiate, and complete checks.',
-    companies: ['Offer', 'BGV', 'Onboarding'],
-    liveCount: 246,
-  },
-]
+const stageIcons: Record<string, typeof FileText> = {
+  application: FileText,
+  recruiter: MessageSquare,
+  technical: Code2,
+  'hiring-manager': Users,
+  panel: Building2,
+  offer: Trophy,
+}
 
 // ─── Company Pill ─────────────────────────
 function CompanyPill({ name, index, color }: { name: string; index: number; color: string }) {
@@ -178,11 +83,12 @@ function LiveCounter({ value, color }: { value: number; color: string }) {
 }
 
 // ─── Stage Card ───────────────────────────
-function StageCard({ stage, index, isActive, onClick }: {
+function StageCard({ stage, index, isActive, onClick, labels }: {
   stage: Stage
   index: number
   isActive: boolean
   onClick: () => void
+  labels: { stage: string; live: string; pass: string }
 }) {
   const Icon = stage.icon
   const [from, to] = funnelGradients[index % funnelGradients.length]
@@ -216,7 +122,7 @@ function StageCard({ stage, index, isActive, onClick }: {
               className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
               style={{ color: stage.color }}
             >
-              Stage {stage.step}
+              {labels.stage} {stage.step}
             </div>
             <h3 className="text-sm font-bold text-text-primary leading-tight">{stage.title}</h3>
           </div>
@@ -237,7 +143,7 @@ function StageCard({ stage, index, isActive, onClick }: {
             </span>
             <LiveCounter value={stage.liveCount} color={stage.color} />
           </div>
-          <div className="text-[9px] text-text-muted font-medium">live now</div>
+          <div className="text-[9px] text-text-muted font-medium">{labels.live}</div>
         </div>
       </div>
 
@@ -258,37 +164,16 @@ function StageCard({ stage, index, isActive, onClick }: {
           style={{ background: `${stage.color}10`, color: stage.color }}
         >
           <TrendingUp className="w-3 h-3" />
-          Pass {stage.passRate}
+          {labels.pass} {stage.passRate}
         </div>
       </div>
 
       {/* Companies */}
-      <div className="flex flex-wrap gap-1.5 mb-4">
+      <div className="flex flex-wrap gap-1.5">
         {stage.companies.map((co, i) => (
           <CompanyPill key={co} name={co} index={i} color={stage.color} />
         ))}
       </div>
-
-      {/* Pro tip - expandable */}
-      <AnimatePresence>
-        {isActive && stage.tip && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="overflow-hidden"
-          >
-            <div
-              className="flex items-start gap-2 p-3 rounded-xl text-xs font-medium leading-relaxed"
-              style={{ background: `${stage.color}10`, color: stage.color, border: `1px solid ${stage.color}20` }}
-            >
-              <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-              <span>{stage.tip}</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   )
 }
@@ -298,10 +183,12 @@ function FunnelBar({
   stage,
   index,
   metric,
+  labels,
 }: {
   stage: Stage
   index: number
   metric: FunnelMetric
+  labels: { stage: string; live: string }
 }) {
   const width = `${metric.width}%`
   const [from, to] = funnelGradients[index % funnelGradients.length]
@@ -316,7 +203,7 @@ function FunnelBar({
       className="flex items-center gap-3"
     >
       <div className="w-24 text-right text-[10px] font-bold text-text-muted whitespace-nowrap">
-        Stage {stage.step}
+        {labels.stage} {stage.step}
       </div>
       <div
         className="flex-1 h-7 rounded-lg overflow-hidden relative"
@@ -333,7 +220,7 @@ function FunnelBar({
           transition={{ delay: 0.1 + index * 0.03, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
         >
           <span className="text-[10px] font-bold text-white whitespace-nowrap">
-            {stage.title} - {metric.liveCount.toLocaleString()} live
+            {stage.title} - {metric.liveCount.toLocaleString()} {labels.live}
           </span>
         </motion.div>
       </div>
@@ -348,6 +235,15 @@ function FunnelBar({
 }
 // ─── Main Component ───────────────────────
 export default function HiringHierarchy() {
+  const content = useCandmainLandingContent()
+  const h = content.hiring
+  const hiringStages: Stage[] = h.stages.map((stage) => ({
+    ...stage,
+    icon: stageIcons[stage.id] ?? FileText,
+  }))
+  const cardLabels = { stage: h.stageLabel, live: h.liveSuffix, pass: h.passPrefix }
+  const funnelLabels = { stage: h.stageLabel, live: h.liveSuffix }
+
   const [activeStage, setActiveStage] = useState<string | null>('application')
   const [funnelMetrics, setFunnelMetrics] = useState(baseFunnelMetrics)
   const [lastUpdated, setLastUpdated] = useState(new Date())
@@ -355,17 +251,6 @@ export default function HiringHierarchy() {
   const toggleStage = (id: string) => {
     setActiveStage((prev) => (prev === id ? null : id))
   }
-
-  // Auto-cycle through stages
-  useEffect(() => {
-    const stages = hiringStages.map((s) => s.id)
-    let i = 0
-    const interval = setInterval(() => {
-      i = (i + 1) % stages.length
-      setActiveStage(stages[i])
-    }, 2200)
-    return () => clearInterval(interval)
-  }, [])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -402,15 +287,13 @@ export default function HiringHierarchy() {
           className="text-center mb-16"
         >
           <div className="tag-pill tag-blue inline-flex mb-4">
-            <span>Hiring Intelligence</span>
+            <span>{h.tag}</span>
           </div>
           <h2 className="text-display-xl text-text-primary mb-4">
-            The Complete{' '}
-            <span className="gradient-text-blue">Hiring Process Hierarchy</span>
+            {h.title}{' '}
+            <span className="gradient-text-blue">{h.titleAccent}</span>
           </h2>
-          <p className="text-text-muted text-lg max-w-2xl mx-auto">
-            See how candidates move from application to offer across tech, business, finance, healthcare, sales, operations, design, and more.
-          </p>
+          <p className="text-text-muted text-lg max-w-2xl mx-auto">{h.subtitle}</p>
         </motion.div>
 
         {/* ── Funnel Overview ─────────────────── */}
@@ -423,20 +306,20 @@ export default function HiringHierarchy() {
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="font-bold text-text-primary text-sm">Live Hiring Funnel</h3>
+              <h3 className="font-bold text-text-primary text-sm">{h.funnelTitle}</h3>
               <p className="text-xs text-text-muted mt-0.5">
-                Real-time candidate progression across all 6 stages - Updated {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                {h.funnelUpdated} {lastUpdated.toLocaleTimeString(content.dateLocale, { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              Live Data
+              {h.liveData}
             </div>
           </div>
 
           <div className="space-y-3">
             {hiringStages.map((stage, i) => (
-              <FunnelBar key={stage.id} stage={stage} index={i} metric={funnelMetrics[i]} />
+              <FunnelBar key={stage.id} stage={stage} index={i} metric={funnelMetrics[i]} labels={funnelLabels} />
             ))}
           </div>
 
@@ -444,25 +327,17 @@ export default function HiringHierarchy() {
           <div className="flex items-center gap-6 mt-5 pt-4 border-t border-[rgba(15,23,42,0.06)]">
             <div className="flex items-center gap-2 text-xs text-text-muted">
               <div className="w-3 h-3 rounded bg-[rgba(15,23,42,0.06)]" />
-              Total applicant pool
+              {h.totalPool}
             </div>
             <div className="flex items-center gap-2 text-xs text-text-muted">
               <TrendingUp className="w-3 h-3 text-blue-500" />
-              % and live counts refresh in real time
+              {h.refreshNote}
             </div>
           </div>
         </motion.div>
 
         {/* ── Stage Cards Grid ─────────────────── */}
         <div className="mb-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Star className="w-4 h-4 text-blue-500" />
-            <span className="text-sm font-bold text-text-primary">
-              Click any stage to reveal HR Yantra portal tips
-            </span>
-            <span className="text-xs text-text-muted">(auto-cycling every 2.2s)</span>
-          </div>
-
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
             {hiringStages.map((stage, i) => (
               <div key={stage.id} className="relative">
@@ -471,6 +346,7 @@ export default function HiringHierarchy() {
                   index={i}
                   isActive={activeStage === stage.id}
                   onClick={() => toggleStage(stage.id)}
+                  labels={cardLabels}
                 />
 
                 {/* Connector arrow between rows */}
@@ -500,10 +376,10 @@ export default function HiringHierarchy() {
         >
           <div className="px-8 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { label: 'Avg. End-to-End Hire Time', value: '4–8 Weeks', icon: Clock },
-              { label: 'Offers from 12.5K+ Applications', value: '~246 Offers', icon: Trophy },
-              { label: 'HR Yantra Interview Success Rate', value: '94%', icon: CheckCircle2 },
-              { label: 'Salary Uplift via Negotiation Tips', value: '+21% avg', icon: TrendingUp },
+              { label: h.banner[0].label, value: h.banner[0].value, icon: Clock },
+              { label: h.banner[1].label, value: h.banner[1].value, icon: Trophy },
+              { label: h.banner[2].label, value: h.banner[2].value, icon: CheckCircle2 },
+              { label: h.banner[3].label, value: h.banner[3].value, icon: TrendingUp },
             ].map(({ label, value, icon: Icon }, i) => (
               <motion.div
                 key={label}
