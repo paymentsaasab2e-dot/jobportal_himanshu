@@ -1,12 +1,18 @@
 'use client'
 import { motion } from 'framer-motion'
 import { ArrowUpRight, Mail, Linkedin, Twitter, Calendar } from 'lucide-react'
-import { candidate, portalRoutes } from '@candmain/lib/data'
+import { useLocale } from 'next-intl'
+import { useCandmainLandingContent } from '@/lib/candmain-landing'
+import { AppLocale, localizePath } from '@/lib/i18n'
+import { candidate } from '@candmain/lib/data'
 
 export default function CTASection() {
+  const content = useCandmainLandingContent()
+  const c = content.cta
+  const locale = useLocale() as AppLocale
+
   return (
     <section className="section relative overflow-hidden" id="cta">
-      {/* Background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-[#FAFBFC] via-white to-[#F0F4FF]" />
         <motion.div
@@ -15,23 +21,18 @@ export default function CTASection() {
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full"
           style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%)' }}
         />
-        <motion.div
-          animate={{ scale: [1, 1.08, 1], opacity: [0.05, 0.08, 0.05] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%)' }}
-        />
-        {/* Grid */}
-        <div className="absolute inset-0 opacity-[0.03]"
+        <div
+          className="absolute inset-0 opacity-[0.03]"
           style={{
-            backgroundImage: 'linear-gradient(rgba(15,23,42,1) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,1) 1px, transparent 1px)',
+            backgroundImage:
+              'linear-gradient(rgba(15,23,42,1) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,1) 1px, transparent 1px)',
             backgroundSize: '80px 80px',
-          }} />
+          }}
+        />
       </div>
 
       <div className="container relative z-10">
         <div className="max-w-3xl mx-auto text-center">
-          {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -43,10 +44,9 @@ export default function CTASection() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
             </span>
-            <span className="text-xs font-semibold text-blue-700">Join the HR Yantra candidate network</span>
+            <span className="text-xs font-semibold text-blue-700">{c.badge}</span>
           </motion.div>
 
-          {/* Headline */}
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -54,11 +54,10 @@ export default function CTASection() {
             transition={{ delay: 0.1, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="text-display-2xl text-text-primary mb-6"
           >
-            {candidate.tagline}{' '}
-            <span className="gradient-text-mixed">Start on Explore Jobs.</span>
+            {c.tagline}{' '}
+            <span className="gradient-text-mixed">{c.accent}</span>
           </motion.h2>
 
-          {/* Subheadline */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -66,10 +65,9 @@ export default function CTASection() {
             transition={{ delay: 0.2, duration: 0.6 }}
             className="text-lg text-text-muted leading-relaxed mb-12"
           >
-            Search live openings, complete your profile, apply with confidence, and track every step in Applications and your Candidate Dashboard.
+            {c.subtitle}
           </motion.p>
 
-          {/* Role Tags */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -77,22 +75,13 @@ export default function CTASection() {
             transition={{ delay: 0.3, duration: 0.5 }}
             className="flex flex-wrap justify-center gap-2 mb-12"
           >
-            {[
-              'Technology',
-              'Business & Strategy',
-              'Finance & Banking',
-              'Sales & Marketing',
-              'HR & Operations',
-              'Healthcare & Education',
-              'Design & Customer Success',
-            ].map((role) => (
+            {c.roles.map((role) => (
               <span key={role} className="tag-pill tag-neutral text-xs">
                 {role}
               </span>
             ))}
           </motion.div>
 
-          {/* Primary CTA */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -101,23 +90,22 @@ export default function CTASection() {
             className="flex flex-wrap justify-center gap-3 mb-12"
           >
             <a
-              href={portalRoutes.exploreJobs}
+              href={localizePath('/explore-jobs', locale)}
               className="group flex items-center gap-3 px-8 py-4 text-white font-semibold rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-blue-glow text-base"
               style={{ background: 'linear-gradient(135deg, #28A8E1, #28A8DF)' }}
             >
-              {candidate.ctaPrimary}
+              {c.exploreJobs}
               <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </a>
             <a
-              href={portalRoutes.whatsappLogin}
+              href={localizePath('/whatsapp', locale)}
               className="flex items-center gap-3 px-8 py-4 text-text-primary font-semibold rounded-2xl border border-[rgba(15,23,42,0.12)] hover:border-[rgba(15,23,42,0.22)] bg-white hover:-translate-y-1 transition-all duration-300 shadow-card text-base"
             >
               <Calendar className="w-5 h-5" />
-              {candidate.ctaSecondary}
+              {c.whatsappLogin}
             </a>
           </motion.div>
 
-          {/* Social links */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -129,7 +117,7 @@ export default function CTASection() {
               { icon: Linkedin, label: 'LinkedIn', href: candidate.linkedin, color: '#0A66C2' },
               { icon: Twitter, label: 'Twitter', href: candidate.twitter, color: '#1DA1F2' },
               { icon: Mail, label: 'Email', href: `mailto:${candidate.email}`, color: '#FF6B35' },
-            ].map(({ icon: Icon, label, href, color }) => (
+            ].map(({ icon: Icon, label, href }) => (
               <a
                 key={label}
                 href={href}

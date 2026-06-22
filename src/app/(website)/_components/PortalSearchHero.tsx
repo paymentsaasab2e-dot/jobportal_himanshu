@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useId } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import {
   buildSearchJobsUrl,
+  computeShineRingMetrics,
   getSuggestionLabel,
   HighlightMatch,
   portalSearchHeroStyles,
@@ -32,6 +33,37 @@ export function PortalSearchHero() {
   const [isSuggesting, setIsSuggesting] = useState(false);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const locationInputRef = useRef<HTMLInputElement | null>(null);
+  const shineWrapperRef = useRef<HTMLDivElement | null>(null);
+  const shineGradId = useId().replace(/:/g, '');
+  const [shineRing, setShineRing] = useState<ReturnType<
+    typeof computeShineRingMetrics
+  > | null>(null);
+
+  useEffect(() => {
+    const el = shineWrapperRef.current;
+    if (!el) return;
+
+    const updateRing = () => {
+      const width = el.offsetWidth;
+      const height = el.offsetHeight;
+      if (width === 0 || height === 0) return;
+      const isPill = window.matchMedia('(min-width: 640px)').matches;
+      const metrics = computeShineRingMetrics(width, height, isPill);
+      setShineRing(metrics);
+    };
+
+    updateRing();
+    const ro = new ResizeObserver(updateRing);
+    ro.observe(el);
+    window.addEventListener('resize', updateRing);
+    const pillMq = window.matchMedia('(min-width: 640px)');
+    pillMq.addEventListener('change', updateRing);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', updateRing);
+      pillMq.removeEventListener('change', updateRing);
+    };
+  }, [searchMode]);
 
   // Debounced Search Suggestions
   useEffect(() => {
@@ -263,12 +295,11 @@ export function PortalSearchHero() {
         {/* ========================================================= */}
         <section className="relative pt-28 pb-12 lg:pt-32 lg:pb-20 overflow-hidden bg-white border-b border-slate-100 flex items-center justify-center">
           <TechCircuit />
-          {/* Subtle modern background elements */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_center,rgba(40,168,225,0.08)_0%,rgba(255,255,255,0)_70%)] pointer-events-none" />
           <div className="absolute top-0 right-1/4 -mt-[10%] w-[500px] h-[500px] bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
           <div className="absolute top-1/4 left-1/4 -ml-[10%] w-[600px] h-[600px] bg-sky-400/10 blur-[150px] rounded-full pointer-events-none" />
 
-          <div className="relative z-10 w-full max-w-5xl mx-auto px-6">
+          <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col items-center justify-center text-center">
 
               <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col items-center">
@@ -278,24 +309,123 @@ export function PortalSearchHero() {
                   <span className="text-[12px] font-black uppercase tracking-[0.18em] text-sky-700">{t("landing.badge")}</span>
                 </div>
 
-                <h1 className="text-4xl md:text-[3.75rem] font-black tracking-tight text-slate-900 mb-5 leading-[1.12]">
+                <h1 className="text-5xl md:text-[4.25rem] font-black tracking-tight text-slate-900 mb-5 leading-[1.1]">
                   {t("landing.heroLine1")}<br className="hidden sm:block" />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600">
                     {t("landing.heroLine2")}
                   </span>
                 </h1>
 
-                <p className="text-[17px] text-slate-500 font-medium max-w-2xl leading-relaxed">
+                <p className="text-lg md:text-xl text-slate-500 font-medium max-w-3xl leading-relaxed">
                   {t("landing.heroSubtitle")}
                 </p>
               </div>
 
-              {/* Hero Search Box */}
-              <form
+              {/* Hero Search Box — pill shine border */}
+              <div
+                ref={shineWrapperRef}
+                className={`hero-search-shine-wrapper ${searchMode === 'ai' ? 'hero-search-shine-wrapper--ai' : ''}`}
+              >
+                {shineRing && (() => {
+                  const beamGradSpan = Math.max(64, shineRing.perimeter * 0.07);
+                  const gradX2 = shineRing.x + beamGradSpan;
+                  const isAi = searchMode === 'ai';
+                  const blueStart = isAi ? '#38bdf8' : '#0ea5e9';
+                  const blueMid = isAi ? '#28a8e1' : '#00bfff';
+                  const orangeMid = '#fc9620';
+                  const orangeEnd = '#f28a1d';
+                  return (
+                  <svg
+                    className="hero-search-shine-svg"
+                    aria-hidden
+                    viewBox={`0 0 ${shineRing.width} ${shineRing.height}`}
+                  >
+                    <defs>
+                      <linearGradient
+                        id={`${shineGradId}-beam`}
+                        gradientUnits="userSpaceOnUse"
+                        x1={shineRing.x}
+                        y1={shineRing.y}
+                        x2={gradX2}
+                        y2={shineRing.y}
+                        spreadMethod="repeat"
+                      >
+                        <stop offset="0%" stopColor={blueStart} stopOpacity="0" />
+                        <stop offset="10%" stopColor={blueStart} />
+                        <stop offset="35%" stopColor={blueMid} />
+                        <stop offset="48%" stopColor="#ffffff" stopOpacity="0.9" />
+                        <stop offset="58%" stopColor={orangeMid} />
+                        <stop offset="82%" stopColor={orangeEnd} />
+                        <stop offset="100%" stopColor={orangeEnd} stopOpacity="0" />
+                      </linearGradient>
+                      <linearGradient
+                        id={`${shineGradId}-glow`}
+                        gradientUnits="userSpaceOnUse"
+                        x1={shineRing.x}
+                        y1={shineRing.y}
+                        x2={gradX2}
+                        y2={shineRing.y}
+                        spreadMethod="repeat"
+                      >
+                        <stop offset="0%" stopColor={blueStart} stopOpacity="0" />
+                        <stop offset="15%" stopColor={blueMid} stopOpacity="0.55" />
+                        <stop offset="50%" stopColor={orangeMid} stopOpacity="0.5" />
+                        <stop offset="85%" stopColor={orangeEnd} stopOpacity="0.55" />
+                        <stop offset="100%" stopColor={orangeEnd} stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    <rect
+                      className="hero-search-shine-track hero-search-shine-glow-track"
+                      x={shineRing.x}
+                      y={shineRing.y}
+                      width={shineRing.rw}
+                      height={shineRing.rh}
+                      rx={shineRing.r}
+                      ry={shineRing.r}
+                      pathLength={100}
+                      strokeDasharray="7 93"
+                      strokeDashoffset={0}
+                      stroke={`url(#${shineGradId}-glow)`}
+                    >
+                      <animate
+                        attributeName="stroke-dashoffset"
+                        from="0"
+                        to="-100"
+                        dur="10s"
+                        repeatCount="indefinite"
+                        calcMode="linear"
+                      />
+                    </rect>
+                    <rect
+                      className="hero-search-shine-track hero-search-shine-beam-track"
+                      x={shineRing.x}
+                      y={shineRing.y}
+                      width={shineRing.rw}
+                      height={shineRing.rh}
+                      rx={shineRing.r}
+                      ry={shineRing.r}
+                      pathLength={100}
+                      strokeDasharray="7 93"
+                      strokeDashoffset={0}
+                      stroke={`url(#${shineGradId}-beam)`}
+                    >
+                      <animate
+                        attributeName="stroke-dashoffset"
+                        from="0"
+                        to="-100"
+                        dur="10s"
+                        repeatCount="indefinite"
+                        calcMode="linear"
+                      />
+                    </rect>
+                  </svg>
+                  );
+                })()}
+                <form
                 onSubmit={handleSearchSubmit}
-                className={`w-full rounded-[32px] sm:rounded-full p-3.5 shadow-2xl ring-1 mb-14 flex flex-col sm:flex-row gap-3 relative z-20 group transition-all duration-700 ease-in-out ${searchMode === 'ai'
-                    ? 'bg-slate-950 ring-white/10 shadow-[0_0_50px_-12px_rgba(37,99,235,0.25)]'
-                    : 'bg-white/90 backdrop-blur-2xl ring-slate-900/5 shadow-[0_24px_60px_-15px_rgba(40,168,225,0.2)]'
+                className={`hero-search-shine-inner w-full rounded-[28px] sm:rounded-full p-3.5 flex flex-col sm:flex-row gap-3 relative group transition-all duration-700 ease-in-out ${searchMode === 'ai'
+                    ? 'bg-slate-950/98 shadow-[0_0_40px_-12px_rgba(56,189,248,0.2)]'
+                    : 'bg-white shadow-[0_8px_32px_-8px_rgba(40,168,225,0.12)]'
                   }`}
               >
 
@@ -518,46 +648,44 @@ export function PortalSearchHero() {
                   </button>
                 </div>
               </form>
+              </div>
 
-              {/* Industry / Domain Category Grid */}
+              {/* Industry / Domain Category Grid — iPhone glassmorphism */}
               <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
-                <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.25em] text-center mb-6">{t("landing.exploreByCategory")}</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <p className="text-xs md:text-sm text-slate-400 font-black uppercase tracking-[0.25em] text-center mb-6">{t("landing.exploreByCategory")}</p>
+                <div className="category-glass-scene">
+                  <div className="category-glass-orb category-glass-orb-1" aria-hidden />
+                  <div className="category-glass-orb category-glass-orb-2" aria-hidden />
+                  <div className="category-glass-orb category-glass-orb-3" aria-hidden />
+                  <div className="category-glass-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   {([
-                    { label: t("landing.categoryRemote"), Icon: Home, q: 'Remote', color: 'text-sky-600', bg: 'bg-sky-50' },
-                    { label: t("landing.categoryCorporate"), Icon: Building2, q: 'MNC', color: 'text-violet-600', bg: 'bg-violet-50' },
-                    { label: t("landing.categoryAnalytics"), Icon: BarChart2, q: 'Analytics', color: 'text-amber-600', bg: 'bg-amber-50' },
-                    { label: t("landing.categoryLogistics"), Icon: Package, q: 'Supply Chain', color: 'text-orange-600', bg: 'bg-orange-50' },
-                    { label: t("landing.categoryFresher"), Icon: GraduationCap, q: 'Fresher', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                    { label: t("landing.categorySoftware"), Icon: Code2, q: 'Software Engineer', color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: t("landing.categorySales"), Icon: TrendingUp, q: 'Sales', color: 'text-rose-600', bg: 'bg-rose-50' },
-                    { label: t("landing.categoryFinance"), Icon: BadgeDollarSign, q: 'Banking Finance', color: 'text-green-600', bg: 'bg-green-50' },
-                    { label: t("landing.categoryLeadership"), Icon: Users, q: 'Project Manager', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                    { label: t("landing.categoryEngineering"), Icon: Cpu, q: 'Engineering', color: 'text-slate-600', bg: 'bg-slate-100' },
-                    { label: t("landing.categoryData"), Icon: Database, q: 'Data Science', color: 'text-pink-600', bg: 'bg-pink-50' },
+                    { label: t("landing.categoryRemote"), Icon: Home, q: 'Remote', color: 'text-sky-600', tint: 'rgba(56, 189, 248, 0.22)' },
+                    { label: t("landing.categoryCorporate"), Icon: Building2, q: 'MNC', color: 'text-violet-600', tint: 'rgba(167, 139, 250, 0.22)' },
+                    { label: t("landing.categoryAnalytics"), Icon: BarChart2, q: 'Analytics', color: 'text-amber-600', tint: 'rgba(251, 191, 36, 0.22)' },
+                    { label: t("landing.categoryLogistics"), Icon: Package, q: 'Supply Chain', color: 'text-orange-600', tint: 'rgba(251, 146, 60, 0.22)' },
+                    { label: t("landing.categoryFresher"), Icon: GraduationCap, q: 'Fresher', color: 'text-emerald-600', tint: 'rgba(52, 211, 153, 0.22)' },
+                    { label: t("landing.categorySoftware"), Icon: Code2, q: 'Software Engineer', color: 'text-blue-600', tint: 'rgba(59, 130, 246, 0.22)' },
+                    { label: t("landing.categorySales"), Icon: TrendingUp, q: 'Sales', color: 'text-rose-600', tint: 'rgba(244, 63, 94, 0.2)' },
+                    { label: t("landing.categoryFinance"), Icon: BadgeDollarSign, q: 'Banking Finance', color: 'text-green-600', tint: 'rgba(34, 197, 94, 0.2)' },
+                    { label: t("landing.categoryLeadership"), Icon: Users, q: 'Project Manager', color: 'text-indigo-600', tint: 'rgba(99, 102, 241, 0.22)' },
+                    { label: t("landing.categoryEngineering"), Icon: Cpu, q: 'Engineering', color: 'text-slate-600', tint: 'rgba(100, 116, 139, 0.18)' },
+                    { label: t("landing.categoryData"), Icon: Database, q: 'Data Science', color: 'text-pink-600', tint: 'rgba(236, 72, 153, 0.2)' },
                   ] as const).map(cat => (
                     <button
                       key={cat.label}
                       type="button"
                       onClick={() => router.push(buildSearchJobsUrl(locale, cat.q, ""))}
-                      className="group relative flex items-center gap-4 bg-white border border-slate-200/90 rounded-2xl px-6 py-4.5 text-left transition-all duration-300 shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 cursor-pointer overflow-hidden"
+                      className="category-glass-card"
+                      style={{ ['--glass-tint' as string]: cat.tint }}
                     >
-                      {/* Left-to-Right Hover Background */}
-                      <div className="absolute inset-0 w-0 bg-slate-900 transition-all duration-500 ease-out group-hover:w-full z-0 opacity-[0.98]" />
-
-                      {/* Icon Container */}
-                      <span className={`relative z-10 w-11 h-11 rounded-2xl ${cat.bg} border border-transparent flex items-center justify-center shrink-0 transition-all duration-300 group-hover:bg-white/10 group-hover:scale-110 group-hover:border-white/20 shadow-sm`}>
-                        <cat.Icon className={`w-5.5 h-5.5 ${cat.color} group-hover:text-white transition-colors duration-300`} strokeWidth={2.5} />
+                      <span className="category-glass-icon">
+                        <cat.Icon className={`w-5 h-5 ${cat.color}`} strokeWidth={2.5} />
                       </span>
-
-                      {/* Text Section */}
-                      <div className="relative z-10 flex-1 flex flex-col min-w-0">
-                        <span className="text-[15px] font-bold text-slate-800 group-hover:text-white transition-colors duration-300 leading-tight">{cat.label}</span>
-                      </div>
-
-                      <ChevronRight className="relative z-10 w-4 h-4 text-slate-300 group-hover:text-white group-hover:translate-x-0.5 shrink-0 transition-all duration-300" />
+                      <span className="category-glass-label">{cat.label}</span>
+                      <ChevronRight className="category-glass-chevron w-4 h-4" />
                     </button>
                   ))}
+                  </div>
                 </div>
               </div>
 

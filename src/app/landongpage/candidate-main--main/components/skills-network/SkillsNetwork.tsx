@@ -1,6 +1,6 @@
 'use client'
 import { motion } from 'framer-motion'
-import { useCallback, useEffect, useState } from 'react'
+import { useMemo, useEffect } from 'react'
 import ReactFlow, {
   Background,
   Controls,
@@ -13,8 +13,9 @@ import ReactFlow, {
   MarkerType,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
+import { useCandmainLandingContent } from '@/lib/candmain-landing'
 
-const initialNodes: Node[] = [
+const baseNodes: Node[] = [
   {
     id: 'center',
     position: { x: 350, y: 250 },
@@ -120,8 +121,22 @@ const initialEdges: Edge[] = [
 ]
 
 export default function SkillsNetwork() {
-  const [nodes, , onNodesChange] = useNodesState(initialNodes)
+  const content = useCandmainLandingContent()
+  const s = content.skills
+  const initialNodes = useMemo(
+    () =>
+      baseNodes.map((node) => ({
+        ...node,
+        data: { label: s.nodes[node.id] ?? node.data.label },
+      })),
+    [s.nodes]
+  )
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, , onEdgesChange] = useEdgesState(initialEdges)
+
+  useEffect(() => {
+    setNodes(initialNodes)
+  }, [initialNodes, setNodes])
 
   return (
     <section className="section bg-[#FAFBFC]" id="skills">
@@ -135,15 +150,13 @@ export default function SkillsNetwork() {
           className="text-center mb-16"
         >
           <div className="tag-pill tag-blue inline-flex mb-4">
-            <span>Live Hiring Intelligence</span>
+            <span>{s.tag}</span>
           </div>
           <h2 className="text-display-xl text-text-primary mb-4">
-            What Recruiters{' '}
-            <span className="gradient-text-blue">Care About</span>
+            {s.title}{' '}
+            <span className="gradient-text-blue">{s.titleAccent}</span>
           </h2>
-          <p className="text-text-muted text-lg max-w-2xl mx-auto">
-            Recruiters look at clear experience, relevant skills, communication, role fit, growth potential, and proof that a candidate can create value in any field.
-          </p>
+          <p className="text-text-muted text-lg max-w-2xl mx-auto">{s.subtitle}</p>
         </motion.div>
 
         {/* React Flow Graph */}
@@ -178,10 +191,7 @@ export default function SkillsNetwork() {
           </ReactFlow>
         </motion.div>
 
-        <p className="text-center text-xs text-text-muted mt-4">
-          Live updates: recruiter views, role matches, resume quality, profile ranking, interview readiness,
-          certifications, salary benchmarks, and recruiter engagement across the platform.
-        </p>
+        <p className="text-center text-xs text-text-muted mt-4">{s.footer}</p>
       </div>
     </section>
   )

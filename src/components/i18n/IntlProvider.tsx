@@ -7,6 +7,7 @@ import enMessages from "@/messages/en.json";
 import frMessages from "@/messages/fr.json";
 import {
   AppLocale,
+  APP_TIME_ZONE,
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
   getLocaleFromPathname,
@@ -45,7 +46,7 @@ export function IntlProvider({ children }: Props) {
   );
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={messages} timeZone={APP_TIME_ZONE}>
       {children}
     </NextIntlClientProvider>
   );

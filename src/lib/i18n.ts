@@ -4,6 +4,8 @@ export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 
 export const DEFAULT_LOCALE: AppLocale = "en";
 
+export const APP_TIME_ZONE = "Asia/Kolkata";
+
 export const LOCALE_COOKIE = "NEXT_LOCALE";
 
 export function isSupportedLocale(value?: string | null): value is AppLocale {

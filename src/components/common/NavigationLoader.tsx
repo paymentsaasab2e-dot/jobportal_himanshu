@@ -4,8 +4,11 @@ import { useEffect, useState, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 
+import { stripLocaleFromPathname } from '@/lib/i18n';
+
 export function NavigationLoader() {
   const pathname = usePathname();
+  const normalizedPath = stripLocaleFromPathname(pathname || '/');
   const [isNavigating, setIsNavigating] = useState(false);
   const prevPathname = useRef(pathname);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -31,6 +34,11 @@ export function NavigationLoader() {
 
       if (!isInternal) return;
 
+      const destinationPath = stripLocaleFromPathname(href.split('?')[0] || '/');
+
+      // No full-screen loader on the marketing home page
+      if (normalizedPath === '/' || destinationPath === '/') return;
+
       // Don't show loader if navigating to the same page or to the extract page
       if (href === pathname || href === '/extract' || href.startsWith('/extract/')) return;
 
@@ -42,7 +50,7 @@ export function NavigationLoader() {
 
     document.addEventListener('click', handleClick, true);
     return () => document.removeEventListener('click', handleClick, true);
-  }, [pathname]);
+  }, [pathname, normalizedPath]);
 
   // Hide loader when navigation completes (pathname changes)
   useEffect(() => {
@@ -76,6 +84,13 @@ export function NavigationLoader() {
     };
   }, []);
 
-  if (!isNavigating || pathname === '/extract' || pathname?.startsWith('/extract/')) return null;
+  if (
+    !isNavigating ||
+    normalizedPath === '/' ||
+    pathname === '/extract' ||
+    pathname?.startsWith('/extract/')
+  ) {
+    return null;
+  }
   return <GlobalLoader />;
 }

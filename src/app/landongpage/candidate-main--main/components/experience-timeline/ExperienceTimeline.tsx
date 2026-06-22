@@ -1,7 +1,8 @@
 'use client'
 import { motion, useMotionValueEvent, useScroll, useTransform, MotionValue } from 'framer-motion'
 import { useRef, useState } from 'react'
-import { experiences } from '@candmain/lib/data'
+import { useCandmainLandingContent } from '@/lib/candmain-landing'
+import type { CandmainExperience } from '@/lib/candmain-landing'
 import { ArrowRight } from 'lucide-react'
 
 function TimelineCard({
@@ -12,21 +13,23 @@ function TimelineCard({
   isReached,
   scrollYProgress,
   activeIndex,
+  totalSteps,
 }: {
-  experience: (typeof experiences)[0]
+  experience: CandmainExperience
   index: number
   isLast: boolean
   isActive: boolean
   isReached: boolean
   scrollYProgress: MotionValue<number>
   activeIndex: number
+  totalSteps: number
 }) {
   const segmentFill = useTransform(
     scrollYProgress,
-    [index / (experiences.length - 1), (index + 1) / (experiences.length - 1)],
+    [index / (totalSteps - 1), (index + 1) / (totalSteps - 1)],
     ['0%', '100%']
   )
-  const isLiveSegment = index === Math.min(activeIndex, experiences.length - 2)
+  const isLiveSegment = index === Math.min(activeIndex, totalSteps - 2)
 
   return (
     <motion.div
@@ -177,6 +180,9 @@ function TimelineCard({
 }
 
 export default function ExperienceTimeline() {
+  const content = useCandmainLandingContent()
+  const e = content.experience
+  const experiences = e.steps
   const timelineRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const { scrollYProgress } = useScroll({
@@ -202,23 +208,20 @@ export default function ExperienceTimeline() {
             className="lg:sticky lg:top-28"
           >
             <div className="tag-pill tag-blue inline-flex mb-4">
-              <span>Candidate Journey</span>
+              <span>{e.tag}</span>
             </div>
             <h2 className="text-display-xl text-text-primary mb-6">
-              Live Hiring{' '}
-              <span className="gradient-text-blue">Pipeline</span>
+              {e.title}{' '}
+              <span className="gradient-text-blue">{e.titleAccent}</span>
             </h2>
-            <p className="text-text-muted text-lg leading-relaxed mb-8">
-              Track how a candidate moves from profile setup to recruiter discovery, interview readiness, and active offer-stage momentum.
-            </p>
+            <p className="text-text-muted text-lg leading-relaxed mb-8">{e.subtitle}</p>
 
-            {/* Platform stats */}
             <div className="p-6 rounded-2xl bg-white border border-[rgba(15,23,42,0.07)] shadow-card">
-              <div className="text-4xl font-black gradient-text-blue mb-1">4</div>
-              <div className="text-sm font-medium text-text-muted">Live evaluation stages</div>
+              <div className="text-4xl font-black gradient-text-blue mb-1">{experiences.length}</div>
+              <div className="text-sm font-medium text-text-muted">{e.stagesCount}</div>
               <div className="mt-4 pt-4 border-t border-[rgba(15,23,42,0.06)] flex items-center gap-2 text-xs text-text-muted">
                 <ArrowRight className="w-3.5 h-3.5 text-blue-primary" />
-                Stage 1 profile signal to Stage 4 hiring movement
+                {e.stagesHint}
               </div>
             </div>
           </motion.div>
@@ -235,6 +238,7 @@ export default function ExperienceTimeline() {
                 isReached={i <= activeIndex}
                 scrollYProgress={scrollYProgress}
                 activeIndex={activeIndex}
+                totalSteps={experiences.length}
               />
             ))}
           </div>
