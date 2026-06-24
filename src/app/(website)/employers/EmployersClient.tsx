@@ -1,5 +1,6 @@
 "use client";
 
+import type { PricingPlan } from "@/components/ui/pricing";
 import React from "react";
 import { EmployersHeroSection } from "./EmployersHeroSection";
 import { EmployersFloatingHeroSection } from "./EmployersFloatingHeroSection";
@@ -16,7 +17,13 @@ import {
   Briefcase, Bot
 } from "lucide-react";
 
-export default function EmployerLandingPage() {
+type EmployerLandingPageProps = {
+  initialPricingPlans: PricingPlan[];
+};
+
+export default function EmployerLandingPage({
+  initialPricingPlans,
+}: EmployerLandingPageProps) {
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-purple-500/30 selection:text-purple-900 overflow-x-hidden antialiased">
 
@@ -96,7 +103,7 @@ export default function EmployerLandingPage() {
 
         <EmployersCoreModulesBento />
 
-        <EmployersPricingSection />
+        <EmployersPricingSection initialPlans={initialPricingPlans} />
 
         {/* 4. ECOSYSTEM VIEW (CRITICAL UI) */}
         <section id="ecosystem" className="pt-16 pb-16 bg-slate-50 relative overflow-hidden border-y border-slate-200">
