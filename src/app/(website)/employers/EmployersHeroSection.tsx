@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { useLocale } from "next-intl";
 import { BlurRevealHeading } from "./BlurRevealText";
 import { EmployersDashboardPreview } from "./EmployersDashboardPreview";
-import { EMPLOYERS_DEMO_PATH } from "@/lib/employers/constants";
+import { EMPLOYERS_DEMO_PATH, EMPLOYERS_TRIAL_PATH } from "@/lib/employers/constants";
 import { AppLocale, localizePath } from "@/lib/i18n";
 
 const EMPLOYERS_LOGIN_HREF = "https://employers.hryantra.com/login?redirect=%2Fleads";
@@ -21,6 +21,7 @@ const heroGradientCharStyle: React.CSSProperties = {
 export function EmployersHeroSection() {
   const locale = useLocale() as AppLocale;
   const demoHref = localizePath(EMPLOYERS_DEMO_PATH, locale);
+  const trialHref = localizePath(EMPLOYERS_TRIAL_PATH, locale);
 
   return (
     <section className="relative flex min-h-[calc(100vh-5rem)] flex-col items-center justify-start overflow-x-hidden bg-black px-4 pb-20 pt-24 text-white sm:px-6 md:pb-24 md:pt-28">
@@ -64,8 +65,16 @@ export function EmployersHeroSection() {
 
       <div className="relative z-10 mb-14 flex flex-col items-center gap-4 sm:flex-row">
         <Link
+          href={trialHref}
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border-2 border-[#FC9620] bg-linear-to-r from-[#E8770E] to-[#FC9620] px-8 text-base font-semibold text-white shadow-[0_8px_28px_rgba(252,150,32,0.35)] transition-all hover:scale-105 hover:brightness-105 active:scale-95"
+          aria-label="Try it free"
+        >
+          Try it free
+          <ArrowRight size={16} />
+        </Link>
+        <Link
           href={demoHref}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border-2 border-[#28a8e1] bg-gradient-to-r from-[#08428c] to-[#28a8e1] px-8 text-base font-semibold text-white shadow-[0_8px_28px_rgba(40,168,225,0.35)] backdrop-blur-sm transition-all hover:scale-105 hover:border-[#5bc4ef] hover:shadow-[0_12px_32px_rgba(40,168,225,0.45)] active:scale-95"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border-2 border-[#28a8e1] bg-linear-to-r from-[#08428c] to-[#28a8e1] px-8 text-base font-semibold text-white shadow-[0_8px_28px_rgba(40,168,225,0.35)] backdrop-blur-sm transition-all hover:scale-105 hover:border-[#5bc4ef] hover:shadow-[0_12px_32px_rgba(40,168,225,0.45)] active:scale-95"
           aria-label="Request a demo"
         >
           Request Demo

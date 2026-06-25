@@ -6,6 +6,7 @@ import { EmployersHeroSection } from "./EmployersHeroSection";
 import { EmployersFloatingHeroSection } from "./EmployersFloatingHeroSection";
 import { EmployersCoreModulesBento } from "./EmployersCoreModulesBento";
 import { EmployersPricingSection } from "./EmployersPricingSection";
+import { EmployersOverviewSection } from "./EmployersOverviewSection";
 import { BlurRevealHeading } from "./BlurRevealText";
 import {
   Brain, FileText, Share2, Calendar, Target,
@@ -34,72 +35,7 @@ export default function EmployerLandingPage({
         <EmployersHeroSection />
 
         <div className="text-slate-800">
-        {/* 2. PLATFORM OVERVIEW */}
-        <section id="overview" className="pt-20 pb-16 bg-white border-y border-slate-200 relative">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-10">
-              <BlurRevealHeading
-                as="h2"
-                className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4"
-                lines={[
-                  { text: "Not just another tool." },
-                  { text: "A complete ecosystem.", className: "text-slate-500 text-3xl md:text-4xl" },
-                ]}
-              />
-              <p className="text-[1.1rem] text-slate-600 font-normal leading-relaxed mt-6">
-                SAASA B2E is a fully integrated HR ecosystem that connects recruitment, employee management, learning, and payroll into one intelligent workflow.
-              </p>
-            </div>
-
-            {/* Horizontal Timeline */}
-            <div className="relative py-8 overflow-x-auto scrollbar-none">
-              <div className="min-w-[1000px] flex items-center justify-between relative px-10">
-                {/* Connecting Line */}
-                <div className="absolute top-1/2 left-16 right-16 h-[2px] bg-linear-to-r from-blue-500/20 via-purple-500/20 to-emerald-500/20 -translate-y-1/2 z-0" />
-                
-                {[
-                  { label: "Hire", icon: Target, color: "text-blue-500", bg: "bg-blue-50", border: "border-blue-100" },
-                  { label: "Evaluate", icon: FileSearch, color: "text-indigo-500", bg: "bg-indigo-50", border: "border-indigo-100" },
-                  { label: "Train", icon: GraduationCap, color: "text-violet-500", bg: "bg-violet-50", border: "border-violet-100" },
-                  { label: "Manage", icon: Users, color: "text-fuchsia-500", bg: "bg-fuchsia-50", border: "border-fuchsia-100" },
-                  { label: "Pay", icon: CreditCard, color: "text-amber-500", bg: "bg-amber-50", border: "border-amber-100" },
-                  { label: "Improve", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50", border: "border-emerald-100" },
-                  { label: "Repeat", icon: Repeat, color: "text-slate-500", bg: "bg-slate-50", border: "border-slate-200" }
-                ].map((step, idx) => (
-                  <div key={idx} className="relative z-10 flex flex-col items-center gap-5 group">
-                    <div className={`w-16 h-16 rounded-2xl bg-white border shadow-sm ${step.border} flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_10px_20px_rgba(0,0,0,0.08)]`}>
-                      <div className={`p-2.5 rounded-xl ${step.bg}`}>
-                         <step.icon className={`w-6 h-6 ${step.color}`} strokeWidth={1.5} />
-                      </div>
-                    </div>
-                    <span className="text-[12px] font-bold uppercase tracking-[0.15em] text-slate-500 group-hover:text-slate-900 transition-colors">{step.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Value Points */}
-            <div className="grid sm:grid-cols-3 gap-8 mt-12 max-w-5xl mx-auto">
-              {[
-                { title: "No fragmented tools", desc: "Unified data across all modules without complex integrations." },
-                { title: "No manual coordination", desc: "Automated direct handoffs between hiring, HR, and finance." },
-                { title: "AI-driven decisions", desc: "Predictive intelligence injected at every lifecycle stage." },
-              ].map((val, idx) => (
-                <div key={idx} className="bg-slate-50 border border-slate-100 rounded-3xl p-8 text-center hover:bg-slate-100 transition-colors shadow-sm">
-                  <div className="w-12 h-12 mx-auto bg-emerald-100 rounded-full flex items-center justify-center mb-6">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <BlurRevealHeading
-                    as="h4"
-                    className="text-[17px] text-slate-900 font-bold mb-3"
-                    lines={[{ text: val.title }]}
-                  />
-                  <p className="text-[14px] text-slate-600 leading-relaxed">{val.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <EmployersOverviewSection />
 
         <EmployersCoreModulesBento />
 

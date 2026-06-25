@@ -9,6 +9,7 @@ export type EmployerDemoFormPayload = {
   companySize: string;
   organizationName: string;
   outcome?: string;
+  requestKind?: 'demo' | 'trial';
 };
 
 type ApiResponse<T> = {
@@ -43,7 +44,17 @@ export async function resendEmployerDemoOtp(requestId: string, email: string) {
 }
 
 export async function verifyEmployerDemoOtp(requestId: string, email: string, otp: string) {
-  return postDemoRequest<{ requestId: string; email: string }>('/verify-otp', {
+  return postDemoRequest<{
+    requestId: string;
+    email: string;
+    requestKind?: 'demo' | 'trial';
+    loginUrl?: string;
+    loginId?: string;
+    trialEndsAt?: string;
+    tenantDbName?: string;
+    credentialEmailSent?: boolean;
+    devPassword?: string;
+  }>('/verify-otp', {
     requestId,
     email,
     otp,
