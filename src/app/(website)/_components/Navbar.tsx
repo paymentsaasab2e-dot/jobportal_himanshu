@@ -10,6 +10,10 @@ import { useLocale, useTranslations } from "next-intl";
 import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 import { LANDING_SCROLL_EVENT } from "@/hooks/useLandingSmoothScroll";
 import { AppLocale, localizePath, stripLocaleFromPathname } from "@/lib/i18n";
+import {
+  EMPLOYERS_TRIAL_PATH,
+  EMPLOYERS_LOGIN_HREF,
+} from "@/lib/employers/constants";
 
 const navLinks = [
   { key: "exploreJobs", href: "/" },
@@ -34,10 +38,12 @@ export default function WebsiteNavbar() {
   const pathname = usePathname();
   const locale = useLocale() as AppLocale;
   const t = useTranslations();
+  const tEmployers = useTranslations("employersNav");
   const normalizedPath = stripLocaleFromPathname(pathname || "/");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const employersLoginHref = "https://employers.hryantra.com/login?redirect=%2Fleads";
+  const employersLoginHref = EMPLOYERS_LOGIN_HREF;
+  const employersTrialHref = localizePath(EMPLOYERS_TRIAL_PATH, locale);
   const isEmployersPage = normalizedPath === "/employers" || normalizedPath.startsWith("/employers/");
   const isEmployersLandingPage = normalizedPath === "/employers";
   const isServicesPage = normalizedPath === "/services" || normalizedPath.startsWith("/services/");
@@ -55,7 +61,7 @@ export default function WebsiteNavbar() {
 
   const navLinkTextClass = (isActive: boolean) => {
     if (isActive) return "text-white";
-    if (isEmployersTransparent) return "!text-white/80 hover:!text-white";
+    if (isEmployersTransparent) return "text-white/80! hover:text-white!";
     return "text-slate-700 hover:text-slate-900";
   };
 
@@ -105,7 +111,7 @@ export default function WebsiteNavbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-[500] flex justify-center px-3 sm:px-4 transition-all duration-500 ease-out ${
+      className={`fixed top-0 left-0 right-0 z-500 flex justify-center px-3 sm:px-4 transition-all duration-500 ease-out ${
         isScrolled ? "py-2" : "py-2.5"
       }`}
     >
@@ -160,7 +166,7 @@ export default function WebsiteNavbar() {
                 {isActive && (
                   <motion.span
                     layoutId={MARKETING_NAV_PILL_ID}
-                    className={`absolute inset-0 rounded-full bg-gradient-to-r ${navPillClass(link.key)}`}
+                    className={`absolute inset-0 rounded-full bg-linear-to-r ${navPillClass(link.key)}`}
                     transition={{ type: "spring", stiffness: 420, damping: 34 }}
                   />
                 )}
@@ -170,16 +176,30 @@ export default function WebsiteNavbar() {
           })}
         </div>
 
-        <div className="hidden md:flex items-center justify-end justify-self-end gap-2">
+        <div className="hidden md:flex items-center justify-end justify-self-end gap-3 shrink-0">
+          {isEmployersPage && (
+            <Link
+              href={employersTrialHref}
+              className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full font-bold transition-all duration-500 ${
+                isScrolled ? "px-4 py-1.5 text-[13px]" : "px-5 py-2 text-[14px]"
+              } ${
+                isEmployersTransparent
+                  ? "bg-linear-to-r from-[#E8770E] to-[#FC9620] text-white shadow-[0_8px_22px_rgba(252,150,32,0.38)] hover:brightness-105"
+                  : "bg-linear-to-r from-[#E8770E] to-[#FC9620] text-white shadow-[0_8px_22px_rgba(252,150,32,0.32)] hover:brightness-105"
+              }`}
+            >
+              {tEmployers("tryItFree")}
+            </Link>
+          )}
           {!isServicesPage && (
             <Link
               href={loginSignupHref}
-              className={`rounded-full font-bold backdrop-blur-xl transition-all duration-500 ${
+              className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full font-bold backdrop-blur-xl transition-all duration-500 ${
                 isScrolled ? "px-4 py-1.5 text-[14px]" : "px-6 py-2 text-[15px]"
               } ${
                 isEmployersTransparent
-                  ? "border border-white/30 bg-white/10 !text-white shadow-none hover:bg-white/20 hover:!text-white"
-                  : "border border-white/75 bg-white/40 !text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] hover:bg-white/65 hover:!text-[#08428c]"
+                  ? "border border-white/30 bg-white/10 text-white! shadow-none hover:bg-white/20 hover:text-white!"
+                  : "border border-white/75 bg-white/40 text-slate-900! shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] hover:bg-white/65 hover:text-[#08428c]!"
               }`}
             >
               {t("common.login")}
@@ -188,7 +208,7 @@ export default function WebsiteNavbar() {
           <LanguageSwitcher
             className={
               isEmployersTransparent
-                ? "inline-flex min-w-[4.25rem] items-center justify-center gap-1 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:border-white/50 hover:bg-white/15"
+                ? "inline-flex min-w-17 items-center justify-center gap-1 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:border-white/50 hover:bg-white/15"
                 : undefined
             }
           />
@@ -226,9 +246,18 @@ export default function WebsiteNavbar() {
             <div className="h-px bg-white/70 my-2" />
             {!isServicesPage && (
               <div className="flex flex-col gap-3 mt-2">
+                {isEmployersPage && (
+                  <Link
+                    href={employersTrialHref}
+                    className="flex items-center justify-center bg-linear-to-r from-[#E8770E] to-[#FC9620] text-center py-4 rounded-[18px] font-bold text-lg text-white shadow-[0_8px_22px_rgba(252,150,32,0.35)]"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {tEmployers("tryItFree")}
+                  </Link>
+                )}
                 <Link
                   href={loginSignupHref}
-                  className="border border-white/80 bg-white/55 !text-slate-900 text-center py-4 rounded-[18px] font-bold text-lg backdrop-blur-xl hover:bg-white/80 hover:!text-[#08428c] transition-all"
+                  className="border border-white/80 bg-white/55 text-slate-900! text-center py-4 rounded-[18px] font-bold text-lg backdrop-blur-xl hover:bg-white/80 hover:text-[#08428c]! transition-all"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {t("common.login")}

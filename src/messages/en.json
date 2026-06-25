@@ -8,6 +8,10 @@
     "forEmployers": "For Employers",
     "cancel": "Cancel"
   },
+  "employersNav": {
+    "tryItFree": "Try it free",
+    "freeTrialDays": "5 days"
+  },
   "nav": {
     "exploreJobs": "Jobseeker",
     "courses": "Courses",

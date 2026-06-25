@@ -13,6 +13,7 @@ import {
   type EmployerDemoFormPayload,
 } from "@/lib/api/employerDemoApi";
 import { AppLocale, localizePath } from "@/lib/i18n";
+import { TRIAL_DURATION_DAYS } from "@/lib/employers/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -104,8 +105,9 @@ function RequiredMark() {
   return <span className="text-red-500">*</span>;
 }
 
-export function RequestDemoClient() {
+export function RequestDemoClient({ intent = "demo" }: { intent?: "demo" | "trial" }) {
   const locale = useLocale() as AppLocale;
+  const isTrial = intent === "trial";
   const [form, setForm] = useState<FormState>(initialForm);
   const [requestId, setRequestId] = useState("");
   const [otp, setOtp] = useState("");
@@ -117,6 +119,13 @@ export function RequestDemoClient() {
   const [resendTimer, setResendTimer] = useState(0);
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [trialAccess, setTrialAccess] = useState<{
+    loginUrl?: string;
+    loginId?: string;
+    trialEndsAt?: string;
+    devPassword?: string;
+    credentialEmailSent?: boolean;
+  } | null>(null);
   const verifyInFlight = useRef(false);
 
   const countries = useMemo(
@@ -196,6 +205,7 @@ export function RequestDemoClient() {
       companySize: form.companySize,
       organizationName: form.organizationName.trim(),
       outcome: form.outcome.trim() || undefined,
+      requestKind: isTrial ? "trial" : "demo",
     };
   };
 
@@ -249,8 +259,17 @@ export function RequestDemoClient() {
       setOtpError("");
 
       try {
-        await verifyEmployerDemoOtp(requestId, form.email.trim(), code);
+        const result = await verifyEmployerDemoOtp(requestId, form.email.trim(), code);
         setOtpModalOpen(false);
+        if (isTrial) {
+          setTrialAccess({
+            loginUrl: result.data?.loginUrl,
+            loginId: result.data?.loginId,
+            trialEndsAt: result.data?.trialEndsAt,
+            devPassword: result.data?.devPassword,
+            credentialEmailSent: result.data?.credentialEmailSent,
+          });
+        }
         setSuccessModalOpen(true);
       } catch (err) {
         setOtpError(err instanceof Error ? err.message : "Invalid verification code.");
@@ -259,7 +278,7 @@ export function RequestDemoClient() {
         verifyInFlight.current = false;
       }
     },
-    [form.email, requestId],
+    [form.email, requestId, isTrial],
   );
 
   const handleVerifyOtp = async (event: React.FormEvent) => {
@@ -290,7 +309,7 @@ export function RequestDemoClient() {
   return (
     <div className="min-h-screen bg-[#f8f9fc] pt-24 pb-16 text-slate-900">
       {otpModalOpen ? (
-        <div className="fixed inset-0 z-[10050] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-10050 flex items-center justify-center p-4">
           <div
             className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm"
             onClick={closeOtpModal}
@@ -361,9 +380,9 @@ export function RequestDemoClient() {
               <Button
                 type="submit"
                 disabled={isVerifying || otp.length !== 6}
-                className="h-12 w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-base font-semibold text-white shadow-lg shadow-violet-500/25 hover:from-violet-700 hover:to-indigo-700"
+                className="h-12 w-full rounded-xl bg-linear-to-r from-violet-600 to-indigo-600 text-base font-semibold text-white shadow-lg shadow-violet-500/25 hover:from-violet-700 hover:to-indigo-700"
               >
-                {isVerifying ? "Verifying…" : "Verify & schedule demo"}
+                {isVerifying ? "Verifying…" : isTrial ? "Verify & start trial" : "Verify & schedule demo"}
                 {!isVerifying ? <ShieldCheck className="ml-2 h-4 w-4" /> : null}
               </Button>
 
@@ -392,7 +411,7 @@ export function RequestDemoClient() {
       ) : null}
 
       {successModalOpen ? (
-        <div className="fixed inset-0 z-[10050] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-10050 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm" aria-hidden />
           <div
             className="relative z-10 w-full max-w-md rounded-2xl border border-emerald-200/80 bg-white p-6 text-center shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:p-8"
@@ -402,13 +421,53 @@ export function RequestDemoClient() {
           >
             <DemoSuccessCheckIcon />
             <h2 id="demo-success-title" className="text-xl font-bold text-emerald-900">
-              Demo request scheduled
+              {isTrial ? `Your ${TRIAL_DURATION_DAYS}-day trial is ready` : "Demo request scheduled"}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-emerald-800">
-              Thanks — your email is verified and your request for{" "}
-              <strong>{form.organizationName}</strong> is with our team. A specialist will reach
-              out within one business day to schedule your tailored demo.
+              {isTrial ? (
+                <>
+                  Thanks — your email is verified and a workspace for{" "}
+                  <strong>{form.organizationName}</strong> is live for {TRIAL_DURATION_DAYS} days.
+                  {trialAccess?.credentialEmailSent
+                    ? " We emailed your login details."
+                    : " Use the button below to sign in."}
+                </>
+              ) : (
+                <>
+                  Thanks — your email is verified and your request for{" "}
+                  <strong>{form.organizationName}</strong> is with our team. A specialist will reach
+                  out within one business day to schedule your tailored demo.
+                </>
+              )}
             </p>
+            {isTrial && trialAccess?.loginUrl ? (
+              <div className="mt-5 space-y-3 text-left text-sm text-slate-700">
+                {trialAccess.loginId ? (
+                  <p>
+                    <span className="font-semibold text-slate-900">Login ID:</span>{" "}
+                    <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">{trialAccess.loginId}</code>
+                  </p>
+                ) : null}
+                {trialAccess.trialEndsAt ? (
+                  <p>
+                    <span className="font-semibold text-slate-900">Trial ends:</span> {trialAccess.trialEndsAt}
+                  </p>
+                ) : null}
+                {trialAccess.devPassword ? (
+                  <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    Dev password: <strong className="font-mono">{trialAccess.devPassword}</strong>
+                  </p>
+                ) : null}
+                <a
+                  href={trialAccess.loginUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-linear-to-r from-violet-600 to-indigo-600 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 hover:from-violet-700 hover:to-indigo-700"
+                >
+                  Open employer workspace
+                </a>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -419,26 +478,41 @@ export function RequestDemoClient() {
             Home
           </Link>
           <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="font-medium text-slate-700">Request a Demo</span>
+          <span className="font-medium text-slate-700">
+            {isTrial ? "Try it free" : "Request a Demo"}
+          </span>
         </nav>
 
         <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-16">
           <div className="max-w-xl">
             <div className="mb-6 inline-flex rounded-full border border-violet-200/80 bg-violet-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-violet-700">
-              Request a demo
+              {isTrial ? `Try it free · ${TRIAL_DURATION_DAYS} days` : "Request a demo"}
             </div>
 
             <h1 className="text-4xl font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-5xl">
-              Tell us what you need — we&apos;ll{" "}
-              <span className="bg-gradient-to-r from-violet-600 via-indigo-500 to-sky-500 bg-clip-text text-transparent">
-                tailor
-              </span>{" "}
-              a demo to it.
+              {isTrial ? (
+                <>
+                  Start your{" "}
+                  <span className="bg-linear-to-r from-violet-600 via-indigo-500 to-sky-500 bg-clip-text text-transparent">
+                    {TRIAL_DURATION_DAYS}-day free trial
+                  </span>{" "}
+                  on SAASA B2E.
+                </>
+              ) : (
+                <>
+                  Tell us what you need — we&apos;ll{" "}
+                  <span className="bg-linear-to-r from-violet-600 via-indigo-500 to-sky-500 bg-clip-text text-transparent">
+                    tailor
+                  </span>{" "}
+                  a demo to it.
+                </>
+              )}
             </h1>
 
             <p className="mt-5 text-lg leading-relaxed text-slate-600">
-              Not ready to pick a slot? Send us your requirements and a specialist will design a
-              demo around your priorities and reach out to schedule.
+              {isTrial
+                ? "Create your employer workspace in minutes. Verify your email, get instant access to recruitment, HR, and pipeline tools in Phase 2."
+                : "Not ready to pick a slot? Send us your requirements and a specialist will design a demo around your priorities and reach out to schedule."}
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -456,11 +530,12 @@ export function RequestDemoClient() {
           <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
             <div className="mb-6">
               <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-                Request your tailored demo
+                {isTrial ? "Start your free trial" : "Request your tailored demo"}
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                The more you tell us, the more focused your demo. Any valid email address works —
-                we&apos;ll send a verification code before submitting.
+                {isTrial
+                  ? "We provision a dedicated workspace for 5 days after email verification. Login details are emailed to you."
+                  : "The more you tell us, the more focused your demo. Any valid email address works — we'll send a verification code before submitting."}
               </p>
             </div>
 
@@ -600,9 +675,9 @@ export function RequestDemoClient() {
               <Button
                 type="submit"
                 disabled={isSendingOtp}
-                className="h-12 w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-base font-semibold text-white shadow-lg shadow-violet-500/25 hover:from-violet-700 hover:to-indigo-700"
+                className="h-12 w-full rounded-xl bg-linear-to-r from-violet-600 to-indigo-600 text-base font-semibold text-white shadow-lg shadow-violet-500/25 hover:from-violet-700 hover:to-indigo-700"
               >
-                {isSendingOtp ? "Submitting…" : "Submit for demo"}
+                {isSendingOtp ? "Submitting…" : isTrial ? "Start free trial" : "Submit for demo"}
                 {!isSendingOtp ? <Mail className="ml-2 h-4 w-4" /> : null}
               </Button>
             </form>

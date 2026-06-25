@@ -8,6 +8,10 @@
     "forEmployers": "Pour les employeurs",
     "cancel": "Annuler"
   },
+  "employersNav": {
+    "tryItFree": "Essai gratuit",
+    "freeTrialDays": "5 jours"
+  },
   "nav": {
     "exploreJobs": "Chercheur d'emploi",
     "courses": "Cours",

@@ -5,76 +5,36 @@ import { Pricing, type PricingPlan } from "@/components/ui/pricing";
 import { EMPLOYERS_DEMO_PATH } from "@/lib/employers/constants";
 import { localizePath, type AppLocale } from "@/lib/i18n";
 import { useLocale } from "next-intl";
+import { useMemo } from "react";
 
 const EMPLOYERS_LOGIN_HREF =
   "https://employers.hryantra.com/login?redirect=%2Fleads";
 
-function buildEmployerPlans(locale: AppLocale): PricingPlan[] {
+function remapPlansForLocale(
+  plans: PricingPlan[],
+  locale: AppLocale
+): PricingPlan[] {
   const contactHref = localizePath("/contact", locale);
-
-  return [
-    {
-      name: "STARTER",
-      price: "149",
-      yearlyPrice: "119",
-      period: "per month",
-      features: [
-        "Up to 25 active job postings",
-        "AI CV screening & ATS scoring",
-        "Candidate pipeline & interviews",
-        "Basic analytics dashboard",
-        "Email support (48h response)",
-      ],
-      description: "For small teams hiring their first roles on SAASA B2E.",
-      buttonText: "Start Free Trial",
-      href: EMPLOYERS_LOGIN_HREF,
-      isPopular: false,
-    },
-    {
-      name: "PROFESSIONAL",
-      price: "399",
-      yearlyPrice: "319",
-      period: "per month",
-      features: [
-        "Unlimited job postings",
-        "Full AI recruitment suite",
-        "Employee management & onboarding",
-        "Performance & payroll modules",
-        "Multi-platform job publishing",
-        "Priority support (24h response)",
-        "Team collaboration & roles",
-      ],
-      description: "For growing companies running hiring and HR in one place.",
-      buttonText: "Get Started",
-      href: EMPLOYERS_LOGIN_HREF,
-      isPopular: true,
-    },
-    {
-      name: "ENTERPRISE",
-      price: "999",
-      yearlyPrice: "799",
-      period: "per month",
-      features: [
-        "Everything in Professional",
-        "Custom workflows & integrations",
-        "Dedicated account manager",
-        "SSO & advanced security",
-        "SLA-backed uptime",
-        "On-premise / private cloud options",
-        "Custom contracts & training",
-      ],
-      description: "For large organizations with complex HR operations.",
-      buttonText: "Contact Sales",
-      href: contactHref,
-      isPopular: false,
-    },
-  ];
+  return plans.map((plan) => ({
+    ...plan,
+    href:
+      plan.buttonText === "Contact Sales" ? contactHref : EMPLOYERS_LOGIN_HREF,
+  }));
 }
 
-export function EmployersPricingSection() {
+type EmployersPricingSectionProps = {
+  initialPlans: PricingPlan[];
+};
+
+export function EmployersPricingSection({
+  initialPlans,
+}: EmployersPricingSectionProps) {
   const locale = useLocale() as AppLocale;
-  const plans = buildEmployerPlans(locale);
   const demoHref = localizePath(EMPLOYERS_DEMO_PATH, locale);
+  const plans = useMemo(
+    () => remapPlansForLocale(initialPlans, locale),
+    [initialPlans, locale]
+  );
 
   return (
     <section id="pricing" className="border-y border-slate-200 bg-white">
