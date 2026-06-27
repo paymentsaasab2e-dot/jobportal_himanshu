@@ -8,8 +8,11 @@ export type EmployerDemoFormPayload = {
   phoneNumber: string;
   companySize: string;
   organizationName: string;
+  organizationType: 'agency' | 'standalone';
   outcome?: string;
-  requestKind?: 'demo' | 'trial';
+  requestKind?: 'demo' | 'trial' | 'purchase';
+  packageSlug?: string;
+  billingCycle?: 'monthly' | 'annual';
 };
 
 type ApiResponse<T> = {
@@ -47,7 +50,10 @@ export async function verifyEmployerDemoOtp(requestId: string, email: string, ot
   return postDemoRequest<{
     requestId: string;
     email: string;
-    requestKind?: 'demo' | 'trial';
+    requestKind?: 'demo' | 'trial' | 'purchase';
+    readyForPayment?: boolean;
+    packageSlug?: string;
+    billingCycle?: 'monthly' | 'annual';
     loginUrl?: string;
     loginId?: string;
     trialEndsAt?: string;
@@ -59,4 +65,22 @@ export async function verifyEmployerDemoOtp(requestId: string, email: string, ot
     email,
     otp,
   });
+}
+
+export async function completeEmployerPurchase(body: {
+  requestId: string;
+  email: string;
+  paymentReference: string;
+}) {
+  return postDemoRequest<{
+    requestId: string;
+    email: string;
+    loginUrl?: string;
+    loginId?: string;
+    tenantDbName?: string;
+    credentialEmailSent?: boolean;
+    credentialEmailError?: string;
+    devPassword?: string;
+    subscriptionPlan?: { name?: string };
+  }>('/complete-purchase', body);
 }

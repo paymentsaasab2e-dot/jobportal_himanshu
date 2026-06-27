@@ -18,6 +18,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CountrySelectField } from "./CountrySelectField";
+import {
+  OrganizationTypeField,
+  type OrganizationType,
+} from "@/components/employers/OrganizationTypeField";
 
 const COMPANY_SIZES = [
   "1–10 employees",
@@ -79,6 +83,7 @@ type FormState = {
   phoneNumber: string;
   companySize: string;
   organizationName: string;
+  organizationType: OrganizationType | "";
   outcome: string;
 };
 
@@ -90,6 +95,7 @@ const initialForm: FormState = {
   phoneNumber: "",
   companySize: "",
   organizationName: "",
+  organizationType: "",
   outcome: "",
 };
 
@@ -195,6 +201,10 @@ export function RequestDemoClient({ intent = "demo" }: { intent?: "demo" | "tria
       setFormError("Organization name is required.");
       return null;
     }
+    if (!form.organizationType) {
+      setFormError("Please choose Agency or Standalone workspace type.");
+      return null;
+    }
 
     return {
       email,
@@ -204,6 +214,7 @@ export function RequestDemoClient({ intent = "demo" }: { intent?: "demo" | "tria
       phoneNumber: form.phoneNumber.replace(/\D/g, ""),
       companySize: form.companySize,
       organizationName: form.organizationName.trim(),
+      organizationType: form.organizationType,
       outcome: form.outcome.trim() || undefined,
       requestKind: isTrial ? "trial" : "demo",
     };
@@ -426,7 +437,8 @@ export function RequestDemoClient({ intent = "demo" }: { intent?: "demo" | "tria
             <p className="mt-2 text-sm leading-relaxed text-emerald-800">
               {isTrial ? (
                 <>
-                  Thanks — your email is verified and a workspace for{" "}
+                  Thanks — your email is verified and a{" "}
+                  <strong>{form.organizationType === "agency" ? "Agency" : "Standalone"}</strong> workspace for{" "}
                   <strong>{form.organizationName}</strong> is live for {TRIAL_DURATION_DAYS} days.
                   {trialAccess?.credentialEmailSent
                     ? " We emailed your login details."
@@ -434,7 +446,8 @@ export function RequestDemoClient({ intent = "demo" }: { intent?: "demo" | "tria
                 </>
               ) : (
                 <>
-                  Thanks — your email is verified and your request for{" "}
+                  Thanks — your email is verified and your{" "}
+                  <strong>{form.organizationType === "agency" ? "Agency" : "Standalone"}</strong> demo request for{" "}
                   <strong>{form.organizationName}</strong> is with our team. A specialist will reach
                   out within one business day to schedule your tailored demo.
                 </>
@@ -534,8 +547,8 @@ export function RequestDemoClient({ intent = "demo" }: { intent?: "demo" | "tria
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-slate-500">
                 {isTrial
-                  ? "We provision a dedicated workspace for 5 days after email verification. Login details are emailed to you."
-                  : "The more you tell us, the more focused your demo. Any valid email address works — we'll send a verification code before submitting."}
+                ? "We provision a dedicated workspace for 5 days after email verification. Choose Agency or Standalone, then login details are emailed to you."
+                : "Tell us whether you need an Agency or Standalone workspace. Any valid email works — we'll send a verification code before submitting."}
               </p>
             </div>
 
@@ -546,6 +559,11 @@ export function RequestDemoClient({ intent = "demo" }: { intent?: "demo" | "tria
             ) : null}
 
             <form onSubmit={handleSendOtp} className="space-y-5">
+              <OrganizationTypeField
+                value={form.organizationType}
+                onChange={(organizationType) => updateField("organizationType", organizationType)}
+              />
+
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="fullName" className="text-sm font-semibold text-slate-900">

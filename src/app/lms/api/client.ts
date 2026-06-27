@@ -399,18 +399,39 @@ export async function analyzeResumeDraft() {
   const data = await res.json(); return data.data;
 }
 
-export async function fetchInterviewPrep() {
-  const res = await lmsFetch(`${LMS_API_BASE}/interview-prep`, { method: 'GET' });
-  if (!res) return [];
-  if (!res.ok) throw new Error('Failed to fetch interview prep sessions');
-  const data = await res.json(); return data.data;
+function mapInterviewTopicToCategory(topic?: string): string {
+  const normalized = (topic ?? '').toLowerCase();
+  if (normalized.includes('backend')) return 'backend';
+  if (normalized.includes('system')) return 'system-design';
+  if (normalized.includes('behavior') || normalized.includes('hr')) return 'behavioral';
+  if (normalized.includes('data structure') || normalized.includes('dsa')) return 'data-structures';
+  return 'frontend';
 }
 
-export async function startInterviewSession(payload: { type: string, topic?: string }) {
-  const res = await lmsFetch(`${LMS_API_BASE}/interview-prep/start`, { method: 'POST', body: JSON.stringify(payload) });
+export async function fetchInterviewPrep() {
+  const res = await lmsFetch(`${LMS_API_BASE}/interview`, { method: 'GET' });
+  if (!res) return [];
+  if (!res.ok) {
+    if (res.status === 404) return [];
+    throw new Error('Failed to fetch interview prep sessions');
+  }
+  const data = await res.json();
+  return data.data?.recentSessions ?? [];
+}
+
+export async function startInterviewSession(payload: { type: string; topic?: string; category?: string; questionCount?: number }) {
+  const body = {
+    category: payload.category ?? mapInterviewTopicToCategory(payload.topic),
+    questionCount: payload.questionCount ?? 5,
+  };
+  const res = await lmsFetch(`${LMS_API_BASE}/interview/mock-session/start`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
   if (!res) return null;
   if (!res.ok) throw new Error('Failed to start interview session');
-  const data = await res.json(); return data.data;
+  const data = await res.json();
+  return data.data;
 }
 
 export async function fetchLmsDashboard() {

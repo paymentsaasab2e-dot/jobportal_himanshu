@@ -25,6 +25,11 @@ const defaultBackendBase =
 
 const backendBase = (process.env.BACKEND_INTERNAL_URL || defaultBackendBase).replace(/\/$/, '');
 
+const PHASE2_INTERVIEW_FORMS_BASE =
+  process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5001/api/v1/interview-applications'
+    : 'https://api2.hryantra.com/api/v1/interview-applications';
+
 const buildTargetUrl = (req: NextRequest, pathParts: string[]) => {
   if (pathParts[0] === 'phase2-public-jobs') {
     const query = req.nextUrl.search || '';
@@ -39,6 +44,16 @@ const buildTargetUrl = (req: NextRequest, pathParts: string[]) => {
     const subPath = pathParts.slice(1).join('/');
     const query = req.nextUrl.search || '';
     const base = (process.env.PHASE2_PRE_SCREEN_ASSESSMENTS_URL || PHASE2_PRE_SCREEN_ASSESSMENTS_BASE).replace(
+      /\/$/,
+      '',
+    );
+    return `${base}/${subPath}${query}`;
+  }
+
+  if (pathParts[0] === 'phase2-interview-forms') {
+    const subPath = pathParts.slice(1).join('/');
+    const query = req.nextUrl.search || '';
+    const base = (process.env.PHASE2_INTERVIEW_FORMS_URL || PHASE2_INTERVIEW_FORMS_BASE).replace(
       /\/$/,
       '',
     );
@@ -66,7 +81,7 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
   headers.delete('accept-encoding');
 
   // Public feed is anonymous on Phase 2; strip caller JWT so tenant middleware does not
-  // pick the wrong DB from a candidate token. Prefer explicit tenant header + env.
+  // pick the wrong DB from a candidate token.
   if (
     pathParts[0] === 'phase2-public-jobs' ||
     pathParts[0] === 'phase2-public-apply' ||
@@ -77,6 +92,15 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
     const tenantHeader = tenantFromQuery || PHASE2_PUBLIC_FEED_TENANT_DB;
     if (tenantHeader) {
       headers.set('x-tenant-db-name', tenantHeader);
+    }
+  }
+
+  if (pathParts[0] === 'phase2-interview-forms') {
+    headers.delete('authorization');
+    const tenantFromQuery = req.nextUrl.searchParams.get('tenantDbName')?.trim();
+    // Interview form listing aggregates all HQ tenants on Phase 2 — no env default.
+    if (tenantFromQuery) {
+      headers.set('x-tenant-db-name', tenantFromQuery);
     }
   }
 
@@ -116,6 +140,9 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
     }
     if (pathParts[0] === 'phase2-pre-screen-assessments') {
       return NextResponse.json({ success: true, data: [] }, { status: 200 });
+    }
+    if (pathParts[0] === 'phase2-interview-forms') {
+      return NextResponse.json({ success: false, message: 'Interview forms unavailable' }, { status: 503 });
     }
     return NextResponse.json({ error: 'Backend service unavailable' }, { status: 503 });
   }

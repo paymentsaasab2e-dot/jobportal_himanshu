@@ -4,9 +4,18 @@ import { localizePath, type AppLocale } from "@/lib/i18n";
 const EMPLOYERS_LOGIN_HREF =
   "https://employers.hryantra.com/login?redirect=%2Fleads";
 
+function packageSlugFromName(name: string): string {
+  const key = String(name || "").toUpperCase();
+  if (key.includes("STARTER") || key.includes("BASIC")) return "starter";
+  if (key.includes("PROFESSIONAL") || key.includes("PRO")) return "professional";
+  if (key.includes("ENTERPRISE")) return "enterprise";
+  return key.toLowerCase();
+}
+
 export type HqPackage = {
   name: string;
   displayName?: string;
+  slug?: string;
   description?: string;
   price?: string;
   yearlyPrice?: string;
@@ -65,9 +74,10 @@ export function buildEmployerPlans(locale: AppLocale): PricingPlan[] {
         "Email support (48h response)",
       ],
       description: "For small teams hiring their first roles on SAASA B2E.",
-      buttonText: "Start Free Trial",
+      buttonText: "Get Started",
       href: EMPLOYERS_LOGIN_HREF,
       isPopular: false,
+      packageSlug: "starter",
     },
     {
       name: "PROFESSIONAL",
@@ -87,6 +97,7 @@ export function buildEmployerPlans(locale: AppLocale): PricingPlan[] {
       buttonText: "Get Started",
       href: EMPLOYERS_LOGIN_HREF,
       isPopular: true,
+      packageSlug: "professional",
     },
     {
       name: "ENTERPRISE",
@@ -103,9 +114,10 @@ export function buildEmployerPlans(locale: AppLocale): PricingPlan[] {
         "Custom contracts & training",
       ],
       description: "For large organizations with complex HR operations.",
-      buttonText: "Contact Sales",
+      buttonText: "Get Started",
       href: contactHref,
       isPopular: false,
+      packageSlug: "enterprise",
     },
   ];
 }
@@ -131,8 +143,7 @@ export function mapHqPackagesToPricingPlans(
 
   return sorted.map((pkg) => {
     const key = String(pkg.displayName || pkg.name || "").toUpperCase();
-    const isEnterprise = key.includes("ENTERPRISE");
-    const isStarter = key.includes("STARTER");
+    const packageSlug = String(pkg.slug || packageSlugFromName(key));
     return {
       name: key || "PACKAGE",
       price: String(pkg.price || "0"),
@@ -140,13 +151,10 @@ export function mapHqPackagesToPricingPlans(
       period: pkg.pricePeriod || "per month",
       features: Array.isArray(pkg.features) ? pkg.features : [],
       description: pkg.description || "",
-      buttonText: isEnterprise
-        ? "Contact Sales"
-        : isStarter
-          ? "Start Free Trial"
-          : "Get Started",
-      href: isEnterprise ? contactHref : loginHref,
+      buttonText: "Get Started",
+      href: loginHref,
       isPopular: Boolean(pkg.isPopular),
+      packageSlug,
     };
   });
 }
