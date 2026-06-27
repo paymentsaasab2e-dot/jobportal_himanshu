@@ -22,18 +22,21 @@ export interface PricingPlan {
   buttonText: string;
   href: string;
   isPopular: boolean;
+  packageSlug?: string;
 }
 
 export interface PricingProps {
   plans: PricingPlan[];
   title?: string;
   description?: string;
+  onPlanSelect?: (plan: PricingPlan, billing: { isMonthly: boolean }) => void;
 }
 
 export function Pricing({
   plans,
   title = "Simple, Transparent Pricing",
   description = "Choose the plan that works for you.\nAll plans include access to our platform, lead generation tools, and dedicated support.",
+  onPlanSelect,
 }: PricingProps) {
   const [isMonthly, setIsMonthly] = useState(true);
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -169,19 +172,34 @@ export function Pricing({
 
               <hr className="my-4 w-full" />
 
-              <Link
-                href={plan.href}
-                className={cn(
-                  buttonVariants({
-                    variant: "outline",
-                  }),
-                  "group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter",
-                  "transform-gpu ring-offset-current transition-all duration-300 ease-out hover:bg-primary hover:text-primary-foreground hover:ring-2 hover:ring-primary hover:ring-offset-1",
-                  plan.isPopular ? "bg-primary text-primary-foreground" : "bg-background text-foreground",
-                )}
-              >
-                {plan.buttonText}
-              </Link>
+              {onPlanSelect ? (
+                <button
+                  type="button"
+                  onClick={() => onPlanSelect(plan, { isMonthly })}
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter",
+                    "transform-gpu ring-offset-current transition-all duration-300 ease-out hover:bg-primary hover:text-primary-foreground hover:ring-2 hover:ring-primary hover:ring-offset-1",
+                    plan.isPopular ? "bg-primary text-primary-foreground" : "bg-background text-foreground",
+                  )}
+                >
+                  {plan.buttonText}
+                </button>
+              ) : (
+                <Link
+                  href={plan.href}
+                  className={cn(
+                    buttonVariants({
+                      variant: "outline",
+                    }),
+                    "group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter",
+                    "transform-gpu ring-offset-current transition-all duration-300 ease-out hover:bg-primary hover:text-primary-foreground hover:ring-2 hover:ring-primary hover:ring-offset-1",
+                    plan.isPopular ? "bg-primary text-primary-foreground" : "bg-background text-foreground",
+                  )}
+                >
+                  {plan.buttonText}
+                </Link>
+              )}
               <p className="mt-6 text-xs leading-5 text-muted-foreground">{plan.description}</p>
             </div>
           </motion.div>

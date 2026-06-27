@@ -27,18 +27,27 @@ export function useInterviewPrep() {
         const sessions = await fetchInterviewPrep();
         if (sessions && Array.isArray(sessions)) {
           // Map backend sessions to the format expected by the frontend
-          const mappedResults: MockSessionResult[] = sessions.map((s: any) => ({
-             id: s.id,
-             config: {
-               role: s.roleFocus || 'Frontend Developer',
-               difficulty: s.difficulty || 'Intermediate'
-             },
-             answers: {}, // Backend doesn't store full answers yet in this summary
-             createdAt: new Date(s.createdAt).getTime(),
-             strengths: s.feedback?.strengths || [],
-             improvements: s.feedback?.improvements || [],
-             gaps: []
-          }));
+          const mappedResults: MockSessionResult[] = sessions.map((s: any) => {
+            const questionFeedback = Array.isArray(s.questions)
+              ? s.questions.flatMap((q: { aiFeedback?: { strengths?: string[]; improvements?: string[] } }) => {
+                  const fb = q.aiFeedback;
+                  if (!fb) return [];
+                  return [...(fb.strengths ?? []), ...(fb.improvements ?? [])];
+                })
+              : [];
+            return {
+              id: s.id,
+              config: {
+                role: s.roleFocus || s.category || 'Frontend Developer',
+                difficulty: s.difficulty || 'Intermediate',
+              },
+              answers: {},
+              createdAt: new Date(s.createdAt).getTime(),
+              strengths: s.feedback?.strengths ?? questionFeedback.slice(0, 2),
+              improvements: s.feedback?.improvements ?? questionFeedback.slice(2, 4),
+              gaps: [],
+            };
+          });
           setSessionResults(mappedResults);
           
           // Update overall readiness if we have results

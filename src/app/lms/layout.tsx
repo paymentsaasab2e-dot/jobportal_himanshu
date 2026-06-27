@@ -16,7 +16,6 @@ import Header from '@/components/common/Header';
 import { LMS_PAGE_BG, LMS_CONTENT_CLASS } from './constants';
 import { LmsCareerEngineStrip } from './components/LmsCareerEngineStrip';
 import { LmsDailyMomentum } from './components/LmsDailyMomentum';
-import { LmsSharedIntelligenceHint } from './components/LmsSharedIntelligenceHint';
 import { LmsOverlayProvider } from './components/overlays/LmsOverlayProvider';
 import { LmsToastProvider } from './components/ux/LmsToastProvider';
 import { LmsStateProvider, useLmsState } from './state/LmsStateProvider';
@@ -196,9 +195,6 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
 {/* <LmsCareerEngineStrip /> */}
               <div className="relative isolate pt-3">
                 {!hideLmsSidebar && pathname === '/lms/courses' && <LmsDailyMomentum />}
-                {!hideLmsSidebar &&
-                  pathname !== '/lms/interview-prep' &&
-                  pathname !== '/lms/courses' && <LmsSharedIntelligenceHint />}
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out fill-mode-both">
                   {children}
                 </div>
