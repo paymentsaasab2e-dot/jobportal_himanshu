@@ -22,6 +22,9 @@ import {
 } from '@/components/auth/MathCaptcha';
 import { AppLocale, localizePath } from "@/lib/i18n";
 
+/** Accept personal and company emails (Gmail, Outlook, Live, corporate domains, etc.) */
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function WhatsAppLogin() {
   const router = useRouter();
   const locale = useLocale() as AppLocale;
@@ -170,8 +173,7 @@ export default function WhatsAppLogin() {
     }
 
     const normalizedEmail = emailValue.trim().toLowerCase();
-    const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-    if (!gmailRegex.test(normalizedEmail)) {
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
       setError(t("whatsapp.enterValidMailAddress"));
       return;
     }
@@ -420,7 +422,7 @@ export default function WhatsAppLogin() {
                     value={emailValue}
                     onChange={(e) => setEmailValue(e.target.value)}
                     className="w-full h-[56px] pl-[52px] pr-4 bg-transparent outline-none text-slate-900 font-bold text-[16px] placeholder:text-slate-300 placeholder:font-semibold"
-                    placeholder="name@gmail.com"
+                    placeholder="name@company.com"
                   />
                 </div>
               </div>
