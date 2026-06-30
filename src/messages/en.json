@@ -411,7 +411,7 @@
   "whatsapp": {
     "enterWhatsappNumber": "Please enter your WhatsApp number",
     "enterMailAddress": "Please enter your mail address",
-    "enterValidMailAddress": "Please enter a valid mail address",
+    "enterValidMailAddress": "Please enter a valid email address (any provider or company domain)",
     "exactDigitsWhatsapp": "Please enter exactly {count} digits for WhatsApp number",
     "solveMathQuestion": "Please solve the math question correctly",
     "failedToSendOtp": "Failed to send OTP",
