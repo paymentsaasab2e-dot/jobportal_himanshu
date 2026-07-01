@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   ArrowUpRight,
   BookmarkCheck,
@@ -85,14 +86,26 @@ const STATUS_OPTIONS: string[] = [
   'Rejected',
 ];
 
-const DATE_OPTIONS = [
-  'All Time',
-  'Last 7 Days',
-  'Last 30 Days',
-  'Last 3 Months',
-  'Last 6 Months',
-  'Last Year',
-];
+const DATE_FILTER_KEYS = [
+  'allTime',
+  'last7Days',
+  'last30Days',
+  'last3Months',
+  'last6Months',
+  'lastYear',
+] as const;
+
+type DateFilterKey = (typeof DATE_FILTER_KEYS)[number];
+
+const PIPELINE_STEP_KEYS = [
+  'pipelineApplied',
+  'pipelineReview',
+  'pipelineShortlisted',
+  'pipelineInterview',
+  'pipelineOutcome',
+] as const;
+
+type TranslateFn = (key: string, values?: Record<string, string | number>) => string;
 
 const PAGE_BG =
   'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)';
@@ -186,8 +199,6 @@ const INTERVIEW_STATUS_META: Record<InterviewItem['status'], string> = {
   Cancelled: 'bg-rose-100 text-rose-800 ring-1 ring-rose-200/80',
 };
 
-const PIPELINE_LABELS = ['Applied', 'Review', 'Shortlisted', 'Interview', 'Outcome'] as const;
-
 const COMPANY_THEMES = [
   'from-[#28A8E1] to-[#28A8DF]',
   'from-[#FC9620] to-[#F2B86B]',
@@ -228,12 +239,12 @@ function isRecentDate(dateString: string | undefined, days: number) {
   return distance <= days * 86400000;
 }
 
-function formatSavedJobMeta(job: SavedJobRecord) {
+function formatSavedJobMeta(job: SavedJobRecord, t: TranslateFn) {
   const parts = [job.location, job.employmentType, job.workMode]
     .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
     .map((part) => part.trim());
 
-  return parts.length > 0 ? parts.join(' • ') : 'Details available on the jobs board';
+  return parts.length > 0 ? parts.join(' • ') : t('detailsOnJobsBoard');
 }
 
 function formatCompactMoney(value: number, currency?: string | null) {
@@ -295,8 +306,8 @@ function mapJobRecord(job: Record<string, unknown>, fallbackId: string): Dashboa
   };
 }
 
-function isWithinDateFilter(appliedDateStr: string, filter: string): boolean {
-  if (filter === 'All Time') return true;
+function isWithinDateFilter(appliedDateStr: string, filter: DateFilterKey): boolean {
+  if (filter === 'allTime') return true;
   const applied = new Date(appliedDateStr);
   if (Number.isNaN(applied.getTime())) return true;
 
@@ -305,19 +316,19 @@ function isWithinDateFilter(appliedDateStr: string, filter: string): boolean {
   let days = 0;
 
   switch (filter) {
-    case 'Last 7 Days':
+    case 'last7Days':
       days = 7;
       break;
-    case 'Last 30 Days':
+    case 'last30Days':
       days = 30;
       break;
-    case 'Last 3 Months':
+    case 'last3Months':
       days = 90;
       break;
-    case 'Last 6 Months':
+    case 'last6Months':
       days = 180;
       break;
-    case 'Last Year':
+    case 'lastYear':
       days = 365;
       break;
     default:
@@ -326,6 +337,47 @@ function isWithinDateFilter(appliedDateStr: string, filter: string): boolean {
 
   const cutoff = new Date(now.getTime() - days * msPerDay);
   return applied >= cutoff;
+}
+
+function translateApplicationStatus(status: string, t: TranslateFn) {
+  const statusMap: Record<string, string> = {
+    Applied: t('statusApplied'),
+    Submitted: t('statusSubmitted'),
+    Screening: t('statusScreening'),
+    'Under Review': t('statusUnderReview'),
+    Shortlisted: t('statusShortlisted'),
+    Assessment: t('statusAssessment'),
+    Interview: t('statusInterview'),
+    'Final Decision': t('statusFinalDecision'),
+    Selected: t('statusSelected'),
+    Rejected: t('statusRejected'),
+  };
+
+  return statusMap[status] ?? status;
+}
+
+function translateInterviewStatus(status: InterviewItem['status'], t: TranslateFn) {
+  const statusMap: Record<InterviewItem['status'], string> = {
+    Scheduled: t('interviewScheduled'),
+    Rescheduled: t('interviewRescheduled'),
+    Completed: t('interviewCompleted'),
+    Cancelled: t('interviewCancelled'),
+  };
+
+  return statusMap[status] ?? status;
+}
+
+function getDateFilterLabel(filter: DateFilterKey, t: TranslateFn) {
+  const labelMap: Record<DateFilterKey, string> = {
+    allTime: t('dateAllTime'),
+    last7Days: t('dateLast7Days'),
+    last30Days: t('dateLast30Days'),
+    last3Months: t('dateLast3Months'),
+    last6Months: t('dateLast6Months'),
+    lastYear: t('dateLastYear'),
+  };
+
+  return labelMap[filter];
 }
 
 function getApplicationStatusMeta(status: string): StatusMeta {
@@ -355,10 +407,6 @@ function getCompanyTheme(company: string) {
   return COMPANY_THEMES[hash % COMPANY_THEMES.length] ?? COMPANY_THEMES[0];
 }
 
-function getApplicationScoreLabel(matchScore: number | null | undefined) {
-  return matchScore != null && matchScore > 0 ? `${Math.round(matchScore)}% match` : 'Match pending';
-}
-
 function getApplicationPipelineIndex(status: string) {
   const s = status.toLowerCase();
   if (s === 'submitted' || s === 'applied') return 0;
@@ -369,18 +417,25 @@ function getApplicationPipelineIndex(status: string) {
   return 0;
 }
 
+function getApplicationScoreLabel(matchScore: number | null | undefined, t: TranslateFn) {
+  return matchScore != null && matchScore > 0
+    ? t('matchPercent', { score: Math.round(matchScore) })
+    : t('matchPending');
+}
+
 function getApplicationAction(
   application: Application,
   matchingInterview: InterviewItem | undefined,
-  formatInterviewDateTime: (dateString: string) => string
+  formatInterviewDateTime: (dateString: string) => string,
+  t: TranslateFn
 ) {
   if (matchingInterview) {
     return {
       label:
         matchingInterview.interviewType === 'online'
-          ? 'Interview slot is confirmed'
-          : 'Walk-in interview is scheduled',
-      detail: `${formatInterviewDateTime(matchingInterview.interviewDateTime)} · ${matchingInterview.status}`,
+          ? t('actionInterviewOnline')
+          : t('actionInterviewWalkIn'),
+      detail: `${formatInterviewDateTime(matchingInterview.interviewDateTime)} · ${translateInterviewStatus(matchingInterview.status, t)}`,
       tone: 'bg-sky-50 text-sky-800',
     };
   }
@@ -388,46 +443,46 @@ function getApplicationAction(
   switch (application.status) {
     case 'Assessment':
       return {
-        label: 'Assessment stage is active',
-        detail: 'Review the application details and keep your profile updated for the next step.',
+        label: t('actionAssessment'),
+        detail: t('actionAssessmentDetail'),
         tone: 'bg-orange-50 text-orange-800',
       };
     case 'Interview':
       return {
-        label: 'Interview preparation recommended',
-        detail: 'Your application is in an interview stage. Keep your profile and resume sharp.',
+        label: t('actionInterviewPrep'),
+        detail: t('actionInterviewPrepDetail'),
         tone: 'bg-emerald-50 text-emerald-800',
       };
     case 'Final Decision':
       return {
-        label: 'Decision stage reached',
-        detail: 'Recruiter feedback is likely next. Keep an eye on notifications and your inbox.',
+        label: t('actionFinalDecision'),
+        detail: t('actionFinalDecisionDetail'),
         tone: 'bg-indigo-50 text-indigo-800',
       };
     case 'Selected':
       return {
-        label: 'Application moved successfully',
-        detail: 'This role has reached a successful outcome.',
+        label: t('actionSelected'),
+        detail: t('actionSelectedDetail'),
         tone: 'bg-emerald-50 text-emerald-800',
       };
     case 'Rejected':
       return {
-        label: 'Use this result as feedback',
-        detail: 'Review this application detail page and use it to refine the next one.',
+        label: t('actionRejected'),
+        detail: t('actionRejectedDetail'),
         tone: 'bg-rose-50 text-rose-800',
       };
     case 'Screening':
     case 'Under Review':
     case 'Shortlisted':
       return {
-        label: 'Recruiter review is in motion',
-        detail: 'No action is required right now. Keep applying to maintain pipeline momentum.',
+        label: t('actionReview'),
+        detail: t('actionReviewDetail'),
         tone: 'bg-sky-50 text-sky-800',
       };
     default:
       return {
-        label: 'Application delivered successfully',
-        detail: 'Track progress here and keep exploring similar opportunities.',
+        label: t('actionDefault'),
+        detail: t('actionDefaultDetail'),
         tone: 'bg-slate-50 text-slate-700',
       };
   }
@@ -481,20 +536,22 @@ function SegmentedControl({
   applicationCount,
   interviewCount,
   savedJobsCount,
+  tabLabels,
   onChange,
 }: {
   activeSection: ActiveSection;
   applicationCount: number;
   interviewCount: number;
   savedJobsCount: number;
+  tabLabels: { applications: string; interviews: string; savedJobs: string };
   onChange: (section: ActiveSection) => void;
 }) {
   return (
     <div className="dashboard-scrollbar inline-flex max-w-full items-center overflow-x-auto rounded-full border border-white/80 bg-white/72 p-1 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
       {([
-        { key: 'applications', label: 'Applications', count: applicationCount },
-        { key: 'interviews', label: 'Interviews', count: interviewCount },
-        { key: 'savedJobs', label: 'Saved Jobs', count: savedJobsCount },
+        { key: 'applications', label: tabLabels.applications, count: applicationCount },
+        { key: 'interviews', label: tabLabels.interviews, count: interviewCount },
+        { key: 'savedJobs', label: tabLabels.savedJobs, count: savedJobsCount },
       ] as const).map((item) => {
         const active = activeSection === item.key;
 
@@ -531,7 +588,7 @@ function FilterPillRow({
   onChange,
 }: {
   label: string;
-  options: string[];
+  options: { value: string; label: string }[];
   activeValue: string;
   onChange: (value: string) => void;
 }) {
@@ -542,19 +599,19 @@ function FilterPillRow({
       </p>
       <div className="dashboard-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {options.map((option) => {
-          const active = option === activeValue;
+          const active = option.value === activeValue;
           return (
             <button
-              key={option}
+              key={option.value}
               type="button"
-              onClick={() => onChange(option)}
+              onClick={() => onChange(option.value)}
               className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all duration-200 ${
                 active
                   ? 'bg-[#28A8E1] text-white shadow-[0_10px_18px_rgba(40,168,225,0.16)]'
                   : 'bg-slate-100/90 text-slate-600 hover:bg-slate-200/80'
               }`}
             >
-              {option}
+              {option.label}
             </button>
           );
         })}
@@ -592,11 +649,14 @@ function LoadingSkeleton({ count = 6 }: { count?: number }) {
 
 export default function ApplicationsPageClient() {
   const router = useRouter();
+  const t = useTranslations('applicationsPage');
+  const locale = useLocale();
+  const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-US';
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<ActiveSection>('applications');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [dateFilter, setDateFilter] = useState('All Time');
+  const [dateFilter, setDateFilter] = useState<DateFilterKey>('allTime');
   const [displayedApplicationsCount, setDisplayedApplicationsCount] = useState(6);
 
   const [applications, setApplications] = useState<Application[]>([]);
@@ -675,7 +735,7 @@ export default function ApplicationsPageClient() {
         }
       } catch (error) {
         if (!cancelled) {
-          setFetchError(error instanceof Error ? error.message : 'Failed to load applications');
+          setFetchError(error instanceof Error ? error.message : t('loadFailed'));
           setApplications([]);
         }
       } finally {
@@ -966,35 +1026,44 @@ export default function ApplicationsPageClient() {
     };
   }, [savedJobs]);
 
+  const dateFilterOptions = useMemo(
+    () =>
+      DATE_FILTER_KEYS.map((key) => ({
+        value: key,
+        label: getDateFilterLabel(key, t),
+      })),
+    [t]
+  );
+
   const heroMetrics = useMemo(() => {
     if (activeSection === 'savedJobs') {
       return [
         {
           id: 'saved-total',
-          label: 'Saved',
+          label: t('metricSaved'),
           value: String(savedJobsSummary.total),
-          helper: 'Roles bookmarked for later',
+          helper: t('metricSavedHelper'),
           icon: BookmarkCheck,
         },
         {
           id: 'saved-strong',
-          label: 'High Match',
+          label: t('metricHighMatch'),
           value: String(savedJobsSummary.strongMatch),
-          helper: 'Saved roles with strong fit',
+          helper: t('metricHighMatchHelper'),
           icon: Sparkles,
         },
         {
           id: 'saved-remote',
-          label: 'Remote',
+          label: t('metricRemote'),
           value: String(savedJobsSummary.remote),
-          helper: 'Remote-friendly saved roles',
+          helper: t('metricRemoteHelper'),
           icon: MapPin,
         },
         {
           id: 'saved-recent',
-          label: 'Fresh',
+          label: t('metricFresh'),
           value: String(savedJobsSummary.recent),
-          helper: 'Recently posted opportunities',
+          helper: t('metricFreshHelper'),
           icon: Clock3,
         },
       ];
@@ -1004,30 +1073,30 @@ export default function ApplicationsPageClient() {
       return [
         {
           id: 'scheduled',
-          label: 'Scheduled',
+          label: t('metricScheduled'),
           value: String(interviewSummary.scheduled),
-          helper: 'Upcoming interview slots',
+          helper: t('metricScheduledHelper'),
           icon: CalendarRange,
         },
         {
           id: 'online',
-          label: 'Online',
+          label: t('metricOnline'),
           value: String(interviewSummary.online),
-          helper: 'Remote interview sessions',
+          helper: t('metricOnlineHelper'),
           icon: Video,
         },
         {
           id: 'completed',
-          label: 'Completed',
+          label: t('metricCompleted'),
           value: String(interviewSummary.completed),
-          helper: 'Interview rounds finished',
+          helper: t('metricCompletedHelper'),
           icon: CheckCircle2,
         },
         {
           id: 'total-interviews',
-          label: 'Total',
+          label: t('metricTotal'),
           value: String(interviewSummary.total),
-          helper: 'Interview records tracked',
+          helper: t('metricTotalHelper'),
           icon: Target,
         },
       ];
@@ -1036,27 +1105,27 @@ export default function ApplicationsPageClient() {
     return [
       {
         id: 'applied',
-        label: 'Applied',
+        label: t('metricApplied'),
         value: String(applicationSummary.total),
-        helper: 'Roles already submitted',
+        helper: t('metricAppliedHelper'),
         icon: BriefcaseBusiness,
       },
       {
         id: 'reviewing',
-        label: 'Reviewing',
+        label: t('metricReviewing'),
         value: String(applicationSummary.reviewing),
-        helper: 'Under review and shortlist stages',
+        helper: t('metricReviewingHelper'),
         icon: FileSearch,
       },
       {
         id: 'selected',
-        label: 'Success',
+        label: t('metricSuccess'),
         value: String(applicationSummary.selected),
-        helper: 'Roles marked selected',
+        helper: t('metricSuccessHelper'),
         icon: CheckCircle2,
       },
     ];
-  }, [activeSection, applicationSummary, interviewSummary, savedJobsSummary]);
+  }, [activeSection, applicationSummary, interviewSummary, savedJobsSummary, t]);
 
   const featuredInterview = filteredInterviews[0] ?? null;
 
@@ -1099,7 +1168,7 @@ export default function ApplicationsPageClient() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(dateLocale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -1108,7 +1177,7 @@ export default function ApplicationsPageClient() {
 
   const formatInterviewDateTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
+    return date.toLocaleString(dateLocale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -1119,13 +1188,13 @@ export default function ApplicationsPageClient() {
 
   const hasActiveFilters =
     activeSection === 'applications'
-      ? searchQuery !== '' || statusFilter !== 'All' || dateFilter !== 'All Time'
+      ? searchQuery !== '' || statusFilter !== 'All' || dateFilter !== 'allTime'
       : searchQuery !== '';
 
   const clearFilters = () => {
     setSearchQuery('');
     setStatusFilter('All');
-    setDateFilter('All Time');
+    setDateFilter('allTime');
   };
 
   const handleLoadMore = () => {
@@ -1139,7 +1208,7 @@ export default function ApplicationsPageClient() {
         ? previous.filter((item) => item !== jobId)
         : [...previous, jobId]
     );
-    showSuccessToast(wasSaved ? 'Job removed from saved jobs' : 'Job saved');
+    showSuccessToast(wasSaved ? t('jobRemovedFromSaved') : t('jobSaved'));
   };
 
   const renderApplicationCard = (application: Application) => {
@@ -1154,7 +1223,8 @@ export default function ApplicationsPageClient() {
     const statusMeta = getApplicationStatusMeta(application.status);
     const pipelineIndex = getApplicationPipelineIndex(application.status);
     const progressWidth = ['12%', '32%', '56%', '78%', '100%'][pipelineIndex] ?? '12%';
-    const action = getApplicationAction(application, matchingInterview, formatInterviewDateTime);
+    const action = getApplicationAction(application, matchingInterview, formatInterviewDateTime, t);
+    const statusLabel = translateApplicationStatus(application.status, t);
 
     return (
       <DashboardPanel key={application.id} className="h-full p-4 sm:p-5">
@@ -1174,17 +1244,17 @@ export default function ApplicationsPageClient() {
 
             <div className="flex shrink-0 flex-col items-end gap-2">
               <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${statusMeta.chip}`}>
-                {application.status}
+                {statusLabel}
               </span>
               <span className="rounded-full bg-(--brand-accent-soft) px-2.5 py-1 text-[11px] font-semibold text-(--brand-accent)">
-                {getApplicationScoreLabel(application.matchScore)}
+                {getApplicationScoreLabel(application.matchScore, t)}
               </span>
             </div>
           </div>
 
           <div className={`rounded-[18px] px-3.5 py-3 ${action.tone}`}>
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] opacity-80">
-              Next action
+              {t('nextAction')}
             </p>
             <p className="profile-page-value mt-1 font-semibold">{action.label}</p>
             <p className="mt-1 text-[12px] leading-5 opacity-80">{action.detail}</p>
@@ -1193,10 +1263,10 @@ export default function ApplicationsPageClient() {
           <div className="rounded-[18px] border border-slate-100/90 bg-slate-50/85 px-3.5 py-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                Progress
+                {t('progress')}
               </p>
               <p className="text-[11px] font-semibold text-slate-600">
-                {application.status}
+                {statusLabel}
               </p>
             </div>
 
@@ -1208,10 +1278,10 @@ export default function ApplicationsPageClient() {
             </div>
 
             <div className="mt-3 grid grid-cols-5 gap-1">
-              {PIPELINE_LABELS.map((label, index) => {
+              {PIPELINE_STEP_KEYS.map((labelKey, index) => {
                 const active = pipelineIndex >= index;
                 return (
-                  <div key={label} className="text-center">
+                  <div key={labelKey} className="text-center">
                     <div className="mx-auto mb-1 h-1.5 w-1.5 rounded-full bg-slate-200">
                       <div
                         className={`h-full w-full rounded-full ${
@@ -1224,7 +1294,7 @@ export default function ApplicationsPageClient() {
                         active ? 'text-slate-700' : 'text-slate-400'
                       }`}
                     >
-                      {label}
+                      {t(labelKey)}
                     </p>
                   </div>
                 );
@@ -1235,12 +1305,12 @@ export default function ApplicationsPageClient() {
           <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-slate-600">
             <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm ring-1 ring-slate-100">
               <Clock3 className="h-3 w-3" strokeWidth={2.1} />
-              Applied {formatDate(application.appliedDate)}
+              {t('appliedOn', { date: formatDate(application.appliedDate) })}
             </span>
             {matchingInterview ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm ring-1 ring-slate-100">
                 <CalendarRange className="h-3 w-3" strokeWidth={2.1} />
-                {matchingInterview.status}
+                {translateInterviewStatus(matchingInterview.status, t)}
               </span>
             ) : null}
           </div>
@@ -1254,7 +1324,7 @@ export default function ApplicationsPageClient() {
                 }}
                 className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[rgba(40,168,225,0.22)] bg-white px-3 py-2 text-[12px] font-semibold text-(--brand-primary) transition-all duration-200 hover:bg-(--brand-primary-soft)"
               >
-                Join interview
+                {t('joinInterviewShort')}
                 <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
               </button>
             ) : null}
@@ -1264,7 +1334,7 @@ export default function ApplicationsPageClient() {
               onClick={() => router.push(`/applications/${application.id}`)}
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
             >
-              View status
+              {t('viewStatus')}
               <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.1} />
             </button>
           </div>
@@ -1276,12 +1346,14 @@ export default function ApplicationsPageClient() {
   const renderSavedJobCard = (job: SavedJobRecord) => {
     const matchLabel =
       job.matchScore != null && job.matchScore > 0
-        ? `${Math.round(job.matchScore)}% match`
-        : 'Saved role';
-    const savedLabel = job.savedAt ? `Saved ${formatDate(job.savedAt)}` : 'Saved in your list';
+        ? t('matchPercent', { score: Math.round(job.matchScore) })
+        : t('savedRole');
+    const savedLabel = job.savedAt
+      ? t('savedOn', { date: formatDate(job.savedAt) })
+      : t('savedInList');
     const postedLabel = isRecentDate(job.postedAt, 7)
-      ? 'Posted recently'
-      : `Posted ${formatDate(job.postedAt)}`;
+      ? t('postedRecently')
+      : t('postedOn', { date: formatDate(job.postedAt) });
     const salaryLabel = formatSavedSalary(job);
 
     return (
@@ -1296,7 +1368,7 @@ export default function ApplicationsPageClient() {
                 </p>
                 <p className="application-detail-meta mt-1 truncate">{job.company}</p>
                 <p className="mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
-                  {formatSavedJobMeta(job)}
+                  {formatSavedJobMeta(job, t)}
                 </p>
               </div>
             </div>
@@ -1308,15 +1380,15 @@ export default function ApplicationsPageClient() {
 
           <div className="rounded-[18px] border border-slate-100/90 bg-slate-50/85 px-3.5 py-3">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-              Why keep this role
+              {t('whyKeepRole')}
             </p>
             <p className="profile-page-value mt-1 font-semibold">
               {job.matchScore != null && job.matchScore >= 75
-                ? 'This role still looks like a strong fit for your profile.'
-                : 'You bookmarked this role to revisit when you are ready to apply.'}
+                ? t('strongFitSaved')
+                : t('bookmarkedSaved')}
             </p>
             <p className="mt-1 text-[12px] leading-5 text-slate-500">
-              Open the jobs board to review the latest details and apply when the timing feels right.
+              {t('savedJobDetail')}
             </p>
           </div>
 
@@ -1336,7 +1408,7 @@ export default function ApplicationsPageClient() {
             ) : null}
             {job.visaSponsorship ? (
               <span className="inline-flex rounded-full bg-(--brand-primary-soft) px-2.5 py-1 text-(--brand-primary)">
-                Visa friendly
+                {t('visaFriendly')}
               </span>
             ) : null}
           </div>
@@ -1347,7 +1419,7 @@ export default function ApplicationsPageClient() {
               onClick={() => handleToggleSavedJob(job.id)}
               className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
             >
-              Remove saved
+              {t('removeSaved')}
               <BookmarkCheck className="h-3.5 w-3.5" strokeWidth={2.1} />
             </button>
             <button
@@ -1357,7 +1429,7 @@ export default function ApplicationsPageClient() {
               }
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
             >
-              Apply now
+              {t('applyNow')}
               <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
             </button>
           </div>
@@ -1376,18 +1448,17 @@ export default function ApplicationsPageClient() {
                 <BriefcaseBusiness className="h-7 w-7" strokeWidth={2.2} />
               </div>
               <h1 className="application-detail-title mt-5">
-                Sign in to see your applications
+                {t('signInTitle')}
               </h1>
               <p className="application-detail-helper mx-auto mt-3 max-w-2xl">
-                Verify your WhatsApp number so we can load only your application history,
-                interview schedule, and next recommended actions.
+                {t('signInBody')}
               </p>
               <button
                 type="button"
                 onClick={() => router.push('/whatsapp/verify')}
                 className="mt-8 inline-flex items-center justify-center rounded-full bg-[#28A8E1] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(40,168,225,0.2)] transition-all duration-200 hover:bg-[#28A8DF]"
               >
-                Continue with WhatsApp
+                {t('continueWhatsapp')}
               </button>
             </DashboardPanel>
           </div>
@@ -1413,7 +1484,7 @@ export default function ApplicationsPageClient() {
                 <div className="max-w-2xl space-y-3">
                   <div className="inline-flex items-center gap-1.5 rounded-full border border-(--brand-primary-soft) bg-white/72 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-primary) shadow-sm">
                     <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
-                    Application command center
+                    {t('badge')}
                   </div>
 
                   <div className="space-y-2">
@@ -1422,7 +1493,7 @@ export default function ApplicationsPageClient() {
                         type="button"
                         onClick={() => router.back()}
                         className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
-                        title="Go Back"
+                        title={t('goBack')}
                       >
                         <svg
                           width="20"
@@ -1439,18 +1510,18 @@ export default function ApplicationsPageClient() {
                       </button>
                       <h1 className="application-detail-title">
                         {activeSection === 'applications'
-                          ? 'My Applications'
+                          ? t('titleApplications')
                           : activeSection === 'interviews'
-                            ? 'Interview Tracker'
-                            : 'Saved Jobs'}
+                            ? t('titleInterviews')
+                            : t('titleSavedJobs')}
                       </h1>
                     </div>
                     <p className="application-detail-helper max-w-2xl">
                       {activeSection === 'applications'
-                        ? 'Track every role, understand its current stage, and move quickly on the applications that need attention.'
+                        ? t('subtitleApplications')
                         : activeSection === 'interviews'
-                          ? 'Keep your interview schedule, formats, and next actions in one cleaner view.'
-                          : 'Revisit the roles you bookmarked, compare fit signals, and jump back into the jobs board when you want to apply.'}
+                          ? t('subtitleInterviews')
+                          : t('subtitleSavedJobs')}
                     </p>
                   </div>
 
@@ -1459,6 +1530,11 @@ export default function ApplicationsPageClient() {
                     applicationCount={applications.length}
                     interviewCount={interviews.length}
                     savedJobsCount={savedJobs.length}
+                    tabLabels={{
+                      applications: t('tabApplications'),
+                      interviews: t('tabInterviews'),
+                      savedJobs: t('tabSavedJobs'),
+                    }}
                     onChange={setActiveSection}
                   />
                 </div>
@@ -1492,7 +1568,7 @@ export default function ApplicationsPageClient() {
                     <CompanyMark company={featuredApplication.company} />
                     <div className="min-w-0">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-accent)">
-                        Needs attention
+                        {t('needsAttention')}
                       </p>
                       <h2 className="profile-page-section-title mt-1">
                         {featuredApplication.jobTitle}
@@ -1505,14 +1581,14 @@ export default function ApplicationsPageClient() {
 
                   <div className="flex flex-col gap-3 lg:max-w-[420px] lg:items-end">
                     <p className={`rounded-full px-3 py-1 text-[11px] font-semibold ${getApplicationStatusMeta(featuredApplication.status).chip}`}>
-                      {featuredApplication.status}
+                      {translateApplicationStatus(featuredApplication.status, t)}
                     </p>
                     <button
                       type="button"
                       onClick={() => router.push(`/applications/${featuredApplication.id}`)}
                       className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-4 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
                     >
-                      Open application
+                      {t('openApplication')}
                       <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
                     </button>
                   </div>
@@ -1525,7 +1601,7 @@ export default function ApplicationsPageClient() {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0 space-y-2">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-accent)">
-                      Upcoming interview
+                      {t('upcomingInterview')}
                     </p>
                     <h2 className="profile-page-section-title">
                       {featuredInterview.jobTitle}
@@ -1542,7 +1618,7 @@ export default function ApplicationsPageClient() {
                         ) : (
                           <MapPin className="h-3 w-3" strokeWidth={2.1} />
                         )}
-                        {featuredInterview.interviewType === 'online' ? 'Online' : 'Walk-in'}
+                        {featuredInterview.interviewType === 'online' ? t('metricOnlineShort') : t('walkIn')}
                       </span>
                     </div>
                   </div>
@@ -1556,7 +1632,7 @@ export default function ApplicationsPageClient() {
                         }
                         className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[rgba(40,168,225,0.22)] bg-white px-4 py-2 text-[12px] font-semibold text-(--brand-primary) transition-all duration-200 hover:bg-(--brand-primary-soft)"
                       >
-                        Join interview
+                        {t('joinInterview')}
                         <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
                       </button>
                     ) : null}
@@ -1565,7 +1641,7 @@ export default function ApplicationsPageClient() {
                       onClick={() => router.push(`/interviews/${featuredInterview.id}`)}
                       className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-4 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
                     >
-                      View details
+                      {t('viewDetails')}
                       <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.1} />
                     </button>
                   </div>
@@ -1580,7 +1656,7 @@ export default function ApplicationsPageClient() {
                     <CompanyMark company={featuredSavedJob.company} />
                     <div className="min-w-0">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-accent)">
-                        Saved spotlight
+                        {t('savedSpotlight')}
                       </p>
                       <h2 className="profile-page-section-title mt-1">
                         {featuredSavedJob.title}
@@ -1589,7 +1665,7 @@ export default function ApplicationsPageClient() {
                         {featuredSavedJob.company}
                       </p>
                       <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
-                        {formatSavedJobMeta(featuredSavedJob)}
+                        {formatSavedJobMeta(featuredSavedJob, t)}
                       </p>
                     </div>
                   </div>
@@ -1597,8 +1673,8 @@ export default function ApplicationsPageClient() {
                   <div className="flex flex-col gap-3 lg:max-w-[420px] lg:items-end">
                     <p className="rounded-full bg-(--brand-accent-soft) px-3 py-1 text-[11px] font-semibold text-(--brand-accent)">
                       {featuredSavedJob.matchScore != null && featuredSavedJob.matchScore > 0
-                        ? `${Math.round(featuredSavedJob.matchScore)}% match`
-                        : 'Saved for later'}
+                        ? t('matchPercent', { score: Math.round(featuredSavedJob.matchScore) })
+                        : t('savedForLater')}
                     </p>
                     <button
                       type="button"
@@ -1609,7 +1685,7 @@ export default function ApplicationsPageClient() {
                       }
                       className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-4 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
                     >
-                      Open jobs board
+                      {t('openJobsBoard')}
                       <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
                     </button>
                   </div>
@@ -1628,10 +1704,10 @@ export default function ApplicationsPageClient() {
                       onChange={(event) => setSearchQuery(event.target.value)}
                       placeholder={
                         activeSection === 'applications'
-                          ? 'Search by job title or company'
+                          ? t('searchApplications')
                           : activeSection === 'interviews'
-                          ? 'Search interviews by role or company'
-                          : 'Search saved jobs by role, company, or location'
+                          ? t('searchInterviews')
+                          : t('searchSavedJobs')
                       }
                       className="profile-modal-field w-full rounded-[18px] border border-slate-200/80 bg-slate-50/85 py-3 pr-4 text-[0.8125rem] font-medium text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.28)] focus:bg-white focus:ring-4 focus:ring-[rgba(40,168,225,0.08)]"
                       style={{ paddingLeft: '3.1rem' }}
@@ -1641,21 +1717,21 @@ export default function ApplicationsPageClient() {
                   {activeSection === 'applications' ? (
                     <div className="flex-1 space-y-3">
                       <FilterPillRow
-                        label="Timeline"
-                        options={DATE_OPTIONS}
+                        label={t('timeline')}
+                        options={dateFilterOptions}
                         activeValue={dateFilter}
-                        onChange={setDateFilter}
+                        onChange={(value) => setDateFilter(value as DateFilterKey)}
                       />
                     </div>
                   ) : activeSection === 'interviews' ? (
                     <div className="flex items-center gap-2 rounded-full bg-slate-100/85 px-3 py-2 text-[11px] font-semibold text-slate-500">
                       <LayoutGrid className="h-3.5 w-3.5" strokeWidth={2.2} />
-                      Search updates your interview list in real time
+                      {t('interviewsSearchHint')}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 rounded-full bg-slate-100/85 px-3 py-2 text-[11px] font-semibold text-slate-500">
                       <BookmarkCheck className="h-3.5 w-3.5" strokeWidth={2.2} />
-                      Saved jobs stay synced with the dashboard bookmarks
+                      {t('savedJobsSearchHint')}
                     </div>
                   )}
                 </div>
@@ -1664,19 +1740,24 @@ export default function ApplicationsPageClient() {
                   <div className="flex items-center gap-2 text-[12px] font-medium text-slate-500">
                     <span className="inline-flex items-center gap-1 rounded-full bg-(--brand-primary-soft) px-2.5 py-1 text-[11px] font-semibold text-(--brand-primary)">
                       {activeSection === 'applications'
-                        ? `${filteredApplications.length} applications`
+                        ? t('countApplications', { count: filteredApplications.length })
                         : activeSection === 'interviews'
-                        ? `${filteredInterviews.length} interviews`
-                        : `${filteredSavedJobs.length} saved jobs`}
+                        ? t('countInterviews', { count: filteredInterviews.length })
+                        : t('countSavedJobs', { count: filteredSavedJobs.length })}
                     </span>
                     {activeSection === 'applications' ? (
                       <span className="text-slate-400">
-                        Showing {Math.min(displayedApplications.length, filteredApplications.length)} of{' '}
-                        {filteredApplications.length}
+                        {t('showingApplications', {
+                          shown: Math.min(displayedApplications.length, filteredApplications.length),
+                          total: filteredApplications.length,
+                        })}
                       </span>
                     ) : activeSection === 'savedJobs' ? (
                       <span className="text-slate-400">
-                        Showing {filteredSavedJobs.length} of {savedJobs.length}
+                        {t('showingSavedJobs', {
+                          shown: filteredSavedJobs.length,
+                          total: savedJobs.length,
+                        })}
                       </span>
                     ) : null}
                   </div>
@@ -1687,7 +1768,7 @@ export default function ApplicationsPageClient() {
                       onClick={clearFilters}
                       className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
                     >
-                      Clear filters
+                      {t('clearFilters')}
                       <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.1} />
                     </button>
                   ) : null}
@@ -1711,7 +1792,7 @@ export default function ApplicationsPageClient() {
                         onClick={handleLoadMore}
                         className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
                       >
-                        Load more applications
+                        {t('loadMoreApplications')}
                         <ChevronRight className="h-4 w-4" strokeWidth={2.1} />
                       </button>
                     </div>
@@ -1723,12 +1804,12 @@ export default function ApplicationsPageClient() {
                     <BriefcaseBusiness className="h-7 w-7" strokeWidth={1.8} />
                   </div>
                   <h2 className="application-detail-title mt-5">
-                    {applications.length === 0 ? 'No applications yet' : 'No applications found'}
+                    {applications.length === 0 ? t('noApplicationsYet') : t('noApplicationsFound')}
                   </h2>
                   <p className="application-detail-helper mx-auto mt-3 max-w-md">
                     {applications.length === 0
-                      ? 'Browse jobs and apply - your application history will show up here.'
-                      : 'We could not find any applications matching your current search or filters.'}
+                      ? t('noApplicationsYetBody')
+                      : t('noApplicationsFoundBody')}
                   </p>
                   <div className="mt-6 flex justify-center gap-3">
                     {applications.length === 0 ? (
@@ -1737,7 +1818,7 @@ export default function ApplicationsPageClient() {
                         onClick={() => router.push('/explore-jobs')}
                         className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
                       >
-                        Explore jobs
+                        {t('exploreJobs')}
                         <ArrowUpRight className="h-4 w-4" strokeWidth={2.1} />
                       </button>
                     ) : null}
@@ -1747,7 +1828,7 @@ export default function ApplicationsPageClient() {
                         onClick={clearFilters}
                         className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-slate-50"
                       >
-                        Reset filters
+                        {t('resetFilters')}
                       </button>
                     ) : null}
                   </div>
@@ -1766,12 +1847,12 @@ export default function ApplicationsPageClient() {
                     <BookmarkCheck className="h-7 w-7" strokeWidth={1.8} />
                   </div>
                   <h2 className="application-detail-title mt-5">
-                    {savedJobs.length === 0 ? 'No saved jobs yet' : 'No saved jobs found'}
+                    {savedJobs.length === 0 ? t('noSavedJobsYet') : t('noSavedJobsFound')}
                   </h2>
                   <p className="application-detail-helper mx-auto mt-3 max-w-md">
                     {savedJobs.length === 0
-                      ? 'Save roles from the dashboard and they will appear here for quick follow-up.'
-                      : 'We could not find any saved jobs matching your current search.'}
+                      ? t('noSavedJobsYetBody')
+                      : t('noSavedJobsFoundBody')}
                   </p>
                   <div className="mt-6 flex justify-center gap-3">
                     <button
@@ -1779,7 +1860,7 @@ export default function ApplicationsPageClient() {
                       onClick={() => router.push('/explore-jobs')}
                       className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
                     >
-                      Explore jobs
+                      {t('exploreJobs')}
                       <ArrowUpRight className="h-4 w-4" strokeWidth={2.1} />
                     </button>
                     {hasActiveFilters ? (
@@ -1788,7 +1869,7 @@ export default function ApplicationsPageClient() {
                         onClick={clearFilters}
                         className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-slate-50"
                       >
-                        Reset search
+                        {t('resetSearch')}
                       </button>
                     ) : null}
                   </div>
@@ -1817,14 +1898,14 @@ export default function ApplicationsPageClient() {
                             INTERVIEW_STATUS_META[interview.status]
                           }`}
                         >
-                          {interview.status}
+                          {translateInterviewStatus(interview.status, t)}
                         </span>
                       </div>
 
                       <div className="grid gap-2 sm:grid-cols-2">
                         <div className="rounded-[16px] bg-slate-50/90 px-3 py-2.5">
                           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                            Scheduled
+                            {t('interviewScheduledLabel')}
                           </p>
                           <p className="profile-page-value mt-1 font-semibold">
                             {formatInterviewDateTime(interview.interviewDateTime)}
@@ -1832,18 +1913,18 @@ export default function ApplicationsPageClient() {
                         </div>
                         <div className="rounded-[16px] bg-slate-50/90 px-3 py-2.5">
                           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                            Format
+                            {t('interviewFormat')}
                           </p>
                           <p className="profile-page-value mt-1 font-semibold">
-                            {interview.interviewType === 'online' ? 'Online interview' : 'Walk-in interview'}
+                            {interview.interviewType === 'online' ? t('onlineInterview') : t('walkInInterview')}
                           </p>
                         </div>
                       </div>
 
                       <div className="application-detail-helper rounded-[18px] border border-slate-100/90 bg-slate-50/85 px-3.5 py-3">
                         {interview.interviewType === 'online'
-                          ? 'Meeting access is available when you are ready to join.'
-                          : 'Keep interview documents and location details handy before the visit.'}
+                          ? t('meetingAccessOnline')
+                          : t('walkInPrep')}
                       </div>
 
                       <div className="mt-auto grid grid-cols-2 gap-2">
@@ -1857,7 +1938,7 @@ export default function ApplicationsPageClient() {
                             }}
                             className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-3 py-2.5 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
                           >
-                            Join
+                            {t('join')}
                             <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
                           </button>
                         ) : (
@@ -1866,7 +1947,7 @@ export default function ApplicationsPageClient() {
                             className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[12px] font-semibold text-slate-500"
                             disabled
                           >
-                            Walk-in
+                            {t('walkIn')}
                           </button>
                         )}
 
@@ -1875,7 +1956,7 @@ export default function ApplicationsPageClient() {
                           onClick={() => router.push(`/interviews/${interview.id}`)}
                           className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[12px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
                         >
-                          View details
+                          {t('viewDetails')}
                           <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.1} />
                         </button>
                       </div>
@@ -1889,18 +1970,17 @@ export default function ApplicationsPageClient() {
                   <CalendarRange className="h-7 w-7" strokeWidth={1.8} />
                 </div>
                 <h2 className="application-detail-title mt-5">
-                  No interviews scheduled
+                  {t('noInterviewsScheduled')}
                 </h2>
                 <p className="application-detail-helper mx-auto mt-3 max-w-md">
-                  You do not have any interview events in view right now. Keep applying to increase
-                  your chances.
+                  {t('noInterviewsBody')}
                 </p>
                 <button
                   type="button"
                   onClick={() => router.push('/explore-jobs')}
                   className="mt-6 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
                 >
-                  Explore jobs
+                  {t('exploreJobs')}
                   <ArrowUpRight className="h-4 w-4" strokeWidth={2.1} />
                 </button>
               </DashboardPanel>

@@ -1,4 +1,7 @@
+'use client';
+
 import type { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { PROFILE_DASHBOARD_CARD } from '@/components/profile/layout/profile-layout.constants';
 
 export type WorkspaceSectionCardProps = {
@@ -30,6 +33,7 @@ export function WorkspaceSectionCard({
   sectionId,
   className = '',
 }: WorkspaceSectionCardProps) {
+  const t = useTranslations('profilePage.actions');
   return (
     <div
       id={sectionId}
@@ -40,7 +44,7 @@ export function WorkspaceSectionCard({
           {incomplete ? (
             <span
               className="h-2 w-2 shrink-0 rounded-full bg-amber-500"
-              title="Needs attention"
+              title={t('needsAttention')}
               aria-hidden
             />
           ) : null}
@@ -54,8 +58,8 @@ export function WorkspaceSectionCard({
               type="button"
               onClick={onEdit}
               className="rounded-lg border border-gray-200 p-2 text-blue-600 transition-all duration-200 hover:bg-blue-50"
-              aria-label={`Edit ${title}`}
-              title="Edit"
+              aria-label={t('editSection', { title })}
+              title={t('edit')}
             >
               <svg
                 className="h-4 w-4"

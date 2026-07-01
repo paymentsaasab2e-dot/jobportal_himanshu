@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { downloadProfileDocument, openProfileDocumentInNewTab } from '@/lib/profile-documents';
 import type { WorkExperienceEntry } from '@/components/modals/WorkExperienceModal';
 import {
@@ -11,6 +12,7 @@ import {
   textSnippet,
 } from './PreviewPrimitives';
 import { PreviewEntryActionButtons } from './PreviewEntryActionButtons';
+import { formatProfileDateRange } from '@/lib/profile-page-i18n';
 
 type Props = {
   entry: WorkExperienceEntry;
@@ -23,22 +25,14 @@ type Props = {
   onDelete: () => void;
 };
 
-function fmtRange(start?: string, end?: string, current?: boolean) {
-  const a = start
-    ? new Date(start).toLocaleDateString('en-US', {
-        month: 'short',
-        year: 'numeric',
-      })
-    : '—';
-  const b = current
-    ? 'Present'
-    : end
-      ? new Date(end).toLocaleDateString('en-US', {
-          month: 'short',
-          year: 'numeric',
-        })
-      : '—';
-  return `${a} – ${b}`;
+function fmtRange(
+  start?: string,
+  end?: string,
+  current?: boolean,
+  locale = 'en',
+  presentLabel = 'Present',
+) {
+  return formatProfileDateRange(locale, presentLabel, start, end, current);
 }
 
 export function WorkExperienceEntryCard({
@@ -51,6 +45,8 @@ export function WorkExperienceEntryCard({
   onEdit,
   onDelete,
 }: Props) {
+  const t = useTranslations('profilePage');
+  const locale = useLocale();
   const docCount = entry.documents?.length ?? 0;
   const snippet = textSnippet(
     [entry.keyResponsibilities, entry.achievements].filter(Boolean).join(' · '),
@@ -90,7 +86,7 @@ export function WorkExperienceEntryCard({
               </PreviewChip>
             ) : null}
             {entry.currentlyWorkHere ? (
-              <PreviewChip tone="orange">Current role</PreviewChip>
+              <PreviewChip tone="orange">{t('fields.currentRole')}</PreviewChip>
             ) : null}
             {entry.industryDomain ? (
               <PreviewChip tone="neutral">{entry.industryDomain}</PreviewChip>
@@ -102,6 +98,8 @@ export function WorkExperienceEntryCard({
                 entry.startDate,
                 entry.endDate,
                 entry.currentlyWorkHere,
+                locale,
+                t('fields.present'),
               )}
             </span>
             {entry.workLocation ? (
