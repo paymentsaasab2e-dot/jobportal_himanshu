@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 export function PreviewMetaItem({
   label,
@@ -123,6 +124,7 @@ export function PreviewExpandableText({
   lineClamp?: number;
   className?: string;
 }) {
+  const t = useTranslations('profilePage.actions');
   const [open, setOpen] = useState(false);
   const trimmed = (text || '').trim();
   if (!trimmed) {
@@ -162,7 +164,7 @@ export function PreviewExpandableText({
           onClick={() => setOpen(!open)}
           className="mt-2 text-xs font-semibold text-orange-700 hover:text-orange-800"
         >
-          {open ? 'Show less' : 'Read more'}
+          {open ? t('showLess') : t('readMore')}
         </button>
       ) : null}
     </div>

@@ -18,6 +18,7 @@ import {
 import { profileCancelBtnClass, profileFieldClass, profileSaveBtnClass } from '@/lib/profile-modal-ui';
 import { resolveSignupPhoneFields } from '@/lib/phone-utils';
 import { useAuth } from '@/components/auth/AuthContext';
+import { useTranslations } from 'next-intl';
 
 function isValidCalendarYmd(year: number, month: number, day: number) {
   const dt = new Date(year, month - 1, day);
@@ -95,6 +96,9 @@ export default function BasicInfoModal({
   onSave,
   initialData,
 }: BasicInfoModalProps) {
+  const t = useTranslations('profilePage.modals.basicInfo');
+  const tCommon = useTranslations('profilePage.modals');
+  const tEnum = useTranslations('profilePage.enums');
   const { user } = useAuth();
 
   const getMaxDobDate = () => {
@@ -375,10 +379,10 @@ export default function BasicInfoModal({
   const validate = (payload: BasicInfoData) => {
     const nextErrors: Partial<Record<BasicInfoFieldKey, string>> = {};
 
-    if (!payload.firstName) nextErrors.firstName = 'First name is required.';
-    if (!payload.email) nextErrors.email = 'Email is required.';
+    if (!payload.firstName) nextErrors.firstName = t('errFirstName');
+    if (!payload.email) nextErrors.email = t('errEmail');
     if (!payload.phone) {
-      nextErrors.phone = 'Phone number is required.';
+      nextErrors.phone = t('errPhone');
     } else {
       const expectedLength = selectedPhoneCodeOption.phoneLength;
       const digitsOnly = payload.phone.replace(/\D/g, '');
@@ -387,27 +391,27 @@ export default function BasicInfoModal({
         nextErrors.phone = `Phone number must be exactly ${expectedLength} digits.`;
       }
     }
-    if (!payload.gender) nextErrors.gender = 'Gender is required.';
+    if (!payload.gender) nextErrors.gender = t('errGender');
     if (!dobDisplay.trim()) {
-      nextErrors.dob = 'Date of birth is required.';
+      nextErrors.dob = t('errDob');
     } else {
       const iso = parseDdMmYyyyToIso(dobDisplay.trim());
       if (!iso) {
-        nextErrors.dob = 'Enter a valid date as DD/MM/YYYY (e.g. 15/03/1998).';
+        nextErrors.dob = t('errDobFormat');
       } else {
         const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
         if (!m) {
-          nextErrors.dob = 'Enter a valid date as DD/MM/YYYY.';
+          nextErrors.dob = t('errDobInvalid');
         } else {
           const birth = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
           if (birth > maxDob) {
-            nextErrors.dob = 'Candidate must be at least 18 years old.';
+            nextErrors.dob = t('errDobAge');
           }
         }
       }
     }
-    if (!payload.city) nextErrors.city = 'City is required.';
-    if (!payload.country) nextErrors.country = 'Country is required.';
+    if (!payload.city) nextErrors.city = t('errCity');
+    if (!payload.country) nextErrors.country = t('errCountry');
 
     return nextErrors;
   };
@@ -502,13 +506,13 @@ export default function BasicInfoModal({
           {/* Header */}
           <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-5 py-4">
             <h2 className="profile-modal-title">
-              {initialData ? 'Edit Basic Information' : 'Add Basic Information'}
+              {initialData ? t('titleEdit') : t('titleAdd')}
             </h2>
             <button
               type="button"
               onClick={onClose}
               className="profile-modal-close-btn"
-              aria-label="Close"
+              aria-label={tCommon('close')}
             >
               <svg
                 width="24"
@@ -532,41 +536,41 @@ export default function BasicInfoModal({
               {/* Section 1 */}
               <section className="profile-modal-section">
                 <h3 className="profile-modal-section-title">
-                  Personal Details
+                  {tCommon('personalDetails')}
                 </h3>
                 <div className="profile-modal-form-grid profile-modal-form-grid--split">
                   <div className="profile-modal-field-group">
-                    <label className="profile-modal-label">First Name *</label>
+                    <label className="profile-modal-label">{t('firstName')}</label>
                     <input
                       type="text"
                       value={firstNameValue}
                       onChange={(e) => setFirstNameValue(e.target.value)}
                       className={profileFieldClass(!firstNameValue.trim() || Boolean(errors.firstName))}
-                      placeholder="Enter first name"
+                      placeholder={t('placeholderFirstName')}
                     />
                     {!firstNameValue.trim() && (
-                      <p className="profile-modal-helper mt-1 text-amber-600">First name is required</p>
+                      <p className="profile-modal-helper mt-1 text-amber-600">{t('firstNameRequired')}</p>
                     )}
                     {errors.firstName && <p className="profile-modal-helper text-red-600">{errors.firstName}</p>}
                   </div>
                   <div className="profile-modal-field-group">
-                    <label className="profile-modal-label">Middle Name</label>
+                    <label className="profile-modal-label">{t('middleName')}</label>
                     <input
                       type="text"
                       value={middleNameValue}
                       onChange={(e) => setMiddleNameValue(e.target.value)}
                       className={profileFieldClass()}
-                      placeholder="Enter middle name"
+                      placeholder={t('placeholderMiddleName')}
                     />
                   </div>
                   <div className="profile-modal-field-group profile-modal-form-grid__full">
-                    <label className="profile-modal-label">Last Name</label>
+                    <label className="profile-modal-label">{t('lastName')}</label>
                     <input
                       type="text"
                       value={lastNameValue}
                       onChange={(e) => setLastNameValue(e.target.value)}
                       className={profileFieldClass()}
-                      placeholder="Enter last name"
+                      placeholder={t('placeholderLastName')}
                     />
                   </div>
                 </div>
@@ -575,27 +579,27 @@ export default function BasicInfoModal({
               {/* Section 2 */}
               <section className="profile-modal-section">
                 <h3 className="profile-modal-section-title">
-                  Contact Information
+                  {tCommon('contactInformation')}
                 </h3>
                 <div className="profile-modal-form-grid profile-modal-form-grid--split">
                   <div className="profile-modal-field-group profile-modal-form-grid__full">
-                    <label className="profile-modal-label">Email Address *</label>
+                    <label className="profile-modal-label">{t('email')}</label>
                     <div className="relative">
                       <input
                         type="email"
                         value={emailValue}
                         onChange={(e) => setEmailValue(e.target.value)}
                         className={profileFieldClass(!emailValue.trim() || Boolean(errors.email))}
-                        placeholder="Enter email address"
+                        placeholder={t('placeholderEmail')}
                       />
                     </div>
                     {!emailValue.trim() && (
-                      <p className="profile-modal-helper mt-1 text-amber-600">Email address is required</p>
+                      <p className="profile-modal-helper mt-1 text-amber-600">{t('emailRequired')}</p>
                     )}
                     {errors.email && <p className="profile-modal-helper text-red-600">{errors.email}</p>}
                   </div>
                   <div className="profile-modal-field-group profile-modal-form-grid__full">
-                    <label className="profile-modal-label">Phone Number *</label>
+                    <label className="profile-modal-label">{t('phone')}</label>
                     <div className="profile-modal-phone-row">
                       <div className="relative min-w-0" ref={phoneCodeRef}>
                         <button
@@ -688,22 +692,22 @@ export default function BasicInfoModal({
                 </h3>
                 <div className="profile-modal-form-grid profile-modal-form-grid--split">
                   <div className="profile-modal-field-group">
-                    <label className="profile-modal-label">Gender *</label>
+                    <label className="profile-modal-label">{t('gender')}</label>
                     <select
                       value={genderValue}
                       onChange={(e) => setGenderValue(e.target.value)}
                       className={`${profileFieldClass(!genderValue || Boolean(errors.gender))} appearance-none`}
                     >
-                      <option value="">Select Gender</option>
-                      <option>Male</option>
-                      <option>Female</option>
-                      <option>Other</option>
-                      <option>Prefer not to say</option>
+                      <option value="">{t('selectGender')}</option>
+                      <option value="Male">{tEnum('genderMale')}</option>
+                      <option value="Female">{tEnum('genderFemale')}</option>
+                      <option value="Other">{tEnum('genderOther')}</option>
+                      <option value="Prefer not to say">{tEnum('genderPreferNot')}</option>
                     </select>
                     {errors.gender && <p className="profile-modal-helper text-red-600">{errors.gender}</p>}
                   </div>
                   <div className="profile-modal-field-group">
-                    <label className="profile-modal-label">Date of Birth *</label>
+                    <label className="profile-modal-label">{t('dob')}</label>
                     <div className="relative">
                       <div
                         className="absolute left-3 top-1/2 z-10 -translate-y-1/2 cursor-pointer"
@@ -761,7 +765,7 @@ export default function BasicInfoModal({
                 </h3>
                 <div className="profile-modal-form-grid profile-modal-form-grid--split">
                   <div className="profile-modal-field-group">
-                    <label className="profile-modal-label">Current Country *</label>
+                    <label className="profile-modal-label">{t('country')}</label>
                     <select
                       value={countryValue}
                       onChange={(e) => {
@@ -778,7 +782,7 @@ export default function BasicInfoModal({
                       }}
                       className={`${profileFieldClass(!countryValue || Boolean(errors.country))} appearance-none`}
                     >
-                      <option value="">Select Country</option>
+                      <option value="">{t('selectCountry')}</option>
                       {ALL_COUNTRY_CODES.map((country) => (
                         <option key={country.code} value={country.name}>
                           {country.name}
@@ -889,31 +893,31 @@ export default function BasicInfoModal({
               {/* Section 5 */}
               <section className="profile-modal-section">
                 <h3 className="profile-modal-section-title">
-                  Professional Status
+                  {tCommon('employmentStatus')}
                 </h3>
                 <div className="profile-modal-form-grid profile-modal-form-grid--split">
                   <div className="profile-modal-field-group">
-                    <label className="profile-modal-label">Employment Status</label>
+                    <label className="profile-modal-label">{t('employment')}</label>
                     <select
                       value={employmentValue}
                       onChange={(e) => setEmploymentValue(e.target.value)}
                       className={`${profileFieldClass()} appearance-none`}
                     >
-                      <option value="">Select Status</option>
-                      <option>Employed</option>
-                      <option>Unemployed</option>
-                      <option>Self-Employed</option>
-                      <option>Student</option>
+                      <option value="">{t('selectEmployment')}</option>
+                      <option value="Employed">{tEnum('employmentEmployed')}</option>
+                      <option value="Unemployed">{tEnum('employmentUnemployed')}</option>
+                      <option value="Self-Employed">{tEnum('employmentSelfEmployed')}</option>
+                      <option value="Student">{tEnum('employmentStudent')}</option>
                     </select>
                   </div>
                   <div className="profile-modal-field-group">
-                    <label className="profile-modal-label">Passport Number</label>
+                    <label className="profile-modal-label">{t('passport')}</label>
                     <input
                       type="text"
                       value={passportNumberValue}
                       onChange={(e) => setPassportNumberValue(e.target.value)}
                       className={profileFieldClass()}
-                      placeholder="Enter passport number"
+                      placeholder={t('placeholderPassport')}
                     />
                   </div>
                 </div>
@@ -925,10 +929,10 @@ export default function BasicInfoModal({
           <div className="profile-modal-footer sticky bottom-0 z-10 shrink-0 border-t border-gray-200 bg-white px-5 py-3.5">
             <div className="flex justify-end gap-3">
               <button type="button" onClick={onClose} className={profileCancelBtnClass}>
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button type="button" onClick={handleSave} className={profileSaveBtnClass}>
-                Save Changes
+                {tCommon('save')}
               </button>
             </div>
           </div>

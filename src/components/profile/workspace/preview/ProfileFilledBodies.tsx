@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import type { BasicInfoData } from '@/components/modals/BasicInfoModal';
 import type { ResumeData as BaseResumeData } from '@/components/modals/ResumeModal';
 import type { InternshipData } from '@/components/modals/InternshipModal';
@@ -23,6 +24,15 @@ import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-dis
 import { resolveDocumentUrl } from '@/lib/api-base';
 import { formatDobDisplay } from '@/lib/format-dob';
 import { formatVaccinationValidity } from '@/lib/format-vaccination-validity';
+import {
+  translateEmployment,
+  translateGender,
+  translateLanguageMode,
+  translateProficiency,
+  translateProjectType,
+  translateSkillCategory,
+  formatProfileDateRange,
+} from '@/lib/profile-page-i18n';
 import { PreviewEntryActionButtons } from './PreviewEntryActionButtons';
 import {
   PreviewChip,
@@ -46,25 +56,8 @@ function fullName(d: BasicInfoData) {
   return [d.firstName, d.middleName, d.lastName].filter(Boolean).join(' ').trim() || '—';
 }
 
-function fmtRangeShort(start?: string, end?: string, current?: boolean) {
-  const a = start
-    ? new Date(start).toLocaleDateString('en-US', {
-        month: 'short',
-        year: 'numeric',
-      })
-    : '—';
-  const b = current
-    ? 'Present'
-    : end
-      ? new Date(end).toLocaleDateString('en-US', {
-          month: 'short',
-          year: 'numeric',
-        })
-      : '—';
-  return `${a} – ${b}`;
-}
-
 export function ProfileBasicInfoFilled({ data }: { data: BasicInfoData }) {
+  const t = useTranslations('profilePage');
   // Strip country name from phoneCode (e.g., "+237 (Cameroon)" -> "+237")
   const cleanPhoneCode = (data.phoneCode || '').split(' ')[0];
   
@@ -80,29 +73,29 @@ export function ProfileBasicInfoFilled({ data }: { data: BasicInfoData }) {
     <div className="profile-basic-info-display space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="profile-page-label">Full name</p>
+          <p className="profile-page-label">{t('fields.fullName')}</p>
           <p className="profile-page-value">{fullName(data)}</p>
         </div>
         {data.employment ? (
           <span className="inline-flex w-fit shrink-0 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-900">
-            {data.employment}
+            {translateEmployment(t, data.employment)}
           </span>
         ) : null}
       </div>
       <PreviewMetaGrid>
-        <PreviewMetaItem label="Email" value={data.email || '—'} />
-        <PreviewMetaItem label="Phone" value={phoneDisplay} />
-        <PreviewMetaItem label="Gender" value={data.gender || '—'} />
+        <PreviewMetaItem label={t('fields.email')} value={data.email || '—'} />
+        <PreviewMetaItem label={t('fields.phone')} value={phoneDisplay} />
+        <PreviewMetaItem label={t('fields.gender')} value={translateGender(t, data.gender)} />
         <PreviewMetaItem
-          label="Date of birth"
+          label={t('fields.dateOfBirth')}
           value={formatDobDisplay(data.dob) || '—'}
         />
-        <PreviewMetaItem label="City" value={data.city || '—'} />
-        <PreviewMetaItem label="Country" value={data.country || '—'} />
+        <PreviewMetaItem label={t('fields.city')} value={data.city || '—'} />
+        <PreviewMetaItem label={t('fields.country')} value={data.country || '—'} />
       </PreviewMetaGrid>
       {data.passportNumber ? (
         <div className="rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2">
-          <p className="profile-page-label">Passport</p>
+          <p className="profile-page-label">{t('fields.passport')}</p>
           <p className="profile-page-value mt-0.5 font-mono">{data.passportNumber}</p>
         </div>
       ) : null}
@@ -119,13 +112,15 @@ export function ProfileResumeFilled({
   scorePercent: number;
   onReplace: () => void;
 }) {
+  const t = useTranslations('profilePage');
+  const locale = useLocale();
   const displayName = resumeData.fileName
     ? getProfileDocumentDisplayName(resumeData.fileName)
     : resumeData.fileUrl
       ? getProfileDocumentDisplayName(resumeData.fileUrl)
-      : 'Resume on file';
+      : t('resume.onFile');
   const uploaded = resumeData.uploadedDate
-    ? new Date(resumeData.uploadedDate).toLocaleDateString()
+    ? new Date(resumeData.uploadedDate).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US')
     : null;
   const ext =
     resumeData.mimeType?.split('/').pop()?.toUpperCase() ||
@@ -173,7 +168,7 @@ export function ProfileResumeFilled({
             <div>
               <p className="text-sm font-semibold text-gray-900">{displayName}</p>
               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
-                {uploaded ? <span>Uploaded {uploaded}</span> : null}
+                {uploaded ? <span>{t('resume.uploaded', { date: uploaded })}</span> : null}
                 {ext ? <span>{ext}</span> : null}
                 {resumeData.fileSize != null ? (
                   <span>{(resumeData.fileSize / 1024).toFixed(1)} KB</span>
@@ -189,7 +184,7 @@ export function ProfileResumeFilled({
                     handlePreview(resumeData.fileUrl!);
                   }}
                   className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  title="View Resume"
+                  title={t('aria.viewResume')}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -203,7 +198,7 @@ export function ProfileResumeFilled({
                     handleDownload(resumeData.fileUrl!, displayName);
                   }}
                   className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                  title="Download Resume"
+                  title={t('aria.downloadResume')}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -213,7 +208,7 @@ export function ProfileResumeFilled({
             )}
           </div>
           <p className="text-xs text-gray-500">
-            ATS-style readiness score — upload or refresh to improve matching.
+            {t('resume.atsHint')}
           </p>
           <div className="flex flex-wrap gap-2 pt-1">
             <button
@@ -221,7 +216,7 @@ export function ProfileResumeFilled({
               onClick={onReplace}
               className="rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-orange-600"
             >
-              Replace
+              {t('actions.replace')}
             </button>
           </div>
         </div>
@@ -259,6 +254,8 @@ export function ProfileInternshipFilled({
   getDocumentName: (doc: unknown) => string;
   resolveDocHref: (doc: unknown) => string;
 }) {
+  const t = useTranslations('profilePage');
+  const locale = useLocale();
   const handlePreview = (url: string) => {
     openProfileDocumentInNewTab(url);
   };
@@ -294,14 +291,20 @@ export function ProfileInternshipFilled({
               <PreviewChip tone="green">{formatEnum(data.workMode)}</PreviewChip>
             ) : null}
             {data.currentlyWorking ? (
-              <PreviewChip tone="orange">Current</PreviewChip>
+              <PreviewChip tone="orange">{t('fields.currentRole')}</PreviewChip>
             ) : null}
             {data.domainDepartment ? (
               <PreviewChip tone="neutral">{data.domainDepartment}</PreviewChip>
             ) : null}
           </div>
           <p className="text-xs text-gray-500">
-            {fmtRangeShort(data.startDate, data.endDate, data.currentlyWorking)}
+            {formatProfileDateRange(
+              locale,
+              t('fields.present'),
+              data.startDate,
+              data.endDate,
+              data.currentlyWorking,
+            )}
             {data.location ? <> · {data.location}</> : null}
           </p>
           {skills.length > 0 ? (
@@ -554,6 +557,7 @@ export function ProfileSkillsFilled({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations('profilePage');
   const [notesOpen, setNotesOpen] = useState(false);
   const notes = (data.additionalNotes || '').trim();
   const notesLong = notes.length > 200;
@@ -563,9 +567,9 @@ export function ProfileSkillsFilled({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-gray-900">
-            {data.skills.length} skills
+            {t('skills.count', { count: data.skills.length })}
           </p>
-          <p className="text-xs text-gray-500">Grouped by category</p>
+          <p className="text-xs text-gray-500">{t('skills.groupedByCategory')}</p>
         </div>
         <div className="flex gap-1">
           <button
@@ -575,7 +579,7 @@ export function ProfileSkillsFilled({
               onDelete();
             }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-            aria-label="Delete skills"
+            aria-label={t('aria.deleteSkills')}
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -589,7 +593,7 @@ export function ProfileSkillsFilled({
         return (
           <div key={cat}>
             <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-gray-400">
-              {cat}
+              {translateSkillCategory(t, cat)}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {list.map((skill, i) => (
@@ -599,7 +603,7 @@ export function ProfileSkillsFilled({
                 >
                   {skill.name}
                   <span className="shrink-0 rounded bg-white/80 px-1 text-[10px] text-gray-600">
-                    {skill.proficiency}
+                    {translateProficiency(t, skill.proficiency)}
                   </span>
                 </span>
               ))}
@@ -610,7 +614,7 @@ export function ProfileSkillsFilled({
       {notes ? (
         <div className="border-t border-gray-100 pt-3">
           <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
-            Additional notes
+            {t('fields.additionalNotes')}
           </p>
           <p
             className={`mt-1 text-xs leading-relaxed text-gray-600 whitespace-pre-wrap ${
@@ -625,7 +629,7 @@ export function ProfileSkillsFilled({
               onClick={() => setNotesOpen(!notesOpen)}
               className="mt-1 text-xs font-semibold text-orange-700 hover:text-orange-800"
             >
-              {notesOpen ? 'Show less' : 'Read more'}
+              {notesOpen ? t('actions.showLess') : t('actions.readMore')}
             </button>
           ) : null}
         </div>
@@ -645,6 +649,7 @@ export function ProfileLanguagesFilled({
   getDocumentName: (doc: unknown) => string;
   getApiDocumentHref: (doc: unknown) => string;
 }) {
+  const t = useTranslations('profilePage');
   const handlePreview = (url: string) => {
     openProfileDocumentInNewTab(url);
   };
@@ -658,9 +663,9 @@ export function ProfileLanguagesFilled({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-gray-900">
-            {data.languages.length} languages
+            {t('skills.languageCount', { count: data.languages.length })}
           </p>
-          <p className="text-xs text-gray-500">Proficiency & modes</p>
+          <p className="text-xs text-gray-500">{t('skills.proficiencyModes')}</p>
         </div>
         <div className="flex gap-1">
           <button
@@ -670,7 +675,7 @@ export function ProfileLanguagesFilled({
               onDelete();
             }}
             className="rounded-lg border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-            aria-label="Delete languages"
+            aria-label={t('aria.deleteLanguages')}
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -688,12 +693,12 @@ export function ProfileLanguagesFilled({
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-900">
                   {lang.name || '—'}
-                  {lang.proficiency ? ` - ${lang.proficiency}` : ''}
+                  {lang.proficiency ? ` - ${translateProficiency(t, lang.proficiency)}` : ''}
                 </p>
                 <div className="mt-1 flex flex-wrap gap-1.5">
-                  {lang.speak ? <PreviewChip tone="green">Speak</PreviewChip> : null}
-                  {lang.read ? <PreviewChip tone="purple">Read</PreviewChip> : null}
-                  {lang.write ? <PreviewChip tone="amber">Write</PreviewChip> : null}
+                  {lang.speak ? <PreviewChip tone="green">{t('enums.langSpeak')}</PreviewChip> : null}
+                  {lang.read ? <PreviewChip tone="purple">{t('enums.langRead')}</PreviewChip> : null}
+                  {lang.write ? <PreviewChip tone="amber">{t('enums.langWrite')}</PreviewChip> : null}
                 </div>
               </div>
               {lang.documents && lang.documents.length > 0 ? (
@@ -749,6 +754,8 @@ export function ProfileProjectFilled({
   getDocumentName: (doc: unknown) => string;
   getApiDocumentHref: (doc: unknown) => string;
 }) {
+  const t = useTranslations('profilePage');
+  const locale = useLocale();
   const handlePreview = (url: string) => {
     openProfileDocumentInNewTab(url);
   };
@@ -776,22 +783,28 @@ export function ProfileProjectFilled({
           </div>
           <div className="flex flex-wrap gap-2">
             {data.projectType ? (
-              <PreviewChip tone="blue">{data.projectType}</PreviewChip>
+              <PreviewChip tone="blue">{translateProjectType(t, data.projectType)}</PreviewChip>
             ) : null}
             {data.currentlyWorking ? (
-              <PreviewChip tone="orange">In progress</PreviewChip>
+              <PreviewChip tone="orange">{t('projectTypes.inProgress')}</PreviewChip>
             ) : (
-              <PreviewChip tone="neutral">Completed</PreviewChip>
+              <PreviewChip tone="neutral">{t('projectTypes.completed')}</PreviewChip>
             )}
           </div>
           <p className="text-xs text-gray-500">
-            {fmtRangeShort(data.startDate, data.endDate, data.currentlyWorking)}
+            {formatProfileDateRange(
+              locale,
+              t('fields.present'),
+              data.startDate,
+              data.endDate,
+              data.currentlyWorking,
+            )}
           </p>
           {tech.length > 0 ? (
-            <PreviewChipRow label="Tech">
-              {tech.map((t, i) => (
+            <PreviewChipRow label={t('fields.tech')}>
+              {tech.map((techName, i) => (
                 <PreviewChip key={i} tone="purple">
-                  {t}
+                  {techName}
                 </PreviewChip>
               ))}
             </PreviewChipRow>
@@ -927,6 +940,7 @@ export function ProfilePortfolioLinksFilled({
   onEditLink: (link: PortfolioLink) => void;
   onDeleteLink: (link: PortfolioLink) => void;
 }) {
+  const t = useTranslations('profilePage');
   const [expandedLinkIds, setExpandedLinkIds] = useState<Set<string>>(() => new Set());
   const links = filterPortfolioLinksForProfileDisplay(data.links);
   const visible = isExpanded ? links : links.slice(0, 4);
@@ -937,9 +951,9 @@ export function ProfilePortfolioLinksFilled({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-gray-900">
-            {links.length} links
+            {t('portfolio.linkCount', { count: links.length })}
           </p>
-          <p className="text-xs text-gray-500">Portfolio & professional URLs</p>
+          <p className="text-xs text-gray-500">{t('portfolio.portfolioUrls')}</p>
         </div>
       </div>
       <ul className="space-y-2">
@@ -971,7 +985,7 @@ export function ProfilePortfolioLinksFilled({
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {link.linkType || 'Link'}
+                    {link.linkType || t('fields.link')}
                   </p>
                   {link.title && (
                     <p className="truncate text-base font-bold text-gray-900">
@@ -1019,7 +1033,7 @@ export function ProfilePortfolioLinksFilled({
           }}
           className="text-xs font-semibold text-gray-600 hover:text-gray-900"
         >
-          {isExpanded ? 'Show fewer' : `Show all (${hidden} more)`}
+          {isExpanded ? t('actions.showFewer') : t('actions.showAll', { count: hidden })}
         </button>
       ) : null}
     </div>
@@ -1041,6 +1055,7 @@ export function ProfileCareerPreferencesFilled({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations('profilePage');
   const titles =
     data.preferredJobTitles?.length
       ? data.preferredJobTitles
@@ -1065,7 +1080,7 @@ export function ProfileCareerPreferencesFilled({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-3">
           {titles.length > 0 ? (
-            <PreviewChipRow label="Target roles">
+            <PreviewChipRow label={t('fields.targetRoles')}>
               {titles.map((t, i) => (
                 <PreviewChip key={i} tone="blue">
                   {t}
@@ -1085,15 +1100,15 @@ export function ProfileCareerPreferencesFilled({
             if (industries.length === 0 && areas.length === 0) {
               return (
                 <PreviewMetaGrid>
-                  <PreviewMetaItem label="Industry" value="—" />
-                  <PreviewMetaItem label="Functional area" value="—" />
+                  <PreviewMetaItem label={t('fields.industry')} value="—" />
+                  <PreviewMetaItem label={t('fields.functionalArea')} value="—" />
                 </PreviewMetaGrid>
               );
             }
             return (
               <>
                 {industries.length > 0 ? (
-                  <PreviewChipRow label="Industry">
+                  <PreviewChipRow label={t('fields.industry')}>
                     {industries.map((ind, i) => (
                       <PreviewChip key={`ind-${i}`} tone="blue">
                         {ind}
@@ -1102,7 +1117,7 @@ export function ProfileCareerPreferencesFilled({
                   </PreviewChipRow>
                 ) : null}
                 {areas.length > 0 ? (
-                  <PreviewChipRow label="Functional area">
+                  <PreviewChipRow label={t('fields.functionalArea')}>
                     {areas.map((a, i) => (
                       <PreviewChip key={`fa-${i}`} tone="purple">
                         {a}
@@ -1114,7 +1129,7 @@ export function ProfileCareerPreferencesFilled({
             );
           })()}
           {data.jobTypes && data.jobTypes.length > 0 ? (
-            <PreviewChipRow label="Job types">
+            <PreviewChipRow label={t('fields.jobTypes')}>
               {data.jobTypes.map((j, i) => (
                 <PreviewChip key={i} tone="green">
                   {j}
@@ -1123,7 +1138,7 @@ export function ProfileCareerPreferencesFilled({
             </PreviewChipRow>
           ) : null}
           {workModes.length > 0 ? (
-            <PreviewChipRow label="Work modes">
+            <PreviewChipRow label={t('fields.workModes')}>
               {workModes.map((m, i) => (
                 <PreviewChip key={i} tone="purple">
                   {m}
@@ -1132,7 +1147,7 @@ export function ProfileCareerPreferencesFilled({
             </PreviewChipRow>
           ) : null}
           {data.preferredLocations && data.preferredLocations.length > 0 ? (
-            <PreviewChipRow label="Locations">
+            <PreviewChipRow label={t('fields.locations')}>
               {data.preferredLocations.map((loc, i) => (
                 <PreviewChip key={i} tone="amber">
                   {loc}
@@ -1142,11 +1157,15 @@ export function ProfileCareerPreferencesFilled({
           ) : null}
           <PreviewMetaGrid>
             <PreviewMetaItem
-              label="Relocation"
-              value={data.relocationPreference || '—'}
+              label={t('fields.relocation')}
+              value={
+                data.relocationPreference?.toLowerCase() === 'not open to relocate'
+                  ? t('careerPrefs.notOpenToRelocate')
+                  : data.relocationPreference || '—'
+              }
             />
             <PreviewMetaItem
-              label="Salary expectation"
+              label={t('fields.salaryExpectation')}
               value={
                 prefSalary
                   ? `${prefCurr || 'USD'} ${prefSalary}${prefType ? ` (${prefType})` : ''}`
@@ -1154,11 +1173,11 @@ export function ProfileCareerPreferencesFilled({
               }
             />
             <PreviewMetaItem
-              label="Availability"
+              label={t('fields.availability')}
               value={data.availabilityToStart || '—'}
             />
             <PreviewMetaItem
-              label="Notice period"
+              label={t('fields.noticePeriod')}
               value={data.noticePeriod || '—'}
             />
           </PreviewMetaGrid>

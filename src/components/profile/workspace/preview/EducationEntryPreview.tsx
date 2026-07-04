@@ -1,6 +1,7 @@
 'use client';
 
 import type { EducationData as EducationEntryData } from '@/components/modals/EducationModal';
+import { useLocale } from 'next-intl';
 import {
   formatCourseDurationDisplay,
   formatEducationDateLine,
@@ -38,6 +39,7 @@ export function EducationEntryPreview({
   getDocumentName,
   resolveDocHref,
 }: Props) {
+  const locale = useLocale();
   const docCount = entry.documents?.length ?? 0;
   const titleLine = formatEducationTitle(entry.educationLevel || '', entry.degreeProgram || '');
   const institutionLine = formatInstitutionLine(
@@ -52,6 +54,7 @@ export function EducationEntryPreview({
     entry.endYear || '',
     entry.endMonth || '',
     entry.currentlyStudying || false,
+    locale,
   );
   const isSchoolCert = isSchoolCertificateEntry(
     entry.educationLevel || '',

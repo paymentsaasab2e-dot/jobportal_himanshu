@@ -3,6 +3,7 @@
 import { Download, Eye, FileText, Loader2, Pencil, Sparkles, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   deleteResumeRoleVersion,
   exportResumePdf,
@@ -18,11 +19,15 @@ import {
   openResumeStudioHtmlInNewTab,
 } from '@/lib/resumePreview';
 
-function formatVersionDate(value?: string) {
+function formatVersionDate(value: string | undefined, locale: string) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 function buildPdfFilename(label: string) {
@@ -54,6 +59,8 @@ function VersionCard({
   canView,
   canDownloadPdf,
   downloadLabel = 'PDF',
+  tResume,
+  tActions,
 }: {
   label: string;
   subtitle?: string | null;
@@ -68,6 +75,8 @@ function VersionCard({
   canView?: boolean;
   canDownloadPdf?: boolean;
   downloadLabel?: string;
+  tResume: ReturnType<typeof useTranslations>;
+  tActions: ReturnType<typeof useTranslations>;
 }) {
   const badgeClass =
     badgeTone === 'sky'
@@ -94,7 +103,7 @@ function VersionCard({
           {subtitle ? (
             <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-gray-500">{subtitle}</p>
           ) : null}
-          {dateLabel ? <p className="mt-1 text-[10px] text-gray-400">Saved {dateLabel}</p> : null}
+          {dateLabel ? <p className="mt-1 text-[10px] text-gray-400">{tResume('saved', { date: dateLabel })}</p> : null}
         </div>
       </div>
 
@@ -104,17 +113,17 @@ function VersionCard({
           onClick={onView}
         disabled={busy}
         className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-2.5"
-          title="View CV"
+          title={tResume('viewCv')}
         >
           {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Eye className="h-3 w-3" />}
-          View
+          {tActions('view')}
         </button>
         <button
           type="button"
           onClick={onDownloadPdf}
         disabled={busy}
         className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-orange-200 bg-orange-50/80 px-2 py-1 text-[10px] font-semibold text-orange-700 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-2.5"
-          title="Download as PDF"
+          title={tResume('downloadPdf')}
         >
           {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
           {downloadLabel}
@@ -123,10 +132,10 @@ function VersionCard({
           <Link
             href={onEditHref}
             className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50 sm:flex-none sm:px-2.5"
-            title="Edit in resume studio"
+            title={tResume('editInStudio')}
           >
             <Pencil className="h-3 w-3" />
-            Edit
+            {tActions('edit')}
           </Link>
         ) : null}
         {onDelete ? (
@@ -135,10 +144,10 @@ function VersionCard({
             onClick={onDelete}
             disabled={busy}
             className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-red-200 bg-red-50/80 px-2 py-1 text-[10px] font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:px-2.5"
-            title="Delete this CV version"
+            title={tResume('deleteVersion')}
           >
             {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-            Delete
+            {tActions('delete')}
           </button>
         ) : null}
       </div>
@@ -159,6 +168,9 @@ export function ProfileResumeVersionsPanel({
   onOpenOriginal?: () => void;
   onVersionsChanged?: () => void | Promise<void>;
 }) {
+  const tResume = useTranslations('profilePage.resume');
+  const tActions = useTranslations('profilePage.actions');
+  const uiLocale = useLocale();
   const [busyVersionId, setBusyVersionId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -183,9 +195,9 @@ export function ProfileResumeVersionsPanel({
           openResumeStudioHtmlInNewTab(detail.resumeHtml, detail.label);
           return;
         }
-        setActionError('No preview yet. Tap Edit and save once in the resume studio.');
+        setActionError(tResume('noPreview'));
       } catch (error) {
-        setActionError(error instanceof Error ? error.message : 'Could not open CV preview');
+        setActionError(error instanceof Error ? error.message : tResume('previewFailed'));
       } finally {
         setBusyVersionId(null);
       }
@@ -282,8 +294,8 @@ export function ProfileResumeVersionsPanel({
         key={item.id}
         label={item.label}
         subtitle={subtitle}
-        dateLabel={formatVersionDate(item.updatedAt || item.createdAt)}
-        badge={item.versionType === 'role-tailored' ? 'Role CV' : 'Studio'}
+        dateLabel={formatVersionDate(item.updatedAt || item.createdAt, uiLocale) ?? undefined}
+        badge={item.versionType === 'role-tailored' ? tResume('roleCv') : 'Studio'}
         badgeTone="violet"
         busy={busy}
         canView={canPreview}
@@ -293,6 +305,8 @@ export function ProfileResumeVersionsPanel({
         onEditHref={editorHref}
         onDelete={() => void handleDeleteVersion(item)}
         downloadLabel="PDF"
+        tResume={tResume}
+        tActions={tActions}
       />
     );
   };
@@ -305,7 +319,7 @@ export function ProfileResumeVersionsPanel({
     <div className="mt-4 space-y-2.5 border-t border-gray-100 pt-4">
       <div className="flex items-center gap-2">
         <Sparkles className="h-3.5 w-3.5 text-sky-600" strokeWidth={2.2} />
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-500">CV versions</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-500">{tResume('cvVersions')}</p>
       </div>
 
       {actionError ? (
@@ -319,7 +333,7 @@ export function ProfileResumeVersionsPanel({
           <VersionCard
             label={original.label || 'Original CV'}
             subtitle={original.fileName || 'Uploaded resume file'}
-            dateLabel={formatVersionDate(original.uploadedAt || original.updatedAt)}
+            dateLabel={formatVersionDate(original.uploadedAt || original.updatedAt, uiLocale) ?? undefined}
             badge="Original"
             badgeTone="sky"
             busy={busyVersionId === original.id}
@@ -340,6 +354,8 @@ export function ProfileResumeVersionsPanel({
                 original.fileName || buildPdfFilename(original.label || 'Original CV'),
               );
             }}
+            tResume={tResume}
+            tActions={tActions}
           />
         ) : null}
 

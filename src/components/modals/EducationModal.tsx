@@ -137,11 +137,17 @@ export function formatInstitutionLine(institutionName: string, institutionLocati
   return name || location || '—';
 }
 
-function formatMonthYearFull(year: string, month: string): string {
+function formatMonthYearFull(year: string, month: string, locale = 'en'): string {
   const y = String(year || '').trim();
   const m = parseInt(String(month || '').trim(), 10);
   if (!y) return '';
-  if (m >= 1 && m <= 12) return `${MONTH_FULL[m]} ${y}`;
+  if (m >= 1 && m <= 12) {
+    const date = new Date(Number(y), m - 1, 1);
+    const monthName = date.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
+      month: 'long',
+    });
+    return `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} ${y}`;
+  }
   return y;
 }
 
@@ -154,12 +160,14 @@ export function formatEducationDateLine(
   endYear: string,
   endMonth: string,
   currentlyStudying: boolean,
+  locale = 'en',
 ): string {
-  const startPart = formatMonthYearFull(startYear, startMonth);
+  const presentLabel = locale === 'fr' ? 'En cours' : 'Present';
+  const startPart = formatMonthYearFull(startYear, startMonth, locale);
   if (currentlyStudying) {
-    return startPart ? `${startPart} - Present` : 'Present';
+    return startPart ? `${startPart} - ${presentLabel}` : presentLabel;
   }
-  const endPart = formatMonthYearFull(endYear, endMonth);
+  const endPart = formatMonthYearFull(endYear, endMonth, locale);
   if (startPart && endPart) return `${startPart} - ${endPart}`;
   return startPart || endPart || '—';
 }

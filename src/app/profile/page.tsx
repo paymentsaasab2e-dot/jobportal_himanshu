@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { AppLocale, localizePath } from '@/lib/i18n';
+import { translateWorkMode } from '@/lib/profile-page-i18n';
 import {
   getMissingProfileSections,
   getProfileSectionTabId,
@@ -175,11 +176,13 @@ const DEFAULT_POPUP_STATE: PopupState = {
 };
 
 /** Static copy only — surfaced in the insights rail (no API). */
-const PROFILE_AI_SUGGESTIONS = [
-  'Improve your summary to highlight leadership skills.',
-  'Add quantifiable achievements to your work experience.',
-  'Consider certifications in cloud computing for better matching.',
-];
+function useProfileAiSuggestions() {
+  const t = useTranslations('profilePage.rail');
+  return useMemo(
+    () => [t('suggestion1'), t('suggestion2'), t('suggestion3')],
+    [t],
+  );
+}
 
 function resolveProfileImage(
   photoUrl: string | null | undefined,
@@ -239,6 +242,9 @@ export default function ProfilePage() {
   const searchParams = useSearchParams();
   const locale = useLocale() as AppLocale;
   const t = useTranslations();
+  const tPage = useTranslations('profilePage');
+  const tSections = useTranslations('candidateDashboard.profileSections');
+  const profileAiSuggestions = useProfileAiSuggestions();
   const { user, refreshUser } = useAuth();
   const [isBasicInfoModalOpen, setIsBasicInfoModalOpen] = useState(false);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -482,16 +488,18 @@ export default function ProfilePage() {
   // Helper function to format enum values for display
   const formatEnumValue = (value: string | null | undefined): string => {
     if (!value) return '—';
+    const translated = translateWorkMode(tPage, value);
+    if (translated !== value) return translated;
     const slugLabels: Record<string, string> = {
-      'full-time': 'Full-time',
-      'part-time': 'Part-time',
-      contract: 'Contract',
-      internship: 'Internship',
-      freelance: 'Freelance',
-      remote: 'Remote',
-      hybrid: 'Hybrid',
-      onsite: 'On-site',
-      'on-site': 'On-site',
+      'full-time': tPage('enums.workModeFullTime'),
+      'part-time': tPage('enums.workModePartTime'),
+      contract: tPage('enums.workModeContract'),
+      internship: tPage('enums.workModeInternship'),
+      freelance: tPage('enums.workModeFreelance'),
+      remote: tPage('enums.workModeRemote'),
+      hybrid: tPage('enums.workModeHybrid'),
+      onsite: tPage('enums.workModeOnsite'),
+      'on-site': tPage('enums.workModeOnsite'),
     };
     const key = value.trim().toLowerCase();
     if (slugLabels[key]) return slugLabels[key];
@@ -1431,7 +1439,7 @@ export default function ProfilePage() {
     () => [
       {
         id: 'personal-details',
-        label: 'Personal Details',
+        label: tPage('tabs.personalDetails'),
         incomplete: tabIncomplete([
           () =>
             isMandatorySectionMissing('PERSONAL DETAILS', 'Basic Information'),
@@ -1441,7 +1449,7 @@ export default function ProfilePage() {
       },
       {
         id: 'work-experience',
-        label: 'Work Experience',
+        label: tPage('tabs.workExperience'),
         incomplete: tabIncomplete([
           () => isMandatorySectionMissing('WORK HISTORY', 'Work Experience'),
           () => isMandatorySectionMissing('WORK HISTORY', 'Internships'),
@@ -1450,12 +1458,12 @@ export default function ProfilePage() {
       },
       {
         id: 'education',
-        label: 'Education',
+        label: tPage('tabs.education'),
         incomplete: false,
       },
       {
         id: 'skills',
-        label: 'Skills',
+        label: tPage('tabs.skills'),
         incomplete: tabIncomplete([
           () => isMandatorySectionMissing('SKILLS', 'Skills'),
           () => isMandatorySectionMissing('SKILLS', 'Languages'),
@@ -1463,7 +1471,7 @@ export default function ProfilePage() {
       },
       {
         id: 'projects-certifications',
-        label: 'Projects & Certifications',
+        label: tPage('tabs.projectsCertifications'),
         incomplete: tabIncomplete([
           () => isMandatorySectionMissing('PROJECTS', 'Portfolio Links'),
           () => isMandatorySectionMissing('CERTIFICATIONS', 'Certifications'),
@@ -1471,7 +1479,7 @@ export default function ProfilePage() {
       },
       {
         id: 'job-preferences',
-        label: 'Job Preferences',
+        label: tPage('tabs.jobPreferences'),
         incomplete: tabIncomplete([
           () =>
             isMandatorySectionMissing('PREFERENCES', 'Career Preferences'),
@@ -1479,11 +1487,12 @@ export default function ProfilePage() {
       },
       {
         id: 'additional-details',
-        label: 'Additional Details',
+        label: tPage('tabs.additionalDetails'),
         incomplete: false,
       },
     ],
     [
+      tPage,
       tabIncomplete,
       basicInfoData,
       summaryText,
@@ -1588,9 +1597,11 @@ export default function ProfilePage() {
         >
           <ProfileWorkspaceRail
             completionPct={profileCompleteness.percentage}
-            pendingRows={detailedMissingSections.map((section) => section.label)}
+            pendingRows={detailedMissingSections.map((section) =>
+              tSections(section.slug as never),
+            )}
             atsDisplay={atsDisplay}
-            aiSuggestions={PROFILE_AI_SUGGESTIONS}
+            aiSuggestions={profileAiSuggestions}
             onImprove={openFirstMissingModal}
           />
           <div className="flex min-w-0 flex-col">
@@ -1612,7 +1623,7 @@ export default function ProfilePage() {
                 className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3"
               >
                 <WorkspaceSectionCard
-                  title="Basic Information"
+                  title={tSections('basic-information')}
                   sectionId="basic-info"
                   incomplete={isMandatorySectionMissing(
                     'PERSONAL DETAILS',
@@ -1648,13 +1659,13 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <p className="profile-page-empty">
-                      Add your name, contact, and location to get started.
+                      {tPage('empty.basicInfo')}
                     </p>
                   )}
                 </WorkspaceSectionCard>
 
                 <WorkspaceSectionCard
-                  title="Resume / CV"
+                  title={tPage('sections.resumeCv')}
                   sectionId="resume-cv"
                   incomplete={isMandatorySectionMissing('RESUME', 'Resume')}
                   onEdit={() => handleEditClick('RESUME', 'Resume')}
@@ -1713,21 +1724,21 @@ export default function ProfilePage() {
                   ) : (
                     <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 px-4 py-6 text-center">
                       <p className="text-sm text-gray-600">
-                        Upload a resume for ATS scoring and recruiter discovery.
+                        {tPage('resume.uploadPrompt')}
                       </p>
                       <button
                         type="button"
                         onClick={() => setIsResumeModalOpen(true)}
                         className="mt-3 rounded-lg bg-orange-500 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-orange-600"
                       >
-                        Upload resume
+                        {tPage('actions.uploadResume')}
                       </button>
                     </div>
                   )}
                 </WorkspaceSectionCard>
 
                 <WorkspaceSectionCard
-                  title="Professional summary"
+                  title={tPage('sections.professionalSummary')}
                   sectionId="professional-summary"
                   incomplete={isMandatorySectionMissing(
                     'PERSONAL DETAILS',
@@ -1770,7 +1781,7 @@ export default function ProfilePage() {
                 className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3"
               >
                 <WorkspaceSectionCard
-                  title="Work Experience"
+                  title={tSections('work-experience')}
                   sectionId="work-experience"
                   onEdit={() =>
                     handleEditClick('WORK HISTORY', 'Work Experience')
@@ -1869,15 +1880,15 @@ export default function ProfilePage() {
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
-                        <p className="mt-4 text-base font-medium text-gray-900">No work experience added yet</p>
-                        <p className="mt-2 text-sm text-gray-500">Click "+" to add your first work experience</p>
+                        <p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.workExperience')}</p>
+                        <p className="mt-2 text-sm text-gray-500">{tPage('empty.workExperienceHint')}</p>
                       </div>
                     )}
                   </div>
                 </WorkspaceSectionCard>
 
                 <WorkspaceSectionCard
-                  title="Internships"
+                  title={tSections('internships')}
                   sectionId="internships"
                   onEdit={() =>
                     handleEditClick('WORK HISTORY', 'Internships')
@@ -1986,15 +1997,15 @@ export default function ProfilePage() {
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
-                        <p className="mt-4 text-base font-medium text-gray-900">No internship added yet</p>
-                        <p className="mt-2 text-sm text-gray-500">Click "+" to add your internship</p>
+                        <p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.internship')}</p>
+                        <p className="mt-2 text-sm text-gray-500">{tPage('empty.internshipHint')}</p>
                       </div>
                     )}
                   </div>
                 </WorkspaceSectionCard>
 
                 <WorkspaceSectionCard
-                  title="Gap Explanation"
+                  title={tSections('gap-explanation')}
                   sectionId="gap-explanation"
                   onEdit={() =>
                     handleEditClick('WORK HISTORY', 'Gap Explanation')
@@ -2097,8 +2108,8 @@ export default function ProfilePage() {
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <p className="mt-4 text-base font-medium text-gray-900">No gap explanation added yet</p>
-                        <p className="mt-2 text-sm text-gray-500">Click "+" to add your gap explanation</p>
+                        <p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.gapExplanation')}</p>
+                        <p className="mt-2 text-sm text-gray-500">{tPage('empty.gapExplanationHint')}</p>
                       </div>
                     )}
                   </div>
@@ -2107,7 +2118,7 @@ export default function ProfilePage() {
 
               <section id="education" className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3">
                 <WorkspaceSectionCard
-                  title="Education"
+                  title={tSections('education')}
                   sectionId="education"
                   incomplete={isMandatorySectionMissing(
                     'EDUCATION',
@@ -2201,15 +2212,15 @@ export default function ProfilePage() {
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                         </svg>
-                        <p className="mt-4 text-base font-medium text-gray-900">No education added yet</p>
-                        <p className="mt-2 text-sm text-gray-500">Click "+" to add your first education</p>
+                        <p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.education')}</p>
+                        <p className="mt-2 text-sm text-gray-500">{tPage('empty.educationHint')}</p>
                       </div>
                     )}
                   </div>
                 </WorkspaceSectionCard>
 
                 <WorkspaceSectionCard
-                  title="Academic Achievements"
+                  title={tSections('academic-achievements')}
                   sectionId="academic-achievements"
                   onEdit={() =>
                     handleEditClick('EDUCATION', 'Academic Achievements')
@@ -2321,15 +2332,15 @@ export default function ProfilePage() {
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                         </svg>
-                        <p className="mt-4 text-base font-medium text-gray-900">No academic achievements added yet</p>
-                        <p className="mt-2 text-sm text-gray-500">Click "+" to add your first academic achievement</p>
+                        <p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.academicAchievement')}</p>
+                        <p className="mt-2 text-sm text-gray-500">{tPage('empty.academicAchievementHint')}</p>
                       </div>
                     )}
                   </div>
                 </WorkspaceSectionCard>
 
                 <WorkspaceSectionCard
-                  title="Competitive Exams"
+                  title={tSections('competitive-exams')}
                   sectionId="competitive-exams"
                   onEdit={() =>
                     handleEditClick('EDUCATION', 'Competitive Exams')
@@ -2426,7 +2437,7 @@ export default function ProfilePage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-12"><svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><p className="mt-4 text-base font-medium text-gray-900">No competitive exam information added yet</p><p className="mt-2 text-sm text-gray-500">Click "+" to add your first competitive exam</p></div>
+                      <div className="text-center py-12"><svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.competitiveExam')}</p><p className="mt-2 text-sm text-gray-500">{tPage('empty.competitiveExamHint')}</p></div>
                     )}
                   </div>
                 </WorkspaceSectionCard>
@@ -2439,7 +2450,7 @@ export default function ProfilePage() {
                 <div className="space-y-4">
 
                 <WorkspaceSectionCard
-                  title="Skills"
+                  title={tSections('skills')}
                   sectionId="skills"
                   incomplete={isMandatorySectionMissing('SKILLS', 'Skills')}
                   onEdit={() => handleEditClick('SKILLS', 'Skills')}
@@ -2473,10 +2484,10 @@ export default function ProfilePage() {
                           data={skillsData}
                           onEdit={() => setIsSkillsModalOpen(true)}
                           onDelete={async () => {
-                          if (await showConfirm('Are you sure you want to delete all skills?')) {
+                          if (await showConfirm(tPage('skills.deleteAllConfirm'))) {
                             const candidateId = getStoredCandidateId();
                             if (!candidateId) {
-                              showAlert('Candidate ID not found.');
+                              showAlert(tPage('skills.candidateIdMissing'));
                               return;
                             }
                             try {
@@ -2484,14 +2495,14 @@ export default function ProfilePage() {
                                 `${API_BASE_URL}/profile/skills/${candidateId}`,
                                 { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
                               );
-                              if (!response.ok) throw new Error('Failed to delete skills');
+                              if (!response.ok) throw new Error(tPage('skills.deleteFailed'));
                               // Optimistically clear from UI immediately
                               setSkillsData(undefined);
                               await refreshProfileData(candidateId);
-                              showAlert('Skills deleted successfully');
+                              showAlert(tPage('skills.deletedSuccess'));
                             } catch (error) {
                               console.error('Error deleting skills:', error);
-                              showAlert(error instanceof Error ? error.message : 'Error deleting skills');
+                              showAlert(error instanceof Error ? error.message : tPage('skills.deleteError'));
                             }
                           }
                           }}
@@ -2505,7 +2516,7 @@ export default function ProfilePage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                             </svg>
                           </div>
-                          <h3 className="text-base font-semibold text-gray-900">Add your skills</h3>
+                          <h3 className="text-base font-semibold text-gray-900">{tPage('skills.addYourSkills')}</h3>
                           <p className="mt-2 text-sm leading-relaxed text-gray-500">
                             Recruiters match on tools and strengths. Start with a few you use often — you can refine proficiency later.
                           </p>
@@ -2522,7 +2533,7 @@ export default function ProfilePage() {
                               </button>
                             ))}
                           </div>
-                          <p className="mt-4 text-xs text-gray-400">Or use Add above to open the full skills form.</p>
+                          <p className="mt-4 text-xs text-gray-400">{tPage('skills.orUseAdd')}</p>
                         </div>
                       </div>
                     )}
@@ -2530,7 +2541,7 @@ export default function ProfilePage() {
                 </WorkspaceSectionCard>
 
                 <WorkspaceSectionCard
-                  title="Languages"
+                  title={tSections('languages')}
                   sectionId="languages"
                   incomplete={isMandatorySectionMissing(
                     'SKILLS',
@@ -2606,8 +2617,8 @@ export default function ProfilePage() {
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                         </svg>
-                        <p className="mt-4 text-base font-medium text-gray-900">No languages added yet</p>
-                        <p className="mt-2 text-sm text-gray-500">Click "+" to add your first language</p>
+                        <p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.languages')}</p>
+                        <p className="mt-2 text-sm text-gray-500">{tPage('empty.languagesHint')}</p>
                       </div>
                     )}
                   </div>
@@ -2620,7 +2631,7 @@ export default function ProfilePage() {
                 className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3"
               >
                 <WorkspaceSectionCard
-                  title="Projects"
+                  title={tSections('projects')}
                   incomplete={isMandatorySectionMissing(
                     'PROJECTS',
                     'Projects',
@@ -2717,13 +2728,13 @@ export default function ProfilePage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-12"><svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><p className="mt-4 text-base font-medium text-gray-900">No projects added yet</p><p className="mt-2 text-sm text-gray-500">Click "+" to add your first project</p></div>
+                      <div className="text-center py-12"><svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.projects')}</p><p className="mt-2 text-sm text-gray-500">{tPage('empty.projectsHint')}</p></div>
                     )}
                   </div>
                 </WorkspaceSectionCard>
 
                 <WorkspaceSectionCard
-                  title="Portfolio Links"
+                  title={tSections('portfolio-links')}
                   sectionId="portfolio-links"
                   incomplete={isMandatorySectionMissing(
                     'PROJECTS',
@@ -2815,15 +2826,15 @@ export default function ProfilePage() {
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
-                        <p className="mt-4 text-base font-medium text-gray-900">No portfolio links added yet</p>
-                        <p className="mt-2 text-sm text-gray-500">Click "+" to add your first portfolio link</p>
+                        <p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.portfolioLinks')}</p>
+                        <p className="mt-2 text-sm text-gray-500">{tPage('empty.portfolioLinksHint')}</p>
                       </div>
                     )}
                   </div>
                 </WorkspaceSectionCard>
 
                 <WorkspaceSectionCard
-                  title="Certifications"
+                  title={tSections('certifications')}
                   sectionId="certifications"
                   incomplete={isMandatorySectionMissing(
                     'CERTIFICATIONS',
@@ -2929,15 +2940,15 @@ export default function ProfilePage() {
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                         </svg>
-                        <p className="mt-4 text-base font-medium text-gray-900">No certifications added yet</p>
-                        <p className="mt-2 text-sm text-gray-500">Click "+" to add your first certification</p>
+                        <p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.certifications')}</p>
+                        <p className="mt-2 text-sm text-gray-500">{tPage('empty.certificationsHint')}</p>
                       </div>
                     )}
                   </div>
                 </WorkspaceSectionCard>
 
                 <WorkspaceSectionCard
-                  title="Accomplishments"
+                  title={tSections('accomplishments')}
                   sectionId="accomplishments"
                   onEdit={() =>
                     handleEditClick('CERTIFICATIONS', 'Accomplishments')
@@ -3036,8 +3047,8 @@ export default function ProfilePage() {
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M6.75 15.75l-1.5-1.5a2.25 2.25 0 010-3.182l1.5-1.5m4.5 0l1.5 1.5a2.25 2.25 0 010 3.182l-1.5 1.5m-4.5 0l-1.5-1.5a2.25 2.25 0 010-3.182l1.5-1.5m4.5 0l1.5 1.5a2.25 2.25 0 010 3.182l-1.5 1.5" />
                         </svg>
-                        <p className="mt-4 text-base font-medium text-gray-900">No accomplishments added yet</p>
-                        <p className="mt-2 text-sm text-gray-500">Click "+" to add your first accomplishment</p>
+                        <p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.accomplishments')}</p>
+                        <p className="mt-2 text-sm text-gray-500">{tPage('empty.accomplishmentsHint')}</p>
                       </div>
                     )}
                   </div>
@@ -3049,7 +3060,7 @@ export default function ProfilePage() {
                 className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3"
               >
                 <WorkspaceSectionCard
-                  title="Career Preferences"
+                  title={tSections('career-preferences')}
                   sectionId="career-preferences"
                   incomplete={isMandatorySectionMissing(
                     'PREFERENCES',
@@ -3119,8 +3130,8 @@ export default function ProfilePage() {
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
-                        <p className="mt-4 text-base font-medium text-gray-900">No career preferences added yet</p>
-                        <p className="mt-2 text-sm text-gray-500">Click "+" to add your career preferences</p>
+                        <p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.careerPreferences')}</p>
+                        <p className="mt-2 text-sm text-gray-500">{tPage('empty.careerPreferencesHint')}</p>
                       </div>
                     )}
                   </div>
@@ -3130,7 +3141,7 @@ export default function ProfilePage() {
               <section id="additional-details" className="scroll-mt-[var(--profile-scroll-pad,7rem)] space-y-3">
 
                 <WorkspaceSectionCard
-                  title="Visa & Work Authorization"
+                  title={tSections('visa-work-authorization')}
                   sectionId="visa-work-authorization"
                   incomplete={isMandatorySectionMissing(
                     'GLOBAL ELIGIBILITY',
@@ -3290,15 +3301,15 @@ export default function ProfilePage() {
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <p className="mt-4 text-base font-medium text-gray-900">No visa & work authorization information added yet</p>
-                        <p className="mt-2 text-sm text-gray-500">Click "+" to add your visa & work authorization details</p>
+                        <p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.visa')}</p>
+                        <p className="mt-2 text-sm text-gray-500">{tPage('empty.visaHint')}</p>
                       </div>
                     )}
                   </div>
                 </WorkspaceSectionCard>
 
                 <WorkspaceSectionCard
-                  title="Vaccination"
+                  title={tSections('vaccination')}
                   sectionId="vaccination"
                   incomplete={isMandatorySectionMissing(
                     'GLOBAL ELIGIBILITY',
@@ -3383,8 +3394,8 @@ export default function ProfilePage() {
                         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
-                        <p className="mt-4 text-base font-medium text-gray-900">No vaccination information added yet</p>
-                        <p className="mt-2 text-sm text-gray-500">Click "+" to add your vaccination details</p>
+                        <p className="mt-4 text-base font-medium text-gray-900">{tPage('empty.vaccination')}</p>
+                        <p className="mt-2 text-sm text-gray-500">{tPage('empty.vaccinationHint')}</p>
                       </div>
                     )}
                   </div>

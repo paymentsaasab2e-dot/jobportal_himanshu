@@ -1,4 +1,7 @@
+'use client';
+
 import type { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { PROFILE_DASHBOARD_CARD } from '@/components/profile/layout/profile-layout.constants';
 
 type ProfileWorkspaceRailProps = {
@@ -18,6 +21,8 @@ export function ProfileWorkspaceRail({
   promo,
   onImprove,
 }: ProfileWorkspaceRailProps) {
+  const t = useTranslations('profilePage.rail');
+  const tActions = useTranslations('profilePage.actions');
   const pct = Math.min(100, Math.max(0, Math.round(Number(completionPct) || 0)));
   const circumference = 2 * Math.PI * 40;
   const offset = circumference - (pct / 100) * circumference;
@@ -25,7 +30,7 @@ export function ProfileWorkspaceRail({
   return (
     <aside className="mx-auto w-full max-w-[248px] space-y-3 lg:mx-0 lg:sticky lg:top-[var(--app-header-height,92px)] lg:w-[248px] lg:max-w-none lg:self-start xl:w-[256px]">
       <div className={`${PROFILE_DASHBOARD_CARD} p-4 sm:p-5`}>
-        <p className="profile-page-label">Profile health</p>
+        <p className="profile-page-label">{t('profileHealth')}</p>
         <div className="mt-3 flex items-center gap-4">
           <div className="relative h-22 w-22 shrink-0">
             <svg className="-rotate-90" viewBox="0 0 100 100" aria-hidden>
@@ -55,7 +60,7 @@ export function ProfileWorkspaceRail({
                 {pct}%
               </span>
               <span className="text-[9px] font-medium uppercase text-gray-500">
-                done
+                {t('done')}
               </span>
             </div>
           </div>
@@ -66,7 +71,7 @@ export function ProfileWorkspaceRail({
                 <span className="font-semibold text-gray-900">{atsDisplay}</span>
               </p>
             ) : (
-              <p className="text-xs text-gray-500">ATS — add a resume to score</p>
+              <p className="text-xs text-gray-500">{t('atsAddResume')}</p>
             )}
             {pendingRows.slice(0, 4).map((row) => (
               <p key={row} className="truncate text-xs text-gray-600">
@@ -79,7 +84,7 @@ export function ProfileWorkspaceRail({
         {aiSuggestions.length > 0 ? (
           <>
             <p className="profile-page-label mt-4 border-t border-gray-100 pt-4">
-              Suggestions
+              {t('suggestions')}
             </p>
             <ul className="mt-2 space-y-2">
               {aiSuggestions.slice(0, 3).map((s, i) => (
@@ -105,7 +110,7 @@ export function ProfileWorkspaceRail({
           onClick={onImprove}
           className="mt-4 w-full rounded-xl bg-orange-500 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-orange-600"
         >
-          Improve profile
+          {tActions('improveProfile')}
         </button>
       </div>
 
