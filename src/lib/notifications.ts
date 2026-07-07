@@ -89,6 +89,26 @@ export async function markAllNotificationsAsRead(candidateId: string): Promise<{
   return result;
 }
 
+export async function deleteNotification(
+  candidateId: string,
+  notificationId: string,
+): Promise<{ success: boolean; message?: string }> {
+  const response = await fetch(`${API_BASE_URL}/notifications/${candidateId}/${notificationId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const result = await response.json() as { success: boolean; message?: string };
+
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to delete notification');
+  }
+
+  return result;
+}
+
 export async function getUnreadNotificationCount(candidateId: string): Promise<{ success: boolean; count: number; message?: string }> {
   const response = await fetch(`${API_BASE_URL}/notifications/${candidateId}/unread-count`, {
     method: 'GET',

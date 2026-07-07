@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, Loader2, RefreshCw, ExternalLink, CheckCheck, Settings } from 'lucide-react';
+import { Bell, Loader2, RefreshCw, ExternalLink, CheckCheck, Settings, Trash2 } from 'lucide-react';
 import {
   fetchNotifications,
   markAllNotificationsAsRead,
   markNotificationAsRead,
+  deleteNotification,
   NOTIFICATIONS_UPDATED_EVENT,
   type Notification,
 } from '@/lib/notifications';
@@ -108,10 +109,12 @@ function getNotificationColor(type: string): { barColor: string; barColorValue: 
 
 export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props) {
   const [activeFilter, setActiveFilter] = useState<(typeof FILTERS)[number]>('All');
+  const [readView, setReadView] = useState<'unread' | 'read'>('unread');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const candidateId =
@@ -163,7 +166,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
     };
   }, [isOpen, onClose, loadNotifications]);
 
-  const filteredNotifications = useMemo(() => {
+  const categoryNotifications = useMemo(() => {
     const filterType = getFilterType(activeFilter);
     if (!filterType) return notifications;
     return notifications.filter((item) => {
@@ -172,9 +175,26 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
     });
   }, [activeFilter, notifications]);
 
+  const unreadTotal = useMemo(
+    () => categoryNotifications.filter((item) => !item.isRead).length,
+    [categoryNotifications],
+  );
+  const readTotal = useMemo(
+    () => categoryNotifications.filter((item) => item.isRead).length,
+    [categoryNotifications],
+  );
+
+  const filteredNotifications = useMemo(
+    () =>
+      categoryNotifications.filter((item) =>
+        readView === 'read' ? item.isRead : !item.isRead,
+      ),
+    [categoryNotifications, readView],
+  );
+
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [activeFilter]);
+  }, [activeFilter, readView]);
 
   const firstNotificationId = notifications[0]?.id;
 
@@ -211,6 +231,27 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
         window.dispatchEvent(new Event(NOTIFICATIONS_UPDATED_EVENT));
       } catch (e) {
         console.warn('mark-as-read failed', e);
+      }
+    },
+    [candidateId]
+  );
+
+  const handleDeleteNotification = useCallback(
+    async (notification: Notification) => {
+      if (!candidateId) return;
+      setDeletingId(notification.id);
+      setNotifications((prev) => prev.filter((item) => item.id !== notification.id));
+      try {
+        await deleteNotification(candidateId, notification.id);
+        window.dispatchEvent(new Event(NOTIFICATIONS_UPDATED_EVENT));
+      } catch (e) {
+        console.warn('delete notification failed', e);
+        setNotifications((prev) => {
+          const exists = prev.some((item) => item.id === notification.id);
+          return exists ? prev : [notification, ...prev];
+        });
+      } finally {
+        setDeletingId(null);
       }
     },
     [candidateId]
@@ -288,6 +329,45 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
                   );
                 })}
               </div>
+
+              <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-slate-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => setReadView('unread')}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    readView === 'unread'
+                      ? 'bg-white text-sky-600 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  Unread
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                      readView === 'unread' ? 'bg-sky-100 text-sky-700' : 'bg-slate-200 text-slate-600'
+                    }`}
+                  >
+                    {unreadTotal}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReadView('read')}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    readView === 'read'
+                      ? 'bg-white text-sky-600 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  Read
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                      readView === 'read' ? 'bg-sky-100 text-sky-700' : 'bg-slate-200 text-slate-600'
+                    }`}
+                  >
+                    {readTotal}
+                  </span>
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-5" ref={scrollContainerRef}>
@@ -300,11 +380,15 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
                   <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
                     <Bell className="w-8 h-8 text-slate-400" />
                   </div>
-                  <h4 className="text-lg font-medium text-slate-900 mb-2">No notifications</h4>
+                  <h4 className="text-lg font-medium text-slate-900 mb-2">
+                    {readView === 'read' ? 'No read notifications' : 'No unread notifications'}
+                  </h4>
                   <p className="text-sm text-slate-500 max-w-xs">
-                    {activeFilter === 'All' 
-                      ? "You're all caught up! Check back later for job matches, application updates, and more."
-                      : `No ${activeFilter.toLowerCase()} notifications yet.`}
+                    {readView === 'read'
+                      ? 'Notifications you have opened will appear here.'
+                      : activeFilter === 'All'
+                        ? "You're all caught up! Check back later for job matches, application updates, and more."
+                        : `No unread ${activeFilter.toLowerCase()} notifications.`}
                   </p>
                 </div>
               ) : (
@@ -337,9 +421,28 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
                               </div>
 
                               <div className="min-w-0 flex-1">
-                                <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-start justify-between gap-2">
                                   <h4 className="text-base font-medium leading-6 text-slate-900">{notification.title}</h4>
-                                  <div className="shrink-0 pt-0.5 text-sm text-slate-500">{formatTimestamp(notification.timestamp)}</div>
+                                  <div className="flex shrink-0 items-center gap-1">
+                                    <span className="pt-0.5 text-sm text-slate-500">{formatTimestamp(notification.timestamp)}</span>
+                                    <button
+                                      type="button"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        void handleDeleteNotification(notification);
+                                      }}
+                                      disabled={deletingId === notification.id}
+                                      className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-rose-500 disabled:opacity-50"
+                                      title="Delete notification"
+                                      aria-label="Delete notification"
+                                    >
+                                      {deletingId === notification.id ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      )}
+                                    </button>
+                                  </div>
                                 </div>
                                 <p className="mt-1.5 text-sm leading-6 text-slate-600">{notification.description}</p>
                                 {notification.actionButton && notification.actionPath && (
