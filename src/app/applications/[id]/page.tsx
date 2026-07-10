@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { API_BASE_URL } from '@/lib/api-base';
+import { API_BASE_URL, resolvePhase2UploadUrl } from '@/lib/api-base';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
 import { ProfilePageShell } from '@/components/profile/layout';
 import { ApplicationDetailSectionCard } from '@/components/applications/ApplicationDetailSectionCard';
@@ -1248,6 +1248,11 @@ export default function ApplicationStatusPage() {
     loadApplicationDetail();
   }, [applicationId]);
 
+  const offerLetterHref = useMemo(
+    () => (application?.offerLetterUrl ? resolvePhase2UploadUrl(application.offerLetterUrl) : ''),
+    [application?.offerLetterUrl],
+  );
+
   const filteredTimelineRows = useMemo(() => {
     if (!application?.timeline?.length) return [] as ApplicationDetail['timeline'];
     const sorted = [...application.timeline].sort(
@@ -1954,7 +1959,7 @@ export default function ApplicationStatusPage() {
                     </div>
                     <div className="flex shrink-0 flex-wrap gap-2">
                       <a
-                        href={application.offerLetterUrl}
+                        href={offerLetterHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-700/30 bg-white px-3 py-2 text-[0.8125rem] font-medium text-emerald-800 shadow-sm hover:bg-emerald-50"
@@ -1966,7 +1971,7 @@ export default function ApplicationStatusPage() {
                         View
                       </a>
                       <a
-                        href={application.offerLetterUrl}
+                        href={offerLetterHref}
                         download={application.offerLetterFileName || 'offer-letter.pdf'}
                         target="_blank"
                         rel="noopener noreferrer"

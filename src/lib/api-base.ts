@@ -4,6 +4,9 @@
 
 const LOCAL_API_ORIGIN = 'http://localhost:5000';
 const HOSTED_API_ORIGIN = 'https://api1.hryantra.com';
+const LOCAL_PHASE2_ORIGIN = 'http://localhost:5001';
+const HOSTED_PHASE2_ORIGIN = 'https://api2.hryantra.com';
+const LOOPBACK_ORIGIN_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i;
 
 const normalizeToApiBaseUrl = (value: string): string => {
   const trimmed = value.trim();
@@ -53,9 +56,101 @@ export const API_ORIGIN = (() => {
   return HOSTED_API_ORIGIN;
 })();
 
+export const PHASE2_API_ORIGIN = (() => {
+  const fromEnv = process.env.NEXT_PUBLIC_PHASE2_API_URL?.trim().replace(/\/api\/?.*$/, '').replace(/\/$/, '');
+  if (fromEnv) return fromEnv;
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) return HOSTED_PHASE2_ORIGIN;
+  return HOSTED_PHASE2_ORIGIN;
+})();
+
+function resolvePhase2OriginForRuntime(): string {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local')) {
+      return LOCAL_PHASE2_ORIGIN;
+    }
+  }
+  return PHASE2_API_ORIGIN;
+}
+
+function toPublicUploadsApiUrl(origin: string, input?: string | null): string {
+  const raw = String(input || '').trim();
+  if (!raw) return '';
+  if (raw.includes('/api/v1/public/uploads/')) return raw;
+
+  let relative = '';
+  if (raw.startsWith('/uploads/')) {
+    relative = raw;
+  } else if (/^https?:\/\//i.test(raw)) {
+    try {
+      relative = new URL(raw).pathname || '';
+    } catch {
+      return raw;
+    }
+  } else {
+    return raw;
+  }
+
+  if (
+    !relative.startsWith('/uploads/placements/') &&
+    !relative.startsWith('/uploads/interview-client-review/')
+  ) {
+    if (relative.startsWith('/uploads/')) {
+      return `${origin.replace(/\/+$/, '')}${relative}`;
+    }
+    return raw;
+  }
+
+  const subPath = relative.replace(/^\/uploads\//, '');
+  return `${origin.replace(/\/+$/, '')}/api/v1/public/uploads/${subPath}`;
+}
+
+/**
+ * Offer letters are uploaded to backendphase2 (`/uploads/placements/...` on
+ * api2.hryantra.com). Stored URLs can be relative or a dev absolute URL
+ * (`http://localhost:5001/...`) — rewrite them for production viewers.
+ */
+export const resolvePhase2UploadUrl = (raw?: string | null, relative?: string | null): string => {
+  const origin = resolvePhase2OriginForRuntime();
+  const rel = String(relative || '').trim();
+  if (rel.startsWith('/uploads/')) {
+    return toPublicUploadsApiUrl(origin, rel);
+  }
+
+  let trimmed = String(raw || '').trim();
+  if (!trimmed) return '';
+
+  if (trimmed.match(/^https? \/\//i)) {
+    trimmed = trimmed.replace(/^(https?)( \/\/)/i, '$1:$2');
+  }
+  if (trimmed.match(/^https?\/\//i)) {
+    trimmed = trimmed.replace(/^(https?)\/\//i, '$1://');
+  }
+
+  if (LOOPBACK_ORIGIN_RE.test(trimmed)) {
+    return toPublicUploadsApiUrl(origin, trimmed.replace(LOOPBACK_ORIGIN_RE, origin));
+  }
+
+  if (trimmed.startsWith('/uploads/')) {
+    return toPublicUploadsApiUrl(origin, trimmed);
+  }
+
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('//')) {
+    return toPublicUploadsApiUrl(origin, trimmed);
+  }
+
+  const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return toPublicUploadsApiUrl(origin, path);
+};
+
 export const resolveDocumentUrl = (url?: string): string => {
   if (!url) return '';
   let trimmed = url.trim();
+
+  // CRM placement / offer-letter uploads live on backendphase2, not api1.
+  if (trimmed.includes('/uploads/placements/') || trimmed.includes('/uploads/interview-client-review/')) {
+    return resolvePhase2UploadUrl(trimmed);
+  }
   
   // Fix common malformation: 'https//' or 'http//' missing the colon
   if (trimmed.match(/^https? \/\//i)) {
