@@ -8,6 +8,8 @@ import { useLocale, useTranslations } from "next-intl";
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 import { API_BASE_URL, getApiBaseUrl } from '@/lib/api-base';
+import { prefetchPortalRoute } from '@/lib/portal-route-prefetch';
+import { useCvDashboardProfile } from '@/hooks/portal/useCvDashboard';
 import { useAuth } from '@/components/auth/AuthContext';
 import { getProfileDisplayFullName } from '@/components/dashboard/dashboard-utils';
 import {
@@ -148,35 +150,22 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
         };
     }, [isLoggedIn, user?.id]);
 
-    const refreshHeaderProfile = useCallback(async () => {
-        if (!isLoggedIn || !user?.id) return;
-
-        try {
-            const response = await fetch(`${getApiBaseUrl()}/cv/dashboard/${user.id}`);
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success && result.data?.profile) {
-                    const { profile } = result.data;
-                    if (profile.profileCompleteness != null) {
-                        setProfileCompletion(profile.profileCompleteness);
-                    }
-                    const displayName = getProfileDisplayFullName(profile);
-                    setDashboardUser({
-                        name: displayName,
-                        email: profile.email || '',
-                        photoUrl: resolveProfilePhotoUrl(profile.profilePhotoUrl),
-                        initials: getAvatarInitials(profile, displayName),
-                    });
-                }
-            }
-        } catch (e) {
-            console.error('Header: Error fetching completion:', e);
-        }
-    }, [isLoggedIn, user?.id]);
+    const { profile: dashboardProfile } = useCvDashboardProfile(isLoggedIn ? user?.id : null);
 
     useEffect(() => {
-        void refreshHeaderProfile();
-    }, [refreshHeaderProfile]);
+        if (!dashboardProfile || typeof dashboardProfile !== 'object') return;
+        const profile = dashboardProfile as Record<string, unknown>;
+        if (profile.profileCompleteness != null) {
+            setProfileCompletion(profile.profileCompleteness as number);
+        }
+        const displayName = getProfileDisplayFullName(profile);
+        setDashboardUser({
+            name: displayName,
+            email: String(profile.email || ''),
+            photoUrl: resolveProfilePhotoUrl(profile.profilePhotoUrl as string | null | undefined),
+            initials: getAvatarInitials(profile, displayName),
+        });
+    }, [dashboardProfile]);
 
     useEffect(() => {
         if (!isLoggedIn) return;
@@ -303,6 +292,11 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
         router.push(localizePath(item.path, locale));
     };
 
+    const handleNavItemPrefetch = (item: NavItem) => {
+        if (item.openInNewTab) return;
+        prefetchPortalRoute(router, localizePath(item.path, locale), user?.id, locale);
+    };
+
     const handleJobsToggleSearch = () => {
         setShowJobSearch((prev) => !prev);
     };
@@ -386,6 +380,8 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                                             handleNavItemClick(item);
                                                         }
                                                     }}
+                                                    onMouseEnter={() => handleNavItemPrefetch(item)}
+                                                    onFocus={() => handleNavItemPrefetch(item)}
                                                     className={`app-header-nav-link relative z-10 flex min-w-[68px] flex-1 items-center justify-center gap-1 rounded-full px-3 py-1.5 transition-all duration-200 ease-in-out sm:min-w-[76px] sm:flex-none ${active
                                                         ? 'text-white'
                                                         : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
@@ -547,6 +543,8 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                                     handleNavItemClick(item);
                                                     setIsMobileMenuOpen(false);
                                                 }}
+                                                onMouseEnter={() => handleNavItemPrefetch(item)}
+                                                onFocus={() => handleNavItemPrefetch(item)}
                                                 className={`app-header-nav-link flex items-center rounded-full px-4 py-2.5 transition-all duration-200 ${active
                                                     ? 'bg-[#28A8E1] font-semibold text-white shadow-[0_10px_18px_rgba(40,168,225,0.18)]'
                                                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'

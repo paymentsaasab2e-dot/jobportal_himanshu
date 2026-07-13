@@ -30,6 +30,7 @@ import {
 } from '@/lib/job-salary-filter';
 import { showInfoToast, showSuccessToast } from '@/components/common/toast/toast';
 import { notifyBellRefresh } from '@/lib/notifications';
+import { usePortalApplications } from '@/hooks/portal/usePortalApplications';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 import {
   createInitialMatchScoreState,
@@ -538,12 +539,6 @@ const ExploreJobsPageContent = () => {
   const [jobListings, setJobListings] = useState<JobListing[]>([])
   const [cvResumeSections, setCvResumeSections] = useState<CvResumeSections | null>(null)
   const [loading, setLoading] = useState(true)
-  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500)
-    return () => clearTimeout(timer)
-  }, [])
 
   useEffect(() => {
     const loadCandidateCv = async () => {
@@ -602,6 +597,8 @@ const ExploreJobsPageContent = () => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [appliedJobSummary, setAppliedJobSummary] = useState<AppliedJobSummary | null>(null)
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set())
+  const [portalCandidateId, setPortalCandidateId] = useState<string | null>(null)
+  const applicationsQuery = usePortalApplications(portalCandidateId)
   const [savedJobIds, setSavedJobIds] = useState<string[]>([])
   const [applyPreflightLoading, setApplyPreflightLoading] = useState(false)
 
@@ -675,6 +672,19 @@ const ExploreJobsPageContent = () => {
       setSearchQuery(combined)
     }
   }, [searchParams])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setPortalCandidateId(sessionStorage.getItem('candidateId'))
+  }, [])
+
+  useEffect(() => {
+    const rows = applicationsQuery.data as Array<{ jobId?: string | number }> | undefined
+    if (!rows?.length) return
+    setAppliedJobIds(
+      new Set(rows.map((app) => String(app.jobId ?? '')).filter(Boolean)),
+    )
+  }, [applicationsQuery.data])
 
   // Deep link from candidate dashboard (Apply): /explore-jobs?job=<id> → same detail layout as clicking a card.
   useEffect(() => {
@@ -916,8 +926,11 @@ const ExploreJobsPageContent = () => {
   const [isPersonalized, setIsPersonalized] = useState(false);
 
   const loadJobListings = async () => {
+    const showBlockingLoader = jobListings.length === 0;
     try {
-      setLoading(true);
+      if (showBlockingLoader) {
+        setLoading(true);
+      }
       const candidateId = sessionStorage.getItem('candidateId');
       const apiBases = buildApiBaseCandidates(String(API_BASE_URL));
 
@@ -1342,27 +1355,7 @@ const ExploreJobsPageContent = () => {
   }
 
   const checkAppliedJobs = async () => {
-    const candidateId = sessionStorage.getItem('candidateId');
-    if (!candidateId) return;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/applications/${candidateId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data) {
-          const appliedIds = new Set<string>(result.data.map((app: any) => String(app.jobId)));
-          setAppliedJobIds(appliedIds);
-        }
-      }
-    } catch (error) {
-      console.error('Error checking applied jobs:', error);
-    }
+    await applicationsQuery.refetch()
   }
 
   const handleResetFilters = () => {
@@ -2609,7 +2602,7 @@ const ExploreJobsPageContent = () => {
     );
   };
 
-  if (loading || !minLoadingTimeFinished) {
+  if (loading && jobListings.length === 0) {
     return <GlobalLoader />;
   }
 

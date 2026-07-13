@@ -82,13 +82,7 @@ export default function LmsDashboardPage() {
   const toast = useLmsToast();
   const { state, registerEvent, unregisterEvent, addPlannedItem, setLastActiveCourseId, fetchDashboard } = useLmsState();
   const dashboardData = state.dashboardData;
-  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
-  const isLoading = !state.isHydrated || !dashboardData || !minLoadingTimeFinished;
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+  const isLoading = !state.isHydrated || !dashboardData;
 
   useEffect(() => {
     if (state.isHydrated && !dashboardData) {

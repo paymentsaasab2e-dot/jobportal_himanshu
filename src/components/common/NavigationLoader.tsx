@@ -6,16 +6,16 @@ import { GlobalLoader } from '@/components/auth/GlobalLoader';
 
 import { stripLocaleFromPathname } from '@/lib/i18n';
 
+const SHOW_DELAY_MS = 180;
+
 export function NavigationLoader() {
   const pathname = usePathname();
   const normalizedPath = stripLocaleFromPathname(pathname || '/');
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
   const prevPathname = useRef(pathname);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const minShowTimeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const showingSince = useRef<number | null>(null);
+  const showDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isNavigatingRef = useRef(false);
 
-  // Detect link/tab clicks and start the loader
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -25,7 +25,6 @@ export function NavigationLoader() {
       const href = anchor.getAttribute('href');
       if (!href) return;
 
-      // Only trigger for internal navigation links
       const isInternal =
         href.startsWith('/') &&
         !href.startsWith('//') &&
@@ -36,56 +35,48 @@ export function NavigationLoader() {
 
       const destinationPath = stripLocaleFromPathname(href.split('?')[0] || '/');
 
-      // No full-screen loader on the marketing home page
       if (normalizedPath === '/' || destinationPath === '/') return;
-
-      // Don't show loader if navigating to the same page or to the extract page
       if (href === pathname || href === '/extract' || href.startsWith('/extract/')) return;
 
-      // Start loader
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      setIsNavigating(true);
-      showingSince.current = Date.now();
+      isNavigatingRef.current = true;
+      if (showDelayRef.current) clearTimeout(showDelayRef.current);
+      showDelayRef.current = setTimeout(() => {
+        if (isNavigatingRef.current) {
+          setShowLoader(true);
+        }
+      }, SHOW_DELAY_MS);
     };
 
     document.addEventListener('click', handleClick, true);
     return () => document.removeEventListener('click', handleClick, true);
   }, [pathname, normalizedPath]);
 
-  // Hide loader when navigation completes (pathname changes)
   useEffect(() => {
     if (pathname !== prevPathname.current) {
       prevPathname.current = pathname;
-
-      // Ensure the loader shows for at least 400ms for a smooth experience
-      const elapsed = showingSince.current ? Date.now() - showingSince.current : 0;
-      const minRemaining = Math.max(0, 1500 - elapsed);
-
-      if (minShowTimeRef.current) clearTimeout(minShowTimeRef.current);
-      minShowTimeRef.current = setTimeout(() => {
-        setIsNavigating(false);
-        showingSince.current = null;
-      }, minRemaining);
+      isNavigatingRef.current = false;
+      if (showDelayRef.current) {
+        clearTimeout(showDelayRef.current);
+        showDelayRef.current = null;
+      }
+      setShowLoader(false);
     }
   }, [pathname]);
 
-  // Safety: auto-hide after 5 seconds in case navigation fails
   useEffect(() => {
-    if (!isNavigating) return;
-    const safetyTimer = setTimeout(() => setIsNavigating(false), 5000);
+    if (!showLoader) return;
+    const safetyTimer = setTimeout(() => setShowLoader(false), 8000);
     return () => clearTimeout(safetyTimer);
-  }, [isNavigating]);
+  }, [showLoader]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (minShowTimeRef.current) clearTimeout(minShowTimeRef.current);
+      if (showDelayRef.current) clearTimeout(showDelayRef.current);
     };
   }, []);
 
   if (
-    !isNavigating ||
+    !showLoader ||
     normalizedPath === '/' ||
     pathname === '/extract' ||
     pathname?.startsWith('/extract/')
