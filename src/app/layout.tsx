@@ -15,6 +15,8 @@ import GlobalHeader from "@/components/common/GlobalHeader";
 import ApiHealthChecker from "@/components/common/ApiHealthChecker";
 import GlobalFooter from "@/components/common/GlobalFooter";
 import { NavigationLoader } from "@/components/common/NavigationLoader";
+import { PortalNavigationWarmup } from "@/components/common/PortalNavigationWarmup";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import { IntlProvider } from "@/components/i18n/IntlProvider";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -47,14 +49,17 @@ export default function RootLayout({
           <ToastProvider>
             <AuthProvider>
               <InactivityGuard>
+                <QueryProvider>
                 <AuthGuard>
                   <NavigationLoader />
+                  <PortalNavigationWarmup />
                   <GlobalHeader />
                   <main className="min-h-screen">
                     {children}
                   </main>
                   <GlobalFooter />
                 </AuthGuard>
+                </QueryProvider>
               </InactivityGuard>
             </AuthProvider>
           </ToastProvider>

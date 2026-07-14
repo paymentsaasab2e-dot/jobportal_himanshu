@@ -1,7 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import {
+  Briefcase,
+  CalendarRange,
+  ExternalLink,
+  MapPin,
+  UserRound,
+  Users,
+  Video,
+  X,
+} from 'lucide-react';
+import { useApplicationDetail } from '@/hooks/portal/useApplicationDetail';
+import { portalQueryKeys } from '@/lib/query/portal-query-keys';
+import { getQueryClient } from '@/lib/query/query-client';
 import { API_BASE_URL, resolvePhase2UploadUrl } from '@/lib/api-base';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
 import { ProfilePageShell } from '@/components/profile/layout';
@@ -241,6 +254,31 @@ function buildApplicationPipelineFlow(application: ApplicationDetail): string[] 
   }
 
   return flow;
+}
+
+/**
+ * Replace the single pre-offer Interview step with one pill per scheduled/completed round
+ * so the flow reads Applied → Screening → Interview — HR screening → Interview — Technical round.
+ */
+function expandPipelineFlowWithInterviewRounds(
+  flow: string[],
+  rounds: InterviewRoundPayload[],
+): string[] {
+  if (!flow.length || rounds.length <= 1) return flow;
+
+  let interviewIndex = -1;
+  for (let i = flow.length - 1; i >= 0; i--) {
+    if (isInterviewPipelineStageName(flow[i])) {
+      interviewIndex = i;
+      break;
+    }
+  }
+  if (interviewIndex < 0) return flow;
+
+  const expanded = [...flow];
+  const interviewSteps = Array.from({ length: rounds.length }, () => 'Interview');
+  expanded.splice(interviewIndex, 1, ...interviewSteps);
+  return expanded;
 }
 
 function hasRespondedToOffer(application: ApplicationDetail): boolean {
@@ -499,38 +537,42 @@ function resolveInterviewRoundForPipelinePill(
 function reconcileInterviewRoundsClient(rounds: InterviewRoundPayload[]): InterviewRoundPayload[] {
   if (rounds.length <= 1) return rounds;
 
-  const scheduled = rounds.filter((round) => !round.isCompleted);
+  const scheduled = rounds.filter((round) => !isInterviewRoundCompleted(round));
   const completed = rounds.filter((round) => roundHasFeedbackDetails(round));
-  if (!completed.length) return rounds;
+  if (!completed.length) return sortInterviewRoundsChronologically(rounds);
 
   if (!scheduled.length) {
-    const sorted = [...completed].sort(
-      (a, b) => interviewRoundFeedbackRichness(b) - interviewRoundFeedbackRichness(a)
-    );
-    let merged = { ...sorted[0] };
-    for (let index = 1; index < sorted.length; index += 1) {
-      merged = mergeInterviewRoundWithFeedback(merged, sorted[index]);
-    }
-    return [merged];
+    return sortInterviewRoundsChronologically(completed);
   }
 
-  const merged = scheduled.map((sched, index) => {
+  const merged = scheduled.map((sched) => {
     const labelMatch = completed.find((comp) =>
       interviewRoundLabelsEquivalent(sched.roundLabel, comp.roundLabel)
     );
-    const source = pickRichestInterviewRound([labelMatch, completed[index], ...completed]);
-    return source && !roundHasFeedbackDetails(sched)
-      ? mergeInterviewRoundWithFeedback(sched, source)
-      : sched;
+    if (!labelMatch || roundHasFeedbackDetails(sched)) return sched;
+    return mergeInterviewRoundWithFeedback(sched, labelMatch);
   });
 
-  completed.forEach((comp, index) => {
-    if (index >= scheduled.length) merged.push(comp);
-  });
+  for (const comp of completed) {
+    const alreadyMerged = merged.some(
+      (round) =>
+        isInterviewRoundCompleted(round) &&
+        interviewRoundLabelsEquivalent(round.roundLabel, comp.roundLabel)
+    );
+    if (!alreadyMerged) merged.push(comp);
+  }
 
-  return merged.sort(
-    (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
-  );
+  return sortInterviewRoundsChronologically(merged);
+}
+
+function sortInterviewRoundsChronologically(
+  rounds: InterviewRoundPayload[]
+): InterviewRoundPayload[] {
+  return [...rounds].sort((a, b) => {
+    const aTime = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+    const bTime = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+    return aTime - bTime;
+  });
 }
 
 function interviewRoundFeedbackRichness(round: InterviewRoundPayload = {} as InterviewRoundPayload): number {
@@ -559,10 +601,21 @@ function pickRichestInterviewRound(
 }
 
 function interviewRoundLabelsEquivalent(a: string | null | undefined, b: string | null | undefined): boolean {
-  const left = String(a || '').trim().toLowerCase();
-  const right = String(b || '').trim().toLowerCase();
+  const normalize = (value: string) =>
+    String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/\bround\s*\d+\b/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  const left = normalize(a || '');
+  const right = normalize(b || '');
   if (!left || !right) return false;
-  return left === right || left.includes(right) || right.includes(left);
+  if (left === right) return true;
+  const stripHr = (value: string) => value.replace(/^hr\s+/, '').trim();
+  if (stripHr(left) === stripHr(right)) return true;
+  return left.includes(right) || right.includes(left);
 }
 
 function isInterviewRoundCompleted(round: InterviewRoundPayload): boolean {
@@ -1058,9 +1111,131 @@ function buildInterviewDetailsFromTimelineRow(
   };
 }
 
+const STRUCTURED_INTERVIEW_NOTE_PATTERNS = [
+  /^when\s*:/i,
+  /^type\s*:/i,
+  /^link\s*:/i,
+  /^location\s*:/i,
+  /^mode\s*:/i,
+  /^interviewer(?:s)?\s*:/i,
+  /^recruiter\s*:/i,
+  /^format\s*:/i,
+  /^meeting link\s*:/i,
+  /^recruiter scheduled/i,
+];
+
+function humanizeInterviewMode(value: string | null | undefined): string | null {
+  if (!value?.trim()) return null;
+  const normalized = normalizeStage(value);
+  if (normalized.includes('online') || normalized.includes('video')) return 'Online';
+  if (normalized.includes('person') || normalized.includes('walk') || normalized.includes('onsite')) {
+    return 'In-person';
+  }
+  return value.trim().replace(/_/g, ' ');
+}
+
+function resolveInterviewMode(payload: InterviewDetailsPayload): string | null {
+  if (payload.meetingLink) return 'Online';
+  const modeMatch = payload.notes?.match(/^\s*mode\s*:\s*(.+)$/im);
+  if (modeMatch) return humanizeInterviewMode(modeMatch[1]);
+  if (payload.format) return humanizeInterviewMode(payload.format);
+  if (payload.location) return 'In-person';
+  return null;
+}
+
+function extractInterviewExtraNotes(
+  notes: string | null | undefined,
+  payload: InterviewDetailsPayload,
+): string | null {
+  if (!notes?.trim()) return null;
+
+  const extraLines = notes
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => {
+      if (STRUCTURED_INTERVIEW_NOTE_PATTERNS.some((pattern) => pattern.test(line))) return false;
+      const normalized = normalizeStage(line);
+      if (payload.roundLabel && normalized.includes(normalizeStage(payload.roundLabel))) return false;
+      if (payload.location && normalized.includes(normalizeStage(payload.location).slice(0, 48))) {
+        return false;
+      }
+      return true;
+    });
+
+  const result = extraLines.join('\n').trim();
+  return result || null;
+}
+
+function InterviewDetailTile({
+  icon,
+  label,
+  value,
+  className = '',
+}: {
+  icon: ReactNode;
+  label: string;
+  value: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`rounded-lg border border-slate-100/90 bg-white p-2.5 shadow-sm ${className}`}>
+      <div className="flex items-start gap-2.5">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-slate-400">{label}</p>
+          <div className="mt-0.5 text-[13px] font-medium leading-5 text-slate-900">{value}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function isInterviewTimelineRow(row: { status: string; title: string }) {
   const blob = `${row.status} ${row.title}`.toLowerCase();
   return blob.includes('interview');
+}
+
+/** Rows already represented by the fixed "Application Submitted" timeline card. */
+function isApplicationSubmittedTimelineRow(row: {
+  status: string;
+  title: string;
+  description?: string | null;
+}) {
+  const st = normalizeStage(row.status);
+  const ti = normalizeStage(row.title);
+  const desc = normalizeStage(row.description || '');
+
+  if (ti.includes('application submitted')) return true;
+  if (ti === 'submitted' || ti.includes('successfully submitted')) return true;
+  if (desc.includes('successfully submitted')) return true;
+
+  // CRM sync on Applied: title "Applied", description "Applied stage" (SUBMITTED → "Applied" in API).
+  if (st === 'applied' && ti === 'applied' && desc.includes('applied stage')) return true;
+
+  return false;
+}
+
+function dedupeTimelineRowsByFingerprint<T extends { status: string; title: string; description?: string | null; occurredAt: string }>(
+  rows: T[],
+) {
+  const seen = new Set<string>();
+  const result: T[] = [];
+  for (const row of rows) {
+    const minuteBucket = Math.floor(new Date(row.occurredAt).getTime() / 60_000);
+    const fingerprint = [
+      normalizeStage(row.title),
+      normalizeStage(row.status),
+      normalizeStage(row.description || '').slice(0, 120),
+    ].join('|');
+    const key = `${minuteBucket}|${fingerprint}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(row);
+  }
+  return result;
 }
 
 /** Pipeline pill names that represent an interview step (CRM may use "Interview", "Interviewing", etc.). */
@@ -1192,14 +1367,225 @@ function buildRejectionPayloadFromDetails(
   };
 }
 
+function InterviewDetailsModal({
+  payload,
+  jobTitle,
+  company,
+  onClose,
+}: {
+  payload: InterviewDetailsPayload;
+  jobTitle: string;
+  company: string;
+  onClose: () => void;
+}) {
+  const scheduled = new Date(payload.scheduledAt);
+  const when = Number.isNaN(scheduled.getTime()) ? null : formatDateTime(scheduled);
+  const interviewMode = resolveInterviewMode(payload);
+  const extraNotes = extractInterviewExtraNotes(payload.notes, payload);
+  const isOnline = Boolean(payload.meetingLink) || interviewMode === 'Online';
+  const interviewerNames = Array.isArray(payload.interviewerNames) ? payload.interviewerNames : [];
+  const HeaderIcon = isOnline ? Video : MapPin;
+
+  return (
+    <div
+      className="fixed inset-0 z-[10050] flex items-center justify-center p-3 sm:p-4"
+      style={{ paddingTop: 'calc(var(--app-header-height, 5.75rem) + 0.5rem)' }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="interview-details-title"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+        aria-label="Close dialog"
+        onClick={onClose}
+      />
+      <div className="profile-modal-typography relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.16)]">
+        <div className="relative border-b border-slate-100 bg-gradient-to-br from-emerald-50 via-white to-sky-50 px-4 pb-3 pt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-3 top-3 rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-white/80 hover:text-slate-900"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" strokeWidth={2} />
+          </button>
+
+          <div className="flex items-start gap-2.5 pr-8">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/15">
+              <HeaderIcon className="h-4 w-4" strokeWidth={2} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                Interview details
+              </p>
+              <h2 id="interview-details-title" className="profile-modal-title mt-0.5 text-lg leading-tight">
+                {payload.timelineTitle}
+              </h2>
+              <p className="profile-modal-helper mt-0.5 text-[13px]">
+                {jobTitle} · {company}
+              </p>
+              {interviewMode ? (
+                <span className="mt-1.5 inline-flex rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-slate-600 ring-1 ring-slate-200/80">
+                  {interviewMode}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="profile-modal-scroll max-h-[min(58vh,26rem)] space-y-2.5 overflow-y-auto px-4 py-3">
+          <div className="rounded-lg border border-sky-100 bg-gradient-to-r from-sky-50/90 to-white p-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-700">
+                <CalendarRange className="h-4 w-4" strokeWidth={2} />
+              </div>
+              <div>
+                <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-sky-600">
+                  Scheduled
+                </p>
+                {when ? (
+                  <>
+                    <p className="mt-0.5 text-sm font-semibold text-slate-900">{when.date}</p>
+                    <p className="text-[13px] text-slate-600">{when.time}</p>
+                  </>
+                ) : (
+                  <p className="mt-0.5 text-[13px] font-medium text-slate-500">Date to be confirmed</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            {payload.roundLabel ? (
+              <InterviewDetailTile
+                icon={<Briefcase className="h-3.5 w-3.5" strokeWidth={2} />}
+                label="Round / type"
+                value={payload.roundLabel}
+              />
+            ) : null}
+            {payload.format ? (
+              <InterviewDetailTile
+                icon={<Video className="h-3.5 w-3.5" strokeWidth={2} />}
+                label="Format"
+                value={<span className="capitalize">{payload.format}</span>}
+              />
+            ) : null}
+          </div>
+
+          {payload.location ? (
+            <InterviewDetailTile
+              className="sm:col-span-2"
+              icon={<MapPin className="h-3.5 w-3.5" strokeWidth={2} />}
+              label="Location"
+              value={<span className="whitespace-pre-wrap">{payload.location}</span>}
+            />
+          ) : null}
+
+          {payload.meetingLink ? (
+            <div className="rounded-lg border border-[rgba(40,168,225,0.18)] bg-[rgba(40,168,225,0.06)] p-3">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-[#28A8E1]">
+                Meeting link
+              </p>
+              <a
+                href={payload.meetingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1.5 inline-flex items-center gap-1 break-all text-[13px] font-semibold text-[#28A8E1] underline decoration-[#28A8E1]/35 underline-offset-2 hover:opacity-90"
+              >
+                Join interview
+                <ExternalLink className="h-3 w-3 shrink-0" strokeWidth={2.1} />
+              </a>
+            </div>
+          ) : null}
+
+          {interviewerNames.length > 0 || payload.recruiterName ? (
+            <div className="rounded-lg border border-slate-100 bg-slate-50/80 p-3">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                Your panel
+              </p>
+              <div className="mt-2 space-y-2">
+                {interviewerNames.length > 0 ? (
+                  <div className="flex items-start gap-2.5">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white text-slate-600 shadow-sm ring-1 ring-slate-100">
+                      <Users className="h-3.5 w-3.5" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                        Interviewer{interviewerNames.length > 1 ? 's' : ''}
+                      </p>
+                      <p className="mt-0.5 text-[13px] font-medium text-slate-900">
+                        {interviewerNames.join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+                {payload.recruiterName ? (
+                  <div className="flex items-start gap-2.5">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white text-slate-600 shadow-sm ring-1 ring-slate-100">
+                      <UserRound className="h-3.5 w-3.5" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                        Recruiter
+                      </p>
+                      <p className="mt-0.5 text-[13px] font-medium text-slate-900">{payload.recruiterName}</p>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
+          {extraNotes ? (
+            <div className="rounded-lg border border-amber-100 bg-amber-50/60 p-3">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-amber-800">
+                Additional notes
+              </p>
+              <p className="mt-1.5 whitespace-pre-wrap text-[13px] leading-5 text-amber-950/90">{extraNotes}</p>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/70 px-4 py-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            Close
+          </button>
+          {payload.meetingLink ? (
+            <a
+              href={payload.meetingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-lg bg-[#28A8E1] px-3 py-1.5 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(40,168,225,0.2)] transition-opacity hover:opacity-95"
+            >
+              Join interview
+              <ExternalLink className="h-3.5 w-3.5" strokeWidth={2.1} />
+            </a>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ApplicationStatusPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const applicationId = String(params?.id || '');
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [application, setApplication] = useState<ApplicationDetail | null>(null);
+  const detailQuery = useApplicationDetail(applicationId);
+  const application = (detailQuery.data as ApplicationDetail | undefined) ?? null;
+  const loading = detailQuery.isLoading && !application;
+  const error =
+    detailQuery.error instanceof Error
+      ? detailQuery.error.message
+      : detailQuery.isError
+        ? 'Failed to load application details'
+        : null;
   const [interviewModalOpen, setInterviewModalOpen] = useState(false);
   const [interviewModalPayload, setInterviewModalPayload] = useState<InterviewDetailsPayload | null>(null);
   const [interviewFeedbackModalOpen, setInterviewFeedbackModalOpen] = useState(false);
@@ -1223,30 +1609,14 @@ export default function ApplicationStatusPage() {
     setCandidateId(id);
   }, []);
 
-  useEffect(() => {
-    async function loadApplicationDetail() {
-      if (!applicationId) return;
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/applications/detail/${encodeURIComponent(applicationId)}`);
-        const result = await response.json();
-
-        if (!response.ok || !result?.success || !result?.data) {
-          throw new Error(result?.message || 'Failed to load application details');
-        }
-
-        setApplication(result.data as ApplicationDetail);
-      } catch (err: any) {
-        setError(err?.message || 'Failed to load application details');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadApplicationDetail();
-  }, [applicationId]);
+  const patchApplicationCache = (patch: Partial<ApplicationDetail>) => {
+    if (!applicationId) return;
+    getQueryClient().setQueryData(
+      portalQueryKeys.applicationDetail(applicationId),
+      (current: Record<string, unknown> | undefined) =>
+        current ? { ...current, ...patch } : current,
+    );
+  };
 
   const offerLetterHref = useMemo(
     () => (application?.offerLetterUrl ? resolvePhase2UploadUrl(application.offerLetterUrl) : ''),
@@ -1258,13 +1628,8 @@ export default function ApplicationStatusPage() {
     const sorted = [...application.timeline].sort(
       (a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime()
     );
-    return sorted.filter((row) => {
-      const st = String(row.status || '').toLowerCase();
-      const ti = String(row.title || '').toLowerCase();
-      if (st.includes('submit') && (ti.includes('application submitted') || ti === 'submitted' || ti.includes('successfully submitted')))
-        return false;
-      return true;
-    });
+    const withoutSubmitDupes = sorted.filter((row) => !isApplicationSubmittedTimelineRow(row));
+    return dedupeTimelineRowsByFingerprint(withoutSubmitDupes);
   }, [application]);
 
   /** Stack of interview rounds (API or derived from timeline). Chronological: round 1 → round 2. */
@@ -1294,45 +1659,28 @@ export default function ApplicationStatusPage() {
     return filteredTimelineRows.filter((row) => !isInterviewTimelineRow(row));
   }, [filteredTimelineRows, interviewRoundsStack]);
 
-  const emailUpdates = useMemo<CommunicationUpdate[]>(() => {
+  const communicationUpdates = useMemo<CommunicationUpdate[]>(() => {
     if (!application) return [];
-    return (application.communications || [])
-      .filter((item) => String(item.channel || '').toLowerCase() === 'email')
-      .map((item) => {
-        const { date, time } = formatDateTime(item.sentAt);
-        return {
-          id: item.id,
-          channel: 'email',
-          title: item.subject || 'Email Update',
-          preview: item.message || 'Status update sent via email.',
-          date,
-          time,
-        };
-      });
-  }, [application]);
-
-  const whatsappUpdates = useMemo<CommunicationUpdate[]>(() => {
-    if (!application) return [];
-    return (application.communications || [])
-      .filter((item) => String(item.channel || '').toLowerCase() === 'whatsapp')
-      .map((item) => {
-        const { date, time } = formatDateTime(item.sentAt);
-        return {
-          id: item.id,
-          channel: 'whatsapp',
-          title: item.subject || 'WhatsApp Update',
-          preview: item.message || 'Status update sent via WhatsApp.',
-          date,
-          time,
-        };
-      });
+    return (application.communications || []).map((item) => {
+      const { date, time } = formatDateTime(item.sentAt);
+      const channel = String(item.channel || '').toLowerCase();
+      return {
+        id: item.id,
+        channel,
+        title: item.subject || 'Status update',
+        preview: item.message || 'Update from the hiring team.',
+        date,
+        time,
+      };
+    });
   }, [application]);
 
   const defaultAppliedAt = application?.appliedAt ? formatDateTime(application.appliedAt).date : '';
   const pipelineStageFlow = useMemo(() => {
     if (!application) return [] as string[];
-    return buildApplicationPipelineFlow(application);
-  }, [application]);
+    const baseFlow = buildApplicationPipelineFlow(application);
+    return expandPipelineFlowWithInterviewRounds(baseFlow, interviewRoundsStack);
+  }, [application, interviewRoundsStack]);
   const currentPipelineIndex = useMemo(() => {
     if (!application || pipelineStageFlow.length === 0) return -1;
     return resolveCurrentPipelineIndex(pipelineStageFlow, application);
@@ -1432,7 +1780,8 @@ export default function ApplicationStatusPage() {
     const current = resolveCanonicalCurrentStage(application);
     if (current === 'Interview' && interviewRoundsStack.length > 0) {
       const activeRound =
-        interviewRoundsStack[interviewRoundsStack.length - 1] ?? interviewRoundsStack[0];
+        interviewRoundsStack.find((round) => !isInterviewRoundCompleted(round)) ??
+        interviewRoundsStack[interviewRoundsStack.length - 1];
       const typeLabel = resolveInterviewTypeLabel(activeRound);
       const roundLabel =
         typeLabel ||
@@ -1512,12 +1861,7 @@ export default function ApplicationStatusPage() {
   };
 
   const reloadApplication = async () => {
-    if (!applicationId) return;
-    const response = await fetch(`${API_BASE_URL}/applications/detail/${encodeURIComponent(applicationId)}`);
-    const result = await response.json();
-    if (response.ok && result?.success && result?.data) {
-      setApplication(result.data as ApplicationDetail);
-    }
+    await detailQuery.refetch();
   };
 
   const respondToOffer = async (decision: 'accept' | 'reject', remark?: string) => {
@@ -1561,15 +1905,10 @@ export default function ApplicationStatusPage() {
         if (message.toLowerCase().includes('already responded')) {
           setOfferRejectModalOpen(false);
           setOfferRejectRemark('');
-          setApplication((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  offerResponse: prev.offerResponse || 'REJECTED',
-                  placementStatus: prev.placementStatus || 'OFFER_REJECTED',
-                }
-              : prev
-          );
+          patchApplicationCache({
+            offerResponse: 'REJECTED',
+            placementStatus: 'OFFER_REJECTED',
+          });
           await reloadApplication();
           showSuccessToast('Offer declined', 'Your response was already recorded.');
           return;
@@ -1578,19 +1917,14 @@ export default function ApplicationStatusPage() {
       }
 
       const respondedAt = new Date().toISOString();
-      setApplication((prev) =>
-        prev
-          ? {
-              ...prev,
-              offerResponse: decision === 'accept' ? 'ACCEPTED' : 'REJECTED',
-              placementStatus: decision === 'accept' ? 'OFFER_ACCEPTED' : 'OFFER_REJECTED',
-              offerRespondedAt: respondedAt,
-              ...(decision === 'reject' && remark
-                ? { offerRejectionRemark: String(remark).trim() }
-                : {}),
-            }
-          : prev
-      );
+      patchApplicationCache({
+        offerResponse: decision === 'accept' ? 'ACCEPTED' : 'REJECTED',
+        placementStatus: decision === 'accept' ? 'OFFER_ACCEPTED' : 'OFFER_REJECTED',
+        offerRespondedAt: respondedAt,
+        ...(decision === 'reject' && remark
+          ? { offerRejectionRemark: String(remark).trim() }
+          : {}),
+      });
       showSuccessToast(
         decision === 'accept' ? 'Offer accepted' : 'Offer declined',
         decision === 'accept'
@@ -1704,12 +2038,6 @@ export default function ApplicationStatusPage() {
                       </svg>
                       Interview details
                     </button>
-                  ) : interviewRoundsStack.length > 0 ? (
-                    <p className="application-detail-helper max-w-xs shrink-0 text-right">
-                      {interviewRoundsStack.length === 1
-                        ? 'Interview details are in the section below.'
-                        : `${interviewRoundsStack.length} interview rounds — open each card below for links and times.`}
-                    </p>
                   ) : null}
                 </div>
               </ApplicationDetailSectionCard>
@@ -2242,24 +2570,12 @@ export default function ApplicationStatusPage() {
               </ApplicationDetailSectionCard>
 
               <ApplicationDetailSectionCard title="Communication Updates">
-                <div className="mb-3 flex items-center gap-4">
-                  <span className={`text-[0.8125rem] font-medium ${application.emailUpdates ? 'text-emerald-700' : 'text-[#64748b]'}`}>
-                    Email Updates
-                  </span>
-                  <span className={`text-[0.8125rem] font-medium ${application.whatsappUpdates ? 'text-emerald-700' : 'text-[#64748b]'}`}>
-                    WhatsApp Updates
-                  </span>
-                </div>
-
                 <div className="space-y-3">
-                  {(emailUpdates.length || whatsappUpdates.length) ? (
-                    [...emailUpdates, ...whatsappUpdates].map((item) => (
+                  {communicationUpdates.length ? (
+                    communicationUpdates.map((item) => (
                       <div key={item.id} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                         <div className="mb-1 flex items-center justify-between gap-2">
                           <p className="profile-page-value font-semibold">{item.title}</p>
-                          <span className="text-[0.75rem] font-medium uppercase tracking-wide text-[#94a3b8]">
-                            {item.channel}
-                          </span>
                         </div>
                         <p className="profile-page-empty mb-1">
                           {item.date}, {item.time}
@@ -2278,130 +2594,12 @@ export default function ApplicationStatusPage() {
       </main>
 
       {interviewModalOpen && interviewModalPayload ? (
-        <div
-          className="fixed inset-0 z-100 flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="interview-details-title"
-        >
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
-            aria-label="Close dialog"
-            onClick={closeInterviewModal}
-          />
-          <div className="profile-modal-typography relative z-101 w-full max-w-lg rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h2 id="interview-details-title" className="profile-modal-title">
-                  {interviewModalPayload.timelineTitle}
-                </h2>
-                <p className="profile-modal-helper mt-1">
-                  {application?.job.title} · {application?.job.company}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeInterviewModal}
-                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                aria-label="Close"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <dl className="space-y-3">
-              <div>
-                <dt className="profile-modal-label">Scheduled</dt>
-                <dd className="profile-modal-field mt-1">
-                  {(() => {
-                    const d = new Date(interviewModalPayload.scheduledAt);
-                    if (Number.isNaN(d.getTime())) return '—';
-                    const { date, time } = formatDateTime(d);
-                    return `${date} · ${time}`;
-                  })()}
-                </dd>
-              </div>
-              {interviewModalPayload.roundLabel ? (
-                <div>
-                  <dt className="font-medium text-gray-500">Round / type</dt>
-                  <dd className="mt-1 text-gray-900">{interviewModalPayload.roundLabel}</dd>
-                </div>
-              ) : null}
-              {interviewModalPayload.format ? (
-                <div>
-                  <dt className="font-medium text-gray-500">Format</dt>
-                  <dd className="mt-1 text-gray-900 capitalize">{interviewModalPayload.format}</dd>
-                </div>
-              ) : null}
-              {interviewModalPayload.meetingLink ? (
-                <div>
-                  <dt className="font-medium text-gray-500">Meeting link</dt>
-                  <dd className="mt-2">
-                    <a
-                      href={interviewModalPayload.meetingLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex break-all text-[#28A8E1] font-medium underline decoration-[#28A8E1]/40 underline-offset-2 hover:opacity-90"
-                    >
-                      Join interview
-                    </a>
-                  </dd>
-                </div>
-              ) : null}
-              {interviewModalPayload.location ? (
-                <div>
-                  <dt className="font-medium text-gray-500">Location</dt>
-                  <dd className="mt-1 text-gray-900">{interviewModalPayload.location}</dd>
-                </div>
-              ) : null}
-              {Array.isArray(interviewModalPayload.interviewerNames) && interviewModalPayload.interviewerNames.length > 0 ? (
-                <div>
-                  <dt className="font-medium text-gray-500">
-                    Interviewer{interviewModalPayload.interviewerNames.length > 1 ? 's' : ''}
-                  </dt>
-                  <dd className="mt-1 text-gray-900">
-                    {interviewModalPayload.interviewerNames.join(', ')}
-                  </dd>
-                </div>
-              ) : null}
-              {interviewModalPayload.recruiterName ? (
-                <div>
-                  <dt className="font-medium text-gray-500">Recruiter</dt>
-                  <dd className="mt-1 text-gray-900">{interviewModalPayload.recruiterName}</dd>
-                </div>
-              ) : null}
-              {interviewModalPayload.notes?.trim() ? (
-                <div>
-                  <dt className="font-medium text-gray-500">Full details</dt>
-                  <dd className="mt-1 whitespace-pre-wrap text-gray-800">{interviewModalPayload.notes}</dd>
-                </div>
-              ) : null}
-            </dl>
-
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={closeInterviewModal}
-                className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-              >
-                Close
-              </button>
-              {interviewModalPayload.meetingLink ? (
-                <a
-                  href={interviewModalPayload.meetingLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl bg-[#28A8E1] px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
-                >
-                  Open link
-                </a>
-              ) : null}
-            </div>
-          </div>
-        </div>
+        <InterviewDetailsModal
+          payload={interviewModalPayload}
+          jobTitle={application?.job.title || 'Role'}
+          company={application?.job.company || 'Company'}
+          onClose={closeInterviewModal}
+        />
       ) : null}
 
       {interviewFeedbackModalOpen && interviewFeedbackPayload ? (
@@ -2509,7 +2707,8 @@ export default function ApplicationStatusPage() {
 
       {withdrawConfirmOpen ? (
         <div
-          className="fixed inset-0 z-100 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[10050] flex items-center justify-center p-4"
+          style={{ paddingTop: 'calc(var(--app-header-height, 5.75rem) + 0.5rem)' }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="withdraw-confirm-title"
@@ -2520,7 +2719,7 @@ export default function ApplicationStatusPage() {
             aria-label="Close dialog"
             onClick={closeWithdrawConfirm}
           />
-          <div className="profile-modal-typography relative z-101 w-full max-w-md rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl">
+          <div className="profile-modal-typography relative z-10 w-full max-w-md rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl">
             <h2 id="withdraw-confirm-title" className="profile-modal-title">
               Withdraw application?
             </h2>
@@ -2551,7 +2750,8 @@ export default function ApplicationStatusPage() {
 
       {offerRejectModalOpen ? (
         <div
-          className="fixed inset-0 z-100 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[10050] flex items-center justify-center p-4"
+          style={{ paddingTop: 'calc(var(--app-header-height, 5.75rem) + 0.5rem)' }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="offer-reject-title"
@@ -2566,7 +2766,7 @@ export default function ApplicationStatusPage() {
               setOfferRejectRemark('');
             }}
           />
-          <div className="profile-modal-typography relative z-101 w-full max-w-md rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl">
+          <div className="profile-modal-typography relative z-10 w-full max-w-md rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl">
             <h2 id="offer-reject-title" className="profile-modal-title">
               Decline this offer?
             </h2>

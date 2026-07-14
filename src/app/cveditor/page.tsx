@@ -16,12 +16,6 @@ export default function CVEditorPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Load resume HTML on mount
   useEffect(() => {
@@ -200,7 +194,7 @@ export default function CVEditorPage() {
     }
   };
 
-  if (isLoading || !minLoadingTimeFinished) {
+  if (isLoading) {
     return <GlobalLoader />;
   }
 

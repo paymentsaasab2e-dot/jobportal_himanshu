@@ -27,13 +27,7 @@ export default function AICVEditorPage() {
   const [editingIndex, setEditingIndex] = useState<{ section: string; index: number } | null>(null);
   const [aiImproving, setAiImproving] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
   const resumePreviewRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Load resume data on mount
   useEffect(() => {
@@ -307,7 +301,7 @@ export default function AICVEditorPage() {
     updateResume({ custom_sections: current });
   };
 
-  if (isLoading || !minLoadingTimeFinished) {
+  if (isLoading) {
     return <GlobalLoader />;
   }
 

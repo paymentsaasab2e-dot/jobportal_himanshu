@@ -24,8 +24,12 @@ import {
 import DashboardPanel from '@/components/dashboard/DashboardPanel';
 import { resolvePortalCompanyLogo, resolvePortalCompanyName } from '@/lib/map-portal-job';
 import { showSuccessToast } from '@/components/common/toast/toast';
-import type { DashboardData, DashboardJob } from '@/components/dashboard/dashboard-types';
+import type { DashboardJob } from '@/components/dashboard/dashboard-types';
 import { API_BASE_URL } from '@/lib/profile-completion';
+import { usePortalApplications } from '@/hooks/portal/usePortalApplications';
+import { useCvDashboard } from '@/hooks/portal/useCvDashboard';
+import { usePortalJobsList } from '@/hooks/portal/usePortalJobs';
+import type { AppLocale } from '@/lib/i18n';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 
 type ApplicationStatus =
@@ -418,9 +422,8 @@ function getApplicationPipelineIndex(status: string) {
 }
 
 function getApplicationScoreLabel(matchScore: number | null | undefined, t: TranslateFn) {
-  return matchScore != null && matchScore > 0
-    ? t('matchPercent', { score: Math.round(matchScore) })
-    : t('matchPending');
+  if (matchScore == null || matchScore <= 0) return null;
+  return t('matchPercent', { score: Math.round(matchScore) });
 }
 
 function getApplicationAction(
@@ -650,7 +653,7 @@ function LoadingSkeleton({ count = 6 }: { count?: number }) {
 export default function ApplicationsPageClient() {
   const router = useRouter();
   const t = useTranslations('applicationsPage');
-  const locale = useLocale();
+  const locale = useLocale() as AppLocale;
   const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-US';
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<ActiveSection>('applications');
@@ -659,21 +662,34 @@ export default function ApplicationsPageClient() {
   const [dateFilter, setDateFilter] = useState<DateFilterKey>('allTime');
   const [displayedApplicationsCount, setDisplayedApplicationsCount] = useState(6);
 
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
+  const applicationsQuery = usePortalApplications(candidateId);
+  const applications = (applicationsQuery.data as Application[] | undefined) ?? [];
+  const loading = applicationsQuery.isLoading && applications.length === 0;
+  const fetchError =
+    applicationsQuery.error instanceof Error
+      ? applicationsQuery.error.message
+      : applicationsQuery.isError
+        ? t('loadFailed')
+        : null;
+  const isRefreshingApplications = applicationsQuery.isFetching && applications.length > 0;
 
-  useEffect(() => {
-    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
-    return () => clearTimeout(timer);
-  }, []);
   const [candidateMissing, setCandidateMissing] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-  const [savedJobsLoading, setSavedJobsLoading] = useState(true);
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
-  const [savedJobSourceJobs, setSavedJobSourceJobs] = useState<DashboardJob[]>([]);
-  const [backendSavedJobs, setBackendSavedJobs] = useState<DashboardData['savedJobs']>([]);
-  const [dashboardStats, setDashboardStats] = useState<DashboardData['stats'] | null>(null);
+  const cvDashboardQuery = useCvDashboard(candidateId);
+  const jobsListQuery = usePortalJobsList(locale, 80);
+  const backendSavedJobs = cvDashboardQuery.data?.savedJobs ?? [];
+  const dashboardStats = cvDashboardQuery.data?.stats ?? null;
+  const savedJobSourceJobs = useMemo(() => {
+    const rawJobs = jobsListQuery.data ?? [];
+    return rawJobs
+      .filter((job): job is Record<string, unknown> => typeof job === 'object' && job !== null)
+      .map((job, index) => mapJobRecord(job, `saved-job-${index + 1}`));
+  }, [jobsListQuery.data]);
+  const savedJobsLoading =
+    activeSection === 'savedJobs' &&
+    savedJobSourceJobs.length === 0 &&
+    backendSavedJobs.length === 0 &&
+    (cvDashboardQuery.isLoading || jobsListQuery.isLoading);
   const [interviews, setInterviews] = useState<InterviewItem[]>([]);
 
   useEffect(() => {
@@ -690,65 +706,11 @@ export default function ApplicationsPageClient() {
 
     if (!resolvedCandidateId) {
       setCandidateMissing(true);
-      setLoading(false);
-      setSavedJobsLoading(false);
-      setApplications([]);
-      setSavedJobSourceJobs([]);
-      setBackendSavedJobs([]);
       return;
     }
 
     setCandidateMissing(false);
   }, []);
-
-  useEffect(() => {
-    if (!candidateId) return;
-
-    let cancelled = false;
-
-    const load = async () => {
-      setLoading(true);
-      setFetchError(null);
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/applications/${candidateId}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-
-        const payload: unknown = await response.json().catch(() => ({}));
-        const success = Boolean((payload as { success?: unknown })?.success);
-        const data = (payload as { data?: unknown })?.data;
-
-        if (!response.ok) {
-          const message =
-            (payload as { message?: string })?.message ||
-            `Could not load applications (${response.status})`;
-          throw new Error(message);
-        }
-
-        if (!cancelled && success && Array.isArray(data)) {
-          const loadedApplications = data as Application[];
-          setApplications(loadedApplications);
-        } else if (!cancelled) {
-          setApplications([]);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setFetchError(error instanceof Error ? error.message : t('loadFailed'));
-          setApplications([]);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [candidateId]);
 
   useEffect(() => {
     const derived: InterviewItem[] = applications
@@ -805,92 +767,6 @@ export default function ApplicationsPageClient() {
       JSON.stringify(savedJobIds)
     );
   }, [candidateId, savedJobIds]);
-
-  useEffect(() => {
-    if (!candidateId) return;
-
-    let cancelled = false;
-
-    const loadSavedJobSources = async () => {
-      setSavedJobsLoading(true);
-
-      const nextBackendSavedJobs: DashboardData['savedJobs'] = [];
-      const nextAvailableJobs: DashboardJob[] = [];
-
-      const dashboardRequest = fetch(`${API_BASE_URL}/cv/dashboard/${candidateId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      const jobsRequest = (async () => {
-        // Important: do NOT call personalized matching on Applications page.
-        // Personalized endpoint runs the job-matching pipeline and should only
-        // be used from Dashboard / Explore Jobs pages.
-        const response = await fetch(`${API_BASE_URL}/jobs?limit=80`, { method: 'GET' });
-        const result = (await response.json()) as {
-          success?: boolean;
-          data?: { jobs?: unknown[] } | unknown[];
-        };
-
-        if (!response.ok || !result.success) {
-          throw new Error('Failed to load saved job sources');
-        }
-
-        const rawJobs = Array.isArray(result.data)
-          ? result.data
-          : Array.isArray((result.data as { jobs?: unknown[] } | undefined)?.jobs)
-          ? (result.data as { jobs?: unknown[] }).jobs || []
-          : [];
-
-        return rawJobs
-          .filter((job): job is Record<string, unknown> => typeof job === 'object' && job !== null)
-          .map((job, index) => mapJobRecord(job, `saved-job-${index + 1}`));
-      })();
-
-      const [dashboardResult, jobsResult] = await Promise.allSettled([
-        dashboardRequest,
-        jobsRequest,
-      ]);
-
-      if (dashboardResult.status === 'fulfilled') {
-        try {
-          const payload = (await dashboardResult.value.json()) as {
-            success?: boolean;
-            data?: DashboardData;
-          };
-
-          if (dashboardResult.value.ok && payload.success && payload.data) {
-            if (payload.data.stats) {
-              setDashboardStats(payload.data.stats);
-            }
-            if (Array.isArray(payload.data.savedJobs)) {
-              nextBackendSavedJobs.push(...payload.data.savedJobs);
-            }
-          }
-        } catch (error) {
-          console.error('Could not parse dashboard saved jobs:', error);
-        }
-      }
-
-      if (jobsResult.status === 'fulfilled') {
-        nextAvailableJobs.push(...jobsResult.value);
-      } else {
-        console.error('Could not load saved job cards:', jobsResult.reason);
-      }
-
-      if (!cancelled) {
-        setBackendSavedJobs(nextBackendSavedJobs);
-        setSavedJobSourceJobs(nextAvailableJobs);
-        setSavedJobsLoading(false);
-      }
-    };
-
-    void loadSavedJobSources();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [candidateId]);
 
   useEffect(() => {
     const backendSavedIds = backendSavedJobs.map((job) => job.id);
@@ -1127,8 +1003,6 @@ export default function ApplicationsPageClient() {
     ];
   }, [activeSection, applicationSummary, interviewSummary, savedJobsSummary, t]);
 
-  const featuredInterview = filteredInterviews[0] ?? null;
-
   const featuredSavedJob = useMemo(() => {
     if (filteredSavedJobs.length === 0) return null;
 
@@ -1147,24 +1021,6 @@ export default function ApplicationsPageClient() {
       return left.title.localeCompare(right.title);
     })[0];
   }, [filteredSavedJobs]);
-
-  const featuredApplication = useMemo(() => {
-    if (filteredApplications.length === 0) return null;
-
-    const interviewBackedApplication = filteredApplications.find((application) =>
-      interviews.some((interview) => interview.id === application.id)
-    );
-
-    if (interviewBackedApplication) return interviewBackedApplication;
-
-    return (
-      filteredApplications.find((application) =>
-        ['Assessment', 'Interview', 'Final Decision', 'Screening', 'Under Review', 'Shortlisted'].includes(
-          application.status
-        )
-      ) ?? filteredApplications[0]
-    );
-  }, [filteredApplications, interviews]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -1225,6 +1081,7 @@ export default function ApplicationsPageClient() {
     const progressWidth = ['12%', '32%', '56%', '78%', '100%'][pipelineIndex] ?? '12%';
     const action = getApplicationAction(application, matchingInterview, formatInterviewDateTime, t);
     const statusLabel = translateApplicationStatus(application.status, t);
+    const matchLabel = getApplicationScoreLabel(application.matchScore, t);
 
     return (
       <DashboardPanel key={application.id} className="h-full p-4 sm:p-5">
@@ -1246,9 +1103,11 @@ export default function ApplicationsPageClient() {
               <span className={`rounded-full px-3 py-1 text-[11px] font-semibold ${statusMeta.chip}`}>
                 {statusLabel}
               </span>
-              <span className="rounded-full bg-(--brand-accent-soft) px-2.5 py-1 text-[11px] font-semibold text-(--brand-accent)">
-                {getApplicationScoreLabel(application.matchScore, t)}
-              </span>
+              {matchLabel ? (
+                <span className="rounded-full bg-(--brand-accent-soft) px-2.5 py-1 text-[11px] font-semibold text-(--brand-accent)">
+                  {matchLabel}
+                </span>
+              ) : null}
             </div>
           </div>
 
@@ -1467,7 +1326,7 @@ export default function ApplicationsPageClient() {
     );
   }
 
-  if (loading || !minLoadingTimeFinished) {
+  if (loading) {
     return <GlobalLoader />;
   }
 
@@ -1561,94 +1420,6 @@ export default function ApplicationsPageClient() {
               </DashboardPanel>
             ) : null}
 
-            {activeSection === 'applications' && featuredApplication ? (
-              <DashboardPanel className="px-4 py-2 sm:px-5 sm:py-2">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <CompanyMark company={featuredApplication.company} />
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-accent)">
-                        {t('needsAttention')}
-                      </p>
-                      <h2 className="profile-page-section-title mt-1">
-                        {featuredApplication.jobTitle}
-                      </h2>
-                      <p className="application-detail-meta mt-1">
-                        {featuredApplication.company}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3 lg:max-w-[420px] lg:items-end">
-                    <p className={`rounded-full px-3 py-1 text-[11px] font-semibold ${getApplicationStatusMeta(featuredApplication.status).chip}`}>
-                      {translateApplicationStatus(featuredApplication.status, t)}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/applications/${featuredApplication.id}`)}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-4 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
-                    >
-                      {t('openApplication')}
-                      <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
-                    </button>
-                  </div>
-                </div>
-              </DashboardPanel>
-            ) : null}
-
-            {activeSection === 'interviews' && featuredInterview ? (
-              <DashboardPanel className="px-4 py-2 sm:px-5 sm:py-2">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="min-w-0 space-y-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-(--brand-accent)">
-                      {t('upcomingInterview')}
-                    </p>
-                    <h2 className="profile-page-section-title">
-                      {featuredInterview.jobTitle}
-                    </h2>
-                    <p className="application-detail-meta">{featuredInterview.company}</p>
-                    <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-slate-600">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm ring-1 ring-slate-100">
-                        <CalendarRange className="h-3 w-3" strokeWidth={2.1} />
-                        {formatInterviewDateTime(featuredInterview.interviewDateTime)}
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm ring-1 ring-slate-100">
-                        {featuredInterview.interviewType === 'online' ? (
-                          <Video className="h-3 w-3" strokeWidth={2.1} />
-                        ) : (
-                          <MapPin className="h-3 w-3" strokeWidth={2.1} />
-                        )}
-                        {featuredInterview.interviewType === 'online' ? t('metricOnlineShort') : t('walkIn')}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {featuredInterview.interviewType === 'online' && featuredInterview.joinUrl ? (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          window.open(featuredInterview.joinUrl, '_blank', 'noopener,noreferrer')
-                        }
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[rgba(40,168,225,0.22)] bg-white px-4 py-2 text-[12px] font-semibold text-(--brand-primary) transition-all duration-200 hover:bg-(--brand-primary-soft)"
-                      >
-                        {t('joinInterview')}
-                        <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/interviews/${featuredInterview.id}`)}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-4 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
-                    >
-                      {t('viewDetails')}
-                      <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.1} />
-                    </button>
-                  </div>
-                </div>
-              </DashboardPanel>
-            ) : null}
-
             {activeSection === 'savedJobs' && featuredSavedJob ? (
               <DashboardPanel className="px-4 py-2 sm:px-5 sm:py-2">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -1736,33 +1507,8 @@ export default function ApplicationsPageClient() {
                   )}
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-2 text-[12px] font-medium text-slate-500">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-(--brand-primary-soft) px-2.5 py-1 text-[11px] font-semibold text-(--brand-primary)">
-                      {activeSection === 'applications'
-                        ? t('countApplications', { count: filteredApplications.length })
-                        : activeSection === 'interviews'
-                        ? t('countInterviews', { count: filteredInterviews.length })
-                        : t('countSavedJobs', { count: filteredSavedJobs.length })}
-                    </span>
-                    {activeSection === 'applications' ? (
-                      <span className="text-slate-400">
-                        {t('showingApplications', {
-                          shown: Math.min(displayedApplications.length, filteredApplications.length),
-                          total: filteredApplications.length,
-                        })}
-                      </span>
-                    ) : activeSection === 'savedJobs' ? (
-                      <span className="text-slate-400">
-                        {t('showingSavedJobs', {
-                          shown: filteredSavedJobs.length,
-                          total: savedJobs.length,
-                        })}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {hasActiveFilters ? (
+                {hasActiveFilters ? (
+                  <div className="flex justify-end">
                     <button
                       type="button"
                       onClick={clearFilters}
@@ -1771,8 +1517,8 @@ export default function ApplicationsPageClient() {
                       {t('clearFilters')}
                       <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.1} />
                     </button>
-                  ) : null}
-                </div>
+                  </div>
+                ) : null}
               </div>
             </DashboardPanel>
 

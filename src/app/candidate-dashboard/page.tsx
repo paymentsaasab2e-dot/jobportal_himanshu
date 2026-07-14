@@ -33,11 +33,12 @@ import {
   type ProfileCompletenessResponse,
 } from "@/lib/profile-completion";
 import { getAuthHeaders, getStoredCandidateId, syncAuthStorage } from "@/lib/auth-storage";
+import { useCvDashboard, useInvalidateCvDashboard } from "@/hooks/portal/useCvDashboard";
+import { usePortalJobsList, usePortalPersonalizedJobs } from "@/hooks/portal/usePortalJobs";
 import { clearPendingJobApply, readPendingJobApply } from "@/lib/job-apply-flow";
 import { useTabVisibilityRefresh } from "@/hooks/useTabVisibilityRefresh";
 import { dispatchProfilePhotoUpdated } from "@/lib/profile-photo";
 import { AppLocale, localizePath } from "@/lib/i18n";
-import { withJobApiLocale } from "@/lib/jobApiLocale";
 import {
   localizeDisplayText,
   localizeLocationText,
@@ -187,10 +188,13 @@ export default function CandidateDashboardPage() {
   const matchesArrivalTimeoutRef = useRef<number | null>(null);
   const pendingApplyInFlightRef = useRef<string | null>(null);
   const [candidateId, setCandidateId] = useState<string | null>(null);
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const dashboardQuery = useCvDashboard(candidateId);
+  const invalidateCvDashboard = useInvalidateCvDashboard();
+  const dashboardData = dashboardQuery.data ?? null;
+  const loading = dashboardQuery.isLoading && !dashboardData;
+  const generalJobsQuery = usePortalJobsList(locale);
+  const personalizedJobsQuery = usePortalPersonalizedJobs(candidateId, locale);
   const [jobs, setJobs] = useState<DashboardJob[]>([]);
-  const [jobsLoading, setJobsLoading] = useState(true);
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
 
@@ -215,12 +219,6 @@ export default function CandidateDashboardPage() {
     useState<ProfileCompletenessResponse | null>(null);
   const [profileSnapshot, setProfileSnapshot] = useState<Record<string, unknown> | null>(null);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
-  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     if (!authLoading) {
@@ -228,10 +226,6 @@ export default function CandidateDashboardPage() {
       const idFromUser = user?.id || null;
       const idFromStorage = getStoredCandidateId();
       setCandidateId(idFromUser || idFromStorage);
-      if (!isAuthenticated) {
-        setLoading(false);
-        setJobsLoading(false);
-      }
     }
   }, [authLoading, isAuthenticated, user]);
 
@@ -308,44 +302,22 @@ export default function CandidateDashboardPage() {
     [candidateId, user?.id]
   );
 
-  const fetchDashboardData = useCallback(async (id?: string) => {
-    const targetId = id || candidateId || user?.id;
-    if (!targetId) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(
-        withJobApiLocale(`${API_BASE_URL}/cv/dashboard/${targetId}`, locale),
-        {
-          method: "GET",
-          headers: getAuthHeaders(),
-        }
-      );
-
-      const result = (await response.json()) as {
-        success?: boolean;
-        data?: DashboardData;
-      };
-
-      if (response.ok && result.success && result.data) {
-        setDashboardData(result.data);
-      } else {
-        console.warn("Dashboard data fetch was not successful:", result);
-      }
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [candidateId, user?.id, locale]);
+  const fetchDashboardData = useCallback(
+    async (_id?: string) => {
+      await dashboardQuery.refetch();
+    },
+    [dashboardQuery],
+  );
 
   useEffect(() => {
     if (!candidateId) return;
-    void syncProfileToCommonDatabase(candidateId);
     void refreshProfileCompleteness(candidateId);
     void refreshProfileSnapshot(candidateId);
-    void fetchDashboardData(candidateId);
-  }, [candidateId, refreshProfileCompleteness, fetchDashboardData]);
+    const syncTimer = window.setTimeout(() => {
+      void syncProfileToCommonDatabase(candidateId);
+    }, 2500);
+    return () => window.clearTimeout(syncTimer);
+  }, [candidateId, refreshProfileCompleteness, refreshProfileSnapshot]);
 
   useEffect(() => {
     if (!candidateId || !isAuthenticated) return;
@@ -508,16 +480,7 @@ export default function CandidateDashboardPage() {
         };
 
         if (response.ok && result.success && result.data?.cv_score != null) {
-          setDashboardData((previous) => {
-            if (!previous) return previous;
-            return {
-              ...previous,
-              stats: {
-                ...previous.stats,
-                cvScore: result.data?.cv_score || previous.stats.cvScore,
-              },
-            };
-          });
+          void dashboardQuery.refetch();
         }
       } catch (error) {
         console.error("Error fetching CV analysis:", error);
@@ -530,131 +493,63 @@ export default function CandidateDashboardPage() {
   useEffect(() => {
     if (!candidateId) return;
 
-    let cancelled = false;
+    const generalRawJobs = generalJobsQuery.data ?? [];
+    const personalizedRawJobs = personalizedJobsQuery.data ?? [];
 
-    const loadJobs = async () => {
-      setJobsLoading(true);
+    const idOf = (job: unknown): string => {
+      if (!job || typeof job !== "object") return "";
+      const j = job as Record<string, unknown>;
+      return String(j.id ?? j._id ?? j.jobId ?? "");
+    };
 
-      try {
-        /**
-         * Always pull the full /jobs list so a newly added role appears on the dashboard
-         * even when the AI matcher (qualifiesForPersonalizedMatch) hasn't yet scored it
-         * highly enough to keep it in /jobs/personalized. Personalized matches, when
-         * available, are placed first and their scores overlay onto the general row.
-         */
-        const generalResponse = await fetch(withJobApiLocale(`${API_BASE_URL}/jobs?limit=200`, locale), {
-          method: "GET",
-        });
-        let generalRawJobs: unknown[] = [];
-        if (generalResponse.ok) {
-          const generalResult = (await generalResponse.json()) as {
-            success?: boolean;
-            data?: { jobs?: unknown[] } | unknown[];
-          };
-          if (generalResult?.success !== false) {
-            generalRawJobs = Array.isArray(generalResult.data)
-              ? generalResult.data
-              : Array.isArray((generalResult.data as { jobs?: unknown[] } | undefined)?.jobs)
-              ? (generalResult.data as { jobs?: unknown[] }).jobs || []
-              : [];
-          }
-        }
-
-        let personalizedRawJobs: unknown[] = [];
-        try {
-          const personalizedResponse = await fetch(
-            withJobApiLocale(
-              `${API_BASE_URL}/jobs/personalized?candidateId=${candidateId}`,
-              locale
-            ),
-            { method: "GET" }
-          );
-          if (personalizedResponse.ok) {
-            const personalizedResult = (await personalizedResponse.json()) as {
-              success?: boolean;
-              data?: unknown;
-            };
-            if (personalizedResult?.success !== false) {
-              personalizedRawJobs = Array.isArray(personalizedResult.data)
-                ? personalizedResult.data
-                : Array.isArray((personalizedResult.data as { jobs?: unknown[] } | undefined)?.jobs)
-                ? (personalizedResult.data as { jobs?: unknown[] }).jobs || []
-                : [];
-            }
-          }
-        } catch (personalizedError) {
-          console.warn("Personalized jobs fetch failed, falling back to general", personalizedError);
-        }
-
-        const idOf = (job: unknown): string => {
-          if (!job || typeof job !== "object") return "";
-          const j = job as Record<string, unknown>;
-          return String(j.id ?? j._id ?? j.jobId ?? "");
-        };
-
-        const personalizedById = new Map<string, Record<string, unknown>>();
-        for (const job of personalizedRawJobs) {
-          const id = idOf(job);
-          if (id && job && typeof job === "object") {
-            personalizedById.set(id, job as Record<string, unknown>);
-          }
-        }
-
-        const merged: Record<string, unknown>[] = [];
-        const seen = new Set<string>();
-        for (const job of personalizedRawJobs) {
-          const id = idOf(job);
-          if (!id || seen.has(id)) continue;
-          seen.add(id);
-          if (job && typeof job === "object") merged.push(job as Record<string, unknown>);
-        }
-        for (const job of generalRawJobs) {
-          const id = idOf(job);
-          if (!id || seen.has(id) || !job || typeof job !== "object") continue;
-          seen.add(id);
-          const personalizedMatch = personalizedById.get(id);
-          merged.push(
-            personalizedMatch
-              ? {
-                  ...(job as Record<string, unknown>),
-                  ...personalizedMatch,
-                  title:
-                    asString((job as Record<string, unknown>).title) ??
-                    asString(personalizedMatch.title) ??
-                    asString(personalizedMatch.jobTitle),
-                  jobTitle:
-                    asString((job as Record<string, unknown>).title) ??
-                    asString(personalizedMatch.title) ??
-                    asString(personalizedMatch.jobTitle),
-                  location:
-                    asNullableString((job as Record<string, unknown>).location) ??
-                    asNullableString(personalizedMatch.location),
-                }
-              : (job as Record<string, unknown>)
-          );
-        }
-
-        const mappedJobs = merged.map((job, index) => mapJobRecord(job, `job-${index + 1}`));
-
-        if (!cancelled) {
-          setJobs(mappedJobs);
-        }
-      } catch (error) {
-        console.error("Error fetching jobs:", error);
-        if (!cancelled) {
-          setJobs([]);
-        }
-      } finally {
-        if (!cancelled) setJobsLoading(false);
+    const personalizedById = new Map<string, Record<string, unknown>>();
+    for (const job of personalizedRawJobs) {
+      const id = idOf(job);
+      if (id && job && typeof job === "object") {
+        personalizedById.set(id, job as Record<string, unknown>);
       }
-    };
+    }
 
-    void loadJobs();
+    const merged: Record<string, unknown>[] = [];
+    const seen = new Set<string>();
+    for (const job of personalizedRawJobs) {
+      const id = idOf(job);
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      if (job && typeof job === "object") merged.push(job as Record<string, unknown>);
+    }
+    for (const job of generalRawJobs) {
+      const id = idOf(job);
+      if (!id || seen.has(id) || !job || typeof job !== "object") continue;
+      seen.add(id);
+      const personalizedMatch = personalizedById.get(id);
+      merged.push(
+        personalizedMatch
+          ? {
+              ...(job as Record<string, unknown>),
+              ...personalizedMatch,
+              title:
+                asString((job as Record<string, unknown>).title) ??
+                asString(personalizedMatch.title) ??
+                asString(personalizedMatch.jobTitle),
+              jobTitle:
+                asString((job as Record<string, unknown>).title) ??
+                asString(personalizedMatch.title) ??
+                asString(personalizedMatch.jobTitle),
+              location:
+                asNullableString((job as Record<string, unknown>).location) ??
+                asNullableString(personalizedMatch.location),
+            }
+          : (job as Record<string, unknown>)
+      );
+    }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [candidateId, locale]);
+    setJobs(merged.map((job, index) => mapJobRecord(job, `job-${index + 1}`)));
+  }, [candidateId, generalJobsQuery.data, personalizedJobsQuery.data]);
+
+  const jobsLoading =
+    jobs.length === 0 &&
+    (generalJobsQuery.isLoading || personalizedJobsQuery.isLoading);
 
   useEffect(() => {
     if (!candidateId) return;
@@ -734,24 +629,8 @@ export default function CandidateDashboardPage() {
 
       let syncedPhotoUrl = result.data?.profilePhotoUrl ?? null;
 
-      const refreshedProfile = await fetch(
-        `${API_BASE_URL}/cv/dashboard/${resolvedCandidateId}`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      const refreshedResult = (await refreshedProfile.json()) as {
-        success?: boolean;
-        data?: DashboardData;
-      };
-
-      if (refreshedProfile.ok && refreshedResult.success && refreshedResult.data) {
-        setDashboardData(refreshedResult.data);
-        syncedPhotoUrl =
-          refreshedResult.data.profile?.profilePhotoUrl ?? syncedPhotoUrl;
-      }
+      invalidateCvDashboard(resolvedCandidateId);
+      await dashboardQuery.refetch();
 
       if (syncedPhotoUrl) {
         dispatchProfilePhotoUpdated(syncedPhotoUrl, API_BASE_URL);
@@ -791,22 +670,8 @@ export default function CandidateDashboardPage() {
         throw new Error(result.message || t("candidateDashboard.profilePhotoDeleteFailed"));
       }
 
-      const refreshedProfile = await fetch(
-        `${API_BASE_URL}/cv/dashboard/${resolvedCandidateId}`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      const refreshedResult = (await refreshedProfile.json()) as {
-        success?: boolean;
-        data?: DashboardData;
-      };
-
-      if (refreshedProfile.ok && refreshedResult.success && refreshedResult.data) {
-        setDashboardData(refreshedResult.data);
-      }
+      invalidateCvDashboard(resolvedCandidateId);
+      await dashboardQuery.refetch();
 
       dispatchProfilePhotoUpdated(null);
       showSuccessToast(t("candidateDashboard.profilePhotoRemoved"));
@@ -1011,7 +876,7 @@ export default function CandidateDashboardPage() {
     },
   ];
 
-  if (loading || jobsLoading || !minLoadingTimeFinished) {
+  if (loading || jobsLoading) {
     return <GlobalLoader />;
   }
 

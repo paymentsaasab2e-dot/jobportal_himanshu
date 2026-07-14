@@ -126,12 +126,6 @@ function LmsCoursesPageContent() {
 
   const [backendCourses, setBackendCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Fetch courses from backend
   useEffect(() => {
@@ -249,7 +243,7 @@ function LmsCoursesPageContent() {
     }
   }
 
-  if (loading || !minLoadingTimeFinished) {
+  if (loading) {
     return <GlobalLoader />;
   }
 

@@ -287,7 +287,6 @@ export default function ProfilePage() {
       typeof window !== 'undefined' &&
       sessionStorage.getItem(PROFILE_SESSION_LOADED_KEY) === '1',
   );
-  const [minLoadingTimeFinished, setMinLoadingTimeFinished] = useState(profileSessionReady);
   const completenessFetchRef = useRef(0);
   const pendingDeepLinkRef = useRef<{ open: string; tab?: string | null } | null>(null);
   const deepLinkHandledRef = useRef(false);
@@ -295,12 +294,6 @@ export default function ProfilePage() {
   useEffect(() => {
     sessionStorage.removeItem('uploadStatus');
   }, []);
-
-  useEffect(() => {
-    if (profileSessionReady) return;
-    const timer = setTimeout(() => setMinLoadingTimeFinished(true), 1500);
-    return () => clearTimeout(timer);
-  }, [profileSessionReady]);
 
   // Profile completeness state
   const [profileCompleteness, setProfileCompleteness] = useState({
@@ -921,7 +914,6 @@ export default function ProfilePage() {
         setIsLoadingProfile(false);
         sessionStorage.setItem(PROFILE_SESSION_LOADED_KEY, '1');
         setProfileSessionReady(true);
-        setMinLoadingTimeFinished(true);
       }
     };
 
@@ -1532,7 +1524,7 @@ export default function ProfilePage() {
     return () => window.clearTimeout(timeoutId);
   }, [careerPreferencesSuccessMessage]);
 
-  if (!profileSessionReady && (isLoadingProfile || !minLoadingTimeFinished)) {
+  if (!profileSessionReady && isLoadingProfile) {
     return <GlobalLoader />;
   }
 
