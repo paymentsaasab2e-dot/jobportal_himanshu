@@ -12,6 +12,14 @@ export type MathCaptchaChallenge = {
   label: string;
 };
 
+const INITIAL_CHALLENGE: MathCaptchaChallenge = {
+  a: 1,
+  b: 1,
+  operator: '+',
+  answer: 2,
+  label: '1 + 1',
+};
+
 function buildChallenge(): MathCaptchaChallenge {
   const operator: '+' | '-' = Math.random() < 0.5 ? '+' : '-';
   let a = Math.floor(Math.random() * 9) + 1;
@@ -45,7 +53,11 @@ export function MathCaptcha({
   error,
 }: MathCaptchaProps) {
   const t = useTranslations();
-  const [challenge, setChallenge] = useState<MathCaptchaChallenge>(() => buildChallenge());
+  const [challenge, setChallenge] = useState<MathCaptchaChallenge>(INITIAL_CHALLENGE);
+
+  useEffect(() => {
+    setChallenge(buildChallenge());
+  }, []);
 
   useEffect(() => {
     onChallengeChange?.(challenge);
