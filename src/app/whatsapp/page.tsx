@@ -24,13 +24,58 @@ import { AppLocale, localizePath } from "@/lib/i18n";
 
 /** Accept personal and company emails (Gmail, Outlook, Live, corporate domains, etc.) */
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TIMEZONE_REGION_HINTS: Record<string, string> = {
+  "Africa/Douala": "CM",
+  "Asia/Kolkata": "IN",
+  "America/New_York": "US",
+  "America/Los_Angeles": "US",
+  "Europe/London": "GB",
+  "Europe/Paris": "FR",
+  "Asia/Dubai": "AE",
+};
+
+function extractRegionFromLocale(localeTag: string): string | null {
+  const normalized = String(localeTag || "").trim().replace(/_/g, "-");
+  if (!normalized) return null;
+
+  // Handles values like en-US, fr-CM, en-Latn-US.
+  const parts = normalized.split("-");
+  for (let i = parts.length - 1; i >= 0; i -= 1) {
+    const part = parts[i];
+    if (/^[A-Za-z]{2}$/.test(part)) return part.toUpperCase();
+  }
+
+  return null;
+}
+
+function detectBrowserCountryCode(): string | null {
+  if (typeof window === "undefined") return null;
+
+  const navigatorLocales = Array.isArray(window.navigator.languages) && window.navigator.languages.length
+    ? window.navigator.languages
+    : [window.navigator.language];
+
+  for (const localeTag of navigatorLocales) {
+    const region = extractRegionFromLocale(localeTag);
+    if (region) return region;
+  }
+
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz && TIMEZONE_REGION_HINTS[tz]) return TIMEZONE_REGION_HINTS[tz];
+  } catch {
+    // no-op: keep null fallback
+  }
+
+  return null;
+}
 
 export default function WhatsAppLogin() {
   const router = useRouter();
   const locale = useLocale() as AppLocale;
   const t = useTranslations();
   const countryOptions = useMemo(() => getCountryCodesForLocale(locale), [locale]);
-  const [selectedCountryCode, setSelectedCountryCode] = useState("CM");
+  const [selectedCountryCode, setSelectedCountryCode] = useState("");
   const selectedCountry = useMemo(
     () => countryOptions.find((c) => c.code === selectedCountryCode) ?? countryOptions[0],
     [countryOptions, selectedCountryCode],
@@ -47,6 +92,7 @@ export default function WhatsAppLogin() {
   const [captchaChallenge, setCaptchaChallenge] = useState<MathCaptchaChallenge | null>(null);
   const [otpDisplay, setOtpDisplay] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const hasAutoDetectedCountry = useRef(false);
 
   const handleCountrySelect = (country: LocalizedCountryCodeOption) => {
     setSelectedCountryCode(country.code);
@@ -54,6 +100,21 @@ export default function WhatsAppLogin() {
     setCountrySearch("");
     setWhatsappNumberValue(""); // Clear number when country changes
   };
+
+  // Auto-detect browser country once and preselect the matching dial code.
+  useEffect(() => {
+    if (hasAutoDetectedCountry.current || !countryOptions.length) return;
+    hasAutoDetectedCountry.current = true;
+
+    const detectedCode = detectBrowserCountryCode();
+    if (detectedCode && countryOptions.some((c) => c.code === detectedCode)) {
+      setSelectedCountryCode(detectedCode);
+      return;
+    }
+
+    // Fallback to first sorted option when no browser hint is available.
+    setSelectedCountryCode(countryOptions[0].code);
+  }, [countryOptions]);
 
   // Handle keyboard typing when dropdown is open for inline search
   const handleDropdownKeyDown = (e: React.KeyboardEvent) => {

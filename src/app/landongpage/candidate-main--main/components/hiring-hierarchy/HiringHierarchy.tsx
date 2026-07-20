@@ -246,13 +246,16 @@ export default function HiringHierarchy() {
 
   const [activeStage, setActiveStage] = useState<string | null>('application')
   const [funnelMetrics, setFunnelMetrics] = useState(baseFunnelMetrics)
-  const [lastUpdated, setLastUpdated] = useState(new Date())
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   const toggleStage = (id: string) => {
     setActiveStage((prev) => (prev === id ? null : id))
   }
 
   useEffect(() => {
+    // Set once on mount to avoid SSR/client hydration timestamp drift.
+    setLastUpdated(new Date())
+
     const interval = setInterval(() => {
       setFunnelMetrics((current) =>
         current.map((metric, index) => {
@@ -308,7 +311,13 @@ export default function HiringHierarchy() {
             <div>
               <h3 className="font-bold text-text-primary text-sm">{h.funnelTitle}</h3>
               <p className="text-xs text-text-muted mt-0.5">
-                {h.funnelUpdated} {lastUpdated.toLocaleTimeString(content.dateLocale, { hour: '2-digit', minute: '2-digit' })}
+                {h.funnelUpdated}{' '}
+                {lastUpdated
+                  ? lastUpdated.toLocaleTimeString(content.dateLocale, {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : '--:--'}
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold">

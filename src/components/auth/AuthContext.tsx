@@ -84,12 +84,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null;
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const normalizedPathname = stripLocaleFromPathname(pathname || '/');
   const currentLocale = getLocaleFromPathname(pathname || '/');
 
   const logout = useCallback(async (logoutAll: boolean = false) => {
+    setIsLoggingOut(true);
     const candidateId = getStoredCandidateId();
     
     if (logoutAll && candidateId) {
@@ -110,11 +112,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.clear();
     setUser(null);
     setToken(null);
-    
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 800);
-  }, []);
+
+    const landingPath = localizePath('/', currentLocale);
+    window.location.replace(landingPath);
+  }, [currentLocale]);
 
   const refreshUser = useCallback(async () => {
     syncAuthStorage();
@@ -262,7 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Auth Guard Logic
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isLoggingOut) return;
 
     // Only redirect away from the phone-entry page.
     // /whatsapp/verify manages its own post-login navigation — do NOT interfere.
@@ -279,7 +280,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else if (token && isPublicAuthRoute) {
       router.push(localizePath('/candidate-dashboard', currentLocale));
     }
-  }, [token, isLoading, normalizedPathname, currentLocale, router]);
+  }, [token, isLoading, isLoggingOut, normalizedPathname, currentLocale, router]);
 
   return (
     <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, isLoading, login, logout, refreshUser }}>
