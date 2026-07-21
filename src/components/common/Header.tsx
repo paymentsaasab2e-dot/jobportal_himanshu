@@ -32,6 +32,7 @@ import ProfilePanel from '@/components/common/ProfilePanel';
 import GlobalAIAssistant from '@/components/common/GlobalAIAssistant';
 import { AppLocale, localizePath, stripLocaleFromPathname } from '@/lib/i18n';
 const PRIMARY = '#28A8E1';
+const HOME_PATH = '/candidate-home';
 const JOBS_PATH = '/explore-jobs';
 const SERVICES_PATH = '/services';
 
@@ -89,8 +90,11 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
 
     const isActive = useCallback(
         (path: string) => {
+            if (path === HOME_PATH) {
+                return normalizedPath === HOME_PATH;
+            }
             if (path === '/candidate-dashboard') {
-                return normalizedPath === path;
+                return normalizedPath === '/candidate-dashboard';
             }
             if (path === '/applications') {
                 return normalizedPath?.startsWith('/applications') || normalizedPath?.startsWith('/interviews');
@@ -273,6 +277,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
         : isLoggedIn
           ? [
               { label: t('nav.dashboard'), path: '/candidate-dashboard' },
+              { label: 'Home', path: HOME_PATH },
               { label: t('nav.jobs'), path: '/explore-jobs' },
               { label: t('nav.applications'), path: '/applications' },
               { label: t('nav.lms'), path: '/lms/courses' },

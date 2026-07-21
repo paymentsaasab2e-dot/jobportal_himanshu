@@ -61,6 +61,7 @@ export default function Footer() {
 
   const platformLinks = (isLoggedIn && !isLandingPage && !isEmployersPage) ? [
     { href: "/candidate-dashboard", label: t("nav.dashboard") },
+    { href: "/candidate-home", label: "Home" },
     { href: "/explore-jobs", label: t("nav.jobs") },
     { href: "/applications", label: t("nav.applications") },
     { href: "/lms/courses", label: "LMS" },

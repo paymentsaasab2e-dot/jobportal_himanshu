@@ -21,11 +21,16 @@ async function lmsFetch(url: string, options: RequestInit = {}) {
     return null;
   }
   console.log(`[LMS FETCH] ${url}`, options);
-
-  const res = await fetch(url, { 
-    ...options, 
-    headers: { ...(headers as any), ...(options.headers || {}) } 
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers: { ...(headers as any), ...(options.headers || {}) },
+    });
+  } catch (error) {
+    console.error(`LMS Client: Network error while calling ${url}`, error);
+    return null;
+  }
   
   if (res.status === 401) {
     console.error('LMS Client: Session expired (401).');

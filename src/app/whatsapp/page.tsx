@@ -12,6 +12,7 @@ import { showSuccessToast } from '@/components/common/toast/toast';
 
 import {
   getCountryCodesForLocale,
+  getCountryCodeForTimeZone,
   countryCodeToFlag,
   type LocalizedCountryCodeOption,
 } from '@/lib/country-codes';
@@ -24,16 +25,6 @@ import { AppLocale, localizePath } from "@/lib/i18n";
 
 /** Accept personal and company emails (Gmail, Outlook, Live, corporate domains, etc.) */
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TIMEZONE_REGION_HINTS: Record<string, string> = {
-  "Africa/Douala": "CM",
-  "Asia/Kolkata": "IN",
-  "America/New_York": "US",
-  "America/Los_Angeles": "US",
-  "Europe/London": "GB",
-  "Europe/Paris": "FR",
-  "Asia/Dubai": "AE",
-};
-
 function extractRegionFromLocale(localeTag: string): string | null {
   const normalized = String(localeTag || "").trim().replace(/_/g, "-");
   if (!normalized) return null;
@@ -51,6 +42,15 @@ function extractRegionFromLocale(localeTag: string): string | null {
 function detectBrowserCountryCode(): string | null {
   if (typeof window === "undefined") return null;
 
+  // Timezone is usually the strongest signal of the user's current location.
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const countryFromTz = getCountryCodeForTimeZone(tz);
+    if (countryFromTz) return countryFromTz;
+  } catch {
+    // no-op: fallback to locale hints
+  }
+
   const navigatorLocales = Array.isArray(window.navigator.languages) && window.navigator.languages.length
     ? window.navigator.languages
     : [window.navigator.language];
@@ -58,13 +58,6 @@ function detectBrowserCountryCode(): string | null {
   for (const localeTag of navigatorLocales) {
     const region = extractRegionFromLocale(localeTag);
     if (region) return region;
-  }
-
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz && TIMEZONE_REGION_HINTS[tz]) return TIMEZONE_REGION_HINTS[tz];
-  } catch {
-    // no-op: keep null fallback
   }
 
   return null;

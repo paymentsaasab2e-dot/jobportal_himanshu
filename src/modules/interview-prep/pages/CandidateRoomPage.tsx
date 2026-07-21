@@ -1,0 +1,295 @@
+'use client';
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import {
+  candidateScheduleDecision,
+  getInterviewRequestChat,
+  getMyInterviewRequests,
+  postInterviewRequestChat,
+} from '@/lib/interview-request-api';
+
+export default function CandidateRoomPage() {
+  const router = useRouter();
+  const params = useParams<{ requestId: string }>();
+  const requestId = String(params?.requestId || '').trim();
+  const [selectedSlot, setSelectedSlot] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [chatDraft, setChatDraft] = useState('');
+  const [chatSending, setChatSending] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
+
+  const requestQuery = useQuery({
+    queryKey: ['candidate-room', requestId],
+    queryFn: () => getMyInterviewRequests(),
+    enabled: Boolean(requestId),
+    staleTime: 10_000,
+    retry: 0,
+  });
+  const chatQuery = useQuery({
+    queryKey: ['candidate-room-chat', requestId],
+    queryFn: () => getInterviewRequestChat(requestId),
+    enabled: Boolean(requestId),
+    staleTime: 2000,
+    refetchInterval: 4000,
+    retry: 0,
+  });
+
+  const record = useMemo(() => {
+    const list = requestQuery.data || [];
+    return list.find((item) => String(item.id) === requestId || String(item.requestId) === requestId) || null;
+  }, [requestQuery.data, requestId]);
+
+  const effectiveSlot = selectedSlot || record?.preferredTime?.[0] || '';
+  const timelineSteps = useMemo(() => {
+    if (!record) return [];
+    const status = String(record.status || '').toUpperCase();
+    const hasAccepted = ['ACCEPTED', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED'].includes(status);
+    const hasProposed =
+      hasAccepted ||
+      (status === 'WAITING_FOR_ACCEPTANCE' && String(record.proposedSlot || '').trim().length > 0);
+    const hasScheduled = ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'].includes(status);
+    const scheduledAtTime = record.scheduledAt ? new Date(record.scheduledAt).getTime() : null;
+    const reminderThreshold =
+      typeof scheduledAtTime === 'number' && Number.isFinite(scheduledAtTime)
+        ? scheduledAtTime - 60 * 60 * 1000
+        : null;
+    const reminderSent = Boolean(
+      hasScheduled &&
+        typeof reminderThreshold === 'number' &&
+        Number.isFinite(reminderThreshold) &&
+        Date.now() >= reminderThreshold
+    );
+
+    return [
+      { label: 'Requested', done: true },
+      { label: 'Accepted', done: hasAccepted },
+      { label: 'Slot Proposed', done: hasProposed },
+      { label: 'Scheduled', done: hasScheduled },
+      { label: 'Reminder Sent', done: reminderSent },
+    ];
+  }, [record]);
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [chatQuery.data?.length]);
+
+  const handleSendChat = async () => {
+    const text = chatDraft.trim();
+    if (!text) return;
+    try {
+      setChatSending(true);
+      await postInterviewRequestChat(requestId, text);
+      setChatDraft('');
+      await chatQuery.refetch();
+    } finally {
+      setChatSending(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <button
+        type="button"
+        onClick={() => router.push('/lms/interview-prep/request-interview')}
+        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Interview Requests
+      </button>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h1 className="text-xl font-bold text-slate-900">Candidate Chat & Slot Room</h1>
+        <p className="mt-1 text-sm text-slate-600">Chat with interviewer and finalize one interview slot.</p>
+
+        {requestQuery.isLoading ? (
+          <p className="mt-4 text-sm text-slate-600">Loading room details...</p>
+        ) : requestQuery.isError ? (
+          <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            Unable to load interview room right now.
+          </p>
+        ) : !record ? (
+          <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+            Interview request not found.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-sm font-bold text-slate-900">{record.requestId} • {record.statusLabel}</p>
+              <p className="mt-1 text-sm text-slate-700">
+                Interviewer: {record.interviewerProfile?.fullName || record.interviewerId || 'N/A'}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                {record.interviewType} • {record.duration} mins • {record.language}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Interview Timeline</p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-5">
+                {timelineSteps.map((step, index) => (
+                  <div
+                    key={`${step.label}-${index}`}
+                    className={`rounded-lg border px-2 py-1.5 text-center text-[11px] font-semibold ${
+                      step.done
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                        : 'border-slate-200 bg-slate-50 text-slate-500'
+                    }`}
+                  >
+                    {step.label}
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] text-slate-500">
+                Reminder is auto-sent around 1 hour before scheduled time.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Interview Room Chat</p>
+                <p className="mt-0.5 text-[11px] text-emerald-600">
+                  Chat directly here with your interviewer.
+                </p>
+              </div>
+              <div className="mt-3 rounded-lg border border-slate-200 bg-[#e5ddd5] p-2">
+                <div className="max-h-72 space-y-2 overflow-y-auto rounded-md bg-[#efeae2] p-2 pr-1">
+                  {(chatQuery.data || []).length === 0 ? (
+                    <p className="text-xs text-slate-500">No messages yet. Start the conversation below.</p>
+                  ) : (
+                    (chatQuery.data || []).map((item) => (
+                      <div
+                        key={item.id}
+                        className={`rounded-lg px-2.5 py-2 text-xs ${
+                          item.senderRole === 'candidate'
+                            ? 'ml-auto max-w-[85%] bg-[#dcf8c6] text-slate-900'
+                            : 'mr-auto max-w-[85%] bg-white text-slate-800'
+                        }`}
+                      >
+                        <p className="mb-0.5 text-[10px] font-semibold opacity-70">
+                          {item.senderRole === 'candidate' ? 'You' : 'Interviewer'}
+                        </p>
+                        <p>{item.message}</p>
+                        <p className="mt-1 text-[10px] opacity-70">
+                          {new Date(item.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    value={chatDraft}
+                    onChange={(event) => setChatDraft(event.target.value)}
+                    placeholder="Type message to interviewer..."
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault();
+                        if (!chatSending) void handleSendChat();
+                      }
+                    }}
+                    className="w-full rounded-full border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-emerald-400"
+                  />
+                  <button
+                    type="button"
+                    disabled={chatSending}
+                    onClick={() => void handleSendChat()}
+                    className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                  >
+                    {chatSending ? 'Sending...' : 'Send'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Final Slot Decision</p>
+              {record.status === 'ACCEPTED' ? (
+                <p className="mt-1 text-xs text-slate-600">
+                  Interviewer proposed a final slot. Accept or reject this slot.
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-slate-600">
+                  Current status: {record.statusLabel}
+                </p>
+              )}
+              <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+                <select
+                  value={effectiveSlot}
+                  onChange={(event) => setSelectedSlot(event.target.value)}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-cyan-400"
+                >
+                  {(record.preferredTime || []).map((slot) => (
+                    <option key={`${record.id}-${slot}`} value={slot}>
+                      {slot}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={saving || record.status !== 'ACCEPTED'}
+                  onClick={async () => {
+                    try {
+                      setSaving(true);
+                      setMessage('');
+                      setError('');
+                      if (!effectiveSlot) {
+                        setError('Please select a slot.');
+                        return;
+                      }
+                      const updated = await candidateScheduleDecision(record.id, 'CONFIRM', '', effectiveSlot);
+                      setMessage(`Final slot accepted for ${updated.requestId}.`);
+                      await requestQuery.refetch();
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Unable to accept slot');
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                  className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                >
+                  {saving ? 'Saving...' : 'Accept Slot'}
+                </button>
+                <button
+                  type="button"
+                  disabled={saving || record.status !== 'ACCEPTED'}
+                  onClick={async () => {
+                    try {
+                      setSaving(true);
+                      setMessage('');
+                      setError('');
+                      await candidateScheduleDecision(record.id, 'REQUEST_NEW_SLOT', 'Candidate rejected proposed slot');
+                      setMessage(`Slot rejected for ${record.requestId}. Interviewer will propose a new slot.`);
+                      await requestQuery.refetch();
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Unable to reject slot');
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                  className="rounded-lg border border-rose-300 bg-white px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-60"
+                >
+                  {saving ? 'Saving...' : 'Reject Slot'}
+                </button>
+              </div>
+              {message ? (
+                <p className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                  {message}
+                </p>
+              ) : null}
+              {error ? (
+                <p className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                  {error}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
