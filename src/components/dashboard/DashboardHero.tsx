@@ -19,6 +19,7 @@ interface DashboardHeroProps {
   subheading: string;
   stats: DashboardHeroStat[];
   onOpenMatches: () => void;
+  onRequestInterview?: () => void;
 }
 
 export default function DashboardHero({
@@ -27,6 +28,7 @@ export default function DashboardHero({
   subheading,
   stats,
   onOpenMatches,
+  onRequestInterview,
 }: DashboardHeroProps) {
   const t = useTranslations("candidateDashboard.greeting");
 
@@ -53,6 +55,15 @@ export default function DashboardHero({
           <p className="application-detail-helper max-w-2xl">
             {subheading}
           </p>
+          {onRequestInterview ? (
+            <button
+              type="button"
+              onClick={onRequestInterview}
+              className="inline-flex items-center rounded-full bg-linear-to-r from-[#28A8E1] to-[#1F8FC2] px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white shadow-[0_10px_22px_rgba(40,168,225,0.26)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95"
+            >
+              Request Interview
+            </button>
+          ) : null}
         </div>
 
         <div className="-mx-1 overflow-x-auto px-1 sm:mx-0 sm:overflow-visible sm:px-0">

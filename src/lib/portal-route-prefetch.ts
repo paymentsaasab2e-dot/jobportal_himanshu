@@ -61,7 +61,9 @@ export function prefetchPortalRoute(
 
   if (
     normalizedPath === '/candidate-dashboard' ||
-    normalizedPath.endsWith('/candidate-dashboard')
+    normalizedPath.endsWith('/candidate-dashboard') ||
+    normalizedPath === '/candidate-home' ||
+    normalizedPath.endsWith('/candidate-home')
   ) {
     void queryClient.prefetchQuery({
       queryKey: portalQueryKeys.cvDashboard(id),

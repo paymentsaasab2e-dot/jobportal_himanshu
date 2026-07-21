@@ -94,7 +94,7 @@ function FormCard({
     <article
       className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:border-[#28A8E1]/35 hover:shadow-md"
     >
-      <div className="border-b border-sky-50 bg-gradient-to-r from-sky-50/90 to-white px-4 py-3">
+      <div className="border-b border-sky-50 bg-linear-to-r from-sky-50/90 to-white px-4 py-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#28A8E1]/10 text-[#28A8E1] ring-1 ring-[#28A8E1]/15">
             <Building2 size={16} />
@@ -177,7 +177,7 @@ function FormsTabBar({
           >
             {tab.label}
             <span
-              className={`inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
+              className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
                 active ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
               }`}
             >
@@ -324,7 +324,10 @@ export function TenantInterviewFormsPanel({ tenantDbName }: Props) {
 
   return (
     <>
-      <section className="rounded-2xl border border-[#28A8E1]/20 bg-gradient-to-br from-white to-sky-50/40 p-5 shadow-sm">
+      <section
+        id="tenant-interview-forms"
+        className="rounded-2xl border border-[#28A8E1]/20 bg-linear-to-br from-white to-sky-50/40 p-5 shadow-sm"
+      >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wide text-[#28A8E1]">

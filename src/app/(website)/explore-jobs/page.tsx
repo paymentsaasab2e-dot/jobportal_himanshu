@@ -3205,18 +3205,6 @@ const ExploreJobsPageContent = () => {
           {/* Main Content Area */}
           {viewMode === 'detail' ? (
             <div ref={detailsRef} className="w-full min-w-0">
-              {/* Back Button */}
-              <button
-                onClick={handleBackToGrid}
-                className="flex items-center gap-1.5 sm:gap-2 text-gray-600 hover:text-gray-900 font-medium mb-3 sm:mb-4 md:mb-5 lg:mb-6 transition-colors"
-                style={{ fontSize: "clamp(11px, 1.3vw, 14px)" }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: "clamp(14px, 1.8vw, 20px)", height: "clamp(14px, 1.8vw, 20px)" }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                </svg>
-                <span className="wrap-break-word">{te('back')}</span>
-              </button>
-
               <div className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)] min-w-0">
                 {/* Left Sidebar - Job Listings */}
                 <div className="min-w-0">
@@ -3303,39 +3291,39 @@ const ExploreJobsPageContent = () => {
                           return (insightJob.reasoning || insightJob.matchScore) ? (
                             <section className="mt-8 w-full">
                               <div
-                                className="rounded-3xl p-px bg-linear-to-br from-[#28A8E1] via-[#28A8DF] to-[#FC9620]"
-                                style={{ boxShadow: "0 16px 36px -18px rgba(40, 168, 225, 0.28)" }}
+                                className="rounded-[30px] p-px bg-linear-to-br from-[#28A8E1] via-[#28A8DF] to-[#7CCEF1]"
+                                style={{ boxShadow: "0 22px 48px -22px rgba(40, 168, 225, 0.36)" }}
                               >
-                                <div className="overflow-hidden rounded-[23px] bg-white/95 backdrop-blur-xl">
-                                  <div className="grid gap-0 lg:grid-cols-[35%_65%]">
-                                    <div className="relative border-b border-slate-100 bg-[linear-gradient(180deg,rgba(40,168,225,0.12),rgba(40,168,225,0.04))] px-6 py-3 sm:px-8 lg:border-b-0 lg:border-r">
-                                      <div className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-[radial-gradient(circle_at_top,rgba(40,168,225,0.20),transparent_72%)]" />
+                                <div className="overflow-hidden rounded-[29px] bg-white/96 backdrop-blur-xl">
+                                  <div className="grid gap-0 lg:grid-cols-[34%_66%]">
+                                    <div className="relative border-b border-slate-100 bg-linear-to-b from-[rgba(40,168,225,0.15)] via-[rgba(40,168,225,0.08)] to-[rgba(40,168,225,0.03)] px-6 py-5 sm:px-8 lg:border-b-0 lg:border-r">
+                                      <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-[radial-gradient(circle_at_top,rgba(40,168,225,0.22),transparent_72%)]" />
 
-                                      <div className="relative flex flex-col items-center gap-2.5">
+                                      <div className="relative flex flex-col items-center gap-3">
                                         {/* 1. Partial Match Tag - Centered */}
                                         <div className="flex justify-center">
-                                          <div className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] shadow-sm ${getConfidenceBadgeClasses(insightConfidenceTag)}`}>
+                                          <div className={`inline-flex rounded-full border px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] shadow-sm ${getConfidenceBadgeClasses(insightConfidenceTag)}`}>
                                             {translateFitLabel(insightConfidenceTag, te)}
                                           </div>
                                         </div>
 
                                         {/* 2. Description - Below Tag, Centered */}
                                         <div className="flex justify-center">
-                                          <p className="max-w-[280px] text-center text-[12px] font-medium leading-relaxed text-slate-500">
+                                          <p className="max-w-[280px] text-center text-[12px] font-medium leading-relaxed text-slate-600">
                                             {insightUsesCvScore ? te('cvOverlapDescription') : te('overlapDescription')}
                                           </p>
                                         </div>
 
                                         {/* 3. Market Alignment Tag - Centered */}
                                         <div className="mt-1 text-center">
-                                          <div className="inline-flex rounded-full border border-[rgba(40,168,225,0.20)] bg-white/80 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#28A8E1]">
+                                          <div className="inline-flex rounded-full border border-[rgba(40,168,225,0.24)] bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#28A8E1] shadow-[0_8px_18px_rgba(40,168,225,0.12)]">
                                             {te('marketAlignment')}
                                           </div>
                                         </div>
 
                                         {/* 4. Circle Graph - Centered & Larger */}
-                                        <div className="relative mx-auto h-24 w-24">
-                                          <svg className="h-24 w-24 -rotate-90" viewBox="0 0 120 120">
+                                        <div className="relative mx-auto h-28 w-28">
+                                          <svg className="h-28 w-28 -rotate-90" viewBox="0 0 120 120">
                                             <circle cx="60" cy="60" r="50" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-100" />
                                             <circle
                                               cx="60"
@@ -3351,7 +3339,7 @@ const ExploreJobsPageContent = () => {
                                             />
                                           </svg>
                                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span className="application-detail-title leading-none">{insightMatchValue}%</span>
+                                            <span className="application-detail-title leading-none text-[#0F2744]">{insightMatchValue}%</span>
                                             <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500 mt-0.5">{te('matchLabel')}</span>
                                           </div>
                                         </div>
@@ -3359,20 +3347,20 @@ const ExploreJobsPageContent = () => {
                                         {/* 5. Button - Centered */}
                                         <button
                                           onClick={() => handleOptimizeCv(insightJob)}
-                                          className="mt-2 relative inline-flex h-fit w-full items-center justify-center rounded-xl bg-[#28A8E1] px-4 py-2.5 text-[12px] font-bold text-white shadow-[0_10px_20px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF] active:scale-[0.99]"
+                                          className="mt-2 relative inline-flex h-fit w-full items-center justify-center rounded-xl bg-linear-to-r from-[#28A8E1] to-[#1F8FC2] px-4 py-2.5 text-[12px] font-bold text-white shadow-[0_12px_24px_rgba(40,168,225,0.26)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 active:scale-[0.99]"
                                         >
                                           {te('optimizeCv')}
                                         </button>
                                       </div>
                                     </div>
 
-                                    <div className="space-y-3 px-6 py-4 sm:px-7">
+                                    <div className="space-y-4 px-6 py-5 sm:px-7">
                                       <div className="flex flex-wrap items-center gap-3">
-                                        <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(40,168,225,0.16)] bg-[rgba(40,168,225,0.08)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#28A8E1]">
+                                        <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(40,168,225,0.2)] bg-[rgba(40,168,225,0.1)] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1F8FC2]">
                                           <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
                                           {te('aiMatchingInsight')}
                                         </div>
-                                        <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-semibold text-slate-500">
+                                        <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-[11px] font-semibold text-slate-600">
                                           {insightUsesCvScore
                                             ? te('cvScoreSignal', { score: insightJob.match })
                                             : te('scoreSignal', { score: insightJob.match })}
@@ -3386,7 +3374,7 @@ const ExploreJobsPageContent = () => {
                                       </p>
 
                                       <div className="grid gap-4 xl:grid-cols-2">
-                                          <div className="rounded-[20px] border border-emerald-100 bg-emerald-50/60 p-3">
+                                          <div className="rounded-[22px] border border-emerald-100 bg-linear-to-br from-emerald-50/70 to-emerald-50/35 p-4 shadow-[0_8px_20px_rgba(16,185,129,0.10)]">
                                             <div className="flex items-center gap-2">
                                               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2.2} />
                                               <h5 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">{te('whereYouAlign')}</h5>
@@ -3398,7 +3386,7 @@ const ExploreJobsPageContent = () => {
                                             {insightMatchedSkills.map((skill, index) => (
                                               <span
                                                 key={`${insightJob.id}-matched-${index}`}
-                                                className="inline-flex rounded-full border border-emerald-200 bg-white/85 px-3 py-1.5 text-[11px] font-semibold text-emerald-700"
+                                                className="inline-flex rounded-full border border-emerald-200 bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 shadow-[0_5px_12px_rgba(16,185,129,0.10)]"
                                               >
                                                 {skill}
                                               </span>
@@ -3406,7 +3394,7 @@ const ExploreJobsPageContent = () => {
                                           </div>
                                         </div>
 
-                                          <div className="rounded-[20px] border border-[rgba(252,150,32,0.18)] bg-[rgba(252,150,32,0.08)] p-3">
+                                          <div className="rounded-[22px] border border-[rgba(252,150,32,0.2)] bg-linear-to-br from-[rgba(252,150,32,0.12)] to-[rgba(252,150,32,0.06)] p-4 shadow-[0_8px_20px_rgba(252,150,32,0.10)]">
                                             <div className="flex items-center gap-2">
                                               <AlertTriangle className="h-3.5 w-3.5 text-[#FC9620]" strokeWidth={2.2} />
                                               <h5 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#d97706]">{te('strengthenNext')}</h5>
@@ -3418,7 +3406,7 @@ const ExploreJobsPageContent = () => {
                                             {insightMissingSkills.map((skill, index) => (
                                               <span
                                                 key={`${insightJob.id}-gap-${index}`}
-                                                className="inline-flex rounded-full border border-[rgba(252,150,32,0.18)] bg-white/85 px-3 py-1.5 text-[11px] font-semibold text-[#c2410c]"
+                                                className="inline-flex rounded-full border border-[rgba(252,150,32,0.24)] bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-[#c2410c] shadow-[0_5px_12px_rgba(252,150,32,0.10)]"
                                               >
                                                 {skill}
                                               </span>

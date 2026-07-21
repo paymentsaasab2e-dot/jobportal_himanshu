@@ -627,7 +627,7 @@ export default function CandidateDashboardPage() {
         throw new Error(result.message || t("candidateDashboard.profilePhotoUploadFailed"));
       }
 
-      let syncedPhotoUrl = result.data?.profilePhotoUrl ?? null;
+      const syncedPhotoUrl = result.data?.profilePhotoUrl ?? null;
 
       invalidateCvDashboard(resolvedCandidateId);
       await dashboardQuery.refetch();
@@ -917,6 +917,9 @@ export default function CandidateDashboardPage() {
             subheading={greeting.subheading}
             stats={heroStats}
             onOpenMatches={handleJumpToMatches}
+            onRequestInterview={() =>
+              router.push(localizePath('/lms/interview-prep?requestInterview=1', locale))
+            }
           />
 
           {pendingApplyBanner ? (

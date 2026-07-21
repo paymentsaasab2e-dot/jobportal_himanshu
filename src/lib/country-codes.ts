@@ -223,6 +223,27 @@ export const ALL_COUNTRY_CODES: CountryCodeOption[] = Country.getAllCountries()
   })
   .sort((a, b) => a.name.localeCompare(b.name));
 
+const TIMEZONE_TO_COUNTRY_CODE = new Map<string, string>();
+for (const country of Country.getAllCountries()) {
+  const zoneEntries = Array.isArray(country.timezones) ? country.timezones : [];
+  for (const zone of zoneEntries) {
+    const zoneName = String(zone?.zoneName || '').trim();
+    if (!zoneName) continue;
+    if (!TIMEZONE_TO_COUNTRY_CODE.has(zoneName)) {
+      TIMEZONE_TO_COUNTRY_CODE.set(zoneName, country.isoCode);
+    }
+  }
+}
+
+// Browser/OSs can still report legacy aliases for a few regions.
+const TIMEZONE_ALIASES: Record<string, string> = {
+  'Asia/Calcutta': 'Asia/Kolkata',
+  'US/Eastern': 'America/New_York',
+  'US/Central': 'America/Chicago',
+  'US/Mountain': 'America/Denver',
+  'US/Pacific': 'America/Los_Angeles',
+};
+
 export type LocalizedCountryCodeOption = CountryCodeOption & {
   displayName: string;
 };
@@ -268,4 +289,12 @@ export function countryCodeToFlag(code: string): string {
   return code
     .toUpperCase()
     .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)));
+}
+
+/** Resolve ISO country code from IANA timezone (e.g. "Asia/Kolkata" -> "IN"). */
+export function getCountryCodeForTimeZone(timeZone: string | null | undefined): string | null {
+  const raw = String(timeZone || '').trim();
+  if (!raw) return null;
+  const canonical = TIMEZONE_ALIASES[raw] || raw;
+  return TIMEZONE_TO_COUNTRY_CODE.get(canonical) || null;
 }
