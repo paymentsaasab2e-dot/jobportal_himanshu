@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthContext';
 import { getApiBaseUrl } from '@/lib/api-base';
 import { getAuthHeaders } from '@/lib/auth-storage';
+import { buildInterviewLiveMeetingUrl } from '@/lib/interview-live-meeting';
 import {
   getInterviewerQueue,
   getMyInterviewerApplication,
@@ -82,6 +83,27 @@ function getInterviewerQueueBadge(item: { status?: string; candidateFeedback?: s
   return null;
 }
 
+function getJoinWindowState(item: { scheduledAt?: string | null; duration?: number }, nowTs: number) {
+  const scheduledAtMs = item?.scheduledAt ? new Date(item.scheduledAt).getTime() : Number.NaN;
+  if (!Number.isFinite(scheduledAtMs)) {
+    return { canJoinNow: false, joinOpensAtLabel: null as string | null };
+  }
+  const durationMin = Math.max(15, Number(item?.duration || 45));
+  const joinOpensAt = scheduledAtMs - 15 * 60 * 1000; // allow join 15 minutes before
+  const joinClosesAt = scheduledAtMs + (durationMin + 30) * 60 * 1000; // grace window after interview
+  const canJoinNow = nowTs >= joinOpensAt && nowTs <= joinClosesAt;
+  const joinOpensAtLabel =
+    nowTs < joinOpensAt
+      ? new Date(joinOpensAt).toLocaleString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      : null;
+  return { canJoinNow, joinOpensAtLabel };
+}
+
 export default function BecomeInterviewerPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -112,6 +134,7 @@ export default function BecomeInterviewerPage() {
   const [proposedSlotByRequest, setProposedSlotByRequest] = useState<Record<string, string>>({});
   const [prefilledFromRejected, setPrefilledFromRejected] = useState(false);
   const [hasManualCompanyRoleEdit, setHasManualCompanyRoleEdit] = useState(false);
+  const [nowTs, setNowTs] = useState(() => Date.now());
 
   const profileQuery = useQuery({
     queryKey: ['interviewer-application-me'],
@@ -143,6 +166,13 @@ export default function BecomeInterviewerPage() {
     staleTime: 60_000,
     retry: 0,
   });
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNowTs(Date.now());
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (name.trim()) return;
@@ -738,11 +768,13 @@ export default function BecomeInterviewerPage() {
               </p>
             ) : (
               <div className="mt-3 grid gap-2.5 md:grid-cols-2">
-                {acceptedQueueItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="w-full max-w-md rounded-xl border border-emerald-200 bg-linear-to-br from-emerald-50 via-white to-cyan-50 p-3 shadow-sm"
-                  >
+                {acceptedQueueItems.map((item) => {
+                  const joinState = getJoinWindowState(item, nowTs);
+                  return (
+                    <div
+                      key={item.id}
+                      className="w-full max-w-md rounded-xl border border-emerald-200 bg-linear-to-br from-emerald-50 via-white to-cyan-50 p-3 shadow-sm"
+                    >
                     <div className="flex flex-wrap items-start justify-between gap-1.5">
                       <p className="text-base font-bold text-emerald-800">{item.requestId}</p>
                       <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
@@ -788,7 +820,40 @@ export default function BecomeInterviewerPage() {
                       <p className="mt-0.5 text-[11px] text-slate-600">
                         Candidate must accept the proposed final slot before schedule is locked.
                       </p>
+                      {joinState.joinOpensAtLabel ? (
+                        <p className="mt-1 text-[11px] font-medium text-emerald-700">
+                          Join opens at {joinState.joinOpensAtLabel}
+                        </p>
+                      ) : null}
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {joinState.canJoinNow ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const liveUrl = buildInterviewLiveMeetingUrl(item.requestId || item.id, {
+                                role: 'interviewer',
+                                displayName: user?.name || 'Interviewer',
+                              });
+                              window.open(liveUrl, '_blank', 'noopener,noreferrer');
+                            }}
+                            className="rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white"
+                          >
+                            Join Interview
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const liveUrl = buildInterviewLiveMeetingUrl(item.requestId || item.id, {
+                              role: 'interviewer',
+                              displayName: user?.name || 'Interviewer',
+                            });
+                            window.open(liveUrl, '_blank', 'noopener,noreferrer');
+                          }}
+                          className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700"
+                        >
+                          Join Dummy
+                        </button>
                         <button
                           type="button"
                           onClick={() => router.push(`/lms/interview-prep/interviewer-room/${item.id}`)}
@@ -799,7 +864,8 @@ export default function BecomeInterviewerPage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

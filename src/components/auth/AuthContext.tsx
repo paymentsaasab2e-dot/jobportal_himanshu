@@ -57,6 +57,7 @@ const PUBLIC_ROUTES = [
   '/employers',
   '/aicveditor',
   '/apply',
+  '/lms/interview-prep/live-room',
   '/searchjobs',
   '/ats-check',
   '/courses',

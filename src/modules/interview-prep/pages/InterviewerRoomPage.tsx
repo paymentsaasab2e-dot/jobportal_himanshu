@@ -6,8 +6,11 @@ import { ArrowLeft } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { getInterviewerQueue, scheduleInterviewSlot } from '@/lib/interviewer-api';
 import { getInterviewRequestChat, postInterviewRequestChat } from '@/lib/interview-request-api';
+import { buildInterviewLiveMeetingUrl } from '@/lib/interview-live-meeting';
+import { useAuth } from '@/components/auth/AuthContext';
 
 export default function InterviewerRoomPage() {
+  const { user } = useAuth();
   const router = useRouter();
   const params = useParams<{ requestId: string }>();
   const requestId = String(params?.requestId || '').trim();
@@ -17,6 +20,7 @@ export default function InterviewerRoomPage() {
   const [saving, setSaving] = useState(false);
   const [chatDraft, setChatDraft] = useState('');
   const [chatSending, setChatSending] = useState(false);
+  const [nowTs, setNowTs] = useState(() => Date.now());
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   const queueQuery = useQuery({
@@ -41,6 +45,26 @@ export default function InterviewerRoomPage() {
   }, [queueQuery.data, requestId]);
 
   const effectiveSlot = selectedSlot || record?.preferredTime?.[0] || '';
+  const joinWindowState = useMemo(() => {
+    const scheduledAtMs = record?.scheduledAt ? new Date(record.scheduledAt).getTime() : Number.NaN;
+    if (!Number.isFinite(scheduledAtMs)) {
+      return { canJoinNow: false, joinOpensAtLabel: null as string | null };
+    }
+    const durationMin = Math.max(15, Number(record?.duration || 45));
+    const joinOpensAt = scheduledAtMs - 15 * 60 * 1000;
+    const joinClosesAt = scheduledAtMs + (durationMin + 30) * 60 * 1000;
+    const canJoinNow = nowTs >= joinOpensAt && nowTs <= joinClosesAt;
+    const joinOpensAtLabel =
+      nowTs < joinOpensAt
+        ? new Date(joinOpensAt).toLocaleString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            hour: 'numeric',
+            minute: '2-digit',
+          })
+        : null;
+    return { canJoinNow, joinOpensAtLabel };
+  }, [nowTs, record?.duration, record?.scheduledAt]);
   const timelineSteps = useMemo(() => {
     if (!record) return [];
     const status = String(record.status || '').toUpperCase();
@@ -71,6 +95,13 @@ export default function InterviewerRoomPage() {
   }, [record]);
   const canProposeFinalSlot =
     record?.status === 'ACCEPTED' || record?.status === 'WAITING_FOR_ACCEPTANCE';
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNowTs(Date.now());
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -145,6 +176,28 @@ export default function InterviewerRoomPage() {
               <p className="mt-2 text-[11px] text-slate-500">
                 Reminder is auto-sent around 1 hour before scheduled time.
               </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {joinWindowState.canJoinNow ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const liveUrl = buildInterviewLiveMeetingUrl(record.requestId || record.id, {
+                        role: 'interviewer',
+                        displayName: user?.name || 'Interviewer',
+                      });
+                      window.open(liveUrl, '_blank', 'noopener,noreferrer');
+                    }}
+                    className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white"
+                  >
+                    Join Interview
+                  </button>
+                ) : null}
+                {joinWindowState.joinOpensAtLabel ? (
+                  <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-medium text-emerald-700">
+                    Join opens at {joinWindowState.joinOpensAtLabel}
+                  </span>
+                ) : null}
+              </div>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-3">

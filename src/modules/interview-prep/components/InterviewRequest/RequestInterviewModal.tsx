@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 
 import { getApiBaseUrl } from '@/lib/api-base';
@@ -196,6 +196,7 @@ export function RequestInterviewModal({
   renderMode = 'modal',
   showCloseButton = true,
 }: Props) {
+  const contentScrollRef = useRef<HTMLDivElement | null>(null);
   const [step, setStep] = useState(1);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -338,6 +339,22 @@ export function RequestInterviewModal({
     initialWeakAreas,
     open,
   ]);
+
+  useEffect(() => {
+    if (!open || renderMode === 'page') return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open, renderMode]);
+
+  useEffect(() => {
+    if (!open) return;
+    const node = contentScrollRef.current;
+    if (!node) return;
+    node.scrollTop = 0;
+  }, [open, step]);
 
   useEffect(() => {
     if (!open || !candidateId) return;
@@ -603,14 +620,14 @@ export function RequestInterviewModal({
       className={
         isPageMode
           ? 'mx-auto w-full max-w-5xl px-3 pb-4 pt-2 sm:px-4'
-          : 'fixed inset-0 z-1200 flex items-start justify-center overflow-y-auto bg-black/25 p-3 pt-6 sm:p-6'
+          : 'fixed inset-0 z-1200 flex items-center justify-center bg-black/35 p-4'
       }
     >
       <div
         className={
           isPageMode
             ? 'w-full rounded-2xl border border-slate-200 bg-white shadow-sm'
-            : 'flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.18)]'
+            : 'flex w-full max-w-4xl max-h-[90vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.18)]'
         }
       >
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
@@ -641,7 +658,10 @@ export function RequestInterviewModal({
               <p className="mt-2 text-xs text-slate-500">Step {step} of {TOTAL_STEPS}</p>
             </div>
 
-            <div className={`${isPageMode ? 'px-5 py-4' : 'max-h-[68vh] overflow-y-auto px-5 py-4'}`}>
+            <div
+              ref={contentScrollRef}
+              className={`${isPageMode ? 'px-5 py-4' : 'flex-1 overflow-y-auto px-5 py-4'}`}
+            >
               {step === 1 ? (
                 <div className="space-y-3">
                   <div className="rounded-2xl border border-slate-200 bg-white">
