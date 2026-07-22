@@ -1,15 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import * as NextNavigation from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/components/auth/AuthContext';
-import { getMyInterviewRequestSummary } from '@/lib/interview-request-api';
 import { useInterviewPrep } from './hooks/useInterviewPrep';
 import { InterviewHeader } from './components/InterviewHeader';
 import { MockInterviewCard } from './components/MockInterview/MockInterviewCard';
-import { LiveInterviewCard } from './components/LiveInterviewCard';
-import { RequestInterviewModal } from './components/InterviewRequest/RequestInterviewModal';
 import { InterviewRoleOptions } from './components/InterviewRoleOptions';
 import { LmsPageHeader } from '@/app/lms/components/LmsPageHeader';
 import { useLmsOverlay } from '@/app/lms/components/overlays/LmsOverlayProvider';
@@ -17,21 +11,8 @@ import { TenantInterviewFormsPanel } from './components/TenantInterviewFormsPane
 
 export default function InterviewPrepModulePage() {
   const router = NextNavigation.useRouter();
-  const searchParams = NextNavigation.useSearchParams();
   const overlay = useLmsOverlay();
-  const { user } = useAuth();
   const { data, mockConfig, setMockConfig, onStartMock } = useInterviewPrep();
-  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
-  const requestInterviewFromQuery = searchParams.get('requestInterview') === '1';
-  const requestSummaryQuery = useQuery({
-    queryKey: ['interview-request-summary', user?.id || 'anonymous'],
-    queryFn: getMyInterviewRequestSummary,
-    enabled: Boolean(user?.id),
-    staleTime: 30_000,
-    retry: 0,
-  });
-  const requestSummary = requestSummaryQuery.data ?? null;
-  const isModalOpen = isRequestModalOpen || requestInterviewFromQuery;
 
   return (
     <div className="space-y-8 pb-2 -mt-1">
@@ -102,27 +83,9 @@ export default function InterviewPrepModulePage() {
             });
           }}
         />
-        <LiveInterviewCard
-          summary={requestSummary}
-          onTakeInterview={() => setIsRequestModalOpen(true)}
-        />
       </div>
 
       <TenantInterviewFormsPanel />
-
-      <RequestInterviewModal
-        open={isModalOpen}
-        candidateId={user?.id || null}
-        onOpenChange={(next) => {
-          if (!next && requestInterviewFromQuery) {
-            router.replace('/lms/interview-prep');
-          }
-          setIsRequestModalOpen(next);
-        }}
-        onSubmitted={() => {
-          void requestSummaryQuery.refetch();
-        }}
-      />
     </div>
   );
 }

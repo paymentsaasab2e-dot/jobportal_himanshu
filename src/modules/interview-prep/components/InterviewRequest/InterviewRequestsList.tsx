@@ -6,8 +6,10 @@ import {
   getMyInterviewRequests,
   rematchInterviewRequest,
 } from '@/lib/interview-request-api';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { buildInterviewLiveMeetingUrl } from '@/lib/interview-live-meeting';
+import { useAuth } from '@/components/auth/AuthContext';
 
 type Props = {
   title?: string;
@@ -47,17 +49,40 @@ function getScheduleBadge(request: { status: string; candidateFeedback?: string 
   return null;
 }
 
+function getJoinWindowState(request: { scheduledAt?: string | null; duration?: number }, nowTs: number) {
+  const scheduledAtMs = request?.scheduledAt ? new Date(request.scheduledAt).getTime() : Number.NaN;
+  if (!Number.isFinite(scheduledAtMs)) {
+    return { canJoinNow: false, joinOpensAtLabel: null as string | null };
+  }
+  const durationMin = Math.max(15, Number(request?.duration || 45));
+  const joinOpensAt = scheduledAtMs - 15 * 60 * 1000;
+  const joinClosesAt = scheduledAtMs + (durationMin + 30) * 60 * 1000;
+  const canJoinNow = nowTs >= joinOpensAt && nowTs <= joinClosesAt;
+  const joinOpensAtLabel =
+    nowTs < joinOpensAt
+      ? new Date(joinOpensAt).toLocaleString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      : null;
+  return { canJoinNow, joinOpensAtLabel };
+}
+
 export function InterviewRequestsList({
   title = 'Your Interview Requests',
   subtitle = 'Track all submitted requests and current status.',
   refreshKey = 0,
 }: Props) {
+  const { user } = useAuth();
   const router = useRouter();
   const [rematchId, setRematchId] = useState<string | null>(null);
   const [scheduleActionId, setScheduleActionId] = useState<string | null>(null);
   const [selectedSlotByRequest, setSelectedSlotByRequest] = useState<Record<string, string>>({});
   const [scheduleMessage, setScheduleMessage] = useState('');
   const [scheduleError, setScheduleError] = useState('');
+  const [nowTs, setNowTs] = useState(() => Date.now());
   const query = useQuery({
     queryKey: ['my-interview-requests', refreshKey],
     queryFn: () => getMyInterviewRequests(),
@@ -66,6 +91,12 @@ export function InterviewRequestsList({
   });
 
   const requests = query.data ?? [];
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNowTs(Date.now());
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const grouped = {
     pending: requests.filter((row) =>
       [
@@ -272,7 +303,46 @@ export function InterviewRequestsList({
                   <p className="text-xs font-semibold text-cyan-800">
                     Final slot accepted. You can continue discussion in chat room.
                   </p>
+                  {(() => {
+                    const joinState = getJoinWindowState(request, nowTs);
+                    return joinState.joinOpensAtLabel ? (
+                      <p className="mt-1 text-[11px] font-medium text-emerald-700">
+                        Join opens at {joinState.joinOpensAtLabel}
+                      </p>
+                    ) : null;
+                  })()}
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {(() => {
+                      const joinState = getJoinWindowState(request, nowTs);
+                      return joinState.canJoinNow ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const liveUrl = buildInterviewLiveMeetingUrl(request.requestId || request.id, {
+                              role: 'candidate',
+                              displayName: user?.name || 'Candidate',
+                            });
+                            window.open(liveUrl, '_blank', 'noopener,noreferrer');
+                          }}
+                          className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white"
+                        >
+                          Join Interview
+                        </button>
+                      ) : null;
+                    })()}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const liveUrl = buildInterviewLiveMeetingUrl(request.requestId || request.id, {
+                          role: 'candidate',
+                          displayName: user?.name || 'Candidate',
+                        });
+                        window.open(liveUrl, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700"
+                    >
+                      Join Dummy
+                    </button>
                     <button
                       type="button"
                       onClick={() => router.push(`/lms/interview-prep/candidate-room/${request.id}`)}

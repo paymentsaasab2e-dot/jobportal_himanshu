@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarClock, ClipboardList, ShieldCheck, Video } from 'lucide-react';
+import { CalendarClock, ShieldCheck, Video } from 'lucide-react';
 
 type RequestSummary = {
   pendingRequests: number;
@@ -10,7 +10,6 @@ type RequestSummary = {
 };
 
 type LiveInterviewCardProps = {
-  onTakeInterview: () => void;
   summary?: RequestSummary | null;
 };
 
@@ -20,7 +19,7 @@ const LIVE_FEATURES = [
   'Track status, notes, rating, and final result',
 ];
 
-export function LiveInterviewCard({ onTakeInterview, summary }: LiveInterviewCardProps) {
+export function LiveInterviewCard({ summary }: LiveInterviewCardProps) {
   const stats = summary || {
     pendingRequests: 0,
     scheduledInterviews: 0,
@@ -91,14 +90,6 @@ export function LiveInterviewCard({ onTakeInterview, summary }: LiveInterviewCar
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onTakeInterview}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-emerald-700 hover:shadow-md active:scale-[0.98]"
-        >
-          <ClipboardList className="h-5 w-5 shrink-0" />
-          Request Interview
-        </button>
       </div>
     </section>
   );
