@@ -18,6 +18,7 @@ export default function GlobalFooter() {
         '/uploadcv',
         '/sa',
         '/candmain',
+        '/apply',
     ];
     
     const shouldHide = hideFooterPaths.some(path => normalizedPath === path || normalizedPath.startsWith(path + '/'));

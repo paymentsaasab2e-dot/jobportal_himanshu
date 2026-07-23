@@ -29,7 +29,8 @@ export default function GlobalHeader() {
         '/explore-jobs',
         '/help',
         '/sa',
-        '/candmain'
+        '/candmain',
+        '/apply',
     ];
     const shouldHide = hideHeaderPaths.some(path => normalizedPath === path || normalizedPath.startsWith(path + '/'));
 
