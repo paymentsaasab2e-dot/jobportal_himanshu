@@ -257,7 +257,7 @@ function BulletList({ items }: { items: string[] }) {
       {filtered.map((item, index) => (
         <li key={`${item}-${index}`} className="flex items-start gap-3">
           <span
-            className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#28A8E1]"
+            className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#2098C8]"
             aria-hidden
           />
           <span className="text-sm leading-7 text-slate-600">{item}</span>

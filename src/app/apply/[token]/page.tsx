@@ -11,6 +11,7 @@ import {
   JobPostingDetailsPanel,
   type JobPostingDetailsJob,
 } from "@/components/jobs/JobPostingDetailsPanel";
+import { JobApplyShareRail } from "@/components/jobs/JobApplyShareRail";
 import { savePendingJobApply } from "@/lib/job-apply-flow";
 
 const displayFont = Syne({
@@ -155,10 +156,17 @@ export default function ApplyLandingPage() {
   const [error, setError] = useState(token ? "" : "Invalid apply link");
   const [ready, setReady] = useState(false);
   const [shareState, setShareState] = useState<"idle" | "copied" | "shared">("idle");
+  const [shareUrl, setShareUrl] = useState("");
 
   const tenantQuery = useMemo(() => {
     return tenantDbName ? `?tenantDbName=${encodeURIComponent(tenantDbName)}` : "";
   }, [tenantDbName]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // Share the exact public apply URL the candidate is viewing (locale + tenant).
+    setShareUrl(window.location.href);
+  }, [token, tenantDbName]);
 
   const detailsJob = useMemo(() => (job ? mapPublicJobToDetails(job) : null), [job]);
 
@@ -270,20 +278,24 @@ export default function ApplyLandingPage() {
           "--apply-ink": "#0f1c24",
           "--apply-muted": "#5b6b76",
           "--apply-line": "rgba(15, 28, 36, 0.08)",
-          "--apply-surface": "#f7fafb",
-          "--apply-accent": "#0f766e",
-          "--apply-accent-deep": "#0d5c56",
-          "--apply-glow": "rgba(15, 118, 110, 0.18)",
+          "--apply-surface": "#f5fafc",
+          "--apply-accent": "#2098C8",
+          "--apply-accent-deep": "#1A86B3",
+          "--apply-glow": "rgba(32, 152, 200, 0.2)",
           fontFamily: "var(--apply-body), ui-sans-serif, system-ui, sans-serif",
         } as CSSProperties
       }
     >
+      {!loading && job && shareUrl ? (
+        <JobApplyShareRail shareUrl={shareUrl} jobTitle={shareTitle} />
+      ) : null}
+
       <style>{`
         .apply-page {
           background:
             radial-gradient(ellipse 90% 55% at 12% -10%, var(--apply-glow), transparent 55%),
-            radial-gradient(ellipse 70% 45% at 95% 8%, rgba(14, 165, 233, 0.12), transparent 50%),
-            linear-gradient(180deg, #eef6f5 0%, var(--apply-surface) 38%, #ffffff 100%);
+            radial-gradient(ellipse 70% 45% at 95% 8%, rgba(240, 136, 24, 0.1), transparent 50%),
+            linear-gradient(180deg, #e8f6fb 0%, var(--apply-surface) 38%, #ffffff 100%);
         }
         .apply-page::before {
           content: "";
@@ -325,7 +337,7 @@ export default function ApplyLandingPage() {
         .apply-cta:hover {
           transform: translateY(-1px);
           background-color: var(--apply-accent-deep);
-          box-shadow: 0 18px 40px rgba(15, 118, 110, 0.28);
+          box-shadow: 0 18px 40px rgba(32, 152, 200, 0.28);
         }
         .apply-cta:active {
           transform: translateY(0);
@@ -346,24 +358,17 @@ export default function ApplyLandingPage() {
         @media (min-width: 1024px) {
           .apply-left-card-fixed {
             position: fixed;
-            top: 6rem;
-            left: max(2rem, calc((100vw - 72rem) / 2 + 2rem));
+            top: 5.5rem;
+            left: max(1.5rem, calc((100vw - 72rem) / 2 + 2rem));
             z-index: 10;
-            width: 24.5rem;
-            max-height: calc(100vh - 7.5rem);
-            overflow-y: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-          }
-          .apply-left-card-fixed::-webkit-scrollbar {
-            display: none;
-            width: 0;
-            height: 0;
+            width: 21.5rem;
+            max-height: none;
+            overflow: visible;
           }
         }
         @media (min-width: 1280px) {
           .apply-left-card-fixed {
-            width: 26rem;
+            width: 22.5rem;
           }
         }
       `}</style>
@@ -427,37 +432,37 @@ export default function ApplyLandingPage() {
           </div>
         ) : (
           <div className="relative flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
-            {/* Identity column — fixed on desktop so it never scrolls away */}
-            <aside className="w-full shrink-0 lg:w-[min(100%,24.5rem)] xl:w-[26rem]">
+            {/* Identity column — fixed on desktop so it stays put while details scroll */}
+            <aside className="w-full shrink-0 lg:w-[21.5rem] xl:w-[22.5rem]">
               <div
-                className={`apply-reveal apply-reveal-delay-1 apply-left-card-fixed relative overflow-hidden rounded-[2rem] border border-[var(--apply-line)] bg-white/80 p-6 shadow-[0_24px_60px_rgba(15,28,36,0.08)] backdrop-blur-sm sm:p-8 ${ready ? "is-ready" : ""}`}
+                className={`apply-reveal apply-reveal-delay-1 apply-left-card-fixed relative rounded-[1.5rem] border border-[var(--apply-line)] bg-white/80 p-4 shadow-[0_18px_44px_rgba(15,28,36,0.08)] backdrop-blur-sm sm:p-5 ${ready ? "is-ready" : ""}`}
               >
                 <div
-                  className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full"
+                  className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full"
                   style={{
                     background:
                       "radial-gradient(circle, rgba(15,118,110,0.16) 0%, transparent 70%)",
                   }}
                 />
 
-                <div className="apply-logo relative mb-6">
+                <div className="apply-logo relative mb-4">
                   {job.companyLogo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={job.companyLogo}
                       alt={job.company || "Company logo"}
-                      className="h-16 w-16 rounded-2xl object-cover ring-1 ring-[var(--apply-line)]"
+                      className="h-12 w-12 rounded-xl object-cover ring-1 ring-[var(--apply-line)]"
                     />
                   ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--apply-surface)] text-[var(--apply-accent)] ring-1 ring-[var(--apply-line)]">
-                      <Building2 className="h-7 w-7" strokeWidth={1.75} />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--apply-surface)] text-[var(--apply-accent)] ring-1 ring-[var(--apply-line)]">
+                      <Building2 className="h-5 w-5" strokeWidth={1.75} />
                     </div>
                   )}
                 </div>
 
                 {job.company ? (
                   <p
-                    className="relative text-2xl font-extrabold tracking-tight text-[var(--apply-ink)] sm:text-3xl"
+                    className="relative text-xl font-extrabold tracking-tight text-[var(--apply-ink)] sm:text-2xl"
                     style={{ fontFamily: "var(--apply-display), sans-serif" }}
                   >
                     {job.company}
@@ -465,33 +470,33 @@ export default function ApplyLandingPage() {
                 ) : null}
 
                 <h1
-                  className="relative mt-3 text-3xl font-extrabold leading-[1.1] tracking-tight text-[var(--apply-ink)] sm:text-4xl"
+                  className="relative mt-2 text-2xl font-extrabold leading-[1.15] tracking-tight text-[var(--apply-ink)] sm:text-[1.75rem]"
                   style={{ fontFamily: "var(--apply-display), sans-serif" }}
                 >
                   {job.title}
                 </h1>
 
-                <p className="relative mt-4 max-w-md text-sm leading-6 text-[var(--apply-muted)]">
+                <p className="relative mt-3 max-w-md text-xs leading-5 text-[var(--apply-muted)] sm:text-[13px] sm:leading-5">
                   Review the role, then continue to WhatsApp login. Your application submits
                   automatically after login.
                 </p>
 
                 {job.location ? (
-                  <p className="relative mt-5 inline-flex items-center gap-2 text-sm font-medium text-[var(--apply-ink)]">
-                    <MapPin className="h-4 w-4 text-[var(--apply-accent)]" strokeWidth={2} />
+                  <p className="relative mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--apply-ink)] sm:text-sm">
+                    <MapPin className="h-3.5 w-3.5 text-[var(--apply-accent)]" strokeWidth={2} />
                     {job.location}
                   </p>
                 ) : null}
 
-                <div className="relative mt-6">
+                <div className="relative mt-4 [&_.mt-4]:mt-0 [&_span]:rounded-md [&_span]:px-2 [&_span]:py-1.5 [&_span]:text-xs">
                   <JobDetailHighlights job={detailsJob} />
                 </div>
 
-                <div className="relative mt-8 hidden gap-3 lg:flex">
+                <div className="relative mt-5 hidden gap-2 lg:flex">
                   <button
                     type="button"
                     onClick={handleContinue}
-                    className="apply-cta inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--apply-accent)] px-5 py-4 text-sm font-bold text-white"
+                    className="apply-cta inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--apply-accent)] px-4 py-3 text-sm font-bold text-white"
                   >
                     Continue to apply
                     <ArrowRight className="h-4 w-4" />
@@ -501,7 +506,7 @@ export default function ApplyLandingPage() {
                     onClick={() => {
                       void handleShare();
                     }}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--apply-line)] bg-white px-4 py-4 text-sm font-bold text-[var(--apply-ink)] transition hover:border-[var(--apply-accent)] hover:text-[var(--apply-accent)]"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--apply-line)] bg-white px-3.5 py-3 text-sm font-bold text-[var(--apply-ink)] transition hover:border-[var(--apply-accent)] hover:text-[var(--apply-accent)]"
                     aria-label="Share this job link"
                   >
                     {shareState === "copied" || shareState === "shared" ? (
