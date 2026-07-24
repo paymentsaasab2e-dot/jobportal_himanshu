@@ -21,8 +21,9 @@ import { LmsStatusBadge } from '../components/ux/LmsStatusBadge';
 import { LmsEmptyState } from '../components/states/LmsEmptyState';
 import { LmsSkeleton } from '../components/states/LmsSkeleton';
 import { courseStatusFromPct, parseDurationToMinutes } from './course-utils';
-import { fetchCourses, toggleSaveCourse } from '../api/client';
+import { fetchCourses, toggleSaveCourse, enrollCourse } from '../api/client';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
+import { CourseAccessBadge, TokenSpendButton } from '../components/ux/TokenSpendButton';
 
 const ICON_MAP: Record<string, typeof Code2> = {
   code2: Code2,
@@ -164,7 +165,13 @@ function LmsCoursesPageContent() {
       isCompleted: c.isCompleted,
       category: c.category,
       tags: c.tags || [],
-      focusReason: c.focusReason
+      focusReason: c.focusReason,
+      accessTier: c.accessTier || 'free',
+      tokenCost: Number(c.tokenCost) || 0,
+      isCertified: Boolean(c.isCertified),
+      isLocked: Boolean(c.isLocked),
+      enrollmentStatus: Boolean(c.enrollmentStatus),
+      isFree: c.isFree !== false && !(Number(c.tokenCost) > 0),
     })).filter((course) => {
       const pct = course.progress;
       const st = courseStatusFromPct(pct);
@@ -237,10 +244,26 @@ function LmsCoursesPageContent() {
         tone: 'success',
       });
     } catch (e) {
-      toast.push({ title: 'Error', message: 'Could not update save state', tone: 'destructive' });
+      toast.push({
+        title: 'Could not save',
+        message: e instanceof Error ? e.message : 'Unlock premium courses before saving.',
+        tone: 'destructive',
+      });
       // Revert optimistic
       setBackendCourses(prev => prev.map(c => c.id === courseId ? { ...c, isSaved: currentlySaved } : c));
     }
+  }
+
+  async function handleUnlockCourse(courseId: string) {
+    await enrollCourse(courseId);
+    setBackendCourses((prev) =>
+      prev.map((c) =>
+        c.id === courseId
+          ? { ...c, enrollmentStatus: true, isLocked: false, progressPercent: c.progressPercent || 0 }
+          : c,
+      ),
+    );
+    router.push(`/lms/courses/${courseId}`);
   }
 
   if (loading) {
@@ -447,6 +470,11 @@ function LmsCoursesPageContent() {
                   <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-2">
                       {levelBadge(course.level)}
+                      <CourseAccessBadge
+                        accessTier={course.accessTier}
+                        tokenCost={course.tokenCost}
+                        isCertified={course.isCertified}
+                      />
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500">
                         <Clock className="h-3.5 w-3.5" strokeWidth={2} />
                         {course.duration}
@@ -470,13 +498,31 @@ function LmsCoursesPageContent() {
                     ) : null}
 
                     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap pt-2">
-                      <Link
-                        href={courseHref}
-                        onClick={() => setLastActiveCourseId(course.id)}
-                        className="flex-1 min-w-[6rem] rounded-xl bg-[#28A8E1] px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98] text-center"
-                      >
-                        {courseCtaLabel(pct)}
-                      </Link>
+                      {course.isLocked && course.tokenCost > 0 ? (
+                        <TokenSpendButton
+                          className="flex-1 min-w-[8rem]"
+                          tokenCost={course.tokenCost}
+                          label="Unlock"
+                          onSpend={() => handleUnlockCourse(course.id)}
+                        />
+                      ) : course.isFree && !course.enrollmentStatus && pct === 0 ? (
+                        <TokenSpendButton
+                          className="flex-1 min-w-[8rem]"
+                          tokenCost={0}
+                          label="Start free"
+                          onSpend={async () => {
+                            await handleUnlockCourse(course.id);
+                          }}
+                        />
+                      ) : (
+                        <Link
+                          href={courseHref}
+                          onClick={() => setLastActiveCourseId(course.id)}
+                          className="flex-1 min-w-[6rem] rounded-xl bg-[#28A8E1] px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98] text-center"
+                        >
+                          {courseCtaLabel(pct)}
+                        </Link>
+                      )}
                       <button
                         type="button"
                         onClick={(e) => {

@@ -89,14 +89,32 @@ export default function UploadCV() {
 
       // Handle upload completion/errors
       xhr.addEventListener("load", () => {
-        // Upload completed - extract page will handle status checking
         if (xhr.status !== 200) {
-          // If upload fails, store error in sessionStorage
           try {
             const response = JSON.parse(xhr.responseText);
             sessionStorage.setItem("uploadError", response.message || "Upload failed");
           } catch (e) {
             sessionStorage.setItem("uploadError", "Upload failed. Please try again.");
+          }
+        } else {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            const earn = response?.data?.tokenEarn;
+            if (earn?.amount) {
+              sessionStorage.setItem(
+                "tokenEarnToast",
+                JSON.stringify({ amount: earn.amount, reason: "CV upload" }),
+              );
+            }
+            if (typeof response?.data?.tokenBalance === "number") {
+              window.dispatchEvent(
+                new CustomEvent("saasa:token-balance", {
+                  detail: { tokenBalance: response.data.tokenBalance },
+                }),
+              );
+            }
+          } catch {
+            // ignore parse errors
           }
         }
       });

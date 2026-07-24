@@ -916,13 +916,13 @@ export const resumeAIChips = [
 ];
 
 export const notesAIChips = [
-  { id: 'sum', label: 'Summarize notes' },
-  { id: 'flash', label: 'Convert to flashcards' },
-  { id: 'quiz', label: 'Generate quiz' },
-  { id: 'keys', label: 'Extract key concepts' },
-  { id: 'interview', label: 'Convert to interview answers' },
-  { id: 'mockq', label: 'Generate mock questions' },
-  { id: 'eli5', label: 'Explain like interviewer' },
+  { id: 'sum', label: 'Summarize · 5' },
+  { id: 'flash', label: 'Flashcards · 5' },
+  { id: 'quiz', label: 'Generate quiz · 5' },
+  { id: 'keys', label: 'Key concepts · 5' },
+  { id: 'interview', label: 'Interview answers · 5' },
+  { id: 'mockq', label: 'Mock questions · 5' },
+  { id: 'eli5', label: 'Explain like interviewer · 5' },
 ];
 
 export const notesAIInsight = {

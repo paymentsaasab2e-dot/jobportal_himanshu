@@ -31,7 +31,7 @@ type ToastApi = {
 
 const ToastContext = createContext<ToastApi | null>(null);
 
-const DEFAULT_DURATION = 3400;
+const DEFAULT_DURATION = 4200;
 const MAX_VISIBLE_TOASTS = 4;
 
 function normalizeTone(tone?: ToastTone): Exclude<ToastTone, 'critical' | 'destructive'> {
@@ -46,39 +46,47 @@ function iconForTone(tone: Exclude<ToastTone, 'critical' | 'destructive'>) {
   return Info;
 }
 
-function toneClasses(tone: Exclude<ToastTone, 'critical' | 'destructive'>) {
+function toneStyles(tone: Exclude<ToastTone, 'critical' | 'destructive'>) {
   if (tone === 'success') {
     return {
-      shell:
-        'border-emerald-200/80 bg-emerald-50/95 text-emerald-950 shadow-[0_18px_45px_rgba(16,185,129,0.14)]',
-      icon: 'bg-emerald-100 text-emerald-600',
-      close: 'text-emerald-700/70 hover:bg-emerald-100 hover:text-emerald-800',
+      accent: '#10B981',
+      icon: 'bg-emerald-500 text-white',
+      title: 'text-slate-900',
+      message: 'text-slate-600',
+      close: 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',
+      progress: 'bg-emerald-500',
     };
   }
 
   if (tone === 'error') {
     return {
-      shell:
-        'border-rose-200/80 bg-rose-50/95 text-rose-950 shadow-[0_18px_45px_rgba(244,63,94,0.16)]',
-      icon: 'bg-rose-100 text-rose-600',
-      close: 'text-rose-700/70 hover:bg-rose-100 hover:text-rose-800',
+      accent: '#F43F5E',
+      icon: 'bg-rose-500 text-white',
+      title: 'text-slate-900',
+      message: 'text-slate-600',
+      close: 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',
+      progress: 'bg-rose-500',
     };
   }
 
   if (tone === 'warning') {
     return {
-      shell:
-        'border-amber-200/80 bg-amber-50/95 text-amber-950 shadow-[0_18px_45px_rgba(245,158,11,0.14)]',
-      icon: 'bg-amber-100 text-amber-600',
-      close: 'text-amber-700/70 hover:bg-amber-100 hover:text-amber-800',
+      accent: '#F59E0B',
+      icon: 'bg-amber-500 text-white',
+      title: 'text-slate-900',
+      message: 'text-slate-600',
+      close: 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',
+      progress: 'bg-amber-500',
     };
   }
 
   return {
-    shell:
-      'border-sky-200/80 bg-sky-50/95 text-sky-950 shadow-[0_18px_45px_rgba(14,165,233,0.14)]',
-    icon: 'bg-sky-100 text-sky-600',
-    close: 'text-sky-700/70 hover:bg-sky-100 hover:text-sky-800',
+    accent: '#0EA5E9',
+    icon: 'bg-sky-500 text-white',
+    title: 'text-slate-900',
+    message: 'text-slate-600',
+    close: 'text-slate-400 hover:bg-slate-100 hover:text-slate-700',
+    progress: 'bg-sky-500',
   };
 }
 
@@ -88,15 +96,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const dismissTimersRef = useRef<Map<string, number>>(new Map());
   const dedupeRef = useRef<Map<string, number>>(new Map());
 
-  const removeToast = useCallback(
-    (id: string) => {
-      setToasts((current) => current.filter((toast) => toast.id !== id));
-      const timer = dismissTimersRef.current.get(id);
-      if (timer) window.clearTimeout(timer);
-      dismissTimersRef.current.delete(id);
-    },
-    []
-  );
+  const removeToast = useCallback((id: string) => {
+    setToasts((current) => current.filter((toast) => toast.id !== id));
+    const timer = dismissTimersRef.current.get(id);
+    if (timer) window.clearTimeout(timer);
+    dismissTimersRef.current.delete(id);
+  }, []);
 
   const push = useCallback(
     (toast: ToastPayload) => {
@@ -129,7 +134,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       const timer = window.setTimeout(() => removeToast(id), duration);
       dismissTimersRef.current.set(id, timer);
     },
-    [removeToast]
+    [removeToast],
   );
 
   useEffect(() => {
@@ -182,7 +187,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       warning: (title, message, duration) => push({ title, message, duration, tone: 'warning' }),
       info: (title, message, duration) => push({ title, message, duration, tone: 'info' }),
     }),
-    [push, removeToast]
+    [push, removeToast],
   );
 
   return (
@@ -190,56 +195,70 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {isMounted && typeof document !== 'undefined'
         ? createPortal(
-            <div className="pointer-events-none fixed inset-x-4 top-4 z-[10000] flex flex-col items-end gap-2 sm:left-auto sm:right-4 sm:w-[360px]">
+            <div className="pointer-events-none fixed inset-x-3 top-3 z-[11000] flex flex-col items-center gap-2.5 sm:inset-x-auto sm:right-5 sm:top-5 sm:items-end sm:w-[380px]">
               <AnimatePresence mode="popLayout">
                 {toasts.map((toast) => {
                   const tone = normalizeTone(toast.tone);
                   const Icon = iconForTone(tone);
-                  const classes = toneClasses(tone);
+                  const styles = toneStyles(tone);
+                  const duration = toast.duration ?? DEFAULT_DURATION;
 
                   return (
                     <motion.div
                       key={toast.id}
                       layout
-                      initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                      initial={{ opacity: 0, y: -16, scale: 0.96 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-                      transition={{ 
-                        type: 'spring', 
-                        damping: 25, 
-                        stiffness: 300 
-                      }}
-                      className={`pointer-events-auto w-full rounded-2xl border px-4 py-3 backdrop-blur-md ${classes.shell}`}
+                      exit={{ opacity: 0, y: -8, scale: 0.96, transition: { duration: 0.18 } }}
+                      transition={{ type: 'spring', damping: 26, stiffness: 340 }}
+                      className="pointer-events-auto w-full overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.18)] ring-1 ring-black/5"
                       role="status"
                       aria-live="polite"
                     >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${classes.icon}`}
-                        >
-                          <Icon className="h-4 w-4" strokeWidth={2.2} aria-hidden />
+                      <div className="flex items-stretch">
+                        <span
+                          className="w-1.5 shrink-0"
+                          style={{ backgroundColor: styles.accent }}
+                          aria-hidden
+                        />
+                        <div className="flex min-w-0 flex-1 items-start gap-3 px-3.5 py-3.5">
+                          <div
+                            className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm ${styles.icon}`}
+                          >
+                            <Icon className="h-4 w-4" strokeWidth={2.4} aria-hidden />
+                          </div>
+                          <div className="min-w-0 flex-1 pt-0.5">
+                            <p className={`text-[15px] font-semibold leading-5 ${styles.title}`}>
+                              {toast.title}
+                            </p>
+                            {toast.message ? (
+                              <p className={`mt-1 text-sm leading-5 ${styles.message}`}>
+                                {toast.message}
+                              </p>
+                            ) : null}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeToast(toast.id)}
+                            aria-label="Dismiss notification"
+                            className={`rounded-lg p-1.5 transition-colors ${styles.close}`}
+                          >
+                            <X className="h-4 w-4" strokeWidth={2.2} />
+                          </button>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold leading-5">{toast.title}</p>
-                          {toast.message ? (
-                            <p className="mt-1 text-xs font-medium leading-5 opacity-80">{toast.message}</p>
-                          ) : null}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeToast(toast.id)}
-                          aria-label="Dismiss notification"
-                          className={`rounded-xl p-1.5 transition-colors ${classes.close}`}
-                        >
-                          <X className="h-4 w-4" strokeWidth={2.2} />
-                        </button>
                       </div>
+                      <motion.div
+                        className={`h-0.5 origin-left ${styles.progress}`}
+                        initial={{ scaleX: 1 }}
+                        animate={{ scaleX: 0 }}
+                        transition={{ duration: duration / 1000, ease: 'linear' }}
+                      />
                     </motion.div>
                   );
                 })}
               </AnimatePresence>
             </div>,
-            document.body
+            document.body,
           )
         : null}
     </ToastContext.Provider>

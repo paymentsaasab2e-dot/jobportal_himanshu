@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth/AuthContext';
 import { CheckCircle2, Sparkles, User, Briefcase, GraduationCap } from "lucide-react";
 
 import { API_BASE_URL } from '@/lib/api-base';
+import { dispatchTokenEarn } from '@/lib/token-earn-events';
 import { showSuccessToast } from '@/components/common/toast/toast';
 import HryantraLoader from "@/components/loader/CV Parsing Loader Final";
 import { getLocaleFromPathname, localizePath, stripLocaleFromPathname } from "@/lib/i18n";
@@ -113,6 +114,23 @@ export default function ExtractPage() {
       clearPolling();
       sessionStorage.removeItem("uploadStatus");
       sessionStorage.removeItem("uploadError");
+      try {
+        const earnRaw = sessionStorage.getItem("tokenEarnToast");
+        if (earnRaw && !completionToastShownRef.current) {
+          const earn = JSON.parse(earnRaw) as { amount?: number; reason?: string };
+          if (earn?.amount) {
+            completionToastShownRef.current = true;
+            dispatchTokenEarn({
+              amount: earn.amount,
+              title: "CV upload reward",
+              subtitle: `+${earn.amount} for ${earn.reason || "uploading your CV"}`,
+            });
+          }
+          sessionStorage.removeItem("tokenEarnToast");
+        }
+      } catch {
+        sessionStorage.removeItem("tokenEarnToast");
+      }
       scheduleTimeout(redirect, 1500);
     };
 

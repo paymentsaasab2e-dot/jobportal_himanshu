@@ -87,7 +87,10 @@ export function useInterviewPrep() {
         topic: `${mockConfig.role} - ${mockConfig.difficulty}`
       });
     } catch (err) {
-       // Silently fail or handle error
+      const { notifyInsufficientTokens } = await import('@/lib/token-errors');
+      if (!notifyInsufficientTokens(err)) {
+        console.warn('Mock session start failed', err);
+      }
     }
     return mockConfig;
   }, [mockConfig]);

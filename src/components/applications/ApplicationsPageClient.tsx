@@ -690,30 +690,8 @@ export default function ApplicationsPageClient() {
     savedJobSourceJobs.length === 0 &&
     backendSavedJobs.length === 0 &&
     (cvDashboardQuery.isLoading || jobsListQuery.isLoading);
-  const [interviews, setInterviews] = useState<InterviewItem[]>([]);
-
-  useEffect(() => {
-    const resolvedCandidateId =
-      typeof window !== 'undefined'
-        ? sessionStorage.getItem('candidateId') || localStorage.getItem('candidateId')
-        : null;
-
-    if (typeof window !== 'undefined' && resolvedCandidateId && !sessionStorage.getItem('candidateId')) {
-      sessionStorage.setItem('candidateId', resolvedCandidateId);
-    }
-
-    setCandidateId(resolvedCandidateId);
-
-    if (!resolvedCandidateId) {
-      setCandidateMissing(true);
-      return;
-    }
-
-    setCandidateMissing(false);
-  }, []);
-
-  useEffect(() => {
-    const derived: InterviewItem[] = applications
+  const interviews = useMemo<InterviewItem[]>(() => {
+    return applications
       .filter(
         (app) =>
           app.status === 'Interview' || Boolean(app.interviewScheduledAt)
@@ -734,8 +712,27 @@ export default function ApplicationsPageClient() {
           joinUrl,
         };
       });
-    setInterviews(derived);
   }, [applications]);
+
+  useEffect(() => {
+    const resolvedCandidateId =
+      typeof window !== 'undefined'
+        ? sessionStorage.getItem('candidateId') || localStorage.getItem('candidateId')
+        : null;
+
+    if (typeof window !== 'undefined' && resolvedCandidateId && !sessionStorage.getItem('candidateId')) {
+      sessionStorage.setItem('candidateId', resolvedCandidateId);
+    }
+
+    setCandidateId(resolvedCandidateId);
+
+    if (!resolvedCandidateId) {
+      setCandidateMissing(true);
+      return;
+    }
+
+    setCandidateMissing(false);
+  }, []);
 
   useEffect(() => {
     if (!candidateId) return;

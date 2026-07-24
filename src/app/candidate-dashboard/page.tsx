@@ -13,6 +13,9 @@ import ApplicationPipelineCard from "@/components/dashboard/ApplicationPipelineC
 import DashboardHero, { type DashboardHeroStat } from "@/components/dashboard/DashboardHero";
 import JobMatchesPanel from "@/components/dashboard/JobMatchesPanel";
 import ProfileOverviewCard from "@/components/dashboard/ProfileOverviewCard";
+import { PendingEarnCard } from "@/components/dashboard/PendingEarnCard";
+import { dispatchTokenEarn } from "@/lib/token-earn-events";
+import { recordCandidateNotification, notifyBellRefresh } from "@/lib/notifications";
 import RecommendedCoursesPanel from "@/components/dashboard/RecommendedCoursesPanel";
 import {
   getDashboardName,
@@ -47,6 +50,7 @@ import {
 import { ProfilePageShell } from "@/components/profile/layout";
 import ProfileMissingSectionNudge from "@/components/profile/ProfileMissingSectionNudge";
 import { getMissingProfileSections } from "@/lib/profile-section-routes";
+import { useTokensOptional } from "@/components/tokens/TokensContext";
 
 const SAVED_JOBS_STORAGE_PREFIX = "dashboardSavedJobs";
 
@@ -192,6 +196,8 @@ export default function CandidateDashboardPage() {
   const invalidateCvDashboard = useInvalidateCvDashboard();
   const dashboardData = dashboardQuery.data ?? null;
   const loading = dashboardQuery.isLoading && !dashboardData;
+  const tokensCtx = useTokensOptional();
+  const welcomeToastShownRef = useRef(false);
   const generalJobsQuery = usePortalJobsList(locale);
   const personalizedJobsQuery = usePortalPersonalizedJobs(candidateId, locale);
   const [jobs, setJobs] = useState<DashboardJob[]>([]);
@@ -228,6 +234,36 @@ export default function CandidateDashboardPage() {
       setCandidateId(idFromUser || idFromStorage);
     }
   }, [authLoading, isAuthenticated, user]);
+
+  useEffect(() => {
+    if (!dashboardData?.stats) return;
+    const bal = dashboardData.stats.tokenBalance;
+    if (typeof bal === 'number') {
+      tokensCtx?.setBalance(bal);
+    }
+    if (
+      dashboardData.stats.welcomeTokensGranted &&
+      !welcomeToastShownRef.current &&
+      dashboardData.stats.welcomeTokenAmount
+    ) {
+      welcomeToastShownRef.current = true;
+      dispatchTokenEarn({
+        amount: dashboardData.stats.welcomeTokenAmount,
+        title: 'Welcome bonus unlocked',
+        subtitle: 'Thanks for joining — keep earning by completing your profile.',
+        tokenBalance: typeof bal === 'number' ? bal : undefined,
+      });
+    }
+  }, [dashboardData?.stats, tokensCtx]);
+
+  // After dashboard syncs lifecycle earns, reload claimed keys once per candidate session.
+  useEffect(() => {
+    if (!candidateId || !dashboardData?.stats) return;
+    const key = `saasa:earn-lifecycle-refreshed:${candidateId}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    void tokensCtx?.refresh?.();
+  }, [candidateId, dashboardData?.stats, tokensCtx]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setCoursesLoading(false), 360);
@@ -293,13 +329,38 @@ export default function CandidateDashboardPage() {
       try {
         const details = await fetchProfileCompleteness(resolvedCandidateId);
         setProfileCompletionDetails(details);
+        const earns = (details as {
+          tokenEarns?: Array<{ amount?: number; earnKey?: string }>;
+          tokenBalance?: number;
+        })?.tokenEarns;
+        if (Array.isArray(earns) && earns.length > 0) {
+          const total = earns.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+          if (total > 0) {
+            dispatchTokenEarn({
+              amount: total,
+              title: 'Profile rewards unlocked',
+              subtitle: 'You completed profile sections and earned tokens automatically.',
+              tokenBalance: (details as { tokenBalance?: number }).tokenBalance,
+              items: earns.map((e) => ({
+                label: e.earnKey?.replace(/^earn\.profile\./, '') || 'Profile',
+                amount: e.amount,
+              })),
+            });
+            const bal = (details as { tokenBalance?: number }).tokenBalance;
+            if (typeof bal === 'number' && tokensCtx) {
+              tokensCtx.setBalance(bal);
+            } else {
+              void tokensCtx?.refresh?.();
+            }
+          }
+        }
         return details;
       } catch (error) {
         console.error("Error fetching profile completeness:", error);
         return null;
       }
     },
-    [candidateId, user?.id]
+    [candidateId, user?.id, tokensCtx]
   );
 
   const fetchDashboardData = useCallback(
@@ -821,6 +882,99 @@ export default function CandidateDashboardPage() {
     [profileSnapshot, profileCompletionDetails],
   );
 
+  const pendingEarnItems = useMemo(() => {
+    const lifecycle = tokensCtx?.earnLifecycle || [];
+    const tasks = tokensCtx?.earnTasks || [];
+    const claimed = new Set(tokensCtx?.claimedEarnKeys || []);
+    const SECTION_TO_EARN: Record<string, string> = {
+      'basic-information': 'earn.profile.basicInformation',
+      summary: 'earn.profile.summary',
+      education: 'earn.profile.education',
+      skills: 'earn.profile.skills',
+      languages: 'earn.profile.languages',
+      projects: 'earn.profile.projects',
+      'career-preferences': 'earn.profile.careerPreferences',
+    };
+    const missingEarnKeys = new Set(
+      missingProfileSections
+        .map((s) => SECTION_TO_EARN[s.slug])
+        .filter(Boolean) as string[],
+    );
+
+    // Prefer server lifecycle (reopens after undo + next repeat amount).
+    if (lifecycle.length > 0) {
+      return lifecycle
+        .filter((task) => !task.done && !task.auto && task.id !== 'welcome')
+        .map((task) => ({
+          id: task.id,
+          name: task.repeat ? `${task.name} (again)` : task.name,
+          tokens: task.nextTokens || task.tokens,
+          href: task.href || '/profile',
+          order: task.order ?? 99,
+        }))
+        .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+    }
+
+    const items: Array<{
+      id: string;
+      name: string;
+      tokens: number;
+      href: string;
+      order?: number;
+    }> = [];
+
+    for (const task of tasks) {
+      if (claimed.has(task.id)) continue;
+      if (task.auto || task.id === 'welcome') continue;
+      if (task.id === 'earn.cv_upload') {
+        items.push({
+          id: task.id,
+          name: task.name,
+          tokens: task.tokens,
+          href: task.href || '/uploadcv',
+          order: task.order ?? 2,
+        });
+        continue;
+      }
+      if (task.id.startsWith('earn.profile.') && missingEarnKeys.has(task.id)) {
+        items.push({
+          id: task.id,
+          name: task.name,
+          tokens: task.tokens,
+          href: task.href || '/profile',
+          order: task.order ?? 99,
+        });
+      }
+    }
+
+    return items.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+  }, [
+    tokensCtx?.claimedEarnKeys,
+    tokensCtx?.earnTasks,
+    tokensCtx?.earnLifecycle,
+    missingProfileSections,
+  ]);
+
+  // One-time pending-earn bell nudges (session)
+  useEffect(() => {
+    if (!candidateId || pendingEarnItems.length === 0) return;
+    const key = `saasa:pending-earn-notified:${candidateId}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    const top = pendingEarnItems.slice(0, 3);
+    const total = pendingEarnItems.reduce((s, i) => s + i.tokens, 0);
+    void recordCandidateNotification(candidateId, {
+      type: 'system',
+      title: `Earn up to +${total} tokens`,
+      description: `Pending: ${top.map((i) => i.name).join(', ')}${
+        pendingEarnItems.length > 3 ? '…' : ''
+      }. Complete these tasks to grow your balance.`,
+      actionButton: 'View tasks',
+      actionPath: '/subscriptions',
+      metadata: { kind: 'pending_earn', channel: 'alert', count: pendingEarnItems.length, total },
+    }).then(() => notifyBellRefresh());
+  }, [candidateId, pendingEarnItems]);
+
   const savedJobsTotal = mergeUnique([
     ...savedJobIds,
     ...(dashboardData?.savedJobs || []).map((job) => job.id),
@@ -952,6 +1106,8 @@ export default function CandidateDashboardPage() {
                 onOpenProfile={() => router.push(localizePath("/profile", locale))}
                 onCompleteProfile={() => setIsProfileDrawerOpen(true)}
               />
+
+              <PendingEarnCard items={pendingEarnItems} />
 
               <ApplicationPipelineCard
                 stats={dashboardData?.stats || null}

@@ -28,6 +28,8 @@ import {
   type ProfilePhotoUpdatedDetail,
 } from '@/lib/profile-photo';
 import NotificationPanel from '@/components/common/NotificationPanel';
+import { useTokensOptional } from '@/components/tokens/TokensContext';
+import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
 import ProfilePanel from '@/components/common/ProfilePanel';
 import GlobalAIAssistant from '@/components/common/GlobalAIAssistant';
 import { AppLocale, localizePath, stripLocaleFromPathname } from '@/lib/i18n';
@@ -67,6 +69,7 @@ async function fetchWithRetry(
 
 export default function Header({ showNav = true }: { showNav?: boolean }) {
     const { user, isAuthenticated: isLoggedIn, logout } = useAuth();
+    const tokensCtx = useTokensOptional();
     const router = useRouter();
     const pathname = usePathname();
     const normalizedPath = stripLocaleFromPathname(pathname || "/");
@@ -277,7 +280,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
         : isLoggedIn
           ? [
               { label: t('nav.dashboard'), path: '/candidate-dashboard' },
-              { label: 'Home', path: HOME_PATH },
+              // { label: 'Home', path: HOME_PATH }, // hidden for now — re-enable later
               { label: t('nav.jobs'), path: '/explore-jobs' },
               { label: t('nav.applications'), path: '/applications' },
               { label: t('nav.lms'), path: '/lms/courses' },
@@ -569,6 +572,20 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                         <LanguageSwitcher />
                         {isLoggedIn && !isLandingPage ? (
                             <>
+                                {tokensCtx ? (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            router.push(localizePath('/subscriptions', locale))
+                                        }
+                                        className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-sm font-bold tabular-nums text-amber-900 ring-1 ring-amber-200 transition hover:bg-amber-100"
+                                        title={t('nav.subscriptions')}
+                                        aria-label={`Tokens ${tokensCtx.balance} — open subscriptions`}
+                                    >
+                                        <TokenCoinIcon className="h-5 w-5" />
+                                        {tokensCtx.balance}
+                                    </button>
+                                ) : null}
                                 {/* Notifications trigger */}
                                 <div className="relative">
                                     <button

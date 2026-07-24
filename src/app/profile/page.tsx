@@ -127,6 +127,10 @@ import VaccinationModal, { VaccinationData } from '../../components/modals/Vacci
 import ResumeModal, { ResumeData as BaseResumeData } from '../../components/modals/ResumeModal';
 import { API_BASE_URL } from '@/lib/api-base';
 import {
+  fetchProfileCompleteness,
+} from '@/lib/profile-completion';
+import { dispatchTokenEarn, formatEarnLabel } from '@/lib/token-earn-events';
+import {
   getAuthHeaders,
   getStoredCandidateId,
   getStoredToken,
@@ -562,6 +566,10 @@ export default function ProfilePage() {
     })) || [],
   });
 
+  const syncProfileEarnRewardsRef = useRef<(candidateId: string) => Promise<unknown>>(
+    async () => null,
+  );
+
   const refreshProfileData = async (candidateId: string) => {
     try {
       const url = `${API_BASE_URL}/profile/${candidateId}`;
@@ -850,6 +858,9 @@ export default function ProfilePage() {
     }
     // Preserve existing vaccinationData if not in response
 
+      // Credit earn tasks immediately after profile data changes (no page refresh needed).
+      await syncProfileEarnRewardsRef.current(candidateId);
+
       return profileData;
     } catch (error) {
       console.error('❌ Error in refreshProfileData:', error);
@@ -961,30 +972,55 @@ export default function ProfilePage() {
   }, []);
 
   // Recalculate completeness whenever relevant data changes
+  const syncProfileEarnRewards = async (candidateId: string) => {
+    try {
+      const details = await fetchProfileCompleteness(candidateId);
+      setProfileCompleteness({
+        percentage: details.percentage,
+        completedSections: details.completedSections || [],
+        missingSections: details.missingSections || [],
+        sections: details.sections || [],
+      });
+
+      const earns = details.tokenEarns;
+      if (Array.isArray(earns) && earns.length > 0) {
+        const total = earns.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+        if (total > 0) {
+          const isRepeat = earns.some((e) => Number((e as { cycle?: number }).cycle) > 1);
+          dispatchTokenEarn({
+            amount: total,
+            title:
+              earns.length === 1
+                ? formatEarnLabel(earns[0].earnKey)
+                : 'Profile rewards unlocked',
+            subtitle: isRepeat
+              ? 'Re-completed after undo — smaller repeat credit applied.'
+              : 'You completed a profile task and earned tokens.',
+            tokenBalance: details.tokenBalance,
+            items: earns.map((e) => ({
+              label: formatEarnLabel(e.earnKey),
+              amount: e.amount,
+            })),
+          });
+        }
+      }
+      return details;
+    } catch (error) {
+      console.error('Error syncing profile earn rewards:', error);
+      return null;
+    }
+  };
+  syncProfileEarnRewardsRef.current = syncProfileEarnRewards;
+
   const fetchAndUpdateCompleteness = async () => {
     const candidateId = getStoredCandidateId();
     if (!candidateId) {
       calculateProfileCompleteness();
       return;
     }
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/profile/completeness/${candidateId}`);
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data) {
-          setProfileCompleteness({
-            percentage: result.data.percentage,
-            completedSections: result.data.completedSections || [],
-            missingSections: result.data.missingSections || [],
-            sections: result.data.sections || [],
-          });
-          return;
-        }
-      }
-      calculateProfileCompleteness();
-    } catch (error) {
-      console.error('Error fetching profile completeness:', error);
+
+    const details = await syncProfileEarnRewards(candidateId);
+    if (!details) {
       calculateProfileCompleteness();
     }
   };

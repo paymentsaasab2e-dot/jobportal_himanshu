@@ -2,6 +2,9 @@ import { API_BASE_URL } from './api-base';
 
 export type NotificationType = 'job' | 'application' | 'interview' | 'course' | 'system' | 'saved-search';
 
+/** Alerts = inbound (recommendations, reminders, pending data). Activity = what you did. */
+export type NotificationChannel = 'alert' | 'activity';
+
 export interface Notification {
   id: string;
   type: NotificationType;
@@ -19,6 +22,9 @@ export interface Notification {
     companyName?: string;
     position?: string;
     status?: string;
+    kind?: string;
+    channel?: NotificationChannel;
+    live?: boolean;
     [key: string]: unknown;
   };
 }
@@ -33,7 +39,92 @@ export interface NotificationsResponse {
   message?: string;
 }
 
-export async function fetchNotifications(candidateId: string, type?: NotificationType): Promise<NotificationsResponse> {
+const ACTIVITY_KINDS = new Set([
+  'application_submitted',
+  'user_action',
+  'course_started',
+  'course_enrolled',
+  'course_completed',
+  'interview_booked',
+  'interview_completed',
+  'token_spend',
+  'token_earn',
+]);
+
+const ALERT_KINDS = new Set([
+  'job_recommendation',
+  'saved_search_match',
+  'pending_earn',
+  'profile_incomplete',
+  'interview_reminder',
+  'interview_invite',
+  'interview_scheduled',
+  'status_update',
+  'recommendation',
+]);
+
+/**
+ * Classify a notification as an inbound alert or a user activity event.
+ * Prefers explicit metadata.channel / metadata.kind, then title heuristics.
+ */
+export function getNotificationChannel(n: Notification): NotificationChannel {
+  const channel = String(n.metadata?.channel || '').toLowerCase();
+  if (channel === 'alert' || channel === 'activity') return channel as NotificationChannel;
+
+  const kind = String(n.metadata?.kind || '')
+    .toLowerCase()
+    .replace(/-/g, '_');
+  if (ALERT_KINDS.has(kind)) return 'alert';
+  if (ACTIVITY_KINDS.has(kind)) return 'activity';
+
+  const title = String(n.title || '').toLowerCase();
+  const description = String(n.description || '').toLowerCase();
+  const text = `${title} ${description}`;
+
+  if (
+    /recommend|pending|reminder|invite|shortlist|rejected|selected|earn up to|complete your profile|missing|alert|match score|cv fit/.test(
+      text,
+    )
+  ) {
+    return 'alert';
+  }
+
+  if (
+    /submitted successfully|you applied|application submitted|started (a )?course|enrolled|you booked|you completed|course started|mission started|tokens earned/.test(
+      text,
+    )
+  ) {
+    return 'activity';
+  }
+
+  if (n.type === 'application') {
+    if (/submitted|applied|received/.test(text)) return 'activity';
+    return 'alert';
+  }
+  if (n.type === 'course') return 'activity';
+  if (n.type === 'job' || n.type === 'saved-search' || n.type === 'system' || n.type === 'interview') {
+    return 'alert';
+  }
+  return 'alert';
+}
+
+export function partitionNotifications(items: Notification[]): {
+  alerts: Notification[];
+  activity: Notification[];
+} {
+  const alerts: Notification[] = [];
+  const activity: Notification[] = [];
+  for (const item of items) {
+    if (getNotificationChannel(item) === 'activity') activity.push(item);
+    else alerts.push(item);
+  }
+  return { alerts, activity };
+}
+
+export async function fetchNotifications(
+  candidateId: string,
+  type?: NotificationType,
+): Promise<NotificationsResponse> {
   const url = new URL(`${API_BASE_URL}/notifications/${candidateId}`);
   if (type && type !== 'all') {
     url.searchParams.append('type', type);
@@ -46,7 +137,7 @@ export async function fetchNotifications(candidateId: string, type?: Notificatio
     },
   });
 
-  const result = await response.json() as NotificationsResponse;
+  const result = (await response.json()) as NotificationsResponse;
 
   if (!response.ok || !result.success) {
     throw new Error(result.message || 'Failed to fetch notifications');
@@ -55,15 +146,21 @@ export async function fetchNotifications(candidateId: string, type?: Notificatio
   return result;
 }
 
-export async function markNotificationAsRead(candidateId: string, notificationId: string): Promise<{ success: boolean; message?: string }> {
-  const response = await fetch(`${API_BASE_URL}/notifications/${candidateId}/${notificationId}/read`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
+export async function markNotificationAsRead(
+  candidateId: string,
+  notificationId: string,
+): Promise<{ success: boolean; message?: string }> {
+  const response = await fetch(
+    `${API_BASE_URL}/notifications/${candidateId}/${notificationId}/read`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     },
-  });
+  );
 
-  const result = await response.json() as { success: boolean; message?: string };
+  const result = (await response.json()) as { success: boolean; message?: string };
 
   if (!response.ok) {
     throw new Error(result.message || 'Failed to mark notification as read');
@@ -72,15 +169,20 @@ export async function markNotificationAsRead(candidateId: string, notificationId
   return result;
 }
 
-export async function markAllNotificationsAsRead(candidateId: string): Promise<{ success: boolean; message?: string }> {
-  const response = await fetch(`${API_BASE_URL}/notifications/${candidateId}/mark-all-read`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
+export async function markAllNotificationsAsRead(
+  candidateId: string,
+): Promise<{ success: boolean; message?: string }> {
+  const response = await fetch(
+    `${API_BASE_URL}/notifications/${candidateId}/mark-all-read`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     },
-  });
+  );
 
-  const result = await response.json() as { success: boolean; message?: string };
+  const result = (await response.json()) as { success: boolean; message?: string };
 
   if (!response.ok) {
     throw new Error(result.message || 'Failed to mark all notifications as read');
@@ -93,14 +195,17 @@ export async function deleteNotification(
   candidateId: string,
   notificationId: string,
 ): Promise<{ success: boolean; message?: string }> {
-  const response = await fetch(`${API_BASE_URL}/notifications/${candidateId}/${notificationId}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
+  const response = await fetch(
+    `${API_BASE_URL}/notifications/${candidateId}/${notificationId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     },
-  });
+  );
 
-  const result = await response.json() as { success: boolean; message?: string };
+  const result = (await response.json()) as { success: boolean; message?: string };
 
   if (!response.ok) {
     throw new Error(result.message || 'Failed to delete notification');
@@ -109,15 +214,24 @@ export async function deleteNotification(
   return result;
 }
 
-export async function getUnreadNotificationCount(candidateId: string): Promise<{ success: boolean; count: number; message?: string }> {
-  const response = await fetch(`${API_BASE_URL}/notifications/${candidateId}/unread-count`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
+export async function getUnreadNotificationCount(
+  candidateId: string,
+): Promise<{ success: boolean; count: number; message?: string }> {
+  const response = await fetch(
+    `${API_BASE_URL}/notifications/${candidateId}/unread-count`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     },
-  });
+  );
 
-  const result = await response.json() as { success: boolean; count: number; message?: string };
+  const result = (await response.json()) as {
+    success: boolean;
+    count: number;
+    message?: string;
+  };
 
   if (!response.ok) {
     throw new Error(result.message || 'Failed to get unread count');
@@ -170,7 +284,7 @@ function isSuppressedBellNotification(payload: CreateNotificationInput): boolean
 
 export async function recordCandidateNotification(
   candidateId: string | null | undefined,
-  payload: CreateNotificationInput
+  payload: CreateNotificationInput,
 ): Promise<void> {
   if (!candidateId || !payload?.title || isSuppressedBellNotification(payload)) return;
 

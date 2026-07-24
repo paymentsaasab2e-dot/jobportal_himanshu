@@ -54,6 +54,8 @@ export interface ProfileCompletenessResponse {
   completedSections: string[];
   missingSections: string[];
   sections: ProfileSectionStatus[];
+  tokenEarns?: Array<{ earnKey?: string; amount?: number; cycle?: number }>;
+  tokenBalance?: number;
 }
 
 export interface ChatMessage {

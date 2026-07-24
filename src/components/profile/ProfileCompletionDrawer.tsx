@@ -13,6 +13,7 @@ import {
 } from "@/lib/profile-completion";
 import { X } from "lucide-react";
 import { showSuccessToast } from "@/components/common/toast/toast";
+import { dispatchTokenEarn } from "@/lib/token-earn-events";
 
 type DraftMap = Partial<Record<ProfileSectionKey, unknown>>;
 
@@ -99,6 +100,23 @@ export default function ProfileCompletionDrawer({
     const freshData = await fetchProfileCompleteness(candidateId);
     setCompleteness(freshData);
     onCompletionUpdated(freshData);
+    const earns = (freshData as { tokenEarns?: Array<{ amount?: number; earnKey?: string }> })
+      ?.tokenEarns;
+    if (Array.isArray(earns) && earns.length > 0) {
+      const total = earns.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+      if (total > 0) {
+        dispatchTokenEarn({
+          amount: total,
+          title: "Profile rewards unlocked",
+          subtitle: "Tokens credited for sections you just completed.",
+          tokenBalance: (freshData as { tokenBalance?: number }).tokenBalance,
+          items: earns.map((e) => ({
+            label: e.earnKey?.replace(/^earn\.profile\./, "") || "Profile",
+            amount: e.amount,
+          })),
+        });
+      }
+    }
     return freshData;
   }, [candidateId, onCompletionUpdated]);
 
