@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
+import type { ComponentType } from "react";
 
 import DashboardPanel from "./DashboardPanel";
 
@@ -9,7 +10,7 @@ export interface DashboardHeroStat {
   label: string;
   value: string;
   helper: string;
-  icon: LucideIcon;
+  icon: LucideIcon | ComponentType<{ className?: string; strokeWidth?: number }>;
   onClick?: () => void;
 }
 

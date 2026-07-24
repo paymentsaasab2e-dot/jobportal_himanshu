@@ -18,6 +18,9 @@ export interface DashboardData {
     reviewing: number;
     offersReceived?: number;
     rejected?: number;
+    tokenBalance?: number;
+    welcomeTokensGranted?: boolean;
+    welcomeTokenAmount?: number;
   };
   applicationCounts?: {
     SUBMITTED: number;

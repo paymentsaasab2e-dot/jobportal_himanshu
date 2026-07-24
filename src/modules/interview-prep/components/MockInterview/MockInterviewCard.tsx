@@ -1,24 +1,47 @@
 'use client';
 
 import { Mic2 } from 'lucide-react';
+import { TokenSpendButton, CourseAccessBadge } from '@/app/lms/components/ux/TokenSpendButton';
+import { startInterviewSession } from '@/app/lms/api/client';
+
+const MOCK_TOKEN_COST = 25;
 
 type MockInterviewCardProps = {
   difficulty: string;
   role: string;
   onChangeConfig: (next: { difficulty: string; role: string }) => void;
-  onStartMock: () => void;
+  onStartMock: () => void | Promise<void>;
 };
 
-export function MockInterviewCard({ onStartMock: _onStartMock }: MockInterviewCardProps) {
+export function MockInterviewCard({
+  difficulty,
+  role,
+}: MockInterviewCardProps) {
+  const unlockAndLaunch = async () => {
+    await startInterviewSession({
+      type: 'MOCK',
+      topic: `${role} - ${difficulty}`,
+    });
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('lms:mock-interview-paid', '1');
+      window.location.href = '/Aimockinter';
+    }
+  };
+
   return (
     <section className="rounded-2xl border border-violet-100 bg-white p-5 sm:p-6 shadow-sm transition-all duration-200 ease-in-out hover:shadow-md space-y-4">
       <div className="flex items-center gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#28A8E1]/10 text-[#28A8E1] ring-1 ring-[#28A8E1]/20">
           <Mic2 className="h-6 w-6" strokeWidth={2} aria-hidden />
         </div>
-        <div className="min-w-0">
-          <h2 className="text-lg font-bold text-gray-900">AI mock interview</h2>
-          <p className="mt-0.5 text-sm font-normal text-gray-500">Choose your role and configure your session.</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-bold text-gray-900">AI mock interview</h2>
+            <CourseAccessBadge accessTier="premium" tokenCost={MOCK_TOKEN_COST} />
+          </div>
+          <p className="mt-0.5 text-sm font-normal text-gray-500">
+            Unlock with coins, then launch your AI mock session.
+          </p>
         </div>
       </div>
 
@@ -28,19 +51,16 @@ export function MockInterviewCard({ onStartMock: _onStartMock }: MockInterviewCa
             Be interviewed
           </span>
           <p className="text-sm font-medium leading-relaxed text-gray-600">
-            Jump straight into the real-time AI mock session. You can seamlessly configure your role
-            and interview parameters directly inside the module.
+            Premium AI mock interview. Unlock once to launch, then configure role and parameters inside
+            the module.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            window.location.href = '/Aimockinter';
-          }}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#28A8E1] px-5 py-3.5 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:bg-[#1a85b6] hover:shadow-md active:scale-[0.98]"
-        >
-          <Mic2 className="h-5 w-5 shrink-0" /> Launch AI Interview
-        </button>
+        <TokenSpendButton
+          tokenCost={MOCK_TOKEN_COST}
+          label="Unlock & launch"
+          lockedLabel="Need"
+          onSpend={unlockAndLaunch}
+        />
       </div>
     </section>
   );

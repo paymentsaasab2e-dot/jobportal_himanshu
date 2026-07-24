@@ -4,11 +4,20 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import ProfileDrawer from '@/components/ui/ProfileDrawer';
 import SettingsCard from '@/components/settings/SettingsCard';
-import { User, Bell, Shield, SlidersHorizontal, Briefcase, AlertTriangle } from 'lucide-react';
+import { User, Bell, Shield, SlidersHorizontal, Briefcase, AlertTriangle, MessagesSquare } from 'lucide-react';
 import { showSuccessToast, showErrorToast } from '@/components/common/toast/toast';
 import { API_BASE_URL } from '@/lib/api-base';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
+import {
+  getGossipIdentity,
+  getMaxReferenceFee,
+  hasGossipAccount,
+  normalizeGossipUsername,
+  suggestAnonymousUsername,
+  updateGossipIdentity,
+  type GossipIdentity,
+} from '@/lib/community-store';
 interface SettingsData {
   account: {
     email: string;
@@ -72,6 +81,8 @@ export default function SettingsPage() {
   const [profileVisibility, setProfileVisibility] = useState('Recruiters only');
   const [dataSharing, setDataSharing] = useState(false);
   const [loginSessions, setLoginSessions] = useState('0 active sessions');
+  const [gossipIdentity, setGossipIdentity] = useState<GossipIdentity | null>(null);
+  const [gossipUsernameDraft, setGossipUsernameDraft] = useState('');
 
   // Preferences state
   const [language, setLanguage] = useState('English');
@@ -81,7 +92,7 @@ export default function SettingsPage() {
   // Application state
   const [defaultResume, setDefaultResume] = useState('No resume uploaded');
   const [jobPreferenceDefaults, setJobPreferenceDefaults] = useState('Not set');
-  const [activeSection, setActiveSection] = useState<'account' | 'notifications' | 'privacy' | 'preferences' | 'application' | 'danger'>('account');
+  const [activeSection, setActiveSection] = useState<'account' | 'notifications' | 'privacy' | 'gossips' | 'preferences' | 'application' | 'danger'>('account');
 
   // Get candidate ID from AuthContext
   const getCandidateId = useCallback(() => {
@@ -183,6 +194,45 @@ export default function SettingsPage() {
       fetchSettings();
     }
   }, [fetchSettings, authLoading, isAuthenticated, router]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setGossipIdentity(null);
+      return;
+    }
+    const identity = getGossipIdentity(user.id);
+    setGossipIdentity(identity);
+    setGossipUsernameDraft(identity?.username || '');
+  }, [user?.id]);
+
+  const updateGossipToggle = (
+    patch: Partial<
+      Pick<
+        GossipIdentity,
+        | 'isAnonymous'
+        | 'username'
+        | 'showInCompanyConnections'
+        | 'availableForReferenceCheck'
+        | 'referenceFeeTokens'
+        | 'allowPeopleToFollow'
+        | 'followAnonymously'
+      >
+    >,
+  ) => {
+    if (!user?.id) return;
+    if (!hasGossipAccount(user.id)) {
+      showErrorToast('Office Gossips', 'Open Office Gossips once to create your account first.');
+      return;
+    }
+    const result = updateGossipIdentity(user.id, patch);
+    if (!result.ok) {
+      showErrorToast('Could not update', result.error);
+      return;
+    }
+    setGossipIdentity(result.identity);
+    setGossipUsernameDraft(result.identity.username || '');
+    showSuccessToast('Office Gossips updated');
+  };
 
   const handleScrollToSection = useCallback((id: string) => {
     setActiveSection(id as any);
@@ -462,6 +512,7 @@ export default function SettingsPage() {
     { id: 'account', label: 'Account', icon: User, onClick: () => handleScrollToSection('account') },
     { id: 'notifications', label: 'Notifications', icon: Bell, onClick: () => handleScrollToSection('notifications') },
     { id: 'privacy', label: 'Privacy & Security', icon: Shield, onClick: () => handleScrollToSection('privacy') },
+    { id: 'gossips', label: 'Office Gossips', icon: MessagesSquare, onClick: () => handleScrollToSection('gossips') },
     { id: 'preferences', label: 'Preferences', icon: SlidersHorizontal, onClick: () => handleScrollToSection('preferences') },
     { id: 'application', label: 'Application', icon: Briefcase, onClick: () => handleScrollToSection('application') },
     { id: 'danger', label: 'Account Controls', icon: AlertTriangle, onClick: () => handleScrollToSection('danger') },
@@ -581,6 +632,138 @@ export default function SettingsPage() {
                 <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Profile Visibility:</span> {profileVisibility}</p>
                 <ToggleRow label="Data Sharing" enabled={dataSharing} onToggle={() => updatePrivacySetting('dataSharing', !dataSharing)} />
                 <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Login Sessions:</span> {loginSessions}</p>
+              </SettingsCard>
+            </div>
+
+            <div id="section-gossips">
+              <SettingsCard
+                title="Office Gossips"
+                description="Anonymous posting, company connections, reference availability and fee."
+                icon={<MessagesSquare className="w-5 h-5" />}
+                active={activeSection === 'gossips'}
+              >
+                {!gossipIdentity ? (
+                  <p className="text-sm text-gray-600">
+                    Open <span className="font-medium text-gray-900">Office Gossips</span> once to create your account, then manage privacy here.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    <ToggleRow
+                      label="Be anonymous"
+                      enabled={gossipIdentity.isAnonymous}
+                      onToggle={() =>
+                        updateGossipToggle({
+                          isAnonymous: !gossipIdentity.isAnonymous,
+                          username:
+                            !gossipIdentity.isAnonymous
+                              ? gossipIdentity.username || suggestAnonymousUsername()
+                              : gossipIdentity.username,
+                        })
+                      }
+                    />
+                    {gossipIdentity.isAnonymous ? (
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <input
+                          value={gossipUsernameDraft}
+                          onChange={(e) =>
+                            setGossipUsernameDraft(normalizeGossipUsername(e.target.value))
+                          }
+                          className="h-10 flex-1 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="username"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateGossipToggle({
+                              username: gossipUsernameDraft || suggestAnonymousUsername(),
+                            })
+                          }
+                          className="h-10 rounded-lg bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-800"
+                        >
+                          Save username
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = suggestAnonymousUsername();
+                            setGossipUsernameDraft(next);
+                            updateGossipToggle({ username: next });
+                          }}
+                          className="h-10 rounded-lg border border-gray-200 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                          Change name
+                        </button>
+                      </div>
+                    ) : null}
+                    <ToggleRow
+                      label="Show in company connections"
+                      enabled={gossipIdentity.showInCompanyConnections}
+                      onToggle={() =>
+                        updateGossipToggle({
+                          showInCompanyConnections: !gossipIdentity.showInCompanyConnections,
+                        })
+                      }
+                    />
+                    <ToggleRow
+                      label="Available for reference check"
+                      enabled={gossipIdentity.availableForReferenceCheck}
+                      onToggle={() =>
+                        updateGossipToggle({
+                          availableForReferenceCheck: !gossipIdentity.availableForReferenceCheck,
+                        })
+                      }
+                    />
+                    <ToggleRow
+                      label="Allow people to follow me"
+                      enabled={gossipIdentity.allowPeopleToFollow !== false}
+                      onToggle={() =>
+                        updateGossipToggle({
+                          allowPeopleToFollow: !(gossipIdentity.allowPeopleToFollow !== false),
+                        })
+                      }
+                    />
+                    <ToggleRow
+                      label="Follow anonymously"
+                      enabled={Boolean(gossipIdentity.followAnonymously)}
+                      onToggle={() =>
+                        updateGossipToggle({
+                          followAnonymously: !gossipIdentity.followAnonymously,
+                        })
+                      }
+                    />
+                    {gossipIdentity.availableForReferenceCheck ? (
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-gray-900">Reference fee</p>
+                          <span className="text-sm font-semibold text-amber-700">
+                            {gossipIdentity.referenceFeeTokens} tokens
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          First-time cap 1–20. After you complete checks, your max rises (now up to{' '}
+                          {getMaxReferenceFee(gossipIdentity.completedReferenceChecks)}). Requesters
+                          unlock a chat by spending your fee — same as other premium services.
+                        </p>
+                        <input
+                          type="range"
+                          min={1}
+                          max={getMaxReferenceFee(gossipIdentity.completedReferenceChecks)}
+                          value={gossipIdentity.referenceFeeTokens}
+                          onChange={(e) =>
+                            updateGossipToggle({
+                              referenceFeeTokens: Number(e.target.value),
+                            })
+                          }
+                          className="mt-3 w-full accent-amber-600"
+                        />
+                        <p className="mt-1 text-[11px] text-gray-400">
+                          Completed reference checks given:{' '}
+                          {gossipIdentity.completedReferenceChecks || 0}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
               </SettingsCard>
             </div>
 

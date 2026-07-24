@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { LMS_CARD_CLASS } from '../../constants';
@@ -13,10 +14,14 @@ import {
 } from '../../api/client';
 import { buildQuizAttemptHref, formatQuizDifficulty } from '../quiz-utils';
 import { difficultyBadge } from '../quiz-page-helpers';
+import { insufficientTokensMessage } from '@/lib/token-errors';
+import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
 
 type QuizTopicGeneratorProps = {
   onGenerated?: (topic: string, quizzes: GeneratedQuizSummary[]) => void;
 };
+
+type DropdownBox = { top: number; left: number; width: number };
 
 export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
   const [topic, setTopic] = useState('');
@@ -29,7 +34,18 @@ export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [generatedQuizzes, setGeneratedQuizzes] = useState<GeneratedQuizSummary[]>([]);
   const [activeTopic, setActiveTopic] = useState('');
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [dropdownBox, setDropdownBox] = useState<DropdownBox | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  const inputWrapRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const showSuggestions = suggestOpen && topic.trim().length >= 2;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const query = topic.trim();
@@ -67,9 +83,38 @@ export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
     };
   }, [topic]);
 
+  const updateDropdownPosition = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setDropdownBox({
+      top: rect.bottom + 8,
+      left: rect.left,
+      width: Math.max(rect.width, 280),
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!showSuggestions) {
+      setDropdownBox(null);
+      return;
+    }
+    updateDropdownPosition();
+    const onReposition = () => updateDropdownPosition();
+    window.addEventListener('resize', onReposition);
+    window.addEventListener('scroll', onReposition, true);
+    return () => {
+      window.removeEventListener('resize', onReposition);
+      window.removeEventListener('scroll', onReposition, true);
+    };
+  }, [showSuggestions, topic, suggestions.length, suggestLoading]);
+
   useEffect(() => {
     const handleDown = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const insideInput = inputWrapRef.current?.contains(target);
+      const insideDropdown = dropdownRef.current?.contains(target);
+      if (!insideInput && !insideDropdown) {
         setSuggestOpen(false);
         setHighlight(-1);
       }
@@ -82,6 +127,7 @@ export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
     setTopic(value);
     setSuggestOpen(false);
     setHighlight(-1);
+    inputRef.current?.focus();
   };
 
   const handleGenerate = async (topicValue?: string) => {
@@ -99,28 +145,85 @@ export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
       setGeneratedQuizzes(result.quizzes);
       onGenerated?.(result.topic, result.quizzes);
     } catch (error) {
-      setGenerateError(error instanceof Error ? error.message : 'Failed to generate quizzes.');
+      const tokenMsg = insufficientTokensMessage(error);
+      setGenerateError(
+        tokenMsg ||
+          (error instanceof Error ? error.message : 'Failed to generate quizzes.'),
+      );
       setGeneratedQuizzes([]);
     } finally {
       setGenerating(false);
     }
   };
 
+  const suggestionsPortal =
+    mounted && showSuggestions && dropdownBox
+      ? createPortal(
+          <div
+            ref={dropdownRef}
+            id="quiz-topic-suggestions"
+            role="listbox"
+            style={{
+              position: 'fixed',
+              top: dropdownBox.top,
+              left: dropdownBox.left,
+              width: Math.min(dropdownBox.width, window.innerWidth - 24),
+              zIndex: 9999,
+            }}
+            className="max-h-64 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-2xl"
+          >
+            {suggestLoading ? (
+              <div className="flex items-center gap-2 px-4 py-3 text-sm text-gray-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading OpenAI suggestions…
+              </div>
+            ) : suggestions.length > 0 ? (
+              <ul>
+                {suggestions.map((suggestion, index) => (
+                  <li key={suggestion} role="option" aria-selected={highlight === index}>
+                    <button
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => applySuggestion(suggestion)}
+                      className={`flex w-full items-center gap-2 px-4 py-3 text-left text-sm transition hover:bg-sky-50 ${
+                        highlight === index ? 'bg-sky-50' : ''
+                      }`}
+                    >
+                      <Sparkles className="h-4 w-4 shrink-0 text-[#28A8E1]" />
+                      <span className="min-w-0 break-words">{suggestion}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-4 py-3 text-sm text-gray-500">
+                {suggestError || 'No suggestions yet. Press Enter to generate quizzes for this topic.'}
+              </p>
+            )}
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
     <div className="space-y-6">
-      <section className="space-y-4">
+      <section className="space-y-4 overflow-visible">
         <AISectionHeading title="AI quiz generator" />
-        <div className={`${LMS_CARD_CLASS} space-y-4`} ref={containerRef}>
+        <div
+          className="space-y-4 overflow-visible rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] backdrop-blur-sm sm:p-7"
+        >
           <p className="text-sm text-gray-600">
-            Enter a topic and OpenAI will suggest ideas while you type, then create 5 practice quizzes for that topic.
+            Enter a topic and OpenAI will suggest ideas while you type, then create 5 practice quizzes for
+            that topic.
           </p>
 
-          <div className="relative">
+          <div ref={inputWrapRef}>
             <label htmlFor="quiz-topic-input" className="text-sm font-semibold text-gray-900">
               Quiz topic
             </label>
             <div className="mt-2 flex flex-col gap-3 sm:flex-row">
               <input
+                ref={inputRef}
                 id="quiz-topic-input"
                 type="text"
                 value={topic}
@@ -129,11 +232,15 @@ export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
                   setSuggestOpen(true);
                   setHighlight(-1);
                 }}
-                onFocus={() => setSuggestOpen(true)}
+                onFocus={() => {
+                  setSuggestOpen(true);
+                  requestAnimationFrame(updateDropdownPosition);
+                }}
                 onKeyDown={(event) => {
                   if (event.key === 'ArrowDown') {
                     event.preventDefault();
-                    setHighlight((prev) => Math.min(prev + 1, suggestions.length - 1));
+                    setSuggestOpen(true);
+                    setHighlight((prev) => Math.min(prev + 1, Math.max(suggestions.length - 1, 0)));
                   } else if (event.key === 'ArrowUp') {
                     event.preventDefault();
                     setHighlight((prev) => Math.max(prev - 1, 0));
@@ -152,6 +259,9 @@ export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
                 placeholder="e.g. JavaScript, React Hooks, System Design"
                 className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none ring-[#28A8E1] transition focus:border-[#28A8E1] focus:ring-2"
                 autoComplete="off"
+                aria-autocomplete="list"
+                aria-expanded={showSuggestions}
+                aria-controls="quiz-topic-suggestions"
               />
               <button
                 type="button"
@@ -160,42 +270,15 @@ export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
                 className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#28A8E1] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                {generating ? 'Generating…' : 'Generate 5 quizzes'}
+                {generating ? (
+                  'Generating…'
+                ) : (
+                  <>
+                    Generate · <TokenCoinIcon className="h-4 w-4" /> 15
+                  </>
+                )}
               </button>
             </div>
-
-            {suggestOpen && topic.trim().length >= 2 ? (
-              <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
-                {suggestLoading ? (
-                  <div className="flex items-center gap-2 px-4 py-3 text-sm text-gray-500">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading OpenAI suggestions…
-                  </div>
-                ) : suggestions.length > 0 ? (
-                  <ul>
-                    {suggestions.map((suggestion, index) => (
-                      <li key={suggestion}>
-                        <button
-                          type="button"
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => applySuggestion(suggestion)}
-                          className={`flex w-full items-center gap-2 px-4 py-3 text-left text-sm transition hover:bg-sky-50 ${
-                            highlight === index ? 'bg-sky-50' : ''
-                          }`}
-                        >
-                          <Sparkles className="h-4 w-4 text-[#28A8E1]" />
-                          <span>{suggestion}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="px-4 py-3 text-sm text-gray-500">
-                    {suggestError || 'No suggestions yet. Press Enter to generate quizzes for this topic.'}
-                  </p>
-                )}
-              </div>
-            ) : null}
           </div>
 
           {generateError ? (
@@ -205,6 +288,8 @@ export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
           ) : null}
         </div>
       </section>
+
+      {suggestionsPortal}
 
       {generatedQuizzes.length > 0 ? (
         <section className="space-y-4">

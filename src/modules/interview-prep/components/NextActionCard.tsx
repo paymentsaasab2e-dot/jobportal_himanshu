@@ -5,6 +5,8 @@ import { ChevronRight, Zap } from 'lucide-react';
 type NextActionCardProps = {
   label: string;
   onAction?: () => void;
+  /** Kept for callers; cost is shown on the spend/unlock button, not here */
+  tokenCost?: number;
 };
 
 export function NextActionCard({ label, onAction }: NextActionCardProps) {

@@ -8,9 +8,10 @@ import type { InterviewPrepData } from '../types/interview.types';
 type InterviewHeaderProps = {
   data: Pick<InterviewPrepData, 'goal' | 'readiness' | 'nextAction' | 'scores'>;
   onNextAction?: () => void;
+  nextActionTokenCost?: number;
 };
 
-export function InterviewHeader({ data, onNextAction }: InterviewHeaderProps) {
+export function InterviewHeader({ data, onNextAction, nextActionTokenCost }: InterviewHeaderProps) {
   return (
     <div className="relative overflow-hidden rounded-2xl p-5 sm:p-6 shadow-sm transition-all duration-200 ease-in-out hover:shadow-md">
       <div
@@ -47,7 +48,11 @@ export function InterviewHeader({ data, onNextAction }: InterviewHeaderProps) {
           </div>
         </div>
 
-        <NextActionCard label={data.nextAction} onAction={onNextAction} />
+        <NextActionCard
+          label={data.nextAction}
+          onAction={onNextAction}
+          tokenCost={nextActionTokenCost}
+        />
 
         <PerformanceSnapshot scores={data.scores} />
       </div>

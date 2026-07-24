@@ -83,36 +83,51 @@ export default function LmsNotesPage() {
 
   const hasAnyNotes = rawNotes.length > 0;
   
-  const handleAIChipClick = (action: { id: string, label: string }) => {
-     let title = 'AI Generated Draft';
-     let type: NoteType = 'Learning Notes';
-     let body = 'AI draft template initialized...\\n\\n';
+  const handleAIChipClick = async (action: { id: string, label: string }) => {
+     try {
+       const { spendTokenService } = await import('@/lib/tokens-api');
+       const { notifyInsufficientTokens } = await import('@/lib/token-errors');
+       try {
+         await spendTokenService('lms.notes.ai-action');
+       } catch (err) {
+         if (!notifyInsufficientTokens(err)) {
+           console.warn(err);
+         }
+         return;
+       }
+
+       let title = 'AI Generated Draft';
+       let type: NoteType = 'Learning Notes';
+       let body = 'AI draft template initialized...\\n\\n';
      
-     if (action.id === 'sum') {
-         title = 'Summary of recent topics';
-         body += '- Core concepts extracted.\\n- Review required items highlighted.';
-     } else if (action.id === 'flash') {
-         title = 'Flashcard collection';
-         body += 'Q: \\nA: \\n';
-     } else if (action.id === 'quiz') {
-         title = 'Generated mock questions';
-         type = 'Interview Prep';
-         body += 'Question 1: Explain the tradeoff between X and Y?';
-     } else if (action.id === 'keys') {
-         title = 'Key concepts extraction';
-         body += 'Concept 1:\\n- Why it matters';
-     } else if (action.id === 'interview') {
-         title = 'Interview answer bank';
-         type = 'Interview Prep';
-     } else if (action.id === 'mockq') {
-         title = 'Mock interview question set';
-         type = 'Interview Prep';
-     } else if (action.id === 'eli5') {
-         title = 'Explain it like an interviewer';
-         type = 'Interview Prep';
+       if (action.id === 'sum') {
+           title = 'Summary of recent topics';
+           body += '- Core concepts extracted.\\n- Review required items highlighted.';
+       } else if (action.id === 'flash') {
+           title = 'Flashcard collection';
+           body += 'Q: \\nA: \\n';
+       } else if (action.id === 'quiz') {
+           title = 'Generated mock questions';
+           type = 'Interview Prep';
+           body += 'Question 1: Explain the tradeoff between X and Y?';
+       } else if (action.id === 'keys') {
+           title = 'Key concepts extraction';
+           body += 'Concept 1:\\n- Why it matters';
+       } else if (action.id === 'interview') {
+           title = 'Interview answer bank';
+           type = 'Interview Prep';
+       } else if (action.id === 'mockq') {
+           title = 'Mock interview question set';
+           type = 'Interview Prep';
+       } else if (action.id === 'eli5') {
+           title = 'Explain it like an interviewer';
+           type = 'Interview Prep';
+       }
+     
+       router.push(`/lms/notes/new?title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&body=${encodeURIComponent(body)}`);
+     } catch (e) {
+       console.error(e);
      }
-     
-     router.push(`/lms/notes/new?title=${encodeURIComponent(title)}&type=${encodeURIComponent(type)}&body=${encodeURIComponent(body)}`);
   };
 
   return (

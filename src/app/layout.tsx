@@ -18,6 +18,7 @@ import { NavigationLoader } from "@/components/common/NavigationLoader";
 import { PortalNavigationWarmup } from "@/components/common/PortalNavigationWarmup";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { IntlProvider } from "@/components/i18n/IntlProvider";
+import { TokensProvider } from "@/components/tokens/TokensContext";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 
@@ -50,15 +51,17 @@ export default function RootLayout({
             <AuthProvider>
               <InactivityGuard>
                 <QueryProvider>
+                <TokensProvider>
                 <AuthGuard>
                   <NavigationLoader />
                   <PortalNavigationWarmup />
                   <GlobalHeader />
-                  <main className="min-h-screen">
+                  <main className="min-h-[calc(100dvh-var(--app-header-height,96px))]">
                     {children}
                   </main>
                   <GlobalFooter />
                 </AuthGuard>
+                </TokensProvider>
                 </QueryProvider>
               </InactivityGuard>
             </AuthProvider>

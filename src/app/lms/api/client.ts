@@ -1,16 +1,18 @@
 import { getApiBaseUrl } from '@/lib/api-base';
+import { getStoredToken } from '@/lib/auth-storage';
+import { assertTokensOk, InsufficientTokensError } from '@/lib/tokens-api';
 
 export const LMS_API_BASE = `${getApiBaseUrl()}/lms`;
 
 function getAuthHeaders(): HeadersInit | null {
   if (typeof window === 'undefined') return null;
-  
-  const token = sessionStorage.getItem('token');
+
+  const token = getStoredToken();
   if (!token || token === 'undefined' || token === 'null') return null;
 
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    Authorization: `Bearer ${token}`,
   };
 }
 
@@ -31,11 +33,25 @@ async function lmsFetch(url: string, options: RequestInit = {}) {
     console.error(`LMS Client: Network error while calling ${url}`, error);
     return null;
   }
-  
+
   if (res.status === 401) {
     console.error('LMS Client: Session expired (401).');
   }
-  
+
+  if (res.status === 402) {
+    await assertTokensOk(res);
+  }
+
+  const balanceHeader = res.headers.get('x-token-balance');
+  if (balanceHeader != null && typeof window !== 'undefined') {
+    const bal = Number(balanceHeader);
+    if (!Number.isNaN(bal)) {
+      window.dispatchEvent(
+        new CustomEvent('saasa:token-balance', { detail: { tokenBalance: bal } }),
+      );
+    }
+  }
+
   return res;
 }
 
@@ -59,6 +75,29 @@ export async function toggleSaveCourse(courseId: string, saved: boolean) {
   if (!res) return null;
   if (!res.ok) throw new Error('Failed to toggle save state');
   const data = await res.json(); return data.data;
+}
+
+export async function enrollCourse(courseId: string) {
+  const res = await lmsFetch(`${LMS_API_BASE}/courses/enroll`, {
+    method: 'POST',
+    body: JSON.stringify({ courseId }),
+  });
+  if (!res) throw new Error('No authentication token found. Please log in again.');
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    if (res.status === 402) {
+      const { InsufficientTokensError } = await import('@/lib/tokens-api');
+      throw new InsufficientTokensError({
+        message: data?.message || data?.error || 'Insufficient tokens',
+        balance: data?.balance,
+        required: data?.required,
+        shortfall: data?.shortfall,
+        service: data?.service,
+      });
+    }
+    throw new Error(data?.message || data?.error || 'Failed to enroll');
+  }
+  return data.data;
 }
 
 export async function fetchEvents(filters?: Record<string, string>) {
@@ -483,6 +522,8 @@ export async function improveResumeText(text: string) {
   if (!res.ok) throw new Error('AI improvement failed');
   const data = await res.json(); return data.data.improvedText;
 }
+
+export { InsufficientTokensError };
 
 export async function exportResumePdf(resumeHtml: string) {
   const candidateId = typeof window !== 'undefined' ? sessionStorage.getItem('candidateId') : null;
