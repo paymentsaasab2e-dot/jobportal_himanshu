@@ -1,8 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
+import { ArrowRight, BookOpen } from 'lucide-react';
+import { useLocale } from 'next-intl';
+import { useAuth } from '@/components/auth/AuthContext';
+import { AppLocale, localizePath } from '@/lib/i18n';
 
 interface Course {
   id: number;
@@ -38,11 +42,107 @@ interface Course {
   reviewCount: number;
 }
 
+function AuthInterceptModal({
+  isOpen,
+  onClose,
+  redirectUrl,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  redirectUrl: string;
+}) {
+  const router = useRouter();
+  const locale = useLocale() as AppLocale;
+
+  if (!isOpen) return null;
+
+  const handleContinue = () => {
+    sessionStorage.setItem('postLoginRedirect', redirectUrl);
+    router.push(localizePath('/whatsapp', locale));
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="w-full max-w-md rounded-[28px] bg-white p-8 shadow-2xl ring-1 ring-slate-900/5"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-sky-50">
+          <BookOpen className="h-7 w-7 text-[#28A8DF]" />
+        </div>
+        <h2 className="mb-3 text-center text-2xl font-bold tracking-tight text-slate-900">
+          Login required
+        </h2>
+        <p className="mb-8 text-center text-[15px] font-medium leading-relaxed text-slate-500">
+          Sign in with WhatsApp to view full course details and start learning.
+        </p>
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={handleContinue}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#28A8DF] px-4 py-3.5 text-[15px] font-semibold text-white transition-all hover:bg-[#1f97cb]"
+          >
+            Continue with WhatsApp Login
+            <ArrowRight className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-xl border border-slate-200 px-4 py-3.5 text-[15px] font-semibold text-slate-600 transition-all hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CourseDetailsPage() {
   const router = useRouter();
   const params = useParams();
+  const locale = useLocale() as AppLocale;
   const courseId = params?.id as string;
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [expandedModule, setExpandedModule] = useState<number | null>(1);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const detailsPath = localizePath(`/courses/${courseId}`, locale);
+
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+    }
+  }, [isAuthenticated, isAuthLoading]);
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-sky-200 border-t-[#28A8DF]" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-white">
+        <AuthInterceptModal
+          isOpen={isAuthModalOpen}
+          onClose={() => {
+            setIsAuthModalOpen(false);
+            router.push(localizePath('/courses', locale));
+          }}
+          redirectUrl={detailsPath}
+        />
+      </div>
+    );
+  }
 
   // Sample course data - in a real app, this would be fetched based on courseId
   const course: Course = {

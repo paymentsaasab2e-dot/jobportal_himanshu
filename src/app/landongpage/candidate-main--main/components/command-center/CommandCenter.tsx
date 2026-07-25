@@ -2,12 +2,12 @@
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import {
-  Activity, Cpu, Globe, Shield, TrendingUp, Users, Target, Wifi, ChevronDown
+  Users, MessageSquare, Gift, Mic2, Sparkles, Building2, ChevronDown
 } from 'lucide-react'
 import { useCandmainLandingContent } from '@/lib/candmain-landing'
 import type { CandmainStat } from '@/lib/candmain-landing'
 
-const icons = [Activity, Cpu, Globe, Shield, TrendingUp, Users, Target, Wifi]
+const icons = [Users, MessageSquare, Gift, Mic2, Sparkles, Building2]
 
 function StatCard({ stat, index }: { stat: CandmainStat; index: number }) {
   const [displayValue, setDisplayValue] = useState(
@@ -128,10 +128,12 @@ export default function CommandCenter() {
             {c.title}{' '}
             <span className="gradient-text-blue">{c.titleAccent}</span>
           </h2>
-          <p className="text-text-muted text-lg max-w-2xl mx-auto">{c.subtitle}</p>
+          {c.subtitle ? (
+            <p className="text-text-muted text-lg max-w-2xl mx-auto">{c.subtitle}</p>
+          ) : null}
         </motion.div>
 
-        <div className="command-center-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 mb-10 py-4">
+        <div className="command-center-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-10 py-4">
           {c.stats.map((stat, i) => (
             <StatCard key={stat.id} stat={stat} index={i} />
           ))}

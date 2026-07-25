@@ -4,10 +4,9 @@ export const candmainLandingEn: CandmainLandingContent = {
   dateLocale: 'en-US',
   commandCenter: {
     tag: 'HRYANTRA',
-    title: 'Have Your Dream Job.',
-    titleAccent: 'Have Fun. Live with Freedom.',
-    subtitle:
-      'Join HRYantra by learning, improving your skills, strengthening your CV, expanding your knowledge, and landing your dream job across the globe.',
+    title: '',
+    titleAccent: 'Find Fun & Freedom',
+    subtitle: '',
     liveFeed: 'Live Feed',
     ticker: [
       'Recruiter viewed profile - Operations Manager role',
@@ -21,14 +20,12 @@ export const candmainLandingEn: CandmainLandingContent = {
       'Offer activity detected - Customer Success role',
     ],
     stats: [
-      { id: 'matches', label: 'AI Job Matches', value: '42', status: 'live', statusLabel: 'live', trend: 'Roles aligned to your profile on Explore Jobs.' },
-      { id: 'applications', label: 'Active Applications', value: '18', status: 'active', statusLabel: 'active', trend: 'Tracked in Applications with live status updates.' },
-      { id: 'profile', label: 'Profile Completion', value: '94%', status: 'excellent', statusLabel: 'excellent', trend: 'Complete your candidate profile for better recruiter visibility.' },
-      { id: 'resume', label: 'Resume Builder Score', value: '88', status: 'growing', statusLabel: 'growing', trend: 'Improve ATS readiness with LMS Resume Builder.' },
-      { id: 'interviews', label: 'Interview Prep Sessions', value: '12', status: 'excellent', statusLabel: 'excellent', trend: 'Mock interviews and question banks in LMS.' },
-      { id: 'ats', label: 'ATS Check Pass Rate', value: '92%', status: 'excellent', statusLabel: 'excellent', trend: 'Scan your CV before applying to open roles.' },
-      { id: 'courses', label: 'Learning Paths Started', value: '6', status: 'active', statusLabel: 'active', trend: 'Upskill with courses and career-path planning.' },
-      { id: 'response', label: 'Recruiter Response Rate', value: '58%', status: 'growing', statusLabel: 'growing', trend: 'Stronger profiles get more responses from tenant recruiters.' },
+      { id: 'communities', label: 'Build your communities', value: '01', status: 'live', statusLabel: 'community', trend: 'Connect with peers, mentors, and talent circles that match your goals.' },
+      { id: 'chats', label: 'Have personalized chats', value: '02', status: 'active', statusLabel: 'chat', trend: 'Talk with mentors and recruiters through conversations tailored to you.' },
+      { id: 'referrals', label: 'Earn with referrals', value: '03', status: 'growing', statusLabel: 'earn', trend: 'Share openings and earn rewards when your referrals get hired.' },
+      { id: 'interviewer', label: 'Be an interviewer', value: '04', status: 'excellent', statusLabel: 'expert', trend: 'Join interview panels, share expertise, and grow your professional brand.' },
+      { id: 'aicv', label: 'Build AI-powered CV', value: '05', status: 'excellent', statusLabel: 'AI', trend: 'Create a stronger resume with AI guidance built for ATS and recruiters.' },
+      { id: 'companies', label: 'Connect to companies', value: '06', status: 'active', statusLabel: 'network', trend: 'Reach hiring teams and discover roles matched to your profile.' },
     ],
   },
   activity: {
@@ -191,17 +188,17 @@ export const candmainLandingEn: CandmainLandingContent = {
   },
   experience: {
     tag: 'Candidate Journey',
-    title: 'Live Hiring',
-    titleAccent: 'Pipeline',
+    title: 'How the',
+    titleAccent: 'Application Process Works',
     subtitle:
-      'Track how a candidate moves from profile setup to recruiter discovery, interview readiness, and active offer-stage momentum.',
-    stagesCount: 'Live evaluation stages',
-    stagesHint: 'Stage 1 profile signal to Stage 4 hiring movement',
+      'Log in, upload your CV, receive relevant job matches, and apply—all in four simple steps.',
+    stagesCount: '4 simple steps',
+    stagesHint: 'From WhatsApp login to tracked applications',
     steps: [
-      { id: 'signup', company: 'WhatsApp Sign-In', role: 'Step 1: Join the Portal', period: 'Day 1', description: 'Sign in with WhatsApp, verify your number, and land on your candidate dashboard with personalized job recommendations.', highlights: ['Quick OTP login', 'Secure session', 'Dashboard access'], color: '#28A8E1' },
-      { id: 'profile', company: 'Profile & CV Setup', role: 'Step 2: Complete Your Profile', period: 'Week 1', description: 'Add experience, education, skills, and upload your CV. Run ATS Check and improve your resume in LMS Resume Builder.', highlights: ['Profile 94% complete', 'ATS optimized', 'Skills tagged'], color: '#28A8DF' },
-      { id: 'explore', company: 'Explore Jobs', role: 'Step 3: Search & Apply', period: 'Week 2', description: 'Browse live openings from agency tenants, filter by location and role type, and apply with tailored CVs and screening flows.', highlights: ['42 AI matches', 'Remote & hybrid roles', 'Tracked applications'], color: '#0EA5E9' },
-      { id: 'grow', company: 'LMS & Interview Prep', role: 'Step 4: Prepare & Progress', period: 'Ongoing', description: 'Use courses, mock interviews, career path planning, and application tracking until offer and placement stages.', highlights: ['Mock interviews', 'Application timeline', 'Recruiter visibility'], color: '#38BDF8' },
+      { id: 'signup', company: 'WhatsApp Login', role: 'Step 1: Log In', period: 'Start', description: 'Enter your WhatsApp number, verify the OTP, and securely access your candidate account.', highlights: ['WhatsApp sign-in', 'Quick OTP', 'Secure access'], color: '#28A8E1' },
+      { id: 'profile', company: 'CV Upload', role: 'Step 2: Upload Your CV', period: 'Next', description: 'Upload your latest CV so HRYantra AI can understand your skills, experience, and career goals.', highlights: ['Upload CV', 'AI profile scan', 'Skills identified'], color: '#28A8DF' },
+      { id: 'explore', company: 'AI Job Matching', role: 'Step 3: Get Job Matches', period: 'Then', description: 'Receive personalized job matches based on your CV, preferences, location, and experience.', highlights: ['Relevant matches', 'Job-fit insights', 'Personalized roles'], color: '#0EA5E9' },
+      { id: 'grow', company: 'Apply & Track', role: 'Step 4: Apply for Jobs', period: 'Ongoing', description: 'Review matched roles, apply with your CV, complete screening questions, and track every application.', highlights: ['Easy application', 'Screening flow', 'Live status tracking'], color: '#38BDF8' },
     ],
   },
   whyHire: {
@@ -226,10 +223,10 @@ export const candmainLandingEn: CandmainLandingContent = {
   },
   cta: {
     badge: 'Join the HR Yantra candidate network',
-    tagline: 'Find the job that fits you perfectly.',
-    accent: 'Start on Explore Jobs.',
+    tagline: 'Where dream meets opportunities — Learn, Earn and Grow with AI',
+    accent: 'Learn, Earn and Grow with AI',
     subtitle:
-      'Search live openings, complete your profile, apply with confidence, and track every step in Applications and your Candidate Dashboard.',
+      'Bridging the gap between ambition and opportunities.',
     roles: ['Technology', 'Business & Strategy', 'Finance & Banking', 'Sales & Marketing', 'HR & Operations', 'Healthcare & Education', 'Design & Customer Success'],
     exploreJobs: 'Explore Jobs',
     whatsappLogin: 'Sign in with WhatsApp',

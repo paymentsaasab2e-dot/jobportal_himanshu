@@ -4,7 +4,7 @@ import { CandMainLandingPage } from '@/components/candmain/CandMainLandingPage';
 export const metadata: Metadata = {
   title: 'HR Yantra — AI-Powered Job Search',
   description:
-    'Find the job that fits you perfectly. HR Yantra AI matches you to roles that suit your skills, experience, and goals.',
+    'Where dream meets opportunities — Learn, Earn and Grow with AI. Bridging the gap between ambition and opportunities. Discover Jobs. Build Skills. Elevate.',
 };
 
 export default function Page() {

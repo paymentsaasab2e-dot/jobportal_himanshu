@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { BookOpen } from 'lucide-react';
+import { ArrowRight, BookOpen } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { useAuth } from '@/components/auth/AuthContext';
+import { AppLocale, localizePath } from '@/lib/i18n';
 
 interface Course {
   id: number;
@@ -36,38 +38,55 @@ function AuthInterceptModal({
   redirectUrl: string;
 }) {
   const router = useRouter();
+  const locale = useLocale() as AppLocale;
 
   if (!isOpen) return null;
 
   const handleContinue = () => {
     sessionStorage.setItem('postLoginRedirect', redirectUrl);
-    router.push('/whatsapp');
+    router.push(localizePath('/whatsapp', locale));
   };
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-3xl border border-slate-100 bg-white p-8 shadow-xl">
-        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50">
+    <div
+      className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="w-full max-w-md rounded-[28px] bg-white p-8 shadow-2xl ring-1 ring-slate-900/5"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="courses-auth-modal-title"
+      >
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-sky-50">
           <BookOpen className="h-7 w-7 text-[#28A8DF]" />
         </div>
-        <h2 className="mb-2 text-center text-xl font-bold tracking-tight text-slate-900">
+        <h2
+          id="courses-auth-modal-title"
+          className="mb-3 text-center text-2xl font-bold tracking-tight text-slate-900"
+        >
           {title}
         </h2>
-        <p className="mb-8 text-center text-sm leading-relaxed text-slate-500">
+        <p className="mb-8 text-center text-[15px] font-medium leading-relaxed text-slate-500">
           {description}
         </p>
         <div className="space-y-3">
           <button
+            type="button"
             onClick={handleContinue}
-            className="w-full rounded-2xl bg-[#28A8DF] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-sky-500"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#28A8DF] px-4 py-3.5 text-[15px] font-semibold text-white transition-all hover:bg-[#1f97cb]"
           >
-            Register / Log In
+            Continue with WhatsApp Login
+            <ArrowRight className="h-5 w-5" />
           </button>
           <button
+            type="button"
             onClick={onClose}
-            className="w-full rounded-2xl py-3 text-sm font-medium text-slate-400 transition-colors hover:text-slate-600"
+            className="w-full rounded-xl border border-slate-200 px-4 py-3.5 text-[15px] font-semibold text-slate-600 transition-all hover:bg-slate-50"
           >
-            I&apos;ll do this later
+            Cancel
           </button>
         </div>
       </div>
@@ -77,7 +96,8 @@ function AuthInterceptModal({
 
 export default function CoursesPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const locale = useLocale() as AppLocale;
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [skillLevel, setSkillLevel] = useState('all');
   const [provider, setProvider] = useState('all');
@@ -86,6 +106,17 @@ export default function CoursesPage() {
   const [sortBy, setSortBy] = useState('relevance');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authRedirectUrl, setAuthRedirectUrl] = useState('/courses');
+
+  const openCourseDetails = (courseId: number) => {
+    const detailsPath = localizePath(`/courses/${courseId}`, locale);
+    if (isAuthLoading) return;
+    if (!isAuthenticated) {
+      setAuthRedirectUrl(detailsPath);
+      setIsAuthModalOpen(true);
+      return;
+    }
+    router.push(detailsPath);
+  };
 
   const courses: Course[] = [
     {
@@ -766,14 +797,8 @@ export default function CoursesPage() {
 
                 {/* View Details Button */}
                 <button
-                  onClick={() => {
-                    if (isAuthenticated) {
-                      router.push(`/courses/${course.id}`);
-                      return;
-                    }
-                    setAuthRedirectUrl(`/courses/${course.id}`);
-                    setIsAuthModalOpen(true);
-                  }}
+                  type="button"
+                  onClick={() => openCourseDetails(course.id)}
                   className="w-full px-4 py-2.5 rounded-lg font-medium transition-colors"
                   style={{
                     fontFamily: 'Inter, sans-serif',
@@ -827,8 +852,8 @@ export default function CoursesPage() {
       <AuthInterceptModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        title="View Course Details"
-        description="Sign in to see full course details and start learning with AI-recommended courses."
+        title="Login required"
+        description="Sign in with WhatsApp to view full course details and start learning with AI-recommended courses."
         redirectUrl={authRedirectUrl}
       />
     </div>
