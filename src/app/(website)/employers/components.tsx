@@ -657,7 +657,7 @@ function HeroSection() {
           <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col items-center">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200/80 rounded-full px-4 py-2 mb-6 shadow-sm">
               <span className="flex h-2 w-2 rounded-full bg-sky-500 animate-pulse"></span>
-              <span className="text-[12px] font-black uppercase tracking-[0.18em] text-sky-700">HR Yantra AI - Powered Job Search</span>
+              <span className="text-[12px] font-black uppercase tracking-[0.18em] text-sky-700">HRYantra AI Powered Career</span>
             </div>
 
             <h1 className="text-4xl md:text-[3.75rem] font-black tracking-tight text-slate-900 mb-5 leading-[1.12]">

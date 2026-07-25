@@ -3,11 +3,11 @@ import type { CandmainLandingContent } from './types'
 export const candmainLandingEn: CandmainLandingContent = {
   dateLocale: 'en-US',
   commandCenter: {
-    tag: 'Platform Outcomes',
-    title: 'Trusted Outcomes.',
-    titleAccent: 'Measurable Career Growth.',
+    tag: 'HRYANTRA',
+    title: 'Have Your Dream Job.',
+    titleAccent: 'Have Fun. Live with Freedom.',
     subtitle:
-      'Join an AI-based platform designed to help candidates get discovered, secure interviews, and accelerate career growth through AI-powered matching and recruiter visibility.',
+      'Join HRYantra by learning, improving your skills, strengthening your CV, expanding your knowledge, and landing your dream job across the globe.',
     liveFeed: 'Live Feed',
     ticker: [
       'Recruiter viewed profile - Operations Manager role',
@@ -32,7 +32,7 @@ export const candmainLandingEn: CandmainLandingContent = {
     ],
   },
   activity: {
-    tag: 'Always Moving',
+    tag: 'Keep evolving',
     title: 'Live',
     titleAccent: 'Career Activity Stream',
     subtitle:
@@ -61,10 +61,10 @@ export const candmainLandingEn: CandmainLandingContent = {
   },
   hiring: {
     tag: 'Hiring Intelligence',
-    title: 'The Complete',
-    titleAccent: 'Hiring Process Hierarchy',
+    title: 'What Happened When You',
+    titleAccent: 'Joined HRyantra',
     subtitle:
-      'See how candidates move from application to offer across tech, business, finance, healthcare, sales, operations, design, and more.',
+      'See how candidates move through the hiring process: From Job Applicant → Job Offer.',
     funnelTitle: 'Live Hiring Funnel',
     funnelUpdated: 'Real-time candidate progression across all 6 stages - Updated',
     liveData: 'Live Data',

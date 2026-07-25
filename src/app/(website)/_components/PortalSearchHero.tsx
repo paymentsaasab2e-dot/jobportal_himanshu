@@ -9,7 +9,9 @@ import { AppLocale, localizePath } from '@/lib/i18n';
 import {
   Search, MapPin, ChevronRight,
   Home, Building2, BarChart2, Package, GraduationCap,
-  Code2, TrendingUp, BadgeDollarSign, Cpu, Users, Database,
+  Code2, TrendingUp, BadgeDollarSign, Cpu, Users,
+  Globe2, HeartPulse, Factory, ShoppingBag, BookOpen, Hotel,
+  Briefcase, UserRound, Award, Landmark,
 } from 'lucide-react';
 import {
   buildSearchJobsUrl,
@@ -31,6 +33,7 @@ export function PortalSearchHero() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showLocSuggestions, setShowLocSuggestions] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [exploreTab, setExploreTab] = useState<'country' | 'industries' | 'departments'>('country');
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const locationInputRef = useRef<HTMLInputElement | null>(null);
   const shineWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -64,6 +67,18 @@ export function PortalSearchHero() {
       pillMq.removeEventListener('change', updateRing);
     };
   }, [searchMode]);
+
+  // Cycle Country → Industries → Departments so visitors see each group in turn.
+  useEffect(() => {
+    const order = ['country', 'industries', 'departments'] as const;
+    const timer = window.setInterval(() => {
+      setExploreTab((prev) => {
+        const idx = order.indexOf(prev);
+        return order[(idx + 1) % order.length];
+      });
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   // Debounced Search Suggestions
   useEffect(() => {
@@ -650,42 +665,163 @@ export function PortalSearchHero() {
               </form>
               </div>
 
-              {/* Industry / Domain Category Grid — iPhone glassmorphism */}
+              {/* Explore by Country → Industries → Departments */}
               <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
-                <p className="text-xs md:text-sm text-slate-400 font-black uppercase tracking-[0.25em] text-center mb-6">{t("landing.exploreByCategory")}</p>
+                <p className="text-xs md:text-sm text-slate-400 font-black uppercase tracking-[0.25em] text-center mb-4">
+                  {exploreTab === 'country'
+                    ? t('landing.exploreByCountry')
+                    : exploreTab === 'industries'
+                      ? t('landing.exploreByIndustries')
+                      : t('landing.exploreByDepartments')}
+                </p>
+
+                <div className="mb-5 flex flex-wrap items-center justify-center gap-2">
+                  {([
+                    { id: 'country' as const, label: t('landing.exploreByCountry') },
+                    { id: 'industries' as const, label: t('landing.exploreByIndustries') },
+                    { id: 'departments' as const, label: t('landing.exploreByDepartments') },
+                  ]).map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setExploreTab(tab.id)}
+                      className={`rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] transition-all ${
+                        exploreTab === tab.id
+                          ? 'bg-[#2098C8] text-white shadow-md shadow-[#2098C8]/25'
+                          : 'bg-white/70 text-slate-500 ring-1 ring-slate-200/80 hover:text-slate-800'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="category-glass-scene">
                   <div className="category-glass-orb category-glass-orb-1" aria-hidden />
                   <div className="category-glass-orb category-glass-orb-2" aria-hidden />
                   <div className="category-glass-orb category-glass-orb-3" aria-hidden />
-                  <div className="category-glass-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                  {([
-                    { label: t("landing.categoryRemote"), Icon: Home, q: 'Remote', color: 'text-sky-600', tint: 'rgba(56, 189, 248, 0.22)' },
-                    { label: t("landing.categoryCorporate"), Icon: Building2, q: 'MNC', color: 'text-violet-600', tint: 'rgba(167, 139, 250, 0.22)' },
-                    { label: t("landing.categoryAnalytics"), Icon: BarChart2, q: 'Analytics', color: 'text-amber-600', tint: 'rgba(251, 191, 36, 0.22)' },
-                    { label: t("landing.categoryLogistics"), Icon: Package, q: 'Supply Chain', color: 'text-orange-600', tint: 'rgba(251, 146, 60, 0.22)' },
-                    { label: t("landing.categoryFresher"), Icon: GraduationCap, q: 'Fresher', color: 'text-emerald-600', tint: 'rgba(52, 211, 153, 0.22)' },
-                    { label: t("landing.categorySoftware"), Icon: Code2, q: 'Software Engineer', color: 'text-blue-600', tint: 'rgba(59, 130, 246, 0.22)' },
-                    { label: t("landing.categorySales"), Icon: TrendingUp, q: 'Sales', color: 'text-rose-600', tint: 'rgba(244, 63, 94, 0.2)' },
-                    { label: t("landing.categoryFinance"), Icon: BadgeDollarSign, q: 'Banking Finance', color: 'text-green-600', tint: 'rgba(34, 197, 94, 0.2)' },
-                    { label: t("landing.categoryLeadership"), Icon: Users, q: 'Project Manager', color: 'text-indigo-600', tint: 'rgba(99, 102, 241, 0.22)' },
-                    { label: t("landing.categoryEngineering"), Icon: Cpu, q: 'Engineering', color: 'text-slate-600', tint: 'rgba(100, 116, 139, 0.18)' },
-                    { label: t("landing.categoryData"), Icon: Database, q: 'Data Science', color: 'text-pink-600', tint: 'rgba(236, 72, 153, 0.2)' },
-                  ] as const).map(cat => (
-                    <button
-                      key={cat.label}
-                      type="button"
-                      onClick={() => router.push(buildSearchJobsUrl(locale, cat.q, ""))}
-                      className="category-glass-card"
-                      style={{ ['--glass-tint' as string]: cat.tint }}
-                    >
-                      <span className="category-glass-icon">
-                        <cat.Icon className={`w-5 h-5 ${cat.color}`} strokeWidth={2.5} />
-                      </span>
-                      <span className="category-glass-label">{cat.label}</span>
-                      <ChevronRight className="category-glass-chevron w-4 h-4" />
-                    </button>
-                  ))}
-                  </div>
+
+                  {exploreTab === 'country' ? (
+                    <div className="category-glass-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                      {([
+                        { label: t('landing.countryIndia'), Icon: Globe2, q: 'India', color: 'text-sky-600', tint: 'rgba(56, 189, 248, 0.22)' },
+                        { label: t('landing.countryUae'), Icon: Building2, q: 'UAE', color: 'text-emerald-600', tint: 'rgba(52, 211, 153, 0.22)' },
+                        { label: t('landing.countryUsa'), Icon: Home, q: 'USA', color: 'text-blue-600', tint: 'rgba(59, 130, 246, 0.22)' },
+                        { label: t('landing.countryUk'), Icon: Landmark, q: 'UK', color: 'text-indigo-600', tint: 'rgba(99, 102, 241, 0.22)' },
+                        { label: t('landing.countrySingapore'), Icon: Globe2, q: 'Singapore', color: 'text-violet-600', tint: 'rgba(167, 139, 250, 0.22)' },
+                        { label: t('landing.countryCanada'), Icon: MapPin, q: 'Canada', color: 'text-rose-600', tint: 'rgba(244, 63, 94, 0.2)' },
+                        { label: t('landing.countryGermany'), Icon: Factory, q: 'Germany', color: 'text-amber-600', tint: 'rgba(251, 191, 36, 0.22)' },
+                        { label: t('landing.countryAustralia'), Icon: Globe2, q: 'Australia', color: 'text-orange-600', tint: 'rgba(251, 146, 60, 0.22)' },
+                      ] as const).map((cat) => (
+                        <button
+                          key={cat.label}
+                          type="button"
+                          onClick={() => router.push(buildSearchJobsUrl(locale, '', cat.q))}
+                          className="category-glass-card"
+                          style={{ ['--glass-tint' as string]: cat.tint }}
+                        >
+                          <span className="category-glass-icon">
+                            <cat.Icon className={`w-5 h-5 ${cat.color}`} strokeWidth={2.5} />
+                          </span>
+                          <span className="category-glass-label">{cat.label}</span>
+                          <ChevronRight className="category-glass-chevron w-4 h-4" />
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {exploreTab === 'industries' ? (
+                    <div className="category-glass-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                      {([
+                        { label: t('landing.industryTechnology'), Icon: Code2, q: 'Technology', color: 'text-blue-600', tint: 'rgba(59, 130, 246, 0.22)' },
+                        { label: t('landing.industryHealthcare'), Icon: HeartPulse, q: 'Healthcare', color: 'text-rose-600', tint: 'rgba(244, 63, 94, 0.2)' },
+                        { label: t('landing.industryFinance'), Icon: BadgeDollarSign, q: 'Finance', color: 'text-green-600', tint: 'rgba(34, 197, 94, 0.2)' },
+                        { label: t('landing.industryManufacturing'), Icon: Factory, q: 'Manufacturing', color: 'text-slate-600', tint: 'rgba(100, 116, 139, 0.18)' },
+                        { label: t('landing.industryRetail'), Icon: ShoppingBag, q: 'Retail', color: 'text-orange-600', tint: 'rgba(251, 146, 60, 0.22)' },
+                        { label: t('landing.industryEducation'), Icon: BookOpen, q: 'Education', color: 'text-violet-600', tint: 'rgba(167, 139, 250, 0.22)' },
+                        { label: t('landing.industryLogistics'), Icon: Package, q: 'Logistics', color: 'text-amber-600', tint: 'rgba(251, 191, 36, 0.22)' },
+                        { label: t('landing.industryHospitality'), Icon: Hotel, q: 'Hospitality', color: 'text-pink-600', tint: 'rgba(236, 72, 153, 0.2)' },
+                      ] as const).map((cat) => (
+                        <button
+                          key={cat.label}
+                          type="button"
+                          onClick={() => router.push(buildSearchJobsUrl(locale, cat.q, ''))}
+                          className="category-glass-card"
+                          style={{ ['--glass-tint' as string]: cat.tint }}
+                        >
+                          <span className="category-glass-icon">
+                            <cat.Icon className={`w-5 h-5 ${cat.color}`} strokeWidth={2.5} />
+                          </span>
+                          <span className="category-glass-label">{cat.label}</span>
+                          <ChevronRight className="category-glass-chevron w-4 h-4" />
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {exploreTab === 'departments' ? (
+                    <div className="space-y-6">
+                      <div>
+                        <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                          {t('landing.exploreJrLevel')}
+                        </p>
+                        <div className="category-glass-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                          {([
+                            { label: t('landing.deptJrSoftware'), Icon: Code2, q: 'Junior Software', color: 'text-blue-600', tint: 'rgba(59, 130, 246, 0.22)' },
+                            { label: t('landing.deptJrSales'), Icon: TrendingUp, q: 'Junior Sales', color: 'text-rose-600', tint: 'rgba(244, 63, 94, 0.2)' },
+                            { label: t('landing.deptJrFinance'), Icon: BadgeDollarSign, q: 'Junior Finance', color: 'text-green-600', tint: 'rgba(34, 197, 94, 0.2)' },
+                            { label: t('landing.deptJrMarketing'), Icon: BarChart2, q: 'Junior Marketing', color: 'text-amber-600', tint: 'rgba(251, 191, 36, 0.22)' },
+                            { label: t('landing.deptFresher'), Icon: GraduationCap, q: 'Fresher', color: 'text-emerald-600', tint: 'rgba(52, 211, 153, 0.22)' },
+                            { label: t('landing.deptInternship'), Icon: UserRound, q: 'Internship', color: 'text-sky-600', tint: 'rgba(56, 189, 248, 0.22)' },
+                          ] as const).map((cat) => (
+                            <button
+                              key={cat.label}
+                              type="button"
+                              onClick={() => router.push(buildSearchJobsUrl(locale, cat.q, ''))}
+                              className="category-glass-card"
+                              style={{ ['--glass-tint' as string]: cat.tint }}
+                            >
+                              <span className="category-glass-icon">
+                                <cat.Icon className={`w-5 h-5 ${cat.color}`} strokeWidth={2.5} />
+                              </span>
+                              <span className="category-glass-label">{cat.label}</span>
+                              <ChevronRight className="category-glass-chevron w-4 h-4" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                          {t('landing.exploreSrLevel')}
+                        </p>
+                        <div className="category-glass-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                          {([
+                            { label: t('landing.deptSrEngineering'), Icon: Cpu, q: 'Senior Engineering', color: 'text-slate-600', tint: 'rgba(100, 116, 139, 0.18)' },
+                            { label: t('landing.deptSrSales'), Icon: TrendingUp, q: 'Senior Sales', color: 'text-rose-600', tint: 'rgba(244, 63, 94, 0.2)' },
+                            { label: t('landing.deptSrFinance'), Icon: BadgeDollarSign, q: 'Senior Finance', color: 'text-green-600', tint: 'rgba(34, 197, 94, 0.2)' },
+                            { label: t('landing.deptLeadership'), Icon: Users, q: 'Leadership', color: 'text-indigo-600', tint: 'rgba(99, 102, 241, 0.22)' },
+                            { label: t('landing.deptManager'), Icon: Briefcase, q: 'Manager', color: 'text-violet-600', tint: 'rgba(167, 139, 250, 0.22)' },
+                            { label: t('landing.deptDirector'), Icon: Award, q: 'Director', color: 'text-orange-600', tint: 'rgba(251, 146, 60, 0.22)' },
+                          ] as const).map((cat) => (
+                            <button
+                              key={cat.label}
+                              type="button"
+                              onClick={() => router.push(buildSearchJobsUrl(locale, cat.q, ''))}
+                              className="category-glass-card"
+                              style={{ ['--glass-tint' as string]: cat.tint }}
+                            >
+                              <span className="category-glass-icon">
+                                <cat.Icon className={`w-5 h-5 ${cat.color}`} strokeWidth={2.5} />
+                              </span>
+                              <span className="category-glass-label">{cat.label}</span>
+                              <ChevronRight className="category-glass-chevron w-4 h-4" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
 

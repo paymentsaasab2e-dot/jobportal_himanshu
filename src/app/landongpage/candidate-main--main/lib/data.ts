@@ -26,7 +26,7 @@ export const candidate = {
   tagline: 'Find the job that fits you perfectly.',
   subtitle:
     'HR Yantra AI matches you to roles that suit your skills, experience, and goals — explore jobs, build your profile, track applications, and prepare for interviews in one Phase 1 portal.',
-  heroBadge: 'HR Yantra AI — Powered Job Search',
+  heroBadge: 'HRYantra AI Powered Career',
   heroLine1: 'Find the job that',
   heroLine2: 'fits you perfectly.',
   heroAccent: 'Every application counts.',

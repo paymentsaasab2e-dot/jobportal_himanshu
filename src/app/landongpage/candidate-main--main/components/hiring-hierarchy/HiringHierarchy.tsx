@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import {
   FileText, MessageSquare, Code2, Users, Trophy,
-  CheckCircle2, Clock, TrendingUp, ArrowDown, Building2
+  Clock, TrendingUp, ArrowDown, Building2
 } from 'lucide-react'
 import { useCandmainLandingContent } from '@/lib/candmain-landing'
 import type { CandmainHiringStage } from '@/lib/candmain-landing'
@@ -373,40 +373,6 @@ export default function HiringHierarchy() {
             ))}
           </div>
         </div>
-
-        {/* ── Bottom Stats Banner ─────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="rounded-2xl overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #3B82F6 100%)' }}
-        >
-          <div className="px-8 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { label: h.banner[0].label, value: h.banner[0].value, icon: Clock },
-              { label: h.banner[1].label, value: h.banner[1].value, icon: Trophy },
-              { label: h.banner[2].label, value: h.banner[2].value, icon: CheckCircle2 },
-              { label: h.banner[3].label, value: h.banner[3].value, icon: TrendingUp },
-            ].map(({ label, value, icon: Icon }, i) => (
-              <motion.div
-                key={label}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.4 + i * 0.08, duration: 0.5 }}
-                className="text-center"
-              >
-                <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center mx-auto mb-2">
-                  <Icon className="w-4 h-4 text-white" />
-                </div>
-                <div className="text-xl font-black text-white mb-1">{value}</div>
-                <div className="text-xs text-white/60 font-medium">{label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
 
       </div>
     </section>

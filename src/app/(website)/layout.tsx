@@ -28,6 +28,7 @@ export default function WebsiteSiteLayout({
     "/trust-safety",
     "/help",
     "/ats-check",
+    "/courses",
   ]);
 
   const usesMarketingNavbar =

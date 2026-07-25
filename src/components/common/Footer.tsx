@@ -50,7 +50,7 @@ const socialLinks = [
 ];
 
 export default function Footer() {
-  const { isAuthenticated: isLoggedIn } = useAuth();
+  const { isAuthenticated: isLoggedIn, isLoading: isAuthLoading } = useAuth();
   const pathname = usePathname();
   const locale = useLocale() as AppLocale;
   const t = useTranslations();
@@ -59,7 +59,11 @@ export default function Footer() {
   const isEmployersPage =
     normalizedPath === "/employers" || normalizedPath.startsWith("/employers/");
 
-  const platformLinks = (isLoggedIn && !isLandingPage && !isEmployersPage) ? [
+  // Keep guest links until auth has finished hydrating so SSR HTML matches the first client paint.
+  const showAuthedPlatformLinks =
+    !isAuthLoading && isLoggedIn && !isLandingPage && !isEmployersPage;
+
+  const platformLinks = showAuthedPlatformLinks ? [
     { href: "/candidate-dashboard", label: t("nav.dashboard") },
     { href: "/candidate-home", label: "Home" },
     { href: "/explore-jobs", label: t("nav.jobs") },

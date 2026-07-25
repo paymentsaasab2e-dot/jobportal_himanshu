@@ -3,11 +3,11 @@ import type { CandmainLandingContent } from './types'
 export const candmainLandingFr: CandmainLandingContent = {
   dateLocale: 'fr-FR',
   commandCenter: {
-    tag: 'Resultats de la plateforme',
-    title: 'Resultats fiables.',
-    titleAccent: 'Croissance de carriere mesurable.',
+    tag: 'HRYANTRA',
+    title: 'Have Your Dream Job.',
+    titleAccent: 'Have Fun. Live with Freedom.',
     subtitle:
-      'Rejoignez une plateforme basee sur l\'IA concue pour aider les candidats a etre decouverts, obtenir des entretiens et accelerer leur carriere grace a la correspondance IA et a la visibilite aupres des recruteurs.',
+      'Join HRYantra by learning, improving your skills, strengthening your CV, expanding your knowledge, and landing your dream job across the globe.',
     liveFeed: 'Fil en direct',
     ticker: [
       'Profil consulte par un recruteur - poste Operations Manager',
@@ -32,7 +32,7 @@ export const candmainLandingFr: CandmainLandingContent = {
     ],
   },
   activity: {
-    tag: 'Toujours en mouvement',
+    tag: 'Keep evolving',
     title: 'Flux d\'activite',
     titleAccent: 'carriere en direct',
     subtitle:
@@ -61,10 +61,10 @@ export const candmainLandingFr: CandmainLandingContent = {
   },
   hiring: {
     tag: 'Intelligence recrutement',
-    title: 'La hierarchie complete du',
-    titleAccent: 'processus de recrutement',
+    title: 'What Happened When You',
+    titleAccent: 'Joined HRyantra',
     subtitle:
-      'Decouvrez comment les candidats passent de la candidature a l\'offre en tech, business, finance, sante, ventes, operations, design et plus.',
+      'See how candidates move through the hiring process: From Job Applicant → Job Offer.',
     funnelTitle: 'Entonnoir de recrutement en direct',
     funnelUpdated: 'Progression candidats en temps reel sur les 6 etapes - Mis a jour',
     liveData: 'Donnees en direct',

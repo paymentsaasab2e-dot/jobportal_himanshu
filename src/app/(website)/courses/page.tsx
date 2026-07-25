@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { BookOpen } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthContext';
 
 interface Course {
   id: number;
@@ -20,14 +22,70 @@ interface Course {
   language?: string;
 }
 
+function AuthInterceptModal({
+  isOpen,
+  onClose,
+  title,
+  description,
+  redirectUrl,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  description: string;
+  redirectUrl: string;
+}) {
+  const router = useRouter();
+
+  if (!isOpen) return null;
+
+  const handleContinue = () => {
+    sessionStorage.setItem('postLoginRedirect', redirectUrl);
+    router.push('/whatsapp');
+  };
+
+  return (
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-3xl border border-slate-100 bg-white p-8 shadow-xl">
+        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50">
+          <BookOpen className="h-7 w-7 text-[#28A8DF]" />
+        </div>
+        <h2 className="mb-2 text-center text-xl font-bold tracking-tight text-slate-900">
+          {title}
+        </h2>
+        <p className="mb-8 text-center text-sm leading-relaxed text-slate-500">
+          {description}
+        </p>
+        <div className="space-y-3">
+          <button
+            onClick={handleContinue}
+            className="w-full rounded-2xl bg-[#28A8DF] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-sky-500"
+          >
+            Register / Log In
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full rounded-2xl py-3 text-sm font-medium text-slate-400 transition-colors hover:text-slate-600"
+          >
+            I&apos;ll do this later
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CoursesPage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [skillLevel, setSkillLevel] = useState('all');
   const [provider, setProvider] = useState('all');
   const [price, setPrice] = useState('all');
   const [duration, setDuration] = useState('all');
   const [sortBy, setSortBy] = useState('relevance');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authRedirectUrl, setAuthRedirectUrl] = useState('/courses');
 
   const courses: Course[] = [
     {
@@ -261,16 +319,16 @@ export default function CoursesPage() {
 
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #fde9d4, #fafbfb, #bddffb)" }}>
-      <main className="mx-auto max-w-[1180px] px-4 py-8 sm:px-5 lg:px-6 pt-32">
+      <main className="mx-auto max-w-[1180px] px-4 pb-8 pt-24 sm:px-5 lg:px-6">
         {/* Title Section */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1
             style={{
               fontFamily: 'Inter, sans-serif',
               fontSize: '36px',
               fontWeight: 700,
               color: '#111827',
-              marginBottom: '12px',
+              marginBottom: '10px',
               letterSpacing: '-0.5px',
             }}
           >
@@ -290,17 +348,14 @@ export default function CoursesPage() {
         </div>
 
         {/* Search and Filter Section */}
-        <div className="mb-8 flex flex-col lg:flex-row gap-6">
+        <div className="mb-8 flex w-full justify-center">
           {/* Search Bar and Filters Container */}
           <div
-            className="p-5 flex flex-col gap-4"
+            className="flex w-full max-w-6xl flex-col gap-4 p-6"
             style={{
-              width: '861px',
-              height: '187px',
-              borderRadius: '14px',
-              border: '0 solid #000',
+              borderRadius: '16px',
               background: '#FFF',
-              boxShadow: '0 0 2px 0 rgba(23, 26, 31, 0.12), 0 0 0 0 rgba(0, 0, 0, 0.00)',
+              boxShadow: '0 4px 18px 0 rgba(23, 26, 31, 0.08)',
             }}
           >
             {/* Search Input */}
@@ -500,62 +555,25 @@ export default function CoursesPage() {
               </div>
             </div>
           </div>
-
-          {/* Why these courses? Section */}
-          <div className="lg:w-80 lg:-mt-14">
-            <div className="bg-white rounded-xl p-6 shadow-md">
-              <h3
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '18px',
-                  fontWeight: 600,
-                  color: '#111827',
-                  marginBottom: '16px',
-                }}
-              >
-                Why these courses?
-              </h3>
-              <ul className="space-y-3" style={{ fontFamily: 'Inter, sans-serif' }}>
-                <li className="flex items-start gap-3">
-                  <span className="text-blue-600 mt-1">•</span>
-                  <span style={{ fontSize: '14px', color: '#4B5563', lineHeight: '1.5' }}>
-                    Address missing skills identified by your CV.
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-blue-600 mt-1">•</span>
-                  <span style={{ fontSize: '14px', color: '#4B5563', lineHeight: '1.5' }}>
-                    ATS-based recommendations to pass screening.
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-blue-600 mt-1">•</span>
-                  <span style={{ fontSize: '14px', color: '#4B5563', lineHeight: '1.5' }}>
-                    Improve your job-fit score for target roles.
-                  </span>
-                </li>
-              </ul>
-            </div>
-          </div>
         </div>
 
         {/* Course Cards Grid */}
         {filteredCourses.length > 0 ? (
-          <div className="flex flex-wrap gap-6 mb-8 justify-center lg:justify-start">
+          <div className="mx-auto mb-8 flex max-w-6xl flex-wrap justify-center gap-8">
             {filteredCourses.map((course) => (
               <div
               key={course.id}
               className="overflow-hidden transition-all duration-300 flex flex-col border-2 border-gray-200 hover:border-[#28A8DF] group"
               style={{
-                borderRadius: '14px',
+                borderRadius: '16px',
                 background: '#FFF',
-                boxShadow: '0 0 2px 0 rgba(23, 26, 31, 0.12), 0 0 0 0 rgba(0, 0, 0, 0.00)',
-                width: '271px',
-                height: '524px',
+                boxShadow: '0 4px 18px 0 rgba(23, 26, 31, 0.08)',
+                width: '340px',
+                minHeight: '580px',
               }}
             >
               {/* Course Image */}
-              <div className="w-full h-40 bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+              <div className="w-full h-48 bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {course.image ? (
                   <Image
                     src={course.image}
@@ -584,13 +602,13 @@ export default function CoursesPage() {
               </div>
 
               {/* Course Content */}
-              <div className="px-5 pt-5 pb-5 flex flex-col flex-1" style={{ minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div className="px-6 pt-5 pb-6 flex flex-col flex-1" style={{ minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 {/* Provider and AI Recommended */}
                 <div className="flex items-center justify-between mb-2">
                   <span
                     style={{
                       fontFamily: 'Inter, sans-serif',
-                      fontSize: '13px',
+                      fontSize: '14px',
                       color: '#6B7280',
                       fontWeight: 500,
                     }}
@@ -599,10 +617,10 @@ export default function CoursesPage() {
                   </span>
                   {course.aiRecommended && (
                     <span
-                      className="px-2 py-1 rounded-full"
+                      className="px-2.5 py-1 rounded-full"
                       style={{
                         fontFamily: 'Inter, sans-serif',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         fontWeight: 600,
                         color: '#28A8DF',
                         backgroundColor: '#DBEAFE',
@@ -617,10 +635,10 @@ export default function CoursesPage() {
                 <h3
                   style={{
                     fontFamily: 'Inter, sans-serif',
-                    fontSize: '18px',
+                    fontSize: '20px',
                     fontWeight: 600,
                     color: '#111827',
-                    marginBottom: '8px',
+                    marginBottom: '10px',
                     lineHeight: '1.3',
                   }}
                 >
@@ -748,7 +766,14 @@ export default function CoursesPage() {
 
                 {/* View Details Button */}
                 <button
-                  onClick={() => router.push(`/courses/${course.id}`)}
+                  onClick={() => {
+                    if (isAuthenticated) {
+                      router.push(`/courses/${course.id}`);
+                      return;
+                    }
+                    setAuthRedirectUrl(`/courses/${course.id}`);
+                    setIsAuthModalOpen(true);
+                  }}
                   className="w-full px-4 py-2.5 rounded-lg font-medium transition-colors"
                   style={{
                     fontFamily: 'Inter, sans-serif',
@@ -799,6 +824,13 @@ export default function CoursesPage() {
         </div>
       </main>
 
+      <AuthInterceptModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        title="View Course Details"
+        description="Sign in to see full course details and start learning with AI-recommended courses."
+        redirectUrl={authRedirectUrl}
+      />
     </div>
   );
 }
