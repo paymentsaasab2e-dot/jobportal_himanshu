@@ -78,12 +78,9 @@ function buildPlaceholderUser(candidateId: string): User {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('token') || sessionStorage.getItem('token');
-    }
-    return null;
-  });
+  // Always start null so SSR and the first client render match (avoids hydration mismatch).
+  // Token is restored from storage in the mount-time refreshUser effect below.
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();

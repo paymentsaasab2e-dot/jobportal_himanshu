@@ -11,7 +11,7 @@ const styles = `
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
-    background-image: linear-gradient(to right, #4f46e5, #9333ea, #db2777);
+    background-image: linear-gradient(to right, #1A86B3, #2098C8, #38BDF8);
   }
   
   .fade-in-up {
@@ -37,7 +37,7 @@ const styles = `
       transform: translateX(-50%);
       width: 800px;
       height: 800px;
-      background: radial-gradient(circle, rgba(147, 51, 234, 0.08) 0%, rgba(252, 252, 253, 0) 70%);
+      background: radial-gradient(circle, rgba(32, 152, 200, 0.12) 0%, rgba(252, 252, 253, 0) 70%);
       z-index: 0;
       pointer-events: none;
   }
@@ -90,19 +90,9 @@ export default function AboutUsPage() {
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
               Founded in 2024, HRYANTRA (by SAASA B2E) emerged from a simple observation: the traditional job search process is broken. Resume filtering is often arbitrary, and candidates struggle to understand why they aren't being shortlisted.
             </p>
-            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+            <p className="text-lg text-gray-600 leading-relaxed">
               We decided to build an ecosystem that empowers the candidate. By using the same AI technology that large corporations use to filter applicants, we give you the tools to optimize your profile, upskill your talents, and walk into interviews with absolute confidence.
             </p>
-            <div className="flex gap-4">
-              <div className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm">
-                <div className="text-2xl font-bold text-accent-primary mb-1">50k+</div>
-                <div className="text-sm text-gray-500 font-medium">Active Users</div>
-              </div>
-              <div className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm">
-                <div className="text-2xl font-bold text-accent-secondary mb-1">1M+</div>
-                <div className="text-sm text-gray-500 font-medium">Scans Completed</div>
-              </div>
-            </div>
           </div>
           <div className="relative fade-in-up [transition-delay:200ms]">
             <div className="aspect-square bg-gradient-to-br from-indigo-50 to-purple-50 rounded-[3rem] relative overflow-hidden shadow-2xl flex items-center justify-center">
