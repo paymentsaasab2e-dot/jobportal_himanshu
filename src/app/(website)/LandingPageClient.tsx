@@ -596,6 +596,16 @@ export default function LandingPage() {
                 <p className="text-[17px] text-slate-500 font-medium max-w-2xl leading-relaxed">
                   {t("landing.heroSubtitle")}
                 </p>
+
+                <div className="mt-6 w-full max-w-3xl px-4 sm:px-8">
+                  <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-center text-[12px] font-black uppercase tracking-[0.28em] text-slate-900 sm:text-[13px] md:tracking-[0.35em]">
+                    {t("landing.heroPillJobs")}
+                    <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-sky-500 sm:h-2.5 sm:w-2.5" aria-hidden />
+                    {t("landing.heroPillSkills")}
+                    <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-sky-500 sm:h-2.5 sm:w-2.5" aria-hidden />
+                    {t("landing.heroPillElevate")}
+                  </p>
+                </div>
               </div>
 
               {/* Hero Search Box */}

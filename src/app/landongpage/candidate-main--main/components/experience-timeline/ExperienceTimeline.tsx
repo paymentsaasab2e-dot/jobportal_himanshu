@@ -1,181 +1,74 @@
 'use client'
-import { motion, useMotionValueEvent, useScroll, useTransform, MotionValue } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
 import { useCandmainLandingContent } from '@/lib/candmain-landing'
 import type { CandmainExperience } from '@/lib/candmain-landing'
-import { ArrowRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+
+const AUTO_ADVANCE_MS = 3200
 
 function TimelineCard({
   experience,
   index,
-  isLast,
-  isActive,
-  isReached,
-  scrollYProgress,
-  activeIndex,
-  totalSteps,
 }: {
   experience: CandmainExperience
   index: number
-  isLast: boolean
-  isActive: boolean
-  isReached: boolean
-  scrollYProgress: MotionValue<number>
-  activeIndex: number
-  totalSteps: number
 }) {
-  const segmentFill = useTransform(
-    scrollYProgress,
-    [index / (totalSteps - 1), (index + 1) / (totalSteps - 1)],
-    ['0%', '100%']
-  )
-  const isLiveSegment = index === Math.min(activeIndex, totalSteps - 2)
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ delay: index * 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="relative flex gap-6 pb-10"
-    >
-      {/* Vertical line */}
-      {!isLast && (
-        <div
-          className="absolute left-5 top-14 bottom-8 z-0 w-[3px] overflow-hidden rounded-full"
-          style={{
-            background: `linear-gradient(to bottom, ${experience.color}18, rgba(15,23,42,0.04))`,
-          }}
-        >
-          <motion.div
-            className="absolute left-0 top-0 w-full rounded-full"
-            style={{
-              height: segmentFill,
-              background: `linear-gradient(to bottom, ${experience.color}, #38BDF8 52%, #F97316)`,
-              boxShadow: `0 0 18px ${experience.color}, 0 0 28px rgba(56,189,248,0.45)`,
-            }}
-          >
-            <motion.div
-              className="absolute inset-x-0 h-10 rounded-full"
-              style={{ background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.85), transparent)' }}
-              animate={{ y: ['-40px', '120px'] }}
-              transition={{ duration: 1.15, repeat: Infinity, ease: 'linear' }}
-            />
-          </motion.div>
-          {isLiveSegment && (
-            <motion.div
-              className="absolute left-1/2 z-10 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-white"
-              style={{
-                top: segmentFill,
-                background: '#38BDF8',
-                boxShadow: `0 0 0 5px ${experience.color}18, 0 0 24px ${experience.color}`,
-              }}
-              animate={{ scale: [1, 1.25, 1], opacity: [0.8, 1, 0.8] }}
-              transition={{ duration: 0.7, repeat: Infinity, ease: 'easeInOut' }}
-            />
-          )}
-        </div>
-      )}
-
-      {/* Timeline dot */}
+    <div className="relative flex w-full items-center gap-5">
       <div className="relative z-10 flex-shrink-0">
-        {isActive && (
-          <motion.div
-            className="absolute -right-1 -top-1 z-20 h-2.5 w-2.5 rounded-full"
-            style={{
-              background: '#FFFFFF',
-              border: `2px solid ${experience.color}`,
-              boxShadow: `0 0 18px ${experience.color}`,
-            }}
-            animate={{ scale: [1, 1.35, 1], opacity: [0.8, 1, 0.8] }}
-            transition={{ duration: 0.9, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        )}
-        <motion.div
-          className="relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center shadow-card text-xs font-black"
-          animate={{
-            scale: isActive ? 1.08 : 1,
-            boxShadow: isActive
-              ? `0 0 0 6px ${experience.color}14, 0 12px 28px ${experience.color}24`
-              : '0 8px 18px rgba(15,23,42,0.08)',
-          }}
-          transition={{ duration: 0.25 }}
+        <div
+          className="relative z-10 flex h-10 w-10 items-center justify-center rounded-xl text-sm font-black shadow-card"
           style={{
-            background: isActive
-              ? `linear-gradient(135deg, ${experience.color}1F, rgba(56,189,248,0.16), rgba(249,115,22,0.12))`
-              : isReached ? `${experience.color}18` : '#FFFFFF',
-            border: `2px solid ${isActive ? experience.color : `${experience.color}30`}`,
+            background: `linear-gradient(135deg, ${experience.color}22, rgba(56,189,248,0.14))`,
+            border: `2px solid ${experience.color}`,
+            boxShadow: `0 0 0 5px ${experience.color}12, 0 10px 22px ${experience.color}18`,
           }}
         >
-          {isActive && (
-            <motion.span
-              className="absolute inset-0 rounded-2xl"
-              style={{ background: 'linear-gradient(120deg, transparent 20%, rgba(255,255,255,0.72), transparent 80%)' }}
-              animate={{ x: ['-120%', '120%'] }}
-              transition={{ duration: 1.25, repeat: Infinity, ease: 'linear' }}
-            />
-          )}
           <span style={{ color: experience.color }}>{index + 1}</span>
-        </motion.div>
-        {isActive && (
-          <motion.div
-            className="absolute -bottom-5 left-1/2 z-20 -translate-x-1/2 rounded-full bg-white px-2 py-0.5 text-[8px] font-black uppercase tracking-wider shadow-card"
-            style={{ color: experience.color, border: `1px solid ${experience.color}22` }}
-            initial={{ opacity: 0, y: -2 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Live
-          </motion.div>
-        )}
+        </div>
       </div>
 
-      {/* Card */}
-      <motion.div
-        className="relative flex-1 overflow-hidden rounded-2xl bg-white border shadow-card p-6 hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300"
-        animate={{
-          borderColor: '#000000',
-          boxShadow: '0 8px 18px rgba(15,23,42,0.08)',
+      <div
+        className="relative w-full overflow-hidden rounded-2xl border bg-white p-6 shadow-card"
+        style={{
+          borderColor: experience.color,
+          boxShadow: `0 14px 32px ${experience.color}16`,
         }}
-        transition={{ duration: 0.25 }}
       >
-        {/* Top */}
-        <div className="flex flex-wrap items-start justify-between gap-2 mb-4">
-          <div>
-            <span
-              className="text-xs font-bold uppercase tracking-wider"
-              style={{ color: experience.color }}
-            >
-              {experience.period}
-            </span>
-            <h3 className="text-lg font-bold text-text-primary mt-1 leading-tight">
-              {experience.role}
-            </h3>
-            <p className="text-sm font-medium text-text-muted">{experience.company}</p>
-          </div>
+        <div className="mb-3">
+          <span
+            className="text-[11px] font-bold uppercase tracking-wider"
+            style={{ color: experience.color }}
+          >
+            {experience.period}
+          </span>
+          <h3 className="mt-1 text-lg font-bold leading-tight text-text-primary">
+            {experience.role}
+          </h3>
+          <p className="text-sm font-medium text-text-muted">{experience.company}</p>
         </div>
 
-        {/* Description */}
-        <p className="text-sm text-text-muted leading-relaxed mb-4">{experience.description}</p>
+        <p className="mb-4 text-sm leading-relaxed text-text-muted">{experience.description}</p>
 
-        {/* Highlights */}
         <div className="flex flex-wrap gap-2">
           {experience.highlights.map((highlight) => (
             <span
               key={highlight}
-              className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg"
+              className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold"
               style={{
                 background: `${experience.color}08`,
                 color: experience.color,
                 border: `1px solid ${experience.color}18`,
               }}
             >
-              <span className="w-1 h-1 rounded-full" style={{ background: experience.color }} />
+              <span className="h-1 w-1 rounded-full" style={{ background: experience.color }} />
               {highlight}
             </span>
           ))}
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   )
 }
 
@@ -183,64 +76,138 @@ export default function ExperienceTimeline() {
   const content = useCandmainLandingContent()
   const e = content.experience
   const experiences = e.steps
-  const timelineRef = useRef<HTMLDivElement>(null)
+  const sectionRef = useRef<HTMLElement>(null)
+  const [inView, setInView] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
-  const { scrollYProgress } = useScroll({
-    target: timelineRef,
-    offset: ['start center', 'end center'],
-  })
+  const [direction, setDirection] = useState(1)
 
-  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
-    const nextIndex = Math.min(experiences.length - 1, Math.max(0, Math.round(latest * (experiences.length - 1))))
-    setActiveIndex(nextIndex)
-  })
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setInView(true)
+      },
+      { threshold: 0.2 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!inView || experiences.length <= 1) return
+    const timer = window.setInterval(() => {
+      setDirection(1)
+      setActiveIndex((prev) => (prev + 1) % experiences.length)
+    }, AUTO_ADVANCE_MS)
+    return () => window.clearInterval(timer)
+  }, [inView, experiences.length])
+
+  const goTo = (index: number) => {
+    setDirection(index > activeIndex ? 1 : -1)
+    setActiveIndex(index)
+  }
+
+  const goPrev = () => {
+    setDirection(-1)
+    setActiveIndex((prev) => (prev - 1 + experiences.length) % experiences.length)
+  }
+
+  const goNext = () => {
+    setDirection(1)
+    setActiveIndex((prev) => (prev + 1) % experiences.length)
+  }
+
+  const variants = {
+    enter: (dir: number) => ({
+      x: dir > 0 ? 56 : -56,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (dir: number) => ({
+      x: dir > 0 ? -56 : 56,
+      opacity: 0,
+    }),
+  }
 
   return (
-    <section className="section" id="experience">
+    <section ref={sectionRef} className="section" id="experience">
       <div className="container">
-        <div className="grid lg:grid-cols-[1fr_2fr] gap-16 items-start">
-          {/* Left: Heading */}
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1fr_1.15fr] lg:items-start lg:gap-12">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.6 }}
-            className="lg:sticky lg:top-28"
+            className="w-full lg:sticky lg:top-28"
           >
-            <div className="tag-pill tag-blue inline-flex mb-4">
+            <div className="tag-pill tag-blue mb-4 inline-flex">
               <span>{e.tag}</span>
             </div>
-            <h2 className="text-display-xl text-text-primary mb-6">
+            <h2 className="text-display-xl mb-0 text-text-primary">
               {e.title}{' '}
               <span className="gradient-text-blue">{e.titleAccent}</span>
             </h2>
-            <p className="text-text-muted text-lg leading-relaxed mb-8">{e.subtitle}</p>
-
-            <div className="p-6 rounded-2xl bg-white border border-[rgba(15,23,42,0.07)] shadow-card">
-              <div className="text-4xl font-black gradient-text-blue mb-1">{experiences.length}</div>
-              <div className="text-sm font-medium text-text-muted">{e.stagesCount}</div>
-              <div className="mt-4 pt-4 border-t border-[rgba(15,23,42,0.06)] flex items-center gap-2 text-xs text-text-muted">
-                <ArrowRight className="w-3.5 h-3.5 text-blue-primary" />
-                {e.stagesHint}
-              </div>
-            </div>
           </motion.div>
 
-          {/* Right: Timeline */}
-          <div ref={timelineRef} className="relative pt-2">
-            {experiences.map((exp, i) => (
-              <TimelineCard
-                key={exp.id}
-                experience={exp}
-                index={i}
-                isLast={i === experiences.length - 1}
-                isActive={i === activeIndex}
-                isReached={i <= activeIndex}
-                scrollYProgress={scrollYProgress}
-                activeIndex={activeIndex}
-                totalSteps={experiences.length}
-              />
-            ))}
+          <div className="relative w-full pt-2 lg:pt-12">
+            <div className="relative min-h-[280px] overflow-hidden">
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                  key={experiences[activeIndex]?.id ?? activeIndex}
+                  custom={direction}
+                  variants={variants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  className="w-full"
+                >
+                  <TimelineCard
+                    experience={experiences[activeIndex]}
+                    index={activeIndex}
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <div className="mt-5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                {experiences.map((exp, i) => (
+                  <button
+                    key={exp.id}
+                    type="button"
+                    aria-label={`Go to step ${i + 1}`}
+                    onClick={() => goTo(i)}
+                    className={`h-2.5 rounded-full transition-all ${
+                      i === activeIndex ? 'w-7 bg-[#2098C8]' : 'w-2.5 bg-slate-300 hover:bg-slate-400'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  aria-label="Previous step"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[#2098C8]/40 hover:text-[#2098C8]"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  aria-label="Next step"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[#2098C8]/40 hover:text-[#2098C8]"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

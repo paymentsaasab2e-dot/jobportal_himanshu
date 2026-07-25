@@ -106,6 +106,10 @@ export const portalSearchHeroStyles = `
     isolation: isolate;
     border-radius: 36px;
     padding: 1.5rem;
+    min-height: 28rem;
+    height: 28rem;
+    display: flex;
+    flex-direction: column;
     background: linear-gradient(
       145deg,
       rgba(186, 230, 253, 0.35) 0%,
@@ -118,6 +122,51 @@ export const portalSearchHeroStyles = `
       inset 0 1px 0 rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+  }
+
+  .category-glass-panel {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  .category-glass-row {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .category-glass-row-label {
+    margin-bottom: 0.4rem;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #64748b;
+    line-height: 1;
+    min-height: 1rem;
+  }
+
+  .category-glass-row-label.is-spacer {
+    visibility: hidden;
+  }
+
+  @media (max-width: 639px) {
+    .category-glass-scene {
+      min-height: auto;
+      height: auto;
+    }
+
+    .category-glass-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
   }
 
   .category-glass-orb {
@@ -163,8 +212,9 @@ export const portalSearchHeroStyles = `
     align-items: center;
     gap: 1rem;
     width: 100%;
+    min-height: 3.75rem;
     text-align: left;
-    padding: 1rem 1.25rem;
+    padding: 0.85rem 1.1rem;
     border-radius: 22px;
     cursor: pointer;
     overflow: hidden;

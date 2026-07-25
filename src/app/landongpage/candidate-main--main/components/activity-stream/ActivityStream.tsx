@@ -126,11 +126,16 @@ function ActivityItem({
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      transition={{ delay: index * 0.04, duration: 0.55, layout: { duration: 0.45 } }}
-      className={`flex items-center gap-2.5 border px-2.5 py-2 transition-all group ${
+      initial={{ opacity: 0, y: -18, filter: 'blur(2px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, y: 22, filter: 'blur(2px)' }}
+      transition={{
+        layout: { type: 'spring', stiffness: 320, damping: 32, mass: 0.8 },
+        opacity: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+        y: { type: 'spring', stiffness: 280, damping: 28 },
+        filter: { duration: 0.35 },
+      }}
+      className={`flex items-center gap-2.5 border px-2.5 py-2 transition-colors group will-change-transform ${
         isLatest ? 'rounded-xl shadow-md' : 'rounded-lg hover:brightness-[0.98]'
       }`}
       style={{
@@ -174,113 +179,138 @@ function ActivityItem({
   )
 }
 
+const VISIBLE_PER_CARD = 4
+
+function StreamCard({
+  title,
+  feed,
+  dateLocale,
+  latestUpdate,
+  delay,
+}: {
+  title: string
+  feed: CandmainActivityItem[]
+  dateLocale: string
+  latestUpdate: string
+  delay: number
+}) {
+  const [visibleItems, setVisibleItems] = useState(() =>
+    feed.slice(0, VISIBLE_PER_CARD).map((item) => ({ item, feedKey: `initial-${item.id}` }))
+  )
+  const [currentIndex, setCurrentIndex] = useState(VISIBLE_PER_CARD)
+
+  useEffect(() => {
+    if (!feed.length) return
+    const interval = setInterval(() => {
+      setVisibleItems((prev) => {
+        const newItem = feed[currentIndex % feed.length]
+        return [
+          { item: newItem, feedKey: `${newItem.id}-${Date.now()}` },
+          ...prev.slice(0, VISIBLE_PER_CARD - 1),
+        ]
+      })
+      setCurrentIndex((i) => i + 1)
+    }, 3200)
+
+    return () => clearInterval(interval)
+  }, [currentIndex, feed])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.6, delay }}
+      className="relative h-full"
+    >
+      <div
+        className="flex h-full flex-col overflow-hidden rounded-3xl shadow-premium border"
+        style={{
+          borderColor: 'rgba(37, 99, 235, 0.18)',
+          background:
+            'linear-gradient(165deg, rgba(37, 99, 235, 0.07) 0%, rgba(20, 184, 166, 0.05) 42%, rgba(255, 255, 255, 0.98) 100%)',
+        }}
+      >
+        <div
+          className="flex shrink-0 items-center justify-between px-4 py-2.5 border-b"
+          style={{
+            borderColor: 'rgba(37, 99, 235, 0.12)',
+            background:
+              'linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, rgba(6, 182, 212, 0.08) 55%, rgba(255, 255, 255, 0.72) 100%)',
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/25" />
+            <span className="text-xs font-semibold text-text-primary">{title}</span>
+          </div>
+          <span className="rounded-full bg-white/70 px-2.5 py-1 text-xs font-mono text-text-muted border border-[rgba(37,99,235,0.12)]">
+            {new Date().toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })}
+          </span>
+        </div>
+
+        <div
+          className="relative h-[292px] shrink-0 overflow-hidden p-2"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(248, 250, 252, 0.92) 0%, rgba(239, 246, 255, 0.88) 100%)',
+          }}
+        >
+          <div className="flex h-full flex-col gap-1.5">
+            <AnimatePresence initial={false} mode="popLayout">
+              {visibleItems.map(({ item, feedKey }, i) => (
+                <ActivityItem key={feedKey} item={item} index={i} latestUpdate={latestUpdate} />
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
 export default function ActivityStream() {
   const content = useCandmainLandingContent()
   const { activity: a } = content
-  const [visibleItems, setVisibleItems] = useState(() =>
-    a.feed.slice(0, 6).map((item) => ({ item, feedKey: `initial-${item.id}` }))
-  )
-  const [currentIndex, setCurrentIndex] = useState(6)
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setVisibleItems((prev) => {
-        const newItem = a.feed[currentIndex % a.feed.length]
-        return [{ item: newItem, feedKey: `${newItem.id}-${Date.now()}` }, ...prev.slice(0, 7)]
-      })
-      setCurrentIndex((i) => i + 1)
-    }, 2500)
-
-    return () => clearInterval(interval)
-  }, [currentIndex, a.feed])
+  // First card cycles through the full feed (all notifications); the other two
+  // cards keep their own slices so items aren't duplicated between them.
+  const sliceSize = Math.ceil(a.feed.length / 2)
+  const cards = [
+    { title: a.stats[0]?.label || a.streamTitle, feed: a.feed },
+    { title: a.stats[1]?.label || a.streamTitle, feed: a.feed.slice(0, sliceSize) },
+    { title: a.stats[2]?.label || a.streamTitle, feed: a.feed.slice(sliceSize) },
+  ]
 
   return (
     <section className="section" id="activity">
       <div className="container">
-        <div className="grid lg:grid-cols-2 gap-16 items-start">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="tag-pill tag-blue inline-flex mb-4">
-              <span>{a.tag}</span>
-            </div>
-            <h2 className="text-display-xl text-text-primary mb-6">
-              {a.title}{' '}
-              <span className="gradient-text-blue">{a.titleAccent}</span>
-            </h2>
-            <p className="text-text-muted text-lg leading-relaxed mb-8">{a.subtitle}</p>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <div className="tag-pill tag-blue inline-flex mb-4">
+            <span>{a.tag}</span>
+          </div>
+          <h2 className="text-display-xl text-text-primary">
+            {a.title}{' '}
+            <span className="gradient-text-blue">{a.titleAccent}</span>
+          </h2>
+        </motion.div>
 
-            <div className="grid grid-cols-3 gap-4">
-              {a.stats.map((s) => (
-                <div
-                  key={s.label}
-                  className="p-4 rounded-2xl bg-white border border-[rgba(15,23,42,0.07)] shadow-card"
-                >
-                  <div className="text-lg font-bold text-text-primary mb-1">{s.value}</div>
-                  <div className="text-xs text-text-muted">{s.label}</div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative"
-          >
-            <div
-              className="rounded-3xl overflow-hidden shadow-premium border"
-              style={{
-                borderColor: 'rgba(37, 99, 235, 0.18)',
-                background:
-                  'linear-gradient(165deg, rgba(37, 99, 235, 0.07) 0%, rgba(20, 184, 166, 0.05) 42%, rgba(255, 255, 255, 0.98) 100%)',
-              }}
-            >
-              <div
-                className="flex items-center justify-between px-4 py-2.5 border-b"
-                style={{
-                  borderColor: 'rgba(37, 99, 235, 0.12)',
-                  background:
-                    'linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, rgba(6, 182, 212, 0.08) 55%, rgba(255, 255, 255, 0.72) 100%)',
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/25" />
-                  <span className="text-xs font-semibold text-text-primary">{a.streamTitle}</span>
-                </div>
-                <span className="rounded-full bg-white/70 px-2.5 py-1 text-xs font-mono text-text-muted border border-[rgba(37,99,235,0.12)]">
-                  {new Date().toLocaleDateString(content.dateLocale, { month: 'short', day: 'numeric' })}
-                </span>
-              </div>
-
-              <div
-                className="max-h-[420px] overflow-hidden p-2 space-y-1.5"
-                style={{
-                  background:
-                    'linear-gradient(180deg, rgba(248, 250, 252, 0.92) 0%, rgba(239, 246, 255, 0.88) 100%)',
-                }}
-              >
-                <AnimatePresence mode="popLayout">
-                  {visibleItems.map(({ item, feedKey }, i) => (
-                    <ActivityItem key={feedKey} item={item} index={i} latestUpdate={a.latestUpdate} />
-                  ))}
-                </AnimatePresence>
-              </div>
-
-              <div
-                className="h-12 relative -mt-12 pointer-events-none"
-                style={{
-                  background:
-                    'linear-gradient(to top, rgba(239, 246, 255, 0.98) 0%, rgba(239, 246, 255, 0) 100%)',
-                }}
-              />
-            </div>
-          </motion.div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {cards.map((card, i) => (
+            <StreamCard
+              key={card.title}
+              title={card.title}
+              feed={card.feed}
+              dateLocale={content.dateLocale}
+              latestUpdate={a.latestUpdate}
+              delay={0.1 * i}
+            />
+          ))}
         </div>
       </div>
     </section>

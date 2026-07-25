@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Facebook, Instagram, Linkedin, X } from "lucide-react";
 
-import { useAuth } from "@/components/auth/AuthContext";
 import { AppLocale, localizePath, stripLocaleFromPathname } from "@/lib/i18n";
 
 const currentYear = new Date().getFullYear();
@@ -27,67 +26,60 @@ const socialLinks = [
     href: "https://www.linkedin.com/company/hryantra/",
     label: "LinkedIn",
     icon: Linkedin,
-    hover: "hover:text-[var(--brand-primary)] hover:border-[rgba(40,168,225,0.22)] hover:bg-[var(--brand-primary-soft)]",
+    className:
+      "border-[#0A66C2]/25 bg-[#0A66C2]/10 text-[#0A66C2] hover:border-[#0A66C2]/40 hover:bg-[#0A66C2]/18",
   },
   {
     href: "https://x.com/HRyantra",
     label: "X",
     icon: X,
-    hover: "hover:text-[var(--brand-secondary)] hover:border-[rgba(40,168,223,0.22)] hover:bg-[var(--brand-secondary-soft)]",
+    className:
+      "border-slate-800/20 bg-slate-900/5 text-slate-900 hover:border-slate-800/35 hover:bg-slate-900/10",
   },
   {
     href: "https://www.instagram.com/hryantra/",
     label: "Instagram",
     icon: Instagram,
-    hover: "hover:text-[var(--brand-accent)] hover:border-[rgba(252,150,32,0.22)] hover:bg-[var(--brand-accent-soft)]",
+    className:
+      "border-[#E4405F]/25 bg-[#E4405F]/10 text-[#E4405F] hover:border-[#E4405F]/40 hover:bg-[#E4405F]/18",
   },
   {
     href: "https://www.facebook.com/profile.php?id=61576691802751",
     label: "Facebook",
     icon: Facebook,
-    hover: "hover:text-[var(--brand-primary)] hover:border-[rgba(40,168,225,0.22)] hover:bg-[var(--brand-primary-soft)]",
+    className:
+      "border-[#1877F2]/25 bg-[#1877F2]/10 text-[#1877F2] hover:border-[#1877F2]/40 hover:bg-[#1877F2]/18",
   },
 ];
 
+const BOOK_DEMO_HREF =
+  "mailto:support@saasab2e.com?subject=Book%20a%20SAASA%20B2E%20Employer%20Demo";
+
 export default function Footer() {
-  const { isAuthenticated: isLoggedIn, isLoading: isAuthLoading } = useAuth();
   const pathname = usePathname();
   const locale = useLocale() as AppLocale;
   const t = useTranslations();
   const normalizedPath = stripLocaleFromPathname(pathname || "/");
-  const isLandingPage = normalizedPath === "/";
   const isEmployersPage =
     normalizedPath === "/employers" || normalizedPath.startsWith("/employers/");
-
-  // Keep guest links until auth has finished hydrating so SSR HTML matches the first client paint.
-  const showAuthedPlatformLinks =
-    !isAuthLoading && isLoggedIn && !isLandingPage && !isEmployersPage;
-
-  const platformLinks = showAuthedPlatformLinks ? [
-    { href: "/candidate-dashboard", label: t("nav.dashboard") },
-    { href: "/candidate-home", label: "Home" },
-    { href: "/explore-jobs", label: t("nav.jobs") },
-    { href: "/applications", label: t("nav.applications") },
-    { href: "/lms/courses", label: "LMS" },
-    { href: "/profile", label: t("nav.profile") },
-    { href: "/services", label: t("nav.services") },
-  ] : [
-    { href: "/", label: t("footer.findJobs") },
-    { href: "/courses", label: t("footer.coursesLms") },
-    { href: "/services", label: t("footer.expertServices") },
-  ];
 
   const footerLinks: FooterLinkGroup[] = [
     {
       title: t("footer.platform"),
-      items: platformLinks,
+      items: [
+        { href: "/", label: t("footer.findJobs") },
+        { href: "/courses", label: t("footer.coursesLms") },
+        { href: "/services", label: t("footer.expertServices") },
+      ],
     },
     {
       title: t("footer.company"),
       items: [
         { href: "/aboutus", label: t("footer.aboutUs") },
-        { href: "/employers", label: t("common.forEmployers") },
-        { href: "/help", label: t("footer.helpCenter") },
+        { href: "https://saasab2e.com/", label: t("footer.saasaB2e"), external: true },
+        { href: "/", label: t("footer.employee") },
+        { href: "/employers", label: t("footer.employer") },
+        { href: BOOK_DEMO_HREF, label: t("footer.bookADemo"), external: true },
         { href: "/contact", label: t("footer.contact") },
       ],
     },
@@ -121,14 +113,14 @@ export default function Footer() {
             </p>
 
             <div className="mt-1 flex items-center gap-3">
-              {socialLinks.map(({ href, label, icon: Icon, hover }) => (
+              {socialLinks.map(({ href, label, icon: Icon, className }) => (
                 <a
                   key={label}
                   href={href}
                   aria-label={label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-all ${hover}`}
+                  className={`flex h-9 w-9 items-center justify-center rounded-full border bg-white transition-all ${className}`}
                 >
                   <Icon className="h-4 w-4" />
                 </a>
@@ -143,17 +135,23 @@ export default function Footer() {
                   {group.title}
                 </h4>
                 <nav className="flex flex-col gap-3">
-                  {group.items.map((item) => (
-                    <Link
-                      key={item.label}
-                      href={localizePath(item.href, locale)}
-                      target={item.external ? "_blank" : undefined}
-                      rel={item.external ? "noopener noreferrer" : undefined}
-                      className="text-[14px] font-medium transition-colors hover:text-(--brand-primary)"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
+                  {group.items.map((item) => {
+                    const isAbsolute =
+                      item.external ||
+                      item.href.startsWith("http") ||
+                      item.href.startsWith("mailto:");
+                    return (
+                      <Link
+                        key={item.label}
+                        href={isAbsolute ? item.href : localizePath(item.href, locale)}
+                        target={item.external && item.href.startsWith("http") ? "_blank" : undefined}
+                        rel={item.external && item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                        className="text-[14px] font-medium transition-colors hover:text-(--brand-primary)"
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
                 </nav>
               </div>
             ))}

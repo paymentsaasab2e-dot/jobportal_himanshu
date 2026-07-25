@@ -194,12 +194,12 @@ export default function WebsiteNavbar() {
           {!isServicesPage && (
             <Link
               href={loginSignupHref}
-              className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full font-bold backdrop-blur-xl transition-all duration-500 ${
-                isScrolled ? "px-4 py-1.5 text-[14px]" : "px-6 py-2 text-[15px]"
+              className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full font-bold transition-all duration-500 ${
+                isScrolled ? "min-h-[34px] px-4 text-[14px]" : "min-h-[38px] px-5 text-[15px]"
               } ${
                 isEmployersTransparent
-                  ? "border border-white/30 bg-white/10 text-white! shadow-none hover:bg-white/20 hover:text-white!"
-                  : "border border-white/75 bg-white/40 text-slate-900! shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] hover:bg-white/65 hover:text-[#08428c]!"
+                  ? "border border-white/40 bg-white/15 text-white! shadow-none backdrop-blur-xl hover:bg-white/25 hover:text-white!"
+                  : "bg-linear-to-r from-[#08428c] to-[#28a8e1] text-white! shadow-[0_8px_22px_rgba(8,66,140,0.35)] hover:brightness-105"
               }`}
             >
               {t("common.login")}
@@ -257,7 +257,7 @@ export default function WebsiteNavbar() {
                 )}
                 <Link
                   href={loginSignupHref}
-                  className="border border-white/80 bg-white/55 text-slate-900! text-center py-4 rounded-[18px] font-bold text-lg backdrop-blur-xl hover:bg-white/80 hover:text-[#08428c]! transition-all"
+                  className="flex items-center justify-center bg-linear-to-r from-[#08428c] to-[#28a8e1] text-center py-4 rounded-full font-bold text-lg text-white shadow-[0_8px_22px_rgba(8,66,140,0.35)]"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {t("common.login")}

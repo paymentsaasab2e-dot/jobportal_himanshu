@@ -4,10 +4,9 @@ export const candmainLandingFr: CandmainLandingContent = {
   dateLocale: 'fr-FR',
   commandCenter: {
     tag: 'HRYANTRA',
-    title: 'Have Your Dream Job.',
-    titleAccent: 'Have Fun. Live with Freedom.',
-    subtitle:
-      'Join HRYantra by learning, improving your skills, strengthening your CV, expanding your knowledge, and landing your dream job across the globe.',
+    title: '',
+    titleAccent: 'Find Fun & Freedom',
+    subtitle: '',
     liveFeed: 'Fil en direct',
     ticker: [
       'Profil consulte par un recruteur - poste Operations Manager',
@@ -21,14 +20,12 @@ export const candmainLandingFr: CandmainLandingContent = {
       'Activite d\'offre detectee - poste Customer Success',
     ],
     stats: [
-      { id: 'matches', label: 'Correspondances IA', value: '42', status: 'live', statusLabel: 'en direct', trend: 'Postes alignes sur votre profil dans Explorer les emplois.' },
-      { id: 'applications', label: 'Candidatures actives', value: '18', status: 'active', statusLabel: 'actif', trend: 'Suivies dans Candidatures avec mises a jour en temps reel.' },
-      { id: 'profile', label: 'Completion du profil', value: '94 %', status: 'excellent', statusLabel: 'excellent', trend: 'Completez votre profil candidat pour une meilleure visibilite recruteur.' },
-      { id: 'resume', label: 'Score CV Builder', value: '88', status: 'growing', statusLabel: 'en progression', trend: 'Ameliorez la compatibilite ATS avec le CV Builder LMS.' },
-      { id: 'interviews', label: 'Sessions prep. entretien', value: '12', status: 'excellent', statusLabel: 'excellent', trend: 'Entretiens simules et banques de questions dans le LMS.' },
-      { id: 'ats', label: 'Taux de reussite ATS', value: '92 %', status: 'excellent', statusLabel: 'excellent', trend: 'Analysez votre CV avant de postuler aux offres ouvertes.' },
-      { id: 'courses', label: 'Parcours d\'apprentissage', value: '6', status: 'active', statusLabel: 'actif', trend: 'Montez en competences avec les cours et la planification de carriere.' },
-      { id: 'response', label: 'Taux de reponse recruteur', value: '58 %', status: 'growing', statusLabel: 'en progression', trend: 'Les profils plus solides obtiennent plus de reponses des recruteurs.' },
+      { id: 'communities', label: 'Build your communities', value: '01', status: 'live', statusLabel: 'communaute', trend: 'Connectez-vous avec des pairs, mentors et cercles talent qui matchent vos objectifs.' },
+      { id: 'chats', label: 'Have personalized chats', value: '02', status: 'active', statusLabel: 'chat', trend: 'Echangez avec des mentors et recruteurs via des conversations personnalisees.' },
+      { id: 'referrals', label: 'Earn with referrals', value: '03', status: 'growing', statusLabel: 'gains', trend: 'Partagez des offres et gagnez des recompenses quand vos filleuls sont embauches.' },
+      { id: 'interviewer', label: 'Be an interviewer', value: '04', status: 'excellent', statusLabel: 'expert', trend: 'Rejoignez des panels d\'entretien, partagez votre expertise et renforcez votre marque.' },
+      { id: 'aicv', label: 'Build AI-powered CV', value: '05', status: 'excellent', statusLabel: 'IA', trend: 'Creez un CV plus fort avec l\'aide de l\'IA, pense pour ATS et recruteurs.' },
+      { id: 'companies', label: 'Connect to companies', value: '06', status: 'active', statusLabel: 'reseau', trend: 'Accedez aux equipes de recrutement et decouvez des roles adaptes a votre profil.' },
     ],
   },
   activity: {
@@ -191,17 +188,17 @@ export const candmainLandingFr: CandmainLandingContent = {
   },
   experience: {
     tag: 'Parcours candidat',
-    title: 'Pipeline de recrutement',
-    titleAccent: 'en direct',
+    title: 'How the',
+    titleAccent: 'Application Process Works',
     subtitle:
-      'Suivez le parcours d\'un candidat de la creation de profil a la decouverte recruteur, la preparation entretien et l\'elan vers l\'offre.',
-    stagesCount: 'Etapes d\'evaluation en direct',
-    stagesHint: 'Signal profil Etape 1 vers mouvement recrutement Etape 4',
+      'Connectez-vous, uploadez votre CV, recevez des offres adaptees et postulez en quatre etapes simples.',
+    stagesCount: '4 etapes simples',
+    stagesHint: 'De la connexion WhatsApp au suivi des candidatures',
     steps: [
-      { id: 'signup', company: 'Connexion WhatsApp', role: 'Etape 1 : Rejoindre le portail', period: 'Jour 1', description: 'Connectez-vous via WhatsApp, verifiez votre numero et accedez a votre tableau de bord avec des recommandations personnalisees.', highlights: ['Connexion OTP rapide', 'Session securisee', 'Acces tableau de bord'], color: '#28A8E1' },
-      { id: 'profile', company: 'Profil et CV', role: 'Etape 2 : Completer votre profil', period: 'Semaine 1', description: 'Ajoutez experience, formation, competences et uploadez votre CV. Lancez la verification ATS et ameliorez votre CV dans le LMS.', highlights: ['Profil 94 % complete', 'Optimise ATS', 'Competences taguees'], color: '#28A8DF' },
-      { id: 'explore', company: 'Explorer les emplois', role: 'Etape 3 : Rechercher et postuler', period: 'Semaine 2', description: 'Parcourez les offres live des agences, filtrez par lieu et type de poste, postulez avec CV adaptes et flux de screening.', highlights: ['42 correspondances IA', 'Postes remote et hybrides', 'Candidatures suivies'], color: '#0EA5E9' },
-      { id: 'grow', company: 'LMS et prep entretien', role: 'Etape 4 : Preparer et progresser', period: 'En cours', description: 'Utilisez les cours, entretiens simules, planification de carriere et suivi candidature jusqu\'aux etapes d\'offre et d\'integration.', highlights: ['Entretiens simules', 'Timeline candidature', 'Visibilite recruteur'], color: '#38BDF8' },
+      { id: 'signup', company: 'Connexion WhatsApp', role: 'Etape 1 : Se connecter', period: 'Debut', description: 'Entrez votre numero WhatsApp, verifiez l\'OTP et accedez a votre compte candidat en toute securite.', highlights: ['Connexion WhatsApp', 'OTP rapide', 'Acces securise'], color: '#28A8E1' },
+      { id: 'profile', company: 'Upload du CV', role: 'Etape 2 : Uploader votre CV', period: 'Ensuite', description: 'Uploadez votre CV afin que HRYantra AI comprenne vos competences, votre experience et vos objectifs.', highlights: ['Upload CV', 'Analyse IA', 'Competences identifiees'], color: '#28A8DF' },
+      { id: 'explore', company: 'Matching IA', role: 'Etape 3 : Recevoir des offres', period: 'Puis', description: 'Recevez des offres personnalisees selon votre CV, vos preferences, votre lieu et votre experience.', highlights: ['Offres pertinentes', 'Score de compatibilite', 'Roles personnalises'], color: '#0EA5E9' },
+      { id: 'grow', company: 'Postuler et suivre', role: 'Etape 4 : Postuler', period: 'En cours', description: 'Consultez les offres, postulez avec votre CV, completez le screening et suivez chaque candidature.', highlights: ['Candidature simple', 'Screening', 'Suivi en direct'], color: '#38BDF8' },
     ],
   },
   whyHire: {
@@ -226,10 +223,10 @@ export const candmainLandingFr: CandmainLandingContent = {
   },
   cta: {
     badge: 'Rejoignez le reseau candidats HR Yantra',
-    tagline: 'Trouvez l\'emploi qui vous correspond parfaitement.',
-    accent: 'Commencez sur Explorer les emplois.',
+    tagline: 'Where dream meets opportunities — Learn, Earn and Grow with AI',
+    accent: 'Learn, Earn and Grow with AI',
     subtitle:
-      'Recherchez les offres live, completez votre profil, postulez en confiance et suivez chaque etape dans Candidatures et votre Tableau de bord candidat.',
+      'Bridging the gap between ambition and opportunities.',
     roles: ['Technologie', 'Business et strategie', 'Finance et banque', 'Ventes et marketing', 'RH et operations', 'Sante et education', 'Design et customer success'],
     exploreJobs: 'Explorer les emplois',
     whatsappLogin: 'Connexion avec WhatsApp',

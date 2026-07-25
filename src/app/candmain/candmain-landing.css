@@ -180,7 +180,7 @@ html.lenis.candmain-smooth-scroll body {
 }
 
 /* Per-card color themes */
-.candmain-landing .outcome-card-parent--matches {
+.candmain-landing .outcome-card-parent--communities {
   --outcome-brand-deep: #053366;
   --outcome-brand: #08428c;
   --outcome-brand-mid: #0a5ab5;
@@ -191,7 +191,7 @@ html.lenis.candmain-smooth-scroll body {
   --outcome-more-border: rgba(8, 66, 140, 0.14);
 }
 
-.candmain-landing .outcome-card-parent--applications {
+.candmain-landing .outcome-card-parent--chats {
   --outcome-brand-deep: #312e81;
   --outcome-brand: #4338ca;
   --outcome-brand-mid: #4f46e5;
@@ -202,7 +202,7 @@ html.lenis.candmain-smooth-scroll body {
   --outcome-more-border: rgba(67, 56, 202, 0.14);
 }
 
-.candmain-landing .outcome-card-parent--profile {
+.candmain-landing .outcome-card-parent--referrals {
   --outcome-brand-deep: #064e3b;
   --outcome-brand: #059669;
   --outcome-brand-mid: #10b981;
@@ -213,18 +213,7 @@ html.lenis.candmain-smooth-scroll body {
   --outcome-more-border: rgba(5, 150, 105, 0.14);
 }
 
-.candmain-landing .outcome-card-parent--resume {
-  --outcome-brand-deep: #0c4a6e;
-  --outcome-brand: #0284c7;
-  --outcome-brand-mid: #0ea5e9;
-  --outcome-brand-bright: #38bdf8;
-  --outcome-glow: rgba(56, 189, 248, 0.38);
-  --outcome-shadow: rgba(2, 132, 199, 0.22);
-  --outcome-more-bg: rgba(2, 132, 199, 0.08);
-  --outcome-more-border: rgba(2, 132, 199, 0.14);
-}
-
-.candmain-landing .outcome-card-parent--interviews {
+.candmain-landing .outcome-card-parent--interviewer {
   --outcome-brand-deep: #5b21b6;
   --outcome-brand: #7c3aed;
   --outcome-brand-mid: #8b5cf6;
@@ -235,7 +224,7 @@ html.lenis.candmain-smooth-scroll body {
   --outcome-more-border: rgba(124, 58, 237, 0.14);
 }
 
-.candmain-landing .outcome-card-parent--ats {
+.candmain-landing .outcome-card-parent--aicv {
   --outcome-brand-deep: #9a3412;
   --outcome-brand: #ea580c;
   --outcome-brand-mid: #f97316;
@@ -246,7 +235,7 @@ html.lenis.candmain-smooth-scroll body {
   --outcome-more-border: rgba(234, 88, 12, 0.14);
 }
 
-.candmain-landing .outcome-card-parent--courses {
+.candmain-landing .outcome-card-parent--companies {
   --outcome-brand-deep: #9f1239;
   --outcome-brand: #e11d48;
   --outcome-brand-mid: #f43f5e;
@@ -255,17 +244,6 @@ html.lenis.candmain-smooth-scroll body {
   --outcome-shadow: rgba(225, 29, 72, 0.22);
   --outcome-more-bg: rgba(225, 29, 72, 0.08);
   --outcome-more-border: rgba(225, 29, 72, 0.14);
-}
-
-.candmain-landing .outcome-card-parent--response {
-  --outcome-brand-deep: #92400e;
-  --outcome-brand: #d97706;
-  --outcome-brand-mid: #f59e0b;
-  --outcome-brand-bright: #fbbf24;
-  --outcome-glow: rgba(251, 191, 36, 0.42);
-  --outcome-shadow: rgba(217, 119, 6, 0.24);
-  --outcome-more-bg: rgba(217, 119, 6, 0.08);
-  --outcome-more-border: rgba(217, 119, 6, 0.14);
 }
 
 .candmain-landing .outcome-card {

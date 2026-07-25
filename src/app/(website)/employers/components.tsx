@@ -657,19 +657,29 @@ function HeroSection() {
           <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col items-center">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200/80 rounded-full px-4 py-2 mb-6 shadow-sm">
               <span className="flex h-2 w-2 rounded-full bg-sky-500 animate-pulse"></span>
-              <span className="text-[12px] font-black uppercase tracking-[0.18em] text-sky-700">HRYantra AI Powered Career</span>
+              <span className="text-[12px] font-black uppercase tracking-[0.18em] text-sky-700">HRYantra AI Powered Career Platform</span>
             </div>
 
             <h1 className="text-4xl md:text-[3.75rem] font-black tracking-tight text-slate-900 mb-5 leading-[1.12]">
-              Find the job that<br className="hidden sm:block" />
+              Where dream meets opportunities<br className="hidden sm:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600">
-                fits you perfectly.
+                Learn, Earn and Grow with AI
               </span>
             </h1>
 
             <p className="text-[17px] text-slate-500 font-medium max-w-2xl leading-relaxed">
-              HR Yantra AI matches you to roles that suit your skills, experience &amp; goals - so every application counts.
+              Bridging the gap between ambition and opportunities.
             </p>
+
+            <div className="mt-6 w-full max-w-3xl px-4 sm:px-8">
+              <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-center text-[12px] font-black uppercase tracking-[0.28em] text-slate-900 sm:text-[13px] md:tracking-[0.35em]">
+                Discover Jobs
+                <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-sky-500 sm:h-2.5 sm:w-2.5" aria-hidden />
+                Build Skills
+                <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-sky-500 sm:h-2.5 sm:w-2.5" aria-hidden />
+                Elevate
+              </p>
+            </div>
           </div>
 
           {/* Sync Search Box Style from homepage */}

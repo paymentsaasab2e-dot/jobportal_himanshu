@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import {
   FileText, MessageSquare, Code2, Users, Trophy,
-  Clock, TrendingUp, ArrowDown, Building2
+  TrendingUp, Building2
 } from 'lucide-react'
 import { useCandmainLandingContent } from '@/lib/candmain-landing'
 import type { CandmainHiringStage } from '@/lib/candmain-landing'
@@ -43,139 +43,6 @@ const stageIcons: Record<string, typeof FileText> = {
   'hiring-manager': Users,
   panel: Building2,
   offer: Trophy,
-}
-
-// ─── Company Pill ─────────────────────────
-function CompanyPill({ name, index, color }: { name: string; index: number; color: string }) {
-  return (
-    <motion.span
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.06, duration: 0.3 }}
-      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/80 border shadow-sm"
-      style={{ color, borderColor: `${color}24` }}
-    >
-      <Building2 className="w-2.5 h-2.5" />
-      {name}
-    </motion.span>
-  )
-}
-
-// ─── Live Counter ─────────────────────────
-function LiveCounter({ value, color }: { value: number; color: string }) {
-  const [display, setDisplay] = useState(value)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDisplay((prev) => {
-        const delta = Math.floor(Math.random() * 9) - 3
-        return Math.max(1, prev + delta)
-      })
-    }, 550 + Math.random() * 350)
-    return () => clearInterval(interval)
-  }, [])
-
-  return (
-    <span className="font-mono font-bold text-sm" style={{ color }}>
-      {display.toLocaleString()}
-    </span>
-  )
-}
-
-// ─── Stage Card ───────────────────────────
-function StageCard({ stage, index, isActive, onClick, labels }: {
-  stage: Stage
-  index: number
-  isActive: boolean
-  onClick: () => void
-  labels: { stage: string; live: string; pass: string }
-}) {
-  const Icon = stage.icon
-  const [from, to] = funnelGradients[index % funnelGradients.length]
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ delay: index * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      onClick={onClick}
-      className={`relative group cursor-pointer rounded-2xl border transition-all duration-400 p-5 ${
-        isActive ? 'shadow-premium -translate-y-1' : 'shadow-card hover:shadow-premium hover:-translate-y-0.5'
-      }`}
-      style={{
-        background: `linear-gradient(135deg, ${from}12 0%, ${to}0A 48%, #FFFFFF 100%)`,
-        borderColor: isActive ? stage.border : `${from}20`,
-      }}
-    >
-      {/* Step badge */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: `${stage.color}15`, border: `1.5px solid ${stage.color}30` }}
-          >
-            <Icon className="w-4.5 h-4.5" style={{ color: stage.color }} />
-          </div>
-          <div>
-            <div
-              className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
-              style={{ color: stage.color }}
-            >
-              {labels.stage} {stage.step}
-            </div>
-            <h3 className="text-sm font-bold text-text-primary leading-tight">{stage.title}</h3>
-          </div>
-        </div>
-
-        {/* Live count */}
-        <div className="flex flex-col items-end gap-1">
-          <div className="flex items-center gap-1">
-            <span className="relative flex h-1.5 w-1.5">
-              <span
-                className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                style={{ background: stage.color }}
-              />
-              <span
-                className="relative inline-flex rounded-full h-1.5 w-1.5"
-                style={{ background: stage.color }}
-              />
-            </span>
-            <LiveCounter value={stage.liveCount} color={stage.color} />
-          </div>
-          <div className="text-[9px] text-text-muted font-medium">{labels.live}</div>
-        </div>
-      </div>
-
-      {/* Description */}
-      <p className="text-xs text-text-muted leading-relaxed mb-4">{stage.subtitle}</p>
-
-      {/* Meta row */}
-      <div className="flex items-center gap-3 mb-4">
-        <div
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold"
-          style={{ background: `${stage.color}10`, color: stage.color }}
-        >
-          <Clock className="w-3 h-3" />
-          {stage.duration}
-        </div>
-        <div
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold"
-          style={{ background: `${stage.color}10`, color: stage.color }}
-        >
-          <TrendingUp className="w-3 h-3" />
-          {labels.pass} {stage.passRate}
-        </div>
-      </div>
-
-      {/* Companies */}
-      <div className="flex flex-wrap gap-1.5">
-        {stage.companies.map((co, i) => (
-          <CompanyPill key={co} name={co} index={i} color={stage.color} />
-        ))}
-      </div>
-    </motion.div>
-  )
 }
 
 // ─── Funnel Visual ────────────────────────
@@ -233,6 +100,7 @@ function FunnelBar({
     </motion.div>
   )
 }
+
 // ─── Main Component ───────────────────────
 export default function HiringHierarchy() {
   const content = useCandmainLandingContent()
@@ -241,19 +109,12 @@ export default function HiringHierarchy() {
     ...stage,
     icon: stageIcons[stage.id] ?? FileText,
   }))
-  const cardLabels = { stage: h.stageLabel, live: h.liveSuffix, pass: h.passPrefix }
   const funnelLabels = { stage: h.stageLabel, live: h.liveSuffix }
 
-  const [activeStage, setActiveStage] = useState<string | null>('application')
   const [funnelMetrics, setFunnelMetrics] = useState(baseFunnelMetrics)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-  const toggleStage = (id: string) => {
-    setActiveStage((prev) => (prev === id ? null : id))
-  }
-
   useEffect(() => {
-    // Set once on mount to avoid SSR/client hydration timestamp drift.
     setLastUpdated(new Date())
 
     const interval = setInterval(() => {
@@ -280,8 +141,6 @@ export default function HiringHierarchy() {
   return (
     <section className="section bg-[#FAFBFC]" id="hiring-hierarchy">
       <div className="container">
-
-        {/* ── Header ─────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -299,7 +158,6 @@ export default function HiringHierarchy() {
           <p className="text-text-muted text-lg max-w-2xl mx-auto">{h.subtitle}</p>
         </motion.div>
 
-        {/* ── Funnel Overview ─────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -332,7 +190,6 @@ export default function HiringHierarchy() {
             ))}
           </div>
 
-          {/* Legend */}
           <div className="flex items-center gap-6 mt-5 pt-4 border-t border-[rgba(15,23,42,0.06)]">
             <div className="flex items-center gap-2 text-xs text-text-muted">
               <div className="w-3 h-3 rounded bg-[rgba(15,23,42,0.06)]" />
@@ -344,36 +201,6 @@ export default function HiringHierarchy() {
             </div>
           </div>
         </motion.div>
-
-        {/* ── Stage Cards Grid ─────────────────── */}
-        <div className="mb-6">
-          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {hiringStages.map((stage, i) => (
-              <div key={stage.id} className="relative">
-                <StageCard
-                  stage={stage}
-                  index={i}
-                  isActive={activeStage === stage.id}
-                  onClick={() => toggleStage(stage.id)}
-                  labels={cardLabels}
-                />
-
-                {/* Connector arrow between rows */}
-                {i < hiringStages.length - 1 && (i + 1) % 3 === 0 && (
-                  <div className="hidden xl:flex justify-center mt-4 mb-0">
-                    <motion.div
-                      animate={{ y: [0, 4, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                    >
-                      <ArrowDown className="w-5 h-5 text-blue-300" />
-                    </motion.div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
       </div>
     </section>
   )

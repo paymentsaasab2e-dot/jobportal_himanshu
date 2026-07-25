@@ -670,7 +670,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                 <button
                                     type="button"
                                     onClick={() => router.push(localizePath('/whatsapp', locale))}
-                                    className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+                                    className="rounded-full border border-[rgba(40,168,225,0.22)] bg-[var(--brand-primary-soft)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary)] shadow-sm transition-opacity hover:opacity-90"
                                 >
                                     {t("common.login")}
                                 </button>
