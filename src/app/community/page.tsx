@@ -2062,7 +2062,9 @@ export default function OfficeGossipsPage() {
 
                     <div className="space-y-2.5 px-3.5 py-3">
                       <p className="text-sm font-bold leading-snug text-slate-900">{ev.title}</p>
-                      <p className="text-sm leading-relaxed text-slate-700">{ev.body}</p>
+                      <p className="line-clamp-3 text-sm leading-relaxed text-slate-700">
+                        {ev.body}
+                      </p>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium text-slate-500">
                         <span className="inline-flex items-center gap-1">
                           {isJob ? (
@@ -2095,18 +2097,34 @@ export default function OfficeGossipsPage() {
                         ))}
                       </div>
                       <div
-                        className="flex items-center gap-1 border-t border-slate-100 pt-2"
+                        className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2.5"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {isJob ? (
-                          <button
-                            type="button"
-                            onClick={() => openJobEvent(ev)}
-                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#0A66C2] py-2 text-xs font-semibold text-white hover:bg-[#004182]"
-                          >
-                            <Briefcase className="h-4 w-4" />
-                            Apply now
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => openJobEvent(ev)}
+                              className="inline-flex items-center gap-1.5 rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#004182]"
+                            >
+                              <Briefcase className="h-3.5 w-3.5" />
+                              Apply
+                            </button>
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-[#28A8E1] hover:text-[#0A66C2]"
+                            >
+                              <Bookmark className="h-3.5 w-3.5" />
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-[#28A8E1] hover:text-[#0A66C2]"
+                            >
+                              <Share2 className="h-3.5 w-3.5" />
+                              Share
+                            </button>
+                          </>
                         ) : (
                           <>
                             <button

@@ -1,3 +1,5 @@
+import { toPlainJobText } from '@/lib/job-description';
+
 /**
  * Office Gossips — profile-relevant events (walk-ins, seminars, webinars, jobs).
  * Local demo feed shaped like LinkedIn / Instagram posts; live jobs merge in from API.
@@ -148,8 +150,13 @@ export function mapJobsToOgEvents(jobs: unknown[], limit = 8): OgEventPost[] {
       asString(j.location || j.city || j.jobLocation) ||
       (asString(j.workMode || j.employmentType) || undefined);
     const description =
-      asString(j.shortDescription || j.description || j.summary).slice(0, 220) ||
-      `Apply for ${title} at ${company} on HRYantra.`;
+      toPlainJobText(
+        asString(j.shortDescription || j.description || j.summary),
+      )
+        .replace(/^\s*Overview\s*/i, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 180) || `Apply for ${title} at ${company} on HRYantra.`;
     const created =
       asString(j.createdAt || j.postedAt || j.updatedAt) || new Date().toISOString();
     const roleBits = `${title} ${company} ${description}`.toLowerCase();
