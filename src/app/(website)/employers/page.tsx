@@ -9,7 +9,7 @@ import { cookies } from "next/headers";
 import EmployerLandingPage from "./EmployersClient";
 
 export const metadata: Metadata = {
-  title: "Employers",
+  title: "Entrepreneurs",
   description: "Your Entire Hiring & HR Operations — Powered by AI.",
 };
 

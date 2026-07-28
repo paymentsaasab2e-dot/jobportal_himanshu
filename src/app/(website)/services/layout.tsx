@@ -2,8 +2,9 @@ import { Metadata } from "next";
 import { ServicesProvider } from "./context/ServicesContext";
 
 export const metadata: Metadata = {
-  title: "Expert Services",
-  description: "AI-powered resume optimization, interview prep, and career coaching.",
+  title: "Transforming HR into Value for Talent and Enterprise",
+  description:
+    "Where Visionary Entrepreneurs and Top Talent Connect, Grow, and Scale.",
 };
 
 export default function ServicesLayout({

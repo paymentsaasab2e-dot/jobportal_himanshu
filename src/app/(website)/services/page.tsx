@@ -217,25 +217,31 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-[#fcfcfd] text-[#111827] font-inter overflow-x-hidden">
+    <div className="relative min-h-screen bg-[#fcfcfd] text-[#111827] font-inter overflow-x-clip">
       <style dangerouslySetInnerHTML={{ __html: styles }} />
 
       {/* Hero Section */}
-      <header className="relative pt-[160px] pb-[100px] min-h-screen flex items-center overflow-hidden">
+      <header className="relative pt-[140px] pb-[80px] min-h-screen flex items-center overflow-hidden">
         <div className="hero-bg-glow"></div>
-        <div className="max-w-7xl mx-auto px-6 relative z-10 grid md:grid-cols-2 gap-10 lg:gap-16 items-center">
-          <div className="opacity-0 animate-fade-in text-center md:text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-[4rem] mb-6 tracking-tight text-gray-900">
-              We don't just help you apply. <br />
-              <span className="gradient-text">We help you get hired.</span>
+        <div className="max-w-7xl mx-auto px-6 relative z-10 flex w-full flex-col items-center gap-10 lg:gap-12">
+          <div className="opacity-0 animate-fade-in w-full max-w-3xl text-center">
+            <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-[rgba(40,168,225,0.28)] bg-white px-5 py-2 shadow-[0_10px_28px_rgba(40,168,225,0.18)]">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-[#28A8E1]" />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1B6FA8]">
+                HR Yantra: Connect. Value. Grow.
+              </span>
+            </div>
+            <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] mb-5 tracking-tight text-gray-900 leading-tight">
+              Transforming HR into Value for{' '}
+              <span className="gradient-text">Talent and Enterprise.</span>
             </h1>
-            <p className="text-lg text-gray-600 mb-10 max-w-[90%] mx-auto md:mx-0">
-              Transform your job search into job success. SAASA B2E provides an interconnected AI ecosystem that optimizes your resume, perfects your interview skills, and upskills you for the exact roles you want.
+            <p className="text-lg text-gray-600 mb-8 mx-auto max-w-2xl">
+              Where Visionary Entrepreneurs and Top Talent Connect, Grow, and Scale.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/whatsapp"
-                className="px-7 py-3.5 rounded-full font-medium text-base text-white bg-gradient-to-br from-accent-primary to-accent-secondary shadow-[0_4px_14px_0_rgba(79,70,229,0.25)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.4)] hover:-translate-y-0.5 transition inline-flex items-center justify-center gap-2"
+                className="px-7 py-3.5 rounded-full font-medium text-base text-white bg-gradient-to-br from-[#4f46e5] to-[#9333ea] shadow-[0_4px_14px_0_rgba(79,70,229,0.25)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.4)] hover:-translate-y-0.5 transition inline-flex items-center justify-center gap-2"
               >
                 Start Your Journey
               </Link>
@@ -247,7 +253,8 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="relative h-[500px] flex justify-center items-center mt-10 md:mt-0 opacity-0 animate-fade-in [animation-delay:200ms] w-full">
+
+          <div className="relative h-[460px] md:h-[500px] flex justify-center items-center opacity-0 animate-fade-in [animation-delay:200ms] w-full">
             
             {/* Background decorative rings */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -256,7 +263,7 @@ export default function Home() {
             </div>
 
             {/* Floating Pills */}
-            <div className="absolute top-[10%] right-[0%] md:right-[5%] bg-white/95 backdrop-blur-md border border-gray-100 py-3 px-5 rounded-2xl flex items-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.08)] z-30 animate-float hover:scale-105 active:scale-95 cursor-pointer transition-all duration-300 hover:border-accent-primary/30 hover:shadow-[0_8px_30px_rgba(79,70,229,0.15)] group">
+            <div className="absolute top-[10%] right-[0%] md:right-[18%] bg-white/95 backdrop-blur-md border border-gray-100 py-3 px-5 rounded-2xl flex items-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.08)] z-30 animate-float hover:scale-105 active:scale-95 cursor-pointer transition-all duration-300 hover:border-accent-primary/30 hover:shadow-[0_8px_30px_rgba(79,70,229,0.15)] group">
               <div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center text-accent-primary text-lg group-hover:rotate-12 group-hover:bg-accent-primary group-hover:text-white transition-all duration-300">
                 <i className="fa-solid fa-robot"></i>
               </div>
@@ -266,7 +273,7 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="absolute bottom-[20%] -left-[5%] md:-left-[10%] bg-white/95 backdrop-blur-md border border-gray-100 py-3 px-5 rounded-2xl flex items-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.08)] z-30 animate-float [animation-delay:2s] hover:scale-105 active:scale-95 cursor-pointer transition-all duration-300 hover:border-[#10b981]/30 hover:shadow-[0_8px_30px_rgba(16,185,129,0.15)] group">
+            <div className="absolute bottom-[20%] left-[0%] md:left-[14%] bg-white/95 backdrop-blur-md border border-gray-100 py-3 px-5 rounded-2xl flex items-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.08)] z-30 animate-float [animation-delay:2s] hover:scale-105 active:scale-95 cursor-pointer transition-all duration-300 hover:border-[#10b981]/30 hover:shadow-[0_8px_30px_rgba(16,185,129,0.15)] group">
               <div className="w-10 h-10 rounded-full bg-[#10b981]/10 flex items-center justify-center text-[#10b981] text-lg group-hover:-rotate-12 group-hover:bg-[#10b981] group-hover:text-white transition-all duration-300">
                 <i className="fa-solid fa-bolt"></i>
               </div>
