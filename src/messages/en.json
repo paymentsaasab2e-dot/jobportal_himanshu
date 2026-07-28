@@ -15,7 +15,7 @@
   "nav": {
     "exploreJobs": "Employee",
     "courses": "Courses",
-    "services": "Services",
+    "services": "Businesses",
     "dashboard": "Dashboard",
     "jobs": "Jobs",
     "applications": "Applications",
@@ -23,7 +23,7 @@
     "community": "Office Gossips",
     "profile": "Profile",
     "subscriptions": "Subscriptions",
-    "employers": "Employers",
+    "employers": "Entrepreneurs",
     "searchPlaceholder": "Search for roles, companies, or insights...",
     "universalSearch": "Universal Search",
     "searchJobs": "Search jobs"
