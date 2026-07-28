@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CircleHelp } from 'lucide-react';
+import { CircleHelp, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthContext';
 import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
 import { useTokensOptional } from '@/components/tokens/TokensContext';
@@ -12,7 +12,7 @@ import {
   profileAvatarSurfaceClass,
 } from '@/lib/profile-avatar';
 
-type ItemIcon = 'aiCv' | 'subscriptions' | 'community' | 'help' | 'settings';
+type ItemIcon = 'aiCv' | 'subscriptions' | 'community' | 'reference' | 'help' | 'settings';
 
 type Item = {
   label: string;
@@ -35,6 +35,7 @@ const drawerMenuActions: Item[] = [
   { label: 'AI CV Editor', path: '/lms/resume-builder/editor', icon: 'aiCv' },
   { label: 'Tokens', path: '/subscriptions', icon: 'subscriptions' },
   { label: 'Office Gossips', path: '/community', icon: 'community' },
+  { label: 'Reference Check', path: '/reference-check', icon: 'reference' },
   { label: 'Help & Support', path: '/help', icon: 'help' },
   { label: 'Settings', path: '/settings', icon: 'settings' },
 ];
@@ -44,6 +45,7 @@ const ICON_SHELL: Record<ItemIcon, string> = {
   aiCv: 'bg-sky-50 ring-1 ring-sky-200/70',
   subscriptions: 'bg-amber-50 ring-1 ring-amber-200/80',
   community: 'bg-orange-50 ring-1 ring-orange-200/70',
+  reference: 'bg-emerald-50 ring-1 ring-emerald-200/70',
   help: 'bg-emerald-50 ring-1 ring-emerald-200/70',
   settings: 'bg-slate-100 ring-1 ring-slate-200/80',
 };
@@ -70,6 +72,9 @@ function MenuIcon({ icon }: { icon: ItemIcon }) {
   }
   if (icon === 'subscriptions') {
     return <TokenCoinIcon className="h-4 w-4" />;
+  }
+  if (icon === 'reference') {
+    return <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" strokeWidth={2.2} aria-hidden />;
   }
   return <CircleHelp className="h-3.5 w-3.5 text-emerald-700" strokeWidth={2.2} aria-hidden />;
 }

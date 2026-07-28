@@ -805,6 +805,12 @@ export function getConnectedCompanies(userId: string): CompanyPage[] {
   return loadCommunityState().companyPages.filter((c) => c.memberIds.includes(userId));
 }
 
+/** Company pages this user created (admin / company-account switch). */
+export function getOwnedCompanyPages(userId: string): CompanyPage[] {
+  if (!userId) return [];
+  return loadCommunityState().companyPages.filter((c) => c.createdBy === userId);
+}
+
 export type HotCircleStat = {
   community: Community;
   postCount: number;

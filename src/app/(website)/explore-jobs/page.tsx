@@ -786,6 +786,9 @@ const ExploreJobsPageContent = () => {
     })
     setIsSuccessModalOpen(true)
     showSuccessToast('Application submitted successfully')
+    void import('@/lib/user-activity-tracker').then((m) => {
+      m.trackApplicationSubmitForCurrentUser()
+    })
     void loadJobListings()
     checkAppliedJobs()
     notifyBellRefresh()
@@ -1517,6 +1520,9 @@ const ExploreJobsPageContent = () => {
     setSelectedJob(job)
     const jobId = String(job.id || '').trim()
     if (!jobId) return
+    void import('@/lib/user-activity-tracker').then((m) => {
+      m.trackJobCardClickForCurrentUser(jobId)
+    })
     void (async () => {
       const detail = await fetchJobDetailForApply(jobId, String(API_BASE_URL))
       if (!detail) return
@@ -1855,6 +1861,9 @@ const ExploreJobsPageContent = () => {
         loadJobListings();
         checkAppliedJobs();
         showSuccessToast('Application submitted successfully');
+        void import('@/lib/user-activity-tracker').then((m) => {
+          m.trackApplicationSubmitForCurrentUser();
+        });
         // Backend already persists an "Application submitted" Notification — just nudge the bell to refresh.
         notifyBellRefresh();
       } else {

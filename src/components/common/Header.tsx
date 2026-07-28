@@ -669,14 +669,14 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => router.push(localizePath('/whatsapp', locale))}
+                                    onClick={() => router.push(localizePath('/whatsapp', locale) + '?mode=signin')}
                                     className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors"
                                 >
                                     {t("common.login")}
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => router.push(localizePath('/whatsapp', locale))}
+                                    onClick={() => router.push(localizePath('/whatsapp', locale) + '?mode=signup')}
                                     className="rounded-full bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
                                 >
                                     {t("common.signup")}

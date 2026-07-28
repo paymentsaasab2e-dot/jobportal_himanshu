@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronDown,
+  Eye,
   Flame,
   Heart,
   Info,
@@ -16,18 +17,60 @@ import {
   Globe2,
   Loader2,
   Briefcase,
+  Building2,
+  ArrowLeftRight,
+  ArrowLeft,
   X,
+  Home,
+  Calendar,
+  MapPin,
+  Bookmark,
+  Share2,
+  Video,
+  Sparkles,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  companyFollowerCount,
+  pendingDmIncomingCount,
+  pendingFollowIncomingCount,
+} from '@/lib/social-store';
+import {
+  ensureHryantraVerifiedChat,
+  installHryantraHqChatListener,
+} from '@/lib/hryantra-verified-chat-store';
+import type { ChatKind } from '@/components/community/ReferenceMessagingPanel';
+import {
+  eventTypeLabel,
+  filterJobsForProfile,
+  listEventsForProfile,
+  mapJobsToOgEvents,
+  mergeEventsWithJobs,
+  type OgEventPost,
+  type OgEventType,
+} from '@/lib/og-events-store';
+import {
+  fetchPortalJobsList,
+  fetchPortalPersonalizedJobs,
+} from '@/lib/query/portal-api';
+import { DEFAULT_LOCALE } from '@/lib/i18n';
 import { useAuth } from '@/components/auth/AuthContext';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
 import { CompanyPageView } from '@/components/community/CompanyPageView';
+import { ProfileViewsPanel } from '@/components/community/ProfileViewsPanel';
 import { ReferenceCheckPanel } from '@/components/community/ReferenceCheckPanel';
 import { ReferenceMessagingPanel } from '@/components/community/ReferenceMessagingPanel';
 import { UserProfileView } from '@/components/community/UserProfileView';
 import { getApiBaseUrl } from '@/lib/api-base';
 import { getAuthHeaders, resolveCandidateIdForApi } from '@/lib/auth-storage';
 import { heartbeatPresence } from '@/lib/presence';
+import {
+  PROFILE_VIEWS_UPDATED_EVENT,
+  countLockedProfileViews,
+  countRecentProfileViews,
+  ensureDemoProfileViews,
+} from '@/lib/profile-view-store';
 import {
   addComment,
   canConnectToCompany,
@@ -43,6 +86,7 @@ import {
   getGossipDisplayName,
   getGossipIdentity,
   getHotCircles,
+  getOwnedCompanyPages,
   getJoinedCommunities,
   getVisibleFeed,
   hasGossipAccount,
@@ -112,7 +156,15 @@ function ComposeAssetIcon({
 }
 
 export default function OfficeGossipsPage() {
+  const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  type OgTab = 'feed' | 'communities' | 'chat' | 'events';
+  const [ogTab, setOgTab] = useState<OgTab>('feed');
+  const [activeCommunityId, setActiveCommunityId] = useState<string | null>(null);
+  const [eventFilter, setEventFilter] = useState<'all' | OgEventType>('all');
+  const [eventInterested, setEventInterested] = useState<Record<string, boolean>>({});
+  const [jobsFromPersonalized, setJobsFromPersonalized] = useState(false);
+  const [jobEvents, setJobEvents] = useState<OgEventPost[]>([]);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [companyPages, setCompanyPages] = useState<CompanyPage[]>([]);
   const [hotCircles, setHotCircles] = useState<HotCircleStat[]>([]);
@@ -141,9 +193,13 @@ export default function OfficeGossipsPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null);
+  const [showProfileViews, setShowProfileViews] = useState(false);
+  const [profileViewTick, setProfileViewTick] = useState(0);
   const [referenceChatId, setReferenceChatId] = useState<string | null>(null);
-  const [referenceChatKind, setReferenceChatKind] = useState<'reference' | 'dm' | null>(null);
+  const [referenceChatKind, setReferenceChatKind] = useState<ChatKind | null>(null);
   const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
+  const [actingCompanyId, setActingCompanyId] = useState<string | null>(null);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const composeInputRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -171,6 +227,23 @@ export default function OfficeGossipsPage() {
   useEffect(() => {
     if (!authLoading && isAuthenticated) refresh();
   }, [authLoading, isAuthenticated, refresh]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('views') === '1') {
+      setShowProfileViews(true);
+      params.delete('views');
+      const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}`;
+      window.history.replaceState({}, '', next);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onUp = () => setProfileViewTick((n) => n + 1);
+    window.addEventListener(PROFILE_VIEWS_UPDATED_EVENT, onUp);
+    return () => window.removeEventListener(PROFILE_VIEWS_UPDATED_EVENT, onUp);
+  }, []);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated && userId && !hasGossipAccount(userId)) {
@@ -236,6 +309,31 @@ export default function OfficeGossipsPage() {
     () => (userId ? getConnectedCompanies(userId) : []),
     [userId, companyPages],
   );
+  const ownedCompanies = useMemo(
+    () => (userId ? getOwnedCompanyPages(userId) : []),
+    [userId, companyPages],
+  );
+  const actingCompany = useMemo(
+    () => ownedCompanies.find((c) => c.id === actingCompanyId) || null,
+    [ownedCompanies, actingCompanyId],
+  );
+  const isCompanyAccount = Boolean(actingCompany);
+
+  useEffect(() => {
+    if (!userId || isCompanyAccount) return;
+    ensureDemoProfileViews(userId);
+  }, [userId, isCompanyAccount]);
+
+  const lockedProfileViews = useMemo(
+    () => (userId ? countLockedProfileViews(userId) : 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userId, profileViewTick, showProfileViews],
+  );
+  const recentProfileViews = useMemo(
+    () => (userId ? countRecentProfileViews(userId) : 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userId, profileViewTick, showProfileViews],
+  );
 
   const companySearchResults = useMemo(
     () => searchCommunityEverything(companySearch, 20),
@@ -248,17 +346,12 @@ export default function OfficeGossipsPage() {
   );
 
   const openCompanyPage = (pageId: string) => {
-    setSelectedProfileUserId(null);
-    setSelectedCompanyId(pageId);
-    setSearchOpen(false);
-    setCompanySearch('');
-    const page = companyPages.find((p) => p.id === pageId);
-    if (page && userId && page.memberIds.includes(userId)) {
-      setComposeTarget({ kind: 'company', id: pageId });
-    }
+    // Company pages + reference live on the Reference Check platform
+    router.push(`/reference-check?company=${encodeURIComponent(pageId)}`);
   };
 
   const openUserProfile = (profileUserId: string) => {
+    if (isCompanyAccount) return;
     setSelectedCompanyId(null);
     setSelectedProfileUserId(profileUserId);
     setSearchOpen(false);
@@ -266,7 +359,56 @@ export default function OfficeGossipsPage() {
     setHighlightPostId(null);
   };
 
-  const openChat = (kind: 'reference' | 'dm', id: string) => {
+  const switchToPersonalAccount = () => {
+    setActingCompanyId(null);
+    setAccountMenuOpen(false);
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('saasa:og-acting-company');
+    }
+    showSuccessToast('Personal account', 'Viewing as yourself.');
+  };
+
+  const switchToCompanyAccount = (companyId: string) => {
+    const page = ownedCompanies.find((c) => c.id === companyId);
+    if (!page) return;
+    setActingCompanyId(companyId);
+    setAccountMenuOpen(false);
+    setSelectedProfileUserId(null);
+    setSelectedCompanyId(companyId);
+    setComposeTarget({ kind: 'company', id: companyId });
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('saasa:og-acting-company', companyId);
+    }
+    showSuccessToast('Company account', `Now viewing as ${page.name}.`);
+  };
+
+  useEffect(() => {
+    if (!userId || ownedCompanies.length === 0) return;
+    const saved =
+      typeof window !== 'undefined'
+        ? sessionStorage.getItem('saasa:og-acting-company')
+        : null;
+    if (saved && ownedCompanies.some((c) => c.id === saved)) {
+      setActingCompanyId(saved);
+      setSelectedCompanyId(saved);
+      setComposeTarget({ kind: 'company', id: saved });
+    }
+  }, [userId, ownedCompanies]);
+
+  useEffect(() => {
+    if (!actingCompany) return;
+    if (selectedCompanyId !== actingCompany.id) {
+      setSelectedCompanyId(actingCompany.id);
+    }
+    setSelectedProfileUserId(null);
+  }, [actingCompany, selectedCompanyId]);
+
+  const openChat = (kind: ChatKind, id: string) => {
+    if (kind === 'reference') {
+      router.push('/reference-check');
+      return;
+    }
+    setOgTab('chat');
     setReferenceChatKind(kind);
     setReferenceChatId(id);
   };
@@ -276,8 +418,50 @@ export default function OfficeGossipsPage() {
     setReferenceChatKind(null);
   };
 
+  useEffect(() => {
+    if (!userId) return;
+    ensureHryantraVerifiedChat(userId);
+    return installHryantraHqChatListener();
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const openVerified = (chatId?: string) => {
+      const id = chatId || ensureHryantraVerifiedChat(userId)?.id;
+      if (!id) return;
+      setOgTab('chat');
+      setReferenceChatKind('hryantra');
+      setReferenceChatId(id);
+    };
+
+    try {
+      const pending = sessionStorage.getItem('saasa:open-hryantra-chat');
+      if (pending) {
+        sessionStorage.removeItem('saasa:open-hryantra-chat');
+        openVerified(pending);
+      }
+    } catch {
+      /* ignore */
+    }
+
+    const onOpen = (event: Event) => {
+      const detail = (event as CustomEvent<{ chatId?: string }>).detail;
+      openVerified(detail?.chatId);
+    };
+    window.addEventListener('saasa:open-hryantra-chat', onOpen);
+    return () => window.removeEventListener('saasa:open-hryantra-chat', onOpen);
+  }, [userId]);
+
   const composeOptions = useMemo(() => {
     const opts: { value: string; label: string; target: ComposeTarget }[] = [];
+    if (isCompanyAccount && actingCompany) {
+      opts.push({
+        value: `company:${actingCompany.id}`,
+        label: `🏢 ${actingCompany.name}`,
+        target: { kind: 'company', id: actingCompany.id },
+      });
+      return opts;
+    }
     for (const c of joined) {
       opts.push({
         value: `community:${c.id}`,
@@ -285,21 +469,114 @@ export default function OfficeGossipsPage() {
         target: { kind: 'community', id: c.id },
       });
     }
-    for (const co of connectedCompanies) {
-      opts.push({
-        value: `company:${co.id}`,
-        label: `🏢 ${co.name}`,
-        target: { kind: 'company', id: co.id },
-      });
-    }
+    // Company posting lives on Reference Check — keep OG to communities only
     return opts;
-  }, [joined, connectedCompanies]);
+  }, [joined, isCompanyAccount, actingCompany]);
 
   useEffect(() => {
     if (!composeTarget && composeOptions.length > 0) {
       setComposeTarget(composeOptions[0].target);
     }
   }, [composeOptions, composeTarget]);
+
+  const activeCommunity = useMemo(
+    () => communities.find((c) => c.id === activeCommunityId) || null,
+    [communities, activeCommunityId],
+  );
+
+  const displayFeed = useMemo(() => {
+    // Office Gossips = community posts only (company pages moved to Reference Check)
+    let posts = feed.filter((p) => Boolean(p.communityId));
+    if (ogTab === 'communities' && activeCommunityId) {
+      posts = posts.filter((p) => p.communityId === activeCommunityId);
+    }
+    return posts;
+  }, [feed, ogTab, activeCommunityId]);
+
+  const openCommunityRoom = (communityId: string) => {
+    setActiveCommunityId(communityId);
+    setOgTab('communities');
+    setSelectedCompanyId(null);
+    setSelectedProfileUserId(null);
+    setComposeTarget({ kind: 'community', id: communityId });
+    setSearchOpen(false);
+  };
+
+  const profileEventText = useMemo(() => {
+    const bits = [
+      realName,
+      authorName,
+      user?.email,
+      workDomain,
+      ...(joined.map((c) => c.name) || []),
+    ];
+    return bits.filter(Boolean).join(' ').toLowerCase();
+  }, [realName, authorName, user?.email, workDomain, joined]);
+
+  const profileEvents = useMemo(() => {
+    const matched = listEventsForProfile(profileEventText);
+    const relevantJobs = filterJobsForProfile(jobEvents, profileEventText, {
+      preferAll: jobsFromPersonalized,
+      limit: 6,
+    });
+    return mergeEventsWithJobs(matched, relevantJobs);
+  }, [profileEventText, jobEvents, jobsFromPersonalized]);
+
+  const filteredEvents = useMemo(() => {
+    if (eventFilter === 'all') return profileEvents;
+    return profileEvents.filter((e) => e.type === eventFilter);
+  }, [profileEvents, eventFilter]);
+
+  useEffect(() => {
+    if (ogTab !== 'events') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const candidateId = resolveCandidateIdForApi(userId);
+        let jobs: unknown[] = [];
+        let personalized = false;
+        if (candidateId) {
+          jobs = await fetchPortalPersonalizedJobs(candidateId, DEFAULT_LOCALE);
+          personalized = jobs.length > 0;
+        }
+        if (!jobs.length) {
+          jobs = await fetchPortalJobsList(DEFAULT_LOCALE, 12);
+        }
+        if (!cancelled) {
+          setJobsFromPersonalized(personalized);
+          setJobEvents(mapJobsToOgEvents(jobs, personalized ? 8 : 12));
+        }
+      } catch {
+        if (!cancelled) {
+          setJobsFromPersonalized(false);
+          setJobEvents([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ogTab, userId]);
+
+  const openJobEvent = (ev: OgEventPost) => {
+    if (ev.type !== 'job') return;
+    const href =
+      ev.actionHref ||
+      (ev.jobId ? `/explore-jobs?job=${encodeURIComponent(ev.jobId)}` : '/explore-jobs');
+    router.push(href);
+  };
+
+  const followPendingCount = useMemo(
+    () => (userId ? pendingFollowIncomingCount(userId) : 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userId, feed, referenceChatId],
+  );
+
+  const dmPendingCount = useMemo(
+    () => (userId ? pendingDmIncomingCount(userId) : 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userId, feed, referenceChatId],
+  );
 
   const openComments = (postId: string) => {
     if (commentPostId === postId) {
@@ -531,37 +808,202 @@ export default function OfficeGossipsPage() {
 
   return (
     <div className="h-[calc(100dvh-var(--app-header-height,96px))] overflow-hidden bg-[#EEF3F8]">
-      <div className="mx-auto flex h-full max-w-[1128px] flex-col px-3 pb-2 pt-3 sm:px-4">
-        {/* LinkedIn-style 3 columns — each column scrolls independently */}
-        <div className="grid min-h-0 flex-1 items-stretch gap-3 lg:grid-cols-[225px_minmax(0,1fr)] xl:grid-cols-[225px_minmax(0,1fr)_300px]">
+      <div className="mx-auto flex h-full w-full max-w-[1520px] flex-col px-3 pb-[4.25rem] pt-3 sm:px-5 lg:px-6">
+        {/* Top bar — profile views + account switcher */}
+        {!isCompanyAccount || ownedCompanies.length > 0 ? (
+          <div className="relative mb-2 flex shrink-0 items-center justify-between gap-2">
+            {!isCompanyAccount ? (
+              <button
+                type="button"
+                onClick={() => setShowProfileViews(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-[#28A8E1] hover:text-[#0A66C2] lg:hidden"
+              >
+                <Eye className="h-3.5 w-3.5" />
+                Who viewed you
+                {lockedProfileViews > 0 ? (
+                  <span className="rounded-full bg-[#0A66C2] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    {lockedProfileViews}
+                  </span>
+                ) : null}
+              </button>
+            ) : (
+              <span />
+            )}
+            {ownedCompanies.length > 0 ? (
+          <div className="relative ml-auto flex shrink-0 items-center justify-end">
+            <button
+              type="button"
+              onClick={() => setAccountMenuOpen((v) => !v)}
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm transition ${
+                isCompanyAccount
+                  ? 'border-[#1B3A5F]/20 bg-[#1B3A5F] text-white hover:bg-[#16324f]'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-[#28A8E1] hover:text-[#0A66C2]'
+              }`}
+            >
+              {isCompanyAccount ? (
+                <Building2 className="h-3.5 w-3.5" />
+              ) : (
+                <ArrowLeftRight className="h-3.5 w-3.5" />
+              )}
+              {isCompanyAccount
+                ? `Company · ${actingCompany?.name}`
+                : 'Switch account'}
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition ${accountMenuOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {accountMenuOpen ? (
+              <>
+                <button
+                  type="button"
+                  className="fixed inset-0 z-20 cursor-default"
+                  aria-label="Close account menu"
+                  onClick={() => setAccountMenuOpen(false)}
+                />
+                <div
+                  className={`${card} absolute right-0 top-full z-30 mt-1 w-64 overflow-hidden py-1 shadow-lg`}
+                >
+                  <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                    View as
+                  </p>
+                  <button
+                    type="button"
+                    onClick={switchToPersonalAccount}
+                    className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm hover:bg-sky-50 ${
+                      !isCompanyAccount ? 'bg-sky-50/80 font-semibold text-[#0A66C2]' : 'text-slate-800'
+                    }`}
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-[#1B3A5F]">
+                      {authorName.slice(0, 1).toUpperCase()}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold">{authorName}</span>
+                      <span className="block text-[11px] text-slate-500">Personal account</span>
+                    </span>
+                  </button>
+                  {ownedCompanies.map((co) => (
+                    <button
+                      key={co.id}
+                      type="button"
+                      onClick={() => switchToCompanyAccount(co.id)}
+                      className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm hover:bg-sky-50 ${
+                        actingCompanyId === co.id
+                          ? 'bg-sky-50/80 font-semibold text-[#0A66C2]'
+                          : 'text-slate-800'
+                      }`}
+                    >
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#1B3A5F] text-xs font-bold text-white">
+                        {co.logoLetter}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-semibold">{co.name}</span>
+                        <span className="block text-[11px] text-slate-500">
+                          Company page · {companyFollowerCount(co.id)} followers
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
+          </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {/* Feed / open community room */}
+        <div
+          className={`grid min-h-0 flex-1 items-stretch gap-4 ${
+            ogTab === 'feed'
+              ? 'lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_280px]'
+              : 'grid-cols-1'
+          } ${
+            ogTab === 'feed' || (ogTab === 'communities' && activeCommunityId)
+              ? ''
+              : 'hidden'
+          }`}
+        >
           {/* LEFT — profile + circles (own scroll) */}
           <aside
-            className={`hidden h-full min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain pb-4 lg:flex ${hideScroll}`}
-          >            <div className={`${card} overflow-hidden`}>
+            className={`h-full min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain pb-4 ${hideScroll} ${
+              ogTab === 'feed' ? 'hidden lg:flex' : 'hidden'
+            }`}
+          >
+            <div className={`${card} overflow-hidden`}>
               <div className="h-14 bg-gradient-to-r from-[#1B3A5F] via-[#1E5A8A] to-[#28A8E1]" />
               <div className="-mt-8 px-3 pb-3 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-gradient-to-br from-sky-100 to-sky-50 text-lg font-bold text-[#1B3A5F] shadow-md">
-                  {user?.profilePhotoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={user.profilePhotoUrl}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    authorName.slice(0, 1).toUpperCase()
-                  )}
-                </div>
-                <p className="mt-2 truncate text-sm font-semibold text-slate-900">{authorName}</p>
-                <p className="truncate text-xs text-slate-500">
-                  {workDomain ? `@${workDomain}` : 'Office Gossips'}
-                </p>
-                <p className="mt-2 border-t border-slate-100 pt-2 text-[11px] text-slate-500">
-                  {joined.length} circles · {connectedCompanies.length} companies
-                </p>
+                {isCompanyAccount && actingCompany ? (
+                  <>
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border-[3px] border-white bg-[#1B3A5F] text-xl font-bold text-white shadow-md">
+                      {actingCompany.logoLetter}
+                    </div>
+                    <p className="mt-2 truncate text-sm font-semibold text-slate-900">
+                      {actingCompany.name}
+                    </p>
+                    <p className="truncate text-xs text-slate-500">@{actingCompany.domainKey}</p>
+                    <p className="mt-2 border-t border-slate-100 pt-2 text-[11px] text-slate-500">
+                      {actingCompany.memberIds.length} connections ·{' '}
+                      {companyFollowerCount(actingCompany.id)} followers
+                    </p>
+                    <p className="mt-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                      Company account
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-gradient-to-br from-sky-100 to-sky-50 text-lg font-bold text-[#1B3A5F] shadow-md">
+                      {user?.profilePhotoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={user.profilePhotoUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        authorName.slice(0, 1).toUpperCase()
+                      )}
+                    </div>
+                    <p className="mt-2 truncate text-sm font-semibold text-slate-900">{authorName}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      {workDomain ? `@${workDomain}` : 'Office Gossips'}
+                    </p>
+                    <p className="mt-2 border-t border-slate-100 pt-2 text-[11px] text-slate-500">
+                      {joined.length} circles · {connectedCompanies.length} companies
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
+            {!isCompanyAccount ? (
+              <button
+                type="button"
+                onClick={() => setShowProfileViews(true)}
+                className={`${card} flex w-full items-center gap-3 px-3 py-3 text-left transition hover:border-[#28A8E1]/40 hover:bg-sky-50/50`}
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-[#0A66C2]">
+                  <Eye className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs font-bold text-slate-800">Who viewed you</span>
+                  <span className="mt-0.5 block text-[11px] text-slate-500">
+                    {recentProfileViews === 0
+                      ? 'No views yet'
+                      : `${recentProfileViews} view${recentProfileViews === 1 ? '' : 's'} this week`}
+                    {lockedProfileViews > 0
+                      ? ` · ${lockedProfileViews} locked`
+                      : ''}
+                  </span>
+                </span>
+                {lockedProfileViews > 0 ? (
+                  <span className="rounded-full bg-[#0A66C2] px-2 py-0.5 text-[10px] font-bold text-white">
+                    {lockedProfileViews}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
+
+            {!isCompanyAccount ? (
             <div className={`${card} flex min-h-0 flex-1 flex-col overflow-hidden`}>
               <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2.5">
                 <h2 className="text-xs font-bold text-slate-700">Circles</h2>
@@ -587,7 +1029,16 @@ export default function OfficeGossipsPage() {
                           <Users className="h-3.5 w-3.5" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-slate-900">{c.name}</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!isMember) handleJoin(c.id);
+                              openCommunityRoom(c.id);
+                            }}
+                            className="truncate text-left text-sm font-semibold text-slate-900 hover:text-[#0A66C2]"
+                          >
+                            {c.name}
+                          </button>
                           <p className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-500">
                             {c.visibility === 'private' ? (
                               <Lock className="h-3 w-3" />
@@ -612,10 +1063,48 @@ export default function OfficeGossipsPage() {
                 })}
               </ul>
             </div>
+            ) : (
+              <div className={`${card} p-3.5`}>
+                <p className="text-xs font-bold text-slate-700">Page tools</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+                  Circles are personal-only. As a company account you manage posts, people, and
+                  followers on this page.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => actingCompany && openCompanyPage(actingCompany.id)}
+                  className="mt-3 w-full rounded-full bg-[#0A66C2] px-3 py-2 text-xs font-semibold text-white hover:bg-[#004182]"
+                >
+                  Open company page
+                </button>
+              </div>
+            )}
           </aside>
 
           {/* CENTER — search + feed / company page */}
           <section className="flex min-h-0 min-w-0 flex-col gap-2.5">
+            {ogTab === 'communities' && activeCommunity ? (
+              <div className={`${card} flex shrink-0 items-center gap-2 px-3 py-2.5`}>
+                <button
+                  type="button"
+                  onClick={() => setActiveCommunityId(null)}
+                  className="rounded-full p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  aria-label="Back to communities"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#1B3A5F]">
+                  {activeCommunity.name.slice(0, 1).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-slate-900">{activeCommunity.name}</p>
+                  <p className="text-[11px] text-slate-500">
+                    {activeCommunity.memberIds.length} members ·{' '}
+                    {activeCommunity.visibility === 'private' ? 'Private' : 'Public'}
+                  </p>
+                </div>
+              </div>
+            ) : null}
             <div className="relative shrink-0">
               <div className={`${card} flex items-center gap-2 px-3 py-2`}>
                 <Search className="h-4 w-4 shrink-0 text-slate-400" />
@@ -629,21 +1118,27 @@ export default function OfficeGossipsPage() {
                   onBlur={() => {
                     window.setTimeout(() => setSearchOpen(false), 180);
                   }}
-                  placeholder="Search people, companies, circles, posts…"
+                  placeholder="Search people, circles, posts…"
                   className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
                 />
-                {companySearch || selectedCompany || selectedProfileUserId ? (
+                {companySearch ||
+                selectedProfileUserId ||
+                (selectedCompany && !isCompanyAccount) ? (
                   <button
                     type="button"
                     onClick={() => {
                       setCompanySearch('');
-                      setSelectedCompanyId(null);
                       setSelectedProfileUserId(null);
                       setHighlightPostId(null);
                       setSearchOpen(false);
+                      if (!isCompanyAccount) {
+                        setSelectedCompanyId(null);
+                      } else if (actingCompany) {
+                        setSelectedCompanyId(actingCompany.id);
+                      }
                     }}
                     className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                    title="Clear / back to feed"
+                    title={isCompanyAccount ? 'Clear search' : 'Clear / back to feed'}
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -874,7 +1369,7 @@ export default function OfficeGossipsPage() {
                 />
               ) : (
                 <>
-              {feed.map((post) => {
+              {displayFeed.map((post) => {
                 const community = post.communityId
                   ? communities.find((c) => c.id === post.communityId)
                   : null;
@@ -1021,61 +1516,31 @@ export default function OfficeGossipsPage() {
                   </article>
                 );
               })}
-              {feed.length === 0 ? (
+              {displayFeed.length === 0 ? (
                 <div className={`${card} px-5 py-14 text-center text-sm text-slate-500`}>
-                  No posts yet — join a circle or connect your company page.
+                  No posts yet — open Communities to join a circle and start the conversation.
                 </div>
               ) : null}
                 </>
               )}
             </div>
 
-            {/* Mobile create shortcuts */}
-            <div className="flex gap-2 lg:hidden">
-              <button
-                type="button"
-                onClick={() => setShowCreateCommunity(true)}
-                className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
-              >
-                Create circle
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCreateCompany(true)}
-                className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
-              >
-                Company page
-              </button>
-            </div>
-
-            {/* Add post — below feed */}
+            {/* Compose only inside a community room — Feed stays read-focused */}
+            {ogTab === 'communities' && activeCommunityId ? (
             <div className={`${card} shrink-0 p-3 sm:p-3.5`}>
               {composeOptions.length === 0 ? (
                 <div className="text-center">
-                  <p className="text-sm font-semibold text-slate-800">Join a circle to post</p>
+                  <p className="text-sm font-semibold text-slate-800">Join this circle to post</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    You need to join or create a circle (or connect a company page) before you can
-                    share gossip.
+                    You need membership before you can share here.
                   </p>
-                  <div className="mt-3 flex flex-wrap justify-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const first = communities[0];
-                        if (first) handleJoin(first.id);
-                      }}
-                      className="rounded-full bg-(--brand-primary) px-4 py-2 text-xs font-semibold text-white"
-                    >
-                      Join a circle
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowCreateCommunity(true)}
-                      className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700"
-                    >
-                      Create circle
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => activeCommunityId && handleJoin(activeCommunityId)}
+                    className="mt-3 rounded-full bg-[#1B3A5F] px-4 py-2 text-xs font-semibold text-white"
+                  >
+                    Join circle
+                  </button>
                 </div>
               ) : (
                 <>
@@ -1193,13 +1658,17 @@ export default function OfficeGossipsPage() {
                 </>
               )}
             </div>
+            ) : null}
           </section>
 
-          {/* RIGHT — hot + inbox + companies */}
+          {/* RIGHT — discover circles only (feed sidebar) */}
           <aside
-            className={`hidden h-full min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain pb-6 xl:flex ${hideScroll}`}
+            className={`hidden h-full min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain pb-6 xl:flex ${hideScroll} ${
+              ogTab === 'feed' ? '' : '!hidden'
+            }`}
           >
-            {/* Hot circles — LinkedIn News style */}
+            {/* Hot circles — LinkedIn News style (personal account only) */}
+            {!isCompanyAccount ? (
             <div className={`${card} shrink-0 overflow-hidden`}>
               <div className="flex items-start justify-between px-3.5 pt-3.5">
                 <div>
@@ -1222,6 +1691,7 @@ export default function OfficeGossipsPage() {
                         type="button"
                         onClick={() => {
                           if (!isMember) handleJoin(community.id);
+                          openCommunityRoom(community.id);
                         }}
                         className="flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-sky-50/80"
                       >
@@ -1245,11 +1715,11 @@ export default function OfficeGossipsPage() {
                         </span>
                         {!isMember ? (
                           <span className="shrink-0 rounded-full border border-[#28A8E1] px-2.5 py-0.5 text-[11px] font-semibold text-[#28A8E1]">
-                            Join
+                            Open
                           </span>
                         ) : (
                           <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
-                            In
+                            Open
                           </span>
                         )}
                       </button>
@@ -1273,151 +1743,523 @@ export default function OfficeGossipsPage() {
                 </button>
               ) : null}
             </div>
-
-            {userId ? (
-              <ReferenceCheckPanel
-                userId={userId}
-                activeChatId={referenceChatId}
-                activeChatKind={referenceChatKind}
-                onRefresh={refresh}
-                onOpenCompany={openCompanyPage}
-                onOpenChat={openChat}
-              />
-            ) : null}
-
-            {/* Company pages — vertical slide carousel */}
-            <div className={`${card} shrink-0 overflow-hidden`}>
-              <div className="flex items-center justify-between border-b border-slate-100 px-3.5 py-2.5">
-                <h2 className="text-sm font-bold text-slate-900">Company pages</h2>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateCompany(true)}
-                  className="rounded-full p-1 text-[#28A8E1] hover:bg-sky-50"
-                  title="Add company page"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
+            ) : (
+              <div className={`${card} p-3.5`}>
+                <h2 className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
+                  <Building2 className="h-4 w-4 text-[#0A66C2]" />
+                  Company inbox
+                </h2>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Circles are hidden in company mode. Messaging & page updates stay available below.
+                </p>
               </div>
-              {activeCompany ? (
-                <div className="relative h-[168px] overflow-hidden">
-                  <div
-                    key={activeCompany.id}
-                    className={`absolute inset-0 px-3.5 py-3 ${
-                      companySlideDir === 'up'
-                        ? 'animate-[ogSlideUp_0.55s_ease]'
-                        : 'animate-[ogSlideDown_0.55s_ease]'
-                    }`}
+            )}
+
+            <div className={`${card} shrink-0 p-3.5`}>
+              <p className="text-sm font-bold text-slate-900">Tip</p>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+                Feed is for reading. To post, open a circle under Communities.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setOgTab('communities');
+                  setActiveCommunityId(null);
+                }}
+                className="mt-3 w-full rounded-full bg-[#1B3A5F] px-3 py-2 text-xs font-semibold text-white hover:opacity-95"
+              >
+                Go to Communities
+              </button>
+            </div>
+          </aside>
+        </div>
+
+        {/* Communities list — main joined list + Discover side panel */}
+        {ogTab === 'communities' && !activeCommunityId ? (
+          <div className="grid min-h-0 flex-1 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+            <div className={`min-h-0 overflow-y-auto ${hideScroll}`}>
+              <div className={`${card} overflow-hidden`}>
+                <div className="flex items-center justify-between border-b border-slate-100 px-3.5 py-3">
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900">Communities</h2>
+                    <p className="text-[11px] text-slate-500">Open a circle to read and post</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateCommunity(true)}
+                    className="rounded-full bg-[#1B3A5F] p-2 text-white hover:opacity-95"
+                    title="Create community"
                   >
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => openCompanyPage(activeCompany.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') openCompanyPage(activeCompany.id);
-                      }}
-                      className="flex cursor-pointer items-start gap-3"
-                    >
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#1B3A5F] text-base font-bold text-white">
-                        {activeCompany.logoLetter}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-bold text-slate-900">
-                            {activeCompany.name}
-                          </p>
-                          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                            Suggested
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+                <ul className="divide-y divide-slate-100">
+                  {joined.map((c) => {
+                    const postCount = feed.filter((p) => p.communityId === c.id).length;
+                    return (
+                      <li key={c.id}>
+                        <button
+                          type="button"
+                          onClick={() => openCommunityRoom(c.id)}
+                          className="flex w-full items-center gap-3 px-3.5 py-3.5 text-left transition hover:bg-sky-50/80"
+                        >
+                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#1B3A5F]">
+                            {c.name.slice(0, 1).toUpperCase()}
                           </span>
-                        </div>
-                        <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-slate-500">
-                          Get the latest on {activeCompany.name} — news, team chatter & more.
-                        </p>
-                        <p className="mt-1.5 text-[10px] text-slate-400">
-                          {activeCompany.memberIds.length} connected
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (userId && activeCompany.memberIds.includes(userId)) {
-                          openCompanyPage(activeCompany.id);
-                        } else {
-                          handleConnectCompany(activeCompany);
-                        }
-                      }}
-                      className={`mt-3 w-full rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                        userId && activeCompany.memberIds.includes(userId)
-                          ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                          : 'border border-[#28A8E1] text-[#28A8E1] hover:bg-sky-50'
-                      }`}
-                    >
-                      {userId && activeCompany.memberIds.includes(userId)
-                        ? 'View page'
-                        : 'Connect'}
-                    </button>
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center gap-1.5">
+                              <span className="truncate text-sm font-semibold text-slate-900">{c.name}</span>
+                              {c.visibility === 'private' ? (
+                                <Lock className="h-3 w-3 shrink-0 text-slate-400" />
+                              ) : null}
+                            </span>
+                            <span className="mt-0.5 block text-[11px] text-slate-500">
+                              {c.memberIds.length} members
+                              {postCount > 0 ? ` · ${postCount} posts` : ''}
+                            </span>
+                          </span>
+                          <MessageCircle className="h-4 w-4 shrink-0 text-slate-300" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                  {joined.length === 0 ? (
+                    <li className="px-4 py-10 text-center">
+                      <Users className="mx-auto h-10 w-10 text-slate-300" />
+                      <p className="mt-3 text-sm font-semibold text-slate-800">No communities yet</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Pick a circle from Discover on the right, or create your own.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowCreateCommunity(true)}
+                        className="mt-4 rounded-full bg-[#1B3A5F] px-4 py-2 text-xs font-semibold text-white"
+                      >
+                        Create community
+                      </button>
+                    </li>
+                  ) : null}
+                </ul>
+              </div>
+            </div>
+
+            <aside className={`min-h-0 overflow-y-auto ${hideScroll}`}>
+              <div className={`${card} overflow-hidden`}>
+                <div className="flex items-start justify-between px-3.5 pt-3.5">
+                  <div>
+                    <h2 className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
+                      <Flame className="h-4 w-4 text-orange-500" />
+                      Discover
+                    </h2>
+                    <p className="mt-0.5 text-xs font-medium text-slate-500">Suggested circles</p>
                   </div>
                 </div>
+                <ul className="mt-2 space-y-0.5 px-1.5 pb-3">
+                  {hotCircles.map(({ community, label, engagement }) => {
+                    const isMember = Boolean(userId && community.memberIds.includes(userId));
+                    return (
+                      <li key={community.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!isMember) handleJoin(community.id);
+                            openCommunityRoom(community.id);
+                          }}
+                          className="flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-sky-50/80"
+                        >
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#28A8E1]" />
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center gap-1">
+                              <span className="truncate text-[13px] font-semibold text-slate-900">
+                                {community.name}
+                              </span>
+                              {community.visibility === 'private' ? (
+                                <Lock className="h-3 w-3 shrink-0 text-slate-400" />
+                              ) : null}
+                            </span>
+                            <span className="mt-0.5 block text-[10px] text-slate-500">
+                              {label}
+                              {engagement > 0 ? ` · ${engagement}` : ''}
+                            </span>
+                          </span>
+                          <span className="shrink-0 pt-0.5 text-[10px] font-bold uppercase tracking-wide text-[#28A8E1]">
+                            {isMember ? 'Open' : 'Join'}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                  {hotCircles.length === 0 ? (
+                    <li className="px-2 py-6 text-center text-xs text-slate-400">No suggestions yet.</li>
+                  ) : null}
+                </ul>
+              </div>
+            </aside>
+          </div>
+        ) : null}
+
+        {ogTab === 'chat' ? (
+          <div className="grid min-h-0 h-full flex-1 items-stretch gap-3 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]">
+            <div
+              className={`min-h-0 h-full overflow-y-auto ${hideScroll} ${
+                referenceChatId ? 'hidden lg:block' : ''
+              }`}
+            >
+              {userId ? (
+                <ReferenceCheckPanel
+                  userId={userId}
+                  variant="chat"
+                  activeChatId={referenceChatId}
+                  activeChatKind={referenceChatKind}
+                  onRefresh={refresh}
+                  onOpenCompany={openCompanyPage}
+                  onOpenChat={(kind, id) => {
+                    setReferenceChatKind(kind);
+                    setReferenceChatId(id);
+                  }}
+                />
+              ) : null}
+            </div>
+
+            <div
+              className={`min-h-0 h-full ${
+                referenceChatId ? 'flex' : 'hidden lg:flex'
+              } flex-col`}
+            >
+              {userId &&
+              referenceChatId &&
+              (referenceChatKind === 'dm' || referenceChatKind === 'hryantra') ? (
+                <ReferenceMessagingPanel
+                  mode="embedded"
+                  kind={referenceChatKind}
+                  chatId={referenceChatId}
+                  userId={userId}
+                  onClose={closeChat}
+                  onRefresh={refresh}
+                />
               ) : (
-                <p className="px-3 py-6 text-center text-xs text-slate-500">No company pages yet.</p>
+                <div className={`${card} flex h-full min-h-[420px] flex-col items-center justify-center px-6 py-10 text-center`}>
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-50 text-[#0A66C2]">
+                    <MessageCircle className="h-8 w-8" />
+                  </div>
+                  <h2 className="mt-4 text-base font-bold text-slate-900">Your messages</h2>
+                  <p className="mt-1.5 max-w-sm text-[13px] leading-relaxed text-slate-500">
+                    Open HRYantra Verified or any conversation from the list. Chats open here in the
+                    main panel — no small popup.
+                  </p>
+                  <div className="mt-5 w-full max-w-xs space-y-2 text-left">
+                    <div className="rounded-xl border border-sky-100 bg-sky-50/80 px-3 py-2.5">
+                      <p className="text-[11px] font-bold text-[#0A66C2]">Direct messages</p>
+                      <p className="text-[11px] text-slate-600">
+                        {dmPendingCount > 0
+                          ? `${dmPendingCount} waiting for your reply`
+                          : 'No pending message requests'}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                      <p className="text-[11px] font-bold text-slate-800">Follow requests</p>
+                      <p className="text-[11px] text-slate-600">
+                        {followPendingCount > 0
+                          ? `${followPendingCount} pending`
+                          : 'No pending follow requests'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               )}
-              {companyPages.length > 1 ? (
-                <div className="flex items-center justify-center gap-1.5 border-t border-slate-100 py-2">
-                  {companyPages.map((co, i) => (
+            </div>
+          </div>
+        ) : null}
+
+        {ogTab === 'events' ? (
+          <div className="grid min-h-0 flex-1 items-stretch gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-10">
+            <div className={`min-h-0 space-y-3 overflow-y-auto pr-0.5 ${hideScroll}`}>
+              <div className={`${card} flex flex-wrap items-center justify-between gap-2 px-3.5 py-3`}>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">Events for you</h2>
+                  <p className="text-[11px] text-slate-500">
+                    Only events & jobs matched to your profile — full catalog lives in LMS
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {(
+                    [
+                      ['all', 'All'],
+                      ['job', 'Jobs'],
+                      ['walk-in', 'Walk-in'],
+                      ['seminar', 'Seminar'],
+                      ['webinar', 'Webinar'],
+                      ['job-fair', 'Job fair'],
+                    ] as const
+                  ).map(([id, label]) => (
                     <button
-                      key={co.id}
+                      key={id}
                       type="button"
-                      aria-label={`Show ${co.name}`}
-                      onClick={() => {
-                        setCompanySlideDir(i > companySlide ? 'up' : 'down');
-                        setCompanySlide(i);
-                      }}
-                      className={`h-1.5 rounded-full transition-all ${
-                        i === companySlide % companyPages.length
-                          ? 'w-4 bg-[#28A8E1]'
-                          : 'w-1.5 bg-slate-300 hover:bg-slate-400'
+                      onClick={() => setEventFilter(id)}
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                        eventFilter === id
+                          ? 'bg-[#1B3A5F] text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
-                    />
+                    >
+                      {label}
+                    </button>
                   ))}
+                </div>
+              </div>
+
+              {filteredEvents.map((ev) => {
+                const interested = Boolean(eventInterested[ev.id]);
+                const isJob = ev.type === 'job';
+                return (
+                  <article
+                    key={ev.id}
+                    className={`${card} overflow-hidden ${isJob ? 'cursor-pointer transition hover:border-[#28A8E1]/50' : ''}`}
+                    onClick={isJob ? () => openJobEvent(ev) : undefined}
+                    onKeyDown={
+                      isJob
+                        ? (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              openJobEvent(ev);
+                            }
+                          }
+                        : undefined
+                    }
+                    role={isJob ? 'link' : undefined}
+                    tabIndex={isJob ? 0 : undefined}
+                  >
+                    <div className="flex items-center gap-2.5 px-3.5 pt-3.5">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#1B3A5F] text-sm font-bold text-white">
+                        {isJob ? <Briefcase className="h-4 w-4 text-white" /> : ev.hostInitial}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-slate-900">{ev.hostName}</p>
+                        <p className="text-[11px] text-slate-500">
+                          {eventTypeLabel(ev.type)} · {timeAgo(ev.createdAt)}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                          isJob
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-sky-50 text-[#0A66C2]'
+                        }`}
+                      >
+                        {eventTypeLabel(ev.type)}
+                      </span>
+                    </div>
+
+                    <div className="relative mt-3 flex max-h-[520px] w-full items-center justify-center overflow-hidden bg-slate-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={ev.imageUrl}
+                        alt=""
+                        className="max-h-[520px] w-full object-contain"
+                        loading="lazy"
+                      />
+                    </div>
+
+                    <div className="space-y-2.5 px-3.5 py-3">
+                      <p className="text-sm font-bold leading-snug text-slate-900">{ev.title}</p>
+                      <p className="text-sm leading-relaxed text-slate-700">{ev.body}</p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium text-slate-500">
+                        <span className="inline-flex items-center gap-1">
+                          {isJob ? (
+                            <Briefcase className="h-3.5 w-3.5 text-[#28A8E1]" />
+                          ) : (
+                            <Calendar className="h-3.5 w-3.5 text-[#28A8E1]" />
+                          )}
+                          {ev.whenLabel}
+                        </span>
+                        {ev.location ? (
+                          <span className="inline-flex items-center gap-1">
+                            <MapPin className="h-3.5 w-3.5 text-[#28A8E1]" />
+                            {ev.location}
+                          </span>
+                        ) : !isJob ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Video className="h-3.5 w-3.5 text-[#28A8E1]" />
+                            Online
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {ev.tags.map((t) => (
+                          <span
+                            key={t}
+                            className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                      <div
+                        className="flex items-center gap-1 border-t border-slate-100 pt-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {isJob ? (
+                          <button
+                            type="button"
+                            onClick={() => openJobEvent(ev)}
+                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#0A66C2] py-2 text-xs font-semibold text-white hover:bg-[#004182]"
+                          >
+                            <Briefcase className="h-4 w-4" />
+                            Apply now
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEventInterested((prev) => ({
+                                  ...prev,
+                                  [ev.id]: !prev[ev.id],
+                                }))
+                              }
+                              className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold ${
+                                interested
+                                  ? 'text-[#0A66C2] hover:bg-sky-50'
+                                  : 'text-slate-600 hover:bg-slate-50'
+                              }`}
+                            >
+                              <Sparkles className={`h-4 w-4 ${interested ? 'fill-current' : ''}`} />
+                              Interested
+                              <span className="text-slate-400">
+                                · {ev.interestedCount + (interested ? 1 : 0)}
+                              </span>
+                            </button>
+                            <button
+                              type="button"
+                              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                            >
+                              <Bookmark className="h-4 w-4" />
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                            >
+                              <Share2 className="h-4 w-4" />
+                              Share
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+
+              {filteredEvents.length === 0 ? (
+                <div className={`${card} px-5 py-14 text-center text-sm text-slate-500`}>
+                  <p>No profile-matched events in this filter yet.</p>
+                  <button
+                    type="button"
+                    onClick={() => router.push('/lms/events')}
+                    className="mt-3 text-xs font-semibold text-[#0A66C2] hover:underline"
+                  >
+                    Browse all events in LMS →
+                  </button>
                 </div>
               ) : null}
             </div>
 
-            <div className={`${card} shrink-0 overflow-hidden bg-gradient-to-br from-white to-sky-50/60 p-3.5`}>
-              <p className="text-sm font-bold text-slate-900">About Office Gossips</p>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
-                Posts live in circles or company pages. Unlock reference chats with tokens like other
-                premium services.
-              </p>
-              <div className="mt-3 flex flex-col gap-1.5">
+            <aside className={`min-h-0 overflow-y-auto ${hideScroll}`}>
+              <div className={`${card} overflow-hidden p-3.5`}>
+                <h2 className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
+                  <Calendar className="h-4 w-4 text-orange-500" />
+                  For your profile
+                </h2>
+                <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+                  Only matches from your profile, skills, and circles. See every walk-in, seminar,
+                  webinar, job fair, and job posting in LMS Events.
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {(
+                    [
+                      ['job', 'Jobs'],
+                      ['walk-in', 'Walk-ins'],
+                      ['seminar', 'Seminars'],
+                      ['webinar', 'Webinars'],
+                      ['job-fair', 'Job fairs'],
+                    ] as const
+                  ).map(([id, label]) => {
+                    const count = profileEvents.filter((e) => e.type === id).length;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setEventFilter(id)}
+                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition ${
+                          eventFilter === id
+                            ? 'bg-sky-50 text-[#0A66C2]'
+                            : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span>{label}</span>
+                        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] text-slate-500">
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </ul>
                 <button
                   type="button"
-                  onClick={() => setShowCreateCommunity(true)}
-                  className="rounded-full bg-[#1B3A5F] px-3 py-2 text-xs font-semibold text-white hover:opacity-95"
+                  onClick={() => router.push('/lms/events')}
+                  className="mt-3 w-full rounded-full bg-[#1B3A5F] px-3 py-2 text-xs font-semibold text-white hover:opacity-95"
                 >
-                  Create circle
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateCompany(true)}
-                  className="rounded-full border border-[#28A8E1] bg-white px-3 py-2 text-xs font-semibold text-[#28A8E1] hover:bg-sky-50"
-                >
-                  Add company page
+                  All events in LMS →
                 </button>
               </div>
-            </div>
-          </aside>
-        </div>
+            </aside>
+          </div>
+        ) : null}
+
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 backdrop-blur-md">
+          <div className="mx-auto flex h-[3.75rem] max-w-[1520px] items-stretch justify-around px-2">
+            {(
+              [
+                { id: 'feed' as const, label: 'Feed', Icon: Home },
+                { id: 'communities' as const, label: 'Communities', Icon: Users },
+                { id: 'chat' as const, label: 'Chat', Icon: MessageCircle },
+                { id: 'events' as const, label: 'Events', Icon: Calendar },
+              ] as const
+            ).map(({ id, label, Icon }) => {
+              const active = ogTab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    setOgTab(id);
+                    if (id !== 'communities') setActiveCommunityId(null);
+                    if (id !== 'chat') closeChat();
+                    if (id === 'feed') setSelectedCompanyId(null);
+                  }}
+                  className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition ${
+                    active ? 'text-[#0A66C2]' : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  <Icon className={`h-5 w-5 ${active ? 'stroke-[2.25]' : ''}`} />
+                  <span className="truncate">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
       </div>
 
-      {userId && referenceChatId && referenceChatKind ? (
-        <ReferenceMessagingPanel
-          kind={referenceChatKind}
-          chatId={referenceChatId}
+      {userId ? (
+        <ProfileViewsPanel
           userId={userId}
-          onClose={closeChat}
-          onRefresh={refresh}
+          open={showProfileViews}
+          onClose={() => setShowProfileViews(false)}
+          onOpenProfile={(id) => {
+            setShowProfileViews(false);
+            openUserProfile(id);
+          }}
         />
       ) : null}
 

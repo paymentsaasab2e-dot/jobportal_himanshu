@@ -48,7 +48,6 @@ import {
   localizeSkillName,
 } from "@/lib/displayContentLocale";
 import { ProfilePageShell } from "@/components/profile/layout";
-import ProfileMissingSectionNudge from "@/components/profile/ProfileMissingSectionNudge";
 import { getMissingProfileSections } from "@/lib/profile-section-routes";
 import { useTokensOptional } from "@/components/tokens/TokensContext";
 
@@ -1166,15 +1165,6 @@ export default function CandidateDashboardPage() {
         appliedDate={submittedApplicationModal?.appliedDate || formatAppliedDate(locale)}
         applicationId={submittedApplicationModal?.applicationId}
       />
-
-      {candidateId && missingProfileSections.length > 0 ? (
-        <ProfileMissingSectionNudge
-          locale={locale}
-          missingSections={missingProfileSections}
-          onNavigate={(href) => router.push(href)}
-          storageKeyPrefix={`${candidateId}:profileMissingNudge`}
-        />
-      ) : null}
     </ProfilePageShell>
   );
 }

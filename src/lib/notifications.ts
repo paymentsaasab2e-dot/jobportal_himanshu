@@ -56,6 +56,7 @@ const ALERT_KINDS = new Set([
   'saved_search_match',
   'pending_earn',
   'profile_incomplete',
+  'profile_view',
   'interview_reminder',
   'interview_invite',
   'interview_scheduled',
@@ -82,7 +83,7 @@ export function getNotificationChannel(n: Notification): NotificationChannel {
   const text = `${title} ${description}`;
 
   if (
-    /recommend|pending|reminder|invite|shortlist|rejected|selected|earn up to|complete your profile|missing|alert|match score|cv fit/.test(
+    /recommend|pending|reminder|invite|shortlist|rejected|selected|earn up to|complete your profile|missing|alert|match score|cv fit|viewed your profile|who viewed/.test(
       text,
     )
   ) {

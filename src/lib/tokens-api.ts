@@ -215,84 +215,103 @@ export async function spendTokenAmount(input: {
   description?: string;
 }): Promise<{ tokenBalance: number; spent: number; service: string; local?: boolean }> {
   const url = `${getApiBaseUrl()}/tokens/spend-amount`;
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(input),
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Failed to fetch';
-    // Common when backend is down or CORS blocks — retry once on local origin.
-    if (/failed to fetch|networkerror|load failed/i.test(msg)) {
-      try {
-        const { switchToLocalBackend } = await import('@/lib/api-base');
-        switchToLocalBackend();
-        response = await fetch(`${getApiBaseUrl()}/tokens/spend-amount`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(input),
-        });
-      } catch {
-        const networkErr = new Error(
-          'Cannot reach token server. Start the backend (port 5000) and try again.',
-        );
-        (networkErr as Error & { code?: string }).code = 'NETWORK_ERROR';
-        throw networkErr;
+  const maxAttempts = 4;
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    let response: Response;
+    try {
+      response = await fetch(attempt === 1 ? url : `${getApiBaseUrl()}/tokens/spend-amount`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(input),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to fetch';
+      // Common when backend is down or CORS blocks — retry once on local origin.
+      if (/failed to fetch|networkerror|load failed/i.test(msg) && attempt === 1) {
+        try {
+          const { switchToLocalBackend } = await import('@/lib/api-base');
+          switchToLocalBackend();
+          response = await fetch(`${getApiBaseUrl()}/tokens/spend-amount`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(input),
+          });
+        } catch {
+          const networkErr = new Error(
+            'Cannot reach token server. Start the backend (port 5000) and try again.',
+          );
+          (networkErr as Error & { code?: string }).code = 'NETWORK_ERROR';
+          throw networkErr;
+        }
+      } else {
+        throw err instanceof Error ? err : new Error(String(err));
       }
-    } else {
-      throw err instanceof Error ? err : new Error(String(err));
     }
+
+    const payload = await parseJson<{
+      success?: boolean;
+      data?: { tokenBalance: number; spent: number; service: string };
+      message?: string;
+      balance?: number;
+      required?: number;
+      shortfall?: number;
+      service?: string;
+      code?: string;
+    }>(response);
+
+    if (response.status === 401) {
+      throw new Error('Session expired — sign in again to spend tokens.');
+    }
+
+    if (response.status === 402 || payload.code === 'INSUFFICIENT_TOKENS') {
+      throw new InsufficientTokensError({
+        message: payload.message,
+        balance: payload.balance,
+        required: payload.required,
+        shortfall: payload.shortfall,
+        service: payload.service || input.service,
+      });
+    }
+
+    if (response.status === 404) {
+      const missing = new Error(
+        'Token spend endpoint missing — restart the backend server, then retry.',
+      );
+      (missing as Error & { code?: string }).code = 'ENDPOINT_MISSING';
+      throw missing;
+    }
+
+    const conflict =
+      !response.ok &&
+      /write conflict|deadlock|please retry|P2034|transaction failed/i.test(
+        payload.message || '',
+      );
+
+    if (conflict && attempt < maxAttempts) {
+      lastError = new Error(payload.message || 'Token spend conflict — retrying');
+      await new Promise((r) => setTimeout(r, 80 * attempt));
+      continue;
+    }
+
+    if (!response.ok || !payload.success || !payload.data) {
+      throw new Error(payload.message || 'Token spend failed');
+    }
+
+    if (typeof window !== 'undefined' && typeof payload.data.tokenBalance === 'number') {
+      window.localStorage.setItem('saasa:last-token-balance', String(payload.data.tokenBalance));
+      window.dispatchEvent(
+        new CustomEvent('saasa:token-balance', {
+          detail: { tokenBalance: payload.data.tokenBalance },
+        }),
+      );
+    }
+
+    return payload.data;
   }
 
-  const payload = await parseJson<{
-    success?: boolean;
-    data?: { tokenBalance: number; spent: number; service: string };
-    message?: string;
-    balance?: number;
-    required?: number;
-    shortfall?: number;
-    service?: string;
-    code?: string;
-  }>(response);
-
-  if (response.status === 401) {
-    throw new Error('Session expired — sign in again to spend tokens.');
-  }
-
-  if (response.status === 402 || payload.code === 'INSUFFICIENT_TOKENS') {
-    throw new InsufficientTokensError({
-      message: payload.message,
-      balance: payload.balance,
-      required: payload.required,
-      shortfall: payload.shortfall,
-      service: payload.service || input.service,
-    });
-  }
-
-  if (response.status === 404) {
-    const missing = new Error(
-      'Token spend endpoint missing — restart the backend server, then retry.',
-    );
-    (missing as Error & { code?: string }).code = 'ENDPOINT_MISSING';
-    throw missing;
-  }
-
-  if (!response.ok || !payload.success || !payload.data) {
-    throw new Error(payload.message || 'Token spend failed');
-  }
-
-  if (typeof window !== 'undefined' && typeof payload.data.tokenBalance === 'number') {
-    window.localStorage.setItem('saasa:last-token-balance', String(payload.data.tokenBalance));
-    window.dispatchEvent(
-      new CustomEvent('saasa:token-balance', {
-        detail: { tokenBalance: payload.data.tokenBalance },
-      }),
-    );
-  }
-
-  return payload.data;
+  throw lastError || new Error('Token spend failed');
 }
 
 /** Local escrow when API is unreachable — keeps demo reference checks usable. */

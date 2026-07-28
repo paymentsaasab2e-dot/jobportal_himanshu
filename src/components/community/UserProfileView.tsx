@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Briefcase,
@@ -19,6 +19,7 @@ import {
   type CompanyPage,
 } from '@/lib/community-store';
 import { isUserOnline } from '@/lib/presence';
+import { recordProfileView } from '@/lib/profile-view-store';
 import { requestReferenceCheck } from '@/lib/reference-check-store';
 import {
   getPeopleFollowStatus,
@@ -53,6 +54,7 @@ export function UserProfileView({
 }: Props) {
   const [busy, setBusy] = useState(false);
   const [tick, setTick] = useState(0);
+  const [msgAnon, setMsgAnon] = useState(false);
 
   const refreshLocal = () => {
     setTick((n) => n + 1);
@@ -63,9 +65,23 @@ export function UserProfileView({
   const identity = getGossipIdentity(profileUserId);
   const viewerIdentity = getGossipIdentity(viewerId);
   const followAnon = Boolean(viewerIdentity?.followAnonymously);
+  const profileForcedAnon = Boolean(viewerIdentity?.isAnonymous);
+
+  useEffect(() => {
+    setMsgAnon(profileForcedAnon || Boolean(viewerIdentity?.followAnonymously));
+  }, [profileForcedAnon, viewerIdentity?.followAnonymously, viewerId]);
   const demo = DEMO_REFERENCE_PEOPLE.find((d) => d.userId === profileUserId);
   const online = isUserOnline(profileUserId);
   const isSelf = profileUserId === viewerId;
+
+  useEffect(() => {
+    if (!viewerId || isSelf) return;
+    void recordProfileView({
+      profileUserId,
+      viewerId,
+      viewerName,
+    });
+  }, [profileUserId, viewerId, viewerName, isSelf]);
 
   const follow = useMemo(
     () => getPeopleFollowStatus(viewerId, profileUserId),
@@ -113,6 +129,7 @@ export function UserProfileView({
       toUserId: profileUserId,
       companyPageId: primaryCompany?.id,
       companyName: primaryCompany?.name,
+      anonymous: msgAnon || profileForcedAnon,
     });
     if (!result.ok) {
       showErrorToast('Message', result.error);
@@ -122,7 +139,9 @@ export function UserProfileView({
       result.thread.status === 'active' ? 'Chat open' : 'Request sent',
       result.thread.status === 'active'
         ? 'Direct messaging unlocked.'
-        : 'Waiting for them to accept.',
+        : msgAnon || profileForcedAnon
+          ? 'Request sent anonymously — real name hidden until they accept.'
+          : 'Request sent — real name stays hidden until they accept.',
     );
     onOpenChat?.('dm', result.thread.id);
     refreshLocal();
@@ -148,7 +167,7 @@ export function UserProfileView({
       }
       showSuccessToast(
         'Unlocked',
-        `Spent ${result.request.feeTokens} tokens · messaging opened.`,
+        `Spent ${result.request.feeTokens} · messaging opened.`,
       );
       onOpenChat?.('reference', result.request.id);
       refreshLocal();
@@ -190,40 +209,57 @@ export function UserProfileView({
               />
             </div>
             {!isSelf ? (
-              <div className="flex flex-wrap items-center justify-end gap-2 pb-1">
-                <button
-                  type="button"
-                  disabled={busy || follow?.status === 'pending' || follow?.status === 'accepted'}
-                  onClick={handleFollow}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#0A66C2] px-3.5 text-xs font-semibold text-[#0A66C2] hover:bg-sky-50 disabled:opacity-50"
-                >
-                  <UserPlus className="h-3.5 w-3.5" />
-                  {follow?.status === 'accepted'
-                    ? 'Following'
-                    : follow?.status === 'pending'
-                      ? 'Requested'
-                      : 'Follow'}
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={handleMessage}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#0A66C2] px-3.5 text-xs font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
-                >
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  Message
-                </button>
-                {openForRef && primaryCompany ? (
+              <div className="flex flex-col items-end gap-1.5 pb-1">
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    disabled={busy || follow?.status === 'pending' || follow?.status === 'accepted'}
+                    onClick={handleFollow}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#0A66C2] px-3.5 text-xs font-semibold text-[#0A66C2] hover:bg-sky-50 disabled:opacity-50"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    {follow?.status === 'accepted'
+                      ? 'Following'
+                      : follow?.status === 'pending'
+                        ? 'Requested'
+                        : 'Follow'}
+                  </button>
                   <button
                     type="button"
                     disabled={busy}
-                    onClick={() => void handleReference()}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                    onClick={handleMessage}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#0A66C2] px-3.5 text-xs font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
                   >
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    Reference
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    Message
                   </button>
-                ) : null}
+                  {openForRef && primaryCompany ? (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void handleReference()}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      Reference
+                    </button>
+                  ) : null}
+                </div>
+                <label
+                  className={`inline-flex items-center gap-1.5 text-[10px] text-slate-500 ${
+                    profileForcedAnon ? 'opacity-80' : 'cursor-pointer'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={msgAnon || profileForcedAnon}
+                    disabled={profileForcedAnon}
+                    onChange={(e) => setMsgAnon(e.target.checked)}
+                    className="rounded border-slate-300 text-[#0A66C2]"
+                  />
+                  Message anonymously
+                  {profileForcedAnon ? ' (locked)' : ''}
+                </label>
               </div>
             ) : (
               <span className="mb-1 inline-flex h-8 items-center rounded-full bg-slate-100 px-3.5 text-xs font-semibold text-slate-600">

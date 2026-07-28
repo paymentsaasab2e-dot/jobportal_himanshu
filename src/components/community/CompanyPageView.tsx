@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
 import type { ChatKind } from '@/components/community/ReferenceMessagingPanel';
+import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
 import {
   DEMO_REFERENCE_PEOPLE,
   getCommentsForPost,
@@ -73,6 +74,7 @@ export function CompanyPageView({
   const [tab, setTab] = useState<Tab>('posts');
   const [busy, setBusy] = useState(false);
   const [tick, setTick] = useState(0);
+  const [msgAnon, setMsgAnon] = useState(false);
 
   useEffect(() => {
     const openCount = listOpenForReferenceOnCompany(company.id).length;
@@ -86,6 +88,12 @@ export function CompanyPageView({
 
   const identity = getGossipIdentity(userId);
   const followAnon = Boolean(identity?.followAnonymously);
+  const profileForcedAnon = Boolean(identity?.isAnonymous);
+  const isSelfOwner = company.createdBy === userId;
+
+  useEffect(() => {
+    setMsgAnon(profileForcedAnon || Boolean(identity?.followAnonymously));
+  }, [profileForcedAnon, identity?.followAnonymously, userId]);
 
   const followingCompany = useMemo(
     () => isFollowingCompany(company.id, userId),
@@ -126,7 +134,7 @@ export function CompanyPageView({
   const handleFollowCompany = () => {
     if (followingCompany) {
       unfollowCompany(company.id, userId);
-      showSuccessToast('Unfollowed', company.name);
+      showSuccessToast('Unfollowed', `You won't get updates from ${company.name}.`);
       refreshLocal();
       return;
     }
@@ -141,7 +149,10 @@ export function CompanyPageView({
       showErrorToast('Follow', result.error);
       return;
     }
-    showSuccessToast('Following', `You'll see updates from ${company.name}.`);
+    showSuccessToast(
+      'Following',
+      `You're following ${company.name} — new posts will show in your feed.`,
+    );
     refreshLocal();
   };
 
@@ -172,6 +183,7 @@ export function CompanyPageView({
       toUserId,
       companyPageId: company.id,
       companyName: company.name,
+      anonymous: msgAnon || profileForcedAnon,
     });
     if (!result.ok) {
       showErrorToast('Message', result.error);
@@ -181,7 +193,9 @@ export function CompanyPageView({
       result.thread.status === 'active' ? 'Chat open' : 'Request sent',
       result.thread.status === 'active'
         ? 'Direct messaging unlocked.'
-        : 'Waiting for them to accept.',
+        : msgAnon || profileForcedAnon
+          ? 'Anonymous request sent — real name hidden until they accept.'
+          : 'Request sent — real name stays hidden until they accept.',
     );
     onOpenChat?.('dm', result.thread.id);
     refreshLocal();
@@ -203,7 +217,7 @@ export function CompanyPageView({
       }
       showSuccessToast(
         'Unlocked',
-        `Spent ${result.request.feeTokens} tokens · messaging opened.`,
+        `Spent ${result.request.feeTokens} · messaging opened.`,
       );
       onOpenChat?.('reference', result.request.id);
       setTab('references');
@@ -227,7 +241,7 @@ export function CompanyPageView({
         className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-[#0A66C2]"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
-        Back to feed
+        {isSelfOwner ? 'Company page' : 'Back to feed'}
       </button>
 
       <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_1px_4px_rgba(15,23,42,0.07)]">
@@ -252,22 +266,33 @@ export function CompanyPageView({
                   Connect
                 </button>
               ) : null}
-              <button
-                type="button"
-                onClick={handleFollowCompany}
-                className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold ${
-                  followingCompany
-                    ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                    : 'border border-[#0A66C2] text-[#0A66C2] hover:bg-sky-50'
-                }`}
-              >
-                {followingCompany ? (
-                  <BellOff className="h-3.5 w-3.5" />
-                ) : (
-                  <Bell className="h-3.5 w-3.5" />
-                )}
-                {followingCompany ? 'Following' : 'Follow'}
-              </button>
+              {!isSelfOwner ? (
+                <button
+                  type="button"
+                  onClick={handleFollowCompany}
+                  className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold ${
+                    followingCompany
+                      ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                      : 'bg-[#0A66C2] text-white hover:bg-[#004182]'
+                  }`}
+                  title={
+                    followingCompany
+                      ? 'Unfollow — stop page updates'
+                      : 'Follow instantly — see posts in your feed'
+                  }
+                >
+                  {followingCompany ? (
+                    <BellOff className="h-3.5 w-3.5" />
+                  ) : (
+                    <Bell className="h-3.5 w-3.5" />
+                  )}
+                  {followingCompany ? 'Following' : 'Follow'}
+                </button>
+              ) : (
+                <span className="inline-flex h-8 items-center rounded-full bg-amber-50 px-3 text-xs font-semibold text-amber-800 ring-1 ring-amber-200/80">
+                  Your page
+                </span>
+              )}
             </div>
           </div>
 
@@ -280,13 +305,31 @@ export function CompanyPageView({
                 <Globe2 className="h-3 w-3" />
                 {company.domainKey}
               </span>
-              <span className="text-slate-300">·</span>
-              <span>{connections.length} people</span>
-              <span className="text-slate-300">·</span>
-              <span>{followerCount} followers</span>
-              <span className="text-slate-300">·</span>
-              <span>{openForRef.length} open for reference</span>
             </p>
+            <div className="mt-2.5 flex flex-wrap gap-4">
+              <div>
+                <p className="text-base font-bold tabular-nums text-slate-900">
+                  {connections.length}
+                </p>
+                <p className="text-[11px] font-medium text-slate-500">Connections</p>
+              </div>
+              <div>
+                <p className="text-base font-bold tabular-nums text-slate-900">{followerCount}</p>
+                <p className="text-[11px] font-medium text-slate-500">Followers</p>
+              </div>
+              <div>
+                <p className="text-base font-bold tabular-nums text-slate-900">
+                  {companyPosts.length}
+                </p>
+                <p className="text-[11px] font-medium text-slate-500">Posts</p>
+              </div>
+              <div>
+                <p className="text-base font-bold tabular-nums text-slate-900">
+                  {openForRef.length}
+                </p>
+                <p className="text-[11px] font-medium text-slate-500">Open for ref</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -338,9 +381,26 @@ export function CompanyPageView({
 
       {tab === 'people' ? (
         <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm">
-          <div className="mb-3 flex items-center gap-2">
-            <Users className="h-4 w-4 text-[#0A66C2]" />
-            <h2 className="text-sm font-bold text-slate-900">People at {company.name}</h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-[#0A66C2]" />
+              <h2 className="text-sm font-bold text-slate-900">People at {company.name}</h2>
+            </div>
+            <label
+              className={`inline-flex items-center gap-1.5 text-[10px] text-slate-500 ${
+                profileForcedAnon ? 'opacity-80' : 'cursor-pointer'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={msgAnon || profileForcedAnon}
+                disabled={profileForcedAnon}
+                onChange={(e) => setMsgAnon(e.target.checked)}
+                className="rounded border-slate-300 text-[#0A66C2]"
+              />
+              Message anonymously
+              {profileForcedAnon ? ' (locked)' : ''}
+            </label>
           </div>
           {connections.length === 0 ? (
             <EmptyCard text="No visible connections yet." compact />
@@ -441,7 +501,7 @@ export function CompanyPageView({
               <h2 className="text-sm font-bold text-slate-900">Open for reference check</h2>
             </div>
             <p className="mb-3 text-[12px] text-slate-500">
-              Unlock with tokens (paid). Direct Message is free and separate.
+              Paid when you unlock a person. Direct Message is free and separate.
             </p>
             {openForRef.length === 0 ? (
               <EmptyCard text="Nobody on this page has opted in yet." compact />
@@ -463,9 +523,10 @@ export function CompanyPageView({
                           {person.displayName}
                           {isSelf ? ' (you)' : ''}
                         </p>
-                        <p className="text-xs text-slate-500">
-                          {role ? `${role} · ` : ''}
-                          {person.feeTokens} tokens
+                        <p className="inline-flex items-center gap-1 text-xs text-slate-500">
+                          {role ? <span>{role} · </span> : null}
+                          <TokenCoinIcon className="h-3.5 w-3.5" />
+                          {person.feeTokens}
                         </p>
                       </div>
                       {!isSelf ? (
@@ -473,9 +534,10 @@ export function CompanyPageView({
                           type="button"
                           disabled={busy}
                           onClick={() => void handleReference(person.userId)}
-                          className="shrink-0 rounded-full bg-[#0A66C2] px-4 py-2 text-xs font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#0A66C2] px-4 py-2 text-xs font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
                         >
-                          Unlock · {person.feeTokens}
+                          Unlock · <TokenCoinIcon className="h-3.5 w-3.5" />
+                          {person.feeTokens}
                         </button>
                       ) : null}
                     </li>

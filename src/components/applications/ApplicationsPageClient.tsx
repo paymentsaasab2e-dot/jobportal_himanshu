@@ -31,6 +31,7 @@ import { useCvDashboard } from '@/hooks/portal/useCvDashboard';
 import { usePortalJobsList } from '@/hooks/portal/usePortalJobs';
 import type { AppLocale } from '@/lib/i18n';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
+import { runSuggestionsEngine } from '@/lib/suggestions-engine';
 
 type ApplicationStatus =
   | 'Applied'
@@ -713,6 +714,11 @@ export default function ApplicationsPageClient() {
         };
       });
   }, [applications]);
+
+  useEffect(() => {
+    if (!candidateId || applications.length === 0) return;
+    runSuggestionsEngine({ userId: candidateId, applications });
+  }, [applications, candidateId]);
 
   useEffect(() => {
     const resolvedCandidateId =

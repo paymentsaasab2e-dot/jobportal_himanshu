@@ -19,6 +19,7 @@ export default function GlobalFooter() {
         '/sa',
         '/candmain',
         '/community',
+        '/reference-check',
         '/subscriptions',
     ];
     
