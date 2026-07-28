@@ -19,6 +19,9 @@ import { PortalNavigationWarmup } from "@/components/common/PortalNavigationWarm
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { IntlProvider } from "@/components/i18n/IntlProvider";
 import { TokensProvider } from "@/components/tokens/TokensContext";
+import { FloatingAlertsHost } from "@/components/common/FloatingAlertsHost";
+import { SuggestionsEngineHost } from "@/components/common/SuggestionsEngineHost";
+import { UserActivityTrackerHost } from "@/components/common/UserActivityTrackerHost";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +63,9 @@ export default function RootLayout({
                     {children}
                   </main>
                   <GlobalFooter />
+                  <FloatingAlertsHost />
+                  <SuggestionsEngineHost />
+                  <UserActivityTrackerHost />
                 </AuthGuard>
                 </TokensProvider>
                 </QueryProvider>

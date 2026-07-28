@@ -43,6 +43,7 @@ type MathCaptchaProps = {
   onChallengeChange?: (challenge: MathCaptchaChallenge) => void;
   disabled?: boolean;
   error?: string;
+  compact?: boolean;
 };
 
 export function MathCaptcha({
@@ -51,6 +52,7 @@ export function MathCaptcha({
   onChallengeChange,
   disabled = false,
   error,
+  compact = false,
 }: MathCaptchaProps) {
   const t = useTranslations();
   const [challenge, setChallenge] = useState<MathCaptchaChallenge>(INITIAL_CHALLENGE);
@@ -77,12 +79,14 @@ export function MathCaptcha({
   }, [value, challenge.answer]);
 
   return (
-    <div className="space-y-2">
-      <label className="block text-[12px] font-black text-slate-700 uppercase tracking-widest ml-1">
+    <div className={compact ? "space-y-1.5" : "space-y-2"}>
+      <label className={`block font-black text-slate-700 uppercase tracking-widest ml-1 ${compact ? "text-[11px]" : "text-[12px]"}`}>
         {t("mathCaptcha.securityCheck")}
       </label>
       <div
-        className={`w-full overflow-hidden rounded-[16px] border bg-white shadow-sm transition-all ${
+        className={`w-full overflow-hidden border bg-white shadow-sm transition-all ${
+          compact ? "rounded-[14px]" : "rounded-[16px]"
+        } ${
           error
             ? 'border-red-300 ring-4 ring-red-100/60'
             : isCorrect && value.trim()
@@ -90,12 +94,12 @@ export function MathCaptcha({
               : 'border-slate-200 focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100/50'
         }`}
       >
-        <div className="flex w-full min-w-0 items-center gap-2 p-3">
-          <div className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-            <span className="font-mono text-[18px] font-black text-slate-800 tracking-tight">
+        <div className={`flex w-full min-w-0 items-center gap-2 ${compact ? "p-2.5" : "p-3"}`}>
+          <div className={`flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 ${compact ? "px-2.5 py-2" : "px-3 py-3"}`}>
+            <span className={`font-mono font-black text-slate-800 tracking-tight ${compact ? "text-[16px]" : "text-[18px]"}`}>
               {challenge.label}
             </span>
-            <span className="text-[18px] font-black text-slate-400">=</span>
+            <span className={`font-black text-slate-400 ${compact ? "text-[16px]" : "text-[18px]"}`}>=</span>
           </div>
           <div className="flex min-w-0 flex-1 items-center gap-1.5">
             <input
@@ -105,7 +109,9 @@ export function MathCaptcha({
               value={value}
               onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 3))}
               disabled={disabled}
-              className="h-[52px] min-w-[120px] w-full max-w-[168px] flex-1 rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-center text-[18px] font-black text-slate-900 outline-none focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100/50 disabled:opacity-50"
+              className={`min-w-[100px] w-full max-w-[168px] flex-1 rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-center font-black text-slate-900 outline-none focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100/50 disabled:opacity-50 ${
+                compact ? "h-[44px] text-[16px]" : "h-[52px] text-[18px]"
+              }`}
               placeholder="?"
               aria-label={t("mathCaptcha.enterAnswerAria")}
             />
@@ -113,11 +119,13 @@ export function MathCaptcha({
               type="button"
               onClick={refresh}
               disabled={disabled}
-              className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-sky-600 disabled:opacity-50"
+              className={`flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-sky-600 disabled:opacity-50 ${
+                compact ? "h-[44px] w-[44px]" : "h-[52px] w-[52px]"
+              }`}
             title={t("mathCaptcha.newQuestion")}
             aria-label={t("mathCaptcha.generateNewQuestionAria")}
           >
-            <RefreshCw className="h-5 w-5" />
+            <RefreshCw className={compact ? "h-4 w-4" : "h-5 w-5"} />
             </button>
           </div>
         </div>
@@ -125,7 +133,7 @@ export function MathCaptcha({
       {error ? (
         <p className="text-[12px] font-bold text-red-600 ml-1">{error}</p>
       ) : (
-        <p className="text-[11px] font-semibold text-slate-400 ml-1">
+        <p className={`font-semibold text-slate-400 ml-1 ${compact ? "text-[10px]" : "text-[11px]"}`}>
           {t("mathCaptcha.solveToContinue")}
         </p>
       )}

@@ -898,11 +898,8 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
                                       handleNotificationClick(notification);
                                       onNavigate(notification.actionPath as string);
                                     }}
-                                    className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-[#0A66C2] hover:underline"
+                                    className="mt-1.5 inline-flex items-center text-xs font-semibold text-[#0A66C2] hover:underline"
                                   >
-                                    {theme.isToken ? (
-                                      <TokenCoinIcon className="h-3.5 w-3.5" />
-                                    ) : null}
                                     {notification.actionButton}
                                   </button>
                                 ) : null}

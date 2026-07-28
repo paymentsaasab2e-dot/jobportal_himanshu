@@ -1,0 +1,208 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { ArrowRight, AlertCircle, Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
+
+import { API_BASE_URL } from "@/lib/api-base";
+import { showSuccessToast } from "@/components/common/toast/toast";
+import { useAuth } from "@/components/auth/AuthContext";
+import { AppLocale, localizePath } from "@/lib/i18n";
+
+export default function SetPasswordPage() {
+  const { token } = useAuth();
+  const router = useRouter();
+  const locale = useLocale() as AppLocale;
+  const t = useTranslations("whatsapp.setPassword");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!token) {
+      setError(t("missingSession"));
+      return;
+    }
+
+    if (password.length < 8) {
+      setError(t("minLength"));
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError(t("mismatch"));
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/set-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ password, confirmPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || t("failed"));
+      }
+
+      showSuccessToast(t("successTitle"), t("successDescription"));
+
+      const skipCv =
+        data.data?.skipCvUpload === true ||
+        sessionStorage.getItem("skipCvUpload") === "true";
+      sessionStorage.removeItem("skipCvUpload");
+
+      const postLoginRedirect = sessionStorage.getItem("postLoginRedirect");
+
+      if (!skipCv) {
+        router.push(localizePath("/uploadcv", locale));
+      } else if (postLoginRedirect) {
+        sessionStorage.removeItem("postLoginRedirect");
+        router.push(postLoginRedirect);
+      } else {
+        router.push(localizePath("/candidate-dashboard", locale));
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("failed"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FCFDFE] text-slate-900 flex flex-col relative overflow-hidden font-sans">
+      <div className="absolute top-0 right-0 -mr-[10%] -mt-[10%] w-[800px] h-[800px] bg-[radial-gradient(circle_at_center,rgba(40,168,225,0.08)_0,rgba(255,255,255,0)_60%)] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 -ml-[10%] -mb-[10%] w-[800px] h-[800px] bg-[radial-gradient(circle_at_center,rgba(40,168,225,0.05)_0,rgba(255,255,255,0)_60%)] pointer-events-none" />
+
+      <header className="flex flex-none items-center justify-between px-6 py-6 relative z-10 mx-auto w-full max-w-[1240px]">
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => router.push(localizePath("/", locale))}
+        >
+          <Image
+            src="/SAASA%20Logo.png"
+            alt="SAASA B2E"
+            width={120}
+            height={36}
+            className="h-8 w-auto"
+          />
+        </div>
+      </header>
+
+      <main className="flex-1 flex flex-col items-center justify-center p-6 relative z-10 w-full mb-12">
+        <div className="w-full max-w-[440px] bg-white rounded-[24px] shadow-[0_20px_40px_rgba(0,0,0,0.06)] border border-slate-100 p-8 sm:p-10 relative overflow-hidden">
+          <div className="w-16 h-16 bg-sky-50 rounded-[18px] flex items-center justify-center mx-auto mb-6 shadow-sm border border-sky-100">
+            <Lock className="w-7 h-7 text-sky-500" />
+          </div>
+
+          <div className="mb-8 text-center">
+            <h1 className="text-[26px] font-black text-slate-900 tracking-tight leading-tight">
+              {t("heading")}
+            </h1>
+            <p className="mt-2 text-[15px] font-medium text-slate-500 leading-relaxed max-w-[320px] mx-auto">
+              {t("subtitle")}
+            </p>
+          </div>
+
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3.5 flex gap-3 items-start mb-6 text-left">
+              <AlertCircle className="w-5 h-5 text-red-500 mt-[-1px] shrink-0" />
+              <p className="text-sm font-semibold text-red-700 leading-snug">{error}</p>
+            </div>
+          )}
+
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <div>
+              <label className="block text-[12px] font-black text-slate-700 uppercase tracking-widest mb-2 ml-1">
+                {t("createLabel")}
+              </label>
+              <div className="relative rounded-[16px] border border-slate-200 shadow-sm overflow-hidden bg-white focus-within:ring-4 focus-within:ring-sky-100/50 focus-within:border-sky-400 transition-all">
+                <div className="absolute left-4 top-0 bottom-0 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-[56px] pl-[52px] pr-12 bg-transparent outline-none text-slate-900 font-bold text-[16px] placeholder:text-slate-300 placeholder:font-semibold"
+                  placeholder={t("createPlaceholder")}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-0 bottom-0 flex items-center px-2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[12px] font-black text-slate-700 uppercase tracking-widest mb-2 ml-1">
+                {t("confirmLabel")}
+              </label>
+              <div className="relative rounded-[16px] border border-slate-200 shadow-sm overflow-hidden bg-white focus-within:ring-4 focus-within:ring-sky-100/50 focus-within:border-sky-400 transition-all">
+                <div className="absolute left-4 top-0 bottom-0 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type={showConfirm ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full h-[56px] pl-[52px] pr-12 bg-transparent outline-none text-slate-900 font-bold text-[16px] placeholder:text-slate-300 placeholder:font-semibold"
+                  placeholder={t("confirmPlaceholder")}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((v) => !v)}
+                  className="absolute right-3 top-0 bottom-0 flex items-center px-2 text-slate-400 hover:text-slate-600"
+                >
+                  {showConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-[52px] flex justify-center items-center gap-2 rounded-full bg-linear-to-r from-[#08428c] to-[#28a8e1] hover:brightness-105 active:scale-[0.98] text-white font-bold text-[15px] shadow-[0_8px_22px_rgba(8,66,140,0.32)] transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            >
+              {isLoading ? (
+                t("saving")
+              ) : (
+                <>
+                  {t("cta")}
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <p className="text-[13px] font-bold text-slate-500 tracking-tight">
+              {t("heading")}
+            </p>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

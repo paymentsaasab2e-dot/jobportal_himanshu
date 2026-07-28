@@ -144,15 +144,24 @@ export default function VerifyOTP() {
         login(data.data.token, data.data.candidateId);
       }
 
+      const needsPassword = data.data.needsPassword === true;
+      const skipCv = data.data.skipCvUpload === true;
+
       // Clear OTP-related session data
       sessionStorage.removeItem("whatsappNumber");
       sessionStorage.removeItem("countryCode");
       sessionStorage.removeItem("fullWhatsAppNumber");
       sessionStorage.removeItem("otpEmail");
       sessionStorage.removeItem("otpPreview");
+      sessionStorage.removeItem("authFlow");
 
-      // Returning users (number already in DB / onboarded before): go straight to dashboard — no CV step
-      const skipCv = data.data.skipCvUpload === true;
+      if (needsPassword) {
+        sessionStorage.setItem("skipCvUpload", skipCv ? "true" : "false");
+        showSuccessToast(t("setPasswordNextTitle"), t("setPasswordNextDescription"));
+        router.push(localizePath("/whatsapp/set-password", locale));
+        return;
+      }
+
       const postLoginRedirect = sessionStorage.getItem("postLoginRedirect");
 
       showSuccessToast(t("loginSuccessfulTitle"), t("loginSuccessfulDescription"));
@@ -260,7 +269,7 @@ export default function VerifyOTP() {
 
             <button
               type="button"
-              className="w-full h-[52px] flex justify-center items-center gap-2 rounded-xl bg-sky-500 hover:bg-sky-400 active:scale-[0.98] text-white font-bold text-[15px] shadow-[0_4px_14px_0_rgba(14,165,233,0.39)] hover:shadow-[0_6px_20px_rgba(14,165,233,0.23)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-[52px] flex justify-center items-center gap-2 rounded-full bg-linear-to-r from-[#08428c] to-[#28a8e1] hover:brightness-105 active:scale-[0.98] text-white font-bold text-[15px] shadow-[0_8px_22px_rgba(8,66,140,0.32)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleVerifyOTP}
               disabled={isLoading || otp.length !== 6}
             >

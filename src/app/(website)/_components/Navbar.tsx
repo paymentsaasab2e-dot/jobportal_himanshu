@@ -47,7 +47,9 @@ export default function WebsiteNavbar() {
   const isEmployersPage = normalizedPath === "/employers" || normalizedPath.startsWith("/employers/");
   const isEmployersLandingPage = normalizedPath === "/employers";
   const isServicesPage = normalizedPath === "/services" || normalizedPath.startsWith("/services/");
-  const loginSignupHref = isEmployersPage ? employersLoginHref : localizePath("/whatsapp", locale);
+  const loginSignupHref = isEmployersPage
+    ? employersLoginHref
+    : `${localizePath("/whatsapp", locale)}?mode=signin`;
 
   const isHomePage = normalizedPath === "/";
   const activeIndex = navLinks.findIndex((l) => isNavLinkActive(normalizedPath, l.href));

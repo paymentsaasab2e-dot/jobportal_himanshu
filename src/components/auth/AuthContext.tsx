@@ -46,7 +46,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const PUBLIC_ROUTES = [
   '/', 
   '/whatsapp', 
-  '/whatsapp/verify', 
+  '/whatsapp/verify',
+  '/whatsapp/set-password',
   '/login', 
   '/signup',
   '/privacypolicy',
@@ -212,6 +213,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => {
       void refreshUser();
     }, 0);
+    // Count explicit login as a fresh activity session
+    if (typeof window !== 'undefined') {
+      void import('@/lib/user-activity-tracker').then((m) => {
+        m.ensureActivitySession(candidateId, { forceNew: true });
+      });
+    }
   }, [refreshUser]);
 
   const refreshUserRef = useRef(refreshUser);
