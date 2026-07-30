@@ -1,27 +1,14 @@
-import { fetchEmployerPricingPlans } from "@/lib/employers/hqPackages";
-import {
-  DEFAULT_LOCALE,
-  LOCALE_COOKIE,
-  isSupportedLocale,
-} from "@/lib/i18n";
 import { Metadata } from "next";
-import { cookies } from "next/headers";
 import EmployerLandingPage from "./EmployersClient";
+import { fetchEmployerPricingPlans } from "@/lib/employers/hqPackages";
 
 export const metadata: Metadata = {
-  title: "Entrepreneurs",
-  description: "Your Entire Hiring & HR Operations — Powered by AI.",
+  title: "Employers — HRYantra CRM",
+  description:
+    "SAASA B2E employer platform: leads, jobs, AI matching, interviews, placements, billing, and HQ analytics in one unified CRM.",
 };
 
-export const dynamic = "force-dynamic";
-
 export default async function Page() {
-  const cookieStore = await cookies();
-  const cookieLocale = cookieStore.get(LOCALE_COOKIE)?.value;
-  const locale = isSupportedLocale(cookieLocale) ? cookieLocale : DEFAULT_LOCALE;
-  const initialPricingPlans = await fetchEmployerPricingPlans(locale);
-
-  return (
-    <EmployerLandingPage initialPricingPlans={initialPricingPlans} />
-  );
+  const initialPlans = await fetchEmployerPricingPlans("en");
+  return <EmployerLandingPage initialPlans={initialPlans} />;
 }

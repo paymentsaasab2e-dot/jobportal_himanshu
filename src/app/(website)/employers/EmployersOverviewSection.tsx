@@ -159,11 +159,11 @@ export function EmployersOverviewSection() {
           <BlurRevealHeading
             as="h2"
             className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4"
-            lines={[{ text: "Not just another tool." }]}
+            lines={[{ text: "One platform. Full hiring lifecycle." }]}
           />
           <p className="text-[1.1rem] text-slate-600 font-normal leading-relaxed mt-6">
-            SAASA B2E is a fully integrated HR ecosystem that connects recruitment, employee management,
-            learning, and payroll into one intelligent workflow.
+            HRYantra connects leads, recruitment, placements, billing, and analytics —
+            the way modern HRMS platforms like BambooHR and Zoho unify HR, but built for recruiters.
           </p>
         </div>
 

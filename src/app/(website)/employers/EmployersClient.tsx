@@ -1,12 +1,13 @@
 "use client";
 
-import type { PricingPlan } from "@/components/ui/pricing";
 import React from "react";
+import type { PricingPlan } from "@/components/ui/pricing";
 import { EmployersHeroSection } from "./EmployersHeroSection";
 import { EmployersFloatingHeroSection } from "./EmployersFloatingHeroSection";
 import { EmployersCoreModulesBento } from "./EmployersCoreModulesBento";
-import { EmployersPricingSection } from "./EmployersPricingSection";
 import { EmployersOverviewSection } from "./EmployersOverviewSection";
+import { EmployersPhase2FeaturesSection } from "./EmployersPhase2FeaturesSection";
+import { EmployersPricingSection } from "./EmployersPricingSection";
 import { BlurRevealHeading } from "./BlurRevealText";
 import {
   Brain, FileText, Share2, Calendar, Target,
@@ -18,28 +19,22 @@ import {
   Briefcase, Bot
 } from "lucide-react";
 
-type EmployerLandingPageProps = {
-  initialPricingPlans: PricingPlan[];
-};
-
 export default function EmployerLandingPage({
-  initialPricingPlans,
-}: EmployerLandingPageProps) {
+  initialPlans,
+}: {
+  initialPlans: PricingPlan[];
+}) {
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-purple-500/30 selection:text-purple-900 overflow-x-hidden antialiased">
-
-
-      
-
       <main>
         <EmployersHeroSection />
 
         <div className="text-slate-800">
         <EmployersOverviewSection />
 
-        <EmployersCoreModulesBento />
+        <EmployersPhase2FeaturesSection />
 
-        <EmployersPricingSection initialPlans={initialPricingPlans} />
+        <EmployersCoreModulesBento />
 
         {/* 4. ECOSYSTEM VIEW (CRITICAL UI) */}
         <section id="ecosystem" className="pt-16 pb-16 bg-slate-50 relative overflow-hidden border-y border-slate-200">
@@ -136,6 +131,8 @@ export default function EmployerLandingPage({
 
           </div>
         </section>
+
+        <EmployersPricingSection initialPlans={initialPlans} />
 
         <EmployersFloatingHeroSection />
         </div>

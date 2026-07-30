@@ -457,10 +457,22 @@ export default function UserStatsPage() {
                       </span>
                     </div>
                     <p className="mt-1 text-slate-600">
-                      {new Date(s.startedAt).toLocaleString()}
+                      Login: {new Date(s.startedAt).toLocaleString()}
                       {s.endedAt
-                        ? ` → ${new Date(s.endedAt).toLocaleString()}`
+                        ? ` · Logout: ${new Date(s.endedAt).toLocaleString()}`
                         : ' · active'}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {[
+                        s.deviceType,
+                        s.browser,
+                        s.operatingSystem,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ') || 'Device unknown'}
+                      {[s.city, s.state, s.country].filter(Boolean).length
+                        ? ` · ${[s.city, s.state, s.country].filter(Boolean).join(', ')}`
+                        : ''}
                     </p>
                     <p className="mt-0.5 truncate text-xs text-slate-500">
                       {s.firstPath || '—'}

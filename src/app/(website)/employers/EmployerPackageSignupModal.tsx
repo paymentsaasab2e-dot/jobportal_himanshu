@@ -308,7 +308,7 @@ export function EmployerPackageSignupModal({ open, plan, isMonthly, onClose }: P
             <form onSubmit={handleSendOtp} className="space-y-4">
               <p className="text-sm text-slate-600">
                 Fill in your details to continue. Choose <strong>Agency</strong> or{" "}
-                <strong>Standalone</strong>, then verify email and pay to access Phase 2 with the{" "}
+                <strong>Standalone</strong>, then verify email and pay to access the employer platform with the{" "}
                 <strong>{plan.name}</strong> limits.
               </p>
               {formError ? <p className="text-sm text-rose-600">{formError}</p> : null}
@@ -451,7 +451,7 @@ export function EmployerPackageSignupModal({ open, plan, isMonthly, onClose }: P
               <p className="mt-3 text-xl font-bold text-slate-900">Workspace ready</p>
               <p className="mt-1 text-sm text-slate-600">
                 Your <strong>{access?.planName || plan.name}</strong>{" "}
-                {form.organizationType === "agency" ? "Agency" : "Standalone"} workspace is active on Phase 2.
+                {form.organizationType === "agency" ? "Agency" : "Standalone"} workspace is active on the employer platform.
               </p>
               {access?.credentialEmailSent ? (
                 <div className="mx-auto mt-5 max-w-md rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">

@@ -26,6 +26,7 @@ export default function VerifyOTP() {
   const [countryCode, setCountryCode] = useState("");
   const [otpEmail, setOtpEmail] = useState("");
   const [otpPreview, setOtpPreview] = useState("");
+  const [candidateId, setCandidateId] = useState("");
 
   useEffect(() => {
     // Get WhatsApp number from sessionStorage
@@ -33,12 +34,14 @@ export default function VerifyOTP() {
     const storedCountryCode = sessionStorage.getItem("countryCode");
     const storedEmail = sessionStorage.getItem("otpEmail");
     const storedOtpPreview = sessionStorage.getItem("otpPreview");
+    const storedCandidateId = sessionStorage.getItem("candidateId");
 
     if (storedNumber && storedCountryCode && storedEmail) {
       setWhatsappNumber(storedNumber);
       setCountryCode(storedCountryCode);
       setOtpEmail(storedEmail);
       setOtpPreview(storedOtpPreview || "");
+      setCandidateId(storedCandidateId || "");
     } else {
       // If no stored data, redirect back to WhatsApp page
       router.push(localizePath("/whatsapp", locale));
@@ -82,6 +85,7 @@ export default function VerifyOTP() {
           whatsappNumber: whatsappNumber,
           countryCode: countryCode,
           email: otpEmail,
+          ...(candidateId ? { candidateId } : {}),
         }),
       });
 
@@ -120,6 +124,13 @@ export default function VerifyOTP() {
     setIsLoading(true);
 
     try {
+      const geo = await import("@/lib/login-geo").then((m) => m.collectLoginGeoPayload());
+      try {
+        sessionStorage.setItem("saasa:login-geo", JSON.stringify(geo));
+      } catch {
+        /* ignore */
+      }
+
       const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
         method: "POST",
         headers: {
@@ -130,6 +141,8 @@ export default function VerifyOTP() {
           countryCode: countryCode,
           email: otpEmail,
           otp: otp,
+          ...(candidateId ? { candidateId } : {}),
+          ...geo,
         }),
       });
 
