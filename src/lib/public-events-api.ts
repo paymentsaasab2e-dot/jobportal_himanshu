@@ -6,12 +6,21 @@ export type PortalEventSection = {
   content: string;
 };
 
+export type PortalEventMediaItem = {
+  id: string;
+  type: 'image' | 'video';
+  url: string;
+  name?: string;
+  size?: number;
+};
+
 export type PortalEventRow = {
   id: string;
   title: string;
   description: string;
   location: string;
   sections: PortalEventSection[];
+  media?: PortalEventMediaItem[];
   type: string;
   mode: string;
   scheduledAt: string;
@@ -20,6 +29,7 @@ export type PortalEventRow = {
   source?: string;
   registrationCount: number;
   createdByName?: string;
+  hostName?: string;
 };
 
 export type PortalEventRegistrationRow = {
@@ -51,9 +61,13 @@ function authHeaders(token: string) {
   };
 }
 
-export async function fetchPublicEvents(search?: string): Promise<PortalEventRow[]> {
+export async function fetchPublicEvents(
+  search?: string,
+  scope: 'all' | 'upcoming' | 'past' = 'upcoming',
+): Promise<PortalEventRow[]> {
   const params = new URLSearchParams();
   if (search?.trim()) params.set('search', search.trim());
+  if (scope) params.set('scope', scope);
   const qs = params.toString();
   const res = await fetch(`${apiRoot()}/events/public${qs ? `?${qs}` : ''}`, { cache: 'no-store' });
   const payload = await parseJson<{ success: boolean; data: { events: PortalEventRow[] } }>(res);

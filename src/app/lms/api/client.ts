@@ -108,6 +108,15 @@ export async function fetchEvents(filters?: Record<string, string>) {
   const data = await res.json(); return data.data;
 }
 
+export async function fetchEventDetail(eventId: string) {
+  const res = await lmsFetch(`${LMS_API_BASE}/events/${encodeURIComponent(eventId)}`, { method: 'GET' });
+  if (!res) return null;
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error('Failed to fetch event details');
+  const data = await res.json();
+  return data.data;
+}
+
 export async function registerForEvent(eventId: string) {
   const res = await lmsFetch(`${LMS_API_BASE}/events/register`, { method: 'POST', body: JSON.stringify({ eventId }) });
   if (!res) return null;
