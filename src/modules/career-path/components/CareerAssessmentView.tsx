@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import type { CareerAssessment, CareerExperienceLevel } from '../types';
 import { LMS_INPUT_CLASS } from '@/app/lms/constants';
+import { WritingAssistField } from '@/components/common/WritingSuggestions';
 
 const LEVELS: CareerExperienceLevel[] = ['Beginner', 'Intermediate', 'Advanced'];
 
@@ -41,11 +42,11 @@ export function CareerAssessmentView({ submitting, onSubmit, onCancel }: Props) 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block md:col-span-2">
           <span className="mb-1.5 block text-sm font-semibold text-gray-800">About me</span>
-          <textarea
+          <WritingAssistField
             rows={3}
             className={`${LMS_INPUT_CLASS} resize-y`}
             value={form.aboutMe}
-            onChange={(e) => set('aboutMe', e.target.value)}
+            onChange={(next) => set('aboutMe', next)}
             placeholder="Brief background, strengths, and what motivates you..."
           />
         </label>

@@ -22,7 +22,9 @@ import ArcticTemplate from '@/components/cvtemplates/ArcticTemplate';
 import ObsidianTemplate from '@/components/cvtemplates/ObsidianTemplate';
 import SerifClassicTemplate from '@/components/cvtemplates/SerifClassicTemplate';
 import {
-  parseSkillTokens,
+  parseSkillEntries,
+  skillDisplayLabel,
+  splitSkillWriteup,
   prettifyTemplate,
   type ResumeSections,
   type SectionId,
@@ -133,7 +135,11 @@ export function ResumeDocumentPaper({
       location: sections.basics.location,
     },
     summary: sections.summary,
-    skills: parseSkillTokens(sections.skills).map(name => ({ name, level: 90 })),
+    skills: parseSkillEntries(sections.skills).map((entry) => ({
+      name: skillDisplayLabel(entry),
+      level: 90,
+      description: entry.isWriteup ? entry.text : undefined,
+    })),
     experience: sections.experience.map(exp => ({
       role: exp.role,
       company: exp.company,
@@ -237,16 +243,68 @@ export function ResumeDocumentPaper({
 
         {sections.skills.trim() ? (
           <DocumentSection active={activeSection === 'skills'} title="Core Skills">
-            <div className="flex flex-wrap gap-2">
-              {parseSkillTokens(sections.skills).map((skill) => (
-                <span
-                  key={skill}
-                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
+            {(() => {
+              const entries = parseSkillEntries(sections.skills);
+              const keywords = entries.filter((e) => !e.isWriteup);
+              const writeups = entries.filter((e) => e.isWriteup);
+
+              const highlightSkill = (body: string, skill: string) => {
+                if (!skill.trim()) return body;
+                const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const parts = body.split(new RegExp(`(${escaped})`, 'gi'));
+                return parts.map((part, i) =>
+                  part.toLowerCase() === skill.toLowerCase() ? (
+                    <strong key={`${skill}-${i}`} className="font-semibold text-slate-950">
+                      {part}
+                    </strong>
+                  ) : (
+                    <span key={`${skill}-${i}`}>{part}</span>
+                  ),
+                );
+              };
+
+              return (
+                <div className="space-y-3.5">
+                  {keywords.length > 0 ? (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                        Keywords
+                      </p>
+                      <p className="mt-1.5 text-[13px] leading-6 text-slate-700">
+                        {keywords.map((e, i) => (
+                          <span key={e.text}>
+                            {i > 0 ? <span className="text-slate-300"> · </span> : null}
+                            <span className="font-semibold text-slate-900">{e.text}</span>
+                          </span>
+                        ))}
+                      </p>
+                    </div>
+                  ) : null}
+                  {writeups.length > 0 ? (
+                    <div className="space-y-3">
+                      {keywords.length > 0 ? (
+                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                          Skill details
+                        </p>
+                      ) : null}
+                      {writeups.map((entry) => {
+                        const { title, body } = splitSkillWriteup(entry.text);
+                        return (
+                          <div key={entry.text}>
+                            <h4 className="text-[12px] font-bold tracking-tight text-slate-950">
+                              {title}
+                            </h4>
+                            <p className="mt-0.5 text-[13px] leading-6 text-slate-700">
+                              {highlightSkill(body, title)}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })()}
           </DocumentSection>
         ) : null}
 

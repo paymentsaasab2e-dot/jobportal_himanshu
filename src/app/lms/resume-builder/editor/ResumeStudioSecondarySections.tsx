@@ -29,6 +29,7 @@ import {
   type SectionId,
 } from './studio-config';
 import { ResumeDocumentPaper } from './ResumeStudioPreview';
+import { WritingAssistField } from '@/components/common/WritingSuggestions';
 
 export function ResumeStudioExperienceSection({
   collapsed,
@@ -156,9 +157,9 @@ export function ResumeStudioExperienceSection({
 
                     <div className="mt-4">
                       <StudioField label="Impact bullets">
-                        <textarea
+                        <WritingAssistField
                           value={entry.bullets}
-                          onChange={(event) => onUpdateExperience(entry.id, 'bullets', event.target.value)}
+                          onChange={(next) => onUpdateExperience(entry.id, 'bullets', next)}
                           rows={6}
                           className={TEXTAREA_CLASS}
                           placeholder="- Shipped feature X and improved conversion by Y%&#10;- Reduced page load time by Z%"

@@ -100,7 +100,7 @@ function iconForFloat(item: FloatItem) {
 function shellForFloat(item: FloatItem) {
   if (item.kind === 'earn') {
     return {
-      card: 'border-emerald-200/90 bg-emerald-50/95',
+      card: 'border-emerald-200/90',
       icon: 'bg-emerald-100 text-emerald-700',
       accent: 'bg-emerald-500',
       label: 'Earn',
@@ -108,7 +108,7 @@ function shellForFloat(item: FloatItem) {
   }
   if (item.kind === 'suggestion') {
     return {
-      card: 'border-amber-200/90 bg-amber-50/95',
+      card: 'border-amber-200/90',
       icon: 'bg-amber-100 text-amber-700',
       accent: 'bg-amber-500',
       label: 'Suggestion',
@@ -116,14 +116,14 @@ function shellForFloat(item: FloatItem) {
   }
   if (item.kind === 'activity') {
     return {
-      card: 'border-violet-200/90 bg-violet-50/95',
+      card: 'border-violet-200/90',
       icon: 'bg-violet-100 text-violet-700',
       accent: 'bg-violet-500',
       label: 'Activity',
     };
   }
   return {
-    card: 'border-sky-200/90 bg-sky-50/95',
+    card: 'border-sky-200/90',
     icon: 'bg-sky-100 text-sky-700',
     accent: 'bg-sky-500',
     label: 'Alert',
@@ -236,14 +236,23 @@ export function FloatingAlertsHost() {
           saveSeenIds(candidateId, seenRef.current);
           // Newest first, float a few
           for (const n of fresh.slice(0, MAX_FLOATS).reverse()) {
-            const channel = getNotificationChannel(n);
             const kindMeta = String(n.metadata?.kind || '');
-            const isSuggestion =
+            // Dedicated top-stack cards handle earn + profile — skip duplicates
+            if (
               kindMeta === 'pending_earn' ||
               kindMeta === 'profile_incomplete' ||
+              /pending.?earn|earn up to|complete basic details|profile incomplete/i.test(
+                `${n.title} ${n.description || ''}`,
+              )
+            ) {
+              continue;
+            }
+
+            const channel = getNotificationChannel(n);
+            const isSuggestion =
               kindMeta === 'job_recommendation' ||
               kindMeta === 'profile_view' ||
-              /recommend|pending|incomplete|earn|viewed your profile/i.test(n.title);
+              /recommend|viewed your profile/i.test(n.title);
 
             pushFloat({
               id: n.id,
@@ -374,7 +383,7 @@ export function FloatingAlertsHost() {
     if (candidateId) {
       pushHryantraVerifiedMessage({
         userId: candidateId,
-        text: item.body || item.title,
+        text: item.description || item.title,
         actionUrl: item.actionPath
           ? localizePath(item.actionPath, locale)
           : undefined,
@@ -388,158 +397,180 @@ export function FloatingAlertsHost() {
     }
   };
 
-  const profileNudgeLikelyVisible = missingSections.length > 0;
+  const showEarn = earnVisible && pendingEarn.length > 0;
+  const showProfile = missingSections.length > 0;
+  const showStack = showEarn || showProfile || floats.length > 0;
+
+  if (!showStack) return null;
 
   return createPortal(
-    <>
-      {/* App-wide pending profile data nudge (owns its own fixed position) */}
-      {missingSections.length > 0 ? (
-        <ProfileMissingSectionNudge
-          locale={locale}
-          missingSections={missingSections}
-          onNavigate={(href) => router.push(href)}
-          storageKeyPrefix={`${candidateId}:profileMissingNudge`}
-        />
-      ) : null}
-
-      {/* App-wide earn suggestion — stacked above profile nudge when both show */}
-      {earnVisible && pendingEarn.length > 0 ? (
-        <div
-          className={`pointer-events-none fixed left-3 z-[120] max-w-[min(300px,calc(100vw-1.5rem))] sm:left-5 ${
-            profileNudgeLikelyVisible
-              ? 'bottom-[11.5rem] sm:bottom-[12rem]'
-              : 'bottom-5 sm:bottom-6'
-          }`}
-        >
-          <div
-            className="pointer-events-auto animate-in slide-in-from-left-4 fade-in duration-300 rounded-xl border border-emerald-200/90 bg-emerald-50/95 p-3 shadow-[0_10px_28px_rgba(16,185,129,0.14)] backdrop-blur-sm"
+    <div
+      className="pointer-events-none fixed right-3 z-[120] flex w-[min(340px,calc(100vw-1.5rem))] flex-col gap-2.5 sm:right-5"
+      style={{ top: 'calc(var(--app-header-height, 96px) + 0.75rem)' }}
+    >
+      <AnimatePresence mode="popLayout">
+        {showEarn ? (
+          <motion.div
+            key="earn-nudge"
+            layout
+            initial={{ opacity: 0, x: 48 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 32 }}
+            transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+            className="pointer-events-auto overflow-hidden rounded-xl border border-emerald-200/90 bg-white/95 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-md"
             role="status"
             aria-live="polite"
           >
-            <div className="flex items-start gap-2.5">
-              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
-                <Gift className="h-3.5 w-3.5" strokeWidth={2.2} aria-hidden />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-emerald-800">
-                    Earn suggestion
-                  </p>
-                  <button
-                    type="button"
-                    onClick={dismissEarn}
-                    className="-mr-0.5 shrink-0 rounded-md p-0.5 text-emerald-700/70 transition-colors hover:bg-emerald-100 hover:text-emerald-900"
-                    aria-label="Dismiss earn suggestion"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+            <div className="flex">
+              <span className="w-1.5 shrink-0 bg-emerald-500" aria-hidden />
+              <div className="min-w-0 flex-1 p-3">
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                    <Gift className="h-4 w-4" strokeWidth={2.2} aria-hidden />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                        Earn
+                      </span>
+                      <button
+                        type="button"
+                        onClick={dismissEarn}
+                        className="ml-auto rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                        aria-label="Dismiss earn suggestion"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <p className="mt-0.5 inline-flex flex-wrap items-center gap-1 text-sm font-semibold leading-snug text-slate-900">
+                      Earn up to +{earnTotal}
+                      <TokenCoinIcon className="h-3.5 w-3.5" />
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-600">
+                      {pendingEarn
+                        .slice(0, 2)
+                        .map((t) => t.name)
+                        .join(', ')}
+                      {pendingEarn.length > 2 ? '…' : ''}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={openEarn}
+                      className="mt-2.5 inline-flex rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                    >
+                      Complete task
+                    </button>
+                  </div>
                 </div>
-                <p className="mt-0.5 inline-flex flex-wrap items-center gap-1 text-[0.8125rem] font-semibold leading-snug text-emerald-950">
-                  Earn up to +{earnTotal}
-                  <TokenCoinIcon className="h-3.5 w-3.5" />
-                </p>
-                <p className="mt-1 line-clamp-2 text-[0.75rem] leading-snug text-emerald-900/80">
-                  {pendingEarn
-                    .slice(0, 2)
-                    .map((t) => t.name)
-                    .join(', ')}
-                  {pendingEarn.length > 2 ? '…' : ''}
-                </p>
               </div>
             </div>
-            <div className="mt-2.5 pl-9">
-              <button
-                type="button"
-                onClick={openEarn}
-                className="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[0.75rem] font-semibold text-white transition-colors hover:bg-emerald-700"
-              >
-                Complete task
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+          </motion.div>
+        ) : null}
 
-      {/* Incoming alerts / activity / suggestions — bottom right, in front of user */}
-      <div className="pointer-events-none fixed bottom-5 right-3 z-[121] flex w-[min(360px,calc(100vw-1.5rem))] flex-col gap-2.5 sm:bottom-6 sm:right-5">
-        <AnimatePresence mode="popLayout">
-          {floats.map((item) => {
-            const Icon = iconForFloat(item);
-            const shell = shellForFloat(item);
-            const showCoin = /\btokens?\b/i.test(item.title);
-            return (
-              <motion.div
-                key={item.id}
-                layout
-                initial={{ opacity: 0, y: 24, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 12, scale: 0.96 }}
-                transition={{ type: 'spring', damping: 24, stiffness: 320 }}
-                className={`pointer-events-auto overflow-hidden rounded-2xl border shadow-[0_14px_40px_rgba(15,23,42,0.16)] backdrop-blur-md ${shell.card}`}
-                role="status"
-                aria-live="polite"
-              >
-                <div className="flex">
-                  <span className={`w-1.5 shrink-0 ${shell.accent}`} aria-hidden />
-                  <div className="min-w-0 flex-1 p-3">
-                    <div className="flex items-start gap-2.5">
-                      <span
-                        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${shell.icon}`}
-                      >
-                        {item.kind === 'earn' || showCoin ? (
-                          <TokenCoinIcon className="h-4 w-4" />
-                        ) : (
-                          <Icon className="h-4 w-4" strokeWidth={2.2} aria-hidden />
-                        )}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                            {shell.label}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => dismissFloat(item.id)}
-                            className="ml-auto rounded-md p-1 text-slate-400 transition hover:bg-white/70 hover:text-slate-700"
-                            aria-label="Dismiss"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                        <p className="mt-0.5 text-sm font-semibold leading-snug text-slate-900">
-                          {showCoin ? (
-                            <span className="inline-flex flex-wrap items-center gap-1">
-                              {item.title.replace(/\btokens?\b/gi, '').replace(/\s{2,}/g, ' ').trim()}
-                              <TokenCoinIcon className="h-3.5 w-3.5" />
-                            </span>
-                          ) : (
-                            item.title
-                          )}
-                        </p>
-                        {item.description ? (
-                          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-600">
-                            {item.description}
-                          </p>
-                        ) : null}
-                        {item.actionLabel && item.actionPath ? (
-                          <button
-                            type="button"
-                            onClick={() => navigateFloat(item)}
-                            className="mt-2 text-xs font-semibold text-[#0A66C2] hover:underline"
-                          >
-                            {item.actionLabel}
-                          </button>
-                        ) : null}
+        {showProfile ? (
+          <motion.div
+            key="profile-nudge"
+            layout
+            initial={{ opacity: 0, x: 48 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 32 }}
+            transition={{ type: 'spring', damping: 26, stiffness: 320, delay: 0.05 }}
+            className="pointer-events-auto"
+          >
+            <ProfileMissingSectionNudge
+              locale={locale}
+              missingSections={missingSections}
+              onNavigate={(href) => router.push(href)}
+              storageKeyPrefix={`${candidateId}:profileMissingNudge`}
+              placement="inline"
+            />
+          </motion.div>
+        ) : null}
+
+        {floats.map((item, index) => {
+          const Icon = iconForFloat(item);
+          const shell = shellForFloat(item);
+          const showCoin = /\btokens?\b/i.test(item.title);
+          return (
+            <motion.div
+              key={item.id}
+              layout
+              initial={{ opacity: 0, x: 48 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 32 }}
+              transition={{
+                type: 'spring',
+                damping: 26,
+                stiffness: 320,
+                delay: 0.04 * (index + 1),
+              }}
+              className={`pointer-events-auto overflow-hidden rounded-xl border bg-white/95 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-md ${shell.card}`}
+              role="status"
+              aria-live="polite"
+            >
+              <div className="flex">
+                <span className={`w-1.5 shrink-0 ${shell.accent}`} aria-hidden />
+                <div className="min-w-0 flex-1 p-3">
+                  <div className="flex items-start gap-2.5">
+                    <span
+                      className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${shell.icon}`}
+                    >
+                      {item.kind === 'earn' || showCoin ? (
+                        <TokenCoinIcon className="h-4 w-4" />
+                      ) : (
+                        <Icon className="h-4 w-4" strokeWidth={2.2} aria-hidden />
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                          {shell.label}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => dismissFloat(item.id)}
+                          className="ml-auto rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                          aria-label="Dismiss"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
                       </div>
+                      <p className="mt-0.5 text-sm font-semibold leading-snug text-slate-900">
+                        {showCoin ? (
+                          <span className="inline-flex flex-wrap items-center gap-1">
+                            {item.title
+                              .replace(/\btokens?\b/gi, '')
+                              .replace(/\s{2,}/g, ' ')
+                              .trim()}
+                            <TokenCoinIcon className="h-3.5 w-3.5" />
+                          </span>
+                        ) : (
+                          item.title
+                        )}
+                      </p>
+                      {item.description ? (
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-600">
+                          {item.description}
+                        </p>
+                      ) : null}
+                      {item.actionLabel && item.actionPath ? (
+                        <button
+                          type="button"
+                          onClick={() => navigateFloat(item)}
+                          className="mt-2.5 inline-flex rounded-full bg-[#0A66C2] px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#004182]"
+                        >
+                          {item.actionLabel}
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-      </div>
-    </>,
+              </div>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
+    </div>,
     document.body,
   );
 }

@@ -5,9 +5,7 @@ import { ArrowRight, UserCheck, UserRoundSearch } from 'lucide-react';
 import { TokenSpendButton, CourseAccessBadge } from '@/app/lms/components/ux/TokenSpendButton';
 import { fetchTokenUnlocks, spendTokenService } from '@/lib/tokens-api';
 
-const REQUEST_COST = 15;
 const INTERVIEWER_COST = 20;
-const REQUEST_SERVICE = 'lms.interview.unlock-request';
 const INTERVIEWER_SERVICE = 'lms.interview.unlock-interviewer';
 
 type Props = {
@@ -16,7 +14,6 @@ type Props = {
 };
 
 export function InterviewRoleOptions({ onRequestInterview, onBecomeInterviewer }: Props) {
-  const [requestUnlocked, setRequestUnlocked] = useState(false);
   const [interviewerUnlocked, setInterviewerUnlocked] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -26,7 +23,6 @@ export function InterviewRoleOptions({ onRequestInterview, onBecomeInterviewer }
       try {
         const unlocks = await fetchTokenUnlocks();
         if (cancelled) return;
-        setRequestUnlocked(Boolean(unlocks[REQUEST_SERVICE]));
         setInterviewerUnlocked(Boolean(unlocks[INTERVIEWER_SERVICE]));
       } catch {
         // ignore — show locked CTAs
@@ -45,7 +41,8 @@ export function InterviewRoleOptions({ onRequestInterview, onBecomeInterviewer }
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#28A8E1]">Interview roles</p>
         <h3 className="mt-1 text-xl font-bold text-slate-900">Choose how you want to continue</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Premium unlocks: spend once, then reopen anytime without paying again.
+          Be interviewed is free to start. You only pay the interviewer&apos;s fee when matched. Interviewer
+          access unlocks once.
         </p>
       </div>
 
@@ -58,34 +55,22 @@ export function InterviewRoleOptions({ onRequestInterview, onBecomeInterviewer }
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-base font-bold text-slate-900">Be Interviewed</p>
-                <CourseAccessBadge accessTier="premium" tokenCost={REQUEST_COST} />
+                <CourseAccessBadge accessTier="free" tokenCost={0} />
               </div>
-              <p className="text-sm text-slate-600">Create a new interview request in guided steps.</p>
+              <p className="text-sm text-slate-600">
+                Free to request. After match, pay the interviewer&apos;s set token fee.
+              </p>
             </div>
           </div>
           <div className="mt-4">
-            {loading ? (
-              <p className="text-xs text-slate-500">Checking unlock…</p>
-            ) : requestUnlocked ? (
-              <button
-                type="button"
-                onClick={onRequestInterview}
-                className="inline-flex w-full items-center justify-center gap-1 rounded-xl bg-[#28A8E1] px-4 py-2.5 text-sm font-semibold text-white"
-              >
-                Open request page
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            ) : (
-              <TokenSpendButton
-                tokenCost={REQUEST_COST}
-                label="Unlock"
-                onSpend={async () => {
-                  await spendTokenService(REQUEST_SERVICE);
-                  setRequestUnlocked(true);
-                  onRequestInterview();
-                }}
-              />
-            )}
+            <button
+              type="button"
+              onClick={onRequestInterview}
+              className="inline-flex w-full items-center justify-center gap-1 rounded-xl bg-[#28A8E1] px-4 py-2.5 text-sm font-semibold text-white"
+            >
+              Request interview
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
@@ -99,7 +84,9 @@ export function InterviewRoleOptions({ onRequestInterview, onBecomeInterviewer }
                 <p className="text-base font-bold text-slate-900">Become Interviewer</p>
                 <CourseAccessBadge accessTier="premium" tokenCost={INTERVIEWER_COST} />
               </div>
-              <p className="text-sm text-slate-600">Apply to take mock interviews for other candidates.</p>
+              <p className="text-sm text-slate-600">
+                Unlock once, then set your own session token fee per interview.
+              </p>
             </div>
           </div>
           <div className="mt-4">

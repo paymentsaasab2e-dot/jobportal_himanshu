@@ -124,15 +124,86 @@ export function prettifyTemplate(template: string | null) {
     .join(' ');
 }
 
+/** Short keyword chips vs long skill write-ups (concepts + JD angle). */
+const SHORT_SKILL_MAX = 56;
+
+export type SkillEntry = {
+  text: string;
+  /** True when this is a prose/write-up, not a single keyword chip. */
+  isWriteup: boolean;
+};
+
+function looksLikeWriteup(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (t.length > SHORT_SKILL_MAX) return true;
+  if (/:/.test(t)) return true;
+  if (/\.\s|[.!?]$/.test(t)) return true;
+  return false;
+}
+
+/**
+ * Parse skills text into entries.
+ * - Newline-separated lines stay whole (skill write-ups with commas must not become tags).
+ * - Classic comma lists of short keywords still split for chips.
+ */
+export function parseSkillEntries(skills: string): SkillEntry[] {
+  const raw = skills.trim();
+  if (!raw) return [];
+
+  const lines = raw
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const hasWriteupLine = lines.some((line) => looksLikeWriteup(line));
+  if (lines.length > 1 || hasWriteupLine) {
+    const seen = new Set<string>();
+    const out: SkillEntry[] = [];
+    for (const line of lines) {
+      const key = line.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ text: line, isWriteup: looksLikeWriteup(line) });
+    }
+    return out;
+  }
+
+  // Single short line → comma-separated keywords
+  const tokens = raw
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  if (tokens.some((t) => looksLikeWriteup(t))) {
+    return [{ text: raw, isWriteup: true }];
+  }
+  return Array.from(new Set(tokens)).map((text) => ({ text, isWriteup: false }));
+}
+
 export function parseSkillTokens(skills: string) {
-  return Array.from(
-    new Set(
-      skills
-        .split(/[\n,]/)
-        .map((entry) => entry.trim())
-        .filter(Boolean)
-    )
-  );
+  return parseSkillEntries(skills).map((entry) => entry.text);
+}
+
+/** Keyword label for bar-chart style templates (before ":" when write-up). */
+export function skillDisplayLabel(entry: SkillEntry | string): string {
+  const text = typeof entry === 'string' ? entry : entry.text;
+  if (!looksLikeWriteup(text)) return text;
+  const beforeColon = text.split(':')[0]?.trim();
+  if (beforeColon && beforeColon.length <= SHORT_SKILL_MAX) return beforeColon;
+  return text.slice(0, SHORT_SKILL_MAX).trim();
+}
+
+/** Split "Jest: learned unit tests…" into title + body for CV headings. */
+export function splitSkillWriteup(text: string): { title: string; body: string } {
+  const raw = text.trim();
+  if (!raw) return { title: '', body: '' };
+  const colon = raw.indexOf(':');
+  if (colon > 0 && colon <= SHORT_SKILL_MAX) {
+    const title = raw.slice(0, colon).trim();
+    const body = raw.slice(colon + 1).trim();
+    if (title && body) return { title, body };
+  }
+  return { title: skillDisplayLabel(raw), body: raw };
 }
 
 export function completionTone(status: SectionStatus) {

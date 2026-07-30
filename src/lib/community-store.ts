@@ -932,11 +932,55 @@ function saveIdentityMap(map: Record<string, GossipIdentity>) {
 
 export function getGossipIdentity(userId: string | null | undefined): GossipIdentity | null {
   if (!userId) return null;
-  return loadIdentityMap()[userId] || null;
+  const map = loadIdentityMap();
+  if (map[userId]) return map[userId];
+  // Alias: auth user id vs stored candidateId (avoids re-prompting every visit)
+  try {
+    const alt =
+      (typeof window !== 'undefined' &&
+        (localStorage.getItem('candidateId') || sessionStorage.getItem('candidateId'))) ||
+      '';
+    if (alt && alt !== userId && map[alt]) {
+      // Mirror under current id so future lookups are stable
+      map[userId] = { ...map[alt], userId };
+      saveIdentityMap(map);
+      return map[userId];
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
 }
 
 export function hasGossipAccount(userId: string | null | undefined): boolean {
   return Boolean(getGossipIdentity(userId));
+}
+
+const GOSSIP_SETUP_DONE_PREFIX = 'saasa:og-setup-done:';
+
+/** True after first successful Office Gossips setup (or skip) for this user. */
+export function isGossipSetupDone(userId: string | null | undefined): boolean {
+  if (!userId) return false;
+  if (hasGossipAccount(userId)) return true;
+  try {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(`${GOSSIP_SETUP_DONE_PREFIX}${userId}`) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function markGossipSetupDone(userId: string): void {
+  if (!userId || typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(`${GOSSIP_SETUP_DONE_PREFIX}${userId}`, '1');
+    const alt = localStorage.getItem('candidateId') || sessionStorage.getItem('candidateId');
+    if (alt && alt !== userId) {
+      localStorage.setItem(`${GOSSIP_SETUP_DONE_PREFIX}${alt}`, '1');
+    }
+  } catch {
+    /* ignore */
+  }
 }
 
 export function normalizeGossipUsername(raw: string): string {
@@ -1011,7 +1055,20 @@ export function createGossipAccount(input: {
   };
   const map = loadIdentityMap();
   map[input.userId] = identity;
+  // Keep alias so switching between auth id / candidateId doesn't re-ask setup
+  try {
+    const alt =
+      (typeof window !== 'undefined' &&
+        (localStorage.getItem('candidateId') || sessionStorage.getItem('candidateId'))) ||
+      '';
+    if (alt && alt !== input.userId) {
+      map[alt] = { ...identity, userId: alt };
+    }
+  } catch {
+    /* ignore */
+  }
   saveIdentityMap(map);
+  markGossipSetupDone(input.userId);
   return { ok: true, identity };
 }
 

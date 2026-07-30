@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { BadgeCheck, Check, Minus, Send, X, ArrowLeft } from 'lucide-react';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
 import {
@@ -28,6 +28,7 @@ import {
 import { recordSuggestionClick } from '@/lib/suggestions-engine';
 import { getGossipIdentity } from '@/lib/community-store';
 import { isUserOnline } from '@/lib/presence';
+import { WritingAssistField } from '@/components/common/WritingSuggestions';
 
 export type ChatKind = 'reference' | 'dm' | 'hryantra';
 
@@ -459,9 +460,9 @@ export function ReferenceMessagingPanel({
           {refLive.questions.map((q, i) => (
             <div key={`${q}-${i}`}>
               <p className="text-[11px] font-semibold text-slate-800">{i + 1}. {q}</p>
-              <textarea
+              <WritingAssistField
                 value={answers[i] || ''}
-                onChange={(e) => setAnswers((prev) => ({ ...prev, [i]: e.target.value }))}
+                onChange={(next) => setAnswers((prev) => ({ ...prev, [i]: next }))}
                 rows={2}
                 placeholder="Your answer…"
                 className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[12px] outline-none focus:border-emerald-500"
@@ -509,10 +510,11 @@ export function ReferenceMessagingPanel({
 
       {canChat && !iAmRefAnswerer ? (
         <div className="flex shrink-0 items-center gap-2 border-t border-slate-100 bg-white p-3">
-          <input
-            ref={inputRef}
+          <WritingAssistField
+            multiline={false}
+            inputRef={inputRef as RefObject<HTMLInputElement>}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={setDraft}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
@@ -520,7 +522,8 @@ export function ReferenceMessagingPanel({
               }
             }}
             placeholder="Write a message…"
-            className="h-10 min-w-0 flex-1 rounded-full border border-slate-200 bg-slate-50 px-4 text-sm outline-none focus:border-[#0A66C2] focus:bg-white"
+            wrapperClassName="min-w-0 flex-1"
+            className="h-10 w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-sm outline-none focus:border-[#0A66C2] focus:bg-white"
           />
           <button
             type="button"

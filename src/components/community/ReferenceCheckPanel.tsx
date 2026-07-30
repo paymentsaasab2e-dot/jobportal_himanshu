@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Check, EyeOff, MessageSquare, ShieldCheck, X, BadgeCheck } from 'lucide-react';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
 import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
+import { WritingAssistField } from '@/components/common/WritingSuggestions';
 import {
   getReferencePeerLabel,
   listReferenceChecksForUser,
@@ -458,12 +459,12 @@ export function ReferenceCheckPanel({
                               <p className="text-[11px] font-semibold text-slate-800">
                                 {i + 1}. {q}
                               </p>
-                              <textarea
+                              <WritingAssistField
                                 value={drafts[i] || ''}
-                                onChange={(e) =>
+                                onChange={(next) =>
                                   setAnswerDrafts((prev) => ({
                                     ...prev,
-                                    [r.id]: { ...drafts, [i]: e.target.value },
+                                    [r.id]: { ...drafts, [i]: next },
                                   }))
                                 }
                                 rows={2}

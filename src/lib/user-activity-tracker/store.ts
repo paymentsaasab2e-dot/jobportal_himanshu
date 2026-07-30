@@ -318,7 +318,11 @@ export function recordActiveTime(
   persistUserActivityState(state);
 }
 
-export function trackJobCardClick(userId: string, jobId?: string): void {
+export function trackJobCardClick(
+  userId: string,
+  jobId?: string,
+  meta?: Record<string, unknown>,
+): void {
   if (!userId) return;
   ensureActivitySession(userId);
   const state = getUserActivityState(userId);
@@ -329,7 +333,7 @@ export function trackJobCardClick(userId: string, jobId?: string): void {
   bumpCategory(day.pageVisitsByCategory, 'jobs');
   pushEvent(state, 'job_card_click', 'jobs', {
     path: '/explore-jobs',
-    meta: jobId ? { jobId } : undefined,
+    meta: jobId ? { jobId, ...meta } : meta,
   });
   persistUserActivityState(state);
   if (typeof window !== 'undefined' && jobId) {
@@ -341,14 +345,57 @@ export function trackJobCardClick(userId: string, jobId?: string): void {
   }
 }
 
-export function trackJobCardClickForCurrentUser(jobId?: string): void {
+export function trackCustomActivity(input: {
+  userId: string;
+  type: ActivityEventType;
+  category: ActivityCategory;
+  path?: string;
+  meta?: Record<string, unknown>;
+}): void {
+  if (!input.userId) return;
+  ensureActivitySession(input.userId, { path: input.path });
+  const state = getUserActivityState(input.userId);
+  const day = ensureDay(state);
+  const category = input.category || 'other';
+  const path = input.path || state.lastPath;
+  state.lastCategory = category;
+  if (path) state.lastPath = path;
+  pushEvent(state, input.type, category, {
+    path,
+    meta: input.meta,
+  });
+  if (input.type === 'page_visit') {
+    state.totals.visits += 1;
+    day.visits += 1;
+    bumpCategory(state.totals.pageVisitsByCategory, category);
+    bumpCategory(day.pageVisitsByCategory, category);
+  }
+  persistUserActivityState(state);
+}
+
+export function trackCustomActivityForCurrentUser(
+  input: Omit<Parameters<typeof trackCustomActivity>[0], 'userId'>,
+): void {
   if (typeof window === 'undefined') return;
   const userId =
     localStorage.getItem('candidateId') ||
     sessionStorage.getItem('candidateId') ||
     '';
   if (!userId || userId === 'guest') return;
-  trackJobCardClick(userId, jobId);
+  trackCustomActivity({ ...input, userId });
+}
+
+export function trackJobCardClickForCurrentUser(
+  jobId?: string,
+  meta?: Record<string, unknown>,
+): void {
+  if (typeof window === 'undefined') return;
+  const userId =
+    localStorage.getItem('candidateId') ||
+    sessionStorage.getItem('candidateId') ||
+    '';
+  if (!userId || userId === 'guest') return;
+  trackJobCardClick(userId, jobId, meta);
 }
 
 export function trackApplicationSubmit(userId: string): void {

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,7 +14,8 @@ import {
   respondToInterviewRequest,
   submitInterviewerApplication,
 } from '@/lib/interviewer-api';
-import { InterviewRequestsList } from '../components/InterviewRequest/InterviewRequestsList';
+import { WritingAssistField } from '@/components/common/WritingSuggestions';
+import { InterviewSimpleTabs } from '../components/InterviewSimpleTabs';
 
 const SKILLS = [
   'Frontend Development',
@@ -135,6 +136,7 @@ export default function BecomeInterviewerPage() {
   const [prefilledFromRejected, setPrefilledFromRejected] = useState(false);
   const [hasManualCompanyRoleEdit, setHasManualCompanyRoleEdit] = useState(false);
   const [nowTs, setNowTs] = useState(() => Date.now());
+  const [hubTab, setHubTab] = useState<'candidates' | 'active' | 'application'>('candidates');
 
   const profileQuery = useQuery({
     queryKey: ['interviewer-application-me'],
@@ -201,18 +203,29 @@ export default function BecomeInterviewerPage() {
   const queue = useMemo(() => queueQuery.data ?? [], [queueQuery.data]);
   const openQueueItems = useMemo(
     () =>
-      queue.filter((item) =>
-        ['FINDING_INTERVIEWER', 'MATCHING', 'WAITING_FOR_ACCEPTANCE', 'ACCEPTED'].includes(String(item.status || ''))
-      ),
-    [queue]
+      queue.filter((item) => {
+        // Don't show your own candidate requests in the interviewer inbox
+        if (user?.id && String(item.candidateId) === String(user.id)) return false;
+        return ['FINDING_INTERVIEWER', 'MATCHING', 'WAITING_FOR_ACCEPTANCE', 'ACCEPTED'].includes(
+          String(item.status || ''),
+        );
+      }),
+    [queue, user?.id],
   );
   const acceptedQueueItems = useMemo(
     () =>
-      queue.filter((item) =>
-        ['SCHEDULED', 'IN_PROGRESS'].includes(String(item.status || ''))
-      ),
-    [queue]
+      queue.filter((item) => {
+        if (user?.id && String(item.candidateId) === String(user.id)) return false;
+        return ['SCHEDULED', 'IN_PROGRESS'].includes(String(item.status || ''));
+      }),
+    [queue, user?.id],
   );
+
+  useEffect(() => {
+    if (!interviewerProfile && (!existingApplication || existingApplication.status === 'REJECTED')) {
+      setHubTab('application');
+    }
+  }, [existingApplication, interviewerProfile]);
 
   useEffect(() => {
     if (prefilledFromRejected) return;
@@ -379,24 +392,49 @@ export default function BecomeInterviewerPage() {
             Loading interviewer profile...
           </div>
         ) : interviewerProfile ? (
-          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+          <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
             <div className="flex items-center gap-2 text-emerald-800">
               <CheckCircle2 className="h-5 w-5" />
-              <p className="font-semibold">Interviewer profile is active</p>
+              <p className="text-sm font-semibold">Interviewer profile is active</p>
             </div>
-            <p className="mt-1 text-sm text-emerald-700">
-              Status: {interviewerProfile.status} • Rating: {interviewerProfile.ratingAverage.toFixed(1)} • Interviews: {interviewerProfile.totalInterviews}
+            <p className="mt-1 text-xs text-emerald-700">
+              Status: {interviewerProfile.status} · Rating: {interviewerProfile.ratingAverage.toFixed(1)} · Interviews:{' '}
+              {interviewerProfile.totalInterviews}
             </p>
           </div>
         ) : existingApplication && existingApplication.status !== 'REJECTED' ? (
           <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-3">
             <p className="text-xs font-semibold text-sky-800">Application status: {existingApplication.statusLabel}</p>
-            <p className="mt-0.5 text-xs text-sky-700">
-              You can start picking interview candidates below.
-            </p>
+            <p className="mt-0.5 text-xs text-sky-700">Use the tabs below to review candidates.</p>
           </div>
         ) : (
-          <div className="mt-5 space-y-4">
+          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold text-slate-800">Application needed</p>
+            <p className="mt-0.5 text-xs text-slate-600">Open the Application tab to submit your interviewer profile.</p>
+          </div>
+        )}
+      </section>
+
+      <InterviewSimpleTabs
+        active={hubTab}
+        onChange={(id) => setHubTab(id as typeof hubTab)}
+        tabs={[
+          { id: 'candidates', label: 'Inbox', count: openQueueItems.length },
+          { id: 'active', label: 'Scheduled', count: acceptedQueueItems.length },
+          { id: 'application', label: 'Profile' },
+        ]}
+      />
+
+      {hubTab === 'application' ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          {interviewerProfile ? (
+            <p className="text-sm text-slate-600">Your interviewer profile is already active. Open Inbox to take requests.</p>
+          ) : existingApplication && existingApplication.status !== 'REJECTED' ? (
+            <p className="text-sm text-slate-600">
+              Application status: <span className="font-semibold">{existingApplication.statusLabel}</span>
+            </p>
+          ) : (
+          <div className="space-y-4">
             {existingApplication?.status === 'REJECTED' ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
                 <p className="text-sm font-semibold text-amber-800">
@@ -603,9 +641,9 @@ export default function BecomeInterviewerPage() {
 
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">About Yourself</label>
-              <textarea
+              <WritingAssistField
                 value={motivation}
-                onChange={(e) => setMotivation(e.target.value.slice(0, 1000))}
+                onChange={(next) => setMotivation(next.slice(0, 1000))}
                 className="h-24 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
                 placeholder="Brief bio and interview strengths..."
               />
@@ -613,9 +651,9 @@ export default function BecomeInterviewerPage() {
 
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">Feedback Style</label>
-              <textarea
+              <WritingAssistField
                 value={feedbackStyle}
-                onChange={(e) => setFeedbackStyle(e.target.value.slice(0, 500))}
+                onChange={(next) => setFeedbackStyle(next.slice(0, 500))}
                 className="h-24 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
                 placeholder="Explain scoring and actionable feedback approach..."
               />
@@ -648,18 +686,16 @@ export default function BecomeInterviewerPage() {
               </p>
             ) : null}
           </div>
-        )}
-      </section>
+          )}
+        </section>
+      ) : null}
 
-      <InterviewRequestsList
-        title="Interview Requests (Your Candidate View)"
-        subtitle="These are requests submitted by you as a candidate."
-      />
-
-      {interviewerProfile || existingApplication ? (
+      {hubTab === 'candidates' && (interviewerProfile || existingApplication) ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900">Interview Candidates</h3>
-          <p className="mt-1 text-sm text-slate-600">Review candidate details, propose a slot, and accept requests.</p>
+          <h3 className="text-lg font-bold text-slate-900">Inbox</h3>
+          <p className="mt-1 text-sm text-slate-600">
+            People who asked for a mock interview — accept or propose a slot.
+          </p>
           {queueActionMessage ? (
             <p className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
               {queueActionMessage}
@@ -692,7 +728,7 @@ export default function BecomeInterviewerPage() {
                     </span>
                   ) : null}
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-bold text-slate-900">{item.requestId} • {item.statusLabel}</p>
+                    <p className="text-sm font-bold text-slate-900">{item.requestId} · {item.statusLabel}</p>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -715,13 +751,13 @@ export default function BecomeInterviewerPage() {
                     </div>
                   </div>
                   <p className="mt-1 text-sm text-slate-700">
-                    Candidate: {item.candidateProfile?.fullName || item.candidateId} • Role: {item.targetRole || 'N/A'}
+                    Candidate: {item.candidateProfile?.fullName || item.candidateId} · Role: {item.targetRole || 'N/A'}
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
-                    Skills: {item.techStack.join(', ')} • Experience: {item.experience} • Language: {item.language}
+                    Skills: {item.techStack.join(', ')} · Experience: {item.experience} · Language: {item.language}
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
-                    Requested: {item.interviewType} • {item.preferredTime.join(', ')} • {item.duration} mins
+                    Requested: {item.interviewType} · {item.preferredTime.join(', ')} · {item.duration} mins
                   </p>
                   <div className="mt-2">
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -756,76 +792,52 @@ export default function BecomeInterviewerPage() {
               ))}
             </div>
           )}
+        </section>
+      ) : null}
 
-          <div className="mt-6 border-t border-slate-100 pt-4">
-            <h4 className="text-base font-semibold text-slate-900">Accepted Interviews</h4>
-            <p className="mt-1 text-sm text-slate-600">Requests you accepted are shown here.</p>
-            {queueQuery.isLoading ? (
-              <p className="mt-3 text-sm text-slate-600">Loading accepted interviews...</p>
-            ) : acceptedQueueItems.length === 0 ? (
-              <p className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-600">
-                No accepted interviews yet.
-              </p>
-            ) : (
-              <div className="mt-3 grid gap-2.5 md:grid-cols-2">
-                {acceptedQueueItems.map((item) => {
-                  const joinState = getJoinWindowState(item, nowTs);
-                  return (
-                    <div
-                      key={item.id}
-                      className="w-full max-w-md rounded-xl border border-emerald-200 bg-linear-to-br from-emerald-50 via-white to-cyan-50 p-3 shadow-sm"
-                    >
-                    <div className="flex flex-wrap items-start justify-between gap-1.5">
-                      <p className="text-base font-bold text-emerald-800">{item.requestId}</p>
-                      <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
-                        {item.statusLabel}
-                      </span>
-                    </div>
+      {hubTab === 'candidates' && !(interviewerProfile || existingApplication) ? (
+        <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+          Submit your application first, then candidates will appear here.
+        </p>
+      ) : null}
 
+      {hubTab === 'active' && (interviewerProfile || existingApplication) ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-base font-bold text-slate-900">Active interviews</h3>
+          {acceptedQueueItems.length === 0 ? (
+            <p className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+              No scheduled interviews yet.
+            </p>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {acceptedQueueItems.map((item) => {
+                const joinState = getJoinWindowState(item, nowTs);
+                return (
+                  <div key={item.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-sm font-bold text-slate-900">{item.requestId} · {item.statusLabel}</p>
                     <div className="mt-2 space-y-1 text-xs">
-                      <p className="text-slate-700">
+                      <p>
                         <span className="font-semibold text-slate-900">Candidate:</span>{' '}
                         {item.candidateProfile?.fullName || item.candidateId}
                       </p>
-                      <p className="text-slate-700">
-                        <span className="font-semibold text-slate-900">Role:</span> {item.targetRole || 'N/A'}
+                      <p className="text-slate-600">
+                        {item.interviewType} · {item.duration} mins · {item.language}
                       </p>
-                      <p className="text-slate-700">
-                        <span className="font-semibold text-slate-900">Interview:</span> {item.interviewType}
-                      </p>
-                      <p className="text-slate-700">
-                        <span className="font-semibold text-slate-900">Duration:</span> {item.duration} mins
-                      </p>
-                    </div>
-
-                    <div className="mt-2">
-                      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                        Confirmed Time Slots
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {(item.preferredTime || []).map((slot) => (
-                          <span
-                            key={`${item.id}-${slot}`}
-                            className="rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-800"
-                          >
-                            {slot}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                        Final Scheduling Status
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-slate-600">
-                        Candidate must accept the proposed final slot before schedule is locked.
-                      </p>
-                      {joinState.joinOpensAtLabel ? (
-                        <p className="mt-1 text-[11px] font-medium text-emerald-700">
-                          Join opens at {joinState.joinOpensAtLabel}
+                      {item.scheduledAt ? (
+                        <p className="text-slate-600">
+                          Scheduled: {new Date(item.scheduledAt).toLocaleString()}
                         </p>
                       ) : null}
-                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(`/lms/interview-prep/interviewer-room/${item.id}`)
+                          }
+                          className="rounded-lg bg-[#0A66C2] px-3 py-1.5 text-xs font-semibold text-white"
+                        >
+                          Open room
+                        </button>
                         {joinState.canJoinNow ? (
                           <button
                             type="button"
@@ -836,42 +848,25 @@ export default function BecomeInterviewerPage() {
                               });
                               window.open(liveUrl, '_blank', 'noopener,noreferrer');
                             }}
-                            className="rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white"
+                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white"
                           >
-                            Join Interview
+                            Join interview
                           </button>
                         ) : null}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const liveUrl = buildInterviewLiveMeetingUrl(item.requestId || item.id, {
-                              role: 'interviewer',
-                              displayName: user?.name || 'Interviewer',
-                            });
-                            window.open(liveUrl, '_blank', 'noopener,noreferrer');
-                          }}
-                          className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700"
-                        >
-                          Join Dummy
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => router.push(`/lms/interview-prep/interviewer-room/${item.id}`)}
-                          className="rounded-md border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-800"
-                        >
-                          Open Interview Room
-                        </button>
+                        {joinState.joinOpensAtLabel ? (
+                          <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-medium text-emerald-700">
+                            Join opens at {joinState.joinOpensAtLabel}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       ) : null}
-
     </div>
   );
 }

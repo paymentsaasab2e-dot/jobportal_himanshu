@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -8,6 +8,14 @@ import { getInterviewerQueue, scheduleInterviewSlot } from '@/lib/interviewer-ap
 import { getInterviewRequestChat, postInterviewRequestChat } from '@/lib/interview-request-api';
 import { buildInterviewLiveMeetingUrl } from '@/lib/interview-live-meeting';
 import { useAuth } from '@/components/auth/AuthContext';
+import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
+import {
+  clampInterviewFee,
+  getInterviewEscrow,
+  setInterviewFee,
+} from '@/lib/interview-token-escrow';
+import { InterviewRoomChat } from '@/modules/interview-prep/components/InterviewRoomChat';
+import { InterviewSimpleTabs } from '@/modules/interview-prep/components/InterviewSimpleTabs';
 
 export default function InterviewerRoomPage() {
   const { user } = useAuth();
@@ -21,7 +29,9 @@ export default function InterviewerRoomPage() {
   const [chatDraft, setChatDraft] = useState('');
   const [chatSending, setChatSending] = useState(false);
   const [nowTs, setNowTs] = useState(() => Date.now());
-  const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const [feeTokens, setFeeTokens] = useState(15);
+  const [escrowTick, setEscrowTick] = useState(0);
+  const [roomTab, setRoomTab] = useState<'overview' | 'chat' | 'slot'>('chat');
 
   const queueQuery = useQuery({
     queryKey: ['interviewer-room', requestId],
@@ -43,6 +53,15 @@ export default function InterviewerRoomPage() {
     const list = queueQuery.data || [];
     return list.find((item) => String(item.id) === requestId || String(item.requestId) === requestId) || null;
   }, [queueQuery.data, requestId]);
+
+  const escrow = useMemo(() => {
+    void escrowTick;
+    return requestId ? getInterviewEscrow(requestId) : null;
+  }, [requestId, escrowTick]);
+
+  useEffect(() => {
+    if (escrow?.feeTokens) setFeeTokens(escrow.feeTokens);
+  }, [escrow?.feeTokens]);
 
   const effectiveSlot = selectedSlot || record?.preferredTime?.[0] || '';
   const joinWindowState = useMemo(() => {
@@ -103,16 +122,12 @@ export default function InterviewerRoomPage() {
     return () => window.clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [chatQuery.data?.length]);
-
   const handleSendChat = async () => {
     const text = chatDraft.trim();
     if (!text) return;
     try {
       setChatSending(true);
-      await postInterviewRequestChat(requestId, text);
+      await postInterviewRequestChat(requestId, text, { asRole: 'interviewer' });
       setChatDraft('');
       await chatQuery.refetch();
     } finally {
@@ -132,8 +147,57 @@ export default function InterviewerRoomPage() {
       </button>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h1 className="text-xl font-bold text-slate-900">Interview Room</h1>
-        <p className="mt-1 text-sm text-slate-600">Coordinate with candidate and finalize interview timing.</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-slate-900">Interview Room</h1>
+            <p className="mt-1 text-sm text-slate-600">Coordinate with candidate and finalize interview timing.</p>
+          </div>
+          {record ? (
+            <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <span className="text-xs font-semibold text-slate-600">Token fee</span>
+              <label className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                <TokenCoinIcon className="h-4 w-4" />
+                <input
+                  type="number"
+                  min={5}
+                  max={100}
+                  disabled={Boolean(escrow?.escrowHeld || escrow?.settledAt)}
+                  value={feeTokens}
+                  onChange={(e) => setFeeTokens(clampInterviewFee(Number(e.target.value)))}
+                  className="w-16 rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm outline-none focus:border-emerald-400 disabled:bg-slate-100"
+                />
+              </label>
+              <button
+                type="button"
+                disabled={Boolean(escrow?.escrowHeld || escrow?.settledAt) || !user?.id}
+                onClick={() => {
+                  if (!user?.id || !record) return;
+                  const result = setInterviewFee({
+                    requestId: record.id || requestId,
+                    interviewerId: user.id,
+                    candidateId: String(record.candidateId || ''),
+                    feeTokens,
+                  });
+                  if (!result.ok) {
+                    setActionError(result.error);
+                    return;
+                  }
+                  setActionError('');
+                  setActionMessage(`Fee saved · ${result.escrow.feeTokens} tokens`);
+                  setEscrowTick((n) => n + 1);
+                }}
+                className="rounded-full bg-[#0A66C2] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+              >
+                {escrow?.escrowHeld || escrow?.settledAt ? 'Locked' : 'Save'}
+              </button>
+              {escrow?.settledAt ? (
+                <span className="text-[11px] text-slate-500">Paid {escrow.payoutTokens ?? 0}</span>
+              ) : escrow?.escrowHeld ? (
+                <span className="text-[11px] text-slate-500">Held</span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
         {queueQuery.isLoading ? (
           <p className="mt-4 text-sm text-slate-600">Loading interview details...</p>
@@ -157,6 +221,17 @@ export default function InterviewerRoomPage() {
               </p>
             </div>
 
+            <InterviewSimpleTabs
+              active={roomTab}
+              onChange={(id) => setRoomTab(id as typeof roomTab)}
+              tabs={[
+                { id: 'overview', label: 'Overview' },
+                { id: 'chat', label: 'Chat' },
+                { id: 'slot', label: 'Slot' },
+              ]}
+            />
+
+            {roomTab === 'overview' ? (
             <div className="rounded-xl border border-slate-200 bg-white p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Interview Timeline</p>
               <div className="mt-2 grid gap-2 sm:grid-cols-5">
@@ -173,9 +248,6 @@ export default function InterviewerRoomPage() {
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-[11px] text-slate-500">
-                Reminder is auto-sent around 1 hour before scheduled time.
-              </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {joinWindowState.canJoinNow ? (
                   <button
@@ -199,65 +271,25 @@ export default function InterviewerRoomPage() {
                 ) : null}
               </div>
             </div>
+            ) : null}
 
-            <div className="rounded-xl border border-slate-200 bg-white p-3">
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Interview Room Chat</p>
-                <p className="mt-0.5 text-[11px] text-emerald-600">
-                  Chat directly here with the candidate.
-                </p>
-              </div>
-              <div className="mt-3 rounded-lg border border-slate-200 bg-[#e5ddd5] p-2">
-                <div className="max-h-72 space-y-2 overflow-y-auto rounded-md bg-[#efeae2] p-2 pr-1">
-                  {(chatQuery.data || []).length === 0 ? (
-                    <p className="text-xs text-slate-500">No messages yet. Start the conversation below.</p>
-                  ) : (
-                    (chatQuery.data || []).map((item) => (
-                      <div
-                        key={item.id}
-                        className={`rounded-lg px-2.5 py-2 text-xs ${
-                          item.senderRole === 'interviewer'
-                            ? 'ml-auto max-w-[85%] bg-[#dcf8c6] text-slate-900'
-                            : 'mr-auto max-w-[85%] bg-white text-slate-800'
-                        }`}
-                      >
-                        <p className="mb-0.5 text-[10px] font-semibold opacity-70">
-                          {item.senderRole === 'interviewer' ? 'You' : 'Candidate'}
-                        </p>
-                        <p>{item.message}</p>
-                        <p className="mt-1 text-[10px] opacity-70">
-                          {new Date(item.createdAt).toLocaleString()}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                  <div ref={chatEndRef} />
-                </div>
-                <div className="mt-2 flex gap-2">
-                  <input
-                    value={chatDraft}
-                    onChange={(event) => setChatDraft(event.target.value)}
-                    placeholder="Type message to candidate..."
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' && !event.shiftKey) {
-                        event.preventDefault();
-                        if (!chatSending) void handleSendChat();
-                      }
-                    }}
-                    className="w-full rounded-full border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-emerald-400"
-                  />
-                  <button
-                    type="button"
-                    disabled={chatSending}
-                    onClick={() => void handleSendChat()}
-                    className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
-                  >
-                    {chatSending ? 'Sending...' : 'Send'}
-                  </button>
-                </div>
-              </div>
-            </div>
+            {roomTab === 'chat' ? (
+            <InterviewRoomChat
+              messages={chatQuery.data || []}
+              viewerRole="interviewer"
+              candidateName={
+                record.candidateProfile?.fullName || record.candidateId || 'Candidate'
+              }
+              interviewerName={user?.name || 'Interviewer'}
+              draft={chatDraft}
+              onDraftChange={setChatDraft}
+              onSend={() => void handleSendChat()}
+              sending={chatSending}
+              placeholder="Type message to candidate…"
+            />
+            ) : null}
 
+            {roomTab === 'slot' ? (
             <div className="rounded-xl border border-slate-200 bg-white p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Final Slot Proposal</p>
               <p className="mt-1 text-xs text-slate-600">
@@ -312,6 +344,7 @@ export default function InterviewerRoomPage() {
                 </p>
               ) : null}
             </div>
+            ) : null}
           </div>
         )}
       </section>

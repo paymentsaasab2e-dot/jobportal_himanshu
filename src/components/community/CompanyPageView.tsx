@@ -39,6 +39,7 @@ import {
   requestPeopleFollow,
   unfollowCompany,
 } from '@/lib/social-store';
+import { trackCustomActivity } from '@/lib/user-activity-tracker';
 
 type Tab = 'posts' | 'people' | 'references';
 
@@ -94,6 +95,36 @@ export function CompanyPageView({
   useEffect(() => {
     setMsgAnon(profileForcedAnon || Boolean(identity?.followAnonymously));
   }, [profileForcedAnon, identity?.followAnonymously, userId]);
+
+  useEffect(() => {
+    trackCustomActivity({
+      userId,
+      type: 'page_visit',
+      category: 'community',
+      path: `/community/company/${company.id}`,
+      meta: {
+        companyId: company.id,
+        companyName: company.name,
+        roleKey: company.domainKey || undefined,
+        sourceSurface: 'company_page',
+      },
+    });
+  }, [userId, company.id, company.name, company.domainKey]);
+
+  useEffect(() => {
+    if (tab !== 'references') return;
+    trackCustomActivity({
+      userId,
+      type: 'page_visit',
+      category: 'community',
+      path: `/community/company/${company.id}/references`,
+      meta: {
+        companyId: company.id,
+        companyName: company.name,
+        sourceSurface: 'reference_check',
+      },
+    });
+  }, [tab, userId, company.id, company.name]);
 
   const followingCompany = useMemo(
     () => isFollowingCompany(company.id, userId),

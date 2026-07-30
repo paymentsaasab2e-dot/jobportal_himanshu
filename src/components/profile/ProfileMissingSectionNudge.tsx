@@ -18,6 +18,8 @@ type ProfileMissingSectionNudgeProps = {
   missingSections: ProfileMissingSection[];
   onNavigate: (href: string) => void;
   storageKeyPrefix?: string;
+  /** When true, parent owns positioning (e.g. top alert stack). */
+  placement?: 'fixed-bottom' | 'inline';
 };
 
 function readDismissRecord(key: string): DismissRecord | null {
@@ -52,6 +54,7 @@ export default function ProfileMissingSectionNudge({
   missingSections,
   onNavigate,
   storageKeyPrefix = 'profileMissingNudge',
+  placement = 'fixed-bottom',
 }: ProfileMissingSectionNudgeProps) {
   const [visible, setVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -123,9 +126,15 @@ export default function ProfileMissingSectionNudge({
   };
 
   return (
-    <div className="pointer-events-none fixed bottom-5 left-3 z-[120] max-w-[min(272px,calc(100vw-1.5rem))] sm:bottom-6 sm:left-5">
+    <div
+      className={
+        placement === 'inline'
+          ? 'pointer-events-auto w-full max-w-none'
+          : 'pointer-events-none fixed bottom-5 left-3 z-[120] max-w-[min(272px,calc(100vw-1.5rem))] sm:bottom-6 sm:left-5'
+      }
+    >
       <div
-        className="profile-page-typography candidate-dashboard-page pointer-events-auto animate-in slide-in-from-left-4 fade-in duration-300 rounded-xl border border-amber-200/90 bg-amber-50/95 p-3 shadow-[0_10px_28px_rgba(180,83,9,0.12)] backdrop-blur-sm"
+        className="profile-page-typography candidate-dashboard-page pointer-events-auto rounded-xl border border-amber-200/90 bg-white/95 p-3 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-md"
         role="alert"
         aria-live="polite"
       >

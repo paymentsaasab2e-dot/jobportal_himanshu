@@ -62,6 +62,7 @@ import { ProfileViewsPanel } from '@/components/community/ProfileViewsPanel';
 import { ReferenceCheckPanel } from '@/components/community/ReferenceCheckPanel';
 import { ReferenceMessagingPanel } from '@/components/community/ReferenceMessagingPanel';
 import { UserProfileView } from '@/components/community/UserProfileView';
+import { WritingAssistField } from '@/components/common/WritingSuggestions';
 import { getApiBaseUrl } from '@/lib/api-base';
 import { getAuthHeaders, resolveCandidateIdForApi } from '@/lib/auth-storage';
 import { heartbeatPresence } from '@/lib/presence';
@@ -90,6 +91,8 @@ import {
   getJoinedCommunities,
   getVisibleFeed,
   hasGossipAccount,
+  isGossipSetupDone,
+  markGossipSetupDone,
   joinCommunity,
   leaveCommunity,
   loadCommunityState,
@@ -246,7 +249,8 @@ export default function OfficeGossipsPage() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated && userId && !hasGossipAccount(userId)) {
+    // First-login only: never re-prompt after account exists or setup was completed
+    if (!authLoading && isAuthenticated && userId && !isGossipSetupDone(userId)) {
       setShowCreateAccount(true);
     }
   }, [authLoading, isAuthenticated, userId]);
@@ -560,6 +564,20 @@ export default function OfficeGossipsPage() {
 
   const openJobEvent = (ev: OgEventPost) => {
     if (ev.type !== 'job') return;
+    void import('@/lib/user-activity-tracker').then((m) => {
+      m.trackCustomActivityForCurrentUser({
+        type: 'page_visit',
+        category: 'community',
+        path: `/community/events/job/${ev.jobId || ev.id}`,
+        meta: {
+          companyId: ev.hostName,
+          companyName: ev.hostName,
+          jobTitle: ev.title,
+          roleKey: ev.title.toLowerCase().split(/[^a-z0-9+.#]+/).slice(0, 3).join('-'),
+          sourceSurface: 'office_gossips_event',
+        },
+      });
+    });
     const href =
       ev.actionHref ||
       (ev.jobId ? `/explore-jobs?job=${encodeURIComponent(ev.jobId)}` : '/explore-jobs');
@@ -1569,13 +1587,14 @@ export default function OfficeGossipsPage() {
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#1B3A5F]">
                       {authorName.slice(0, 1).toUpperCase()}
                     </div>
-                    <textarea
-                      ref={composeInputRef}
+                    <WritingAssistField
+                      inputRef={composeInputRef}
                       value={composeText}
-                      onChange={(e) => setComposeText(e.target.value)}
+                      onChange={setComposeText}
                       rows={2}
+                      wrapperClassName="min-w-0 flex-1"
                       placeholder="Spill the gossip… use @ to tag someone"
-                      className="min-w-0 flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-[#28A8E1] focus:bg-white"
+                      className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-[#28A8E1] focus:bg-white"
                     />
                     <button
                       type="button"
@@ -2310,6 +2329,7 @@ export default function OfficeGossipsPage() {
         <CreateGossipAccountModal
           realName={realName}
           onCreated={() => {
+            markGossipSetupDone(userId);
             setShowCreateAccount(false);
             refresh();
             showSuccessToast('Account ready', 'Welcome to Office Gossips.');
@@ -2395,9 +2415,9 @@ function CreateCommunityModal({
         </label>
         <label className="mt-3 block text-sm font-semibold text-slate-800">
           Description
-          <textarea
+          <WritingAssistField
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={setDescription}
             rows={3}
             className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#28A8E1]"
           />

@@ -76,6 +76,16 @@ import {
   resolveJobAssessmentsForApply,
 } from '@/lib/pre-screen-assessment-flow';
 import { AppLocale, localizePath } from '@/lib/i18n';
+import { withJobApiLocale } from '@/lib/jobApiLocale';
+import {
+  EXPLORE_JOBS_BATCH_SIZE,
+  exploreJobsCacheKey,
+  isExploreJobsCacheFresh,
+  mergeJobsById,
+  readExploreJobsCache,
+  writeExploreJobsCache,
+} from '@/lib/explore-jobs-session-cache';
+import { fetchExploreJobsProgressive } from '@/lib/explore-jobs-progressive-fetch';
 import { fetchResumeDraft, fetchResumeHtml } from '@/app/lms/api/client';
 import {
   buildJobCvTailorContext,
@@ -86,7 +96,6 @@ import {
   saveJobCvTailorContext,
   type CvResumeSections,
 } from '@/lib/job-cv-tailor';
-import { withJobApiLocale } from '@/lib/jobApiLocale';
 
 const PAGE_BG =
   'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)';
@@ -537,6 +546,10 @@ const ExploreJobsPageContent = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null)
   const [jobListings, setJobListings] = useState<JobListing[]>([])
+  const [jobsCatalogTotal, setJobsCatalogTotal] = useState(0)
+  const [jobsMatchTotal, setJobsMatchTotal] = useState(0)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const jobsLoadGenRef = useRef(0)
   const [cvResumeSections, setCvResumeSections] = useState<CvResumeSections | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -727,8 +740,32 @@ const ExploreJobsPageContent = () => {
   }
 
   useEffect(() => {
-    loadJobListings()
-    checkAppliedJobs()
+    void loadJobListings()
+    void checkAppliedJobs()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale])
+
+  // Soft background refresh only when cache is stale — avoid full recalculate on every focus/click.
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const softRefresh = () => {
+      const candidateId = sessionStorage.getItem('candidateId')
+      const cached = readExploreJobsCache(
+        exploreJobsCacheKey(String(locale || 'en'), candidateId),
+      )
+      if (isExploreJobsCacheFresh(cached)) return
+      void loadJobListings({ force: true })
+    }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') softRefresh()
+    }
+    window.addEventListener('focus', softRefresh)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      window.removeEventListener('focus', softRefresh)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale])
 
   // After BEFORE_SUBMIT assessment chain, auto-submit the application.
@@ -789,27 +826,11 @@ const ExploreJobsPageContent = () => {
     void import('@/lib/user-activity-tracker').then((m) => {
       m.trackApplicationSubmitForCurrentUser()
     })
-    void loadJobListings()
+    void loadJobListings({ force: true })
     checkAppliedJobs()
     notifyBellRefresh()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, jobListings, pathname])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined
-    const refreshJobs = () => {
-      void loadJobListings()
-    }
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') refreshJobs()
-    }
-    window.addEventListener('focus', refreshJobs)
-    document.addEventListener('visibilitychange', onVisibilityChange)
-    return () => {
-      window.removeEventListener('focus', refreshJobs)
-      document.removeEventListener('visibilitychange', onVisibilityChange)
-    }
-  }, [locale])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -928,149 +949,9 @@ const ExploreJobsPageContent = () => {
 
   const [isPersonalized, setIsPersonalized] = useState(false);
 
-  const loadJobListings = async () => {
-    const showBlockingLoader = jobListings.length === 0;
-    try {
-      if (showBlockingLoader) {
-        setLoading(true);
-      }
-      const candidateId = sessionStorage.getItem('candidateId');
-      const apiBases = buildApiBaseCandidates(String(API_BASE_URL));
-
-      let result: any = null;
-      let rawJobs: any[] = [];
-      let usingPersonalized = false;
-      const issues: string[] = []
-
-      const parseErrorBody = async (response: Response) => {
-        const text = await response.text().catch(() => '')
-        const slice = text.slice(0, 400)
-        try {
-          const j = JSON.parse(text) as { hint?: string; message?: string; error?: string }
-          const line = [j.hint, j.message, j.error].filter(Boolean).join(' — ')
-          return line || slice
-        } catch {
-          return slice
-        }
-      }
-
-      /**
-       * Always fetch the **full** /jobs list. If the candidate is signed in, also fetch
-       * the AI-personalized matches and overlay their scores onto the matching general
-       * rows. We never replace the general list with the personalized list — otherwise a
-       * brand-new role that doesn't yet meet AI thresholds would never reach the user
-       * even though it exists in the catalog (this regression came up after the matcher
-       * started filtering with `qualifiesForPersonalizedMatch`).
-       */
-      for (const base of apiBases) {
-        let generalJobs: any[] = [];
-        let generalSucceeded = false;
-
-        try {
-          const generalResponse = await fetch(withJobApiLocale(`${base}/jobs?limit=500`, locale), {
-            method: 'GET',
-            cache: 'no-store',
-          });
-          if (!generalResponse.ok) {
-            const detail = await parseErrorBody(generalResponse)
-            issues.push(`${base}/jobs?limit=500 → HTTP ${generalResponse.status}: ${detail}`)
-          } else {
-            const generalResult = await generalResponse.json();
-            const generalParsed = extractJobsFromResponse(generalResult);
-            if (generalResult?.success !== false) {
-              result = generalResult;
-              generalJobs = generalParsed;
-              generalSucceeded = true;
-            } else {
-              issues.push(`${base}/jobs?limit=500 → success=false: ${JSON.stringify(generalResult).slice(0, 200)}`)
-            }
-          }
-        } catch (error) {
-          const msg = error instanceof Error ? error.message : String(error)
-          issues.push(`${base}/jobs → ${msg}`)
-          console.warn(`General jobs fetch failed for ${base}`, error);
-        }
-
-        let personalizedJobs: any[] = [];
-        if (candidateId) {
-          try {
-            const personalizedResponse = await fetch(
-              `${base}/jobs/personalized?candidateId=${encodeURIComponent(candidateId)}`,
-              { method: 'GET', cache: 'no-store' }
-            );
-            if (personalizedResponse.ok) {
-              const personalizedResult = await personalizedResponse.json();
-              const personalizedParsed = extractJobsFromResponse(personalizedResult);
-              if (personalizedResult?.success !== false && personalizedParsed.length > 0) {
-                personalizedJobs = personalizedParsed;
-              }
-            } else {
-              const detail = await parseErrorBody(personalizedResponse)
-              issues.push(`${base}/jobs/personalized → HTTP ${personalizedResponse.status}: ${detail}`)
-            }
-          } catch (error) {
-            const msg = error instanceof Error ? error.message : String(error)
-            issues.push(`${base}/jobs/personalized → ${msg}`)
-            console.warn(`Personalized jobs fetch failed for ${base}`, error);
-          }
-        }
-
-        if (generalSucceeded) {
-          // Index personalized matches by job id so we can overlay their richer scoring fields.
-          const generalById = new Map<string, any>();
-          for (const item of generalJobs) {
-            const id = String(item?.id || item?._id || item?.jobId || '');
-            if (id) generalById.set(id, item);
-          }
-
-          const personalizedById = new Map<string, any>();
-          for (const item of personalizedJobs) {
-            const id = String(item?.id || item?._id || item?.jobId || '');
-            if (id) personalizedById.set(id, item);
-          }
-
-          const merged: any[] = [];
-          const seen = new Set<string>();
-          // Show personalized matches at the top first so AI-recommended roles still lead the page.
-          for (const job of personalizedJobs) {
-            const id = String(job?.id || job?._id || job?.jobId || '');
-            if (!id || seen.has(id)) continue;
-            seen.add(id);
-            merged.push(
-              mergeGeneralJobWithPersonalizedOverlay(generalById.get(id) || {}, job),
-            );
-          }
-          // Append every other job from the general listing so newly added roles are never hidden.
-          for (const job of generalJobs) {
-            const id = String(job?.id || job?._id || job?.jobId || '');
-            if (!id || seen.has(id)) continue;
-            seen.add(id);
-            const personalizedMatch = personalizedById.get(id);
-            merged.push(
-              personalizedMatch
-                ? mergeGeneralJobWithPersonalizedOverlay(job, personalizedMatch)
-                : job,
-            );
-          }
-
-          rawJobs = merged;
-          usingPersonalized = personalizedJobs.length > 0;
-          break;
-        }
-      }
-
-      if (!result) {
-        throw new Error(
-          `Could not load jobs from any API base (${apiBases.join(', ')}).\n` +
-            (issues.length ? issues.join('\n') : 'No responses (is backend1 running on port 5000?)')
-        );
-      }
-
-      setIsPersonalized(usingPersonalized);
-
-      if (result.success && Array.isArray(rawJobs)) {
-        // Transform API response to JobListing format
-        const transformedJobs: JobListing[] = rawJobs
+  const transformRawJobs = (rawJobs: any[]): JobListing[] => {
+    if (!Array.isArray(rawJobs) || rawJobs.length === 0) return [];
+    return rawJobs
         .map((job: any) => {
           const showClientNamePublicly = job.showClientNamePublicly !== false
           const publicFieldVisibility = parseJobPublicFieldVisibility(job.publicFieldVisibility)
@@ -1319,43 +1200,128 @@ const ExploreJobsPageContent = () => {
           });
         })
         .filter((job) => job !== null) as JobListing[];
+  };
 
-        setJobListings(transformedJobs);
-        let refreshedSelection: JobListing | null = null;
-        setSelectedJob((prev) => {
-          if (transformedJobs.length === 0) return null;
-          if (prev) {
-            const refreshed = transformedJobs.find((job) => String(job.id) === String(prev.id));
-            if (refreshed) {
-              refreshedSelection = refreshed;
-              return refreshed;
+  const loadJobListings = async (opts?: { force?: boolean }) => {
+    const gen = ++jobsLoadGenRef.current;
+    const candidateId =
+      typeof window !== 'undefined' ? sessionStorage.getItem('candidateId') : null;
+    const cacheKey = exploreJobsCacheKey(String(locale || 'en'), candidateId);
+    const cached = readExploreJobsCache(cacheKey);
+
+    if (cached?.jobs?.length) {
+      const cachedJobs = cached.jobs as JobListing[];
+      setJobListings(cachedJobs);
+      setIsPersonalized(Boolean(cached.isPersonalized));
+      setJobsCatalogTotal(cached.totalCatalog || cachedJobs.length);
+      setJobsMatchTotal(cached.totalMatches || cachedJobs.length);
+      setLoading(false);
+      setLoadingMore(false);
+      setSelectedJob((prev) => {
+        if (prev) {
+          const refreshed = cachedJobs.find((job) => String(job.id) === String(prev.id));
+          if (refreshed) return refreshed;
+        }
+        return cachedJobs[0] || null;
+      });
+      if (!opts?.force && isExploreJobsCacheFresh(cached)) {
+        return;
+      }
+    } else if (jobListings.length === 0) {
+      setLoading(true);
+    }
+
+    try {
+      const apiBases = buildApiBaseCandidates(String(API_BASE_URL));
+      const cachedListings =
+        cached?.jobs?.length ? (cached.jobs as JobListing[]) : ([] as JobListing[]);
+      // Rebuild from network; keep cached rows visible until the first fresh batch arrives.
+      let accumulated: JobListing[] = [];
+      let awaitingFirstNetworkBatch = true;
+
+      await fetchExploreJobsProgressive({
+        apiBases,
+        locale: (locale || 'en') as AppLocale,
+        candidateId,
+        shouldAbort: () => jobsLoadGenRef.current !== gen,
+        onBatch: (raw, meta) => {
+          if (jobsLoadGenRef.current !== gen) return;
+          setIsPersonalized(meta.isPersonalized);
+          if (meta.totalCatalog > 0) setJobsCatalogTotal(meta.totalCatalog);
+          if (meta.totalMatches > 0) setJobsMatchTotal(meta.totalMatches);
+          if (!meta.done) setLoadingMore(true);
+
+          if (raw.length > 0) {
+            const transformed = transformRawJobs(raw as any[]);
+            if (awaitingFirstNetworkBatch) {
+              // Soft refresh: keep non-overlapping cached rows so the list doesn't shrink to 10.
+              if (cachedListings.length > 0 && opts?.force) {
+                const headIds = new Set(transformed.map((j) => String(j.id)));
+                const rest = cachedListings.filter((j) => !headIds.has(String(j.id)));
+                accumulated = [...transformed, ...rest];
+              } else {
+                accumulated = transformed;
+              }
+              awaitingFirstNetworkBatch = false;
+            } else {
+              accumulated = mergeJobsById(accumulated, transformed);
+            }
+            setJobListings(accumulated);
+            setLoading(false);
+            setLoadingMore(!meta.done);
+            setSelectedJob((prev) => {
+              if (prev) {
+                const refreshed = accumulated.find((job) => String(job.id) === String(prev.id));
+                if (refreshed) return refreshed;
+                return prev;
+              }
+              return accumulated[0] || null;
+            });
+          }
+
+          if (meta.done) {
+            setLoading(false);
+            setLoadingMore(false);
+            if (meta.totalCatalog > 0) setJobsCatalogTotal(meta.totalCatalog);
+            if (meta.totalMatches > 0) setJobsMatchTotal(meta.totalMatches);
+            if (accumulated.length > 0) {
+              writeExploreJobsCache({
+                locale: String(locale || 'en'),
+                candidateId,
+                jobs: accumulated,
+                isPersonalized: meta.isPersonalized,
+                totalCatalog: meta.totalCatalog || accumulated.length,
+                totalMatches: meta.totalMatches || accumulated.length,
+                updatedAt: Date.now(),
+              });
+            }
+            const selectedId = accumulated[0] ? String(accumulated[0].id) : '';
+            if (selectedId) {
+              void fetchJobDetailForApply(selectedId, String(API_BASE_URL)).then((detail) => {
+                if (!detail || jobsLoadGenRef.current !== gen) return;
+                setSelectedJob((prev) =>
+                  prev && String(prev.id) === selectedId
+                    ? mergeListingWithApiJob(prev, detail)
+                    : prev,
+                );
+              });
             }
           }
-          refreshedSelection = transformedJobs[0];
-          return transformedJobs[0];
-        });
-        if (refreshedSelection) {
-          const selectedId = String(refreshedSelection.id);
-          void fetchJobDetailForApply(selectedId, String(API_BASE_URL)).then((detail) => {
-            if (!detail) return;
-            setSelectedJob((prev) =>
-              prev && String(prev.id) === selectedId
-                ? mergeListingWithApiJob(prev, detail)
-                : prev,
-            );
-          });
-        }
-      } else {
+        },
+      });
+    } catch (error: any) {
+      console.error('Failed to load job listings:', error);
+      if (jobsLoadGenRef.current === gen && jobListings.length === 0) {
         setJobListings([]);
         setSelectedJob(null);
       }
-    } catch (error: any) {
-      console.error('Failed to load job listings:', error);
-      setJobListings([]);
     } finally {
-      setLoading(false);
+      if (jobsLoadGenRef.current === gen) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
-  }
+  };
 
   const checkAppliedJobs = async () => {
     await applicationsQuery.refetch()
@@ -1521,7 +1487,17 @@ const ExploreJobsPageContent = () => {
     const jobId = String(job.id || '').trim()
     if (!jobId) return
     void import('@/lib/user-activity-tracker').then((m) => {
-      m.trackJobCardClickForCurrentUser(jobId)
+      m.trackJobCardClickForCurrentUser(jobId, {
+        companyId: String(job.companyName || job.company || '').trim() || undefined,
+        companyName: String(job.companyName || job.company || '').trim() || undefined,
+        jobTitle: String(job.title || job.jobTitle || '').trim() || undefined,
+        roleKey: String(job.title || job.jobTitle || '')
+          .trim()
+          .toLowerCase()
+          .split(/[^a-z0-9+.#]+/)
+          .slice(0, 3)
+          .join('-') || undefined,
+      })
     })
     void (async () => {
       const detail = await fetchJobDetailForApply(jobId, String(API_BASE_URL))
@@ -1776,7 +1752,7 @@ const ExploreJobsPageContent = () => {
             applicationId: existingApplicationId,
           });
           setIsSuccessModalOpen(true);
-          loadJobListings();
+          loadJobListings({ force: true });
           checkAppliedJobs();
           showInfoToast('Application already submitted', 'This role is already in your applications.');
           return;
@@ -1840,7 +1816,7 @@ const ExploreJobsPageContent = () => {
             `Complete "${pendingAssessmentTitle || 'your assessment'}" to continue.`,
           )
           router.push(assessmentRedirectPath)
-          loadJobListings()
+          loadJobListings({ force: true })
           checkAppliedJobs()
           notifyBellRefresh()
           return
@@ -1858,7 +1834,7 @@ const ExploreJobsPageContent = () => {
         });
         setIsSuccessModalOpen(true);
         // Reload job listings and check applied status
-        loadJobListings();
+        loadJobListings({ force: true });
         checkAppliedJobs();
         showSuccessToast('Application submitted successfully');
         void import('@/lib/user-activity-tracker').then((m) => {
@@ -3084,10 +3060,21 @@ const ExploreJobsPageContent = () => {
                         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM11 16h2v2h-2v-2zm0-10h2v8h-2V6z"/></svg>
                         {isPersonalized ? te('eliteAiMatches') : te('recommendedForYou')}
                       </p>
-                      <p className="profile-page-value mt-1 font-semibold">
-                        {loading
+                      <p className="profile-page-value mt-1 flex items-center gap-2 font-semibold">
+                        {loading && jobListings.length === 0
                           ? te('analyzingProfile')
-                          : te('identifiedMatches', { count: filteredJobs.length })}
+                          : te('identifiedMatches', {
+                              count: Math.max(
+                                filteredJobs.length,
+                                isPersonalized ? jobsMatchTotal : jobsCatalogTotal || filteredJobs.length,
+                              ),
+                            })}
+                        {loadingMore ? (
+                          <span
+                            className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-[#28A8DF]/border-t-transparent"
+                            aria-label="Loading"
+                          />
+                        ) : null}
                       </p>
                     </div>
 
@@ -3136,6 +3123,11 @@ const ExploreJobsPageContent = () => {
                       {filteredJobs.map((job) => renderJobListItem(job))}
                     </div>
                   )}
+                  {loadingMore && !loading ? (
+                    <div className="flex justify-center py-4" aria-hidden>
+                      <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-[#28A8DF]/border-t-transparent" />
+                    </div>
+                  ) : null}
                   {false ? (
                     <div className={displayMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-5' : 'flex flex-col gap-5'}>
                       {filteredJobs.map((job) => {
@@ -3214,11 +3206,11 @@ const ExploreJobsPageContent = () => {
           {/* Main Content Area */}
           {viewMode === 'detail' ? (
             <div ref={detailsRef} className="w-full min-w-0">
-              <div className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)] min-w-0">
-                {/* Left Sidebar - Job Listings */}
-                <div className="min-w-0">
-                  <div className="sticky top-[calc(var(--app-header-height,92px)+8px)] w-full max-w-full self-start rounded-[28px] border border-white/80 bg-white/82 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur-md sm:p-5 lg:p-6 xl:p-7">
-                    <div className="mb-4 flex items-center justify-between gap-3 px-1 min-w-0">
+              <div className="grid min-w-0 items-stretch gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
+                {/* Left Sidebar - Job Listings (matches detail height, internal scroll) */}
+                <div className="h-full min-h-0 min-w-0">
+                  <div className="flex h-full max-h-[70vh] min-h-[280px] w-full max-w-full flex-col rounded-[28px] border border-white/80 bg-white/82 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur-md sm:p-5 lg:p-6 xl:max-h-none xl:p-7">
+                    <div className="mb-4 flex shrink-0 items-center justify-between gap-3 px-1 min-w-0">
                       <div className="min-w-0">
                         <h2 className="profile-page-section-title truncate">{te('mostRecentJobs')}</h2>
                         <p className="profile-page-empty mt-1">{te('rolesInView', { count: filteredJobs.length })}</p>
@@ -3232,7 +3224,9 @@ const ExploreJobsPageContent = () => {
                       </button>
                     </div>
 
-                    <div className="space-y-3 pr-1">
+                    <div
+                      className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                    >
                       {filteredJobs.map(job => renderJobCard(job, true))}
                     </div>
                   </div>
