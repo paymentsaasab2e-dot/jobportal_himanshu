@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Check, EyeOff, MessageSquare, ShieldCheck, X, BadgeCheck } from 'lucide-react';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
 import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
+import { WritingAssistField } from '@/components/common/WritingSuggestions';
 import {
   getReferencePeerLabel,
   listReferenceChecksForUser,
@@ -32,6 +33,7 @@ import {
 import { getGossipIdentity } from '@/lib/community-store';
 import { isUserOnline } from '@/lib/presence';
 import type { ChatKind } from '@/components/community/ReferenceMessagingPanel';
+import { ReferenceCheckDetailModal } from '@/components/community/ReferenceCheckDetailModal';
 
 type Props = {
   userId: string;
@@ -64,7 +66,8 @@ export function ReferenceCheckPanel({
   const [tick, setTick] = useState(0);
   const [dmAcceptAnon, setDmAcceptAnon] = useState<Record<string, boolean>>({});
   const [refAcceptAnon, setRefAcceptAnon] = useState<Record<string, boolean>>({});
-  const [expandedId, setExpandedId] = useState<string | null>(focusRequestId);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [detailRequestId, setDetailRequestId] = useState<string | null>(focusRequestId);
   const [answerDrafts, setAnswerDrafts] = useState<Record<string, Record<number, string>>>({});
 
   const refreshLocal = () => {
@@ -89,7 +92,7 @@ export function ReferenceCheckPanel({
   }, [userId, variant, tick]);
 
   useEffect(() => {
-    if (focusRequestId) setExpandedId(focusRequestId);
+    if (focusRequestId) setDetailRequestId(focusRequestId);
   }, [focusRequestId]);
 
   const hryantraChat = useMemo(
@@ -365,20 +368,78 @@ export function ReferenceCheckPanel({
               Track request status — accept, response, feedback.
             </p>
             {refList.map((r) => {
-              const expanded = expandedId === r.id;
               const iAmReferee = r.refereeId === userId;
               const iAmRequester = r.requesterId === userId;
               const anonChoice =
                 refAcceptAnon[r.id] !== undefined ? refAcceptAnon[r.id] : defaultAcceptAnon;
               const drafts = answerDrafts[r.id] || {};
+              const useModal = variant === 'reference';
+              const expanded = !useModal && expandedId === r.id;
+              const selected = focusRequestId === r.id || detailRequestId === r.id;
+              const qCount = r.questions?.length || 0;
+              const detailCta =
+                r.status === 'answered' || r.status === 'completed'
+                  ? 'View response'
+                  : r.status === 'pending' && iAmReferee
+                    ? 'Review request'
+                    : r.status === 'awaiting_answers' && iAmReferee
+                      ? 'Answer questions'
+                      : 'View details';
+
+              if (useModal) {
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setDetailRequestId(r.id)}
+                    className={`group w-full rounded-2xl border p-3 text-left transition ${
+                      selected
+                        ? 'border-[#0A66C2] bg-gradient-to-br from-sky-50 to-white shadow-sm ring-1 ring-[#0A66C2]/20'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1B3A5F] text-[11px] font-bold uppercase text-white">
+                        {(getReferencePeerLabel(r, userId) || '?').slice(0, 1)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words text-sm font-semibold leading-snug text-slate-900">
+                          {getReferencePeerLabel(r, userId)}
+                        </p>
+                        <p className="mt-0.5 break-words text-[11px] text-slate-500">
+                          {r.companyName}
+                        </p>
+                        <span
+                          className={`mt-2 inline-flex max-w-full rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${statusTone(r)}`}
+                        >
+                          {statusLabel(r, userId)}
+                        </span>
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+                            {qCount} question{qCount === 1 ? '' : 's'}
+                          </span>
+                          {r.feeTokens ? (
+                            <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">
+                              <TokenCoinIcon className="h-3 w-3" />
+                              {r.feeTokens}
+                            </span>
+                          ) : null}
+                        </div>
+                        <span className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#0A66C2] group-hover:underline">
+                          {detailCta}
+                          <span aria-hidden>→</span>
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              }
 
               return (
                 <div
                   key={r.id}
                   className={`space-y-2 rounded-xl border px-3 py-2.5 ${
-                    focusRequestId === r.id
-                      ? 'border-[#0A66C2] bg-sky-50/40'
-                      : 'border-slate-200 bg-white'
+                    selected ? 'border-[#0A66C2] bg-sky-50/40' : 'border-slate-200 bg-white'
                   }`}
                 >
                   <button
@@ -391,7 +452,7 @@ export function ReferenceCheckPanel({
                         {getReferencePeerLabel(r, userId)}
                       </p>
                       <p className="text-[11px] text-slate-500">
-                        {r.companyName} · {r.questions?.length || 0} questions
+                        {r.companyName} · {qCount} questions
                       </p>
                     </div>
                     <span
@@ -458,12 +519,12 @@ export function ReferenceCheckPanel({
                               <p className="text-[11px] font-semibold text-slate-800">
                                 {i + 1}. {q}
                               </p>
-                              <textarea
+                              <WritingAssistField
                                 value={drafts[i] || ''}
-                                onChange={(e) =>
+                                onChange={(next) =>
                                   setAnswerDrafts((prev) => ({
                                     ...prev,
-                                    [r.id]: { ...drafts, [i]: e.target.value },
+                                    [r.id]: { ...drafts, [i]: next },
                                   }))
                                 }
                                 rows={2}
@@ -543,6 +604,15 @@ export function ReferenceCheckPanel({
               <p className="py-2 text-center text-xs text-slate-400">No reference requests.</p>
             ) : null}
           </>
+        ) : null}
+
+        {detailRequestId && variant === 'reference' ? (
+          <ReferenceCheckDetailModal
+            requestId={detailRequestId}
+            userId={userId}
+            onClose={() => setDetailRequestId(null)}
+            onChanged={refreshLocal}
+          />
         ) : null}
 
         {tab === 'direct' ? (

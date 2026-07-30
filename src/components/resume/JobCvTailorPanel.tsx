@@ -170,17 +170,30 @@ export function JobCvTailorPanel({
 
           {missingKeywords.length > 0 ? (
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Add to CV for ATS</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {missingKeywords.slice(0, 8).map((keyword) => (
-                  <button
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                Gaps to cover (open Skills coach below to describe experience)
+              </p>
+              <div className="mt-2 space-y-2">
+                {missingKeywords.slice(0, 6).map((keyword) => (
+                  <div
                     key={`kw-${keyword}`}
-                    type="button"
-                    onClick={() => onAppendKeyword(keyword)}
-                    className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800 transition hover:bg-sky-100"
+                    className="rounded-xl border border-sky-100 bg-sky-50/70 px-3 py-2"
                   >
-                    Add {keyword}
-                  </button>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-slate-800">{keyword}</p>
+                      <button
+                        type="button"
+                        onClick={() => onAppendKeyword(keyword)}
+                        className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-sky-800 hover:bg-sky-100"
+                      >
+                        Add keyword
+                      </button>
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                      Don’t only add the word — in Skills, answer what you did with {keyword} in everyday
+                      language, then frame it into an experience bullet.
+                    </p>
+                  </div>
                 ))}
               </div>
             </div>

@@ -14,8 +14,14 @@ import {
   recordPageVisit,
   syncProfileActivitySnapshot,
   endActivitySession,
+  USER_ACTIVITY_HQ_EVENT,
 } from '@/lib/user-activity-tracker';
 import { stripLocaleFromPathname } from '@/lib/i18n';
+import {
+  buildHqBehaviorPayload,
+  postHqBehaviorPayload,
+} from '@/lib/hq-behavior';
+import { SUGGESTIONS_ENGINE_HQ_EVENT, type HqSuggestionMetrics } from '@/lib/suggestions-engine';
 
 const HEARTBEAT_MS = 15_000;
 const PROFILE_SYNC_MS = 120_000;
@@ -48,6 +54,7 @@ export function UserActivityTrackerHost() {
   const userId = user?.id || null;
   const lastPathRef = useRef<string | null>(null);
   const visibleRef = useRef(true);
+  const latestSuggestionMetricsRef = useRef<HqSuggestionMetrics | null>(null);
 
   // Session + page visits
   useEffect(() => {
@@ -136,6 +143,41 @@ export function UserActivityTrackerHost() {
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+    };
+  }, [isAuthenticated, isLoading, userId]);
+
+  // Relay behaviour + trigger payloads to the local HQ API endpoint.
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || !userId) return;
+    let timer: number | undefined;
+
+    const flush = () => {
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        const payload = buildHqBehaviorPayload(userId, latestSuggestionMetricsRef.current);
+        if (!payload) return;
+        void postHqBehaviorPayload(payload);
+      }, 900);
+    };
+
+    const onBehavior = () => flush();
+    const onSuggestions = (event: Event) => {
+      latestSuggestionMetricsRef.current =
+        (event as CustomEvent<HqSuggestionMetrics>).detail || null;
+      flush();
+    };
+
+    window.addEventListener(USER_ACTIVITY_HQ_EVENT, onBehavior as EventListener);
+    window.addEventListener(SUGGESTIONS_ENGINE_HQ_EVENT, onSuggestions as EventListener);
+    flush();
+
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      window.removeEventListener(USER_ACTIVITY_HQ_EVENT, onBehavior as EventListener);
+      window.removeEventListener(
+        SUGGESTIONS_ENGINE_HQ_EVENT,
+        onSuggestions as EventListener,
+      );
     };
   }, [isAuthenticated, isLoading, userId]);
 

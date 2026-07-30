@@ -5,6 +5,8 @@ import type {
   BehaviourInsight,
   BehaviourSuggestionSignals,
   DayBucket,
+  EntityInterest,
+  HqBehaviourTrigger,
   UserActivityRollup,
   UserActivityState,
 } from './types';
@@ -117,6 +119,115 @@ function rankedCategories(
   );
 }
 
+function topEntities(
+  scoreMap: Record<string, { label: string; count: number; activeMs: number }>,
+  limit = 5,
+): EntityInterest[] {
+  return Object.entries(scoreMap)
+    .map(([key, row]) => ({
+      key,
+      label: row.label,
+      count: row.count,
+      activeMs: row.activeMs,
+    }))
+    .sort((a, b) => (b.count * 10 + (b.activeMs || 0) / 1000) - (a.count * 10 + (a.activeMs || 0) / 1000))
+    .slice(0, limit);
+}
+
+function aggregateEntityInterest(state: UserActivityState, fromTs: number) {
+  const companyMap: Record<string, { label: string; count: number; activeMs: number }> = {};
+  const roleMap: Record<string, { label: string; count: number; activeMs: number }> = {};
+  for (const ev of state.events || []) {
+    if (Date.parse(ev.at) < fromTs) continue;
+    const meta = (ev.meta || {}) as Record<string, unknown>;
+    const companyKey = String(meta.companyId || meta.companyName || '').trim();
+    const companyLabel = String(meta.companyName || meta.companyId || '').trim();
+    const roleKey = String(meta.roleKey || meta.jobTitle || '').trim().toLowerCase();
+    const roleLabel = String(meta.jobTitle || meta.roleKey || '').trim();
+    const durationMs = Number(meta.durationMs || 0) || 0;
+    if (companyKey) {
+      companyMap[companyKey] ||= { label: companyLabel || companyKey, count: 0, activeMs: 0 };
+      companyMap[companyKey].count += 1;
+      companyMap[companyKey].activeMs += durationMs;
+    }
+    if (roleKey) {
+      roleMap[roleKey] ||= { label: roleLabel || roleKey, count: 0, activeMs: 0 };
+      roleMap[roleKey].count += 1;
+      roleMap[roleKey].activeMs += durationMs;
+    }
+  }
+  return {
+    topCompanies: topEntities(companyMap),
+    topRoles: topEntities(roleMap),
+  };
+}
+
+function buildHqTriggers(input: {
+  state: UserActivityState;
+  insights: BehaviourInsight[];
+  rollup: Pick<UserActivityRollup, 'applies' | 'pageVisitsByCategory' | 'activeMsByCategory' | 'jobCardClicks'>;
+  topCompanies: EntityInterest[];
+  topRoles: EntityInterest[];
+}): HqBehaviourTrigger[] {
+  const { state, insights, rollup, topCompanies, topRoles } = input;
+  const out: HqBehaviourTrigger[] = [];
+  const cvScore = state.profileSnapshot?.cvScore ?? null;
+  const premiumVisits = rollup.pageVisitsByCategory.premium || 0;
+  const jobsTimeMin = Math.round((rollup.activeMsByCategory.jobs || 0) / 60000);
+  const topCompany = topCompanies[0];
+  const topRole = topRoles[0];
+
+  if (premiumVisits >= 3 && rollup.applies === 0) {
+    out.push({
+      id: 'hq_service_no_purchase',
+      flag: 'sales_follow_up',
+      title: 'Visited services but did not purchase',
+      reason: 'High premium-service curiosity without conversion.',
+      evidence: [`${premiumVisits} premium visits in the last 7 days`],
+      recommendedAction: 'Sales/HQ can call and explain the most relevant paid service.',
+      priority: 90,
+    });
+  }
+
+  if (topCompany && topCompany.count >= 4) {
+    out.push({
+      id: 'hq_company_high_intent',
+      flag: 'high_intent',
+      title: `Repeated interest in ${topCompany.label}`,
+      reason: 'User keeps visiting the same company surface.',
+      evidence: [`${topCompany.count} tracked company interactions in the last 7 days`],
+      recommendedAction: 'Recommend jobs, reference checks, and interview prep tied to this company.',
+      priority: 82,
+    });
+  }
+
+  if (topRole && topRole.count >= 4) {
+    out.push({
+      id: 'hq_role_research',
+      flag: 'career_assist',
+      title: `Strong interest in ${topRole.label}`,
+      reason: 'User repeatedly explores the same role/position family.',
+      evidence: [`${topRole.count} tracked role interactions`, `${rollup.jobCardClicks} job clicks`, `${jobsTimeMin} min on job pages`],
+      recommendedAction: 'Recommend matching jobs, role-aligned courses, and mock interviews.',
+      priority: 78,
+    });
+  }
+
+  if (insights.some((i) => i.id === 'rejection_cv_issue') && cvScore != null && cvScore < 70) {
+    out.push({
+      id: 'hq_cv_risk',
+      flag: 'watch',
+      title: 'Repeated rejections with low CV score',
+      reason: 'Candidate may need CV optimization support before more applications.',
+      evidence: [`CV score ${Math.round(cvScore)}%`, `${state.profileSnapshot?.rejectionsTotal || 0} rejections`],
+      recommendedAction: 'Push AI CV help first; HQ can offer guided resume services if needed.',
+      priority: 85,
+    });
+  }
+
+  return out.sort((a, b) => b.priority - a.priority);
+}
+
 export function buildBehaviourInsights(
   state: UserActivityState,
   rollup: Pick<
@@ -147,6 +258,8 @@ export function buildBehaviourInsights(
       60000,
   );
   const premiumVisits = rollup.pageVisitsByCategory.premium || 0;
+  const communityVisits = rollup.pageVisitsByCategory.community || 0;
+  const cvTimeMin = Math.round((rollup.activeMsByCategory?.ai_cv || 0) / 60000);
 
   if (skills >= 5 && apps <= 1 && (jobViews >= 5 || jobTimeMin >= 3)) {
     insights.push({
@@ -225,6 +338,33 @@ export function buildBehaviourInsights(
     });
   }
 
+  if (cvTimeMin >= 6 && jobViews >= 4 && rollup.applies <= 1) {
+    insights.push({
+      id: 'cv_edit_hesitation',
+      label: 'Editing CV but not applying',
+      severity: 'watch',
+      summary: 'The user keeps refining the CV and researching jobs, but is still hesitating to apply.',
+      evidence: [
+        `${cvTimeMin}m in CV tools`,
+        `${jobViews} job views/clicks`,
+        `${rollup.applies} applies recorded this period`,
+      ],
+    });
+  }
+
+  if (communityVisits >= 5 && jobViews <= 2 && apps <= 1) {
+    insights.push({
+      id: 'community_research_mode',
+      label: 'Researching in Office Gossips',
+      severity: 'info',
+      summary: 'The user spends time in company/community surfaces and may benefit from company-aligned nudges.',
+      evidence: [
+        `${communityVisits} community/reference-check visits`,
+        `${jobViews} job views`,
+      ],
+    });
+  }
+
   if (rollup.logins >= 5 && rollup.activeMs < 5 * 60 * 1000) {
     insights.push({
       id: 'short_sessions',
@@ -297,6 +437,12 @@ export function getBehaviourSignalsForSuggestions(
   if (insightIds.includes('premium_curious')) {
     preferSlotIds.push('course');
   }
+  if (insightIds.includes('cv_edit_hesitation')) {
+    preferSlotIds.push('jobs', 'ai_cv');
+  }
+  if (insightIds.includes('community_research_mode')) {
+    preferSlotIds.push('community', 'jobs', 'events');
+  }
 
   for (const cat of weakCategories) {
     const slots = CAT_TO_SLOTS[cat] || [];
@@ -314,6 +460,23 @@ export function getBehaviourSignalsForSuggestions(
     }
   }
 
+  const fromTs = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const { topCompanies, topRoles } = aggregateEntityInterest(state, fromTs);
+  const hqTriggers = buildHqTriggers({
+    state,
+    insights: rollup.insights,
+    rollup,
+    topCompanies,
+    topRoles,
+  });
+
+  if ((topCompanies[0]?.count || 0) >= 4) {
+    preferSlotIds.push('community', 'events', 'jobs');
+  }
+  if ((topRoles[0]?.count || 0) >= 4) {
+    preferSlotIds.push('jobs', 'course', 'interview_prep', 'quizzes');
+  }
+
   return {
     userId,
     topCategories,
@@ -327,6 +490,9 @@ export function getBehaviourSignalsForSuggestions(
     skillsCount: state.profileSnapshot?.skillsCount ?? 0,
     rejectionsTotal: state.profileSnapshot?.rejectionsTotal ?? 0,
     cvScore: state.profileSnapshot?.cvScore ?? null,
+    topCompanies,
+    topRoles,
+    hqTriggers,
     preferSlotIds,
     deprioritizeSlotIds,
   };
@@ -382,6 +548,7 @@ export function buildUserActivityRollup(
     })
     .slice(-100)
     .reverse();
+  const { topCompanies, topRoles } = aggregateEntityInterest(state, fromTs);
 
   const rollup: UserActivityRollup = {
     userId,
@@ -394,6 +561,15 @@ export function buildUserActivityRollup(
     insights,
     recentSessions,
     recentEvents,
+    topCompanies,
+    topRoles,
+    hqTriggers: buildHqTriggers({
+      state,
+      insights,
+      rollup: rollupBase,
+      topCompanies,
+      topRoles,
+    }),
     profileSnapshot: state.profileSnapshot,
   };
 

@@ -8,6 +8,7 @@ import {
   type InterviewFormPageData,
 } from '@/lib/phase2-interview-forms-api';
 import { getStoredCandidateId } from '@/lib/auth-storage';
+import { WritingAssistField } from '@/components/common/WritingSuggestions';
 import { saveApplicantContactFromAnswers } from '../lib/resolveApplicantContact';
 
 export type FormField = {
@@ -199,12 +200,12 @@ export function InterviewApplicationFormBody({
           return (
             <div key={field.id}>
               {commonLabel}
-              <textarea
+              <WritingAssistField
                 rows={4}
                 className={`${inputClass} resize-y min-h-[96px]`}
                 placeholder={field.placeholder || 'Your answer'}
                 value={String(answers[field.id] ?? '')}
-                onChange={(e) => setAnswers((prev) => ({ ...prev, [field.id]: e.target.value }))}
+                onChange={(next) => setAnswers((prev) => ({ ...prev, [field.id]: next }))}
               />
             </div>
           );
@@ -271,6 +272,7 @@ export function InterviewApplicationFormBody({
               className={inputClass}
               placeholder={field.placeholder}
               value={String(answers[field.id] ?? '')}
+              spellCheck={field.type !== 'email' && field.type !== 'phone'}
               onChange={(e) => setAnswers((prev) => ({ ...prev, [field.id]: e.target.value }))}
             />
           </div>

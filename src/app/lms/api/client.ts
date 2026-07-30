@@ -523,6 +523,36 @@ export async function improveResumeText(text: string) {
   const data = await res.json(); return data.data.improvedText;
 }
 
+/**
+ * Uses LMS OpenAI resume improve endpoint to expand a skill into a shortlist-ready write-up.
+ * Falls back to null when auth/AI is unavailable (caller should use local builder).
+ */
+export async function generateSkillWriteupWithAi(input: {
+  promptContent: string;
+  targetRole: string;
+}): Promise<string | null> {
+  const res = await lmsFetch(`${LMS_API_BASE}/resume/ai-improve`, {
+    method: 'POST',
+    body: JSON.stringify({
+      section: 'skills',
+      content: input.promptContent,
+      targetRole: input.targetRole || 'Professional',
+    }),
+  });
+  if (!res) return null;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message || 'AI skill coaching failed');
+  }
+  const data = await res.json();
+  const improved =
+    data?.data?.improvedContent ||
+    data?.data?.improvedText ||
+    data?.data?.content ||
+    null;
+  return typeof improved === 'string' && improved.trim() ? improved.trim() : null;
+}
+
 export { InsufficientTokensError };
 
 export async function exportResumePdf(resumeHtml: string) {

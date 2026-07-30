@@ -90,6 +90,23 @@ export type BehaviourInsight = {
   evidence: string[];
 };
 
+export type EntityInterest = {
+  key: string;
+  label: string;
+  count: number;
+  activeMs?: number;
+};
+
+export type HqBehaviourTrigger = {
+  id: string;
+  flag: 'watch' | 'sales_follow_up' | 'career_assist' | 'high_intent';
+  title: string;
+  reason: string;
+  evidence: string[];
+  recommendedAction: string;
+  priority: number;
+};
+
 /**
  * Compact signals for the suggestions engine — change nudges by behaviour.
  */
@@ -107,6 +124,9 @@ export type BehaviourSuggestionSignals = {
   skillsCount: number;
   rejectionsTotal: number;
   cvScore: number | null;
+  topCompanies: EntityInterest[];
+  topRoles: EntityInterest[];
+  hqTriggers: HqBehaviourTrigger[];
   /** Prefer these engagement slot ids next */
   preferSlotIds: string[];
   /** Soft-deprioritize these (user already heavy here) */
@@ -164,6 +184,9 @@ export type UserActivityRollup = {
   insights: BehaviourInsight[];
   recentSessions: ActivitySession[];
   recentEvents: ActivityEvent[];
+  topCompanies: EntityInterest[];
+  topRoles: EntityInterest[];
+  hqTriggers: HqBehaviourTrigger[];
   profileSnapshot?: ProfileActivitySnapshot;
   behaviourSignals?: BehaviourSuggestionSignals;
 };

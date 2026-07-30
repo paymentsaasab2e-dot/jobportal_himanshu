@@ -10,6 +10,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { buildInterviewLiveMeetingUrl } from '@/lib/interview-live-meeting';
 import { useAuth } from '@/components/auth/AuthContext';
+import { getInterviewEscrow } from '@/lib/interview-token-escrow';
+import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
+import { ArrowRight } from 'lucide-react';
 
 type Props = {
   title?: string;
@@ -212,7 +215,7 @@ export function InterviewRequestsList({
                 </span>
               </div>
               <p className="mt-1.5 text-xs text-slate-600">
-                <span className="font-semibold text-slate-800">Interviewer Candidate:</span>{' '}
+                <span className="font-semibold text-slate-800">Interviewer:</span>{' '}
                 {request.interviewerProfile?.fullName || request.interviewerId || 'Matching in progress'}
               </p>
               <div className="mt-1.5 flex flex-wrap gap-1">
@@ -298,59 +301,60 @@ export function InterviewRequestsList({
                   </select>
                 </div>
               ) : null}
-              {request.status === 'SCHEDULED' ? (
-                <div className="mt-1.5 inline-flex max-w-full flex-col rounded-md border border-cyan-200 bg-cyan-50 p-1.5">
-                  <p className="text-xs font-semibold text-cyan-800">
-                    Final slot accepted. You can continue discussion in chat room.
-                  </p>
+              {request.interviewerId ? (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   {(() => {
-                    const joinState = getJoinWindowState(request, nowTs);
-                    return joinState.joinOpensAtLabel ? (
-                      <p className="mt-1 text-[11px] font-medium text-emerald-700">
-                        Join opens at {joinState.joinOpensAtLabel}
-                      </p>
-                    ) : null;
+                    const fee = getInterviewEscrow(request.id)?.feeTokens;
+                    return fee ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-800">
+                        Fee <TokenCoinIcon className="h-3.5 w-3.5" /> {fee}
+                      </span>
+                    ) : (
+                      <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+                        Fee pending
+                      </span>
+                    );
                   })()}
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {(() => {
-                      const joinState = getJoinWindowState(request, nowTs);
-                      return joinState.canJoinNow ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const liveUrl = buildInterviewLiveMeetingUrl(request.requestId || request.id, {
-                              role: 'candidate',
-                              displayName: user?.name || 'Candidate',
-                            });
-                            window.open(liveUrl, '_blank', 'noopener,noreferrer');
-                          }}
-                          className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white"
-                        >
-                          Join Interview
-                        </button>
-                      ) : null;
-                    })()}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const liveUrl = buildInterviewLiveMeetingUrl(request.requestId || request.id, {
-                          role: 'candidate',
-                          displayName: user?.name || 'Candidate',
-                        });
-                        window.open(liveUrl, '_blank', 'noopener,noreferrer');
-                      }}
-                      className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700"
-                    >
-                      Join Dummy
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/lms/interview-prep/candidate-room/${request.id}`)}
-                      className="rounded-md bg-cyan-600 px-2.5 py-1 text-xs font-semibold text-white"
-                    >
-                      Open Chat Room
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/lms/interview-prep/candidate-room/${request.id}`)}
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Chat
+                  </button>
+                  {request.status === 'SCHEDULED'
+                    ? (() => {
+                        const joinState = getJoinWindowState(request, nowTs);
+                        if (joinState.canJoinNow) {
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const liveUrl = buildInterviewLiveMeetingUrl(
+                                  request.requestId || request.id,
+                                  {
+                                    role: 'candidate',
+                                    displayName: user?.name || 'Candidate',
+                                  },
+                                );
+                                window.open(liveUrl, '_blank', 'noopener,noreferrer');
+                              }}
+                              className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1 text-[11px] font-semibold text-white"
+                            >
+                              Start
+                              <ArrowRight className="h-3 w-3" />
+                            </button>
+                          );
+                        }
+                        return (
+                          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-800">
+                            {joinState.joinOpensAtLabel
+                              ? `Starts at ${joinState.joinOpensAtLabel}`
+                              : 'Starts when slot opens'}
+                          </span>
+                        );
+                      })()
+                    : null}
                 </div>
               ) : null}
             </div>

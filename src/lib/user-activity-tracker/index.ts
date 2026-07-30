@@ -8,6 +8,8 @@ export {
   ensureActivitySession,
   recordPageVisit,
   recordActiveTime,
+  trackCustomActivity,
+  trackCustomActivityForCurrentUser,
   trackJobCardClick,
   trackJobCardClickForCurrentUser,
   trackApplicationSubmit,

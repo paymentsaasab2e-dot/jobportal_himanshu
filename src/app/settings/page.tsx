@@ -9,6 +9,7 @@ import { showSuccessToast, showErrorToast } from '@/components/common/toast/toas
 import { API_BASE_URL } from '@/lib/api-base';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
+import { WritingAssistField } from '@/components/common/WritingSuggestions';
 import {
   getGossipIdentity,
   getMaxReferenceFee,
@@ -879,7 +880,7 @@ export default function SettingsPage() {
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2"><label className="mb-1 block text-sm font-medium text-gray-600">Default Resume</label><input value={defaultResume} onChange={(e) => setDefaultResume(e.target.value)} className="h-11 w-full rounded-lg border border-gray-300 px-3 focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div className="md:col-span-2"><label className="mb-1 block text-sm font-medium text-gray-600">Job Preference Defaults</label><textarea value={jobPreferenceDefaults} onChange={(e) => setJobPreferenceDefaults(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 min-h-[100px] resize-none focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div className="md:col-span-2"><label className="mb-1 block text-sm font-medium text-gray-600">Job Preference Defaults</label><WritingAssistField value={jobPreferenceDefaults} onChange={setJobPreferenceDefaults} className="w-full rounded-lg border border-gray-300 px-3 py-2 min-h-[100px] resize-none focus:ring-2 focus:ring-blue-500 outline-none" /></div>
         </div>
       </ProfileDrawer>
 

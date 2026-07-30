@@ -40,6 +40,7 @@ import {
   tailorSummaryForJob,
   type JobCvTailorContext,
 } from '@/lib/job-cv-tailor';
+import { mergeSkillWriteup } from '@/lib/cv-gap-coach';
 import {
   buildBeforeSubmitAssessmentRedirect,
   buildFirstAssessmentRedirect,
@@ -1078,6 +1079,94 @@ export function ResumeStudioPageClient() {
     });
   };
 
+  const weakOrEmptyBullets = useMemo(() => {
+    if (sections.experience.length === 0) return true;
+    return sections.experience.some((entry) => {
+      const bullets = entry.bullets
+        .split('\n')
+        .map((b) => b.replace(/^[-*•]\s*/, '').trim())
+        .filter(Boolean);
+      if (bullets.length === 0) return true;
+      return bullets.some((b) => b.split(/\s+/).length < 8);
+    });
+  }, [sections.experience]);
+
+  const handleApplyCoachFramed = (payload: {
+    item: { keyword: string; applyTarget: 'skills' | 'experience' | 'summary' };
+    framed: string;
+    skillWriteup?: string;
+    applyAs: 'experience' | 'summary' | 'skills';
+  }) => {
+    const { framed, skillWriteup, applyAs } = payload;
+    if (!framed.trim() && !skillWriteup?.trim()) return;
+
+    if (applyAs === 'summary') {
+      const line = (framed || skillWriteup || '').replace(/^-\s*/, '').trim();
+      const next = sections.summary.trim() ? `${sections.summary.trim()}\n\n${line}` : line;
+      setResumeDraftSections({ summary: next });
+      toast.push({
+        title: 'Summary updated',
+        message: 'Your story was framed into the professional summary.',
+        tone: 'success',
+      });
+      return;
+    }
+
+    if (applyAs === 'skills') {
+      const writeup = (skillWriteup || framed).trim();
+      const nextSkills = mergeSkillWriteup(sections.skills, writeup);
+      setResumeDraftSections({ skills: nextSkills });
+      toast.push({
+        title: 'Skill description added',
+        message: 'Added a concepts + shortlist write-up — not just a keyword tag.',
+        tone: 'success',
+      });
+      return;
+    }
+
+    const raw = (framed || skillWriteup || '').trim();
+    const bulletLine = raw.startsWith('-') ? raw : `- ${raw}`;
+    const writeup = skillWriteup?.trim() || '';
+    const nextSkills = writeup ? mergeSkillWriteup(sections.skills, writeup) : sections.skills;
+    const shouldUpdateSkills = Boolean(writeup) && nextSkills !== sections.skills;
+
+    if (sections.experience.length === 0) {
+      const id =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `exp-${Date.now()}`;
+      setResumeDraftSections({
+        experience: [
+          {
+            id,
+            company: '',
+            role: sections.basics.headline || 'Role',
+            duration: '',
+            bullets: bulletLine,
+          },
+        ],
+        ...(shouldUpdateSkills ? { skills: nextSkills } : {}),
+      });
+    } else {
+      const [first, ...rest] = sections.experience;
+      const nextBullets = first.bullets.trim()
+        ? `${first.bullets.trim()}\n${bulletLine}`
+        : bulletLine;
+      setResumeDraftSections({
+        experience: [{ ...first, bullets: nextBullets }, ...rest],
+        ...(shouldUpdateSkills ? { skills: nextSkills } : {}),
+      });
+    }
+
+    toast.push({
+      title: 'Experience updated',
+      message: shouldUpdateSkills
+        ? 'Framed into an impact bullet and added a skill write-up with learned concepts.'
+        : 'Your plain-language answer was framed into an impact bullet.',
+      tone: 'success',
+    });
+  };
+
   const handleSaveHtml = async () => {
     setIsHtmlSaving(true);
     try {
@@ -1337,9 +1426,15 @@ export function ResumeStudioPageClient() {
                     sectionRef={setSectionRef('skills')}
                     sectionState={sectionStates.skills}
                     sections={sections}
-                    skillTokens={skillTokens}
                     onAppendKeyword={handleAppendKeyword}
                     onSkillsChange={(value) => setResumeDraftSections({ skills: value })}
+                    hasExperience={sections.experience.length > 0}
+                    weakOrEmptyBullets={weakOrEmptyBullets}
+                    roleHint={sections.experience[0]?.role || sections.basics.headline}
+                    targetRole={jobTailor?.title || sections.basics.headline}
+                    company={jobTailor?.company}
+                    jobDescriptionSnippet={jobTailor?.description}
+                    onApplyCoachFramed={handleApplyCoachFramed}
                   />
 
                   <ResumeStudioLayoutSection

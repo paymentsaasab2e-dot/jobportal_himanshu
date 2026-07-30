@@ -7,9 +7,13 @@ import {
   StudioField,
   StudioSectionCard,
   TEXTAREA_CLASS,
+  parseSkillEntries,
   type DerivedSectionState,
   type ResumeSections,
 } from './studio-config';
+import { WritingAssistField } from '@/components/common/WritingSuggestions';
+import { CvGapCoach } from '@/components/resume/CvGapCoach';
+import type { CvGapCoachItem } from '@/lib/cv-gap-coach';
 
 export function ResumeStudioBasicsSection({
   collapsed,
@@ -150,9 +154,9 @@ export function ResumeStudioSummarySection({
         </div>
 
         <div className="relative group">
-          <textarea
+          <WritingAssistField
             value={sections.summary}
-            onChange={(event) => onSummaryChange(event.target.value)}
+            onChange={onSummaryChange}
             rows={12}
             className={`${TEXTAREA_CLASS} min-h-[220px] bg-slate-50/30 focus:bg-white`}
             placeholder="Write a sharp overview of your experience, strengths, and recruiter-facing value."
@@ -181,9 +185,15 @@ export function ResumeStudioSkillsSection({
   sectionRef,
   sectionState,
   sections,
-  skillTokens,
   onAppendKeyword,
   onSkillsChange,
+  hasExperience,
+  weakOrEmptyBullets,
+  roleHint,
+  targetRole,
+  company,
+  jobDescriptionSnippet,
+  onApplyCoachFramed,
 }: {
   collapsed: boolean;
   missingKeywords: string[];
@@ -191,15 +201,26 @@ export function ResumeStudioSkillsSection({
   sectionRef: (node: HTMLDivElement | null) => void;
   sectionState: DerivedSectionState;
   sections: ResumeSections;
-  skillTokens: string[];
   onAppendKeyword: (keyword: string) => void;
   onSkillsChange: (value: string) => void;
+  hasExperience: boolean;
+  weakOrEmptyBullets: boolean;
+  roleHint?: string;
+  targetRole?: string;
+  company?: string;
+  jobDescriptionSnippet?: string;
+  onApplyCoachFramed: (payload: {
+    item: CvGapCoachItem;
+    framed: string;
+    skillWriteup?: string;
+    applyAs: 'experience' | 'summary' | 'skills';
+  }) => void;
 }) {
   return (
     <StudioSectionCard
       id="skills"
       title="Skills"
-      helper="Keep this section ATS-aware: list the stack, specialties, and keywords that hiring teams are likely to scan first."
+      helper="Add skill names. Use AI coach for gaps — content goes straight into the CV."
       progress={sectionState.progress}
       status={sectionState.status}
       statusLabel={sectionState.statusLabel}
@@ -211,57 +232,51 @@ export function ResumeStudioSkillsSection({
       sectionRef={sectionRef}
     >
       <div>
-        <textarea
+        <WritingAssistField
           value={sections.skills}
-          onChange={(event) => onSkillsChange(event.target.value)}
-          rows={5}
+          onChange={onSkillsChange}
+          rows={3}
           className={TEXTAREA_CLASS}
-          placeholder="React, TypeScript, Accessibility, Design Systems, Performance, Testing"
+          placeholder="React, TypeScript, Testing…"
         />
 
-        <div className="mt-4 space-y-3">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Current stack</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {skillTokens.length > 0 ? (
-                skillTokens.map((skill) => (
-                  <span
-                    key={skill}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700"
-                  >
-                    {skill}
-                  </span>
-                ))
-              ) : (
-                <span className="rounded-full border border-dashed border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-400">
-                  No keywords added yet
-                </span>
-              )}
+        {missingKeywords.length > 0 ? (
+          <div className="mt-2 max-h-20 overflow-y-auto [scrollbar-width:thin]">
+            <div className="flex flex-wrap gap-1.5">
+              {missingKeywords.map((keyword) => (
+                <button
+                  key={keyword}
+                  type="button"
+                  onClick={() => onAppendKeyword(keyword)}
+                  className="rounded-md border border-sky-100 bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-800 hover:bg-sky-100"
+                >
+                  + {keyword}
+                </button>
+              ))}
             </div>
           </div>
+        ) : null}
 
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Suggested keywords</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {missingKeywords.length > 0 ? (
-                missingKeywords.map((keyword) => (
-                  <button
-                    key={keyword}
-                    type="button"
-                    onClick={() => onAppendKeyword(keyword)}
-                    className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800 transition-colors hover:bg-sky-100"
-                  >
-                    Add {keyword}
-                  </button>
-                ))
-              ) : (
-                <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
-                  Keyword coverage looks healthy
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
+        <CvGapCoach
+          missingKeywords={missingKeywords}
+          existingSkillNames={Array.from(
+            new Set(
+              parseSkillEntries(sections.skills).map((e) => {
+                if (!e.isWriteup) return e.text;
+                const title = e.text.split(':')[0]?.trim();
+                return title && title.length <= 56 ? title : '';
+              }).filter(Boolean),
+            ),
+          )}
+          hasExperience={hasExperience}
+          weakOrEmptyBullets={weakOrEmptyBullets}
+          roleHint={roleHint}
+          targetRole={targetRole}
+          company={company}
+          jobDescriptionSnippet={jobDescriptionSnippet}
+          onAppendKeyword={onAppendKeyword}
+          onApplyFramed={onApplyCoachFramed}
+        />
       </div>
     </StudioSectionCard>
   );

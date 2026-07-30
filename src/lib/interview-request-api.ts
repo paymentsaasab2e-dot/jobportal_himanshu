@@ -213,11 +213,18 @@ export async function getInterviewRequestChat(requestId: string) {
   return (Array.isArray(payload?.data) ? payload.data : []) as InterviewRequestChatMessage[];
 }
 
-export async function postInterviewRequestChat(requestId: string, message: string) {
+export async function postInterviewRequestChat(
+  requestId: string,
+  message: string,
+  opts?: { asRole?: 'candidate' | 'interviewer' },
+) {
   const response = await fetch(`${getApiBaseUrl()}/interview-requests/${encodeURIComponent(requestId)}/chat`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({
+      message,
+      ...(opts?.asRole ? { asRole: opts.asRole } : {}),
+    }),
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || !payload?.success) {

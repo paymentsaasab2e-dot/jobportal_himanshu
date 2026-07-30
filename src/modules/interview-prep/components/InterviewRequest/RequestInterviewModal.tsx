@@ -17,6 +17,7 @@ import {
   TECH_STACK_BY_CATEGORY,
   type InterviewRequestInput,
 } from '@/lib/interview-request-api';
+import { WritingAssistField } from '@/components/common/WritingSuggestions';
 
 type Props = {
   open: boolean;
@@ -1034,9 +1035,10 @@ export function RequestInterviewModal({
                 <div className="space-y-3">
                   <h3 className="text-base font-semibold text-slate-900">Interview Focus Details</h3>
                   <div className="relative">
-                    <input
+                    <WritingAssistField
+                      multiline={false}
                       value={form.targetRole}
-                      onChange={(e) => setForm((prev) => ({ ...prev, targetRole: e.target.value.slice(0, 120) }))}
+                      onChange={(next) => setForm((prev) => ({ ...prev, targetRole: next.slice(0, 120) }))}
                       onFocus={() => setTargetRoleSuggestOpen(true)}
                       onBlur={() => {
                         window.setTimeout(() => setTargetRoleSuggestOpen(false), 120);
@@ -1067,9 +1069,10 @@ export function RequestInterviewModal({
                     ) : null}
                   </div>
                   <div className="relative">
-                    <input
+                    <WritingAssistField
+                      multiline={false}
                       value={form.companyDomain}
-                      onChange={(e) => setForm((prev) => ({ ...prev, companyDomain: e.target.value.slice(0, 160) }))}
+                      onChange={(next) => setForm((prev) => ({ ...prev, companyDomain: next.slice(0, 160) }))}
                       onFocus={() => setCompanyDomainSuggestOpen(true)}
                       onBlur={() => {
                         window.setTimeout(() => setCompanyDomainSuggestOpen(false), 120);
@@ -1099,9 +1102,9 @@ export function RequestInterviewModal({
                       </div>
                     ) : null}
                   </div>
-                  <textarea
+                  <WritingAssistField
                     value={form.weakAreas}
-                    onChange={(e) => setForm((prev) => ({ ...prev, weakAreas: e.target.value.slice(0, 500) }))}
+                    onChange={(next) => setForm((prev) => ({ ...prev, weakAreas: next.slice(0, 500) }))}
                     placeholder="Weak areas to cover (communication, coding speed, system design, etc.)"
                     className="h-24 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
                   />
@@ -1139,9 +1142,9 @@ export function RequestInterviewModal({
                     ) : null}
                   </div>
                   <h4 className="text-sm font-semibold text-slate-900">Additional Notes</h4>
-                  <textarea
+                  <WritingAssistField
                     value={form.notes || ''}
-                    onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value.slice(0, 1000) }))}
+                    onChange={(next) => setForm((prev) => ({ ...prev, notes: next.slice(0, 1000) }))}
                     placeholder="Topics to cover, weak areas, company prep, special requests..."
                     className="h-36 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
                   />
