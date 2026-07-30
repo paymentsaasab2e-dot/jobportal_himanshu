@@ -76,97 +76,94 @@ const themeStyles: Record<
 
 const coreModules: CoreModule[] = [
   {
-    id: "recruitment",
-    title: "AI Recruitment System",
-    tagline: "Hire Top Talent Fast",
+    id: "crm",
+    title: "CRM & Lead Operations",
+    tagline: "Revenue workspace",
     description:
-      "Find, evaluate, and hire the right candidates faster with end-to-end AI-driven recruitment.",
+      "Capture, assign, and convert leads with follow-ups, meetings, client accounts, and a unified contact directory.",
     features: [
-      "AI CV screening & ATS scoring",
-      "AI Job Description generator",
-      "Multi-platform job posting",
-      "AI candidate matching & ranking",
-      "Interview scheduling + automation",
+      "Leads CRUD, import, convert & recycle bin",
+      "Follow-ups with email & Google Meet invites",
+      "Client CRM with scheduled meetings",
+      "Smart search & location intelligence",
     ],
     benefits:
-      "Reduce hiring time by 70%, eliminate manual screening, get top candidates instantly.",
+      "Stop lead leakage — every touchpoint is tracked, assigned, and reportable like Zoho CRM.",
     icon: Brain,
     theme: "blue",
     bentoClass: "md:col-span-1 xl:col-span-4 xl:row-span-1",
     featureLimit: 4,
   },
   {
-    id: "employee",
-    title: "Employee Management",
-    tagline: "Workforce Operations",
+    id: "recruitment",
+    title: "Recruitment Engine",
+    tagline: "Jobs to placements",
     description:
-      "Manage your entire workforce from onboarding to daily operations effortlessly.",
+      "Publish roles, parse CVs in bulk, run AI matching, move pipeline stages, and close placements with billing.",
     features: [
-      "Digital onboarding & documents",
-      "Task & project tracking",
-      "Asset allocation & receipts",
-      "Attendance (biometric + GPS)",
-      "Leave & expense workflows",
+      "AI job wizard & public apply links",
+      "Bulk CV upload & duplicate detection",
+      "4-pass AI candidate matching",
+      "Interviews, feedback & placements",
     ],
     benefits:
-      "Full transparency across teams, reduced HR workload, better employee accountability.",
+      "Cut time-to-shortlist by 60%+ with AI ranking — comparable to Greenhouse-level ATS depth.",
     icon: LayoutDashboard,
     theme: "emerald",
     bentoClass: "md:col-span-1 xl:col-span-4 xl:col-start-5 xl:row-start-1",
     featureLimit: 4,
   },
   {
-    id: "performance",
-    title: "Performance & Analytics",
-    tagline: "Data-backed growth",
-    description: "Measure performance with real data — not assumptions.",
+    id: "analytics",
+    title: "Command & Reports",
+    tagline: "HQ-grade visibility",
+    description: "Dashboard KPIs, exportable reports, billing records, and multi-tenant HQ analytics for leadership.",
     features: [
-      "Task-based performance scoring",
-      "Attendance impact analysis",
-      "AI recommendations for improvement",
-      "Promotion & growth insights",
+      "Real-time recruitment dashboard",
+      "Placement & revenue reports",
+      "Billing & invoice lifecycle",
+      "HQ employer analytics (Enterprise)",
     ],
     benefits:
-      "Identify top performers instantly, improve productivity with data, reduce attrition risk.",
+      "Founder-to-recruiter visibility in one pane — like Workday analytics without the complexity.",
     icon: TrendingUp,
     theme: "purple",
     bentoClass: "md:col-span-1 xl:col-span-4 xl:col-start-9 xl:row-start-1",
     featureLimit: 4,
   },
   {
-    id: "payroll",
-    title: "Payroll & Compliance",
-    tagline: "Zero Manual Errors",
+    id: "platform",
+    title: "Platform & RBAC",
+    tagline: "Enterprise control",
     description:
-      "Automate payroll with full compliance seamlessly linked to attendance.",
+      "Team roles, permissions, calendar, inbox, tasks, notifications, and Phase 1 portal bridge built in.",
     features: [
-      "Automated salary calculation",
-      "Tax & compliance management",
-      "Multi-country payroll support",
-      "Tally & SAP integration",
-      "Payslip automation",
+      "Role-based access & team management",
+      "Calendar, inbox & task workflows",
+      "Org settings & alert scheduler",
+      "Portal sync with candidate job board",
     ],
     benefits:
-      "100% accurate payroll, no compliance risks, saves the finance team hours.",
+      "Secure multi-tenant isolation with audit trails — how modern HRMS platforms should operate.",
     icon: DollarSign,
     theme: "amber",
     bentoClass: "md:col-span-1 xl:col-span-4 xl:col-start-1 xl:row-start-2",
-    featureLimit: 3,
+    featureLimit: 4,
   },
   {
-    id: "learning",
-    title: "Learning & Development",
-    tagline: "Continuous Growth",
+    id: "ai",
+    title: "HRYantra AI Layer",
+    tagline: "Built into every module",
     description:
-      "Turn employee gaps into growth with AI-driven training and integrated courses.",
+      "Brain assistant, smart search, CV parsing, match scoring, and workspace briefs — no bolt-on AI add-ons.",
     features: [
-      "AI-based course recommendations",
-      "Integrated LMS (videos, assessments)",
-      "Skill-gap detection from feedback",
-      "Payment gateway for courses",
+      "HRYantra Brain in-app assistant",
+      "AI job creation & title suggestions",
+      "Natural-language smart search",
+      "CV ATS scoring & match tiers",
     ],
     benefits:
-      "Upskill employees automatically, improve hiring success rate, and drive continuous workforce improvement.",
+      "Practical AI across hiring — not decorative chatbots. Reduces manual screening and follow-up work.",
     icon: GraduationCap,
     theme: "pink",
     bentoClass: "md:col-span-2 xl:col-span-8 xl:col-start-5 xl:row-start-2",
@@ -179,14 +176,14 @@ function NeumorphicModuleCard({ module }: { module: CoreModule }) {
   const visibleFeatures = module.featureLimit
     ? module.features.slice(0, module.featureLimit)
     : module.features;
-  const isCompact = module.id === "recruitment" || Boolean(module.featureLimit);
+  const isCompact = module.id === "crm" || Boolean(module.featureLimit);
 
   return (
     <article
       className={`employers-neu-card group flex h-full flex-col ${isCompact ? "p-5 sm:p-6" : "p-6 sm:p-8 lg:p-9"} ${module.bentoClass}`}
     >
       <div
-        className={`relative flex flex-col gap-5 sm:flex-row sm:items-start ${isCompact ? "mb-4" : "mb-6"} ${module.id === "learning" ? "xl:flex-row xl:items-start xl:gap-10" : ""}`}
+        className={`relative flex flex-col gap-5 sm:flex-row sm:items-start ${isCompact ? "mb-4" : "mb-6"} ${module.id === "ai" ? "xl:flex-row xl:items-start xl:gap-10" : ""}`}
       >
         <div className="flex items-start gap-3 sm:gap-4">
           <div
@@ -210,14 +207,14 @@ function NeumorphicModuleCard({ module }: { module: CoreModule }) {
       </div>
 
       <div
-        className={`flex flex-1 flex-col ${module.id === "learning" ? "xl:grid xl:grid-cols-[1.05fr_0.95fr] xl:gap-8" : ""}`}
+        className={`flex flex-1 flex-col ${module.id === "ai" ? "xl:grid xl:grid-cols-[1.05fr_0.95fr] xl:gap-8" : ""}`}
       >
         <div className="flex flex-1 flex-col">
           <p className={`leading-relaxed text-slate-600 ${isCompact ? "mb-4 text-[13px] sm:text-[14px]" : "mb-5 text-[14px] sm:text-[15px]"}`}>
             {module.description}
           </p>
 
-          {module.id !== "learning" ? (
+          {module.id !== "ai" ? (
             <ul className={`space-y-2.5 ${isCompact ? "mb-4" : "mb-6"}`}>
               {visibleFeatures.map((feature) => (
                 <li key={feature} className="flex items-start gap-3">
@@ -231,7 +228,7 @@ function NeumorphicModuleCard({ module }: { module: CoreModule }) {
           ) : null}
 
           <div
-            className={`employers-neu-inset relative flex gap-3 rounded-2xl ${isCompact ? "mb-4 p-3.5" : "mb-6 p-4 sm:p-5"} ${module.id === "learning" ? "xl:mb-0" : "mt-auto"}`}
+            className={`employers-neu-inset relative flex gap-3 rounded-2xl ${isCompact ? "mb-4 p-3.5" : "mb-6 p-4 sm:p-5"} ${module.id === "ai" ? "xl:mb-0" : "mt-auto"}`}
           >
             <div
               className={`pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br ${styles.benefitGlow} opacity-80`}
@@ -249,7 +246,7 @@ function NeumorphicModuleCard({ module }: { module: CoreModule }) {
           </div>
         </div>
 
-        {module.id === "learning" ? (
+        {module.id === "ai" ? (
           <div className="space-y-3">
             {module.features.map((feature) => (
               <div
@@ -285,10 +282,11 @@ export function EmployersCoreModulesBento() {
           <BlurRevealHeading
             as="h2"
             className="mb-6 text-4xl font-extrabold tracking-tight text-slate-800 md:text-5xl"
-            lines={[{ text: "Core Modules" }]}
+            lines={[{ text: "Platform Pillars" }]}
           />
           <p className="text-[1.05rem] leading-relaxed text-slate-600 sm:text-[1.1rem]">
-            Everything you need to run your workforce securely, accurately, and rapidly.
+            Five connected workspaces — CRM, recruitment, analytics, platform control, and AI — in one
+            employer login.
           </p>
         </div>
 

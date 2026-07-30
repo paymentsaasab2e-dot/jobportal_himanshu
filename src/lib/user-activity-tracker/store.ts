@@ -171,6 +171,50 @@ function currentSession(state: UserActivityState): ActivitySession | null {
   return state.sessions.find((s) => s.id === state.currentSessionId) || null;
 }
 
+function parseClientDevice() {
+  if (typeof navigator === 'undefined') {
+    return { deviceType: 'desktop', browser: 'Unknown', operatingSystem: 'Unknown' };
+  }
+  const ua = navigator.userAgent || '';
+  let browser = 'Unknown';
+  let operatingSystem = 'Unknown';
+  let deviceType = 'desktop';
+  if (/Edg\//i.test(ua)) browser = 'Edge';
+  else if (/Chrome\//i.test(ua) && !/Edg/i.test(ua)) browser = 'Chrome';
+  else if (/Firefox\//i.test(ua)) browser = 'Firefox';
+  else if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+  if (/Windows NT/i.test(ua)) operatingSystem = 'Windows';
+  else if (/Mac OS X/i.test(ua)) operatingSystem = 'macOS';
+  else if (/Android/i.test(ua)) operatingSystem = 'Android';
+  else if (/iPhone|iPad/i.test(ua)) operatingSystem = 'iOS';
+  else if (/Linux/i.test(ua)) operatingSystem = 'Linux';
+  if (/Mobile|Android|iPhone/i.test(ua)) deviceType = 'mobile';
+  else if (/iPad|Tablet/i.test(ua)) deviceType = 'tablet';
+  return { deviceType, browser, operatingSystem };
+}
+
+function readCachedLoginGeo(): {
+  country?: string;
+  state?: string;
+  city?: string;
+  timezone?: string;
+} {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = sessionStorage.getItem('saasa:login-geo');
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return {
+      country: parsed.country,
+      state: parsed.state,
+      city: parsed.city,
+      timezone: parsed.timezone || parsed.timeZone,
+    };
+  } catch {
+    return {};
+  }
+}
+
 /** Start or resume a browsing session; count as login when new session. */
 export function ensureActivitySession(
   userId: string,
@@ -200,6 +244,8 @@ export function ensureActivitySession(
         meta: { durationMs: session.durationMs },
       });
     }
+    const device = parseClientDevice();
+    const geo = readCachedLoginGeo();
     session = {
       id: uid('sess'),
       startedAt: nowIso,
@@ -210,6 +256,8 @@ export function ensureActivitySession(
       lastPath: opts?.path,
       lastCategory: opts?.path ? cat : undefined,
       paths: opts?.path ? [opts.path] : [],
+      ...device,
+      ...geo,
     };
     state.sessions.push(session);
     state.currentSessionId = session.id;
@@ -218,7 +266,10 @@ export function ensureActivitySession(
     const day = ensureDay(state);
     day.logins += 1;
     if (!day.sessionIds.includes(session.id)) day.sessionIds.push(session.id);
-    pushEvent(state, 'login', cat, { path: opts?.path });
+    pushEvent(state, 'login', cat, {
+      path: opts?.path,
+      meta: { ...device, ...geo },
+    });
   } else {
     session.lastActiveAt = nowIso;
   }

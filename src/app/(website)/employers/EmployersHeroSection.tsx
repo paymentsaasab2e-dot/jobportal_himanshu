@@ -28,7 +28,7 @@ export function EmployersHeroSection() {
 
       <aside className="mb-8 inline-flex max-w-full flex-wrap items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 backdrop-blur-sm">
         <span className="whitespace-nowrap text-center text-xs text-slate-300">
-          SAASA B2E Employer OS — hiring, HR, payroll & CRM in one platform
+          HRYantra CRM — leads, jobs, AI matching, placements & HQ analytics
         </span>
         <a
           href="#overview"
@@ -46,7 +46,7 @@ export function EmployersHeroSection() {
         className="mb-6 flex w-full max-w-7xl flex-col items-center gap-0 px-4 text-center text-[clamp(2.125rem,5.8vw,4.75rem)] font-semibold leading-none tracking-[-0.04em]"
         lines={[
           {
-            text: "Your entire hiring & HR operations",
+            text: "Your entire recruitment CRM",
             lineClassName: "whitespace-nowrap",
             charStyle: { ...heroGradientCharStyle, letterSpacing: "-0.05em" },
           },
@@ -59,8 +59,8 @@ export function EmployersHeroSection() {
       />
 
       <p className="mb-10 max-w-2xl px-4 text-center text-sm text-slate-300 md:text-base">
-        From hiring the right candidate to managing payroll and performance — automate everything
-        in one unified employer platform.
+        From lead capture to placement billing — run leads, jobs, candidates, AI matching, interviews,
+        and reports in one multi-tenant employer workspace.
       </p>
 
       <div className="relative z-10 mb-14 flex flex-col items-center gap-4 sm:flex-row">

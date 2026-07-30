@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, Briefcase, Clock3, MapPin, Search, Sparkles } from 'lucide-react';
 import { useLocale } from 'next-intl';
@@ -10,6 +9,20 @@ import { AppLocale } from '@/lib/i18n';
 import { withJobApiLocale } from '@/lib/jobApiLocale';
 import { resolvePortalCompanyLogo, resolvePortalCompanyName } from '@/lib/map-portal-job';
 import { redactPortalJobListing } from '@/lib/job-public-field-visibility';
+
+/** HRYANTRA Phase 1 brand palette for this page */
+const THEME = {
+  cyan: '#28A8E1',
+  cyanDeep: '#1A8FC4',
+  cyanSoft: 'rgba(40,168,225,0.12)',
+  cyanBorder: 'rgba(40,168,225,0.28)',
+  orange: '#FC9620',
+  orangeSoft: 'rgba(252,150,32,0.14)',
+  ink: '#0F172A',
+  muted: '#64748B',
+  pageBg:
+    'radial-gradient(ellipse 90% 60% at 10% -10%, rgba(40,168,225,0.18), transparent 55%), radial-gradient(ellipse 70% 50% at 95% 5%, rgba(252,150,32,0.12), transparent 50%), linear-gradient(180deg, #F0F9FC 0%, #F8FAFC 42%, #FFFFFF 100%)',
+};
 
 type SearchJob = {
   id: string | number;
@@ -102,29 +115,40 @@ function SearchJobsAuthModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-[28px] bg-white p-8 shadow-2xl">
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-sky-50">
-          <Sparkles className="h-7 w-7 text-sky-600" />
-        </div>
-        <h2 className="text-center text-2xl font-bold text-slate-900">Login or Signup Required</h2>
-        <p className="mt-3 text-center text-[15px] font-medium leading-relaxed text-slate-500">
-          Continue with login/signup to unlock full details and guided matching for <span className="font-bold text-slate-700">{jobTitle}</span>.
-        </p>
-        <div className="mt-8 space-y-3">
-          <button
-            onClick={handleContinue}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#28A8DF] px-4 py-3.5 text-[15px] font-semibold text-white transition-all hover:bg-[#1f97cb]"
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_28px_80px_-24px_rgba(15,23,42,0.45)]">
+        <div
+          className="h-1.5 w-full"
+          style={{ background: `linear-gradient(90deg, ${THEME.cyan}, ${THEME.orange})` }}
+        />
+        <div className="p-8">
+          <div
+            className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl"
+            style={{ background: THEME.cyanSoft, color: THEME.cyanDeep }}
           >
-            Continue to Login/Signup
-            <ArrowRight className="h-5 w-5" />
-          </button>
-          <button
-            onClick={onClose}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3.5 text-[15px] font-semibold text-slate-600 transition-all hover:bg-slate-50"
-          >
-            Cancel
-          </button>
+            <Sparkles className="h-7 w-7" />
+          </div>
+          <h2 className="text-center text-2xl font-bold text-slate-900">Login or Signup Required</h2>
+          <p className="mt-3 text-center text-[15px] font-medium leading-relaxed text-slate-500">
+            Continue with login/signup to unlock full details and guided matching for{' '}
+            <span className="font-bold text-slate-700">{jobTitle}</span>.
+          </p>
+          <div className="mt-8 space-y-3">
+            <button
+              onClick={handleContinue}
+              className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-[15px] font-semibold text-white transition-all hover:brightness-95"
+              style={{ background: THEME.cyan }}
+            >
+              Continue to Login/Signup
+              <ArrowRight className="h-5 w-5" />
+            </button>
+            <button
+              onClick={onClose}
+              className="w-full rounded-xl border border-slate-200 px-4 py-3.5 text-[15px] font-semibold text-slate-600 transition-all hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -182,96 +206,155 @@ function SearchJobsContent() {
   }, [jobs, searchQuery, locationQuery]);
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(135deg,#e0f2fe_0%,#ecf7fd_16%,#fafbfb_38%,#fdf6f0_68%,#fef5ed_100%)] pt-28">
+    <div className="min-h-screen pt-28" style={{ background: THEME.pageBg }}>
       <section className="mx-auto max-w-[1180px] px-4 pb-16 sm:px-5 lg:px-6">
-        <div className="rounded-[36px] border border-white/70 bg-white/80 p-8 shadow-[0_30px_80px_-30px_rgba(40,168,225,0.25)] backdrop-blur-xl">
-          <div className="flex flex-col gap-4 border-b border-slate-100 pb-6 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.26em] text-sky-700">Public job search</p>
-              <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Search Jobs</h1>
-              <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-slate-500">
-                Browse live jobs from the database without logging in. Click any card to continue with login/signup and unlock the guided candidate flow.
-              </p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-semibold text-slate-600">
-              <div className="flex items-center gap-2"><Search className="h-4 w-4 text-sky-500 shrink-0" /><span className="text-slate-900">{searchQuery || 'All jobs'}</span></div>
-              <div className="mt-1 flex items-center gap-2"><MapPin className="h-4 w-4 text-sky-500 shrink-0" /><span className="text-slate-900">{locationQuery || 'All locations'}</span></div>
-            </div>
-          </div>
+        <div
+          className="overflow-hidden rounded-[32px] border bg-white/90 shadow-[0_24px_64px_-28px_rgba(26,143,196,0.28)] backdrop-blur-xl"
+          style={{ borderColor: THEME.cyanBorder }}
+        >
+          <div
+            className="h-1.5 w-full"
+            style={{ background: `linear-gradient(90deg, ${THEME.cyan} 0%, ${THEME.cyanDeep} 45%, ${THEME.orange} 100%)` }}
+          />
 
-          {loading ? (
-            <div className="grid gap-5 py-10 md:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="h-72 animate-pulse rounded-[28px] border border-slate-100 bg-slate-50" />
-              ))}
-            </div>
-          ) : filteredJobs.length === 0 ? (
-            <div className="py-16 text-center">
-              <h2 className="text-2xl font-bold text-slate-900">No jobs found</h2>
-              <p className="mt-3 text-slate-500">Try another title or location in the homepage search.</p>
-            </div>
-          ) : (
-            <div className="grid gap-5 py-8 md:grid-cols-2 xl:grid-cols-3">
-              {filteredJobs.map((job) => (
-                <button
-                  key={job.id}
-                  type="button"
-                  onClick={() => setSelectedJob(job)}
-                  className="group flex h-full flex-col rounded-[28px] border border-slate-200 bg-white p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-sky-300 hover:shadow-xl"
+          <div className="p-8">
+            <div className="flex flex-col gap-4 border-b border-slate-100 pb-6 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p
+                  className="text-[11px] font-black uppercase tracking-[0.26em]"
+                  style={{ color: THEME.cyanDeep }}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
-                        {job.logo ? (
-                          <img
-                            src={job.logo}
-                            alt={job.company}
-                            className="h-full w-full object-contain bg-white"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <Briefcase className="h-6 w-6 text-slate-300" />
-                        )}
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-black leading-tight text-slate-900 transition-colors group-hover:text-sky-600">{job.title}</h2>
-                        <p className="mt-1 text-sm font-semibold text-slate-600">{job.company}</p>
-                      </div>
-                    </div>
-                    <span className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-sky-700">
-                      Open
-                    </span>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center rounded-xl border border-slate-100 bg-slate-50 px-3 py-1.5 text-[11px] font-bold text-slate-600">
-                      <MapPin className="mr-1.5 h-3.5 w-3.5 text-slate-400" /> {job.location}
-                    </span>
-                    <span className="inline-flex items-center rounded-xl border border-slate-100 bg-slate-50 px-3 py-1.5 text-[11px] font-bold text-slate-600">
-                      <Briefcase className="mr-1.5 h-3.5 w-3.5 text-slate-400" /> {job.type}
-                    </span>
-                    <span className="inline-flex items-center rounded-xl border border-slate-100 bg-slate-50 px-3 py-1.5 text-[11px] font-bold text-slate-600">
-                      <Clock3 className="mr-1.5 h-3.5 w-3.5 text-slate-400" /> {job.postedAtLabel}
-                    </span>
-                  </div>
-
-                  <p className="mt-5 line-clamp-4 text-sm font-medium leading-6 text-slate-500">{job.description}</p>
-
-                  <div className="mt-auto flex items-end justify-between pt-6">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Salary</p>
-                      <p className="mt-1 text-lg font-black text-slate-900">{job.salary}</p>
-                    </div>
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-white transition-all group-hover:bg-sky-500">
-                      <ArrowRight className="h-4 w-4" />
-                    </div>
-                  </div>
-                </button>
-              ))}
+                  Public job search
+                </p>
+                <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+                  Search Jobs
+                </h1>
+                <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-slate-500">
+                  Browse live jobs from the database without logging in. Click any card to continue
+                  with login/signup and unlock the guided candidate flow.
+                </p>
+              </div>
+              <div
+                className="rounded-2xl border px-5 py-4 text-sm font-semibold"
+                style={{
+                  borderColor: THEME.cyanBorder,
+                  background: THEME.cyanSoft,
+                  color: THEME.muted,
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <Search className="h-4 w-4 shrink-0" style={{ color: THEME.cyan }} />
+                  <span className="text-slate-900">{searchQuery || 'All jobs'}</span>
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <MapPin className="h-4 w-4 shrink-0" style={{ color: THEME.orange }} />
+                  <span className="text-slate-900">{locationQuery || 'All locations'}</span>
+                </div>
+              </div>
             </div>
-          )}
+
+            {loading ? (
+              <div className="grid gap-5 py-10 md:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="h-72 animate-pulse rounded-[28px] border bg-slate-50"
+                    style={{ borderColor: THEME.cyanBorder }}
+                  />
+                ))}
+              </div>
+            ) : filteredJobs.length === 0 ? (
+              <div className="py-16 text-center">
+                <h2 className="text-2xl font-bold text-slate-900">No jobs found</h2>
+                <p className="mt-3 text-slate-500">Try another title or location in the homepage search.</p>
+              </div>
+            ) : (
+              <div className="grid gap-5 py-8 md:grid-cols-2 xl:grid-cols-3">
+                {filteredJobs.map((job) => (
+                  <button
+                    key={job.id}
+                    type="button"
+                    onClick={() => setSelectedJob(job)}
+                    className="group flex h-full flex-col rounded-[28px] border border-slate-200/90 bg-white p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#28A8E1] hover:shadow-[0_20px_40px_-20px_rgba(40,168,225,0.35)]"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border bg-slate-50"
+                          style={{ borderColor: THEME.cyanBorder }}
+                        >
+                          {job.logo ? (
+                            <img
+                              src={job.logo}
+                              alt={job.company}
+                              className="h-full w-full object-contain bg-white"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <Briefcase className="h-6 w-6" style={{ color: THEME.cyan }} />
+                          )}
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-black leading-tight text-slate-900 transition-colors group-hover:text-[#1A8FC4]">
+                            {job.title}
+                          </h2>
+                          <p className="mt-1 text-sm font-semibold text-slate-600">{job.company}</p>
+                        </div>
+                      </div>
+                      <span
+                        className="rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em]"
+                        style={{ background: THEME.cyanSoft, color: THEME.cyanDeep }}
+                      >
+                        Open
+                      </span>
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      <span
+                        className="inline-flex items-center rounded-xl border px-3 py-1.5 text-[11px] font-bold text-slate-600"
+                        style={{ borderColor: THEME.cyanBorder, background: 'rgba(240,249,252,0.9)' }}
+                      >
+                        <MapPin className="mr-1.5 h-3.5 w-3.5" style={{ color: THEME.cyan }} /> {job.location}
+                      </span>
+                      <span
+                        className="inline-flex items-center rounded-xl border px-3 py-1.5 text-[11px] font-bold text-slate-600"
+                        style={{ borderColor: THEME.cyanBorder, background: 'rgba(240,249,252,0.9)' }}
+                      >
+                        <Briefcase className="mr-1.5 h-3.5 w-3.5" style={{ color: THEME.cyan }} /> {job.type}
+                      </span>
+                      <span
+                        className="inline-flex items-center rounded-xl border px-3 py-1.5 text-[11px] font-bold text-slate-600"
+                        style={{ borderColor: 'rgba(252,150,32,0.28)', background: THEME.orangeSoft }}
+                      >
+                        <Clock3 className="mr-1.5 h-3.5 w-3.5" style={{ color: THEME.orange }} />{' '}
+                        {job.postedAtLabel}
+                      </span>
+                    </div>
+
+                    <p className="mt-5 line-clamp-4 text-sm font-medium leading-6 text-slate-500">
+                      {job.description}
+                    </p>
+
+                    <div className="mt-auto flex items-end justify-between pt-6">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                          Salary
+                        </p>
+                        <p className="mt-1 text-lg font-black" style={{ color: THEME.cyanDeep }}>
+                          {job.salary}
+                        </p>
+                      </div>
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#28A8E1] text-white shadow-[0_8px_18px_-8px_rgba(40,168,225,0.75)] transition-all group-hover:bg-[#1A8FC4] group-hover:scale-105">
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -286,7 +369,11 @@ function SearchJobsContent() {
 
 export default function SearchJobsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[linear-gradient(135deg,#e0f2fe_0%,#ecf7fd_16%,#fafbfb_38%,#fdf6f0_68%,#fef5ed_100%)] pt-28" />}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen pt-28" style={{ background: THEME.pageBg }} />
+      }
+    >
       <SearchJobsContent />
     </Suspense>
   );

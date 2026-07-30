@@ -442,15 +442,23 @@ function WhatsAppLoginInner() {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          signInContact === "email"
+        body: JSON.stringify({
+          ...(signInContact === "email"
             ? { email: normalizedEmail, password: passwordValue }
             : {
                 whatsappNumber: cleanNumber,
                 countryCode: selectedCountry.dialCode,
                 password: passwordValue,
-              },
-        ),
+              }),
+          ...(await import("@/lib/login-geo").then((m) => m.collectLoginGeoPayload()).then((geo) => {
+            try {
+              sessionStorage.setItem("saasa:login-geo", JSON.stringify(geo));
+            } catch {
+              /* ignore */
+            }
+            return geo;
+          })),
+        }),
       });
 
       const data = await response.json();

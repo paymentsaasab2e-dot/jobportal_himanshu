@@ -20,6 +20,7 @@ export default function WebsiteSiteLayout({
   // Pages under (website) that must always show the marketing Navbar
   const marketingNavbarPaths = new Set<string>([
     "/employers",
+    "/events",
     "/services",
     "/aboutus",
     "/contact",
@@ -34,6 +35,7 @@ export default function WebsiteSiteLayout({
   const usesMarketingNavbar =
     marketingNavbarPaths.has(normalizedPath) ||
     normalizedPath.startsWith("/employers/") ||
+    normalizedPath.startsWith("/events/") ||
     normalizedPath.startsWith("/services/");
 
   if (isCandMainHome) {

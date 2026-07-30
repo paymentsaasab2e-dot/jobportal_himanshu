@@ -92,16 +92,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = useCallback(async (logoutAll: boolean = false) => {
     setIsLoggingOut(true);
     const candidateId = getStoredCandidateId();
-    
-    if (logoutAll && candidateId) {
+    const storedToken = getStoredToken();
+
+    try {
+      void import('@/lib/user-activity-tracker').then((m) => {
+        if (candidateId) m.endActivitySession(candidateId);
+      });
+    } catch {
+      /* ignore */
+    }
+
+    if (storedToken) {
       try {
-        await fetch(`${API_BASE_URL}/settings/logout-all/${candidateId}`, {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${getStoredToken()}`
-          }
+            Authorization: `Bearer ${storedToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ logoutAll: Boolean(logoutAll) }),
         });
       } catch {
+        /* ignore network errors — still clear local session */
       }
     }
 

@@ -62,6 +62,14 @@ export type ActivitySession = {
   lastPath?: string;
   lastCategory?: ActivityCategory;
   paths: string[];
+  /** Device / geo captured at session start (synced with Phase 1 login analytics). */
+  deviceType?: string;
+  browser?: string;
+  operatingSystem?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  timezone?: string;
 };
 
 export type ProfileActivitySnapshot = {

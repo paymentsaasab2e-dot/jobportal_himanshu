@@ -800,11 +800,11 @@ export default function LandingPage() {
                         }`}
                     >
                       <Image
-                        src="/ai2yantra-removebg.png"
-                        alt="AI"
+                        src="/favicon.png"
+                        alt="HR Yantra"
                         width={36}
                         height={36}
-                        className={`object-contain transition-all ${searchMode === 'ai' ? 'brightness-0 invert' : 'brightness-0'}`}
+                        className={`object-contain transition-all rounded-full ${searchMode === 'ai' ? 'opacity-100' : 'opacity-70'}`}
                         style={{ width: '36px', height: '36px' }}
                       />
                     </button>
@@ -822,11 +822,11 @@ export default function LandingPage() {
                       <>
                         <span>{t("landing.ask")}</span>
                         <Image
-                          src="/ai2yantra-removebg.png"
-                          alt="AI"
+                          src="/favicon.png"
+                          alt="HR Yantra"
                           width={40}
                           height={40}
-                          className="object-contain brightness-0 invert"
+                          className="object-contain rounded-full"
                           style={{ width: '40px', height: '40px' }}
                         />
                       </>
