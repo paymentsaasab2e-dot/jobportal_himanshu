@@ -35,11 +35,15 @@ export type ReferenceCheckStatus =
   | 'completed'
   | 'cancelled';
 
+export type ReferenceMediaType = 'image' | 'voice';
+
 export type ReferenceMessage = {
   id: string;
   senderId: string;
   text: string;
   createdAt: string;
+  mediaUrl?: string;
+  mediaType?: ReferenceMediaType;
 };
 
 export type ReferenceAnswer = {
@@ -514,9 +518,12 @@ export function sendReferenceMessage(
   requestId: string,
   senderId: string,
   text: string,
+  options?: { mediaUrl?: string; mediaType?: ReferenceMediaType },
 ): { ok: true; request: ReferenceCheckRequest } | { ok: false; error: string } {
   const trimmed = text.trim();
-  if (!trimmed) return { ok: false, error: 'Message cannot be empty.' };
+  const mediaUrl = options?.mediaUrl?.trim() || undefined;
+  const mediaType = mediaUrl ? options?.mediaType : undefined;
+  if (!trimmed && !mediaUrl) return { ok: false, error: 'Message cannot be empty.' };
 
   const all = loadAll();
   const idx = all.findIndex((r) => r.id === requestId);
@@ -532,8 +539,13 @@ export function sendReferenceMessage(
   const msg: ReferenceMessage = {
     id: uid('rm'),
     senderId,
-    text: trimmed.slice(0, 2000),
+    text: (trimmed || (mediaType === 'voice' ? 'Voice note' : mediaType === 'image' ? 'Image' : '')).slice(
+      0,
+      2000,
+    ),
     createdAt: new Date().toISOString(),
+    mediaUrl,
+    mediaType,
   };
   const updated: ReferenceCheckRequest = {
     ...row,

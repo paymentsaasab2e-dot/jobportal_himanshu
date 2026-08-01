@@ -38,11 +38,15 @@ export type PeopleFollow = {
 
 export type DmStatus = 'pending' | 'active' | 'rejected' | 'closed';
 
+export type DmMediaType = 'image' | 'voice';
+
 export type DmMessage = {
   id: string;
   senderId: string;
   text: string;
   createdAt: string;
+  mediaUrl?: string;
+  mediaType?: DmMediaType;
 };
 
 export type DirectMessageThread = {
@@ -191,6 +195,12 @@ export function isFollowingCompany(companyPageId: string, userId: string): boole
   );
 }
 
+export function listFollowedCompanyIds(userId: string): string[] {
+  return load()
+    .companyFollows.filter((f) => f.followerId === userId)
+    .map((f) => f.companyPageId);
+}
+
 export function followCompany(input: {
   companyPageId: string;
   companyName: string;
@@ -236,6 +246,12 @@ export function unfollowCompany(companyPageId: string, userId: string): boolean 
 
 export function companyFollowerCount(companyPageId: string): number {
   return load().companyFollows.filter((f) => f.companyPageId === companyPageId).length;
+}
+
+export function listCompanyFollowerIds(companyPageId: string): string[] {
+  return load()
+    .companyFollows.filter((f) => f.companyPageId === companyPageId)
+    .map((f) => f.followerId);
 }
 
 /* ─── People follow (request → accept) ─── */
@@ -500,9 +516,12 @@ export function sendDirectMessage(
   threadId: string,
   senderId: string,
   text: string,
+  options?: { mediaUrl?: string; mediaType?: DmMediaType },
 ): { ok: true; thread: DirectMessageThread } | { ok: false; error: string } {
   const trimmed = text.trim();
-  if (!trimmed) return { ok: false, error: 'Message cannot be empty.' };
+  const mediaUrl = options?.mediaUrl?.trim() || undefined;
+  const mediaType = mediaUrl ? options?.mediaType : undefined;
+  if (!trimmed && !mediaUrl) return { ok: false, error: 'Message cannot be empty.' };
   const state = load();
   const idx = state.dms.findIndex((d) => d.id === threadId);
   if (idx < 0) return { ok: false, error: 'Chat not found.' };
@@ -514,8 +533,13 @@ export function sendDirectMessage(
   const msg: DmMessage = {
     id: uid('dmm'),
     senderId,
-    text: trimmed.slice(0, 2000),
+    text: (trimmed || (mediaType === 'voice' ? 'Voice note' : mediaType === 'image' ? 'Image' : '')).slice(
+      0,
+      2000,
+    ),
     createdAt: new Date().toISOString(),
+    mediaUrl,
+    mediaType,
   };
   state.dms[idx] = {
     ...row,

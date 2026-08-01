@@ -27,11 +27,18 @@ import {
   Bookmark,
   Share2,
   Video,
+  FileText,
+  Upload,
+  CheckCircle2,
+  ShieldCheck,
   Sparkles,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   companyFollowerCount,
+  getDmPeerLabel,
+  listDmThreadsForUser,
+  listFollowedCompanyIds,
   pendingDmIncomingCount,
   pendingFollowIncomingCount,
 } from '@/lib/social-store';
@@ -41,28 +48,56 @@ import {
 } from '@/lib/hryantra-verified-chat-store';
 import type { ChatKind } from '@/components/community/ReferenceMessagingPanel';
 import {
+  buildEventMatchHaystack,
   eventTypeLabel,
   filterJobsForProfile,
   listEventsForProfile,
+  listOgEvents,
   mapJobsToOgEvents,
+  mapLmsEventsToOgEvents,
   mergeEventsWithJobs,
+  mergeOgEventLists,
+  scoreEventsForProfile,
   type OgEventPost,
   type OgEventType,
 } from '@/lib/og-events-store';
 import {
   fetchPortalJobsList,
   fetchPortalPersonalizedJobs,
+  fetchPortalCvDashboard,
 } from '@/lib/query/portal-api';
+import { fetchEvents } from '@/app/lms/api/client';
+import {
+  isOgEventsCacheFresh,
+  readOgEventsCache,
+  writeOgEventsCache,
+} from '@/lib/og-events-session-cache';
+import {
+  exploreJobsCacheKey,
+  isExploreJobsCacheFresh,
+  readExploreJobsCache,
+} from '@/lib/explore-jobs-session-cache';
+import { getBehaviourSignalsForSuggestions } from '@/lib/user-activity-tracker';
+import {
+  buildInterestHaystack,
+  bumpInterestsFromText,
+  syncInterestsFromBehaviour,
+} from '@/lib/interest-affinity-store';
+import { buildProfileSignalsFromDashboard } from '@/lib/suggestions-engine';
 import { DEFAULT_LOCALE } from '@/lib/i18n';
 import { useAuth } from '@/components/auth/AuthContext';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
 import { CompanyPageView } from '@/components/community/CompanyPageView';
+import { ContainedPostMedia, ExpandableCaption } from '@/components/community/PostBody';
 import { ProfileViewsPanel } from '@/components/community/ProfileViewsPanel';
 import { ReferenceCheckPanel } from '@/components/community/ReferenceCheckPanel';
 import { ReferenceMessagingPanel } from '@/components/community/ReferenceMessagingPanel';
 import { UserProfileView } from '@/components/community/UserProfileView';
 import { WritingAssistField } from '@/components/common/WritingSuggestions';
+import {
+  listReferenceChecksForUser,
+} from '@/lib/reference-check-store';
 import { getApiBaseUrl } from '@/lib/api-base';
 import { getAuthHeaders, resolveCandidateIdForApi } from '@/lib/auth-storage';
 import { heartbeatPresence } from '@/lib/presence';
@@ -89,6 +124,7 @@ import {
   getHotCircles,
   getOwnedCompanyPages,
   getJoinedCommunities,
+  getPersonalizedCommunityFeed,
   getVisibleFeed,
   hasGossipAccount,
   isGossipSetupDone,
@@ -102,6 +138,7 @@ import {
   toggleLike,
   updateGossipIdentity,
   upsertCompanyPage,
+  COMPANY_PAGE_REQUIRED_DOCS,
   type Community,
   type CommunityComment,
   type CommunityPost,
@@ -109,6 +146,8 @@ import {
   type CommunitySearchHit,
   type CommunityVisibility,
   type CompanyPage,
+  type CompanyPageDocument,
+  type CompanyPageDocumentKind,
   type GossipIdentity,
   type HotCircleStat,
 } from '@/lib/community-store';
@@ -136,6 +175,21 @@ function timeAgo(iso: string): string {
   return `${d}d ago`;
 }
 
+const EVENTS_QUEUE_BATCH = 5;
+const EVENTS_BG_POLL_MS = 48_000;
+
+type EventsLiveCompanyPost = CommunityPost & {
+  liveSource: 'followed' | 'connected' | 'match';
+};
+
+type EventsTimelineItem =
+  | { kind: 'company'; id: string; createdAt: string; post: EventsLiveCompanyPost }
+  | { kind: 'event'; id: string; createdAt: string; event: OgEventPost };
+
+function sortEventsTimelineNewestFirst(items: EventsTimelineItem[]) {
+  return [...items].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+}
+
 function ComposeAssetIcon({
   src,
   alt,
@@ -158,24 +212,72 @@ function ComposeAssetIcon({
   );
 }
 
+function CompanyPostMedia({
+  post,
+  compact = false,
+  tight = false,
+}: {
+  post: CommunityPost;
+  compact?: boolean;
+  tight?: boolean;
+}) {
+  return (
+    <ContainedPostMedia
+      post={post}
+      className="mt-3"
+      compact={compact}
+      tight={tight}
+    />
+  );
+}
+
 export default function OfficeGossipsPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   type OgTab = 'feed' | 'communities' | 'chat' | 'events';
-  const [ogTab, setOgTab] = useState<OgTab>('feed');
+  const [ogTab, setOgTab] = useState<OgTab>('chat');
   const [activeCommunityId, setActiveCommunityId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(
+      new CustomEvent('saasa:og-tab-changed', { detail: { tab: ogTab } }),
+    );
+  }, [ogTab]);
   const [eventFilter, setEventFilter] = useState<'all' | OgEventType>('all');
+  const [eventSearch, setEventSearch] = useState('');
   const [eventInterested, setEventInterested] = useState<Record<string, boolean>>({});
   const [jobsFromPersonalized, setJobsFromPersonalized] = useState(false);
   const [jobEvents, setJobEvents] = useState<OgEventPost[]>([]);
+  const [lmsEvents, setLmsEvents] = useState<OgEventPost[]>([]);
+  const [eventMatchHaystack, setEventMatchHaystack] = useState('');
   const [communities, setCommunities] = useState<Community[]>([]);
   const [companyPages, setCompanyPages] = useState<CompanyPage[]>([]);
   const [hotCircles, setHotCircles] = useState<HotCircleStat[]>([]);
   const [feed, setFeed] = useState<CommunityPost[]>([]);
+  /** Company page posts (kept separate from personalized community feed) for Events live strip */
+  const [companyFeed, setCompanyFeed] = useState<CommunityPost[]>([]);
+  const [eventsTimeline, setEventsTimeline] = useState<EventsTimelineItem[]>([]);
+  const [eventsQueueCount, setEventsQueueCount] = useState(0);
+  const [eventsHydrated, setEventsHydrated] = useState(false);
+  const [eventsDataReady, setEventsDataReady] = useState(false);
+  const [eventsPullHint, setEventsPullHint] = useState<'idle' | 'loading' | 'empty'>('idle');
+  const [eventsPullDistance, setEventsPullDistance] = useState(0);
+  const eventsQueueRef = useRef<EventsTimelineItem[]>([]);
+  const eventsSeenIdsRef = useRef<Set<string>>(new Set());
+  const eventsScrollRef = useRef<HTMLDivElement>(null);
+  const eventsPullStartY = useRef<number | null>(null);
+  const eventsPullDistanceRef = useRef(0);
+  const eventsPullingRef = useRef(false);
   const [cvCompanies, setCvCompanies] = useState<string[]>([]);
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [showCreateCompany, setShowCreateCompany] = useState(false);
+  const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const [showCreateAccount, setShowCreateAccount] = useState(false);
+
+  useEffect(() => {
+    setCreateMenuOpen(false);
+  }, [ogTab]);
   const [gossipIdentity, setGossipIdentity] = useState<GossipIdentity | null>(null);
   const [connectPromptPage, setConnectPromptPage] = useState<CompanyPage | null>(null);
   const [connectShowInList, setConnectShowInList] = useState(true);
@@ -202,6 +304,9 @@ export default function OfficeGossipsPage() {
   const [referenceChatKind, setReferenceChatKind] = useState<ChatKind | null>(null);
   const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
   const [actingCompanyId, setActingCompanyId] = useState<string | null>(null);
+  const [companyPageInitialTab, setCompanyPageInitialTab] = useState<
+    'posts' | 'people' | 'references' | 'inbox' | undefined
+  >(undefined);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const composeInputRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -220,7 +325,14 @@ export default function OfficeGossipsPage() {
     setCommunities(state.communities);
     setCompanyPages(state.companyPages);
     setHotCircles(getHotCircles(6));
-    setFeed(getVisibleFeed(userId));
+    const visible = getVisibleFeed(userId);
+    setCompanyFeed(visible.filter((p) => Boolean(p.companyPageId)));
+    if (userId) {
+      syncInterestsFromBehaviour(userId);
+      setFeed(getPersonalizedCommunityFeed(userId));
+    } else {
+      setFeed(visible.filter((p) => Boolean(p.communityId)));
+    }
     setGossipIdentity(getGossipIdentity(userId));
     if (commentPostId) {
       setCommentThread(getCommentsForPost(commentPostId));
@@ -240,6 +352,15 @@ export default function OfficeGossipsPage() {
       const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}`;
       window.history.replaceState({}, '', next);
     }
+    const companyId = params.get('company');
+    if (companyId) {
+      setSelectedCompanyId(companyId);
+      setCompanyPageInitialTab('posts');
+      setOgTab('feed');
+      params.delete('company');
+      const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}`;
+      window.history.replaceState({}, '', next);
+    }
   }, []);
 
   useEffect(() => {
@@ -249,11 +370,18 @@ export default function OfficeGossipsPage() {
   }, []);
 
   useEffect(() => {
-    // First-login only: never re-prompt after account exists or setup was completed
-    if (!authLoading && isAuthenticated && userId && !isGossipSetupDone(userId)) {
+    // Only prompt Office Gossips identity when leaving Chat-only usage
+    // (communities / feed / events need the one-time anonymity setup).
+    if (
+      !authLoading &&
+      isAuthenticated &&
+      userId &&
+      !isGossipSetupDone(userId) &&
+      (ogTab === 'communities' || ogTab === 'feed' || ogTab === 'events')
+    ) {
       setShowCreateAccount(true);
     }
-  }, [authLoading, isAuthenticated, userId]);
+  }, [authLoading, isAuthenticated, userId, ogTab]);
 
   // Vertical company page carousel — current exits up, next enters from below
   useEffect(() => {
@@ -350,8 +478,19 @@ export default function OfficeGossipsPage() {
   );
 
   const openCompanyPage = (pageId: string) => {
-    // Company pages + reference live on the Reference Check platform
-    router.push(`/reference-check?company=${encodeURIComponent(pageId)}`);
+    setSelectedProfileUserId(null);
+    setSelectedCompanyId(pageId);
+    setCompanyPageInitialTab('posts');
+    setSearchOpen(false);
+    setCompanySearch('');
+    setHighlightPostId(null);
+    setOgTab('feed');
+  };
+
+  const openReferenceCheckForCompany = (pageId: string, openWizard = true) => {
+    const q = new URLSearchParams({ company: pageId });
+    if (openWizard) q.set('wizard', '1');
+    router.push(`/reference-check?${q.toString()}`);
   };
 
   const openUserProfile = (profileUserId: string) => {
@@ -405,13 +544,10 @@ export default function OfficeGossipsPage() {
       setSelectedCompanyId(actingCompany.id);
     }
     setSelectedProfileUserId(null);
-  }, [actingCompany, selectedCompanyId]);
+    if (ogTab === 'communities') setOgTab('feed');
+  }, [actingCompany, selectedCompanyId, ogTab]);
 
   const openChat = (kind: ChatKind, id: string) => {
-    if (kind === 'reference') {
-      router.push('/reference-check');
-      return;
-    }
     setOgTab('chat');
     setReferenceChatKind(kind);
     setReferenceChatId(id);
@@ -444,17 +580,97 @@ export default function OfficeGossipsPage() {
         sessionStorage.removeItem('saasa:open-hryantra-chat');
         openVerified(pending);
       }
+      const tabPref = sessionStorage.getItem('saasa:og-tab');
+      if (tabPref === 'chat' || tabPref === 'communities' || tabPref === 'feed' || tabPref === 'events') {
+        sessionStorage.removeItem('saasa:og-tab');
+        setOgTab(tabPref);
+      }
     } catch {
       /* ignore */
+    }
+
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab === 'chat' || tab === 'communities' || tab === 'feed' || tab === 'events') {
+        setOgTab(tab);
+        params.delete('tab');
+        const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}`;
+        window.history.replaceState({}, '', next);
+      }
     }
 
     const onOpen = (event: Event) => {
       const detail = (event as CustomEvent<{ chatId?: string }>).detail;
       openVerified(detail?.chatId);
     };
+    const onTab = (event: Event) => {
+      const tab = (event as CustomEvent<{ tab?: string }>).detail?.tab;
+      if (tab === 'chat' || tab === 'communities' || tab === 'feed' || tab === 'events') {
+        setOgTab(tab);
+      }
+    };
     window.addEventListener('saasa:open-hryantra-chat', onOpen);
-    return () => window.removeEventListener('saasa:open-hryantra-chat', onOpen);
+    window.addEventListener('saasa:og-open-tab', onTab as EventListener);
+    return () => {
+      window.removeEventListener('saasa:open-hryantra-chat', onOpen);
+      window.removeEventListener('saasa:og-open-tab', onTab as EventListener);
+    };
   }, [userId]);
+
+  const companyInboxItems = useMemo(() => {
+    if (!userId || !actingCompany) return [];
+    const items: Array<{
+      id: string;
+      kind: 'dm' | 'reference';
+      title: string;
+      subtitle: string;
+      urgency: 'action' | 'open';
+    }> = [];
+    const refs = listReferenceChecksForUser(userId).filter(
+      (r) => r.companyPageId === actingCompany.id,
+    );
+    for (const r of refs) {
+      const peer = r.requesterId === userId ? r.refereeName : r.requesterName;
+      const needsAccept = r.refereeId === userId && r.status === 'pending';
+      const needsAnswers = r.refereeId === userId && r.status === 'awaiting_answers';
+      const needsRate = r.requesterId === userId && r.status === 'answered';
+      if (needsAccept || needsAnswers || needsRate || r.status === 'active') {
+        items.push({
+          id: r.id,
+          kind: 'reference',
+          title: peer,
+          subtitle: needsAccept
+            ? 'Reference · needs accept'
+            : needsAnswers
+              ? 'Reference · answer questions'
+              : needsRate
+                ? 'Reference · rate to complete'
+                : `Reference · ${r.status}`,
+          urgency: needsAccept || needsAnswers || needsRate ? 'action' : 'open',
+        });
+      }
+    }
+    const dms = listDmThreadsForUser(userId).filter(
+      (d) => d.companyPageId === actingCompany.id,
+    );
+    for (const d of dms) {
+      if (d.status !== 'pending' && d.status !== 'active') continue;
+      items.push({
+        id: d.id,
+        kind: 'dm',
+        title: getDmPeerLabel(d, userId),
+        subtitle:
+          d.status === 'pending' && d.toUserId === userId
+            ? 'Message request · needs reply'
+            : d.status === 'pending'
+              ? 'Message · waiting'
+              : 'Direct message · open',
+        urgency: d.status === 'pending' && d.toUserId === userId ? 'action' : 'open',
+      });
+    }
+    return items.slice(0, 8);
+  }, [userId, actingCompany, feed, referenceChatId]);
 
   const composeOptions = useMemo(() => {
     const opts: { value: string; label: string; target: ComposeTarget }[] = [];
@@ -489,13 +705,13 @@ export default function OfficeGossipsPage() {
   );
 
   const displayFeed = useMemo(() => {
-    // Office Gossips = community posts only (company pages moved to Reference Check)
-    let posts = feed.filter((p) => Boolean(p.communityId));
+    // Single circle: full visible posts for that community (not the personalized mix)
     if (ogTab === 'communities' && activeCommunityId) {
-      posts = posts.filter((p) => p.communityId === activeCommunityId);
+      return getVisibleFeed(userId).filter((p) => p.communityId === activeCommunityId);
     }
-    return posts;
-  }, [feed, ogTab, activeCommunityId]);
+    // Main Feed: ~60% joined + interest-matched public (already applied in refresh)
+    return feed.filter((p) => Boolean(p.communityId));
+  }, [feed, ogTab, activeCommunityId, userId]);
 
   const openCommunityRoom = (communityId: string) => {
     setActiveCommunityId(communityId);
@@ -504,83 +720,466 @@ export default function OfficeGossipsPage() {
     setSelectedProfileUserId(null);
     setComposeTarget({ kind: 'community', id: communityId });
     setSearchOpen(false);
+    if (userId) {
+      const c = communities.find((x) => x.id === communityId);
+      if (c) bumpInterestsFromText(userId, `${c.name} ${c.description}`, 1.5);
+    }
   };
 
   const profileEventText = useMemo(() => {
-    const bits = [
+    const base = [
       realName,
       authorName,
       user?.email,
       workDomain,
       ...(joined.map((c) => c.name) || []),
-    ];
-    return bits.filter(Boolean).join(' ').toLowerCase();
-  }, [realName, authorName, user?.email, workDomain, joined]);
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return [base, eventMatchHaystack].filter(Boolean).join(' ').toLowerCase();
+  }, [realName, authorName, user?.email, workDomain, joined, eventMatchHaystack]);
 
   const profileEvents = useMemo(() => {
-    const matched = listEventsForProfile(profileEventText);
+    const catalogMatched = listEventsForProfile(profileEventText);
+    const lmsMatched = scoreEventsForProfile(lmsEvents, profileEventText, {
+      minHits: 1,
+      limit: 12,
+    });
+    const matched = mergeOgEventLists(lmsMatched, catalogMatched);
     const relevantJobs = filterJobsForProfile(jobEvents, profileEventText, {
       preferAll: jobsFromPersonalized,
       limit: 6,
     });
     return mergeEventsWithJobs(matched, relevantJobs);
-  }, [profileEventText, jobEvents, jobsFromPersonalized]);
+  }, [profileEventText, jobEvents, jobsFromPersonalized, lmsEvents]);
 
-  const filteredEvents = useMemo(() => {
-    if (eventFilter === 'all') return profileEvents;
-    return profileEvents.filter((e) => e.type === eventFilter);
-  }, [profileEvents, eventFilter]);
+  const buildEventsCandidates = useCallback((): EventsTimelineItem[] => {
+    if (!userId) return [];
+    const followed = new Set(listFollowedCompanyIds(userId));
+    const connected = new Set(getConnectedCompanies(userId).map((c) => c.id));
+    const hay = `${eventMatchHaystack} ${cvCompanies.join(' ')} ${profileEventText}`.toLowerCase();
+    const tokens = hay.split(/\s+/).filter((t) => t.length > 2);
+    const items: EventsTimelineItem[] = [];
+
+    for (const p of companyFeed) {
+      if (!p.companyPageId) continue;
+      const pageId = p.companyPageId;
+      let liveSource: EventsLiveCompanyPost['liveSource'] | null = null;
+      if (followed.has(pageId)) liveSource = 'followed';
+      else if (connected.has(pageId)) liveSource = 'connected';
+      else {
+        const page = companyPages.find((c) => c.id === pageId);
+        if (!page || !tokens.length) continue;
+        const blob =
+          `${page.name} ${page.domainKey} ${page.description || ''} ${p.text}`.toLowerCase();
+        if (!tokens.some((token) => blob.includes(token))) continue;
+        liveSource = 'match';
+      }
+      items.push({
+        kind: 'company',
+        id: `company:${p.id}`,
+        createdAt: p.createdAt,
+        post: { ...p, liveSource },
+      });
+    }
+
+    for (const ev of profileEvents) {
+      items.push({
+        kind: 'event',
+        id: `event:${ev.id}`,
+        createdAt: ev.createdAt,
+        event: ev,
+      });
+    }
+
+    return sortEventsTimelineNewestFirst(items);
+  }, [
+    userId,
+    companyFeed,
+    companyPages,
+    cvCompanies,
+    eventMatchHaystack,
+    profileEventText,
+    profileEvents,
+  ]);
+
+  const enqueueNewEventsInBackground = useCallback(() => {
+    if (!eventsHydrated) return;
+    const timelineIds = new Set(eventsTimeline.map((i) => i.id));
+    const queuedIds = new Set(eventsQueueRef.current.map((i) => i.id));
+    let added = 0;
+    for (const item of buildEventsCandidates()) {
+      if (eventsSeenIdsRef.current.has(item.id)) continue;
+      if (timelineIds.has(item.id) || queuedIds.has(item.id)) continue;
+      eventsQueueRef.current.push(item);
+      queuedIds.add(item.id);
+      added += 1;
+    }
+    if (!added) return;
+    // Newest first so the next user refresh loads latest batch first (FILO feel)
+    eventsQueueRef.current = sortEventsTimelineNewestFirst(eventsQueueRef.current);
+    setEventsQueueCount(eventsQueueRef.current.length);
+  }, [buildEventsCandidates, eventsHydrated, eventsTimeline]);
+
+  const enqueueNewEventsRef = useRef(enqueueNewEventsInBackground);
+  enqueueNewEventsRef.current = enqueueNewEventsInBackground;
+  const buildEventsCandidatesRef = useRef(buildEventsCandidates);
+  buildEventsCandidatesRef.current = buildEventsCandidates;
+
+  const syncCompanyFeedFromStore = useCallback(() => {
+    const visible = getVisibleFeed(userId);
+    const next = visible.filter((p) => Boolean(p.companyPageId));
+    setCompanyFeed((prev) => {
+      if (
+        prev.length === next.length &&
+        prev.every(
+          (p, i) =>
+            p.id === next[i]?.id &&
+            p.likeIds.length === next[i]?.likeIds.length &&
+            p.text === next[i]?.text,
+        )
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, [userId]);
+
+  const releaseEventsQueueBatch = useCallback(() => {
+    setEventsPullHint('loading');
+    const q = eventsQueueRef.current;
+    if (!q.length) {
+      setEventsPullHint('empty');
+      window.setTimeout(() => setEventsPullHint('idle'), 2200);
+      setEventsPullDistance(0);
+      eventsPullDistanceRef.current = 0;
+      return;
+    }
+    const batch = q.splice(0, EVENTS_QUEUE_BATCH);
+    eventsQueueRef.current = q;
+    setEventsQueueCount(q.length);
+    for (const item of batch) eventsSeenIdsRef.current.add(item.id);
+    setEventsTimeline((prev) => sortEventsTimelineNewestFirst([...batch, ...prev]));
+    setEventsPullHint('idle');
+    setEventsPullDistance(0);
+    eventsPullDistanceRef.current = 0;
+    eventsScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  /** Instagram-style: sync → queue → release a batch into the feed */
+  const pullToLoadEvents = useCallback(() => {
+    setEventsPullHint('loading');
+    setEventsPullDistance(56);
+    eventsPullDistanceRef.current = 56;
+    syncCompanyFeedFromStore();
+    enqueueNewEventsRef.current();
+    window.setTimeout(() => {
+      const q = eventsQueueRef.current;
+      if (!q.length) {
+        setEventsPullHint('empty');
+        setEventsPullDistance(0);
+        eventsPullDistanceRef.current = 0;
+        window.setTimeout(() => setEventsPullHint('idle'), 1800);
+        return;
+      }
+      const batch = q.splice(0, EVENTS_QUEUE_BATCH);
+      eventsQueueRef.current = q;
+      setEventsQueueCount(q.length);
+      for (const item of batch) eventsSeenIdsRef.current.add(item.id);
+      setEventsTimeline((prev) => sortEventsTimelineNewestFirst([...batch, ...prev]));
+      setEventsPullHint('idle');
+      setEventsPullDistance(0);
+      eventsPullDistanceRef.current = 0;
+      eventsScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 320);
+  }, [syncCompanyFeedFromStore]);
+
+  const resetEventsPull = useCallback(() => {
+    eventsPullingRef.current = false;
+    eventsPullStartY.current = null;
+    eventsPullDistanceRef.current = 0;
+    setEventsPullDistance(0);
+  }, []);
+
+  const onEventsPullStart = useCallback(
+    (clientY: number) => {
+      if (eventSearch.trim()) return;
+      if (eventsPullHint === 'loading') return;
+      if ((eventsScrollRef.current?.scrollTop || 0) > 4) return;
+      eventsPullingRef.current = true;
+      eventsPullStartY.current = clientY;
+    },
+    [eventSearch, eventsPullHint],
+  );
+
+  const onEventsPullMove = useCallback((clientY: number) => {
+    if (!eventsPullingRef.current || eventsPullStartY.current == null) return;
+    if ((eventsScrollRef.current?.scrollTop || 0) > 4) {
+      resetEventsPull();
+      return;
+    }
+    const dy = Math.max(0, Math.min(96, clientY - eventsPullStartY.current));
+    eventsPullDistanceRef.current = dy;
+    setEventsPullDistance(dy);
+  }, [resetEventsPull]);
+
+  const onEventsPullEnd = useCallback(() => {
+    if (!eventsPullingRef.current) return;
+    eventsPullingRef.current = false;
+    eventsPullStartY.current = null;
+    const dist = eventsPullDistanceRef.current;
+    if (dist >= 56) {
+      pullToLoadEvents();
+    } else {
+      eventsPullDistanceRef.current = 0;
+      setEventsPullDistance(0);
+    }
+  }, [pullToLoadEvents]);
+
+  const displayEventsTimeline = useMemo(() => {
+    // Instagram-like: only followed/connected company posts + profile-matched events
+    let items = eventsTimeline.filter((item) => {
+      if (item.kind === 'company') {
+        return item.post.liveSource === 'followed' || item.post.liveSource === 'connected';
+      }
+      return true;
+    });
+    if (eventFilter !== 'all') {
+      items = items.filter(
+        (item) => item.kind === 'event' && item.event.type === eventFilter,
+      );
+    }
+    return items;
+  }, [eventsTimeline, eventFilter]);
+
+  /** Full LMS + jobs + catalog — searchable like /lms/events */
+  const allEventsCatalog = useMemo(() => {
+    return mergeOgEventLists(
+      mergeOgEventLists(lmsEvents, jobEvents),
+      listOgEvents(),
+    );
+  }, [lmsEvents, jobEvents]);
+
+  const eventSearchResults = useMemo(() => {
+    const q = eventSearch.trim().toLowerCase();
+    if (!q) return [] as OgEventPost[];
+    const tokens = q.split(/\s+/).filter(Boolean);
+    return allEventsCatalog
+      .filter((ev) => {
+        const blob =
+          `${ev.title} ${ev.body} ${ev.hostName} ${ev.type} ${ev.location || ''} ${ev.tags.join(' ')}`.toLowerCase();
+        return tokens.every((t) => blob.includes(t));
+      })
+      .slice(0, 40);
+  }, [eventSearch, allEventsCatalog]);
+
+  const topMatchedEvents = useMemo(
+    () => profileEvents.slice(0, 6),
+    [profileEvents],
+  );
+
+  /** Main Events column: search catalog OR personalized followed/interest feed */
+  const eventsMainList = useMemo((): EventsTimelineItem[] => {
+    const q = eventSearch.trim();
+    if (q) {
+      return eventSearchResults
+        .filter((ev) => eventFilter === 'all' || ev.type === eventFilter)
+        .map((ev) => ({
+          kind: 'event' as const,
+          id: `search:${ev.id}`,
+          createdAt: ev.createdAt,
+          event: ev,
+        }));
+    }
+    return displayEventsTimeline;
+  }, [eventSearch, eventSearchResults, eventFilter, displayEventsTimeline]);
 
   useEffect(() => {
     if (ogTab !== 'events') return;
     let cancelled = false;
-    (async () => {
+    let softTimer: number | undefined;
+    const candidateId = resolveCandidateIdForApi(userId);
+
+    async function loadEventsSources(opts?: { soft?: boolean }) {
       try {
-        const candidateId = resolveCandidateIdForApi(userId);
-        let jobs: unknown[] = [];
-        let personalized = false;
-        if (candidateId) {
-          jobs = await fetchPortalPersonalizedJobs(candidateId, DEFAULT_LOCALE);
-          personalized = jobs.length > 0;
-        }
-        if (!jobs.length) {
-          jobs = await fetchPortalJobsList(DEFAULT_LOCALE, 12);
-        }
-        if (!cancelled) {
-          setJobsFromPersonalized(personalized);
-          setJobEvents(mapJobsToOgEvents(jobs, personalized ? 8 : 12));
-        }
+        const [jobsResult, lmsRaw, dashboard] = await Promise.all([
+          (async () => {
+            // Prefer explore-jobs cache when still fresh (skip network)
+            const ej = readExploreJobsCache(
+              exploreJobsCacheKey(DEFAULT_LOCALE, candidateId),
+            );
+            if (ej?.jobs?.length && isExploreJobsCacheFresh(ej)) {
+              return {
+                jobs: ej.jobs,
+                personalized: Boolean(ej.isPersonalized),
+              };
+            }
+            let jobs: unknown[] = [];
+            let personalized = false;
+            if (candidateId) {
+              jobs = await fetchPortalPersonalizedJobs(candidateId, DEFAULT_LOCALE).catch(
+                () => [],
+              );
+              personalized = jobs.length > 0;
+            }
+            if (!jobs.length) {
+              jobs = await fetchPortalJobsList(DEFAULT_LOCALE, 12).catch(() => []);
+            }
+            return { jobs, personalized };
+          })(),
+          fetchEvents().catch(() => []),
+          candidateId
+            ? fetchPortalCvDashboard(candidateId).catch(() => null)
+            : Promise.resolve(null),
+        ]);
+
+        if (cancelled) return;
+
+        const nextJobs = mapJobsToOgEvents(
+          jobsResult.jobs,
+          jobsResult.personalized ? 8 : 12,
+        );
+        const nextLms = mapLmsEventsToOgEvents(
+          Array.isArray(lmsRaw) ? lmsRaw : [],
+          40,
+        );
+
+        const profileSignals = dashboard
+          ? buildProfileSignalsFromDashboard(dashboard)
+          : null;
+        const behaviour = userId ? getBehaviourSignalsForSuggestions(userId) : null;
+        const hay = [
+          buildEventMatchHaystack({
+            nameBits: [realName, authorName, user?.email],
+            skills: profileSignals?.skills,
+            targetRole: profileSignals?.targetRole,
+            workDomain: profileSignals?.workDomain || workDomain,
+            recentJobTitles: (dashboard?.recentApplications || [])
+              .slice(0, 5)
+              .map((a) => `${a.jobTitle} ${a.company}`),
+            topRoles: behaviour?.topRoles,
+            topCompanies: behaviour?.topCompanies,
+            communityNames: joined.map((c) => c.name),
+          }),
+          userId ? buildInterestHaystack(userId) : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+        setJobsFromPersonalized(jobsResult.personalized);
+        setJobEvents(nextJobs);
+        setLmsEvents(nextLms);
+        setEventMatchHaystack(hay);
+        setEventsDataReady(true);
+        writeOgEventsCache({
+          userId,
+          jobEvents: nextJobs,
+          lmsEvents: nextLms,
+          jobsFromPersonalized: jobsResult.personalized,
+          eventMatchHaystack: hay,
+        });
       } catch {
-        if (!cancelled) {
+        if (!cancelled && !opts?.soft) {
           setJobsFromPersonalized(false);
           setJobEvents([]);
+          setLmsEvents([]);
+          setEventsDataReady(true);
         }
       }
-    })();
+    }
+
+    const cached = readOgEventsCache(userId);
+    if (cached) {
+      setJobsFromPersonalized(cached.jobsFromPersonalized);
+      setJobEvents(cached.jobEvents);
+      setLmsEvents(cached.lmsEvents);
+      if (cached.eventMatchHaystack) setEventMatchHaystack(cached.eventMatchHaystack);
+      setEventsDataReady(true);
+      if (isOgEventsCacheFresh(cached)) {
+        softTimer = window.setTimeout(() => {
+          if (!cancelled) void loadEventsSources({ soft: true });
+        }, 400);
+        return () => {
+          cancelled = true;
+          if (softTimer) window.clearTimeout(softTimer);
+        };
+      }
+    } else {
+      // Instant paint from explore-jobs cache while LMS/network loads
+      const ej = readExploreJobsCache(exploreJobsCacheKey(DEFAULT_LOCALE, candidateId));
+      if (ej?.jobs?.length) {
+        setJobsFromPersonalized(Boolean(ej.isPersonalized));
+        setJobEvents(mapJobsToOgEvents(ej.jobs, ej.isPersonalized ? 8 : 12));
+        setEventsDataReady(true);
+      }
+    }
+
+    void loadEventsSources();
     return () => {
       cancelled = true;
+      if (softTimer) window.clearTimeout(softTimer);
     };
-  }, [ogTab, userId]);
+  }, [ogTab, userId, realName, authorName, user?.email, workDomain, joined]);
 
-  const openJobEvent = (ev: OgEventPost) => {
-    if (ev.type !== 'job') return;
+  // Seed visible timeline once — later discoveries stay in background queue
+  useEffect(() => {
+    if (ogTab !== 'events' || eventsHydrated || !eventsDataReady) return;
+    const seed = buildEventsCandidatesRef.current().slice(0, 18);
+    for (const item of seed) eventsSeenIdsRef.current.add(item.id);
+    setEventsTimeline(seed);
+    eventsQueueRef.current = [];
+    setEventsQueueCount(0);
+    setEventsHydrated(true);
+  }, [ogTab, eventsHydrated, eventsDataReady]);
+
+  // Quiet background check: queue new IDs only — never rewrite the open feed.
+  // Do NOT call full refresh() here: it recreates companyFeed → rebuilds
+  // enqueue callback → re-runs this effect → max update depth.
+  useEffect(() => {
+    if (ogTab !== 'events' || !eventsHydrated) return;
+    const softCheck = () => {
+      syncCompanyFeedFromStore();
+      window.setTimeout(() => enqueueNewEventsRef.current(), 80);
+    };
+    softCheck();
+    const timer = window.setInterval(softCheck, EVENTS_BG_POLL_MS);
+    return () => window.clearInterval(timer);
+  }, [ogTab, eventsHydrated, syncCompanyFeedFromStore]);
+
+  // When LMS/company sources change, queue silently (no UI jump)
+  useEffect(() => {
+    if (ogTab !== 'events' || !eventsHydrated) return;
+    enqueueNewEventsRef.current();
+  }, [companyFeed, profileEvents, ogTab, eventsHydrated]);
+
+  const openEventCard = (ev: OgEventPost) => {
+    const isJob = ev.type === 'job';
+    const href =
+      ev.actionHref ||
+      (ev.jobId ? `/explore-jobs?job=${encodeURIComponent(ev.jobId)}` : null);
+    if (!href) return;
+
     void import('@/lib/user-activity-tracker').then((m) => {
       m.trackCustomActivityForCurrentUser({
         type: 'page_visit',
         category: 'community',
-        path: `/community/events/job/${ev.jobId || ev.id}`,
+        path: isJob
+          ? `/community/events/job/${ev.jobId || ev.id}`
+          : `/community/events/${ev.id}`,
         meta: {
           companyId: ev.hostName,
           companyName: ev.hostName,
           jobTitle: ev.title,
-          roleKey: ev.title.toLowerCase().split(/[^a-z0-9+.#]+/).slice(0, 3).join('-'),
-          sourceSurface: 'office_gossips_event',
+          roleKey: ev.title
+            .toLowerCase()
+            .split(/[^a-z0-9+.#]+/)
+            .slice(0, 3)
+            .join('-'),
+          sourceSurface: isJob ? 'office_gossips_event' : 'office_gossips_lms_event',
         },
       });
     });
-    const href =
-      ev.actionHref ||
-      (ev.jobId ? `/explore-jobs?job=${encodeURIComponent(ev.jobId)}` : '/explore-jobs');
     router.push(href);
   };
 
@@ -641,6 +1240,8 @@ export default function OfficeGossipsPage() {
       return;
     }
     joinCommunity(id, userId);
+    const c = communities.find((x) => x.id === id);
+    if (c) bumpInterestsFromText(userId, `${c.name} ${c.description}`, 8);
     showSuccessToast('Joined', 'You can post in this circle now.');
     refresh();
   };
@@ -688,23 +1289,30 @@ export default function OfficeGossipsPage() {
     refresh();
   };
 
-  const handleCreateCompany = (payload: { domainOrName: string; displayName: string }) => {
+  const handleCreateCompany = (payload: {
+    domainOrName: string;
+    displayName: string;
+    description: string;
+    documents: CompanyPageDocument[];
+  }) => {
     if (!userId) return;
     const result = upsertCompanyPage({
       domainOrName: payload.domainOrName,
       displayName: payload.displayName,
+      description: payload.description,
+      documents: payload.documents,
       userId,
       email: user?.email,
     });
     if (result.error && !result.created) {
       showErrorToast('Company page', result.error);
-      if (result.page) {
+      if (result.page && result.error.includes('already exists')) {
         handleConnectCompany(result.page);
       }
       return;
     }
     setShowCreateCompany(false);
-    showSuccessToast('Company page created', 'Unique page for this company is ready.');
+    showSuccessToast('Company page created', 'Your company page is ready.');
     refresh();
   };
 
@@ -746,7 +1354,12 @@ export default function OfficeGossipsPage() {
   };
 
   const handlePost = async () => {
-    if (!userId || !composeTarget) return;
+    if (!userId) return;
+    const target: ComposeTarget =
+      ogTab === 'communities' && activeCommunityId
+        ? { kind: 'community', id: activeCommunityId }
+        : composeTarget;
+    if (!target) return;
     if (!hasAccount) {
       setShowCreateAccount(true);
       return;
@@ -758,8 +1371,8 @@ export default function OfficeGossipsPage() {
     setPosting(true);
     try {
       const post = createPost({
-        communityId: composeTarget.kind === 'community' ? composeTarget.id : undefined,
-        companyPageId: composeTarget.kind === 'company' ? composeTarget.id : undefined,
+        communityId: target.kind === 'community' ? target.id : undefined,
+        companyPageId: target.kind === 'company' ? target.id : undefined,
         authorId: userId,
         authorName,
         text: composeText,
@@ -785,21 +1398,47 @@ export default function OfficeGossipsPage() {
 
   const handleLike = (postId: string) => {
     if (!userId) return;
+    const post =
+      feed.find((p) => p.id === postId) ||
+      companyFeed.find((p) => p.id === postId) ||
+      getVisibleFeed(userId).find((p) => p.id === postId);
     toggleLike(postId, userId);
+    if (post) {
+      bumpInterestsFromText(
+        userId,
+        `${post.communityName || ''} ${post.companyName || ''} ${post.text || ''}`,
+        2.5,
+      );
+    }
     refresh();
   };
 
   const handleSendComment = () => {
     if (!userId || !commentPostId) return;
+    const commentAs =
+      isCompanyAccount && actingCompany
+        ? actingCompany.name
+        : authorName;
     const c = addComment({
       postId: commentPostId,
       authorId: userId,
-      authorName,
+      authorName: commentAs,
       text: commentText,
     });
     if (!c) {
       showErrorToast('Comment failed');
       return;
+    }
+    const post =
+      feed.find((p) => p.id === commentPostId) ||
+      companyFeed.find((p) => p.id === commentPostId) ||
+      getVisibleFeed(userId).find((p) => p.id === commentPostId);
+    if (post) {
+      bumpInterestsFromText(
+        userId,
+        `${post.communityName || ''} ${post.companyName || ''} ${post.text || ''} ${commentText}`,
+        4,
+      );
     }
     setCommentText('');
     setCommentThread(getCommentsForPost(commentPostId));
@@ -819,13 +1458,23 @@ export default function OfficeGossipsPage() {
 
   const hideScroll =
     '[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden';
-  const card =
-    'rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]';
+  /** Match candidate dashboard glass panels */
+  const card = 'dashboard-surface rounded-[24px]';
+  /** Blue→orange rounded gradient frame around each feed post */
+  const feedPostFrame =
+    'group rounded-[22px] bg-linear-to-br from-[#28A8E1] via-[#5BB8E8] to-[#FC9620] p-[1.5px] shadow-[0_10px_28px_rgba(40,168,225,0.1),0_4px_14px_rgba(252,150,32,0.08)] transition-shadow duration-220 hover:shadow-[0_16px_36px_rgba(40,168,225,0.16),0_8px_20px_rgba(252,150,32,0.14)]';
+  const feedPostInner =
+    'relative overflow-hidden rounded-[20.5px] bg-linear-to-b from-white via-[#FBFCFE] to-[#F7FAFD] px-4 py-4 sm:px-5';
   const visibleHot = showAllHot ? hotCircles : hotCircles.slice(0, 4);
   const activeCompany = companyPages[companySlide % Math.max(companyPages.length, 1)];
+  const feedPageBg =
+    'radial-gradient(circle at top left, rgba(40,168,225,0.13), transparent 28%), radial-gradient(circle at 85% 12%, rgba(40,168,223,0.1), transparent 16%), radial-gradient(circle at 18% 82%, rgba(252,150,32,0.08), transparent 18%), linear-gradient(180deg, #f5fafd 0%, #f8fcff 44%, #fcfdff 100%)';
 
   return (
-    <div className="h-[calc(100dvh-var(--app-header-height,96px))] overflow-hidden bg-[#EEF3F8]">
+    <div
+      className="profile-page-typography candidate-dashboard-page h-[calc(100dvh-var(--app-header-height,96px))] overflow-hidden"
+      style={{ background: feedPageBg }}
+    >
       <div className="mx-auto flex h-full w-full max-w-[1520px] flex-col px-3 pb-[4.25rem] pt-3 sm:px-5 lg:px-6">
         {/* Top bar — profile views + account switcher */}
         {!isCompanyAccount || ownedCompanies.length > 0 ? (
@@ -834,12 +1483,14 @@ export default function OfficeGossipsPage() {
               <button
                 type="button"
                 onClick={() => setShowProfileViews(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-[#28A8E1] hover:text-[#0A66C2] lg:hidden"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-[var(--dashboard-shadow)] backdrop-blur-sm transition hover:border-[rgba(40,168,225,0.35)] hover:text-[#28A8E1] lg:hidden"
               >
                 <Eye className="h-3.5 w-3.5" />
-                Who viewed you
+                {lockedProfileViews > 0 || recentProfileViews > 0
+                  ? 'Someone viewed your profile'
+                  : 'Who viewed you'}
                 {lockedProfileViews > 0 ? (
-                  <span className="rounded-full bg-[#0A66C2] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  <span className="rounded-full bg-[#28A8E1] px-1.5 py-0.5 text-[10px] font-bold text-white">
                     {lockedProfileViews}
                   </span>
                 ) : null}
@@ -852,10 +1503,10 @@ export default function OfficeGossipsPage() {
             <button
               type="button"
               onClick={() => setAccountMenuOpen((v) => !v)}
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm transition ${
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-[var(--dashboard-shadow)] transition ${
                 isCompanyAccount
-                  ? 'border-[#1B3A5F]/20 bg-[#1B3A5F] text-white hover:bg-[#16324f]'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-[#28A8E1] hover:text-[#0A66C2]'
+                  ? 'border-transparent bg-[#28A8E1] text-white hover:bg-[#28A8DF]'
+                  : 'border-white/80 bg-white/80 text-slate-700 backdrop-blur-sm hover:border-[rgba(40,168,225,0.35)] hover:text-[#28A8E1]'
               }`}
             >
               {isCompanyAccount ? (
@@ -929,17 +1580,13 @@ export default function OfficeGossipsPage() {
           </div>
         ) : null}
 
-        {/* Feed / open community room */}
+        {/* Feed */}
         <div
-          className={`grid min-h-0 flex-1 items-stretch gap-4 ${
+          className={`grid min-h-0 flex-1 items-stretch gap-3 ${
             ogTab === 'feed'
-              ? 'lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_280px]'
+              ? 'lg:grid-cols-[248px_minmax(0,1fr)] xl:grid-cols-[248px_minmax(0,1fr)_288px]'
               : 'grid-cols-1'
-          } ${
-            ogTab === 'feed' || (ogTab === 'communities' && activeCommunityId)
-              ? ''
-              : 'hidden'
-          }`}
+          } ${ogTab === 'feed' ? '' : 'hidden'}`}
         >
           {/* LEFT — profile + circles (own scroll) */}
           <aside
@@ -947,29 +1594,33 @@ export default function OfficeGossipsPage() {
               ogTab === 'feed' ? 'hidden lg:flex' : 'hidden'
             }`}
           >
-            <div className={`${card} overflow-hidden`}>
-              <div className="h-14 bg-gradient-to-r from-[#1B3A5F] via-[#1E5A8A] to-[#28A8E1]" />
-              <div className="-mt-8 px-3 pb-3 text-center">
+            <div className={`${card} relative overflow-hidden`}>
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(40,168,225,0.2),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(40,168,223,0.12),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(252,150,32,0.14),transparent_22%),radial-gradient(circle_at_12%_88%,rgba(252,150,32,0.08),transparent_24%)]" />
+              <div className="pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full bg-[var(--brand-primary-glow)] blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-[var(--brand-accent-glow)] blur-3xl" />
+              <div className="relative px-3.5 pb-4 pt-5 text-center">
                 {isCompanyAccount && actingCompany ? (
                   <>
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border-[3px] border-white bg-[#1B3A5F] text-xl font-bold text-white shadow-md">
+                    <div className="mx-auto flex h-[4.5rem] w-[4.5rem] items-center justify-center overflow-hidden rounded-[22px] border border-white/80 bg-white/75 text-xl font-bold tracking-tight text-[#28A8E1] shadow-[0_14px_30px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] ring-2 ring-[rgba(252,150,32,0.18)]">
                       {actingCompany.logoLetter}
                     </div>
-                    <p className="mt-2 truncate text-sm font-semibold text-slate-900">
+                    <p className="mt-3 truncate text-[15px] font-semibold tracking-tight text-slate-900">
                       {actingCompany.name}
                     </p>
-                    <p className="truncate text-xs text-slate-500">@{actingCompany.domainKey}</p>
-                    <p className="mt-2 border-t border-slate-100 pt-2 text-[11px] text-slate-500">
+                    <p className="truncate text-[12px] font-medium text-slate-500">
+                      @{actingCompany.domainKey}
+                    </p>
+                    <p className="mt-2.5 border-t border-slate-100/80 pt-2.5 text-[11px] font-medium text-slate-500">
                       {actingCompany.memberIds.length} connections ·{' '}
                       {companyFollowerCount(actingCompany.id)} followers
                     </p>
-                    <p className="mt-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                    <p className="mt-1.5 inline-block rounded-full border border-[var(--brand-accent-soft)] bg-white/74 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--brand-accent)] shadow-sm">
                       Company account
                     </p>
                   </>
                 ) : (
                   <>
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-[3px] border-white bg-gradient-to-br from-sky-100 to-sky-50 text-lg font-bold text-[#1B3A5F] shadow-md">
+                    <div className="mx-auto flex h-[4.5rem] w-[4.5rem] items-center justify-center overflow-hidden rounded-full border border-white/80 bg-white/75 text-xl font-bold tracking-tight text-[#28A8E1] shadow-[0_14px_30px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] ring-2 ring-[rgba(40,168,225,0.2)]">
                       {user?.profilePhotoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -981,12 +1632,18 @@ export default function OfficeGossipsPage() {
                         authorName.slice(0, 1).toUpperCase()
                       )}
                     </div>
-                    <p className="mt-2 truncate text-sm font-semibold text-slate-900">{authorName}</p>
-                    <p className="truncate text-xs text-slate-500">
+                    <p className="mt-3 truncate text-[15px] font-semibold tracking-tight text-slate-900">
+                      {authorName}
+                    </p>
+                    <p className="truncate text-[12px] font-medium text-slate-500">
                       {workDomain ? `@${workDomain}` : 'Office Gossips'}
                     </p>
-                    <p className="mt-2 border-t border-slate-100 pt-2 text-[11px] text-slate-500">
-                      {joined.length} circles · {connectedCompanies.length} companies
+                    <p className="mt-2.5 border-t border-slate-100/80 pt-2.5 text-[11px] font-medium text-slate-500">
+                      <span className="font-semibold text-slate-700">{joined.length}</span> circles ·{' '}
+                      <span className="font-semibold text-slate-700">
+                        {connectedCompanies.length}
+                      </span>{' '}
+                      companies
                     </p>
                   </>
                 )}
@@ -997,24 +1654,26 @@ export default function OfficeGossipsPage() {
               <button
                 type="button"
                 onClick={() => setShowProfileViews(true)}
-                className={`${card} flex w-full items-center gap-3 px-3 py-3 text-left transition hover:border-[#28A8E1]/40 hover:bg-sky-50/50`}
+                className={`${card} relative flex w-full items-center gap-3 overflow-hidden px-3.5 py-3.5 text-left transition hover:border-[rgba(40,168,225,0.28)]`}
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-[#0A66C2]">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.12),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(40,168,225,0.1),transparent_45%)]" />
+                <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[16px] border border-white/80 bg-white/90 text-[#28A8E1] shadow-[0_8px_18px_rgba(40,168,225,0.12),inset_0_1px_0_rgba(255,255,255,0.96)]">
                   <Eye className="h-4 w-4" />
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-xs font-bold text-slate-800">Who viewed you</span>
-                  <span className="mt-0.5 block text-[11px] text-slate-500">
+                <span className="relative min-w-0 flex-1">
+                  <span className="block text-[13px] font-semibold tracking-tight text-slate-800">
                     {recentProfileViews === 0
-                      ? 'No views yet'
-                      : `${recentProfileViews} view${recentProfileViews === 1 ? '' : 's'} this week`}
-                    {lockedProfileViews > 0
-                      ? ` · ${lockedProfileViews} locked`
-                      : ''}
+                      ? 'Who viewed you'
+                      : recentProfileViews === 1
+                        ? 'Someone viewed your profile'
+                        : `${recentProfileViews} people viewed your profile`}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] font-semibold text-[#28A8E1]">
+                    {recentProfileViews === 0 ? 'No views yet' : 'View details'}
                   </span>
                 </span>
                 {lockedProfileViews > 0 ? (
-                  <span className="rounded-full bg-[#0A66C2] px-2 py-0.5 text-[10px] font-bold text-white">
+                  <span className="relative rounded-full bg-[#28A8E1] px-2 py-0.5 text-[10px] font-bold text-white shadow-[0_6px_14px_rgba(40,168,225,0.28)]">
                     {lockedProfileViews}
                   </span>
                 ) : null}
@@ -1022,28 +1681,31 @@ export default function OfficeGossipsPage() {
             ) : null}
 
             {!isCompanyAccount ? (
-            <div className={`${card} flex min-h-0 flex-1 flex-col overflow-hidden`}>
-              <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2.5">
-                <h2 className="text-xs font-bold text-slate-700">Circles</h2>
+            <div className={`${card} relative flex min-h-0 flex-1 flex-col overflow-hidden`}>
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.1),transparent_45%),radial-gradient(circle_at_top_left,rgba(40,168,225,0.1),transparent_40%)]" />
+              <div className="relative flex items-center justify-between border-b border-slate-100/70 px-3.5 py-3">
+                <h2 className="dashboard-status-pill inline-flex items-center rounded-full border border-[var(--brand-accent-soft)] bg-white/74 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-accent)] shadow-sm">
+                  Circles
+                </h2>
                 <button
                   type="button"
                   onClick={() => setShowCreateCommunity(true)}
-                  className="rounded-full p-1 text-[#28A8E1] hover:bg-sky-50"
+                  className="rounded-full p-1.5 text-[#28A8E1] transition hover:bg-[var(--brand-primary-soft)]"
                   title="Create circle"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
-              <ul className={`space-y-0 overflow-y-auto ${hideScroll}`}>
+              <ul className={`space-y-1 overflow-y-auto px-2 py-2 ${hideScroll}`}>
                 {communities.map((c) => {
                   const isMember = Boolean(userId && c.memberIds.includes(userId));
                   return (
                     <li
                       key={c.id}
-                      className="border-b border-slate-50 px-3 py-2.5 last:border-0 hover:bg-slate-50/80"
+                      className="rounded-[16px] bg-slate-50/80 px-2.5 py-2.5 transition hover:bg-white"
                     >
-                      <div className="flex items-start gap-2">
-                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#1B3A5F] text-amber-300">
+                      <div className="flex items-start gap-2.5">
+                        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] border border-slate-200/80 bg-white text-[#28A8E1] shadow-[inset_0_1px_0_rgba(255,255,255,0.96)]">
                           <Users className="h-3.5 w-3.5" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -1053,11 +1715,11 @@ export default function OfficeGossipsPage() {
                               if (!isMember) handleJoin(c.id);
                               openCommunityRoom(c.id);
                             }}
-                            className="truncate text-left text-sm font-semibold text-slate-900 hover:text-[#0A66C2]"
+                            className="truncate text-left text-[13px] font-semibold tracking-tight text-slate-900 hover:text-[#28A8E1]"
                           >
                             {c.name}
                           </button>
-                          <p className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-500">
+                          <p className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-slate-500">
                             {c.visibility === 'private' ? (
                               <Lock className="h-3 w-3" />
                             ) : (
@@ -1068,8 +1730,10 @@ export default function OfficeGossipsPage() {
                           <button
                             type="button"
                             onClick={() => (isMember ? handleLeave(c.id) : handleJoin(c.id))}
-                            className={`mt-1.5 text-xs font-semibold ${
-                              isMember ? 'text-slate-500 hover:text-rose-600' : 'text-[#28A8E1]'
+                            className={`mt-2 rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+                              isMember
+                                ? 'bg-slate-100/85 text-slate-500 hover:bg-rose-50 hover:text-rose-600'
+                                : 'bg-[#28A8E1] text-white shadow-[0_8px_16px_rgba(40,168,225,0.22)] hover:bg-[#28A8DF]'
                             }`}
                           >
                             {isMember ? 'Leave' : 'Join'}
@@ -1082,26 +1746,34 @@ export default function OfficeGossipsPage() {
               </ul>
             </div>
             ) : (
-              <div className={`${card} p-3.5`}>
-                <p className="text-xs font-bold text-slate-700">Page tools</p>
-                <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
-                  Circles are personal-only. As a company account you manage posts, people, and
-                  followers on this page.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => actingCompany && openCompanyPage(actingCompany.id)}
-                  className="mt-3 w-full rounded-full bg-[#0A66C2] px-3 py-2 text-xs font-semibold text-white hover:bg-[#004182]"
-                >
-                  Open company page
-                </button>
+              <div className={`${card} relative overflow-hidden p-3.5`}>
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.12),transparent_40%)]" />
+                <div className="relative">
+                  <p className="text-xs font-bold text-slate-700">Page tools</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+                    Circles stay personal-only. Manage posts, people, and requests on this company
+                    page.
+                  </p>
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (actingCompany) setSelectedCompanyId(actingCompany.id);
+                        setOgTab('feed');
+                      }}
+                      className="w-full rounded-full bg-[#28A8E1] px-2 py-2 text-[11px] font-semibold text-white shadow-[0_8px_16px_rgba(40,168,225,0.2)]"
+                    >
+                      Posts
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </aside>
 
           {/* CENTER — search + feed / company page */}
           <section className="flex min-h-0 min-w-0 flex-col gap-2.5">
-            {ogTab === 'communities' && activeCommunity ? (
+            {ogTab === 'feed' && activeCommunity ? (
               <div className={`${card} flex shrink-0 items-center gap-2 px-3 py-2.5`}>
                 <button
                   type="button"
@@ -1124,7 +1796,9 @@ export default function OfficeGossipsPage() {
               </div>
             ) : null}
             <div className="relative shrink-0">
-              <div className={`${card} flex items-center gap-2 px-3 py-2`}>
+              <div
+                className={`${card} flex items-center gap-2.5 px-3.5 py-2.5 transition focus-within:border-[rgba(40,168,225,0.28)]`}
+              >
                 <Search className="h-4 w-4 shrink-0 text-slate-400" />
                 <input
                   value={companySearch}
@@ -1137,7 +1811,7 @@ export default function OfficeGossipsPage() {
                     window.setTimeout(() => setSearchOpen(false), 180);
                   }}
                   placeholder="Search people, circles, posts…"
-                  className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
+                  className="min-w-0 flex-1 bg-transparent text-[14px] font-medium text-slate-800 outline-none placeholder:font-normal placeholder:text-slate-400"
                 />
                 {companySearch ||
                 selectedProfileUserId ||
@@ -1155,7 +1829,7 @@ export default function OfficeGossipsPage() {
                         setSelectedCompanyId(actingCompany.id);
                       }
                     }}
-                    className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                    className="rounded-full p-1 text-slate-400 hover:bg-slate-100/80 hover:text-slate-600"
                     title={isCompanyAccount ? 'Clear search' : 'Clear / back to feed'}
                   >
                     <X className="h-4 w-4" />
@@ -1247,17 +1921,20 @@ export default function OfficeGossipsPage() {
             </div>
 
             {!selectedCompany && !selectedProfileUserId ? (
-              <div className="flex shrink-0 items-center justify-between px-0.5">
-                <p className="text-xs font-semibold text-slate-500">
-                  Feed <span className="font-normal text-slate-400">· {feed.length}</span>
+              <div className="mb-1 flex shrink-0 items-center justify-between px-1">
+                <p className="dashboard-status-pill inline-flex items-center rounded-full border border-transparent bg-[var(--brand-primary-soft)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                  Your feed
+                  <span className="ml-1.5 font-semibold normal-case tracking-normal text-slate-500">
+                    · {feed.length}
+                  </span>
                 </p>
               </div>
             ) : null}
 
             <div
               ref={feedRef}
-              className={`min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5 ${hideScroll} ${
-                selectedCompany || selectedProfileUserId ? '' : 'space-y-2.5'
+              className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-0.5 pb-3 pt-1.5 ${hideScroll} ${
+                selectedCompany || selectedProfileUserId ? '' : 'space-y-3.5'
               }`}
             >
               {selectedProfileUserId && userId ? (
@@ -1275,31 +1952,32 @@ export default function OfficeGossipsPage() {
                     const liked = Boolean(userId && post.likeIds.includes(userId));
                     const commentCount = getCommentsForPost(post.id).length;
                     return (
-                      <article className={`${card} p-3.5 sm:p-4`}>
+                      <article className={feedPostFrame}>
+                        <div className={feedPostInner}>
                         <div className="flex items-start gap-3">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#1B3A5F]">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-slate-200/80 bg-white text-[15px] font-semibold text-[#28A8E1] shadow-[inset_0_1px_0_rgba(255,255,255,0.96)]">
                             {post.authorName.slice(0, 1).toUpperCase()}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-slate-900">
+                            <p className="text-[15px] font-semibold tracking-tight text-slate-900">
                               {post.authorName}
                             </p>
-                            <p className="mt-0.5 text-xs text-slate-500">
+                            <p className="mt-0.5 text-[12px] font-medium text-slate-400">
                               {timeAgo(post.createdAt)}
                             </p>
                             {post.text ? (
-                              <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+                              <p className="mt-3 whitespace-pre-wrap text-[14px] leading-[1.55] text-slate-700">
                                 {post.text}
                               </p>
                             ) : null}
-                            <div className="mt-3 flex items-center gap-1 border-t border-slate-100 pt-1.5">
+                            <div className="mt-3.5 flex items-center gap-1 border-t border-slate-100/80 pt-2">
                               <button
                                 type="button"
                                 onClick={() => handleLike(post.id)}
-                                className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold ${
+                                className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-[12px] font-semibold transition ${
                                   liked
-                                    ? 'text-rose-600 hover:bg-rose-50'
-                                    : 'text-slate-600 hover:bg-slate-50'
+                                    ? 'bg-rose-50 text-rose-600'
+                                    : 'bg-slate-100/70 text-slate-500 hover:bg-slate-100 hover:text-slate-800'
                                 }`}
                               >
                                 <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
@@ -1308,13 +1986,14 @@ export default function OfficeGossipsPage() {
                               <button
                                 type="button"
                                 onClick={() => openComments(post.id)}
-                                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-slate-100/70 py-2.5 text-[12px] font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
                               >
                                 <MessageCircle className="h-4 w-4" />
                                 {commentCount || 'Comment'}
                               </button>
                             </div>
                           </div>
+                        </div>
                         </div>
                       </article>
                     );
@@ -1325,61 +2004,141 @@ export default function OfficeGossipsPage() {
                   company={selectedCompany}
                   userId={userId}
                   authorName={authorName}
-                  posts={feed}
+                  viewerRealName={realName}
+                  posts={companyFeed}
                   isConnected={selectedCompany.memberIds.includes(userId)}
                   canConnect={canConnectToCompany(selectedCompany, {
                     email: user?.email,
                     cvCompanies,
                   })}
-                  onBack={() => setSelectedCompanyId(null)}
+                  hideBack={isCompanyAccount && selectedCompany.id === actingCompany?.id}
+                  manageAsCompany={
+                    isCompanyAccount && selectedCompany.id === actingCompany?.id
+                  }
+                  variant="feed"
+                  initialTab={companyPageInitialTab}
+                  onBack={() => {
+                    if (isCompanyAccount) return;
+                    setSelectedCompanyId(null);
+                    setCompanyPageInitialTab(undefined);
+                  }}
                   onConnect={() => handleConnectCompany(selectedCompany)}
                   onRefresh={refresh}
                   onOpenChat={openChat}
                   onOpenProfile={openUserProfile}
+                  onOpenReferenceModule={() =>
+                    openReferenceCheckForCompany(selectedCompany.id, true)
+                  }
                   renderPost={(post) => {
                     const liked = Boolean(userId && post.likeIds.includes(userId));
-                    const commentCount = getCommentsForPost(post.id).length;
+                    const commentCount =
+                      commentPostId === post.id
+                        ? commentThread.length
+                        : getCommentsForPost(post.id).length;
+                    const commentsOpen = commentPostId === post.id;
                     return (
-                      <article className={`${card} p-3.5 sm:p-4`}>
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#1B3A5F]">
-                            {post.authorName.slice(0, 1).toUpperCase()}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-slate-900">
-                              {post.authorName}
-                            </p>
-                            <p className="mt-0.5 text-xs text-slate-500">
-                              {timeAgo(post.createdAt)}
-                            </p>
-                            {post.text ? (
-                              <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
-                                {post.text}
+                      <article id={`og-post-${post.id}`} className={feedPostFrame}>
+                        <div className={feedPostInner}>
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[14px] border border-slate-200/80 bg-white text-[14px] font-semibold text-[#28A8E1]">
+                              {selectedCompany.logoUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={selectedCompany.logoUrl}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                post.authorName.slice(0, 1).toUpperCase()
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-[15px] font-semibold tracking-tight text-slate-900">
+                                {post.authorName}
                               </p>
-                            ) : null}
-                            <div className="mt-3 flex items-center gap-1 border-t border-slate-100 pt-1.5">
-                              <button
-                                type="button"
-                                onClick={() => handleLike(post.id)}
-                                className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold ${
-                                  liked
-                                    ? 'text-rose-600 hover:bg-rose-50'
-                                    : 'text-slate-600 hover:bg-slate-50'
-                                }`}
-                              >
-                                <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
-                                {post.likeIds.length || 'Like'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => openComments(post.id)}
-                                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-                              >
-                                <MessageCircle className="h-4 w-4" />
-                                {commentCount || 'Comment'}
-                              </button>
+                              <p className="text-[12px] font-medium text-slate-400">
+                                {timeAgo(post.createdAt)}
+                              </p>
                             </div>
                           </div>
+                          <CompanyPostMedia post={post} />
+                          <ExpandableCaption text={post.text} className="mt-3" />
+                          <div className="mt-3.5 flex items-center gap-1 border-t border-slate-100/80 pt-2">
+                            <button
+                              type="button"
+                              onClick={() => handleLike(post.id)}
+                              className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-[12px] font-semibold transition ${
+                                liked
+                                  ? 'bg-rose-50 text-rose-600'
+                                  : 'bg-slate-100/70 text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                              }`}
+                            >
+                              <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
+                              {post.likeIds.length || 'Like'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openComments(post.id)}
+                              className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-[12px] font-semibold transition ${
+                                commentsOpen
+                                  ? 'bg-sky-50 text-[#28A8E1]'
+                                  : 'bg-slate-100/70 text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                              }`}
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                              {commentCount || 'Comment'}
+                            </button>
+                          </div>
+                          {commentsOpen ? (
+                            <div className="mt-3 space-y-2.5 rounded-[16px] border border-slate-100/90 bg-slate-50/80 p-3">
+                              <div className="max-h-44 space-y-2 overflow-y-auto">
+                                {commentThread.map((c) => (
+                                  <div
+                                    key={c.id}
+                                    className="rounded-[14px] bg-white px-3 py-2 shadow-sm"
+                                  >
+                                    <p className="text-[12px] font-semibold text-slate-800">
+                                      {c.authorName}{' '}
+                                      <span className="font-medium text-slate-400">
+                                        · {timeAgo(c.createdAt)}
+                                      </span>
+                                    </p>
+                                    <p className="mt-0.5 text-[13px] leading-relaxed text-slate-700">
+                                      {c.text}
+                                    </p>
+                                  </div>
+                                ))}
+                                {commentThread.length === 0 ? (
+                                  <p className="px-1 text-[12px] font-medium text-slate-400">
+                                    Be the first to comment.
+                                  </p>
+                                ) : null}
+                              </div>
+                              <div className="flex gap-2">
+                                <input
+                                  value={commentText}
+                                  onChange={(e) => setCommentText(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSendComment();
+                                  }}
+                                  placeholder={
+                                    isCompanyAccount
+                                      ? `Reply as ${actingCompany?.name || 'company'}…`
+                                      : 'Write a comment…'
+                                  }
+                                  className="min-w-0 flex-1 rounded-full border border-slate-200/80 bg-white px-3.5 py-2.5 text-[13px] font-medium text-slate-800 outline-none placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.45)]"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleSendComment}
+                                  title="Send"
+                                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#28A8E1] text-white shadow-sm"
+                                >
+                                  <ComposeAssetIcon src="/icons/send.png" alt="Send" size={18} />
+                                </button>
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                       </article>
                     );
@@ -1399,31 +2158,43 @@ export default function OfficeGossipsPage() {
                   <article
                     id={`og-post-${post.id}`}
                     key={post.id}
-                    className={`${card} p-3.5 sm:p-4 ${
-                      highlightPostId === post.id ? 'ring-2 ring-[#28A8E1]' : ''
+                    className={`${feedPostFrame} ${
+                      highlightPostId === post.id
+                        ? 'shadow-[0_0_0_3px_rgba(40,168,225,0.28)]'
+                        : ''
                     }`}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#1B3A5F]">
+                    <div className={feedPostInner}>
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.06),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(40,168,225,0.05),transparent_38%)] opacity-70" />
+                    <div className="relative flex items-start gap-3">
+                      <button
+                        type="button"
+                        onClick={() => openUserProfile(post.authorId)}
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border border-white/90 bg-linear-to-br from-[var(--brand-primary-soft)] to-white text-[15px] font-semibold text-[#28A8E1] shadow-[0_10px_22px_rgba(40,168,225,0.14),inset_0_1px_0_rgba(255,255,255,0.95)] ring-2 ring-[rgba(252,150,32,0.12)] transition group-hover:ring-[rgba(40,168,225,0.22)]"
+                        aria-label={`Open ${post.authorName}`}
+                      >
                         {post.authorName.slice(0, 1).toUpperCase()}
-                      </div>
+                      </button>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-slate-900">
+                        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                           <button
                             type="button"
                             onClick={() => openUserProfile(post.authorId)}
-                            className="hover:text-[#0A66C2] hover:underline"
+                            className="text-[15px] font-semibold tracking-tight text-slate-900 hover:text-[#28A8E1]"
                           >
                             {post.authorName}
                           </button>
-                        </p>
-                        <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-slate-500">
+                          <span className="rounded-full bg-slate-100/80 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                            {timeAgo(post.createdAt)}
+                          </span>
+                        </div>
+                        <p className="mt-1.5">
                           <button
                             type="button"
                             onClick={() => {
                               if (post.companyPageId) openCompanyPage(post.companyPageId);
                             }}
-                            className="inline-flex items-center gap-1 font-medium text-[#0A66C2] hover:underline"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(40,168,225,0.14)] bg-[var(--brand-primary-soft)]/70 px-2.5 py-1 text-[11px] font-semibold text-[#28A8E1] transition hover:border-[rgba(40,168,225,0.28)] hover:bg-[var(--brand-primary-soft)]"
                           >
                             {post.companyPageId ? (
                               <Briefcase className="h-3 w-3" />
@@ -1432,43 +2203,17 @@ export default function OfficeGossipsPage() {
                             )}
                             {place}
                           </button>
-                          <span>·</span>
-                          <span>{timeAgo(post.createdAt)}</span>
                         </p>
-                        {post.text ? (
-                          <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
-                            {post.text}
-                          </p>
-                        ) : null}
-                        {post.mediaUrl && post.type === 'image' ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={post.mediaUrl}
-                            alt=""
-                            className="mt-3 max-h-96 w-full rounded-lg object-cover"
-                          />
-                        ) : null}
-                        {post.mediaUrl && post.type === 'video' ? (
-                          <video
-                            src={post.mediaUrl}
-                            controls
-                            className="mt-3 max-h-96 w-full rounded-lg bg-black"
-                          />
-                        ) : null}
-                        {post.mediaUrl && post.type === 'voice' ? (
-                          <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
-                            <Mic className="h-4 w-4 text-slate-500" />
-                            <audio src={post.mediaUrl} controls className="w-full" />
-                          </div>
-                        ) : null}
-                        <div className="mt-3 flex items-center gap-1 border-t border-slate-100 pt-1.5">
+                        <ContainedPostMedia post={post} className="mt-3.5" />
+                        <ExpandableCaption text={post.text} className="mt-3" />
+                        <div className="mt-4 flex items-center gap-1.5 rounded-[16px] border border-slate-100/90 bg-slate-50/75 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
                           <button
                             type="button"
                             onClick={() => handleLike(post.id)}
-                            className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition ${
+                            className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-[12px] py-2.5 text-[12px] font-semibold transition ${
                               liked
-                                ? 'text-rose-600 hover:bg-rose-50'
-                                : 'text-slate-600 hover:bg-slate-50'
+                                ? 'bg-white text-rose-600 shadow-sm'
+                                : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'
                             }`}
                           >
                             <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
@@ -1477,10 +2222,10 @@ export default function OfficeGossipsPage() {
                           <button
                             type="button"
                             onClick={() => openComments(post.id)}
-                            className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition ${
+                            className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-[12px] py-2.5 text-[12px] font-semibold transition ${
                               commentPostId === post.id
-                                ? 'bg-sky-50 text-[#0A66C2]'
-                                : 'text-slate-600 hover:bg-slate-50'
+                                ? 'bg-white text-[#28A8E1] shadow-sm'
+                                : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'
                             }`}
                           >
                             <MessageCircle className="h-4 w-4" />
@@ -1489,21 +2234,26 @@ export default function OfficeGossipsPage() {
                         </div>
 
                         {commentPostId === post.id ? (
-                          <div className="mt-2 space-y-2 border-t border-slate-100 pt-2">
+                          <div className="mt-3 space-y-2.5 rounded-[16px] border border-slate-100/90 bg-white/70 p-3">
                             <div className={`max-h-40 space-y-2 overflow-y-auto ${hideScroll}`}>
                               {commentThread.map((c) => (
-                                <div key={c.id} className="rounded-lg bg-slate-50 px-2.5 py-1.5">
-                                  <p className="text-xs font-semibold text-slate-800">
+                                <div
+                                  key={c.id}
+                                  className="rounded-[14px] bg-slate-50/90 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]"
+                                >
+                                  <p className="text-[12px] font-semibold text-slate-800">
                                     {c.authorName}{' '}
-                                    <span className="font-normal text-slate-400">
+                                    <span className="font-medium text-slate-400">
                                       · {timeAgo(c.createdAt)}
                                     </span>
                                   </p>
-                                  <p className="text-sm text-slate-700">{c.text}</p>
+                                  <p className="mt-0.5 text-[13px] leading-relaxed text-slate-700">
+                                    {c.text}
+                                  </p>
                                 </div>
                               ))}
                               {commentThread.length === 0 ? (
-                                <p className="px-1 text-xs text-slate-400">
+                                <p className="px-1 text-[12px] font-medium text-slate-400">
                                   Be the first to comment.
                                 </p>
                               ) : null}
@@ -1516,13 +2266,13 @@ export default function OfficeGossipsPage() {
                                   if (e.key === 'Enter') handleSendComment();
                                 }}
                                 placeholder="Write a comment…"
-                                className="min-w-0 flex-1 rounded-full border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#28A8E1]"
+                                className="min-w-0 flex-1 rounded-full border border-slate-200/80 bg-white px-3.5 py-2.5 text-[13px] font-medium text-slate-800 outline-none placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.45)]"
                               />
                               <button
                                 type="button"
                                 onClick={handleSendComment}
                                 title="Send"
-                                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-50 ring-1 ring-sky-100 transition hover:bg-sky-100"
+                                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.96)] transition hover:border-[rgba(40,168,225,0.35)] hover:bg-[var(--brand-primary-soft)]"
                               >
                                 <ComposeAssetIcon src="/icons/send.png" alt="Send" size={18} />
                               </button>
@@ -1531,178 +2281,57 @@ export default function OfficeGossipsPage() {
                         ) : null}
                       </div>
                     </div>
+                    </div>
                   </article>
                 );
               })}
               {displayFeed.length === 0 ? (
-                <div className={`${card} px-5 py-14 text-center text-sm text-slate-500`}>
-                  No posts yet — open Communities to join a circle and start the conversation.
+                <div className={`${card} px-6 py-16 text-center`}>
+                  <p className="text-[15px] font-semibold tracking-tight text-slate-800">
+                    No posts yet
+                  </p>
+                  <p className="mx-auto mt-2 max-w-xs text-[13px] font-medium leading-relaxed text-slate-500">
+                    Open Communities to join a circle and start the conversation.
+                  </p>
                 </div>
               ) : null}
                 </>
               )}
             </div>
 
-            {/* Compose only inside a community room — Feed stays read-focused */}
-            {ogTab === 'communities' && activeCommunityId ? (
-            <div className={`${card} shrink-0 p-3 sm:p-3.5`}>
-              {composeOptions.length === 0 ? (
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-slate-800">Join this circle to post</p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    You need membership before you can share here.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => activeCommunityId && handleJoin(activeCommunityId)}
-                    className="mt-3 rounded-full bg-[#1B3A5F] px-4 py-2 text-xs font-semibold text-white"
-                  >
-                    Join circle
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <select
-                      value={
-                        composeTarget
-                          ? `${composeTarget.kind}:${composeTarget.id}`
-                          : composeOptions[0]?.value
-                      }
-                      onChange={(e) => {
-                        const opt = composeOptions.find((o) => o.value === e.target.value);
-                        if (opt) setComposeTarget(opt.target);
-                      }}
-                      className="max-w-[220px] truncate rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs font-medium text-slate-700"
-                    >
-                      {composeOptions.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="text-[11px] text-slate-400">Posting to</span>
-                  </div>
-                  <div className="flex items-end gap-2">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#1B3A5F]">
-                      {authorName.slice(0, 1).toUpperCase()}
-                    </div>
-                    <WritingAssistField
-                      inputRef={composeInputRef}
-                      value={composeText}
-                      onChange={setComposeText}
-                      rows={2}
-                      wrapperClassName="min-w-0 flex-1"
-                      placeholder="Spill the gossip… use @ to tag someone"
-                      className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-[#28A8E1] focus:bg-white"
-                    />
-                    <button
-                      type="button"
-                      disabled={posting}
-                      onClick={() => void handlePost()}
-                      title="Send"
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-50 ring-1 ring-sky-100 transition hover:bg-sky-100 disabled:opacity-50"
-                    >
-                      {posting ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-[#28A8E1]" />
-                      ) : (
-                        <ComposeAssetIcon src="/icons/send.png" alt="Send" size={22} />
-                      )}
-                    </button>
-                  </div>
-                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (!f) return;
-                        void pickMedia(f, 'image');
-                        e.target.value = '';
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={insertAtMention}
-                      title="Tag someone"
-                      aria-label="Tag someone"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-slate-50"
-                    >
-                      <ComposeAssetIcon src="/icons/email.png" alt="Tag" size={20} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      title="Add image"
-                      aria-label="Add image"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-slate-50"
-                    >
-                      <ComposeAssetIcon src="/icons/image-.png" alt="Image" size={20} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        recording ? mediaRecorderRef.current?.stop() : void startVoice()
-                      }
-                      title={recording ? 'Stop recording' : 'Voice note'}
-                      aria-label={recording ? 'Stop recording' : 'Voice note'}
-                      className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-slate-50 ${
-                        recording ? 'ring-1 ring-rose-300 bg-rose-50' : ''
-                      }`}
-                    >
-                      <ComposeAssetIcon
-                        src="/icons/waveform-path.png"
-                        alt="Voice"
-                        size={20}
-                      />
-                    </button>
-                    {mediaPreview ? (
-                      <span className="ml-auto inline-flex items-center gap-2 text-xs text-slate-500">
-                        Image attached
-                        <button
-                          type="button"
-                          className="font-semibold text-rose-600"
-                          onClick={() => {
-                            setMediaPreview(null);
-                            setComposeType('text');
-                          }}
-                        >
-                          Remove
-                        </button>
-                      </span>
-                    ) : null}
-                  </div>
-                </>
-              )}
-            </div>
-            ) : null}
           </section>
 
           {/* RIGHT — discover circles only (feed sidebar) */}
           <aside
-            className={`hidden h-full min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain pb-6 xl:flex ${hideScroll} ${
+            className={`hidden h-full min-h-0 flex-col gap-3 overscroll-contain pb-6 xl:flex ${hideScroll} ${
               ogTab === 'feed' ? '' : '!hidden'
-            }`}
+            } ${isCompanyAccount ? 'overflow-hidden' : 'overflow-y-auto'}`}
           >
             {/* Hot circles — LinkedIn News style (personal account only) */}
             {!isCompanyAccount ? (
-            <div className={`${card} shrink-0 overflow-hidden`}>
-              <div className="flex items-start justify-between px-3.5 pt-3.5">
+            <div className="shrink-0 rounded-[24px] bg-linear-to-br from-[#28A8E1] via-[#5BB8E8] to-[#FC9620] p-[1.5px] shadow-[0_12px_30px_rgba(40,168,225,0.12),0_4px_16px_rgba(252,150,32,0.1)]">
+              <div className="relative overflow-hidden rounded-[22.5px] bg-linear-to-b from-white via-[#FBFCFE] to-[#F8FAFD]">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.14),transparent_36%),radial-gradient(circle_at_top_left,rgba(40,168,225,0.12),transparent_40%)]" />
+              <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[var(--brand-accent-glow)] blur-3xl" />
+              <div className="relative flex items-start justify-between px-4 pb-3 pt-4">
                 <div>
-                  <h2 className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
-                    <Flame className="h-4 w-4 text-orange-500" />
+                  <div className="dashboard-status-pill inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-accent-soft)] bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-accent)] shadow-sm">
+                    <Flame className="h-3 w-3" />
                     Hot circles
-                  </h2>
-                  <p className="mt-0.5 text-xs font-medium text-slate-500">Most active right now</p>
+                  </div>
+                  <p className="mt-2 text-[12px] font-medium text-slate-500">
+                    Most active right now
+                  </p>
                 </div>
-                <span title="Ranked by posts, likes & comments">
-                  <Info className="h-4 w-4 text-slate-400" />
+                <span
+                  title="Ranked by posts, likes & comments"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-100 bg-white/80 text-slate-400 shadow-sm"
+                >
+                  <Info className="h-3.5 w-3.5" />
                 </span>
               </div>
-              <ul className="mt-2 px-1.5 pb-1">
-                {visibleHot.map(({ community, label, engagement }) => {
+              <ul className="relative space-y-2 px-3 pb-3">
+                {visibleHot.map(({ community, label, engagement }, index) => {
                   const isMember = Boolean(userId && community.memberIds.includes(userId));
                   return (
                     <li key={community.id}>
@@ -1712,12 +2341,24 @@ export default function OfficeGossipsPage() {
                           if (!isMember) handleJoin(community.id);
                           openCommunityRoom(community.id);
                         }}
-                        className="flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-sky-50/80"
+                        className="flex w-full items-center gap-2.5 rounded-[16px] border border-white/90 bg-white/85 px-2.5 py-2.5 text-left shadow-[0_6px_16px_rgba(15,23,42,0.04)] transition hover:-translate-y-px hover:border-[rgba(40,168,225,0.22)] hover:shadow-[0_10px_22px_rgba(40,168,225,0.1)]"
                       >
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#28A8E1]" />
+                        <span
+                          className={`flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-[14px] text-[11px] font-bold text-white ${
+                            [
+                              'bg-linear-to-br from-[#FC9620] to-[#F97316] shadow-[0_8px_16px_rgba(252,150,32,0.28)]',
+                              'bg-linear-to-br from-[#28A8E1] to-[#1F8FC2] shadow-[0_8px_16px_rgba(40,168,225,0.24)]',
+                              'bg-linear-to-br from-[#0EA5E9] to-[#0369A1] shadow-[0_8px_16px_rgba(14,165,233,0.24)]',
+                              'bg-linear-to-br from-[#F59E0B] to-[#D97706] shadow-[0_8px_16px_rgba(245,158,11,0.24)]',
+                            ][index % 4]
+                          }`}
+                        >
+                          <Users className="mb-0.5 h-3 w-3 opacity-90" />
+                          #{index + 1}
+                        </span>
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center gap-1.5">
-                            <span className="truncate text-sm font-semibold text-slate-900">
+                            <span className="truncate text-[13px] font-semibold tracking-tight text-slate-900">
                               {community.name}
                             </span>
                             {community.visibility === 'private' ? (
@@ -1726,34 +2367,39 @@ export default function OfficeGossipsPage() {
                               <Globe2 className="h-3 w-3 shrink-0 text-emerald-500" />
                             )}
                           </span>
-                          <span className="mt-0.5 block text-[11px] text-slate-500">
-                            {label}
-                            {engagement > 0 ? ` · ${engagement} engagement` : ''}
-                            {community.visibility === 'private' ? ' · Private' : ' · Public'}
+                          <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-slate-500">
+                            <span>{label}</span>
+                            {engagement > 0 ? (
+                              <span className="rounded-full bg-[var(--brand-accent-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand-accent)]">
+                                {engagement} eng
+                              </span>
+                            ) : null}
                           </span>
                         </span>
-                        {!isMember ? (
-                          <span className="shrink-0 rounded-full border border-[#28A8E1] px-2.5 py-0.5 text-[11px] font-semibold text-[#28A8E1]">
-                            Open
-                          </span>
-                        ) : (
-                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
-                            Open
-                          </span>
-                        )}
+                        <span
+                          className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                            isMember
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-[#28A8E1] text-white shadow-[0_8px_14px_rgba(40,168,225,0.2)]'
+                          }`}
+                        >
+                          Open
+                        </span>
                       </button>
                     </li>
                   );
                 })}
                 {hotCircles.length === 0 ? (
-                  <li className="px-3 py-4 text-center text-xs text-slate-500">No circles yet.</li>
+                  <li className="px-3 py-4 text-center text-[12px] font-medium text-slate-500">
+                    No circles yet.
+                  </li>
                 ) : null}
               </ul>
               {hotCircles.length > 4 ? (
                 <button
                   type="button"
                   onClick={() => setShowAllHot((v) => !v)}
-                  className="flex w-full items-center gap-1 border-t border-slate-100 px-3.5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                  className="relative flex w-full items-center justify-center gap-1 border-t border-slate-100/80 px-4 py-3 text-[13px] font-semibold text-[#28A8E1] hover:bg-[var(--brand-primary-soft)]/50"
                 >
                   {showAllHot ? 'Show less' : 'Show more circles'}
                   <ChevronDown
@@ -1761,167 +2407,599 @@ export default function OfficeGossipsPage() {
                   />
                 </button>
               ) : null}
+              </div>
             </div>
             ) : (
-              <div className={`${card} p-3.5`}>
-                <h2 className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
-                  <Building2 className="h-4 w-4 text-[#0A66C2]" />
-                  Company inbox
-                </h2>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  Circles are hidden in company mode. Messaging & page updates stay available below.
-                </p>
+              <div className={`${card} relative flex min-h-0 flex-1 flex-col overflow-hidden p-4`}>
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.12),transparent_40%),radial-gradient(circle_at_top_left,rgba(40,168,225,0.1),transparent_42%)]" />
+                <div className="relative flex min-h-0 flex-1 flex-col">
+                  <h2 className="flex shrink-0 items-center gap-1.5 text-[13px] font-semibold tracking-tight text-slate-900">
+                    <Building2 className="h-4 w-4 text-[#28A8E1]" />
+                    Company inbox
+                    {companyInboxItems.filter((i) => i.urgency === 'action').length > 0 ? (
+                      <span className="rounded-full bg-[#FC9620] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                        {companyInboxItems.filter((i) => i.urgency === 'action').length}
+                      </span>
+                    ) : null}
+                  </h2>
+                  <p className="mt-1.5 shrink-0 text-[12px] font-medium leading-relaxed text-slate-500">
+                    Message & reference requests for {actingCompany?.name}.
+                  </p>
+                  {companyInboxItems.length === 0 ? (
+                    <p className="mt-3 flex min-h-[12rem] flex-1 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white/80 px-3 py-6 text-center text-[12px] text-slate-400">
+                      No open requests yet.
+                    </p>
+                  ) : (
+                    <ul className={`mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 ${hideScroll}`}>
+                      {companyInboxItems.map((item) => (
+                        <li key={`${item.kind}-${item.id}`}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedCompanyId(actingCompany?.id || null);
+                              openChat(item.kind, item.id);
+                            }}
+                            className="flex w-full items-start gap-2 rounded-xl border border-white/90 bg-white/90 px-2.5 py-2 text-left shadow-sm transition hover:border-[rgba(40,168,225,0.28)]"
+                          >
+                            <span
+                              className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                                item.kind === 'reference'
+                                  ? 'bg-emerald-50 text-emerald-700'
+                                  : 'bg-sky-50 text-[#28A8E1]'
+                              }`}
+                            >
+                              {item.kind === 'reference' ? (
+                                <ShieldCheck className="h-3.5 w-3.5" />
+                              ) : (
+                                <MessageCircle className="h-3.5 w-3.5" />
+                              )}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[12px] font-semibold text-slate-900">
+                                {item.title}
+                              </span>
+                              <span
+                                className={`mt-0.5 block text-[10px] font-medium ${
+                                  item.urgency === 'action' ? 'text-[#C2410C]' : 'text-slate-500'
+                                }`}
+                              >
+                                {item.subtitle}
+                              </span>
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (actingCompany) {
+                        setSelectedCompanyId(actingCompany.id);
+                        setCompanyPageInitialTab('posts');
+                        setOgTab('feed');
+                      }
+                    }}
+                    className="mt-3 w-full shrink-0 rounded-full border border-[rgba(40,168,225,0.25)] bg-white px-3 py-2 text-[11px] font-semibold text-[#28A8E1] hover:bg-[#F5FAFD]"
+                  >
+                    Open company page
+                  </button>
+                </div>
               </div>
             )}
 
-            <div className={`${card} shrink-0 p-3.5`}>
-              <p className="text-sm font-bold text-slate-900">Tip</p>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
-                Feed is for reading. To post, open a circle under Communities.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setOgTab('communities');
-                  setActiveCommunityId(null);
-                }}
-                className="mt-3 w-full rounded-full bg-[#1B3A5F] px-3 py-2 text-xs font-semibold text-white hover:opacity-95"
-              >
-                Go to Communities
-              </button>
+            <div className={`${card} relative shrink-0 overflow-hidden`}>
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.12),transparent_42%)]" />
+              <div className="relative px-3.5 py-3">
+                {isCompanyAccount ? (
+                  <>
+                    <p className="dashboard-status-pill inline-flex rounded-full border border-[rgba(252,150,32,0.28)] bg-[#FFF8F1] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-[#C2410C]">
+                      Tip
+                    </p>
+                    <p className="mt-1.5 text-[12px] font-medium leading-snug text-slate-600">
+                      Use Company inbox on the right for message & reference requests.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="dashboard-status-pill inline-flex rounded-full border border-transparent bg-[var(--brand-primary-soft)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                      Tip
+                    </p>
+                    <p className="mt-2.5 text-[13px] font-medium leading-relaxed text-slate-600">
+                      Feed is for reading. To post, open a circle under Communities.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOgTab('communities');
+                        setActiveCommunityId(null);
+                      }}
+                      className="mt-3.5 w-full rounded-full bg-[#28A8E1] px-3 py-2.5 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.22)] transition hover:bg-[#28A8DF]"
+                    >
+                      Go to Communities
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </aside>
         </div>
 
-        {/* Communities list — main joined list + Discover side panel */}
-        {ogTab === 'communities' && !activeCommunityId ? (
-          <div className="grid min-h-0 flex-1 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-            <div className={`min-h-0 overflow-y-auto ${hideScroll}`}>
-              <div className={`${card} overflow-hidden`}>
-                <div className="flex items-center justify-between border-b border-slate-100 px-3.5 py-3">
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900">Communities</h2>
-                    <p className="text-[11px] text-slate-500">Open a circle to read and post</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateCommunity(true)}
-                    className="rounded-full bg-[#1B3A5F] p-2 text-white hover:opacity-95"
-                    title="Create community"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
-                <ul className="divide-y divide-slate-100">
-                  {joined.map((c) => {
-                    const postCount = feed.filter((p) => p.communityId === c.id).length;
-                    return (
-                      <li key={c.id}>
-                        <button
-                          type="button"
-                          onClick={() => openCommunityRoom(c.id)}
-                          className="flex w-full items-center gap-3 px-3.5 py-3.5 text-left transition hover:bg-sky-50/80"
-                        >
-                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#1B3A5F]">
-                            {c.name.slice(0, 1).toUpperCase()}
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="flex items-center gap-1.5">
-                              <span className="truncate text-sm font-semibold text-slate-900">{c.name}</span>
-                              {c.visibility === 'private' ? (
-                                <Lock className="h-3 w-3 shrink-0 text-slate-400" />
-                              ) : null}
-                            </span>
-                            <span className="mt-0.5 block text-[11px] text-slate-500">
-                              {c.memberIds.length} members
-                              {postCount > 0 ? ` · ${postCount} posts` : ''}
-                            </span>
-                          </span>
-                          <MessageCircle className="h-4 w-4 shrink-0 text-slate-300" />
-                        </button>
-                      </li>
-                    );
-                  })}
-                  {joined.length === 0 ? (
-                    <li className="px-4 py-10 text-center">
-                      <Users className="mx-auto h-10 w-10 text-slate-300" />
-                      <p className="mt-3 text-sm font-semibold text-slate-800">No communities yet</p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        Pick a circle from Discover on the right, or create your own.
+        {/* Communities — chat-like master/detail; match Feed design system */}
+        {ogTab === 'communities' && !isCompanyAccount ? (
+          <div className="grid min-h-0 h-full flex-1 items-stretch gap-3 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]">
+            <div
+              className={`flex min-h-0 h-full flex-col ${
+                activeCommunityId ? 'hidden lg:flex' : ''
+              }`}
+            >
+              <div className="flex min-h-0 h-full flex-1 flex-col overflow-hidden rounded-[24px] bg-linear-to-br from-[#28A8E1] via-[#5BB8E8] to-[#FC9620] p-[1.5px] shadow-[0_12px_30px_rgba(40,168,225,0.12),0_4px_16px_rgba(252,150,32,0.1)]">
+                <div className="relative flex min-h-0 h-full flex-1 flex-col overflow-hidden rounded-[22.5px] bg-linear-to-b from-white via-[#FBFCFE] to-[#F8FAFD]">
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.12),transparent_36%),radial-gradient(circle_at_top_left,rgba(40,168,225,0.1),transparent_40%)]" />
+                  <div className="relative flex shrink-0 items-center justify-between border-b border-slate-100/80 px-3.5 py-3">
+                    <div>
+                      <h2 className="dashboard-status-pill inline-flex items-center rounded-full border border-[var(--brand-accent-soft)] bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-accent)] shadow-sm">
+                        Communities
+                      </h2>
+                      <p className="mt-1.5 text-[12px] font-medium text-slate-500">
+                        Circles & company pages
                       </p>
+                    </div>
+                    <div className="relative">
                       <button
                         type="button"
-                        onClick={() => setShowCreateCommunity(true)}
-                        className="mt-4 rounded-full bg-[#1B3A5F] px-4 py-2 text-xs font-semibold text-white"
+                        onClick={() => setCreateMenuOpen((o) => !o)}
+                        className="rounded-full bg-[#28A8E1] p-2 text-white shadow-[0_8px_16px_rgba(40,168,225,0.28)] transition hover:bg-[#28A8DF]"
+                        title="Create"
                       >
-                        Create community
+                        <Plus className="h-4 w-4" />
                       </button>
-                    </li>
-                  ) : null}
-                </ul>
+                      {createMenuOpen ? (
+                        <div className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_16px_40px_rgba(15,23,42,0.14)]">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCreateMenuOpen(false);
+                              setShowCreateCommunity(true);
+                            }}
+                            className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left text-sm font-semibold text-slate-800 transition hover:bg-[#F5FAFD]"
+                          >
+                            <Users className="h-4 w-4 text-[#28A8E1]" />
+                            Create circle
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCreateMenuOpen(false);
+                              setShowCreateCompany(true);
+                            }}
+                            className="flex w-full items-center gap-2.5 border-t border-slate-100 px-3.5 py-3 text-left text-sm font-semibold text-slate-800 transition hover:bg-[#FFF8F1]"
+                          >
+                            <Building2 className="h-4 w-4 text-[#FC9620]" />
+                            Create company page
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  <ul className={`relative min-h-0 flex-1 space-y-1.5 overflow-y-auto px-2.5 py-2.5 ${hideScroll}`}>
+                    {joined.map((c, index) => {
+                      const postCount = feed.filter((p) => p.communityId === c.id).length;
+                      const selected = activeCommunityId === c.id;
+                      return (
+                        <li key={c.id}>
+                          <button
+                            type="button"
+                            onClick={() => openCommunityRoom(c.id)}
+                            className={`flex w-full items-center gap-3 rounded-[16px] border px-2.5 py-2.5 text-left transition ${
+                              selected
+                                ? 'border-[rgba(40,168,225,0.28)] bg-[var(--brand-primary-soft)] shadow-[0_8px_18px_rgba(40,168,225,0.12)]'
+                                : 'border-white/90 bg-white/85 shadow-[0_6px_16px_rgba(15,23,42,0.04)] hover:-translate-y-px hover:border-[rgba(40,168,225,0.22)]'
+                            }`}
+                          >
+                            <span
+                              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] text-sm font-bold text-white ${
+                                [
+                                  'bg-linear-to-br from-[#FC9620] to-[#F97316] shadow-[0_8px_16px_rgba(252,150,32,0.28)]',
+                                  'bg-linear-to-br from-[#28A8E1] to-[#1F8FC2] shadow-[0_8px_16px_rgba(40,168,225,0.24)]',
+                                  'bg-linear-to-br from-[#0EA5E9] to-[#0369A1] shadow-[0_8px_16px_rgba(14,165,233,0.24)]',
+                                  'bg-linear-to-br from-[#F59E0B] to-[#D97706] shadow-[0_8px_16px_rgba(245,158,11,0.24)]',
+                                ][index % 4]
+                              }`}
+                            >
+                              {c.name.slice(0, 1).toUpperCase()}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="flex items-center gap-1.5">
+                                <span className="truncate text-[13px] font-semibold tracking-tight text-slate-900">
+                                  {c.name}
+                                </span>
+                                {c.visibility === 'private' ? (
+                                  <Lock className="h-3 w-3 shrink-0 text-slate-400" />
+                                ) : (
+                                  <Globe2 className="h-3 w-3 shrink-0 text-emerald-500" />
+                                )}
+                              </span>
+                              <span className="mt-0.5 block text-[11px] font-medium text-slate-500">
+                                {c.memberIds.length} members
+                                {postCount > 0 ? ` · ${postCount} posts` : ''}
+                              </span>
+                            </span>
+                            <MessageCircle className="h-4 w-4 shrink-0 text-[#28A8E1]/50" />
+                          </button>
+                        </li>
+                      );
+                    })}
+                    {joined.length === 0 ? (
+                      <li className="px-3 py-8 text-center">
+                        <Users className="mx-auto h-9 w-9 text-slate-300" />
+                        <p className="mt-2 text-sm font-semibold text-slate-800">No communities yet</p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">
+                          Join from Discover, create a circle, or add a company page.
+                        </p>
+                        <div className="mt-3 flex flex-wrap justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowCreateCommunity(true)}
+                            className="rounded-full bg-[#28A8E1] px-4 py-2 text-xs font-semibold text-white shadow-[0_8px_16px_rgba(40,168,225,0.22)] hover:bg-[#28A8DF]"
+                          >
+                            Create circle
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowCreateCompany(true)}
+                            className="rounded-full border border-[rgba(252,150,32,0.35)] bg-[#FFF8F1] px-4 py-2 text-xs font-semibold text-[#C2410C] hover:bg-[#FFEDD5]"
+                          >
+                            Company page
+                          </button>
+                        </div>
+                      </li>
+                    ) : null}
+                  </ul>
+                  <div className={`relative flex max-h-[42%] min-h-0 shrink-0 flex-col border-t border-slate-100/80 px-3.5 py-3`}>
+                    <h3 className="dashboard-status-pill inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--brand-accent-soft)] bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-accent)] shadow-sm">
+                      <Flame className="h-3 w-3" />
+                      Discover
+                    </h3>
+                    <ul className={`mt-2.5 min-h-0 flex-1 space-y-1.5 overflow-y-auto ${hideScroll}`}>
+                      {hotCircles.slice(0, 6).map(({ community, label, engagement }, index) => {
+                        const isMember = Boolean(userId && community.memberIds.includes(userId));
+                        return (
+                          <li key={community.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!isMember) handleJoin(community.id);
+                                openCommunityRoom(community.id);
+                              }}
+                              className="flex w-full items-center gap-2.5 rounded-[14px] border border-white/90 bg-white/80 px-2 py-2 text-left shadow-[0_4px_12px_rgba(15,23,42,0.03)] transition hover:border-[rgba(40,168,225,0.22)] hover:bg-white"
+                            >
+                              <span
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] text-[10px] font-bold text-white ${
+                                  [
+                                    'bg-linear-to-br from-[#FC9620] to-[#F97316]',
+                                    'bg-linear-to-br from-[#28A8E1] to-[#1F8FC2]',
+                                    'bg-linear-to-br from-[#0EA5E9] to-[#0369A1]',
+                                    'bg-linear-to-br from-[#F59E0B] to-[#D97706]',
+                                  ][index % 4]
+                                }`}
+                              >
+                                {community.name.slice(0, 1).toUpperCase()}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-[12px] font-semibold text-slate-800">
+                                  {community.name}
+                                </span>
+                                <span className="mt-0.5 block text-[10px] font-medium text-slate-400">
+                                  {label}
+                                  {engagement > 0 ? ` · ${engagement}` : ''}
+                                </span>
+                              </span>
+                              <span
+                                className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                                  isMember
+                                    ? 'bg-emerald-50 text-emerald-700'
+                                    : 'bg-[#28A8E1] text-white shadow-[0_6px_12px_rgba(40,168,225,0.2)]'
+                                }`}
+                              >
+                                {isMember ? 'Open' : 'Join'}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <aside className={`min-h-0 overflow-y-auto ${hideScroll}`}>
-              <div className={`${card} overflow-hidden`}>
-                <div className="flex items-start justify-between px-3.5 pt-3.5">
-                  <div>
-                    <h2 className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
-                      <Flame className="h-4 w-4 text-orange-500" />
-                      Discover
-                    </h2>
-                    <p className="mt-0.5 text-xs font-medium text-slate-500">Suggested circles</p>
+            <div
+              className={`min-h-0 h-full ${
+                activeCommunityId ? 'flex' : 'hidden lg:flex'
+              } flex-col gap-2.5`}
+            >
+              {activeCommunity && activeCommunityId ? (
+                <>
+                  <div className={`${card} relative flex shrink-0 items-center gap-2.5 overflow-hidden px-3.5 py-3`}>
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.1),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(40,168,225,0.1),transparent_45%)]" />
+                    <button
+                      type="button"
+                      onClick={() => setActiveCommunityId(null)}
+                      className="relative rounded-full p-1.5 text-slate-500 hover:bg-white/80 lg:hidden"
+                      aria-label="Back to communities"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </button>
+                    <div className="relative flex h-10 w-10 items-center justify-center rounded-[14px] bg-linear-to-br from-[#28A8E1] to-[#1F8FC2] text-sm font-bold text-white shadow-[0_8px_16px_rgba(40,168,225,0.24)]">
+                      {activeCommunity.name.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="relative min-w-0 flex-1">
+                      <p className="truncate text-[14px] font-semibold tracking-tight text-slate-900">
+                        {activeCommunity.name}
+                      </p>
+                      <p className="text-[11px] font-medium text-slate-500">
+                        {activeCommunity.memberIds.length} members ·{' '}
+                        {activeCommunity.visibility === 'private' ? 'Private' : 'Public'}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <ul className="mt-2 space-y-0.5 px-1.5 pb-3">
-                  {hotCircles.map(({ community, label, engagement }) => {
-                    const isMember = Boolean(userId && community.memberIds.includes(userId));
-                    return (
-                      <li key={community.id}>
+
+                  <div
+                    className={`min-h-0 flex-1 space-y-2 overflow-y-auto px-2.5 py-3 ${hideScroll}`}
+                    style={{
+                      backgroundColor: '#DCEEF8',
+                      backgroundImage:
+                        'radial-gradient(circle at 12% 18%, rgba(252,150,32,0.1), transparent 26%), radial-gradient(circle at 88% 12%, rgba(40,168,225,0.18), transparent 28%), linear-gradient(180deg, #E8F5FC 0%, #E3F1F9 45%, #F0F7FB 100%)',
+                    }}
+                  >
+                    {displayFeed.length === 0 ? (
+                      <div className={`${card} px-6 py-14 text-center`}>
+                        <p className="text-[15px] font-semibold tracking-tight text-slate-800">
+                          No posts yet
+                        </p>
+                        <p className="mx-auto mt-2 max-w-xs text-[13px] font-medium leading-relaxed text-slate-500">
+                          Be the first to share in this circle.
+                        </p>
+                      </div>
+                    ) : (
+                      displayFeed.map((post) => {
+                        const liked = Boolean(userId && post.likeIds.includes(userId));
+                        const commentCount =
+                          commentPostId === post.id
+                            ? commentThread.length
+                            : getCommentsForPost(post.id).length;
+                        return (
+                          <article key={post.id} className="flex items-start gap-2">
+                            <div className="mt-0.5 flex w-8 shrink-0 justify-center">
+                              <button
+                                type="button"
+                                onClick={() => openUserProfile(post.authorId)}
+                                className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-white bg-linear-to-br from-[#28A8E1] to-[#1F8FC2] text-[11px] font-bold text-white shadow-sm"
+                                aria-label={`Open ${post.authorName}`}
+                              >
+                                {(post.authorName || '?').slice(0, 1).toUpperCase()}
+                              </button>
+                            </div>
+                            <div className="min-w-0 max-w-[min(100%,520px)] flex-1 rounded-2xl rounded-tl-md border border-[#B8E0F4] bg-linear-to-br from-white via-[#F2FAFE] to-[#DFF2FB] px-3.5 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.08)]">
+                              <div className="mb-1.5 flex items-center justify-between gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => openUserProfile(post.authorId)}
+                                  className="truncate text-[12px] font-bold text-[#FC9620] hover:underline"
+                                >
+                                  {post.authorName}
+                                </button>
+                                <span className="shrink-0 text-[10px] font-medium text-slate-400">
+                                  {timeAgo(post.createdAt)}
+                                </span>
+                              </div>
+                              <ContainedPostMedia post={post} className="mt-2" />
+                              <ExpandableCaption text={post.text} className="mt-2" />
+                              <div className="mt-2.5 flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleLike(post.id)}
+                                  className={`inline-flex flex-1 items-center justify-center gap-1 rounded-full py-1.5 text-[11px] font-semibold transition ${
+                                    liked
+                                      ? 'bg-rose-50 text-rose-600'
+                                      : 'bg-white/70 text-slate-500 hover:bg-white hover:text-slate-800'
+                                  }`}
+                                >
+                                  <Heart className={`h-3.5 w-3.5 ${liked ? 'fill-current' : ''}`} />
+                                  {post.likeIds.length ? post.likeIds.length : 'Like'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openComments(post.id)}
+                                  className={`inline-flex flex-1 items-center justify-center gap-1 rounded-full py-1.5 text-[11px] font-semibold transition ${
+                                    commentPostId === post.id
+                                      ? 'bg-[#EAF6FC] text-[#28A8E1]'
+                                      : 'bg-white/70 text-slate-500 hover:bg-white hover:text-slate-800'
+                                  }`}
+                                >
+                                  <MessageCircle className="h-3.5 w-3.5" />
+                                  {commentCount ? commentCount : 'Comment'}
+                                </button>
+                              </div>
+                              {commentPostId === post.id ? (
+                                <div className="mt-2.5 space-y-2 rounded-xl border border-sky-100/80 bg-white/80 p-2.5">
+                                  <div className={`max-h-36 space-y-2 overflow-y-auto ${hideScroll}`}>
+                                    {commentThread.map((c) => (
+                                      <div
+                                        key={c.id}
+                                        className="rounded-lg bg-slate-50 px-2.5 py-1.5"
+                                      >
+                                        <p className="text-[11px] font-semibold text-[#FC9620]">
+                                          {c.authorName}{' '}
+                                          <span className="font-medium text-slate-400">
+                                            · {timeAgo(c.createdAt)}
+                                          </span>
+                                        </p>
+                                        <p className="mt-0.5 text-[12px] leading-relaxed text-slate-700">
+                                          {c.text}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <input
+                                      value={commentText}
+                                      onChange={(e) => setCommentText(e.target.value)}
+                                      placeholder="Write a comment…"
+                                      className="min-w-0 flex-1 rounded-full border border-slate-200/80 bg-white px-3 py-2 text-[13px] font-medium text-slate-800 outline-none placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.45)]"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSendComment()}
+                                      className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#28A8E1] px-3.5 py-2 text-[12px] font-semibold text-white shadow-[0_8px_16px_rgba(40,168,225,0.22)] hover:bg-[#28A8DF]"
+                                    >
+                                      Send
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          </article>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  <div className="relative shrink-0 rounded-[18px] border border-[#D5E0DC] bg-[#EEF5F2] px-2.5 py-2 shadow-[0_4px_14px_rgba(7,94,84,0.06)]">
+                    {!(
+                      userId &&
+                      activeCommunityId &&
+                      activeCommunity?.memberIds.includes(userId)
+                    ) ? (
+                      <div className="px-2 py-2 text-center">
+                        <p className="text-sm font-semibold text-slate-800">Join this circle to post</p>
                         <button
                           type="button"
-                          onClick={() => {
-                            if (!isMember) handleJoin(community.id);
-                            openCommunityRoom(community.id);
-                          }}
-                          className="flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-sky-50/80"
+                          onClick={() => activeCommunityId && handleJoin(activeCommunityId)}
+                          className="mt-2 rounded-full bg-[#00A884] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#029978]"
                         >
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#28A8E1]" />
-                          <span className="min-w-0 flex-1">
-                            <span className="flex items-center gap-1">
-                              <span className="truncate text-[13px] font-semibold text-slate-900">
-                                {community.name}
-                              </span>
-                              {community.visibility === 'private' ? (
-                                <Lock className="h-3 w-3 shrink-0 text-slate-400" />
-                              ) : null}
-                            </span>
-                            <span className="mt-0.5 block text-[10px] text-slate-500">
-                              {label}
-                              {engagement > 0 ? ` · ${engagement}` : ''}
-                            </span>
-                          </span>
-                          <span className="shrink-0 pt-0.5 text-[10px] font-bold uppercase tracking-wide text-[#28A8E1]">
-                            {isMember ? 'Open' : 'Join'}
-                          </span>
+                          Join circle
                         </button>
-                      </li>
-                    );
-                  })}
-                  {hotCircles.length === 0 ? (
-                    <li className="px-2 py-6 text-center text-xs text-slate-400">No suggestions yet.</li>
-                  ) : null}
-                </ul>
-              </div>
-            </aside>
+                      </div>
+                    ) : (
+                      <div>
+                        {mediaPreview ? (
+                          <div className="mb-1.5 flex items-center justify-end px-0.5">
+                            <button
+                              type="button"
+                              className="text-[10px] font-semibold text-rose-600"
+                              onClick={() => {
+                                setMediaPreview(null);
+                                setComposeType('text');
+                              }}
+                            >
+                              Remove image
+                            </button>
+                          </div>
+                        ) : null}
+                        <div className="flex items-end gap-1.5 rounded-[16px] border border-[#D0DDD8] bg-white px-1.5 py-1.5 shadow-sm">
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (!f) return;
+                              void pickMedia(f, 'image');
+                              e.target.value = '';
+                            }}
+                          />
+                          <div className="mb-0.5 flex shrink-0 items-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={insertAtMention}
+                              title="Tag someone"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#54656F] transition hover:bg-[#F0F2F5]"
+                            >
+                              <ComposeAssetIcon src="/icons/email.png" alt="Tag" size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              title="Add image"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#54656F] transition hover:bg-[#F0F2F5]"
+                            >
+                              <ComposeAssetIcon src="/icons/image-.png" alt="Image" size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                recording ? mediaRecorderRef.current?.stop() : void startVoice()
+                              }
+                              title={recording ? 'Stop recording' : 'Voice note'}
+                              className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#F0F2F5] ${
+                                recording ? 'bg-rose-50 ring-1 ring-rose-300' : ''
+                              }`}
+                            >
+                              <ComposeAssetIcon src="/icons/waveform-path.png" alt="Voice" size={16} />
+                            </button>
+                          </div>
+                          <WritingAssistField
+                            inputRef={composeInputRef}
+                            value={composeText}
+                            onChange={setComposeText}
+                            rows={1}
+                            wrapperClassName="min-w-0 flex-1"
+                            placeholder="Spill the gossip… @ to tag"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                if (!posting) void handlePost();
+                              }
+                            }}
+                            className="max-h-24 min-h-[36px] w-full resize-none bg-transparent px-1.5 py-2 text-[13px] leading-snug text-slate-800 outline-none placeholder:text-slate-400"
+                          />
+                          <button
+                            type="button"
+                            disabled={posting}
+                            onClick={() => void handlePost()}
+                            title="Send (Enter) · New line (Shift+Enter)"
+                            className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00A884] shadow-[0_4px_12px_rgba(0,168,132,0.28)] transition hover:bg-[#029978] disabled:opacity-50"
+                          >
+                            {posting ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+                            ) : (
+                              <span className="brightness-0 invert">
+                                <ComposeAssetIcon src="/icons/send.png" alt="Send" size={15} />
+                              </span>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className={`${card} relative flex h-full min-h-[420px] flex-col items-center justify-center overflow-hidden px-6 py-10 text-center`}>
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.1),transparent_36%),radial-gradient(circle_at_bottom_left,rgba(40,168,225,0.12),transparent_40%)]" />
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-[22px] bg-linear-to-br from-[#28A8E1] to-[#1F8FC2] text-white shadow-[0_12px_28px_rgba(40,168,225,0.28)]">
+                    <Users className="h-8 w-8" />
+                  </div>
+                  <h2 className="relative mt-4 text-[16px] font-semibold tracking-tight text-slate-900">
+                    Your communities
+                  </h2>
+                  <p className="relative mt-1.5 max-w-sm text-[13px] font-medium leading-relaxed text-slate-500">
+                    Pick a circle from the list. Posts and the compose box open here — same look as
+                    Feed.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         ) : null}
 
         {ogTab === 'chat' ? (
           <div className="grid min-h-0 h-full flex-1 items-stretch gap-3 lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]">
             <div
-              className={`min-h-0 h-full overflow-y-auto ${hideScroll} ${
-                referenceChatId ? 'hidden lg:block' : ''
+              className={`flex min-h-0 h-full flex-col ${
+                referenceChatId ? 'hidden lg:flex' : ''
               }`}
             >
               {userId ? (
@@ -1947,7 +3025,9 @@ export default function OfficeGossipsPage() {
             >
               {userId &&
               referenceChatId &&
-              (referenceChatKind === 'dm' || referenceChatKind === 'hryantra') ? (
+              (referenceChatKind === 'dm' ||
+                referenceChatKind === 'hryantra' ||
+                referenceChatKind === 'reference') ? (
                 <ReferenceMessagingPanel
                   mode="embedded"
                   kind={referenceChatKind}
@@ -1957,33 +3037,36 @@ export default function OfficeGossipsPage() {
                   onRefresh={refresh}
                 />
               ) : (
-                <div className={`${card} flex h-full min-h-[420px] flex-col items-center justify-center px-6 py-10 text-center`}>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-50 text-[#0A66C2]">
+                <div className={`${card} relative flex h-full min-h-[420px] flex-col items-center justify-center overflow-hidden px-6 py-10 text-center`}>
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.1),transparent_36%),radial-gradient(circle_at_bottom_left,rgba(40,168,225,0.12),transparent_40%)]" />
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-[22px] bg-linear-to-br from-[#28A8E1] to-[#1F8FC2] text-white shadow-[0_12px_28px_rgba(40,168,225,0.28)]">
                     <MessageCircle className="h-8 w-8" />
                   </div>
-                  <h2 className="mt-4 text-base font-bold text-slate-900">Your messages</h2>
-                  <p className="mt-1.5 max-w-sm text-[13px] leading-relaxed text-slate-500">
-                    Open HRYantra Verified or any conversation from the list. Chats open here in the
-                    main panel — no small popup.
+                  <h2 className="relative mt-4 text-[16px] font-semibold tracking-tight text-slate-900">
+                    Your messages
+                  </h2>
+                  <p className="relative mt-1.5 max-w-sm text-[13px] font-medium leading-relaxed text-slate-500">
+                    Pick a conversation from the list. HRYantra and DMs open here in the main
+                    panel — same look as Communities.
                   </p>
-                  <div className="mt-5 w-full max-w-xs space-y-2 text-left">
-                    <div className="rounded-xl border border-sky-100 bg-sky-50/80 px-3 py-2.5">
-                      <p className="text-[11px] font-bold text-[#0A66C2]">Direct messages</p>
-                      <p className="text-[11px] text-slate-600">
-                        {dmPendingCount > 0
-                          ? `${dmPendingCount} waiting for your reply`
-                          : 'No pending message requests'}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
-                      <p className="text-[11px] font-bold text-slate-800">Follow requests</p>
-                      <p className="text-[11px] text-slate-600">
-                        {followPendingCount > 0
-                          ? `${followPendingCount} pending`
-                          : 'No pending follow requests'}
-                      </p>
-                    </div>
-                  </div>
+                  {dmPendingCount > 0 || followPendingCount > 0 ? (
+                    <p className="relative mt-4 inline-flex items-center gap-1.5 rounded-full border border-[rgba(40,168,225,0.2)] bg-white/85 px-3 py-1.5 text-[11px] font-semibold text-[#0A66C2] shadow-sm">
+                      {dmPendingCount > 0 ? (
+                        <span>
+                          {dmPendingCount} message{dmPendingCount === 1 ? '' : 's'} waiting
+                        </span>
+                      ) : null}
+                      {dmPendingCount > 0 && followPendingCount > 0 ? (
+                        <span className="text-slate-300">·</span>
+                      ) : null}
+                      {followPendingCount > 0 ? (
+                        <span>
+                          {followPendingCount} follow request
+                          {followPendingCount === 1 ? '' : 's'}
+                        </span>
+                      ) : null}
+                    </p>
+                  ) : null}
                 </div>
               )}
             </div>
@@ -1991,16 +3074,111 @@ export default function OfficeGossipsPage() {
         ) : null}
 
         {ogTab === 'events' ? (
-          <div className="grid min-h-0 flex-1 items-stretch gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-10">
-            <div className={`min-h-0 space-y-3 overflow-y-auto pr-0.5 ${hideScroll}`}>
-              <div className={`${card} flex flex-wrap items-center justify-between gap-2 px-3.5 py-3`}>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900">Events for you</h2>
-                  <p className="text-[11px] text-slate-500">
-                    Only events & jobs matched to your profile — full catalog lives in LMS
+          <div className="grid min-h-0 flex-1 items-stretch gap-3 lg:grid-cols-[248px_minmax(0,1fr)] xl:grid-cols-[248px_minmax(0,1fr)_272px] lg:gap-4">
+            {/* LEFT — profile (Feed-style) */}
+            <aside
+              className={`hidden min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain pb-4 lg:flex ${hideScroll}`}
+            >
+              <div className={`${card} relative overflow-hidden border border-slate-200/80`}>
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(40,168,225,0.18),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(252,150,32,0.1),transparent_36%)]" />
+                <div className="relative px-3.5 pb-4 pt-5 text-center">
+                  <div className="mx-auto flex h-[4.25rem] w-[4.25rem] items-center justify-center overflow-hidden rounded-full border border-white/80 bg-white/75 text-xl font-bold tracking-tight text-[#28A8E1] shadow-[0_12px_26px_rgba(15,23,42,0.08)] ring-2 ring-[rgba(40,168,225,0.2)]">
+                    {user?.profilePhotoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={user.profilePhotoUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      authorName.slice(0, 1).toUpperCase()
+                    )}
+                  </div>
+                  <p className="mt-3 truncate text-[15px] font-semibold tracking-tight text-slate-900">
+                    {authorName}
+                  </p>
+                  <p className="truncate text-[12px] font-medium text-slate-500">
+                    {workDomain ? `@${workDomain}` : 'Office Gossips'}
+                  </p>
+                  <p className="mt-2.5 border-t border-slate-100/80 pt-2.5 text-[11px] font-medium text-slate-500">
+                    <span className="font-semibold text-slate-700">{joined.length}</span> circles ·{' '}
+                    <span className="font-semibold text-slate-700">
+                      {listFollowedCompanyIds(userId || '').length}
+                    </span>{' '}
+                    following
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+              </div>
+            </aside>
+
+            {/* CENTER — wider event posts */}
+            <div
+              ref={eventsScrollRef}
+              className={`min-h-0 overflow-y-auto touch-pan-y ${hideScroll}`}
+              onPointerDown={(e) => {
+                // Only left-click / primary touch; ignore UI controls
+                if (e.button !== 0) return;
+                const tag = (e.target as HTMLElement)?.tagName;
+                if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'A' || tag === 'TEXTAREA') {
+                  return;
+                }
+                onEventsPullStart(e.clientY);
+                if (eventsPullingRef.current) {
+                  try {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                  } catch {
+                    /* ignore */
+                  }
+                }
+              }}
+              onPointerMove={(e) => {
+                if (!eventsPullingRef.current) return;
+                onEventsPullMove(e.clientY);
+              }}
+              onPointerUp={(e) => {
+                try {
+                  if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                  }
+                } catch {
+                  /* ignore */
+                }
+                onEventsPullEnd();
+              }}
+              onPointerCancel={resetEventsPull}
+            >
+              <div className="mx-auto w-full max-w-[760px] space-y-3 px-1 sm:px-0">
+              <div className="space-y-2">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="search"
+                    value={eventSearch}
+                    onChange={(e) => setEventSearch(e.target.value)}
+                    placeholder="Search events, jobs, walk-ins…"
+                    className="w-full rounded-full border border-slate-200/90 bg-white/95 py-2.5 pl-10 pr-9 text-[13px] font-medium text-slate-800 shadow-[0_4px_14px_rgba(15,23,42,0.04)] outline-none placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.45)] focus:ring-2 focus:ring-[rgba(40,168,225,0.12)]"
+                  />
+                  {eventSearch ? (
+                    <button
+                      type="button"
+                      onClick={() => setEventSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                      aria-label="Clear search"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 px-0.5">
+                  {eventsQueueCount > 0 && !eventSearch.trim() ? (
+                    <button
+                      type="button"
+                      onClick={() => releaseEventsQueueBatch()}
+                      className="rounded-full bg-[#FC9620] px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm"
+                    >
+                      {eventsQueueCount} new · load
+                    </button>
+                  ) : null}
                   {(
                     [
                       ['all', 'All'],
@@ -2018,7 +3196,7 @@ export default function OfficeGossipsPage() {
                       className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
                         eventFilter === id
                           ? 'bg-[#1B3A5F] text-white'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          : 'bg-white/90 text-slate-600 ring-1 ring-slate-200/80 hover:bg-slate-50'
                       }`}
                     >
                       {label}
@@ -2027,29 +3205,240 @@ export default function OfficeGossipsPage() {
                 </div>
               </div>
 
-              {filteredEvents.map((ev) => {
+              {!eventSearch.trim() ? (
+              <div
+                className="flex flex-col items-center justify-end gap-1 overflow-hidden transition-[height] duration-150"
+                style={{
+                  height: Math.max(
+                    eventsPullDistance,
+                    eventsPullHint !== 'idle' ? 52 : 0,
+                  ),
+                }}
+                aria-live="polite"
+              >
+                {eventsPullHint === 'loading' || eventsPullDistance > 10 ? (
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-200 border-t-[#28A8E1] ${
+                      eventsPullHint === 'loading' ? 'animate-spin' : ''
+                    }`}
+                    style={
+                      eventsPullHint === 'loading'
+                        ? undefined
+                        : {
+                            transform: `rotate(${Math.min(eventsPullDistance / 56, 1) * 270}deg)`,
+                          }
+                    }
+                    aria-hidden
+                  />
+                ) : null}
+                {eventsPullHint === 'loading' ? (
+                  <p className="pb-1 text-[11px] font-semibold text-[#28A8E1]">
+                    Loading latest…
+                  </p>
+                ) : eventsPullHint === 'empty' ? (
+                  <p className="pb-1 text-[11px] font-semibold text-slate-500">
+                    You’re up to date — nothing new waiting
+                  </p>
+                ) : eventsPullDistance > 10 ? (
+                  <p className="pb-1 text-[11px] font-medium text-slate-500">
+                    {eventsPullDistance >= 56
+                      ? 'Release to load new posts'
+                      : 'Pull down for new posts'}
+                  </p>
+                ) : null}
+              </div>
+              ) : (
+                <p className="px-0.5 text-[11px] font-medium text-slate-500">
+                  {eventsMainList.length} match
+                  {eventsMainList.length === 1 ? '' : 'es'} in the full events catalog
+                </p>
+              )}
+
+              {eventsMainList.map((item) => {
+                if (item.kind === 'company') {
+                  const snap = item.post;
+                  const live = companyFeed.find((p) => p.id === snap.id);
+                  const post = live
+                    ? { ...live, liveSource: snap.liveSource }
+                    : snap;
+                  const company =
+                    (post.companyPageId &&
+                      companyPages.find((p) => p.id === post.companyPageId)) ||
+                    null;
+                  const liked = Boolean(userId && post.likeIds.includes(userId));
+                  const commentCount =
+                    commentPostId === post.id
+                      ? commentThread.length
+                      : getCommentsForPost(post.id).length;
+                  const commentsOpen = commentPostId === post.id;
+                  return (
+                    <article id={`og-post-${post.id}`} key={item.id} className={feedPostFrame}>
+                      <div className={`${feedPostInner} border border-slate-200/70 px-4 py-3.5 sm:px-5`}>
+                        <div className="flex items-start gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (post.companyPageId) setSelectedCompanyId(post.companyPageId);
+                              setOgTab('feed');
+                            }}
+                            className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[14px] border border-slate-200/80 bg-white text-[14px] font-semibold text-[#28A8E1]"
+                            aria-label={`Open ${post.companyName || post.authorName}`}
+                          >
+                            {company?.logoUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={company.logoUrl}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              company?.logoLetter ||
+                              (post.companyName || post.authorName).slice(0, 1).toUpperCase()
+                            )}
+                          </button>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (post.companyPageId) setSelectedCompanyId(post.companyPageId);
+                                  setOgTab('feed');
+                                }}
+                                className="truncate text-[14px] font-semibold text-slate-900 hover:text-[#28A8E1]"
+                              >
+                                {post.companyName || post.authorName}
+                              </button>
+                              {post.liveSource === 'followed' ? (
+                                <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-[#0284C7]">
+                                  Following
+                                </span>
+                              ) : post.liveSource === 'connected' ? (
+                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                                  Connected
+                                </span>
+                              ) : post.liveSource ? (
+                                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                                  For you
+                                </span>
+                              ) : null}
+                            </div>
+                            <p className="mt-0.5 text-[11px] text-slate-400">
+                              {timeAgo(post.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mx-auto w-full max-w-[480px]">
+                          <CompanyPostMedia post={post} compact tight />
+                        </div>
+                        <ExpandableCaption text={post.text} className="mt-2" />
+                        <div className="mt-3 flex items-center gap-1.5 rounded-[16px] border border-slate-100/90 bg-slate-50/75 p-1">
+                          <button
+                            type="button"
+                            onClick={() => handleLike(post.id)}
+                            className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-[12px] py-2 text-[12px] font-semibold transition ${
+                              liked
+                                ? 'bg-white text-rose-600 shadow-sm'
+                                : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'
+                            }`}
+                          >
+                            <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
+                            {post.likeIds.length ? post.likeIds.length : 'Like'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openComments(post.id)}
+                            className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-[12px] py-2 text-[12px] font-semibold transition ${
+                              commentsOpen
+                                ? 'bg-white text-[#28A8E1] shadow-sm'
+                                : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'
+                            }`}
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            {commentCount ? commentCount : 'Comment'}
+                          </button>
+                        </div>
+                        {commentsOpen ? (
+                          <div className="mt-3 space-y-2.5 rounded-[16px] border border-slate-100/90 bg-white/70 p-3">
+                            <div className={`max-h-36 space-y-2 overflow-y-auto ${hideScroll}`}>
+                              {commentThread.map((c) => (
+                                <div
+                                  key={c.id}
+                                  className="rounded-[14px] bg-white px-3 py-2 shadow-sm"
+                                >
+                                  <p className="text-[12px] font-semibold text-slate-800">
+                                    {c.authorName}{' '}
+                                    <span className="font-medium text-slate-400">
+                                      · {timeAgo(c.createdAt)}
+                                    </span>
+                                  </p>
+                                  <p className="mt-0.5 text-[13px] leading-relaxed text-slate-700">
+                                    {c.text}
+                                  </p>
+                                </div>
+                              ))}
+                              {commentThread.length === 0 ? (
+                                <p className="px-1 text-[12px] font-medium text-slate-400">
+                                  Be the first to comment.
+                                </p>
+                              ) : null}
+                            </div>
+                            <div className="flex gap-2">
+                              <input
+                                value={commentText}
+                                onChange={(e) => setCommentText(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSendComment();
+                                }}
+                                placeholder="Write a comment…"
+                                className="min-w-0 flex-1 rounded-full border border-slate-200/80 bg-white px-3.5 py-2 text-[13px] font-medium text-slate-800 outline-none placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.45)]"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleSendComment}
+                                title="Send"
+                                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#28A8E1] text-white shadow-sm"
+                              >
+                                <ComposeAssetIcon src="/icons/send.png" alt="Send" size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </article>
+                  );
+                }
+
+                const ev = item.event;
                 const interested = Boolean(eventInterested[ev.id]);
                 const isJob = ev.type === 'job';
+                const isLms = Boolean(ev.actionHref?.startsWith('/lms/events'));
+                const canOpen = isJob || isLms;
+                const isTalkEvent =
+                  ev.type === 'webinar' ||
+                  ev.type === 'seminar' ||
+                  ev.type === 'walk-in' ||
+                  ev.type === 'job-fair';
                 return (
                   <article
-                    key={ev.id}
-                    className={`${card} overflow-hidden ${isJob ? 'cursor-pointer transition hover:border-[#28A8E1]/50' : ''}`}
-                    onClick={isJob ? () => openJobEvent(ev) : undefined}
+                    key={item.id}
+                    className={`${feedPostFrame} ${canOpen ? 'cursor-pointer' : ''}`}
+                    onClick={canOpen ? () => openEventCard(ev) : undefined}
                     onKeyDown={
-                      isJob
+                      canOpen
                         ? (e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
-                              openJobEvent(ev);
+                              openEventCard(ev);
                             }
                           }
                         : undefined
                     }
-                    role={isJob ? 'link' : undefined}
-                    tabIndex={isJob ? 0 : undefined}
+                    role={canOpen ? 'link' : undefined}
+                    tabIndex={canOpen ? 0 : undefined}
                   >
-                    <div className="flex items-center gap-2.5 px-3.5 pt-3.5">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#1B3A5F] text-sm font-bold text-white">
+                    <div className={`${feedPostInner} border border-slate-200/70 !px-0 !py-0`}>
+                    <div className="flex items-center gap-2.5 px-4 pt-3.5 sm:px-5">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200/80 bg-[#1B3A5F] text-sm font-bold text-white">
                         {isJob ? <Briefcase className="h-4 w-4 text-white" /> : ev.hostInitial}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -2059,29 +3448,42 @@ export default function OfficeGossipsPage() {
                         </p>
                       </div>
                       <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                        className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
                           isJob
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-sky-50 text-[#0A66C2]'
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                            : 'border-sky-200 bg-sky-50 text-[#0A66C2]'
                         }`}
                       >
                         {eventTypeLabel(ev.type)}
                       </span>
                     </div>
 
-                    <div className="relative mt-3 flex max-h-[520px] w-full items-center justify-center overflow-hidden bg-slate-100">
+                    {/* Seminar / webinar / walk-in: smaller image so card fits one viewport */}
+                    <div
+                      className={`relative mt-2.5 flex w-full items-center justify-center overflow-hidden border-y border-slate-100 bg-slate-50/90 ${
+                        isTalkEvent ? 'py-1.5' : 'py-2'
+                      }`}
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={ev.imageUrl}
                         alt=""
-                        className="max-h-[520px] w-full object-contain"
+                        className={
+                          isTalkEvent
+                            ? 'max-h-[140px] w-auto max-w-[min(100%,360px)] object-contain'
+                            : 'max-h-[220px] w-auto max-w-[min(100%,480px)] object-contain'
+                        }
                         loading="lazy"
                       />
                     </div>
 
-                    <div className="space-y-2.5 px-3.5 py-3">
+                    <div className={`space-y-2 px-4 sm:px-5 ${isTalkEvent ? 'py-3' : 'space-y-2.5 py-3.5'}`}>
                       <p className="text-sm font-bold leading-snug text-slate-900">{ev.title}</p>
-                      <p className="line-clamp-3 text-sm leading-relaxed text-slate-700">
+                      <p
+                        className={`text-sm leading-relaxed text-slate-700 ${
+                          isTalkEvent ? 'line-clamp-2' : 'line-clamp-3'
+                        }`}
+                      >
                         {ev.body}
                       </p>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium text-slate-500">
@@ -2109,21 +3511,21 @@ export default function OfficeGossipsPage() {
                         {ev.tags.map((t) => (
                           <span
                             key={t}
-                            className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
+                            className="rounded-full border border-slate-200/80 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
                           >
                             {t}
                           </span>
                         ))}
                       </div>
                       <div
-                        className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2.5"
+                        className="flex flex-wrap items-center gap-2 border-t border-slate-200/80 pt-2.5"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {isJob ? (
                           <>
                             <button
                               type="button"
-                              onClick={() => openJobEvent(ev)}
+                              onClick={() => openEventCard(ev)}
                               className="inline-flex items-center gap-1.5 rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#004182]"
                             >
                               <Briefcase className="h-3.5 w-3.5" />
@@ -2146,6 +3548,16 @@ export default function OfficeGossipsPage() {
                           </>
                         ) : (
                           <>
+                            {isLms ? (
+                              <button
+                                type="button"
+                                onClick={() => openEventCard(ev)}
+                                className="inline-flex items-center gap-1.5 rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#004182]"
+                              >
+                                <Calendar className="h-3.5 w-3.5" />
+                                Open in LMS
+                              </button>
+                            ) : null}
                             <button
                               type="button"
                               onClick={() =>
@@ -2184,71 +3596,75 @@ export default function OfficeGossipsPage() {
                         )}
                       </div>
                     </div>
+                    </div>
                   </article>
                 );
               })}
 
-              {filteredEvents.length === 0 ? (
-                <div className={`${card} px-5 py-14 text-center text-sm text-slate-500`}>
-                  <p>No profile-matched events in this filter yet.</p>
-                  <button
-                    type="button"
-                    onClick={() => router.push('/lms/events')}
-                    className="mt-3 text-xs font-semibold text-[#0A66C2] hover:underline"
-                  >
-                    Browse all events in LMS →
-                  </button>
+              {eventsMainList.length === 0 ? (
+                <div className={`${card} border border-slate-200/90 px-5 py-14 text-center text-sm text-slate-500`}>
+                  <p>
+                    {eventSearch.trim()
+                      ? 'No events match that search.'
+                      : 'No followed or interest-matched items in this filter yet.'}
+                  </p>
+                  {eventSearch.trim() ? (
+                    <button
+                      type="button"
+                      onClick={() => setEventSearch('')}
+                      className="mt-3 text-xs font-semibold text-[#0A66C2] hover:underline"
+                    >
+                      Clear search
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
+              </div>
             </div>
 
-            <aside className={`min-h-0 overflow-y-auto ${hideScroll}`}>
-              <div className={`${card} overflow-hidden p-3.5`}>
-                <h2 className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
-                  <Calendar className="h-4 w-4 text-orange-500" />
-                  For your profile
+            {/* RIGHT — Top for you */}
+            <aside className={`hidden min-h-0 flex-col gap-3 overflow-y-auto xl:flex ${hideScroll}`}>
+              <div className={`${card} overflow-hidden border border-slate-200/90 p-3.5`}>
+                <h2 className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.12em] text-[#FC9620]">
+                  <Calendar className="h-3.5 w-3.5" />
+                  Top for you
                 </h2>
-                <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
-                  Only matches from your profile, skills, and circles. See every walk-in, seminar,
-                  webinar, job fair, and job posting in LMS Events.
+                <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+                  Highest matches from LMS events for your profile.
                 </p>
-                <ul className="mt-3 space-y-2">
-                  {(
-                    [
-                      ['job', 'Jobs'],
-                      ['walk-in', 'Walk-ins'],
-                      ['seminar', 'Seminars'],
-                      ['webinar', 'Webinars'],
-                      ['job-fair', 'Job fairs'],
-                    ] as const
-                  ).map(([id, label]) => {
-                    const count = profileEvents.filter((e) => e.type === id).length;
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => setEventFilter(id)}
-                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition ${
-                          eventFilter === id
-                            ? 'bg-sky-50 text-[#0A66C2]'
-                            : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                        }`}
-                      >
-                        <span>{label}</span>
-                        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] text-slate-500">
-                          {count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </ul>
-                <button
-                  type="button"
-                  onClick={() => router.push('/lms/events')}
-                  className="mt-3 w-full rounded-full bg-[#1B3A5F] px-3 py-2 text-xs font-semibold text-white hover:opacity-95"
-                >
-                  All events in LMS →
-                </button>
+                {topMatchedEvents.length === 0 ? (
+                  <p className="mt-3 text-center text-[12px] text-slate-400">
+                    No strong matches yet — search the catalog above.
+                  </p>
+                ) : (
+                  <ul className="mt-3 space-y-1.5">
+                    {topMatchedEvents.map((ev) => (
+                      <li key={ev.id}>
+                        <button
+                          type="button"
+                          onClick={() => openEventCard(ev)}
+                          className="flex w-full items-start gap-2 rounded-xl border border-slate-200/80 bg-white/90 px-2.5 py-2 text-left shadow-sm transition hover:border-[rgba(40,168,225,0.28)]"
+                        >
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1B3A5F] text-[11px] font-bold text-white">
+                            {ev.type === 'job' ? (
+                              <Briefcase className="h-3.5 w-3.5" />
+                            ) : (
+                              ev.hostInitial
+                            )}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[12px] font-semibold text-slate-900">
+                              {ev.title}
+                            </span>
+                            <span className="mt-0.5 block truncate text-[10px] font-medium text-slate-500">
+                              {eventTypeLabel(ev.type)} · {ev.hostName}
+                            </span>
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </aside>
           </div>
@@ -2257,12 +3673,18 @@ export default function OfficeGossipsPage() {
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 backdrop-blur-md">
           <div className="mx-auto flex h-[3.75rem] max-w-[1520px] items-stretch justify-around px-2">
             {(
-              [
-                { id: 'feed' as const, label: 'Feed', Icon: Home },
-                { id: 'communities' as const, label: 'Communities', Icon: Users },
-                { id: 'chat' as const, label: 'Chat', Icon: MessageCircle },
-                { id: 'events' as const, label: 'Events', Icon: Calendar },
-              ] as const
+              isCompanyAccount
+                ? ([
+                    { id: 'chat' as const, label: 'Chat', Icon: MessageCircle },
+                    { id: 'feed' as const, label: 'Page', Icon: Building2 },
+                    { id: 'events' as const, label: 'Events', Icon: Calendar },
+                  ] as const)
+                : ([
+                    { id: 'chat' as const, label: 'Chat', Icon: MessageCircle },
+                    { id: 'communities' as const, label: 'Communities', Icon: Users },
+                    { id: 'feed' as const, label: 'Feed', Icon: Home },
+                    { id: 'events' as const, label: 'Events', Icon: Calendar },
+                  ] as const)
             ).map(({ id, label, Icon }) => {
               const active = ogTab === id;
               return (
@@ -2273,7 +3695,13 @@ export default function OfficeGossipsPage() {
                     setOgTab(id);
                     if (id !== 'communities') setActiveCommunityId(null);
                     if (id !== 'chat') closeChat();
-                    if (id === 'feed') setSelectedCompanyId(null);
+                    if (id === 'feed') {
+                      if (isCompanyAccount && actingCompany) {
+                        setSelectedCompanyId(actingCompany.id);
+                      } else if (!isCompanyAccount) {
+                        setSelectedCompanyId(null);
+                      }
+                    }
                   }}
                   className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition ${
                     active ? 'text-[#0A66C2]' : 'text-slate-400 hover:text-slate-600'
@@ -2320,6 +3748,7 @@ export default function OfficeGossipsPage() {
       {showCreateCompany ? (
         <CreateCompanyModal
           defaultDomain={workDomain || ''}
+          creatorEmail={user?.email}
           onClose={() => setShowCreateCompany(false)}
           onCreate={handleCreateCompany}
         />
@@ -2472,68 +3901,221 @@ function CreateCommunityModal({
 
 function CreateCompanyModal({
   defaultDomain,
+  creatorEmail,
   onClose,
   onCreate,
 }: {
   defaultDomain: string;
+  creatorEmail?: string | null;
   onClose: () => void;
-  onCreate: (p: { domainOrName: string; displayName: string }) => void;
+  onCreate: (p: {
+    domainOrName: string;
+    displayName: string;
+    description: string;
+    documents: CompanyPageDocument[];
+  }) => void;
 }) {
   const [domainOrName, setDomainOrName] = useState(defaultDomain);
   const [displayName, setDisplayName] = useState('');
+  const [description, setDescription] = useState('');
+  const [docs, setDocs] = useState<Partial<Record<CompanyPageDocumentKind, CompanyPageDocument>>>(
+    {},
+  );
+  const [busyKind, setBusyKind] = useState<CompanyPageDocumentKind | null>(null);
 
   useEffect(() => {
     setDomainOrName(defaultDomain);
   }, [defaultDomain]);
 
+  const allDocsReady = COMPANY_PAGE_REQUIRED_DOCS.every((d) => Boolean(docs[d.kind]?.dataUrl));
+  const canSubmit =
+    domainOrName.trim().includes('.') && displayName.trim().length >= 2 && allDocsReady;
+
+  const pickDoc = async (kind: CompanyPageDocumentKind, file: File | null) => {
+    if (!file) return;
+    if (file.size > 6 * 1024 * 1024) {
+      showErrorToast('File too large', 'Keep each document under 6 MB.');
+      return;
+    }
+    setBusyKind(kind);
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      setDocs((prev) => ({
+        ...prev,
+        [kind]: {
+          kind,
+          fileName: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          dataUrl,
+          uploadedAt: new Date().toISOString(),
+        },
+      }));
+    } catch {
+      showErrorToast('Upload failed', 'Could not read that file.');
+    } finally {
+      setBusyKind(null);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
-        <h3 className="text-lg font-semibold text-slate-900">Add company page</h3>
-        <p className="mt-1 text-sm text-slate-500">
-          Create requires your verified work email matching the domain (e.g. you@aitikit.com →
-          aitikit.com). One unique page per domain. Anyone with that company on their CV can
-          connect later — creating is domain-email only.
-        </p>
-        <label className="mt-4 block text-sm font-semibold text-slate-800">
-          Work domain
-          <input
-            value={domainOrName}
-            onChange={(e) => setDomainOrName(e.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#28A8E1]"
-            placeholder="aitikit.com"
-          />
-        </label>
-        <label className="mt-3 block text-sm font-semibold text-slate-800">
-          Display name (optional)
-          <input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#28A8E1]"
-            placeholder="AiTikit"
-          />
-        </label>
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={domainOrName.trim().length < 2}
-            onClick={() =>
-              onCreate({
-                domainOrName: domainOrName.trim(),
-                displayName: displayName.trim(),
-              })
-            }
-            className="rounded-xl bg-(--brand-primary) px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-          >
-            Create page
-          </button>
+    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-slate-900/45 p-3 backdrop-blur-sm sm:p-4">
+      <div className="max-h-[min(92vh,860px)] w-full max-w-xl overflow-hidden rounded-[24px] bg-linear-to-br from-[#28A8E1] via-[#5BB8E8] to-[#FC9620] p-[1.5px] shadow-[0_24px_60px_rgba(15,23,42,0.28)]">
+        <div className="flex max-h-[min(92vh,860px)] flex-col overflow-hidden rounded-[22.5px] bg-linear-to-b from-white via-[#FBFCFE] to-[#F8FAFD]">
+          <div className="relative shrink-0 border-b border-slate-100/80 px-5 py-4">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.14),transparent_40%),radial-gradient(circle_at_top_left,rgba(40,168,225,0.12),transparent_42%)]" />
+            <div className="relative flex items-start justify-between gap-3">
+              <div>
+                <p className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(252,150,32,0.28)] bg-white/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#C2410C]">
+                  <Building2 className="h-3 w-3" />
+                  Company page
+                </p>
+                <h3 className="mt-2 text-lg font-bold tracking-tight text-slate-900">
+                  Create company page
+                </h3>
+                <p className="mt-1 text-[13px] leading-relaxed text-slate-500">
+                  Any email works for now (including Gmail). Upload the mandatory documents to
+                  verify the page.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                title="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            {creatorEmail ? (
+              <p className="relative mt-3 rounded-xl border border-sky-100 bg-sky-50/80 px-3 py-2 text-[12px] text-slate-600">
+                Creating as{' '}
+                <span className="font-semibold text-slate-900">{creatorEmail}</span>
+              </p>
+            ) : null}
+          </div>
+
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm font-semibold text-slate-800 sm:col-span-2">
+                Company name <span className="text-rose-500">*</span>
+                <input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#28A8E1]"
+                  placeholder="AiTikit"
+                />
+              </label>
+              <label className="block text-sm font-semibold text-slate-800 sm:col-span-2">
+                Company domain <span className="text-rose-500">*</span>
+                <input
+                  value={domainOrName}
+                  onChange={(e) => setDomainOrName(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#28A8E1]"
+                  placeholder="aitikit.com"
+                />
+                <span className="mt-1 block text-[11px] font-medium text-slate-400">
+                  Unique key for this page — one page per domain.
+                </span>
+              </label>
+              <label className="block text-sm font-semibold text-slate-800 sm:col-span-2">
+                About the company
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                  className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#28A8E1]"
+                  placeholder="What your company does, who should connect…"
+                />
+              </label>
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <h4 className="text-sm font-bold text-slate-900">
+                  Mandatory documents <span className="text-rose-500">*</span>
+                </h4>
+                <span className="text-[11px] font-medium text-slate-400">PDF or image · max 6 MB</span>
+              </div>
+              <div className="space-y-2.5">
+                {COMPANY_PAGE_REQUIRED_DOCS.map((item) => {
+                  const uploaded = docs[item.kind];
+                  return (
+                    <label
+                      key={item.kind}
+                      className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-3.5 py-3 transition ${
+                        uploaded
+                          ? 'border-emerald-200 bg-emerald-50/70'
+                          : 'border-dashed border-slate-200 bg-white hover:border-[rgba(40,168,225,0.4)] hover:bg-[#F5FAFD]'
+                      }`}
+                    >
+                      <span
+                        className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                          uploaded ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-50 text-[#28A8E1]'
+                        }`}
+                      >
+                        {uploaded ? (
+                          <CheckCircle2 className="h-4 w-4" />
+                        ) : (
+                          <FileText className="h-4 w-4" />
+                        )}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[13px] font-semibold text-slate-900">
+                          {item.label}
+                        </span>
+                        <span className="mt-0.5 block text-[11px] text-slate-500">{item.hint}</span>
+                        {uploaded ? (
+                          <span className="mt-1 block truncate text-[11px] font-medium text-emerald-700">
+                            {uploaded.fileName}
+                          </span>
+                        ) : (
+                          <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#28A8E1]">
+                            <Upload className="h-3 w-3" />
+                            {busyKind === item.kind ? 'Uploading…' : 'Upload file'}
+                          </span>
+                        )}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*,.pdf,application/pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] || null;
+                          void pickDoc(item.kind, f);
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 justify-end gap-2 border-t border-slate-100/80 bg-white/90 px-5 py-3.5">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!canSubmit}
+              onClick={() =>
+                onCreate({
+                  domainOrName: domainOrName.trim(),
+                  displayName: displayName.trim(),
+                  description: description.trim(),
+                  documents: COMPANY_PAGE_REQUIRED_DOCS.map((d) => docs[d.kind]!).filter(Boolean),
+                })
+              }
+              className="rounded-full bg-[#28A8E1] px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(40,168,225,0.28)] transition hover:bg-[#28A8DF] disabled:opacity-45"
+            >
+              Create company page
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2567,6 +4149,7 @@ function CreateGossipAccountModal({
       userId,
       isAnonymous,
       username: isAnonymous ? username : username || undefined,
+      realName,
       showInCompanyConnections,
       availableForReferenceCheck,
     });

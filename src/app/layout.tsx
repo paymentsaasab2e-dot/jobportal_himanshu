@@ -20,6 +20,8 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { IntlProvider } from "@/components/i18n/IntlProvider";
 import { TokensProvider } from "@/components/tokens/TokensContext";
 import { FloatingAlertsHost } from "@/components/common/FloatingAlertsHost";
+import { HryantraChatFab } from "@/components/common/HryantraChatFab";
+import { HryantraChatSyncHost } from "@/components/common/HryantraChatSyncHost";
 import { SuggestionsEngineHost } from "@/components/common/SuggestionsEngineHost";
 import { UserActivityTrackerHost } from "@/components/common/UserActivityTrackerHost";
 import { Geist } from "next/font/google";
@@ -64,6 +66,8 @@ export default function RootLayout({
                   </main>
                   <GlobalFooter />
                   <FloatingAlertsHost />
+                  <HryantraChatSyncHost />
+                  <HryantraChatFab />
                   <SuggestionsEngineHost />
                   <UserActivityTrackerHost />
                 </AuthGuard>

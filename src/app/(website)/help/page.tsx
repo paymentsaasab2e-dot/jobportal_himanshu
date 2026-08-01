@@ -1,266 +1,391 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  ChevronDown, 
-  Search, 
-  FileText, 
-  UserCheck, 
-  BrainCircuit, 
-  ShieldCheck, 
-  Briefcase, 
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import {
+  ChevronDown,
+  Search,
   HelpCircle,
   Mail,
-  Clock
+  Clock,
+  Sparkles,
+  BadgeCheck,
 } from 'lucide-react';
+import { faqIcon, questionRowIcon, HELP_FAQ_CATEGORIES, type FaqCategory } from './data/faqs';
 
-const FAQS = [
-  {
-    category: "Getting Started",
-    icon: <UserCheck className="w-5 h-5 text-sky-500" />,
-    questions: [
-      {
-        id: "verify",
-        q: "How do I verify my account?",
-        a: "We use a secure passwordless system via WhatsApp. Enter your WhatsApp number and email, and we'll send a 6-digit verification code to your email. Once verified, you're ready to build your profile."
-      },
-      {
-        id: "profile-complete",
-        q: "Why should I complete my profile?",
-        a: "A complete profile gives our AI engine more data to work with. Candidates with 100% complete profiles are 3x more likely to get matched with high-tier opportunities."
-      }
-    ]
-  },
-  {
-    category: "Resume & AI Matching",
-    icon: <BrainCircuit className="w-5 h-5 text-emerald-500" />,
-    questions: [
-      {
-        id: "upload-resume",
-        q: "Do I need to upload my resume?",
-        a: "Yes. Uploading your resume is the first step for our AI to understand your experience. We analyze your skills, achievements, and career trajectory to match you with jobs that actually fit your profile."
-      },
-      {
-        id: "ats-score",
-        q: "What is an ATS Match Score?",
-        a: "The ATS (Applicant Tracking System) Match Score is our AI's calculation of how well your profile aligns with a specific job description. A score above 80% indicates an exceptional fit."
-      },
-      {
-        id: "cv-analysis",
-        q: "How does CV Analysis work?",
-        a: "Our AI 'reads' your resume like a human recruiter would, but faster. It extracts skills, detects career gaps, and highlights your strongest achievements to make your profile stand out to employers."
-      }
-    ]
-  },
-  {
-    category: "Job Applications",
-    icon: <Briefcase className="w-5 h-5 text-purple-500" />,
-    questions: [
-      {
-        id: "apply",
-        q: "How do I apply for jobs?",
-        a: "Once your profile is set up, you can browse matched jobs on your dashboard. Simply click 'Quick Apply' on any job that interests you. Your AI-optimized profile will be sent directly to the employer."
-      },
-      {
-        id: "track",
-        q: "Can I track my application status?",
-        a: "Absolutely. Your dashboard has an 'Applications' tab where you can see the real-time status of every job you've applied for—from 'Under Review' to 'Interview' and 'Offer'."
-      }
-    ]
-  },
-  {
-    category: "Dashboard & Tools",
-    icon: <FileText className="w-5 h-5 text-indigo-500" />,
-    questions: [
-      {
-        id: "cv-editor",
-        q: "How do I use the AI Resume Editor?",
-        a: "Navigate to the 'CV Editor' section. You can either upload an existing resume to optimize it or build one from scratch. Our AI will suggest improvements for your bullet points, skills, and overall layout to maximize your match score."
-      },
-      {
-        id: "dashboard-stats",
-        q: "What do the dashboard statistics mean?",
-        a: "Your dashboard tracks 'Profile Completeness' (data richness), 'CV Score' (resume quality), and 'Market Fit' (how in-demand your skills are). High scores in all three areas significantly improve your job matching results."
-      }
-    ]
-  },
-  {
-    category: "Privacy & Data",
-    icon: <ShieldCheck className="w-5 h-5 text-amber-500" />,
-    questions: [
-      {
-        id: "data-use",
-        q: "How is my data used?",
-        a: "Your data is used exclusively to build your professional profile and match you with employers. We do not sell your personal information to third-party advertisers. Please refer to our Privacy Policy for more details."
-      },
-      {
-        id: "security",
-        q: "Is my personal information secure?",
-        a: "Yes. We use industry-standard encryption and secure cloud infrastructure to protect your documents and personal details. Your contact information is only shared with employers when you choose to apply for their roles."
-      }
-    ]
-  }
-];
+type AudienceFilter = 'all' | 'candidate' | 'employer';
+
+/** Employee / candmain homepage palette */
+const C = {
+  bg: '#FAFBFC',
+  surface: '#FFFFFF',
+  brand: '#08428C',
+  brandDeep: '#053366',
+  bright: '#28A8E1',
+  ink: '#0F172A',
+  muted: '#64748B',
+  border: 'rgba(15, 23, 42, 0.08)',
+  soft: 'rgba(8, 66, 140, 0.08)',
+  softBright: 'rgba(40, 168, 225, 0.12)',
+  shadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.05)',
+  shadowOpen: '0 4px 6px rgba(5,51,102,0.06), 0 12px 28px rgba(8,66,140,0.12)',
+} as const;
 
 export default function HelpPage() {
-  const [openId, setOpenId] = useState<string | null>("upload-resume");
-  const [searchQuery, setSearchQuery] = useState("");
+  /** All questions start closed — open one at a time. */
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [audience, setAudience] = useState<AudienceFilter>('all');
 
   const toggleFaq = (id: string) => {
-    setOpenId(openId === id ? null : id);
+    setOpenId((prev) => (prev === id ? null : id));
   };
 
-  const filteredFaqs = FAQS.map(cat => ({
-    ...cat,
-    questions: cat.questions.filter(q => 
-      q.q.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      q.a.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  })).filter(cat => cat.questions.length > 0);
+  const filteredFaqs = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return HELP_FAQ_CATEGORIES.map((cat) => {
+      if (audience !== 'all' && cat.audience !== 'both' && cat.audience !== audience) {
+        return { ...cat, questions: [] as FaqCategory['questions'] };
+      }
+      return {
+        ...cat,
+        questions: cat.questions.filter(
+          (item) =>
+            !q ||
+            item.q.toLowerCase().includes(q) ||
+            item.a.toLowerCase().includes(q) ||
+            cat.category.toLowerCase().includes(q),
+        ),
+      };
+    }).filter((cat) => cat.questions.length > 0);
+  }, [searchQuery, audience]);
+
+  const totalQuestions = filteredFaqs.reduce((n, c) => n + c.questions.length, 0);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans pt-20">
-      
-      {/* Hero Section */}
-      <section className="bg-white border-b border-slate-200 pt-32 pb-16">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 bg-sky-50 text-sky-600 px-4 py-1.5 rounded-full text-sm font-bold mb-6 border border-sky-100">
-            <HelpCircle className="w-4 h-4" />
-            Support Center
+    <div className="flex min-h-screen flex-col font-sans" style={{ background: C.bg, color: C.ink }}>
+      {/* Hero — candmain soft gradient wash */}
+      <section
+        className="relative overflow-hidden border-b pb-16 pt-28"
+        style={{
+          borderColor: C.border,
+          background: `linear-gradient(165deg, #FFFFFF 0%, #F0F9FF 42%, ${C.bg} 100%)`,
+        }}
+      >
+        <div
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-40 blur-3xl"
+          style={{ background: 'radial-gradient(circle, rgba(40,168,225,0.35), transparent 70%)' }}
+        />
+        <div
+          className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full opacity-30 blur-3xl"
+          style={{ background: 'radial-gradient(circle, rgba(8,66,140,0.25), transparent 70%)' }}
+        />
+
+        <div className="relative mx-auto max-w-3xl px-6 text-center">
+          <div
+            className="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold"
+            style={{
+              background: C.softBright,
+              color: C.brand,
+              border: `1px solid rgba(40,168,225,0.28)`,
+            }}
+          >
+            <HelpCircle className="h-4 w-4" style={{ color: C.bright }} />
+            Help &amp; FAQ
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight mb-6">
-            How can we <span className="text-sky-500">help you</span> today?
+
+          <h1 className="mb-3 text-4xl font-extrabold tracking-tight sm:text-5xl" style={{ color: C.ink }}>
+            Guides for{' '}
+            <span
+              className="bg-clip-text text-transparent"
+              style={{
+                backgroundImage: `linear-gradient(135deg, ${C.brand} 0%, ${C.bright} 55%, #7DD3FC 100%)`,
+              }}
+            >
+              employees
+            </span>{' '}
+            &amp; employers
           </h1>
-          <p className="text-lg text-slate-500 max-w-2xl mx-auto mb-10 font-medium">
-            Find answers to common questions about our AI hiring platform, 
-            profile optimization, and job application process.
+          <p className="mx-auto mb-8 max-w-xl text-base font-medium leading-relaxed" style={{ color: C.muted }}>
+            Short answers for Office Gossips, jobs, AI CV, LMS, interview prep, tokens, reference
+            check, and employer setup.
           </p>
-          
-          {/* Search Bar */}
-          <div className="relative max-w-xl mx-auto">
-            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">
-              <Search className="w-5 h-5" />
+
+          <div className="mx-auto mb-6 flex max-w-lg flex-wrap justify-center gap-2">
+            {(
+              [
+                ['all', 'All'],
+                ['candidate', 'Employees / candidates'],
+                ['employer', 'Employers'],
+              ] as const
+            ).map(([id, label]) => {
+              const active = audience === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setAudience(id)}
+                  className="rounded-full px-4 py-2 text-xs font-bold transition"
+                  style={
+                    active
+                      ? {
+                          background: `linear-gradient(135deg, ${C.brandDeep}, ${C.brand} 50%, ${C.bright})`,
+                          color: '#fff',
+                          boxShadow: '0 4px 14px rgba(8,66,140,0.28)',
+                        }
+                      : {
+                          background: C.surface,
+                          color: C.muted,
+                          border: `1px solid ${C.border}`,
+                        }
+                  }
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="relative mx-auto max-w-xl">
+            <div className="absolute left-5 top-1/2 -translate-y-1/2" style={{ color: C.bright }}>
+              <Search className="h-5 w-5" />
             </div>
-            <input 
-              type="text" 
-              placeholder="Search for articles or questions..."
+            <input
+              type="text"
+              placeholder="Search questions…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-16 pl-14 pr-6 rounded-2xl border border-slate-200 bg-white shadow-sm focus:ring-4 focus:ring-sky-100 focus:border-sky-400 outline-none transition-all text-slate-700 font-medium placeholder:text-slate-400"
+              className="h-14 w-full rounded-[20px] border bg-white pl-14 pr-6 text-[15px] outline-none transition placeholder:text-slate-400 focus:border-[#28A8E1] focus:ring-4 focus:ring-[#28A8E1]/20"
+              style={{
+                borderColor: C.border,
+                color: C.ink,
+                boxShadow: C.shadow,
+              }}
             />
+            {totalQuestions > 0 ? (
+              <p className="mt-3 text-xs font-semibold" style={{ color: C.muted }}>
+                {totalQuestions} question{totalQuestions === 1 ? '' : 's'} · all closed by default —
+                tap to open
+              </p>
+            ) : null}
           </div>
         </div>
       </section>
 
-      <main className="flex-1 max-w-4xl mx-auto px-6 py-16 w-full">
-        <div className="space-y-12">
-          {filteredFaqs.length > 0 ? (
-            filteredFaqs.map((category, catIdx) => (
-              <div key={catIdx} className="space-y-6">
-                <div className="flex items-center gap-3 px-2">
-                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center shrink-0">
-                    {category.icon}
-                  </div>
-                  <h2 className="text-xl font-black text-slate-900 tracking-tight">{category.category}</h2>
-                </div>
-                
-                <div className="grid gap-4">
-                  {category.questions.map((faq) => (
-                    <div 
-                      key={faq.id} 
-                      className={`group rounded-2xl border transition-all duration-300 overflow-hidden ${
-                        openId === faq.id 
-                          ? 'bg-white border-sky-200 shadow-md ring-1 ring-sky-100' 
-                          : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
-                      }`}
+      <section className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
+        {filteredFaqs.length === 0 ? (
+          <p
+            className="rounded-[20px] border bg-white px-6 py-14 text-center text-sm"
+            style={{ borderColor: C.border, color: C.muted, boxShadow: C.shadow }}
+          >
+            No matching questions. Try another search or audience filter.
+          </p>
+        ) : (
+          <div className="space-y-10">
+            {filteredFaqs.map((cat) => (
+              <div key={cat.id}>
+                {/* Category header */}
+                <div className="mb-3.5 flex items-center gap-3 px-0.5">
+                  <span
+                    className="flex h-11 w-11 items-center justify-center rounded-2xl shadow-md"
+                    style={{
+                      background: `linear-gradient(145deg, ${C.brandDeep} 0%, ${C.brand} 48%, ${C.bright} 100%)`,
+                      boxShadow: '0 8px 20px rgba(8,66,140,0.22)',
+                    }}
+                  >
+                    {faqIcon(cat.iconName, 'h-[22px] w-[22px]')}
+                  </span>
+                  <div>
+                    <h2 className="text-lg font-bold tracking-tight" style={{ color: C.ink }}>
+                      {cat.category}
+                    </h2>
+                    <p
+                      className="text-[11px] font-bold uppercase tracking-[0.08em]"
+                      style={{ color: C.bright }}
                     >
-                      <button 
-                        onClick={() => toggleFaq(faq.id)}
-                        className="w-full px-6 py-5 flex items-center justify-between text-left gap-4"
-                      >
-                        <span className={`text-[16px] font-bold transition-colors ${
-                          openId === faq.id ? 'text-sky-600' : 'text-slate-700'
-                        }`}>
-                          {faq.q}
-                        </span>
-                        <div className={`p-1 rounded-full transition-all duration-300 ${
-                          openId === faq.id ? 'bg-sky-50 text-sky-500 rotate-180' : 'bg-slate-50 text-slate-400'
-                        }`}>
-                          <ChevronDown className="w-5 h-5" />
-                        </div>
-                      </button>
-                      
-                      <div 
-                        className={`transition-all duration-300 ease-in-out ${
-                          openId === faq.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                        }`}
-                      >
-                        <div className="px-6 pb-6 pt-0">
-                          <div className="w-full h-px bg-slate-100 mb-4" />
-                          <p className="text-slate-500 text-[15px] leading-relaxed font-medium">
-                            {faq.a}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                      {cat.audience === 'employer'
+                        ? 'Employers'
+                        : cat.audience === 'candidate'
+                          ? 'Employees / candidates'
+                          : 'Everyone'}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
-              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="w-8 h-8 text-slate-300" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">No matches found</h3>
-              <p className="text-slate-500 font-medium">Try searching for different keywords or browse categories.</p>
-              <button 
-                onClick={() => setSearchQuery("")}
-                className="mt-6 text-sky-600 font-bold hover:underline"
-              >
-                Clear search
-              </button>
-            </div>
-          )}
-        </div>
 
-        {/* Contact Strip */}
-        <section className="mt-20 p-8 sm:p-10 rounded-[32px] bg-slate-900 relative overflow-hidden text-center sm:text-left">
-          {/* Atmosphere */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 blur-[80px] rounded-full pointer-events-none" />
-          
-          <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-8">
-            <div>
-              <h2 className="text-2xl font-black text-white tracking-tight mb-2">Still need help?</h2>
-              <p className="text-slate-400 font-medium max-w-md">
-                Our support team is available to assist you with any technical issues or career guidance.
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-              <div className="flex items-center gap-6 bg-white/5 border border-white/10 px-6 py-4 rounded-2xl w-full sm:w-auto">
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2 text-white font-bold mb-0.5">
-                    <Mail className="w-4 h-4 text-sky-400" />
-                    support@hryantra.com
-                  </div>
-                  <div className="flex items-center gap-2 text-[13px] text-slate-500 font-bold uppercase tracking-wider">
-                    <Clock className="w-3.5 h-3.5" />
-                    24H Response Time
-                  </div>
-                </div>
+                {/* Individual question cards — closed by default */}
+                <ul className="space-y-2.5">
+                  {cat.questions.map((item, qIndex) => {
+                    const open = openId === item.id;
+                    return (
+                      <li key={item.id}>
+                        <div
+                          className="overflow-hidden rounded-[18px] border bg-white transition-all duration-300"
+                          style={{
+                            borderColor: open ? 'rgba(40,168,225,0.45)' : C.border,
+                            boxShadow: open ? C.shadowOpen : C.shadow,
+                            background: open
+                              ? `linear-gradient(165deg, #FFFFFF 0%, #F0F9FF 55%, #E8F6FD 100%)`
+                              : C.surface,
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => toggleFaq(item.id)}
+                            aria-expanded={open}
+                            className="flex w-full items-start gap-3 px-4 py-4 text-left sm:px-5"
+                          >
+                            <span
+                              className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition"
+                              style={{
+                                background: open
+                                  ? `linear-gradient(145deg, ${C.brandDeep}, ${C.bright})`
+                                  : `linear-gradient(145deg, rgba(40,168,225,0.14), rgba(8,66,140,0.08))`,
+                                color: open ? '#fff' : C.brand,
+                                boxShadow: open
+                                  ? '0 6px 14px rgba(8,66,140,0.28)'
+                                  : 'inset 0 1px 0 rgba(255,255,255,0.7)',
+                              }}
+                            >
+                              {questionRowIcon(qIndex, 'h-4 w-4', open)}
+                            </span>
+                            <span
+                              className="min-w-0 flex-1 pt-1.5 text-[15px] font-semibold leading-snug"
+                              style={{ color: C.ink }}
+                            >
+                              {item.q}
+                            </span>
+                            <span
+                              className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition"
+                              style={{
+                                background: open
+                                  ? `linear-gradient(135deg, ${C.brand}, ${C.bright})`
+                                  : 'rgba(15,23,42,0.05)',
+                                color: open ? '#fff' : C.muted,
+                              }}
+                            >
+                              <ChevronDown
+                                className={`h-4 w-4 transition-transform duration-300 ${
+                                  open ? 'rotate-180' : ''
+                                }`}
+                              />
+                            </span>
+                          </button>
+
+                          <div
+                            className="grid transition-[grid-template-rows] duration-300 ease-out"
+                            style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
+                          >
+                            <div className="overflow-hidden">
+                              <div className="px-4 pb-4 sm:px-5">
+                                <div
+                                  className="relative overflow-hidden rounded-2xl border p-4 sm:p-5"
+                                  style={{
+                                    borderColor: 'rgba(40,168,225,0.28)',
+                                    background: `linear-gradient(145deg, #053366 0%, #08428C 42%, #0A5AB5 78%, #28A8E1 100%)`,
+                                    boxShadow:
+                                      '0 10px 28px rgba(8,66,140,0.22), inset 0 1px 0 rgba(255,255,255,0.18)',
+                                  }}
+                                >
+                                  {/* soft glow */}
+                                  <div
+                                    className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full opacity-50 blur-2xl"
+                                    style={{
+                                      background:
+                                        'radial-gradient(circle, rgba(125,211,252,0.55), transparent 70%)',
+                                    }}
+                                  />
+                                  <div
+                                    className="pointer-events-none absolute -bottom-10 left-6 h-24 w-24 rounded-full opacity-40 blur-2xl"
+                                    style={{
+                                      background:
+                                        'radial-gradient(circle, rgba(40,168,225,0.5), transparent 70%)',
+                                    }}
+                                  />
+
+                                  <div className="relative flex items-center gap-2">
+                                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/25 backdrop-blur-sm">
+                                      <Sparkles className="h-4 w-4 text-sky-100" strokeWidth={2.25} />
+                                    </span>
+                                    <div>
+                                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sky-100/90">
+                                        Solution
+                                      </p>
+                                      <p className="flex items-center gap-1 text-xs font-semibold text-white/90">
+                                        <BadgeCheck className="h-3.5 w-3.5 text-sky-200" />
+                                        Quick answer
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <p className="relative mt-3 text-[14px] font-medium leading-relaxed text-white/95 sm:text-[15px]">
+                                    {item.a}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
-              <a 
-                href="mailto:support@hryantra.com"
-                className="bg-white px-8 py-4 rounded-2xl font-black text-[15px] hover:bg-slate-100 transition-all w-full sm:w-auto text-center shadow-md"
-                style={{ color: '#000000' }}
-              >
-                Contact Us
-              </a>
-            </div>
+            ))}
           </div>
-        </section>
-      </main>
+        )}
+
+        {/* Support cards */}
+        <div className="mt-14 grid gap-4 sm:grid-cols-2">
+          <div
+            className="rounded-[20px] border bg-white p-5"
+            style={{ borderColor: C.border, boxShadow: C.shadow }}
+          >
+            <span
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl"
+              style={{ background: C.softBright }}
+            >
+              <Mail className="h-5 w-5" style={{ color: C.bright }} />
+            </span>
+            <h3 className="mt-3 text-sm font-bold" style={{ color: C.ink }}>
+              Still need help?
+            </h3>
+            <p className="mt-1 text-sm" style={{ color: C.muted }}>
+              Email support or open Contact — we will guide you through setup.
+            </p>
+            <Link
+              href="/contact"
+              className="mt-3 inline-flex text-sm font-bold hover:underline"
+              style={{ color: C.brand }}
+            >
+              Contact us →
+            </Link>
+          </div>
+          <div
+            className="rounded-[20px] border bg-white p-5"
+            style={{ borderColor: C.border, boxShadow: C.shadow }}
+          >
+            <span
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl"
+              style={{ background: 'rgba(251,146,60,0.12)' }}
+            >
+              <Clock className="h-5 w-5 text-orange-500" />
+            </span>
+            <h3 className="mt-3 text-sm font-bold" style={{ color: C.ink }}>
+              Employer demo
+            </h3>
+            <p className="mt-1 text-sm" style={{ color: C.muted }}>
+              Hiring teams can book a SAASA B2E demo from the footer or Employers page.
+            </p>
+            <Link
+              href="/employers"
+              className="mt-3 inline-flex text-sm font-bold hover:underline"
+              style={{ color: C.brand }}
+            >
+              Employers →
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

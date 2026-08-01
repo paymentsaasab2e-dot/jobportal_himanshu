@@ -16,6 +16,7 @@ import {
   runSuggestionsEngine,
   SUGGESTIONS_ENGINE_STORAGE_KEY,
 } from '@/lib/suggestions-engine';
+import { warmSuggestionJobsCache } from '@/lib/suggestions-engine/job-intent-resolve';
 
 /**
  * Runs the suggestions engine globally:
@@ -45,6 +46,7 @@ export function SuggestionsEngineHost() {
           fetchPortalApplications(candidateId).catch(() => []),
           fetchPortalCvDashboard(candidateId).catch(() => null),
           fetchProfileCompleteness(candidateId).catch(() => null),
+          warmSuggestionJobsCache(candidateId).catch(() => []),
         ]);
         if (cancelled) return;
 

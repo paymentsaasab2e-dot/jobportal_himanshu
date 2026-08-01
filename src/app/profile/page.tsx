@@ -3709,6 +3709,7 @@ export default function ProfilePage() {
       <EducationModal
         isOpen={isEducationModalOpen}
         editingEducationId={editingEducationId}
+        existingEducations={educationData?.educations || []}
         onClose={() => {
           setIsEducationModalOpen(false);
           setEditingEducationId(null);

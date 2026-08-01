@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Eye, Lock, X } from 'lucide-react';
+import { ChevronRight, Eye, Lock, X } from 'lucide-react';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
+import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
 import {
   PROFILE_VIEW_UNLOCK_COST,
   PROFILE_VIEWS_UPDATED_EVENT,
@@ -22,6 +23,8 @@ type Props = {
 export function ProfileViewsPanel({ userId, open, onClose, onOpenProfile }: Props) {
   const [views, setViews] = useState<ProfileView[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  /** Locked row: price only revealed after "View details" */
+  const [revealedPriceId, setRevealedPriceId] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     setViews(listProfileViews(userId));
@@ -30,6 +33,7 @@ export function ProfileViewsPanel({ userId, open, onClose, onOpenProfile }: Prop
   useEffect(() => {
     if (!open) return;
     refresh();
+    setRevealedPriceId(null);
   }, [open, refresh]);
 
   useEffect(() => {
@@ -55,6 +59,7 @@ export function ProfileViewsPanel({ userId, open, onClose, onOpenProfile }: Prop
           ? `${result.view.viewerDisplayName} (anonymous)`
           : result.view.viewerDisplayName,
       );
+      setRevealedPriceId(null);
       refresh();
     } finally {
       setBusyId(null);
@@ -73,12 +78,11 @@ export function ProfileViewsPanel({ userId, open, onClose, onOpenProfile }: Prop
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3.5">
           <div>
             <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
-              <Eye className="h-4 w-4 text-[#0A66C2]" />
-              Who viewed you
+              <Eye className="h-4 w-4 text-[#28A8E1]" />
+              Profile viewers
             </h2>
             <p className="mt-0.5 text-[11px] text-slate-500">
-              Spend {PROFILE_VIEW_UNLOCK_COST} tokens to see each viewer — name and whether they were
-              anonymous.
+              See who viewed your profile. Premium unlock may apply for some viewers.
             </p>
           </div>
           <button
@@ -96,68 +100,98 @@ export function ProfileViewsPanel({ userId, open, onClose, onOpenProfile }: Prop
               No profile views yet. When someone opens your profile, you’ll get a nudge here.
             </li>
           ) : (
-            views.map((v) => (
-              <li
-                key={v.id}
-                className="flex items-center gap-3 rounded-xl px-2.5 py-2.5 hover:bg-slate-50"
-              >
-                <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                    v.unlocked
-                      ? 'bg-[#1B3A5F] text-white'
-                      : 'bg-slate-100 text-slate-400'
-                  }`}
+            views.map((v) => {
+              const priceRevealed = revealedPriceId === v.id;
+              return (
+                <li
+                  key={v.id}
+                  className="rounded-xl px-2.5 py-2.5 hover:bg-slate-50"
                 >
-                  {v.unlocked ? (
-                    v.viewerDisplayName.slice(0, 1).toUpperCase()
-                  ) : (
-                    <Lock className="h-4 w-4" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  {v.unlocked ? (
-                    <>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                        v.unlocked
+                          ? 'bg-[#28A8E1] text-white'
+                          : 'bg-slate-100 text-slate-400'
+                      }`}
+                    >
+                      {v.unlocked ? (
+                        v.viewerDisplayName.slice(0, 1).toUpperCase()
+                      ) : (
+                        <Lock className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      {v.unlocked ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => onOpenProfile?.(v.viewerId)}
+                            className="truncate text-left text-sm font-semibold text-slate-900 hover:text-[#28A8E1]"
+                          >
+                            {v.viewerDisplayName}
+                          </button>
+                          <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
+                            <span
+                              className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                                v.viewerWasAnonymous
+                                  ? 'bg-amber-50 text-amber-800'
+                                  : 'bg-sky-50 text-sky-800'
+                              }`}
+                            >
+                              {v.viewerWasAnonymous ? 'Anonymous' : 'Named'}
+                            </span>
+                            <span>· {formatViewAge(v.createdAt)}</span>
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-semibold text-slate-800">
+                            Someone viewed your profile
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-slate-500">
+                            {formatViewAge(v.createdAt)}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    {!v.unlocked && !priceRevealed ? (
                       <button
                         type="button"
-                        onClick={() => onOpenProfile?.(v.viewerId)}
-                        className="truncate text-left text-sm font-semibold text-slate-900 hover:text-[#0A66C2]"
+                        onClick={() => setRevealedPriceId(v.id)}
+                        className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-semibold text-[#28A8E1] hover:underline"
                       >
-                        {v.viewerDisplayName}
+                        View details
+                        <ChevronRight className="h-3.5 w-3.5" />
                       </button>
-                      <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
-                        <span
-                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                            v.viewerWasAnonymous
-                              ? 'bg-amber-50 text-amber-800'
-                              : 'bg-sky-50 text-sky-800'
-                          }`}
-                        >
-                          {v.viewerWasAnonymous ? 'Anonymous' : 'Named'}
-                        </span>
-                        <span>· {formatViewAge(v.createdAt)}</span>
+                    ) : null}
+                  </div>
+
+                  {!v.unlocked && priceRevealed ? (
+                    <div className="mt-2.5 ml-[3.25rem] rounded-xl border border-[rgba(40,168,225,0.18)] bg-[var(--brand-primary-soft)]/60 px-3 py-2.5">
+                      <p className="text-[11px] font-medium text-slate-600">
+                        Unlock this viewer to see their name and anonymity status.
                       </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm font-semibold text-slate-700">Someone</p>
-                      <p className="mt-0.5 text-[11px] text-slate-500">
-                        Viewed your profile · {formatViewAge(v.createdAt)}
-                      </p>
-                    </>
-                  )}
-                </div>
-                {!v.unlocked ? (
-                  <button
-                    type="button"
-                    disabled={busyId === v.id}
-                    onClick={() => void handleUnlock(v.id)}
-                    className="shrink-0 rounded-full bg-[#0A66C2] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#004182] disabled:opacity-60"
-                  >
-                    {busyId === v.id ? '…' : `${PROFILE_VIEW_UNLOCK_COST} tokens`}
-                  </button>
-                ) : null}
-              </li>
-            ))
+                      <button
+                        type="button"
+                        disabled={busyId === v.id}
+                        onClick={() => void handleUnlock(v.id)}
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#28A8E1] px-3.5 py-1.5 text-[12px] font-semibold text-white shadow-[0_8px_16px_rgba(40,168,225,0.22)] hover:bg-[#28A8DF] disabled:opacity-60"
+                      >
+                        {busyId === v.id ? (
+                          '…'
+                        ) : (
+                          <>
+                            Unlock · <TokenCoinIcon className="h-3.5 w-3.5" />{' '}
+                            {PROFILE_VIEW_UNLOCK_COST}
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })
           )}
         </ul>
       </div>

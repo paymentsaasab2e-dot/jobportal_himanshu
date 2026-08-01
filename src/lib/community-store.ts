@@ -1,3 +1,8 @@
+import {
+  scoreTextAgainstInterests,
+  syncInterestsFromBehaviour,
+} from '@/lib/interest-affinity-store';
+
 export type CommunityVisibility = 'public' | 'private';
 
 export type CommunityPostType = 'text' | 'image' | 'video' | 'voice';
@@ -13,6 +18,38 @@ export type Community = {
   createdAt: string;
 };
 
+export type CompanyPageDocumentKind = 'registration' | 'tax' | 'authorization';
+
+export type CompanyPageDocument = {
+  kind: CompanyPageDocumentKind;
+  fileName: string;
+  mimeType: string;
+  dataUrl: string;
+  uploadedAt: string;
+};
+
+export const COMPANY_PAGE_REQUIRED_DOCS: Array<{
+  kind: CompanyPageDocumentKind;
+  label: string;
+  hint: string;
+}> = [
+  {
+    kind: 'registration',
+    label: 'Business registration',
+    hint: 'Certificate of incorporation / business license',
+  },
+  {
+    kind: 'tax',
+    label: 'Tax / GST ID proof',
+    hint: 'GST, EIN, or equivalent tax document',
+  },
+  {
+    kind: 'authorization',
+    label: 'Authorization letter',
+    hint: 'Letter confirming you can manage this page',
+  },
+];
+
 export type CompanyPage = {
   id: string;
   /** Unique key: email domain lowercased, e.g. aitikit.com */
@@ -20,9 +57,15 @@ export type CompanyPage = {
   name: string;
   description: string;
   logoLetter: string;
+  /** Optional company profile / logo image (data URL or remote). */
+  logoUrl?: string;
   memberIds: string[];
   createdBy: string;
   createdAt: string;
+  /** Verification docs uploaded when the page was created */
+  documents?: CompanyPageDocument[];
+  /** Creator email at create time (any email allowed for now) */
+  createdByEmail?: string;
 };
 
 export type CommunityComment = {
@@ -45,7 +88,11 @@ export type CommunityPost = {
   type: CommunityPostType;
   text: string;
   mediaUrl?: string;
+  /** Multiple images for carousel posts (company pages). */
+  mediaUrls?: string[];
   mediaMime?: string;
+  /** Duration in seconds when type is video (capped at upload). */
+  videoDurationSec?: number;
   likeIds: string[];
   createdAt: string;
 };
@@ -433,7 +480,14 @@ export function ensureDemoCompanyPeople(state: CommunityState): CommunityState {
         'Connect if AiTikit is on your CV (current or past). Creating this page requires a verified @aitikit.com work email.';
     }
   }
-  if (changed) saveCommunityState(state);
+  if (changed) {
+    // Persist demo member merges without going through a full load rewrite
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      /* ignore quota */
+    }
+  }
   ensureDemoGossipIdentities();
   return state;
 }
@@ -472,22 +526,59 @@ export function loadCommunityState(): CommunityState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       const seeded = seedState();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+      } catch {
+        /* quota — keep in-memory seed for this session only */
+      }
       ensureDemoGossipIdentities();
       return seeded;
     }
     const parsed = normalizeState(JSON.parse(raw) as CommunityState);
     const withDemo = ensureDemoCompanyPeople(parsed);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(withDemo));
+    // Do not rewrite storage on every read — avoids wiping user posts on quota errors
     return withDemo;
   } catch {
+    // Parse failure only — never replace persisted data with a silent re-seed write
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        return normalizeState(JSON.parse(raw) as CommunityState);
+      }
+    } catch {
+      /* fall through */
+    }
     return seedState();
   }
 }
 
 export function saveCommunityState(state: CommunityState) {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (err) {
+    // Retry without heavy media so posts/text still persist
+    try {
+      const slim: CommunityState = {
+        ...state,
+        posts: state.posts.map((p) => ({
+          ...p,
+          mediaUrl: p.mediaUrl?.startsWith('data:') ? undefined : p.mediaUrl,
+          mediaUrls: p.mediaUrls?.some((u) => u.startsWith('data:'))
+            ? undefined
+            : p.mediaUrls,
+        })),
+        companyPages: state.companyPages.map((c) => ({
+          ...c,
+          logoUrl: c.logoUrl?.startsWith('data:') ? undefined : c.logoUrl,
+          documents: undefined,
+        })),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(slim));
+    } catch {
+      console.warn('Office Gossips: could not persist community state', err);
+    }
+  }
 }
 
 export function createCommunity(input: {
@@ -513,13 +604,14 @@ export function createCommunity(input: {
   return community;
 }
 
-/** One company page per domain — only matching work-email holders may create. */
+/** One company page per domain. For now any signed-in email can create (docs required). */
 export function upsertCompanyPage(input: {
   domainOrName: string;
   displayName?: string;
   description?: string;
   userId: string;
   email?: string | null;
+  documents?: CompanyPageDocument[];
 }): { page: CompanyPage; created: boolean; error?: string } {
   const state = loadCommunityState();
   const raw = input.domainOrName.trim().toLowerCase().replace(/^@/, '');
@@ -528,7 +620,7 @@ export function upsertCompanyPage(input: {
     return {
       page: state.companyPages[0],
       created: false,
-      error: 'Enter your work domain to create a page (e.g. aitikit.com).',
+      error: 'Enter a company domain (e.g. aitikit.com).',
     };
   }
   const domainKey = raw;
@@ -558,6 +650,17 @@ export function upsertCompanyPage(input: {
     };
   }
 
+  const requiredKinds = COMPANY_PAGE_REQUIRED_DOCS.map((d) => d.kind);
+  const docs = input.documents || [];
+  const missing = requiredKinds.filter((kind) => !docs.some((d) => d.kind === kind && d.dataUrl));
+  if (missing.length > 0) {
+    return {
+      page: state.companyPages[0],
+      created: false,
+      error: 'Upload all mandatory verification documents to create a company page.',
+    };
+  }
+
   const name =
     input.displayName?.trim() ||
     domainKey.split('.')[0].replace(/^\w/, (c) => c.toUpperCase());
@@ -568,19 +671,62 @@ export function upsertCompanyPage(input: {
     name,
     description:
       input.description?.trim() ||
-      `Connect if ${name} is on your CV. Creating this page required a verified @${domainKey} email.`,
+      `Official ${name} page on Office Gossips. Connect if ${name} is on your CV.`,
     logoLetter: name.slice(0, 1).toUpperCase(),
     memberIds: [input.userId],
     createdBy: input.userId,
     createdAt: new Date().toISOString(),
+    documents: docs,
+    createdByEmail: input.email?.trim() || undefined,
   };
   state.companyPages = [page, ...state.companyPages];
   saveCommunityState(state);
   return { page, created: true };
 }
 
+/** Owner-only: update company display name, about text, and/or logo. */
+export function updateCompanyPageDetails(
+  pageId: string,
+  ownerId: string,
+  patch: { name?: string; description?: string; logoUrl?: string | null },
+): { ok: true; page: CompanyPage } | { ok: false; error: string } {
+  const state = loadCommunityState();
+  const idx = state.companyPages.findIndex((p) => p.id === pageId);
+  if (idx < 0) return { ok: false, error: 'Company page not found.' };
+  const page = state.companyPages[idx];
+  if (page.createdBy !== ownerId) {
+    return { ok: false, error: 'Only the company page owner can edit details.' };
+  }
+  const name = patch.name !== undefined ? patch.name.trim() : page.name;
+  if (!name || name.length < 2) {
+    return { ok: false, error: 'Name must be at least 2 characters.' };
+  }
+  const description =
+    patch.description !== undefined ? patch.description.trim() : page.description;
+  const next: CompanyPage = {
+    ...page,
+    name,
+    description,
+    logoLetter: name.slice(0, 1).toUpperCase(),
+    logoUrl:
+      patch.logoUrl === null
+        ? undefined
+        : patch.logoUrl !== undefined
+          ? patch.logoUrl
+          : page.logoUrl,
+  };
+  state.companyPages = [
+    ...state.companyPages.slice(0, idx),
+    next,
+    ...state.companyPages.slice(idx + 1),
+  ];
+  saveCommunityState(state);
+  return { ok: true, page: next };
+}
+
 /**
- * Create = verified work email matching the company domain (unique page per domain).
+ * Create company page — for now any normal email is accepted (Gmail etc. allowed).
+ * Domain format is still required for a unique page key.
  */
 export function canCreateCompanyPage(
   domainKey: string,
@@ -591,27 +737,11 @@ export function canCreateCompanyPage(
     .toLowerCase()
     .replace(/^@/, '');
   if (!key.includes('.')) {
-    return { ok: false, error: 'Use a work domain like aitikit.com to create a page.' };
+    return { ok: false, error: 'Use a domain like aitikit.com to create a page.' };
   }
-  const domain = emailDomain(email);
-  if (!domain) {
-    return {
-      ok: false,
-      error: 'Only a verified work email (not Gmail/Yahoo/etc.) can create a company page.',
-    };
-  }
-  const pageBrand = brandToken(key);
-  const emailBrand = brandToken(domain);
-  const domainMatch =
-    domain === key ||
-    domain.endsWith(`.${key}`) ||
-    key.endsWith(`.${domain}`) ||
-    pageBrand === emailBrand;
-  if (!domainMatch) {
-    return {
-      ok: false,
-      error: `Only @${key} work email can create this company page.`,
-    };
+  const trimmed = String(email || '').trim().toLowerCase();
+  if (!trimmed || !trimmed.includes('@') || trimmed.startsWith('@') || trimmed.endsWith('@')) {
+    return { ok: false, error: 'Sign in with a valid email to create a company page.' };
   }
   return { ok: true };
 }
@@ -694,7 +824,9 @@ export function createPost(input: {
   text: string;
   type: CommunityPostType;
   mediaUrl?: string;
+  mediaUrls?: string[];
   mediaMime?: string;
+  videoDurationSec?: number;
 }): CommunityPost | null {
   const state = loadCommunityState();
   let communityName: string | undefined;
@@ -706,11 +838,19 @@ export function createPost(input: {
     communityName = community.name;
   } else if (input.companyPageId) {
     const page = state.companyPages.find((p) => p.id === input.companyPageId);
-    if (!page || !page.memberIds.includes(input.authorId)) return null;
+    // Only the company page owner can publish updates on the page
+    if (!page || page.createdBy !== input.authorId) return null;
     companyName = page.name;
   } else {
     return null;
   }
+
+  const mediaUrls =
+    input.mediaUrls && input.mediaUrls.length > 0
+      ? input.mediaUrls.slice(0, 5)
+      : input.mediaUrl
+        ? [input.mediaUrl]
+        : undefined;
 
   const post: CommunityPost = {
     id: uid('p'),
@@ -722,8 +862,10 @@ export function createPost(input: {
     authorName: input.authorName,
     type: input.type,
     text: input.text.trim(),
-    mediaUrl: input.mediaUrl,
+    mediaUrl: mediaUrls?.[0] || input.mediaUrl,
+    mediaUrls,
     mediaMime: input.mediaMime,
+    videoDurationSec: input.videoDurationSec,
     likeIds: [],
     createdAt: new Date().toISOString(),
   };
@@ -797,6 +939,85 @@ export function getVisibleFeed(userId: string | null): CommunityPost[] {
     .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
 }
 
+/**
+ * Personalized Office Gossips feed:
+ * ~60% from joined communities (recency),
+ * ~40% from other public communities matched to interest ratings / behaviour.
+ */
+export function getPersonalizedCommunityFeed(
+  userId: string | null,
+  options?: { joinedRatio?: number; limit?: number },
+): CommunityPost[] {
+  const joinedRatio = Math.min(0.9, Math.max(0.4, options?.joinedRatio ?? 0.6));
+  const limit = options?.limit ?? 80;
+  const all = getVisibleFeed(userId).filter((p) => Boolean(p.communityId));
+  if (!userId || all.length === 0) return all.slice(0, limit);
+
+  const state = loadCommunityState();
+  const byCommunity = new Map(state.communities.map((c) => [c.id, c]));
+  const joinedIds = new Set(
+    state.communities.filter((c) => c.memberIds.includes(userId)).map((c) => c.id),
+  );
+
+  const joinedPosts = all.filter((p) => p.communityId && joinedIds.has(p.communityId));
+  const discoveryPool = all.filter((p) => {
+    if (!p.communityId || joinedIds.has(p.communityId)) return false;
+    const c = byCommunity.get(p.communityId);
+    return c?.visibility === 'public';
+  });
+
+  syncInterestsFromBehaviour(userId);
+
+  const scoreDiscovery = (post: CommunityPost) => {
+    const c = post.communityId ? byCommunity.get(post.communityId) : null;
+    const blob = `${c?.name || ''} ${c?.description || ''} ${post.communityName || ''} ${post.text || ''}`;
+    const interest = scoreTextAgainstInterests(userId, blob);
+    const likes = post.likeIds?.length || 0;
+    const ageHours = Math.max(0.5, (Date.now() - +new Date(post.createdAt)) / 3600_000);
+    const recency = 12 / ageHours;
+    return interest * 3 + likes * 0.4 + recency;
+  };
+
+  const discoveryRanked = [...discoveryPool]
+    .map((p) => ({ p, score: scoreDiscovery(p) }))
+    .filter((x) => x.score > 0.35)
+    .sort(
+      (a, b) =>
+        b.score - a.score || +new Date(b.p.createdAt) - +new Date(a.p.createdAt),
+    )
+    .map((x) => x.p);
+
+  // If user has no joins yet, lean fully on interest discovery + public chrono
+  if (joinedPosts.length === 0) {
+    const fallback = discoveryRanked.length
+      ? discoveryRanked
+      : all.filter((p) => {
+          const c = p.communityId ? byCommunity.get(p.communityId) : null;
+          return c?.visibility === 'public';
+        });
+    return fallback.slice(0, limit);
+  }
+
+  const targetJoined = Math.max(1, Math.round(limit * joinedRatio));
+  const targetDiscovery = Math.max(0, limit - targetJoined);
+  const joinedTake = joinedPosts.slice(0, targetJoined);
+  const discoveryTake = discoveryRanked.slice(0, targetDiscovery);
+
+  // Interleave ~3 joined : 2 discovery while preserving relative order
+  const out: CommunityPost[] = [];
+  let ji = 0;
+  let di = 0;
+  while (out.length < limit && (ji < joinedTake.length || di < discoveryTake.length)) {
+    for (let k = 0; k < 3 && ji < joinedTake.length && out.length < limit; k += 1) {
+      out.push(joinedTake[ji++]);
+    }
+    for (let k = 0; k < 2 && di < discoveryTake.length && out.length < limit; k += 1) {
+      out.push(discoveryTake[di++]);
+    }
+  }
+  return out;
+}
+
 export function getJoinedCommunities(userId: string): Community[] {
   return loadCommunityState().communities.filter((c) => c.memberIds.includes(userId));
 }
@@ -865,6 +1086,8 @@ export type GossipIdentity = {
   userId: string;
   createdAt: string;
   updatedAt: string;
+  /** Signed-in / profile name — used on company connection lists. */
+  realName?: string;
   /** When true, others see `username` instead of real name. */
   isAnonymous: boolean;
   /** Unique public handle (required when anonymous; optional otherwise). */
@@ -964,7 +1187,22 @@ export function isGossipSetupDone(userId: string | null | undefined): boolean {
   if (hasGossipAccount(userId)) return true;
   try {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem(`${GOSSIP_SETUP_DONE_PREFIX}${userId}`) === '1';
+    if (localStorage.getItem(`${GOSSIP_SETUP_DONE_PREFIX}${userId}`) === '1') return true;
+    const alt = localStorage.getItem('candidateId') || sessionStorage.getItem('candidateId');
+    if (alt && alt !== userId) {
+      if (localStorage.getItem(`${GOSSIP_SETUP_DONE_PREFIX}${alt}`) === '1') return true;
+      if (hasGossipAccount(alt)) return true;
+    }
+    // Any stored identity under another id (same browser) — adopt if only one exists
+    const map = loadIdentityMap();
+    const rows = Object.values(map);
+    if (rows.length === 1 && rows[0]) {
+      map[userId] = { ...rows[0], userId };
+      saveIdentityMap(map);
+      markGossipSetupDone(userId);
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -1021,6 +1259,7 @@ export function createGossipAccount(input: {
   userId: string;
   isAnonymous: boolean;
   username?: string;
+  realName?: string;
   showInCompanyConnections: boolean;
   availableForReferenceCheck: boolean;
 }): { ok: true; identity: GossipIdentity } | { ok: false; error: string } {
@@ -1044,6 +1283,7 @@ export function createGossipAccount(input: {
     userId: input.userId,
     createdAt: now,
     updatedAt: now,
+    realName: input.realName?.trim() || undefined,
     isAnonymous: Boolean(input.isAnonymous),
     username: username || '',
     showInCompanyConnections: Boolean(input.showInCompanyConnections),
@@ -1079,6 +1319,7 @@ export function updateGossipIdentity(
       GossipIdentity,
       | 'isAnonymous'
       | 'username'
+      | 'realName'
       | 'showInCompanyConnections'
       | 'availableForReferenceCheck'
       | 'referenceFeeTokens'
@@ -1122,6 +1363,10 @@ export function updateGossipIdentity(
     ...current,
     isAnonymous,
     username: username || '',
+    realName:
+      patch.realName !== undefined
+        ? patch.realName.trim() || undefined
+        : current.realName,
     showInCompanyConnections:
       patch.showInCompanyConnections !== undefined
         ? Boolean(patch.showInCompanyConnections)
@@ -1157,7 +1402,34 @@ export function getGossipDisplayName(
   if (identity.isAnonymous) {
     return identity.username ? identity.username : 'Anonymous';
   }
-  return fallbackRealName;
+  return identity.realName?.trim() || fallbackRealName;
+}
+
+/** Title-case a handle like keen_oak36 → Keen Oak36 */
+function formatHandleLabel(handle: string): string {
+  return handle
+    .split(/[_\-.]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+/**
+ * Name shown on company People / Reference lists.
+ * Respects the member's live choice: anonymous handle vs real name.
+ */
+export function getCompanyMemberDisplayName(
+  userId: string,
+  fallbackRealName?: string,
+): string {
+  const identity = getGossipIdentity(userId);
+  const demo = DEMO_REFERENCE_PEOPLE.find((d) => d.userId === userId);
+  const fallback =
+    fallbackRealName?.trim() ||
+    (demo ? formatHandleLabel(demo.username) : '') ||
+    (identity?.username ? formatHandleLabel(identity.username) : '') ||
+    `Member ${userId.slice(-4)}`;
+  return getGossipDisplayName(userId, fallback);
 }
 
 /** Members visible on a company page (respects showInCompanyConnections). */
@@ -1196,7 +1468,7 @@ export function listOpenForReferenceOnCompany(companyPageId: string): Array<{
     if (!identity?.availableForReferenceCheck) continue;
     out.push({
       userId: id,
-      displayName: getGossipDisplayName(id, `Member ${id.slice(-4)}`),
+      displayName: getCompanyMemberDisplayName(id),
       feeTokens: identity.referenceFeeTokens,
       completedChecks: identity.completedReferenceChecks,
     });

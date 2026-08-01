@@ -255,7 +255,10 @@ export function FloatingAlertsHost() {
               /recommend|viewed your profile/i.test(n.title);
 
             pushFloat({
-              id: n.id,
+              id:
+                typeof n.metadata?.messageId === 'string' && n.metadata.messageId
+                  ? `hryantra-${n.metadata.messageId}`
+                  : n.id,
               title: n.title,
               description: n.description,
               actionLabel: n.actionButton,
@@ -299,9 +302,42 @@ export function FloatingAlertsHost() {
     };
     window.addEventListener(NOTIFICATIONS_UPDATED_EVENT, onUpdated);
 
+    // Instant float when HRYantra pushes a message (before bell API round-trip).
+    // Same id as API path so the poll does not stack a duplicate card.
+    type ChatUpdatedDetail = {
+      userId?: string;
+      fromSystem?: boolean;
+      messageId?: string;
+      lastMessagePreview?: string;
+      notificationTitle?: string;
+      notificationActionButton?: string;
+      notificationActionPath?: string;
+    };
+    const onChatUpdated = (event: Event) => {
+      const d = (event as CustomEvent<ChatUpdatedDetail>).detail;
+      if (!d?.fromSystem || !d.lastMessagePreview) return;
+      if (d.userId && d.userId !== candidateId) return;
+      const preview = String(d.lastMessagePreview).trim();
+      if (!preview) return;
+      const floatId = d.messageId
+        ? `hryantra-${d.messageId}`
+        : `hryantra-preview-${preview.slice(0, 80)}`;
+      pushFloat({
+        id: floatId,
+        title: d.notificationTitle || 'New message from HRYantra',
+        description: preview,
+        actionLabel: d.notificationActionButton || 'Open chat',
+        actionPath: d.notificationActionPath || '/community',
+        kind: 'alert',
+        type: 'system',
+      });
+    };
+    window.addEventListener('saasa:hryantra-chat-updated', onChatUpdated as EventListener);
+
     return () => {
       window.clearInterval(poll);
       window.removeEventListener(NOTIFICATIONS_UPDATED_EVENT, onUpdated);
+      window.removeEventListener('saasa:hryantra-chat-updated', onChatUpdated as EventListener);
     };
   }, [
     isAuthenticated,
@@ -310,6 +346,7 @@ export function FloatingAlertsHost() {
     hidden,
     refreshMissing,
     syncNotifications,
+    pushFloat,
   ]);
 
   // Pending earn floating nudge (dismissible, 30m cooldown)
@@ -405,18 +442,24 @@ export function FloatingAlertsHost() {
 
   return createPortal(
     <div
-      className="pointer-events-none fixed right-3 z-[120] flex w-[min(340px,calc(100vw-1.5rem))] flex-col gap-2.5 sm:right-5"
+      className="pointer-events-none fixed right-3 z-[10900] flex w-[min(340px,calc(100vw-1.5rem))] flex-col gap-2.5 sm:right-5"
       style={{ top: 'calc(var(--app-header-height, 96px) + 0.75rem)' }}
     >
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence mode="popLayout" initial={false}>
         {showEarn ? (
           <motion.div
             key="earn-nudge"
             layout
-            initial={{ opacity: 0, x: 48 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 32 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+            initial={{ opacity: 0, y: -28, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.98 }}
+            transition={{
+              layout: { type: 'spring', damping: 28, stiffness: 340 },
+              type: 'spring',
+              damping: 26,
+              stiffness: 320,
+            }}
+            style={{ position: 'relative' }}
             className="pointer-events-auto overflow-hidden rounded-xl border border-emerald-200/90 bg-white/95 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-md"
             role="status"
             aria-live="polite"
@@ -471,10 +514,16 @@ export function FloatingAlertsHost() {
           <motion.div
             key="profile-nudge"
             layout
-            initial={{ opacity: 0, x: 48 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 32 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 320, delay: 0.05 }}
+            initial={{ opacity: 0, y: -28, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.98 }}
+            transition={{
+              layout: { type: 'spring', damping: 28, stiffness: 340 },
+              type: 'spring',
+              damping: 26,
+              stiffness: 320,
+            }}
+            style={{ position: 'relative' }}
             className="pointer-events-auto"
           >
             <ProfileMissingSectionNudge
@@ -487,7 +536,7 @@ export function FloatingAlertsHost() {
           </motion.div>
         ) : null}
 
-        {floats.map((item, index) => {
+        {floats.map((item) => {
           const Icon = iconForFloat(item);
           const shell = shellForFloat(item);
           const showCoin = /\btokens?\b/i.test(item.title);
@@ -495,15 +544,16 @@ export function FloatingAlertsHost() {
             <motion.div
               key={item.id}
               layout
-              initial={{ opacity: 0, x: 48 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 32 }}
+              initial={{ opacity: 0, y: -28, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.98 }}
               transition={{
+                layout: { type: 'spring', damping: 28, stiffness: 340 },
                 type: 'spring',
                 damping: 26,
                 stiffness: 320,
-                delay: 0.04 * (index + 1),
               }}
+              style={{ position: 'relative' }}
               className={`pointer-events-auto overflow-hidden rounded-xl border bg-white/95 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-md ${shell.card}`}
               role="status"
               aria-live="polite"

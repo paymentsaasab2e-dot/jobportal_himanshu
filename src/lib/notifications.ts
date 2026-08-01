@@ -62,6 +62,8 @@ const ALERT_KINDS = new Set([
   'interview_scheduled',
   'status_update',
   'recommendation',
+  'hryantra_chat',
+  'company_follow_post',
 ]);
 
 /**

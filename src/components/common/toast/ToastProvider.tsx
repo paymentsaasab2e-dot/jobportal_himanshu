@@ -196,7 +196,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {isMounted && typeof document !== 'undefined'
         ? createPortal(
             <div className="pointer-events-none fixed inset-x-3 top-3 z-[11000] flex flex-col items-center gap-2.5 sm:inset-x-auto sm:right-5 sm:top-5 sm:items-end sm:w-[380px]">
-              <AnimatePresence mode="popLayout">
+              <AnimatePresence mode="popLayout" initial={false}>
                 {toasts.map((toast) => {
                   const tone = normalizeTone(toast.tone);
                   const Icon = iconForTone(tone);
@@ -207,10 +207,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                     <motion.div
                       key={toast.id}
                       layout
-                      initial={{ opacity: 0, y: -16, scale: 0.96 }}
+                      initial={{ opacity: 0, y: -28, scale: 0.96 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -8, scale: 0.96, transition: { duration: 0.18 } }}
-                      transition={{ type: 'spring', damping: 26, stiffness: 340 }}
+                      exit={{ opacity: 0, y: -12, scale: 0.96, transition: { duration: 0.18 } }}
+                      transition={{
+                        layout: { type: 'spring', damping: 28, stiffness: 340 },
+                        type: 'spring',
+                        damping: 26,
+                        stiffness: 340,
+                      }}
+                      style={{ position: 'relative' }}
                       className="pointer-events-auto w-full overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.18)] ring-1 ring-black/5"
                       role="status"
                       aria-live="polite"

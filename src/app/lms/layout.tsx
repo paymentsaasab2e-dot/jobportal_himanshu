@@ -8,7 +8,7 @@ import {
   BookOpen,
   Mic2,
   ClipboardList,
-  CalendarDays,
+  // CalendarDays — Events moved to Office Gossips; kept commented in NAV_ITEMS
   StickyNote,
   Route,
 } from 'lucide-react';
@@ -27,7 +27,8 @@ const NAV_ITEMS = [
   { href: '/lms/courses', label: 'Courses', icon: BookOpen, exact: false },
   { href: '/lms/interview-prep', label: 'Interview Prep', icon: Mic2, exact: false },
   { href: '/lms/quizzes', label: 'Quizzes', icon: ClipboardList, exact: false },
-  { href: '/lms/events', label: 'Events', icon: CalendarDays, exact: false },
+  // Events live in Office Gossips (`/community` → Events). Keep /lms/events route + API for data.
+  // { href: '/lms/events', label: 'Events', icon: CalendarDays, exact: false },
   { href: '/lms/notes', label: 'Notes', icon: StickyNote, exact: false },
   { href: '/lms/career-path', label: 'Career Path', icon: Route, exact: false },
 ] as const;

@@ -453,6 +453,34 @@ export default function BasicInfoModal({
     const nextErrors = validate(payload);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
+
+    // Cross-user uniqueness for email/mobile only (not display name)
+    const {
+      checkCredentialDuplication,
+      alertDuplicationFindings,
+    } = await import('@/lib/duplication-check');
+    const excludeId =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('candidateId') || sessionStorage.getItem('candidateId')
+        : null;
+    const dup = await checkCredentialDuplication({
+      context: 'profile.basic',
+      email: payload.email,
+      phone: payload.phone || payload.whatsappNumber,
+      countryCode: selectedPhoneCodeOption?.dialCode || payload.phoneCode?.split(' ')[0],
+      excludeCandidateId: excludeId,
+    });
+    if (!dup.ok) {
+      alertDuplicationFindings(dup, { title: 'Already in use' });
+      const fieldErrors: Partial<Record<BasicInfoFieldKey, string>> = { ...nextErrors };
+      for (const f of dup.findings) {
+        if (f.field === 'email') fieldErrors.email = f.message;
+        if (f.field === 'phone') fieldErrors.phone = f.message;
+      }
+      setErrors(fieldErrors);
+      return;
+    }
+
     await onSave(payload);
   };
 

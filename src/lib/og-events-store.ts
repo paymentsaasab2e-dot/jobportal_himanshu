@@ -194,16 +194,169 @@ export function listEventsForProfile(
   profileText: string,
   options?: { minHits?: number },
 ): OgEventPost[] {
+  return scoreEventsForProfile(listOgEvents(), profileText, options);
+}
+
+/** Score any event list against a profile/behaviour haystack; keep only related items. */
+export function scoreEventsForProfile(
+  events: OgEventPost[],
+  profileText: string,
+  options?: { minHits?: number; limit?: number },
+): OgEventPost[] {
   const hay = profileText.trim().toLowerCase();
   const minHits = options?.minHits ?? 1;
-  if (!hay) return [];
+  const limit = options?.limit ?? 40;
+  if (!hay || !events.length) return [];
 
-  const scored = listOgEvents().map((ev) => {
-    const hits = ev.matchKeys.filter((k) => hay.includes(k)).length;
-    return { ev, score: hits };
+  const tokens = hay.split(/[^a-z0-9+#.]+/).filter((t) => t.length > 2);
+  const scored = events.map((ev) => {
+    const blob = `${ev.title} ${ev.body} ${ev.hostName} ${ev.tags.join(' ')} ${ev.matchKeys.join(' ')}`.toLowerCase();
+    const keyHits = ev.matchKeys.filter((k) => hay.includes(k) || tokens.some((t) => k.includes(t) || t.includes(k))).length;
+    const tokenHits = tokens.filter((t) => blob.includes(t)).length;
+    return { ev, score: keyHits * 2 + tokenHits };
   });
   scored.sort((a, b) => b.score - a.score || +new Date(b.ev.createdAt) - +new Date(a.ev.createdAt));
-  return scored.filter((s) => s.score >= minHits).map((s) => s.ev);
+  return scored.filter((s) => s.score >= minHits).slice(0, limit).map((s) => s.ev);
+}
+
+const LMS_EVENT_IMAGE =
+  'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80';
+
+function inferOgTypeFromLms(raw: Record<string, unknown>): OgEventType {
+  const tags = Array.isArray(raw.tags) ? raw.tags.map((t) => asString(t)).join(' ') : '';
+  const blob = `${asString(raw.type)} ${asString(raw.title)} ${asString(raw.mode)} ${tags}`.toLowerCase();
+  if (blob.includes('walk-in') || blob.includes('walk in')) return 'walk-in';
+  if (blob.includes('job fair') || blob.includes('job-fair') || blob.includes('career fair')) return 'job-fair';
+  if (blob.includes('webinar')) return 'webinar';
+  if (blob.includes('online') && !blob.includes('offline')) return 'webinar';
+  return 'seminar';
+}
+
+function tokensFromText(...parts: string[]): string[] {
+  const blob = parts.filter(Boolean).join(' ').toLowerCase();
+  const stop = new Set([
+    'the', 'and', 'for', 'with', 'from', 'your', 'you', 'this', 'that', 'are', 'our', 'into',
+    'will', 'have', 'has', 'been', 'about', 'over', 'under', 'mins', 'min', 'hour', 'hours',
+  ]);
+  return blob
+    .split(/[^a-z0-9+#.]+/)
+    .filter((t) => t.length > 2 && !stop.has(t))
+    .slice(0, 16);
+}
+
+/** Map LMS `/events` API rows into Office Gossips event cards. */
+export function mapLmsEventsToOgEvents(rawEvents: unknown[], limit = 40): OgEventPost[] {
+  const out: OgEventPost[] = [];
+  for (const raw of rawEvents) {
+    if (out.length >= limit) break;
+    const row = asRecord(raw);
+    const id = asString(row.id || row._id || row.eventId);
+    if (!id) continue;
+    const title = asString(row.title) || 'LMS event';
+    const body =
+      asString(row.description || row.overview || row.summary).replace(/\s+/g, ' ').trim().slice(0, 220) ||
+      title;
+    const hostName = asString(row.hostName || row.speaker || row.organizer) || 'HRYantra LMS';
+    const type = inferOgTypeFromLms(row);
+    const tagsRaw = Array.isArray(row.tags) ? row.tags.map((t) => asString(t)).filter(Boolean) : [];
+    const scheduled = asString(row.scheduledAt || row.startsAt || row.date);
+    let whenLabel = 'Upcoming · LMS';
+    let createdAt = new Date().toISOString();
+    if (scheduled) {
+      const d = new Date(scheduled);
+      if (!Number.isNaN(d.getTime())) {
+        createdAt = d.toISOString();
+        whenLabel = d.toLocaleString(undefined, {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        });
+      }
+    }
+    const mode = asString(row.mode);
+    const location =
+      mode.toLowerCase() === 'offline'
+        ? asString(row.location || row.venue) || 'Offline'
+        : undefined;
+    const matchKeys = tokensFromText(title, body, hostName, type, ...tagsRaw);
+
+    out.push({
+      id: `lms-${id}`,
+      type,
+      title,
+      body,
+      hostName,
+      hostInitial: hostName.slice(0, 1).toUpperCase() || 'L',
+      location,
+      whenLabel,
+      imageUrl: asString(row.coverUrl || row.imageUrl) || LMS_EVENT_IMAGE,
+      tags: [eventTypeLabel(type), ...tagsRaw].filter(Boolean).slice(0, 4),
+      interestedCount: Number(row.registeredCount || row.attendeeCount || 0) || 40,
+      createdAt,
+      matchKeys,
+      actionHref: `/lms/events/${encodeURIComponent(id)}`,
+    });
+  }
+  return out;
+}
+
+/**
+ * Build a rich match string from profile + behaviour (skills, target role, researched companies).
+ */
+export function buildEventMatchHaystack(input: {
+  nameBits?: Array<string | null | undefined>;
+  skills?: string[];
+  targetRole?: string | null;
+  workDomain?: string | null;
+  recentJobTitles?: string[];
+  topRoles?: Array<{ label?: string }>;
+  topCompanies?: Array<{ label?: string }>;
+  communityNames?: string[];
+}): string {
+  const bits = [
+    ...(input.nameBits || []),
+    input.targetRole,
+    input.workDomain,
+    ...(input.skills || []),
+    ...(input.recentJobTitles || []),
+    ...(input.topRoles || []).map((r) => r.label),
+    ...(input.topCompanies || []).map((c) => c.label),
+    ...(input.communityNames || []),
+  ];
+  return bits.filter(Boolean).join(' ').toLowerCase();
+}
+
+/** Merge live job cards into the ranked events list (jobs float near top). */
+export function mergeEventsWithJobs(
+  events: OgEventPost[],
+  jobEvents: OgEventPost[],
+): OgEventPost[] {
+  if (!jobEvents.length) return events;
+  const withoutJobs = events.filter((e) => e.type !== 'job');
+  const seen = new Set<string>();
+  const out: OgEventPost[] = [];
+  for (const ev of [...jobEvents, ...withoutJobs]) {
+    if (seen.has(ev.id)) continue;
+    seen.add(ev.id);
+    out.push(ev);
+  }
+  return out;
+}
+
+/** Merge LMS + catalog (+ optional extras), de-dupe by id. */
+export function mergeOgEventLists(...lists: OgEventPost[][]): OgEventPost[] {
+  const seen = new Set<string>();
+  const out: OgEventPost[] = [];
+  for (const list of lists) {
+    for (const ev of list) {
+      if (seen.has(ev.id)) continue;
+      seen.add(ev.id);
+      out.push(ev);
+    }
+  }
+  return out;
 }
 
 /** Keep jobs that touch profile keywords (personalized API jobs can pass through with `preferAll`). */
@@ -230,16 +383,6 @@ export function filterJobsForProfile(
   scored.sort((a, b) => b.score - a.score);
   const matched = scored.filter((s) => s.score > 0).map((s) => s.ev);
   return (matched.length ? matched : jobEvents).slice(0, limit);
-}
-
-/** Merge live job cards into the ranked events list (jobs float near top). */
-export function mergeEventsWithJobs(
-  events: OgEventPost[],
-  jobEvents: OgEventPost[],
-): OgEventPost[] {
-  if (!jobEvents.length) return events;
-  const withoutJobs = events.filter((e) => e.type !== 'job');
-  return [...jobEvents, ...withoutJobs];
 }
 
 export function eventTypeLabel(type: OgEventType): string {

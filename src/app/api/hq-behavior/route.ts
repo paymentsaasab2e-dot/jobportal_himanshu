@@ -10,6 +10,8 @@ type StoredHqBehaviorPayload = {
   rollup7d?: unknown;
   suggestionMetrics?: unknown;
   triggers?: unknown[];
+  interests?: unknown[];
+  personalizedRecs?: unknown[];
 };
 
 const store = globalThis as typeof globalThis & {
@@ -61,6 +63,10 @@ export async function POST(req: NextRequest) {
     data: {
       userId: payload.userId,
       triggerCount: Array.isArray(payload.triggers) ? payload.triggers.length : 0,
+      interestCount: Array.isArray(payload.interests) ? payload.interests.length : 0,
+      personalizedRecCount: Array.isArray(payload.personalizedRecs)
+        ? payload.personalizedRecs.length
+        : 0,
       capturedAt: normalized.capturedAt,
     },
   });

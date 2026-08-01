@@ -17,6 +17,10 @@ import {
   normalizeWorkModeFromApi,
 } from '@/lib/work-experience-utils';
 import {
+  alertDuplicationFindings,
+  checkExperienceDuplication,
+} from '@/lib/duplication-check';
+import {
   downloadProfileDocumentItem,
   getProfileDocumentDisplayName,
   isStoredProfileDocument,
@@ -1049,6 +1053,17 @@ export default function WorkExperienceModal({
         workSkills,
         documents: documents.length > 0 ? documents : undefined,
       };
+
+      const others = finalWorkExperiences.filter((e) => e.id !== (editingEntryId || formEntry.id));
+      const dup = checkExperienceDuplication({
+        existing: others as unknown as Array<Record<string, unknown>>,
+        next: formEntry as unknown as Record<string, unknown>,
+        editingId: editingEntryId || null,
+      });
+      if (!dup.ok) {
+        alertDuplicationFindings(dup, { title: 'Duplicate work experience' });
+        return;
+      }
 
       if (editingEntryId) {
         const existingIndex = finalWorkExperiences.findIndex((e) => e.id === editingEntryId);

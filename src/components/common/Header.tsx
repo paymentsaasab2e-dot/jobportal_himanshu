@@ -716,7 +716,9 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                 userEmail={dashboardUser?.email || user?.email || ''}
                 profileCompletion={profileCompletion}
             />
-            {isLoggedIn && !isLandingPage && <GlobalAIAssistant />}
+            {isLoggedIn &&
+                !isLandingPage &&
+                !normalizedPath.startsWith('/community') && <GlobalAIAssistant />}
         </>
     );
 }

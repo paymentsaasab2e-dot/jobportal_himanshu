@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { BadgeCheck, Check, Minus, Send, X, ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
+import { BadgeCheck, Check, Mic, Minus, X, ArrowLeft } from 'lucide-react';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
 import {
   getReferenceCheck,
@@ -26,11 +27,88 @@ import {
   sendHryantraVerifiedUserMessage,
 } from '@/lib/hryantra-verified-chat-store';
 import { recordSuggestionClick } from '@/lib/suggestions-engine';
-import { getGossipIdentity } from '@/lib/community-store';
+import { fileToDataUrl, getGossipIdentity } from '@/lib/community-store';
 import { isUserOnline } from '@/lib/presence';
 import { WritingAssistField } from '@/components/common/WritingSuggestions';
 
+function ComposeAssetIcon({
+  src,
+  alt,
+  size = 20,
+}: {
+  src: string;
+  alt: string;
+  size?: number;
+}) {
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={size}
+      height={size}
+      className="object-contain"
+      style={{ width: size, height: size }}
+      aria-hidden
+    />
+  );
+}
+
 export type ChatKind = 'reference' | 'dm' | 'hryantra';
+
+type ChatMediaKind = 'image' | 'voice';
+
+function sameCalendarDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+/** WhatsApp-style day chip: Today / Yesterday / full past date */
+function formatChatDayLabel(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (sameCalendarDay(d, today)) return 'Today';
+  if (sameCalendarDay(d, yesterday)) return 'Yesterday';
+  // Every past day gets a full readable date (WhatsApp-style history)
+  return d.toLocaleDateString(undefined, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function formatChatTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+/** Time only for today; for older days include short date + time under the bubble */
+function formatChatBubbleStamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const time = formatChatTime(iso);
+  const today = new Date();
+  if (sameCalendarDay(d, today)) return time;
+  const datePart = d.toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    ...(d.getFullYear() !== today.getFullYear() ? { year: 'numeric' as const } : {}),
+  });
+  return `${datePart}, ${time}`;
+}
+
+function dayKey(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return `unknown-${iso}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 type Props = {
   kind: ChatKind;
@@ -58,16 +136,28 @@ export function ReferenceMessagingPanel({
   const [minimized, setMinimized] = useState(false);
   const [acceptAnon, setAcceptAnon] = useState(false);
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaKind, setMediaKind] = useState<ChatMediaKind | null>(null);
+  const [recording, setRecording] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const stickToBottomRef = useRef(true);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   const myIdentity = getGossipIdentity(userId);
   const forcedAnon = Boolean(myIdentity?.isAnonymous);
 
   useEffect(() => {
+    stickToBottomRef.current = true;
     setMinimized(false);
     setDraft('');
     setAnswers({});
+    setMediaPreview(null);
+    setMediaKind(null);
+    setRecording(false);
     setAcceptAnon(forcedAnon || Boolean(myIdentity?.followAnonymously));
     if (kind === 'hryantra') {
       markHryantraVerifiedChatRead(userId);
@@ -87,6 +177,13 @@ export function ReferenceMessagingPanel({
   }, [chatId, kind]);
 
   void tick;
+
+  const handleThreadScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    stickToBottomRef.current = distanceFromBottom < 80;
+  };
 
   const refLive = kind === 'reference' ? getReferenceCheck(chatId) : null;
   const dmLive = kind === 'dm' ? getDmThread(chatId) : null;
@@ -117,7 +214,7 @@ export function ReferenceMessagingPanel({
     kind === 'hryantra' ? 'verified' : kind === 'reference' ? refLive?.status : dmLive?.status;
   const subtitle =
     kind === 'hryantra'
-      ? 'Verified · official updates'
+      ? 'Official updates'
       : kind === 'reference'
         ? `${refLive?.companyName || 'Reference'} · paid`
         : `${dmLive?.companyName || 'Direct message'} · free`;
@@ -148,10 +245,10 @@ export function ReferenceMessagingPanel({
     refLive.refereeId === userId;
 
   useEffect(() => {
-    if (!minimized) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages.length, tick, minimized, chatId]);
+    if (minimized) return;
+    if (!stickToBottomRef.current) return;
+    bottomRef.current?.scrollIntoView({ behavior: 'auto' });
+  }, [messages.length, chatId, minimized]);
 
   if (
     (kind === 'reference' && !refLive) ||
@@ -175,28 +272,91 @@ export function ReferenceMessagingPanel({
   }
 
   const handleSend = () => {
+    stickToBottomRef.current = true;
+    const mediaOpts =
+      mediaPreview && mediaKind
+        ? { mediaUrl: mediaPreview, mediaType: mediaKind }
+        : undefined;
     if (kind === 'hryantra') {
-      const result = sendHryantraVerifiedUserMessage(userId, draft);
+      const result = sendHryantraVerifiedUserMessage(userId, draft, mediaOpts);
       if (!result.ok) {
         showErrorToast('Message', result.error);
         return;
       }
     } else if (kind === 'reference') {
-      const result = sendReferenceMessage(chatId, userId, draft);
+      const result = sendReferenceMessage(chatId, userId, draft, mediaOpts);
       if (!result.ok) {
         showErrorToast('Message', result.error);
         return;
       }
     } else {
-      const result = sendDirectMessage(chatId, userId, draft);
+      const result = sendDirectMessage(chatId, userId, draft, mediaOpts);
       if (!result.ok) {
         showErrorToast('Message', result.error);
         return;
       }
     }
     setDraft('');
+    setMediaPreview(null);
+    setMediaKind(null);
     setTick((n) => n + 1);
     onRefresh?.();
+  };
+
+  const clearMedia = () => {
+    setMediaPreview(null);
+    setMediaKind(null);
+  };
+
+  const pickImage = async (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showErrorToast('Media', 'Please choose an image file.');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      showErrorToast('File too large', 'Keep media under 4 MB for now.');
+      return;
+    }
+    try {
+      const url = await fileToDataUrl(file);
+      setMediaPreview(url);
+      setMediaKind('image');
+    } catch {
+      showErrorToast('Media', 'Could not attach image.');
+    }
+  };
+
+  const startVoice = async () => {
+    if (recording) {
+      mediaRecorderRef.current?.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size) chunksRef.current.push(e.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        try {
+          const url = await fileToDataUrl(new File([blob], 'voice.webm', { type: 'audio/webm' }));
+          setMediaPreview(url);
+          setMediaKind('voice');
+        } catch {
+          showErrorToast('Voice', 'Could not save recording.');
+        }
+        setRecording(false);
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setRecording(true);
+    } catch {
+      showErrorToast('Mic unavailable', 'Allow microphone access to record voice.');
+    }
   };
 
   const handleDmRespond = (accept: boolean) => {
@@ -307,7 +467,9 @@ export function ReferenceMessagingPanel({
             <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-sky-300" aria-label="Verified" />
           ) : null}
         </span>
-        <span className="text-[10px] uppercase text-white/60">{status}</span>
+        {kind === 'hryantra' ? null : (
+          <span className="text-[10px] uppercase text-white/60">{status}</span>
+        )}
       </button>
     );
   }
@@ -316,18 +478,26 @@ export function ReferenceMessagingPanel({
     <div
       className={
         embedded
-          ? 'flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm'
+          ? 'flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[24px] bg-linear-to-br from-[#28A8E1] via-[#5BB8E8] to-[#FC9620] p-[1.5px] shadow-[0_12px_30px_rgba(40,168,225,0.12),0_4px_16px_rgba(252,150,32,0.1)]'
           : 'fixed bottom-0 right-3 z-[80] flex h-[min(520px,75vh)] w-[min(400px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-t-xl border border-slate-200 border-b-0 bg-white shadow-[0_-8px_40px_rgba(15,23,42,0.2)] sm:bottom-4 sm:right-4 sm:rounded-xl sm:border-b'
       }
     >
-      <div className="flex shrink-0 items-center gap-2 bg-[#1B3A5F] px-3 py-2.5 text-white">
+      <div
+        className={
+          embedded
+            ? 'relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-[22.5px] bg-white'
+            : 'contents'
+        }
+      >
+      <div className="relative flex shrink-0 items-center gap-2.5 overflow-hidden border-b border-slate-100/80 bg-linear-to-r from-[#0F2A44] via-[#1B3A5F] to-[#28A8E1] px-3 py-3 text-white">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.22),transparent_42%)]" />
         {kind === 'hryantra' ? (
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/90 bg-white shadow-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/fs.png" alt="" className="h-8 w-8 object-contain" />
           </div>
         ) : (
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-bold">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white">
             {otherInitial}
             <span
               className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-[#1B3A5F] ${
@@ -337,30 +507,32 @@ export function ReferenceMessagingPanel({
             />
           </div>
         )}
-        <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-1 truncate text-sm font-semibold">
-            {other}
+        <div className="relative min-w-0 flex-1">
+          <p className="flex items-center gap-1.5 truncate text-[15px] font-bold tracking-tight text-white drop-shadow-sm">
+            <span className="text-white">{other}</span>
             {kind === 'hryantra' ? (
-              <BadgeCheck className="h-4 w-4 shrink-0 text-sky-300" aria-label="Verified" />
+              <BadgeCheck className="h-4 w-4 shrink-0 text-[#7DD3FC]" aria-label="Verified" />
             ) : null}
           </p>
-          <p className="truncate text-[11px] text-white/70">
+          <p className="truncate text-[11px] font-medium text-white/90">
             {kind === 'hryantra' ? (
-              <span className="text-emerald-300">Official</span>
+              <span>{subtitle}</span>
             ) : (
-              <span className={online ? 'text-emerald-300' : 'text-rose-300'}>
-                {online ? 'Active now' : 'Offline'}
-              </span>
+              <>
+                <span className={online ? 'text-emerald-200' : 'text-rose-200'}>
+                  {online ? 'Active now' : 'Offline'}
+                </span>
+                {' · '}
+                {subtitle}
+              </>
             )}
-            {' · '}
-            {subtitle}
           </p>
         </div>
         {embedded ? (
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1.5 text-white/80 hover:bg-white/10 lg:hidden"
+            className="relative rounded-md p-1.5 text-white hover:bg-white/15 lg:hidden"
             title="Back to chats"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -370,7 +542,7 @@ export function ReferenceMessagingPanel({
             <button
               type="button"
               onClick={() => setMinimized(true)}
-              className="rounded-md p-1.5 text-white/80 hover:bg-white/10"
+              className="relative rounded-md p-1.5 text-white hover:bg-white/15"
               title="Minimize"
             >
               <Minus className="h-4 w-4" />
@@ -378,7 +550,7 @@ export function ReferenceMessagingPanel({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md p-1.5 text-white/80 hover:bg-white/10"
+              className="relative rounded-md p-1.5 text-white hover:bg-white/15"
               title="Close"
             >
               <X className="h-4 w-4" />
@@ -387,13 +559,22 @@ export function ReferenceMessagingPanel({
         )}
       </div>
 
-      <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto bg-[#F4F2EE] px-3 py-3">
+      <div
+        ref={scrollRef}
+        onScroll={handleThreadScroll}
+        className="relative min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3"
+        style={{
+          backgroundColor: '#DCEEF8',
+          backgroundImage:
+            'radial-gradient(circle at 12% 18%, rgba(252,150,32,0.14), transparent 26%), radial-gradient(circle at 88% 12%, rgba(40,168,225,0.22), transparent 28%), radial-gradient(circle at 70% 78%, rgba(252,150,32,0.1), transparent 24%), linear-gradient(180deg, #E8F5FC 0%, #E3F1F9 42%, #F0F7FB 100%)',
+        }}
+      >
         {messages.length === 0 ? (
-          <p className="rounded-lg bg-white/90 px-3 py-4 text-center text-xs text-slate-500">
+          <p className="rounded-2xl bg-white/85 px-3 py-4 text-center text-xs text-slate-500 shadow-sm backdrop-blur-sm">
             No messages yet — say hello.
           </p>
         ) : (
-          messages.map((m) => {
+          messages.map((m, index) => {
             const mine = m.senderId === userId;
             const isSystem =
               kind === 'hryantra' && m.senderId === HRYANTRA_SYSTEM_SENDER_ID;
@@ -411,39 +592,105 @@ export function ReferenceMessagingPanel({
               typeof hqMeta.suggestionId === 'string'
                 ? hqMeta.suggestionId
                 : null;
+            const prev = index > 0 ? messages[index - 1] : null;
+            const showDay =
+              !prev || dayKey(String(prev.createdAt || '')) !== dayKey(String(m.createdAt || ''));
+            const dayLabel = formatChatDayLabel(String(m.createdAt || ''));
+            const timeLabel = formatChatBubbleStamp(String(m.createdAt || ''));
             return (
-              <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+              <div key={m.id}>
+                {showDay ? (
+                  <div className="mb-2.5 flex justify-center pt-1">
+                    <span className="rounded-full bg-[#1B3A5F]/85 px-3 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur-sm">
+                      {dayLabel || 'Earlier'}
+                    </span>
+                  </div>
+                ) : null}
                 <div
-                  className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed shadow-sm ${
-                    mine
-                      ? 'rounded-br-md bg-[#0A66C2] text-white'
-                      : isSystem
-                        ? 'rounded-bl-md border border-sky-100 bg-sky-50 text-slate-800'
-                        : 'rounded-bl-md bg-white text-slate-800'
-                  }`}
+                  className={`flex items-start gap-2 ${mine ? 'justify-end' : 'justify-start'}`}
                 >
-                  {isSystem ? (
-                    <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#0A66C2]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/fs.png" alt="" className="h-3.5 w-3.5 object-contain" />
-                      HRYantra
-                      <BadgeCheck className="h-3 w-3" aria-label="Verified" />
-                    </p>
+                  {!mine ? (
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white bg-white shadow-sm">
+                      {isSystem ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src="/fs.png" alt="" className="h-6 w-6 object-contain" />
+                      ) : (
+                        <span className="text-[11px] font-bold text-[#28A8E1]">
+                          {(other || 'U').slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
                   ) : null}
-                  {m.text}
-                  {actionUrl ? (
-                    <a
-                      href={actionUrl}
-                      onClick={() => {
-                        if (recoverySuggestionId) {
-                          recordSuggestionClick(userId, recoverySuggestionId);
-                        }
-                      }}
-                      className="mt-2 block text-[12px] font-semibold text-[#0A66C2] underline"
-                    >
-                      Open →
-                    </a>
-                  ) : null}
+                  <div
+                    className={`max-w-[78%] min-w-[140px] whitespace-pre-wrap px-3 py-2 text-[13px] leading-relaxed shadow-[0_4px_14px_rgba(15,23,42,0.08)] ${
+                      mine
+                        ? 'rounded-2xl rounded-br-md bg-linear-to-br from-[#5FE0C0] to-[#00A884] text-white'
+                        : isSystem
+                          ? 'rounded-2xl rounded-tl-md border border-[#B8E0F4] bg-linear-to-br from-[#FFFFFF] via-[#F2FAFE] to-[#DFF2FB] text-slate-800'
+                          : 'rounded-2xl rounded-tl-md border border-white/90 bg-white text-slate-800'
+                    }`}
+                  >
+                    {'mediaUrl' in m &&
+                    m.mediaUrl &&
+                    (m as { mediaType?: string }).mediaType === 'image' ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={m.mediaUrl}
+                        alt=""
+                        className="mb-1.5 max-h-52 w-full rounded-lg object-cover"
+                      />
+                    ) : null}
+                    {'mediaUrl' in m &&
+                    m.mediaUrl &&
+                    (m as { mediaType?: string }).mediaType === 'voice' ? (
+                      <div
+                        className={`mb-1.5 flex items-center gap-2 rounded-lg px-2 py-1.5 ${
+                          mine ? 'bg-white/15' : 'bg-[#EAF6FC]'
+                        }`}
+                      >
+                        <Mic
+                          className={`h-3.5 w-3.5 shrink-0 ${mine ? 'text-white/80' : 'text-slate-500'}`}
+                        />
+                        <audio src={m.mediaUrl} controls className="h-8 min-w-0 flex-1" />
+                      </div>
+                    ) : null}
+                    {(() => {
+                      const hasMedia = Boolean('mediaUrl' in m && m.mediaUrl);
+                      const placeholder = m.text === 'Image' || m.text === 'Voice note';
+                      if (!m.text || (hasMedia && placeholder)) return null;
+                      return (
+                        <p className={`whitespace-pre-wrap ${mine ? 'text-white' : 'text-slate-800'}`}>
+                          {m.text}
+                        </p>
+                      );
+                    })()}
+                    {actionUrl ? (
+                      <a
+                        href={actionUrl}
+                        onClick={() => {
+                          if (recoverySuggestionId) {
+                            recordSuggestionClick(userId, recoverySuggestionId);
+                          }
+                        }}
+                        className={`mt-1.5 inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${
+                          mine
+                            ? 'bg-white/20 text-white hover:bg-white/30'
+                            : 'bg-[#28A8E1]/12 text-[#0285C7] hover:bg-[#28A8E1]/20'
+                        }`}
+                      >
+                        Open →
+                      </a>
+                    ) : null}
+                    {timeLabel ? (
+                      <p
+                        className={`mt-1.5 text-right text-[10px] leading-none ${
+                          mine ? 'text-white/70' : 'text-slate-400'
+                        }`}
+                      >
+                        {timeLabel}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             );
@@ -509,31 +756,91 @@ export function ReferenceMessagingPanel({
       ) : null}
 
       {canChat && !iAmRefAnswerer ? (
-        <div className="flex shrink-0 items-center gap-2 border-t border-slate-100 bg-white p-3">
-          <WritingAssistField
-            multiline={false}
-            inputRef={inputRef as RefObject<HTMLInputElement>}
-            value={draft}
-            onChange={setDraft}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Write a message…"
-            wrapperClassName="min-w-0 flex-1"
-            className="h-10 w-full rounded-full border border-slate-200 bg-slate-50 px-4 text-sm outline-none focus:border-[#0A66C2] focus:bg-white"
-          />
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={!draft.trim()}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0A66C2] text-white hover:bg-[#004182] disabled:opacity-40"
-            title="Send"
-          >
-            <Send className="h-4 w-4" />
-          </button>
+        <div className="shrink-0 border-t border-[#D5E0DC] bg-[#EEF5F2] px-2.5 py-2">
+          {mediaPreview ? (
+            <div className="mb-1.5 flex items-center gap-2 rounded-[14px] border border-[#D0DDD8] bg-white px-2.5 py-1.5">
+              {mediaKind === 'image' ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={mediaPreview} alt="" className="h-10 w-10 rounded-lg object-cover" />
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                  <Mic className="h-3.5 w-3.5" />
+                  Voice note ready
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={clearMedia}
+                className="ml-auto text-[10px] font-semibold text-rose-600 hover:underline"
+              >
+                Remove
+              </button>
+            </div>
+          ) : null}
+          <div className="flex items-end gap-1.5 rounded-[16px] border border-[#D0DDD8] bg-white px-1.5 py-1.5 shadow-sm">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0] || null;
+                void pickImage(f);
+                e.target.value = '';
+              }}
+            />
+            <div className="mb-0.5 flex shrink-0 items-center gap-0.5">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title="Add image"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#54656F] transition hover:bg-[#F0F2F5]"
+              >
+                <ComposeAssetIcon src="/icons/image-.png" alt="Image" size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => void startVoice()}
+                title={recording ? 'Stop recording' : 'Voice note'}
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#F0F2F5] ${
+                  recording ? 'bg-rose-50 ring-1 ring-rose-300' : ''
+                }`}
+              >
+                <ComposeAssetIcon src="/icons/waveform-path.png" alt="Voice" size={16} />
+              </button>
+            </div>
+            <WritingAssistField
+              inputRef={inputRef}
+              value={draft}
+              onChange={setDraft}
+              rows={1}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Write a message…"
+              wrapperClassName="min-w-0 flex-1"
+              className="max-h-24 min-h-[36px] w-full resize-none bg-transparent px-1.5 py-2 text-[13px] leading-snug text-slate-800 outline-none placeholder:text-slate-400"
+            />
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={!draft.trim() && !mediaPreview}
+              className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00A884] shadow-[0_4px_12px_rgba(0,168,132,0.28)] transition hover:bg-[#029978] disabled:opacity-40"
+              title="Send (Enter) · New line (Shift+Enter)"
+            >
+              <span className="brightness-0 invert">
+                <ComposeAssetIcon src="/icons/send.png" alt="Send" size={15} />
+              </span>
+            </button>
+          </div>
+          {recording ? (
+            <p className="mt-1 px-1 text-[10px] font-medium text-rose-600">
+              Recording… tap mic to stop
+            </p>
+          ) : null}
         </div>
       ) : iAmRefRecipient ? (
         <div className="shrink-0 space-y-2 border-t border-amber-100 bg-amber-50/80 px-3 py-3">
@@ -622,6 +929,7 @@ export function ReferenceMessagingPanel({
           Waiting for them to accept… Real names stay hidden until then.
         </div>
       ) : null}
+      </div>
     </div>
   );
 }

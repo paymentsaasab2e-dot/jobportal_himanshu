@@ -8,6 +8,8 @@ import {
   fetchPortalApplications,
   fetchPortalCvDashboard,
 } from '@/lib/query/portal-api';
+import { fetchProfileCompleteness } from '@/lib/profile-completion';
+import { getMissingProfileSections } from '@/lib/profile-section-routes';
 import {
   ensureActivitySession,
   recordActiveTime,
@@ -22,6 +24,7 @@ import {
   postHqBehaviorPayload,
 } from '@/lib/hq-behavior';
 import { SUGGESTIONS_ENGINE_HQ_EVENT, type HqSuggestionMetrics } from '@/lib/suggestions-engine';
+import { INTEREST_AFFINITY_HQ_EVENT } from '@/lib/interest-affinity-store';
 
 const HEARTBEAT_MS = 15_000;
 const PROFILE_SYNC_MS = 120_000;
@@ -104,9 +107,10 @@ export function UserActivityTrackerHost() {
       const candidateId = resolveCandidateIdForApi(userId);
       if (!candidateId || cancelled) return;
       try {
-        const [apps, dashboard] = await Promise.all([
+        const [apps, dashboard, completeness] = await Promise.all([
           fetchPortalApplications(candidateId).catch(() => []),
           fetchPortalCvDashboard(candidateId).catch(() => null),
+          fetchProfileCompleteness(candidateId).catch(() => null),
         ]);
         if (cancelled) return;
 
@@ -124,14 +128,23 @@ export function UserActivityTrackerHost() {
         const skills = Array.isArray(dashboard?.topSkills)
           ? dashboard!.topSkills.length
           : 0;
+        const missing = completeness
+          ? getMissingProfileSections(null, completeness)
+          : [];
 
         syncProfileActivitySnapshot(userId, {
           skillsCount: skills,
-          profileCompleteness: dashboard?.stats?.profileCompleteness ?? null,
+          profileCompleteness:
+            dashboard?.stats?.profileCompleteness ??
+            completeness?.percentage ??
+            null,
           cvScore: dashboard?.stats?.cvScore ?? null,
+          marketFit: dashboard?.stats?.marketFit ?? null,
           applicationsTotal: list.length,
           rejectionsTotal: rejections,
           postInterviewRejections,
+          missingSectionsCount: missing.length,
+          missingSectionKeys: missing.map((s) => s.slug),
         });
       } catch {
         /* best-effort */
@@ -169,6 +182,7 @@ export function UserActivityTrackerHost() {
 
     window.addEventListener(USER_ACTIVITY_HQ_EVENT, onBehavior as EventListener);
     window.addEventListener(SUGGESTIONS_ENGINE_HQ_EVENT, onSuggestions as EventListener);
+    window.addEventListener(INTEREST_AFFINITY_HQ_EVENT, onBehavior as EventListener);
     flush();
 
     return () => {
@@ -178,6 +192,7 @@ export function UserActivityTrackerHost() {
         SUGGESTIONS_ENGINE_HQ_EVENT,
         onSuggestions as EventListener,
       );
+      window.removeEventListener(INTEREST_AFFINITY_HQ_EVENT, onBehavior as EventListener);
     };
   }, [isAuthenticated, isLoading, userId]);
 

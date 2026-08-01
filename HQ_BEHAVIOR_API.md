@@ -14,6 +14,9 @@ Use this endpoint for HQ / sales / operations follow-up when the product detects
 - user researches the same company repeatedly
 - user keeps exploring the same role/position
 - user has repeated rejections with weak CV signals
+- user has rejections **despite** a strong CV (keyword / ATS / profile gap)
+- user loses after interview stage
+- multi-signal combos (premium + company intent, incomplete profile + job hunting, etc.)
 - user shows strong intent but low conversion
 
 The current implementation stores the latest payload per user in-memory in the Next app route for demo/integration purposes. HQ can later replace this route with a backend service, CRM webhook, or queue consumer.
@@ -101,9 +104,63 @@ The current implementation stores the latest payload per user in-memory in the N
       "recommendedAction": "Sales/HQ can call and explain the most relevant paid service.",
       "priority": 90
     }
+  ],
+  "interests": [
+    {
+      "key": "interview_prep",
+      "label": "Interview prep",
+      "score": 42.5,
+      "updatedAt": "2026-07-28T08:55:00.000Z"
+    },
+    {
+      "key": "job_search",
+      "label": "Job search",
+      "score": 38,
+      "updatedAt": "2026-07-28T08:50:00.000Z"
+    },
+    {
+      "key": "frontend",
+      "label": "Frontend",
+      "score": 31,
+      "updatedAt": "2026-07-28T08:40:00.000Z"
+    }
+  ],
+  "personalizedRecs": [
+    {
+      "id": "rec_interview_prep",
+      "interestKey": "interview_prep",
+      "interestScore": 42.5,
+      "title": "Quick interview practice",
+      "text": "You’re about 43 on Interview prep — try one short mock today.",
+      "actionUrl": "/lms/interview-prep",
+      "priority": 86
+    },
+    {
+      "id": "rec_job_search",
+      "interestKey": "job_search",
+      "interestScore": 38,
+      "title": "Jobs that match your focus",
+      "text": "Strong Job search signal (38). Open 2–3 matching roles and apply to one.",
+      "actionUrl": "/explore-jobs",
+      "priority": 84
+    }
   ]
 }
 ```
+
+### Multi-interest ratings (`interests`)
+
+Derived from the behavioural engine + Office Gossips engagement (join / like / comment / circle open). Each topic has a **0–100** strength rating so HQ can personalize without guessing from a single role/company.
+
+- Synced into every `POST /api/hq-behavior` payload alongside rollups and triggers
+- Client relays again when interests change (`saasa:interest-affinity-updated`)
+
+### Short personalized recs (`personalizedRecs`)
+
+Top interests become **short, simple, personalized** nudge lines HQ can push via HRYantra chat or sales scripts. Prefer `title` + `text` + `actionUrl`; sort by `priority`.
+
+- Source: `src/lib/interest-affinity-store.ts` → `buildHqInterestSnapshot`
+- Wired in: `src/lib/hq-behavior.ts`, `UserActivityTrackerHost`
 
 ## GET responses
 
@@ -117,56 +174,65 @@ Returns the latest payload for one user.
 
 ## Current behavior triggers
 
-### `hq_service_no_purchase`
+### Classic signals
 
-Raised when:
+#### `hq_service_no_purchase` (`sales_follow_up`)
+- Premium/service visits high + no apply conversion
+- HQ/sales call for the right package
 
-- premium/service page visits are high
-- no purchase/apply conversion is visible
+#### `hq_company_high_intent` (`high_intent`)
+- Same company researched repeatedly (≥4)
+- Push company jobs, reference checks, prep
 
-Recommended use:
+#### `hq_role_research` (`career_assist`)
+- Same role/family revisited (≥4)
+- Matching jobs, quizzes, courses, mock interviews
 
-- HQ or sales can call and explain the right service/package
+#### `hq_cv_risk` (`watch`)
+- High rejections + **weak** CV score (&lt;70)
+- AI CV first; optional guided resume service
 
-### `hq_company_high_intent`
+---
 
-Raised when:
+### Multi-signal combination triggers
 
-- the same company is viewed/researched repeatedly
-- often from Office Gossips / company pages / reference surfaces
+These fire when **several** tracked signals align (not a single metric).
 
-Recommended use:
+| ID | Flag | Audience | Combination | User nudge / sales action |
+|----|------|----------|-------------|---------------------------|
+| `hq_keyword_ats_gap` | `sales_follow_up` | both | Rejections high + **good** CV (≥70) + thin skills / missing profile sections / low market fit | Tailor JD keywords + finish profile; sales: ATS rewrite package |
+| `hq_interview_stage_loss` | `career_assist` | both | ≥2 post-interview rejections (+ good CV or active apps) | Mock interview; sales: paid coaching |
+| `hq_role_skill_mismatch` | `career_assist` | both | Role repeat + rejections / low skills | Role courses + keyword write-ups; LMS+CV bundle |
+| `hq_company_research_no_apply` | `high_intent` | both | Company intent + community visits + ≤1 apply | Jobs + reference check; company intel package |
+| `hq_premium_plus_intent` | `sales_follow_up` | hq | Premium visits + company/role intent | Warm lead — package tied to their target |
+| `hq_cv_hesitation` | `user_nudge` | both | Heavy AI CV time + low applies | Apply nudge; optional rewrite assist |
+| `hq_profile_incomplete_job_hunter` | `user_nudge` | both | Missing sections / low completeness + job browsing | Finish profile; guided completion service |
+| `hq_ready_but_not_applying` | `career_assist` | both | Skills present + browse-heavy + low applies | One-click apply nudge; application coaching |
+| `hq_shallow_premium_browse` | `sales_follow_up` | hq | Short sessions + premium visits | Short nurture offer, not hard sell |
+| `hq_learn_then_target_role` | `user_nudge` | both | LMS-heavy + role interest | Bridge learning → applications |
+| `hq_low_market_fit` | `career_assist` | both | Market fit &lt;55 + active hunting | CV gap coach + quizzes; consultation |
 
-- push jobs from that company
-- push reference-check connections for that company
-- offer company-specific prep
+Each trigger may include:
+- `audience`: `hq` | `user` | `both`
+- `comboSignals`: list of signal keys that combined (e.g. `rejections`, `good_cv`, `skills_or_profile_gap`)
 
-### `hq_role_research`
+### Related behaviour insights (feed triggers + suggestions)
 
-Raised when:
+- `rejection_keyword_gap` — strong CV but still rejected (keyword/profile gap)
+- `post_interview_drop` — losses after interview stage
+- `incomplete_profile_active` — job hunting with incomplete profile
+- `low_market_fit_active` — weak market fit while applying/browsing
+- Plus existing: `skills_no_apply`, `browser_not_applier`, `rejection_cv_issue`, `rejection_skill_gap`, `lms_heavy`, `premium_curious`, `cv_edit_hesitation`, `community_research_mode`, `short_sessions`
 
-- the same job family / role is revisited multiple times
+### Suggestion mapping
 
-Recommended use:
+`behaviourSignals.preferSlotIds` and `userSuggestionHints` are derived from the same combo triggers so the in-app suggestions engine and HQ see a consistent story (e.g. keyword gap → prefer `ai_cv` + `jobs` + `profile`).
 
-- recommend matching roles, quizzes, interview prep, and role-specific courses
-
-### `hq_cv_risk`
-
-Raised when:
-
-- rejections are high
-- CV score is weak
-
-Recommended use:
-
-- push AI CV fixes first
-- if needed, HQ can offer guided CV or recruiter-facing services
-
-## Where the data comes from
+Profile sync now also tracks `marketFit`, `missingSectionsCount`, and `missingSectionKeys` for these combinations.
 
 - `src/lib/user-activity-tracker/store.ts`
 - `src/lib/user-activity-tracker/insights.ts`
+- `src/lib/interest-affinity-store.ts`
 - `src/components/common/UserActivityTrackerHost.tsx`
 - `src/lib/suggestions-engine/*`
 - `src/lib/hq-behavior.ts`

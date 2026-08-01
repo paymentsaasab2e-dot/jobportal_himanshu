@@ -1,5 +1,6 @@
 import { listDateKeysInRange, getUserActivityState } from './store';
 import { localDateKey } from './categories';
+import { buildUserBehaviourSuggestions } from '@/lib/behaviour-user-suggestions';
 import type {
   ActivityCategory,
   BehaviourInsight,
@@ -162,23 +163,57 @@ function aggregateEntityInterest(state: UserActivityState, fromTs: number) {
   };
 }
 
+function insightHas(insights: BehaviourInsight[], id: string) {
+  return insights.some((i) => i.id === id);
+}
+
+function pushTrigger(out: HqBehaviourTrigger[], trigger: HqBehaviourTrigger) {
+  if (out.some((t) => t.id === trigger.id)) return;
+  out.push(trigger);
+}
+
 function buildHqTriggers(input: {
   state: UserActivityState;
   insights: BehaviourInsight[];
-  rollup: Pick<UserActivityRollup, 'applies' | 'pageVisitsByCategory' | 'activeMsByCategory' | 'jobCardClicks'>;
+  rollup: Pick<
+    UserActivityRollup,
+    'applies' | 'pageVisitsByCategory' | 'activeMsByCategory' | 'jobCardClicks' | 'logins' | 'activeMs'
+  >;
   topCompanies: EntityInterest[];
   topRoles: EntityInterest[];
 }): HqBehaviourTrigger[] {
   const { state, insights, rollup, topCompanies, topRoles } = input;
   const out: HqBehaviourTrigger[] = [];
-  const cvScore = state.profileSnapshot?.cvScore ?? null;
+  const snap = state.profileSnapshot;
+  const cvScore = snap?.cvScore ?? null;
+  const marketFit = snap?.marketFit ?? null;
+  const completeness = snap?.profileCompleteness ?? null;
+  const missingSections = snap?.missingSectionsCount ?? 0;
+  const skills = snap?.skillsCount ?? 0;
+  const rejections = snap?.rejectionsTotal ?? 0;
+  const postInterviewRejections = snap?.postInterviewRejections ?? 0;
+  const apps = snap?.applicationsTotal ?? rollup.applies;
   const premiumVisits = rollup.pageVisitsByCategory.premium || 0;
+  const communityVisits = rollup.pageVisitsByCategory.community || 0;
+  const interviewVisits = rollup.pageVisitsByCategory.interview_prep || 0;
+  const cvVisits = rollup.pageVisitsByCategory.ai_cv || 0;
   const jobsTimeMin = Math.round((rollup.activeMsByCategory.jobs || 0) / 60000);
+  const cvTimeMin = Math.round((rollup.activeMsByCategory.ai_cv || 0) / 60000);
   const topCompany = topCompanies[0];
   const topRole = topRoles[0];
+  const goodCv = cvScore != null && cvScore >= 70;
+  const weakCv = cvScore != null && cvScore < 70;
+  const incompleteProfile =
+    missingSections >= 2 || (completeness != null && completeness < 75);
+  const keywordGapSuspected =
+    goodCv &&
+    rejections >= 3 &&
+    apps >= 4 &&
+    (skills <= 4 || incompleteProfile || (marketFit != null && marketFit < 65));
 
+  // --- Single / classic signals ---
   if (premiumVisits >= 3 && rollup.applies === 0) {
-    out.push({
+    pushTrigger(out, {
       id: 'hq_service_no_purchase',
       flag: 'sales_follow_up',
       title: 'Visited services but did not purchase',
@@ -186,11 +221,13 @@ function buildHqTriggers(input: {
       evidence: [`${premiumVisits} premium visits in the last 7 days`],
       recommendedAction: 'Sales/HQ can call and explain the most relevant paid service.',
       priority: 90,
+      audience: 'hq',
+      comboSignals: ['premium_visits', 'no_apply'],
     });
   }
 
   if (topCompany && topCompany.count >= 4) {
-    out.push({
+    pushTrigger(out, {
       id: 'hq_company_high_intent',
       flag: 'high_intent',
       title: `Repeated interest in ${topCompany.label}`,
@@ -198,30 +235,273 @@ function buildHqTriggers(input: {
       evidence: [`${topCompany.count} tracked company interactions in the last 7 days`],
       recommendedAction: 'Recommend jobs, reference checks, and interview prep tied to this company.',
       priority: 82,
+      audience: 'both',
+      comboSignals: ['company_repeat'],
     });
   }
 
   if (topRole && topRole.count >= 4) {
-    out.push({
+    pushTrigger(out, {
       id: 'hq_role_research',
       flag: 'career_assist',
       title: `Strong interest in ${topRole.label}`,
       reason: 'User repeatedly explores the same role/position family.',
-      evidence: [`${topRole.count} tracked role interactions`, `${rollup.jobCardClicks} job clicks`, `${jobsTimeMin} min on job pages`],
+      evidence: [
+        `${topRole.count} tracked role interactions`,
+        `${rollup.jobCardClicks} job clicks`,
+        `${jobsTimeMin} min on job pages`,
+      ],
       recommendedAction: 'Recommend matching jobs, role-aligned courses, and mock interviews.',
       priority: 78,
+      audience: 'both',
+      comboSignals: ['role_repeat'],
     });
   }
 
-  if (insights.some((i) => i.id === 'rejection_cv_issue') && cvScore != null && cvScore < 70) {
-    out.push({
+  if (insightHas(insights, 'rejection_cv_issue') && weakCv) {
+    pushTrigger(out, {
       id: 'hq_cv_risk',
       flag: 'watch',
       title: 'Repeated rejections with low CV score',
       reason: 'Candidate may need CV optimization support before more applications.',
-      evidence: [`CV score ${Math.round(cvScore)}%`, `${state.profileSnapshot?.rejectionsTotal || 0} rejections`],
+      evidence: [
+        `CV score ${Math.round(cvScore!)}%`,
+        `${rejections} rejections`,
+      ],
       recommendedAction: 'Push AI CV help first; HQ can offer guided resume services if needed.',
       priority: 85,
+      audience: 'both',
+      comboSignals: ['rejections', 'weak_cv'],
+    });
+  }
+
+  // --- Multi-signal combinations ---
+
+  // Good CV + rejections → likely keyword / ATS / JD mismatch (not "bad CV")
+  if (keywordGapSuspected || insightHas(insights, 'rejection_keyword_gap')) {
+    pushTrigger(out, {
+      id: 'hq_keyword_ats_gap',
+      flag: 'sales_follow_up',
+      title: 'Rejections despite strong CV — keyword / ATS gap likely',
+      reason:
+        'CV quality looks fine, but applications still fail — missing role keywords, JD tailor, or incomplete profile sections are likely.',
+      evidence: [
+        cvScore != null ? `CV score ${Math.round(cvScore)}%` : 'CV score unknown',
+        `${rejections} rejections · ${apps} applications`,
+        skills <= 4 ? `Only ${skills} skills listed` : `${skills} skills listed`,
+        incompleteProfile
+          ? `${missingSections} missing profile sections · completeness ${completeness ?? '?'}%`
+          : `Profile completeness ${completeness ?? '?'}%`,
+        marketFit != null ? `Market fit ${Math.round(marketFit)}%` : 'Market fit unknown',
+      ],
+      recommendedAction:
+        'User: open AI CV / job tailor for missing keywords. Sales: offer ATS rewrite or keyword coaching package.',
+      priority: 92,
+      audience: 'both',
+      comboSignals: ['rejections', 'good_cv', 'skills_or_profile_gap'],
+    });
+  }
+
+  // Survived screen but lost after interview
+  if (postInterviewRejections >= 2 && (goodCv || apps >= 4)) {
+    pushTrigger(out, {
+      id: 'hq_interview_stage_loss',
+      flag: 'career_assist',
+      title: 'Losing after interview stage',
+      reason: 'Candidate clears early filters but fails later — coaching / mock interviews matter more than CV polish.',
+      evidence: [
+        `${postInterviewRejections} post-interview rejections`,
+        cvScore != null ? `CV score ${Math.round(cvScore)}%` : 'CV score unknown',
+        `${interviewVisits} interview-prep visits this week`,
+      ],
+      recommendedAction:
+        'User: start mock interview + prep forms. Sales: offer paid interviewer sessions / coaching.',
+      priority: 88,
+      audience: 'both',
+      comboSignals: ['post_interview_rejections', 'good_or_active_apps'],
+    });
+  }
+
+  // Role research + skill/rejection gap
+  if (
+    topRole &&
+    topRole.count >= 3 &&
+    (insightHas(insights, 'rejection_skill_gap') ||
+      insightHas(insights, 'rejection_keyword_gap') ||
+      (rejections >= 2 && skills <= 5))
+  ) {
+    pushTrigger(out, {
+      id: 'hq_role_skill_mismatch',
+      flag: 'career_assist',
+      title: `Role focus on ${topRole.label} with skill / keyword gap`,
+      reason: 'User keeps researching one role family but signals suggest they are not shortlist-ready yet.',
+      evidence: [
+        `${topRole.count} interactions on ${topRole.label}`,
+        `${rejections} rejections`,
+        `${skills} skills on profile`,
+      ],
+      recommendedAction:
+        'Suggest role quizzes, targeted courses, and CV keyword write-ups for that role. Sales can bundle LMS + CV.',
+      priority: 84,
+      audience: 'both',
+      comboSignals: ['role_repeat', 'rejections', 'low_skills'],
+    });
+  }
+
+  // Company intent + community research + no apply → high-intent sales / reference product
+  if (
+    topCompany &&
+    topCompany.count >= 3 &&
+    communityVisits >= 3 &&
+    rollup.applies <= 1
+  ) {
+    pushTrigger(out, {
+      id: 'hq_company_research_no_apply',
+      flag: 'high_intent',
+      title: `Researching ${topCompany.label} without applying`,
+      reason: 'Strong company curiosity via community/reference surfaces, but conversion to apply is low.',
+      evidence: [
+        `${topCompany.count} company interactions`,
+        `${communityVisits} community/reference visits`,
+        `${rollup.applies} applies this period`,
+      ],
+      recommendedAction:
+        'User: open matching jobs + reference check for that company. Sales: offer company intel / referral package.',
+      priority: 86,
+      audience: 'both',
+      comboSignals: ['company_repeat', 'community', 'low_apply'],
+    });
+  }
+
+  // Premium curious + high company or role intent → warmer sales lead
+  if (
+    premiumVisits >= 2 &&
+    ((topCompany?.count || 0) >= 3 || (topRole?.count || 0) >= 3)
+  ) {
+    pushTrigger(out, {
+      id: 'hq_premium_plus_intent',
+      flag: 'sales_follow_up',
+      title: 'Premium curiosity + focused company/role intent',
+      reason: 'User is both window-shopping paid services and deeply researching a target — strong sales combo.',
+      evidence: [
+        `${premiumVisits} premium visits`,
+        topCompany ? `${topCompany.label} ×${topCompany.count}` : 'no top company',
+        topRole ? `${topRole.label} ×${topRole.count}` : 'no top role',
+      ],
+      recommendedAction:
+        'HQ call with a package tied to their top company/role (CV + interview + reference).',
+      priority: 93,
+      audience: 'hq',
+      comboSignals: ['premium_visits', 'entity_intent'],
+    });
+  }
+
+  // Editing CV a lot + still not applying
+  if (insightHas(insights, 'cv_edit_hesitation') || (cvTimeMin >= 6 && rollup.applies <= 1)) {
+    pushTrigger(out, {
+      id: 'hq_cv_hesitation',
+      flag: 'user_nudge',
+      title: 'Polishing CV but hesitating to apply',
+      reason: 'Time in CV tools is high while applications stay low — needs one clear apply path.',
+      evidence: [`${cvTimeMin}m in CV tools`, `${cvVisits} AI CV visits`, `${rollup.applies} applies`],
+      recommendedAction: 'In-app nudge: pick one tailored job and apply today; optional sales assist for rewrite.',
+      priority: 74,
+      audience: 'both',
+      comboSignals: ['ai_cv_time', 'low_apply'],
+    });
+  }
+
+  // Incomplete profile + active job browsing
+  if (incompleteProfile && (rollup.jobCardClicks >= 5 || jobsTimeMin >= 4)) {
+    pushTrigger(out, {
+      id: 'hq_profile_incomplete_job_hunter',
+      flag: 'user_nudge',
+      title: 'Job hunting with incomplete profile',
+      reason: 'Browsing/applying interest is high but profile gaps reduce match and ATS pass rate.',
+      evidence: [
+        `${missingSections} missing sections`,
+        completeness != null ? `Completeness ${Math.round(completeness)}%` : 'Completeness unknown',
+        `${rollup.jobCardClicks} job clicks · ${jobsTimeMin}m on jobs`,
+      ],
+      recommendedAction: 'User: finish missing profile sections. Sales: guided profile completion service.',
+      priority: 80,
+      audience: 'both',
+      comboSignals: ['missing_sections', 'job_activity'],
+    });
+  }
+
+  // Browser not applier + skills present → conversion assist
+  if (
+    (insightHas(insights, 'browser_not_applier') || insightHas(insights, 'skills_no_apply')) &&
+    skills >= 3
+  ) {
+    pushTrigger(out, {
+      id: 'hq_ready_but_not_applying',
+      flag: 'career_assist',
+      title: 'Profile looks ready but user is not applying',
+      reason: 'Skills and browsing exist; friction is likely confidence, fit, or process — not empty profile.',
+      evidence: [
+        `${skills} skills`,
+        `${rollup.jobCardClicks} job clicks`,
+        `${rollup.applies} applies`,
+      ],
+      recommendedAction: 'Nudge one-click apply + interview prep; sales can offer application coaching.',
+      priority: 76,
+      audience: 'both',
+      comboSignals: ['skills', 'browse_heavy', 'low_apply'],
+    });
+  }
+
+  // Short sessions + premium = nurture, don't hard-sell
+  if (insightHas(insights, 'short_sessions') && premiumVisits >= 2) {
+    pushTrigger(out, {
+      id: 'hq_shallow_premium_browse',
+      flag: 'sales_follow_up',
+      title: 'Short visits on premium surfaces',
+      reason: 'Frequent but shallow sessions on paid surfaces — nurture with a concise offer, not a long pitch.',
+      evidence: [
+        `${rollup.logins} logins`,
+        `~${Math.round(rollup.activeMs / 60000)} min active`,
+        `${premiumVisits} premium visits`,
+      ],
+      recommendedAction: 'HQ: short WhatsApp/call with one clear package. In-app: one sticky CTA.',
+      priority: 70,
+      audience: 'hq',
+      comboSignals: ['short_sessions', 'premium_visits'],
+    });
+  }
+
+  // Learning-heavy + role intent → convert learning to jobs
+  if (insightHas(insights, 'lms_heavy') && topRole && topRole.count >= 2) {
+    pushTrigger(out, {
+      id: 'hq_learn_then_target_role',
+      flag: 'user_nudge',
+      title: `Learning path can convert into ${topRole.label} applications`,
+      reason: 'User is investing in LMS while also eyeing a role — bridge courses to concrete applications.',
+      evidence: [`LMS/course heavy insight`, `${topRole.label} ×${topRole.count}`],
+      recommendedAction: 'Suggest jobs matching that role + a quiz checkpoint; sales can offer career-path bundle.',
+      priority: 72,
+      audience: 'both',
+      comboSignals: ['lms_heavy', 'role_repeat'],
+    });
+  }
+
+  // Low market fit + active applications
+  if (marketFit != null && marketFit < 55 && (apps >= 3 || rollup.jobCardClicks >= 6)) {
+    pushTrigger(out, {
+      id: 'hq_low_market_fit',
+      flag: 'career_assist',
+      title: 'Low market fit while actively job hunting',
+      reason: 'Market-fit score is weak relative to activity — skills/keywords/role target may be off.',
+      evidence: [
+        `Market fit ${Math.round(marketFit)}%`,
+        `${apps} applications`,
+        `${rollup.jobCardClicks} job clicks`,
+      ],
+      recommendedAction: 'User: CV gap coach + role quizzes. Sales: market-fit consultation.',
+      priority: 81,
+      audience: 'both',
+      comboSignals: ['low_market_fit', 'job_activity'],
     });
   }
 
@@ -292,20 +572,89 @@ export function buildBehaviourInsights(
 
   if (apps >= 5 && rejections >= 3) {
     const cvIssue = cvScore != null && cvScore < 70;
+    const keywordGap =
+      !cvIssue &&
+      cvScore != null &&
+      cvScore >= 70 &&
+      (skills <= 4 ||
+        (snap?.missingSectionsCount || 0) >= 2 ||
+        (snap?.profileCompleteness != null && snap.profileCompleteness < 75) ||
+        (snap?.marketFit != null && snap.marketFit < 65));
+
+    if (keywordGap) {
+      insights.push({
+        id: 'rejection_keyword_gap',
+        label: 'Rejections with strong CV — keyword / profile gaps',
+        severity: 'action',
+        summary:
+          'CV score is healthy but applications still fail. Likely missing JD keywords, thin skills list, or incomplete profile sections.',
+        evidence: [
+          `${apps} applications`,
+          `${rejections} rejections`,
+          `CV score ${Math.round(cvScore!)}%`,
+          `${skills} skills · ${snap?.missingSectionsCount || 0} missing sections`,
+        ],
+      });
+    } else {
+      insights.push({
+        id: cvIssue ? 'rejection_cv_issue' : 'rejection_skill_gap',
+        label: cvIssue
+          ? 'Many rejections — likely CV issue'
+          : 'Many rejections — skill / prep gap',
+        severity: 'action',
+        summary: cvIssue
+          ? 'Repeated applications with rejections and a weak CV score. Prioritize AI CV + interview prep.'
+          : 'Volume of applications with rejections suggests skill or interview gaps. Suggest courses / prep.',
+        evidence: [
+          `${apps} applications`,
+          `${rejections} rejections`,
+          cvScore != null ? `CV score ${Math.round(cvScore)}%` : 'CV score unknown',
+        ],
+      });
+    }
+  }
+
+  if ((snap?.postInterviewRejections || 0) >= 2) {
     insights.push({
-      id: cvIssue ? 'rejection_cv_issue' : 'rejection_skill_gap',
-      label: cvIssue
-        ? 'Many rejections — likely CV issue'
-        : 'Many rejections — skill / prep gap',
+      id: 'post_interview_drop',
+      label: 'Drop-offs after interview',
       severity: 'action',
-      summary: cvIssue
-        ? 'Repeated applications with rejections and a weak CV score. Prioritize AI CV + interview prep.'
-        : 'Volume of applications with rejections suggests skill or interview gaps. Suggest courses / prep.',
+      summary:
+        'Multiple post-interview rejections — prioritize mock interviews and coaching over more applications.',
       evidence: [
-        `${apps} applications`,
-        `${rejections} rejections`,
-        cvScore != null ? `CV score ${Math.round(cvScore)}%` : 'CV score unknown',
+        `${snap?.postInterviewRejections || 0} post-interview rejections`,
+        `${apps} applications total`,
       ],
+    });
+  }
+
+  if (
+    ((snap?.missingSectionsCount || 0) >= 2 ||
+      (snap?.profileCompleteness != null && snap.profileCompleteness < 70)) &&
+    (jobViews >= 4 || apps >= 2)
+  ) {
+    insights.push({
+      id: 'incomplete_profile_active',
+      label: 'Active on jobs with incomplete profile',
+      severity: 'watch',
+      summary: 'Profile gaps will hurt match scores and ATS — finish sections before more applies.',
+      evidence: [
+        `${snap?.missingSectionsCount || 0} missing sections`,
+        snap?.profileCompleteness != null
+          ? `Completeness ${Math.round(snap.profileCompleteness)}%`
+          : 'Completeness unknown',
+        `${jobViews} job views`,
+      ],
+    });
+  }
+
+  if (snap?.marketFit != null && snap.marketFit < 55 && (jobViews >= 5 || apps >= 3)) {
+    insights.push({
+      id: 'low_market_fit_active',
+      label: 'Low market fit while job hunting',
+      severity: 'watch',
+      summary: 'Market-fit score is weak relative to activity — retarget skills/keywords to the role.',
+      evidence: [`Market fit ${Math.round(snap.marketFit)}%`, `${jobViews} job views`, `${apps} apps`],
     });
   }
 
@@ -430,6 +779,18 @@ export function getBehaviourSignalsForSuggestions(
   if (insightIds.includes('rejection_skill_gap')) {
     preferSlotIds.push('course', 'interview_prep', 'quizzes');
   }
+  if (insightIds.includes('rejection_keyword_gap')) {
+    preferSlotIds.push('ai_cv', 'jobs', 'profile');
+  }
+  if (insightIds.includes('post_interview_drop')) {
+    preferSlotIds.push('interview_prep');
+  }
+  if (insightIds.includes('incomplete_profile_active')) {
+    preferSlotIds.push('profile', 'ai_cv');
+  }
+  if (insightIds.includes('low_market_fit_active')) {
+    preferSlotIds.push('ai_cv', 'course', 'quizzes', 'jobs');
+  }
   if (insightIds.includes('lms_heavy')) {
     preferSlotIds.push('jobs');
     deprioritizeSlotIds.push('course', 'career_path', 'quizzes');
@@ -477,6 +838,39 @@ export function getBehaviourSignalsForSuggestions(
     preferSlotIds.push('jobs', 'course', 'interview_prep', 'quizzes');
   }
 
+  // Combo trigger → suggestion slots + clear user task hints
+  const behaviourTasks = buildUserBehaviourSuggestions(
+    {
+      hqTriggers,
+      topRoles,
+      topCompanies,
+      cvScore: state.profileSnapshot?.cvScore ?? null,
+      marketFit: state.profileSnapshot?.marketFit ?? null,
+      jobCardClicks7d: rollup.jobCardClicks,
+      applies7d: rollup.applies,
+      pageVisitsByCategory7d: rollup.pageVisitsByCategory,
+    },
+    { userId },
+  );
+  for (const task of behaviourTasks) {
+    preferSlotIds.push(task.slotId);
+    if (task.triggerId === 'hq_keyword_ats_gap') preferSlotIds.push('ai_cv', 'jobs', 'profile');
+    if (task.triggerId === 'hq_role_skill_mismatch') {
+      preferSlotIds.push('course', 'quizzes', 'ai_cv', 'interview_prep');
+    }
+    if (task.triggerId === 'hq_company_research_no_apply') {
+      preferSlotIds.push('jobs', 'community', 'events');
+    }
+    if (task.triggerId === 'hq_profile_incomplete_job_hunter') preferSlotIds.push('profile', 'ai_cv');
+    if (task.triggerId === 'hq_cv_hesitation') preferSlotIds.push('jobs', 'ai_cv');
+    if (task.triggerId === 'hq_low_market_fit') preferSlotIds.push('course', 'quizzes', 'ai_cv');
+    if (task.triggerId === 'hq_learn_then_target_role') preferSlotIds.push('jobs', 'quizzes');
+    if (task.kind === 'course' || task.kind === 'sales_followup') {
+      preferSlotIds.push('course');
+    }
+  }
+  const userSuggestionHints = behaviourTasks.slice(0, 5).map((s) => `${s.title} — ${s.text}`);
+
   return {
     userId,
     topCategories,
@@ -490,11 +884,16 @@ export function getBehaviourSignalsForSuggestions(
     skillsCount: state.profileSnapshot?.skillsCount ?? 0,
     rejectionsTotal: state.profileSnapshot?.rejectionsTotal ?? 0,
     cvScore: state.profileSnapshot?.cvScore ?? null,
+    marketFit: state.profileSnapshot?.marketFit ?? null,
+    missingSectionsCount: state.profileSnapshot?.missingSectionsCount ?? 0,
     topCompanies,
     topRoles,
     hqTriggers,
-    preferSlotIds,
-    deprioritizeSlotIds,
+    preferSlotIds: [...new Set(preferSlotIds)],
+    deprioritizeSlotIds: [...new Set(deprioritizeSlotIds)].filter(
+      (id) => !new Set(preferSlotIds).has(id),
+    ),
+    userSuggestionHints: [...new Set(userSuggestionHints)].slice(0, 5),
   };
 }
 
@@ -574,7 +973,7 @@ export function buildUserActivityRollup(
   };
 
   if (!options?.skipSignals) {
-    rollup.behaviourSignals = getBehaviourSignalsForSuggestions(userId);
+    rollup.behaviourSignals = getBehaviourSignalsForSuggestions(userId) || undefined;
   }
 
   return rollup;

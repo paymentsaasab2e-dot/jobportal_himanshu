@@ -119,8 +119,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     showSuccessToast(logoutAll ? 'Logged out from all devices' : 'Logged out successfully');
 
+    // Keep Office Gossips identity / setup + HRYantra chat so re-login does not
+    // re-ask "be anonymous" or wipe verified chat history.
+    const preservePrefixes = [
+      'saasa:office-gossips-identity-v1',
+      'saasa:office-gossips-v5',
+      'saasa:og-setup-done:',
+      'saasa:hryantra-verified-chat-v1',
+      'saasa:hry-hq-sync-since:',
+      'saasa:hryantra-fab-pos',
+    ];
+    const preserved: Record<string, string> = {};
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        if (
+          preservePrefixes.some((p) => key === p || key.startsWith(p))
+        ) {
+          const val = localStorage.getItem(key);
+          if (val != null) preserved[key] = val;
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
     localStorage.clear();
     sessionStorage.clear();
+
+    try {
+      for (const [key, val] of Object.entries(preserved)) {
+        localStorage.setItem(key, val);
+      }
+    } catch {
+      /* ignore */
+    }
+
     setUser(null);
     setToken(null);
 

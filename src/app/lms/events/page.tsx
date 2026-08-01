@@ -495,8 +495,8 @@ export default function LmsEventsPage() {
         <div className="flex gap-3 rounded-xl border border-amber-100 bg-amber-50/30 p-4 text-sm text-amber-900 shadow-sm">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" strokeWidth={2} />
           <span className="leading-relaxed">
-            This page shows the full catalog. Office Gossips Events only surfaces items matched to
-            your profile — so you do not miss open roles and walk-ins that fit you.
+            Events for candidates now live in Office Gossips → Events (personalized + search). This
+            LMS page still powers the catalog data in the background.
           </span>
         </div>
       </section>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Sparkles, 
@@ -17,6 +18,7 @@ import {
   Minimize2
 } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/api-base';
+import { stripLocaleFromPathname } from '@/lib/i18n';
 
 interface Message {
   id: string;
@@ -57,6 +59,11 @@ const AI_FUNCTIONS = [
 ];
 
 export default function GlobalAIAssistant() {
+  const pathname = usePathname() || '/';
+  const barePath = stripLocaleFromPathname(pathname);
+  const hideOnOfficeGossips =
+    barePath === '/community' || barePath.startsWith('/community/');
+
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -140,6 +147,8 @@ export default function GlobalAIAssistant() {
   const handleFunctionClick = (func: typeof AI_FUNCTIONS[0]) => {
     handleSendMessage(func.prompt);
   };
+
+  if (hideOnOfficeGossips) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end">

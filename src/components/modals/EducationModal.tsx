@@ -15,6 +15,10 @@ import {
   formatCitySuggestionLabel,
   searchCitySuggestions,
 } from '@/lib/geo-locations';
+import {
+  alertDuplicationFindings,
+  checkEducationDuplication,
+} from '@/lib/duplication-check';
 
 interface EducationModalProps {
   isOpen: boolean;
@@ -22,6 +26,8 @@ interface EducationModalProps {
   onSave: (data: EducationData) => void;
   initialData?: EducationData;
   editingEducationId?: string | null;
+  /** Other education rows for within-profile duplicate checks */
+  existingEducations?: EducationData[];
 }
 
 export interface EducationDocument {
@@ -315,6 +321,7 @@ export default function EducationModal({
   onSave,
   initialData,
   editingEducationId,
+  existingEducations = [],
 }: EducationModalProps) {
   const [educationLevel, setEducationLevel] = useState(initialData?.educationLevel || '');
   const [degreeProgram, setDegreeProgram] = useState(initialData?.degreeProgram || '');
@@ -789,7 +796,7 @@ export default function EducationModal({
       String(degreeProgram || '').trim() ||
       (isSchoolCert ? educationLevel : '');
 
-    onSave({
+    const nextEntry = {
       id: initialData?.id ?? editingEducationId ?? undefined,
       educationLevel,
       degreeProgram: resolvedDegree,
@@ -805,7 +812,19 @@ export default function EducationModal({
       modeOfStudy,
       courseDuration: effectiveCourseDuration,
       documents: documents.length > 0 ? documents : undefined,
+    };
+
+    const dup = checkEducationDuplication({
+      existing: existingEducations as unknown as Array<Record<string, unknown>>,
+      next: nextEntry as unknown as Record<string, unknown>,
+      editingId: editingEducationId || initialData?.id || null,
     });
+    if (!dup.ok) {
+      alertDuplicationFindings(dup, { title: 'Duplicate education' });
+      return;
+    }
+
+    onSave(nextEntry);
     onClose();
   };
 

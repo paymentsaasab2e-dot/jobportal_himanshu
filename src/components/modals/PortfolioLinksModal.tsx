@@ -180,14 +180,21 @@ export default function PortfolioLinksModal({
       return;
     }
 
-    const normalizedNewUrl = normalizeUrlForCompare(url);
-    const duplicateExists = links.some(
-      (link) =>
-        link.id !== editingLinkId &&
-        normalizeUrlForCompare(link.url) === normalizedNewUrl
-    );
-    if (duplicateExists) {
-      setUrlError('This URL already exists.');
+    const editingIndex = editingLinkId
+      ? links.findIndex((link) => link.id === editingLinkId)
+      : null;
+    const {
+      checkPortfolioDuplication,
+      alertDuplicationFindings,
+    } = await import('@/lib/duplication-check');
+    const dup = checkPortfolioDuplication({
+      existingUrls: links.map((l) => l.url),
+      nextUrl: url,
+      editingIndex: editingIndex != null && editingIndex >= 0 ? editingIndex : null,
+    });
+    if (!dup.ok) {
+      alertDuplicationFindings(dup, { title: 'Duplicate link' });
+      setUrlError(dup.findings[0]?.message || 'This URL already exists.');
       return;
     }
 

@@ -184,7 +184,9 @@ export function pushSuggestionCandidate(
 
   pushHryantraVerifiedMessage({
     userId: state.userId,
-    text: candidate.text,
+    text: candidate.title
+      ? `${candidate.title}\n\n${candidate.text}`
+      : candidate.text,
     actionUrl: candidate.actionUrl,
     hqMeta: {
       source: 'suggestions-engine',

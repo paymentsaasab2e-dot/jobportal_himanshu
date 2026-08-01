@@ -76,9 +76,15 @@ export type ProfileActivitySnapshot = {
   skillsCount: number;
   profileCompleteness: number | null;
   cvScore: number | null;
+  /** Dashboard market-fit % when available */
+  marketFit: number | null;
   applicationsTotal: number;
   rejectionsTotal: number;
   postInterviewRejections: number;
+  /** Count of incomplete profile sections (summary, skills, resume, …) */
+  missingSectionsCount: number;
+  /** Section keys still incomplete — used for keyword / ATS gap heuristics */
+  missingSectionKeys: string[];
   updatedAt: string;
 };
 
@@ -99,12 +105,16 @@ export type EntityInterest = {
 
 export type HqBehaviourTrigger = {
   id: string;
-  flag: 'watch' | 'sales_follow_up' | 'career_assist' | 'high_intent';
+  flag: 'watch' | 'sales_follow_up' | 'career_assist' | 'high_intent' | 'user_nudge';
   title: string;
   reason: string;
   evidence: string[];
   recommendedAction: string;
   priority: number;
+  /** Who should act on this flag */
+  audience?: 'hq' | 'user' | 'both';
+  /** Signal ids that combined to raise this trigger */
+  comboSignals?: string[];
 };
 
 /**
@@ -124,6 +134,8 @@ export type BehaviourSuggestionSignals = {
   skillsCount: number;
   rejectionsTotal: number;
   cvScore: number | null;
+  marketFit: number | null;
+  missingSectionsCount: number;
   topCompanies: EntityInterest[];
   topRoles: EntityInterest[];
   hqTriggers: HqBehaviourTrigger[];
@@ -131,6 +143,8 @@ export type BehaviourSuggestionSignals = {
   preferSlotIds: string[];
   /** Soft-deprioritize these (user already heavy here) */
   deprioritizeSlotIds: string[];
+  /** Short user-facing nudge lines derived from combo triggers */
+  userSuggestionHints: string[];
 };
 
 export type UserActivityState = {

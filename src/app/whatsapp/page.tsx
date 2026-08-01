@@ -271,6 +271,12 @@ function WhatsAppLoginInner() {
     let normalizedEmail = emailValue.trim().toLowerCase();
     const cleanNumber = whatsappNumberValue.replace(/\D/g, "");
 
+    // Sign-in via mobile OTP not available yet
+    if (intent === "login" && signInContact === "whatsapp") {
+      setError(t("whatsapp.mobileOtpComingSoon"));
+      return;
+    }
+
     if (intent === "signup") {
       if (!whatsappNumberValue.trim() || cleanNumber.length !== selectedCountry.phoneLength) {
         setError(
@@ -290,6 +296,24 @@ function WhatsAppLoginInner() {
       }
       if (!captchaChallenge || !validateMathCaptchaAnswer(captchaChallenge, captchaAnswer)) {
         setCaptchaError(t("whatsapp.solveMathQuestion"));
+        return;
+      }
+
+      // Contextual duplication check — credentials only on this page
+      const {
+        checkCredentialDuplication,
+        alertDuplicationFindings,
+      } = await import('@/lib/duplication-check');
+      const dup = await checkCredentialDuplication({
+        context: 'auth.signup',
+        email: normalizedEmail,
+        phone: cleanNumber,
+        countryCode: selectedCountry.dialCode || selectedCountry.code,
+      });
+      if (!dup.ok) {
+        alertDuplicationFindings(dup, { title: 'Account already exists' });
+        setError(dup.findings[0]?.message || t("whatsapp.accountExists"));
+        setAuthMode("signin");
         return;
       }
     } else if (signInContact === "email") {
@@ -401,6 +425,11 @@ function WhatsAppLoginInner() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (signInMethod === "otp") {
+      if (signInContact === "whatsapp") {
+        setError(t("whatsapp.mobileOtpComingSoon"));
+        setShowAccountNotFound(false);
+        return;
+      }
       await handleSendOTP(e);
       return;
     }
@@ -470,7 +499,9 @@ function WhatsAppLoginInner() {
 
       if (data.code === "PASSWORD_NOT_SET") {
         setError(t("whatsapp.passwordNotSet"));
-        setSignInMethod("otp");
+        if (signInContact === "email") {
+          setSignInMethod("otp");
+        }
         return;
       }
 
@@ -807,7 +838,9 @@ function WhatsAppLoginInner() {
                           />
                         </div>
                         <p className="mt-1 px-1 text-[10px] font-bold text-slate-400">
-                          {t("whatsapp.emailHint")}
+                          {signInMethod === "otp"
+                            ? t("whatsapp.emailHint")
+                            : t("whatsapp.emailPasswordHint")}
                         </p>
                       </motion.div>
                     )}
@@ -1037,6 +1070,19 @@ function WhatsAppLoginInner() {
                               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                           </div>
+                        </motion.div>
+                      ) : signInContact === "whatsapp" ? (
+                        <motion.div
+                          key="otp-mobile-soon"
+                          initial={{ opacity: 0, height: 0, y: 6 }}
+                          animate={{ opacity: 1, height: "auto", y: 0 }}
+                          exit={{ opacity: 0, height: 0, y: -4 }}
+                          transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+                          className="overflow-hidden rounded-[14px] border border-amber-200 bg-amber-50 px-3 py-3"
+                        >
+                          <p className="text-[12px] font-semibold leading-relaxed text-amber-900">
+                            {t("whatsapp.mobileOtpComingSoon")}
+                          </p>
                         </motion.div>
                       ) : (
                         <motion.p

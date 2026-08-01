@@ -8,6 +8,10 @@ import {
   profileCancelBtnClass,
   profileSaveBtnClass,
 } from '@/lib/profile-modal-ui';
+import {
+  alertDuplicationFindings,
+  checkSkillsDuplication,
+} from '@/lib/duplication-check';
 
 interface SkillsModalProps {
   isOpen: boolean;
@@ -58,10 +62,9 @@ export default function SkillsModal({
     const trimmed = skillName.trim();
     if (!trimmed || skills.length >= 30) return;
 
-    const alreadyAdded = skills.some(
-      (skill) => skill.name.toLowerCase() === trimmed.toLowerCase(),
-    );
-    if (alreadyAdded) {
+    const dup = checkSkillsDuplication({ skills, nextName: trimmed });
+    if (!dup.ok) {
+      alertDuplicationFindings(dup, { title: 'Skill already added' });
       setSkillInput('');
       return;
     }

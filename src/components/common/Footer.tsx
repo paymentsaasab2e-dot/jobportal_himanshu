@@ -70,6 +70,7 @@ export default function Footer() {
         { href: "/", label: t("footer.findJobs") },
         { href: "/courses", label: t("footer.coursesLms") },
         { href: "/services", label: t("footer.expertServices") },
+        { href: "/help", label: t("footer.helpCenter") },
       ],
     },
     {

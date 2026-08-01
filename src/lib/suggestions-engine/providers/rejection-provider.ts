@@ -1,4 +1,4 @@
-import { pickCoursesForText } from '../catalog';
+﻿import { pickCoursesForText } from '../catalog';
 import type {
   AppSnapshot,
   RejectionEvent,
@@ -7,6 +7,7 @@ import type {
   SuggestionEngineState,
   SuggestionProvider,
 } from '../types';
+import { getBehaviourSignalsForSuggestions } from '@/lib/user-activity-tracker';
 
 const POST_INTERVIEW_STATUSES = new Set([
   'interview',
@@ -92,8 +93,18 @@ function detectNewRejections(
 function buildRejectionSuggestions(
   state: SuggestionEngineState,
   rejection: RejectionEvent,
+  userId: string,
 ): SuggestionCandidate[] {
   const out: SuggestionCandidate[] = [];
+  const signals = getBehaviourSignalsForSuggestions(userId);
+  const insightIds = new Set(signals?.insightIds || []);
+  const keywordGap =
+    insightIds.has('rejection_keyword_gap') ||
+    ((signals?.cvScore ?? 0) >= 70 && (signals?.rejectionsTotal || 0) >= 3);
+  const weakCv =
+    insightIds.has('rejection_cv_issue') ||
+    (signals?.cvScore != null && signals.cvScore < 70);
+
   const courses = pickCoursesForText(
     rejection.jobTitle,
     state.metrics.repeatRejectionCount >= 2 ? 2 : 1,
@@ -104,13 +115,13 @@ function buildRejectionSuggestions(
     dedupeKey: `rejection:course:${rejection.applicationId}:${top.id}`,
     scenario: 'rejection_recovery',
     kind: 'course',
-    title: top.title,
+    title: `Learn for ${rejection.jobTitle}`,
     actionUrl: top.href,
     priority: 100,
     applicationId: rejection.applicationId,
     text: rejection.postInterview
-      ? `Tough outcome for ${rejection.jobTitle} at ${rejection.company} after your interview stage. Most effective paid upgrade: "${top.title}" (${top.effectiveness}% success signal). ${top.reason}`
-      : `Update for ${rejection.jobTitle} at ${rejection.company}: strengthen your next attempt with "${top.title}" (${top.effectiveness}% effectiveness).`,
+      ? `${rejection.company} rejected you after the interview for ${rejection.jobTitle}. Open "${top.title}" in LMS and finish one module before your next interview.`
+      : `${rejection.company} rejected your application for ${rejection.jobTitle}. Open "${top.title}" in LMS to build the skills this role needs, then try again.`,
   });
 
   if (courses[1] && state.metrics.postInterviewRejections >= 2) {
@@ -123,34 +134,47 @@ function buildRejectionSuggestions(
       actionUrl: second.href,
       priority: 95,
       applicationId: rejection.applicationId,
-      text: `Second recommendation: "${second.title}" (${second.effectiveness}% effectiveness). ${second.reason}`,
+      text: `Also open "${second.title}" — another useful course after recent interview rejections.`,
     });
   }
 
-  out.push({
-    dedupeKey: `rejection:cv:${rejection.applicationId}`,
-    scenario: 'rejection_recovery',
-    kind: 'ai_cv',
-    title: 'AI-powered CV upgrade',
-    actionUrl: '/lms/resume-builder/editor',
-    priority: 90,
-    applicationId: rejection.applicationId,
-    text:
-      state.metrics.repeatRejectionCount >= 2
-        ? 'Multiple rejections recently — refresh your CV with the AI editor: keywords, impact bullets, and ATS fit.'
-        : 'Before your next application, run the AI-powered CV editor to align your resume with this role family.',
-  });
+  if (keywordGap && !weakCv) {
+    out.push({
+      dedupeKey: `rejection:cv:${rejection.applicationId}`,
+      scenario: 'rejection_recovery',
+      kind: 'ai_cv',
+      title: 'Make your CV match this job better',
+      actionUrl: '/lms/resume-builder/editor',
+      priority: 98,
+      applicationId: rejection.applicationId,
+      text: `Your CV score looks okay, but ${rejection.company} still rejected you for ${rejection.jobTitle}. Open the AI CV editor and rewrite your skills and experience so they clearly match what this job asks for.`,
+    });
+  } else {
+    out.push({
+      dedupeKey: `rejection:cv:${rejection.applicationId}`,
+      scenario: 'rejection_recovery',
+      kind: 'ai_cv',
+      title: 'Improve your CV in AI editor',
+      actionUrl: '/lms/resume-builder/editor',
+      priority: 90,
+      applicationId: rejection.applicationId,
+      text:
+        state.metrics.repeatRejectionCount >= 2
+          ? `You have several rejections recently. Open the AI CV editor and improve your summary, skills, and work bullets before you apply again.`
+          : `Before you apply again for roles like ${rejection.jobTitle}, open the AI CV editor and improve your summary, skills, and work bullets.`,
+    });
+  }
 
   if (rejection.postInterview) {
     out.push({
       dedupeKey: `rejection:interview:${rejection.applicationId}`,
       scenario: 'rejection_recovery',
       kind: 'interview_prep',
-      title: 'Interview prep drills',
+      title: 'Practice a mock interview',
       actionUrl: '/lms/interview-prep',
       priority: 85,
       applicationId: rejection.applicationId,
-      text: 'Practice mock interviews and company question banks — especially after an interview-stage rejection.',
+      text: `You reached interview stage at ${rejection.company} but did not get the role. Open Interview Prep and do one mock interview for ${rejection.jobTitle} today.`,
     });
   }
 
@@ -159,11 +183,11 @@ function buildRejectionSuggestions(
       dedupeKey: 'rejection:sales_followup',
       scenario: 'rejection_recovery',
       kind: 'sales_followup',
-      title: 'Personal guidance',
+      title: 'Get personal help',
       actionUrl: '/subscriptions',
       priority: 80,
       text:
-        'You are exploring upgrades but have not unlocked a paid course yet. Our career team may reach out — or browse token packages anytime.',
+        'If you want help choosing the next course or CV plan, open Subscriptions or wait for our team to reach out.',
     });
   }
 
@@ -186,7 +210,7 @@ export const rejectionSuggestionProvider: SuggestionProvider = {
       state.metrics.totalRejections += 1;
       if (rejection.postInterview) state.metrics.postInterviewRejections += 1;
       state.metrics.repeatRejectionCount += 1;
-      candidates.push(...buildRejectionSuggestions(state, rejection));
+      candidates.push(...buildRejectionSuggestions(state, rejection, ctx.userId));
     }
 
     return candidates;
