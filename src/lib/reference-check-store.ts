@@ -21,6 +21,11 @@ import {
   spendTokenAmountLocal,
 } from '@/lib/tokens-api';
 import { privacyMaskedLabel } from '@/lib/social-store';
+import {
+  mergeRowsById,
+  pullOfficeGossipsBundle,
+  scheduleOfficeGossipsPush,
+} from '@/lib/office-gossips-sync';
 
 export type ReferenceRating = 'satisfactory' | 'good' | 'top_notch' | 'excellent';
 
@@ -152,9 +157,27 @@ function loadAll(): ReferenceCheckRequest[] {
   }
 }
 
-function saveAll(rows: ReferenceCheckRequest[]) {
+function saveAll(rows: ReferenceCheckRequest[], opts?: { skipSync?: boolean }) {
   if (typeof window === 'undefined') return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+  if (!opts?.skipSync) {
+    scheduleOfficeGossipsPush(() => ({ referenceChecks: rows }));
+  }
+}
+
+export async function hydrateReferenceChecksFromServer(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  const remote = await pullOfficeGossipsBundle();
+  if (!remote?.referenceChecks) return false;
+  const local = loadAll();
+  const merged = mergeRowsById(
+    local,
+    remote.referenceChecks as ReferenceCheckRequest[],
+  ).sort((a, b) =>
+    String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt)),
+  );
+  saveAll(merged, { skipSync: true });
+  return true;
 }
 
 export function listReferenceChecksForUser(userId: string): ReferenceCheckRequest[] {

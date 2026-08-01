@@ -62,6 +62,12 @@ function ReferenceCheckInner() {
   }, [authLoading, isAuthenticated, refresh]);
 
   useEffect(() => {
+    const onHydrated = () => refresh();
+    window.addEventListener('saasa:office-gossips-hydrated', onHydrated);
+    return () => window.removeEventListener('saasa:office-gossips-hydrated', onHydrated);
+  }, [refresh]);
+
+  useEffect(() => {
     const fromQuery = searchParams.get('company');
     if (!fromQuery || companyPages.length === 0) return;
     const co = companyPages.find((c) => c.id === fromQuery);

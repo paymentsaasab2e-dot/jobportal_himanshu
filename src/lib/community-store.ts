@@ -2,6 +2,13 @@ import {
   scoreTextAgainstInterests,
   syncInterestsFromBehaviour,
 } from '@/lib/interest-affinity-store';
+import {
+  flushOfficeGossipsPush,
+  mergeCompanyPagesByDomain,
+  mergeRowsById,
+  pullOfficeGossipsBundle,
+  scheduleOfficeGossipsPush,
+} from '@/lib/office-gossips-sync';
 
 export type CommunityVisibility = 'public' | 'private';
 
@@ -105,6 +112,7 @@ export type CommunityState = {
 };
 
 const STORAGE_KEY = 'saasa:office-gossips-v5';
+let skipCommunitySync = false;
 
 /** Demo teammates for reference-check testing (local only). */
 export const DEMO_REFERENCE_PEOPLE = [
@@ -552,7 +560,7 @@ export function loadCommunityState(): CommunityState {
   }
 }
 
-export function saveCommunityState(state: CommunityState) {
+export function saveCommunityState(state: CommunityState, opts?: { skipSync?: boolean }) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -579,6 +587,82 @@ export function saveCommunityState(state: CommunityState) {
       console.warn('Office Gossips: could not persist community state', err);
     }
   }
+
+  if (!opts?.skipSync && !skipCommunitySync) {
+    scheduleOfficeGossipsPush(() => {
+      const s = loadCommunityState();
+      return {
+        communities: s.communities,
+        companyPages: s.companyPages.map((c) => ({ ...c, documents: undefined })),
+        posts: s.posts,
+        comments: s.comments,
+      };
+    });
+  }
+}
+
+/** Pull shared Office Gossips catalog from backend and merge into local cache. */
+export async function hydrateCommunityStateFromServer(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  const remote = await pullOfficeGossipsBundle();
+  if (!remote) return false;
+
+  const local = loadCommunityState();
+  const merged: CommunityState = {
+    communities: mergeRowsById(
+      local.communities,
+      (remote.communities || []) as Community[],
+    ),
+    companyPages: mergeCompanyPagesByDomain(
+      local.companyPages,
+      (remote.companyPages || []) as CompanyPage[],
+    ),
+    posts: mergeRowsById(local.posts, (remote.posts || []) as CommunityPost[]),
+    comments: mergeRowsById(
+      local.comments,
+      (remote.comments || []) as CommunityComment[],
+    ),
+  };
+
+  skipCommunitySync = true;
+  try {
+    saveCommunityState(merged, { skipSync: true });
+  } finally {
+    skipCommunitySync = false;
+  }
+
+  // Identities
+  if (remote.identities && typeof remote.identities === 'object') {
+    try {
+      const map = loadIdentityMap();
+      for (const [userId, row] of Object.entries(remote.identities)) {
+        if (!row || typeof row !== 'object') continue;
+        const incoming = row as GossipIdentity;
+        const prev = map[userId];
+        if (!prev || String(incoming.updatedAt || '') >= String(prev.updatedAt || '')) {
+          map[userId] = normalizeIdentity({ ...prev, ...incoming, userId });
+        }
+      }
+      saveIdentityMap(map, { skipSync: true });
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return true;
+}
+
+/** Force immediate push (e.g. after creating a company page). */
+export function pushCommunityStateNow() {
+  return flushOfficeGossipsPush(() => {
+    const s = loadCommunityState();
+    return {
+      communities: s.communities,
+      companyPages: s.companyPages.map((c) => ({ ...c, documents: undefined })),
+      posts: s.posts,
+      comments: s.comments,
+    };
+  });
 }
 
 export function createCommunity(input: {
@@ -681,6 +765,7 @@ export function upsertCompanyPage(input: {
   };
   state.companyPages = [page, ...state.companyPages];
   saveCommunityState(state);
+  void pushCommunityStateNow();
   return { page, created: true };
 }
 
@@ -1148,9 +1233,12 @@ function loadIdentityMap(): Record<string, GossipIdentity> {
   }
 }
 
-function saveIdentityMap(map: Record<string, GossipIdentity>) {
+function saveIdentityMap(map: Record<string, GossipIdentity>, opts?: { skipSync?: boolean }) {
   if (typeof window === 'undefined') return;
   localStorage.setItem(IDENTITY_KEY, JSON.stringify(map));
+  if (!opts?.skipSync) {
+    scheduleOfficeGossipsPush(() => ({ identities: map }));
+  }
 }
 
 export function getGossipIdentity(userId: string | null | undefined): GossipIdentity | null {

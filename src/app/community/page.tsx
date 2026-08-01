@@ -344,6 +344,12 @@ export default function OfficeGossipsPage() {
   }, [authLoading, isAuthenticated, refresh]);
 
   useEffect(() => {
+    const onHydrated = () => refresh();
+    window.addEventListener('saasa:office-gossips-hydrated', onHydrated);
+    return () => window.removeEventListener('saasa:office-gossips-hydrated', onHydrated);
+  }, [refresh]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     if (params.get('views') === '1') {

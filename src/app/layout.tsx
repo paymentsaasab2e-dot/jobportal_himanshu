@@ -22,6 +22,7 @@ import { TokensProvider } from "@/components/tokens/TokensContext";
 import { FloatingAlertsHost } from "@/components/common/FloatingAlertsHost";
 import { HryantraChatFab } from "@/components/common/HryantraChatFab";
 import { HryantraChatSyncHost } from "@/components/common/HryantraChatSyncHost";
+import { OfficeGossipsSyncHost } from "@/components/common/OfficeGossipsSyncHost";
 import { SuggestionsEngineHost } from "@/components/common/SuggestionsEngineHost";
 import { UserActivityTrackerHost } from "@/components/common/UserActivityTrackerHost";
 import { Geist } from "next/font/google";
@@ -67,6 +68,7 @@ export default function RootLayout({
                   <GlobalFooter />
                   <FloatingAlertsHost />
                   <HryantraChatSyncHost />
+                  <OfficeGossipsSyncHost />
                   <HryantraChatFab />
                   <SuggestionsEngineHost />
                   <UserActivityTrackerHost />
