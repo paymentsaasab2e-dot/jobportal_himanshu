@@ -9,6 +9,12 @@
  */
 
 import { getGossipDisplayName, getGossipIdentity } from '@/lib/community-store';
+import { recordCandidateNotification, notifyBellRefresh } from '@/lib/notifications';
+import {
+  mergeRowsById,
+  pullOfficeGossipsBundle,
+  scheduleOfficeGossipsPush,
+} from '@/lib/office-gossips-sync';
 
 export type FollowStatus = 'pending' | 'accepted' | 'rejected';
 
@@ -147,6 +153,7 @@ function normalizeFollow(raw: PeopleFollow): PeopleFollow {
 }
 
 const STORAGE_KEY = 'saasa:office-social-v1';
+export const SOCIAL_UPDATED_EVENT = 'saasa:social-updated';
 
 type SocialState = {
   companyFollows: CompanyFollow[];
@@ -160,6 +167,11 @@ function uid(prefix: string) {
 
 function empty(): SocialState {
   return { companyFollows: [], peopleFollows: [], dms: [] };
+}
+
+function emitSocialUpdated() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(SOCIAL_UPDATED_EVENT));
 }
 
 function load(): SocialState {
@@ -182,9 +194,64 @@ function load(): SocialState {
   }
 }
 
-function save(state: SocialState) {
+function save(state: SocialState, opts?: { skipSync?: boolean }) {
   if (typeof window === 'undefined') return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  emitSocialUpdated();
+  if (!opts?.skipSync) {
+    scheduleOfficeGossipsPush(() => ({ social: state }));
+  }
+}
+
+export function getSocialState(): SocialState {
+  return load();
+}
+
+export async function hydrateSocialFromServer(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  const remote = await pullOfficeGossipsBundle();
+  if (!remote?.social || typeof remote.social !== 'object') return false;
+  const social = remote.social as Partial<SocialState>;
+  const local = load();
+  const mergedDms = mergeRowsById(
+    local.dms,
+    Array.isArray(social.dms)
+      ? (social.dms as DirectMessageThread[]).map(normalizeDm)
+      : [],
+  ).map((row) => {
+    const localRow = local.dms.find((d) => d.id === row.id);
+    const remoteRow = Array.isArray(social.dms)
+      ? (social.dms as DirectMessageThread[]).find((d) => d.id === row.id)
+      : null;
+    if (!localRow || !remoteRow) return normalizeDm(row);
+    const msgMap = new Map<string, DmMessage>();
+    for (const m of localRow.messages || []) msgMap.set(m.id, m);
+    for (const m of remoteRow.messages || []) msgMap.set(m.id, m);
+    return normalizeDm({
+      ...row,
+      messages: [...msgMap.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    });
+  });
+  const merged: SocialState = {
+    companyFollows: mergeRowsById(
+      local.companyFollows,
+      Array.isArray(social.companyFollows) ? (social.companyFollows as CompanyFollow[]) : [],
+    ),
+    peopleFollows: mergeRowsById(
+      local.peopleFollows,
+      Array.isArray(social.peopleFollows)
+        ? (social.peopleFollows as PeopleFollow[]).map(normalizeFollow)
+        : [],
+    ),
+    dms: mergedDms,
+  };
+  save(merged, { skipSync: true });
+  return true;
+}
+
+/** Soft pull while browsing Chat / Feed (Events-style live update). */
+export async function softPullSocialFromServer(): Promise<boolean> {
+  return hydrateSocialFromServer();
 }
 
 /* ─── Company follow (news / updates) ─── */
@@ -320,6 +387,24 @@ export function requestPeopleFollow(input: {
   const state = load();
   state.peopleFollows.push(follow);
   save(state);
+
+  if (!isDemoTarget && follow.status === 'pending') {
+    void recordCandidateNotification(input.toUserId, {
+      type: 'system',
+      title: 'New follow request',
+      description: 'Someone wants to follow you on Office Gossips. Open Chat to accept or decline.',
+      actionButton: 'Open chat',
+      actionPath: '/community?tab=chat',
+      metadata: {
+        kind: 'people_follow_request',
+        channel: 'alert',
+        followId: follow.id,
+        fromUserId: input.fromUserId,
+      },
+    });
+    notifyBellRefresh();
+  }
+
   return { ok: true, follow };
 }
 
@@ -355,6 +440,21 @@ export function respondPeopleFollow(
   };
   state.peopleFollows[idx] = updated;
   save(state);
+
+  void recordCandidateNotification(row.fromUserId, {
+    type: 'system',
+    title: 'Follow request accepted',
+    description: 'Your follow request was accepted. You can stay connected on Office Gossips.',
+    actionButton: 'Open chat',
+    actionPath: '/community?tab=chat',
+    metadata: {
+      kind: 'people_follow_accepted',
+      channel: 'alert',
+      followId: updated.id,
+      toUserId,
+    },
+  });
+
   return { ok: true, follow: updated };
 }
 
@@ -460,6 +560,24 @@ export function requestDirectMessage(input: {
   };
   state.dms.push(thread);
   save(state);
+
+  if (!isDemoTarget && thread.status === 'pending') {
+    void recordCandidateNotification(input.toUserId, {
+      type: 'system',
+      title: 'New message request',
+      description: 'Someone wants to message you on Office Gossips. Open Chat to accept or decline.',
+      actionButton: 'Open chat',
+      actionPath: '/community?tab=chat',
+      metadata: {
+        kind: 'dm_request',
+        channel: 'alert',
+        threadId: thread.id,
+        fromUserId: input.fromUserId,
+      },
+    });
+    notifyBellRefresh();
+  }
+
   return { ok: true, thread };
 }
 
@@ -509,6 +627,21 @@ export function respondDirectMessage(
     updatedAt: now,
   };
   save(state);
+
+  void recordCandidateNotification(row.fromUserId, {
+    type: 'system',
+    title: 'Message request accepted',
+    description: 'Your message request was accepted. Chat is open now.',
+    actionButton: 'Open chat',
+    actionPath: '/community?tab=chat',
+    metadata: {
+      kind: 'dm_accepted',
+      channel: 'alert',
+      threadId: state.dms[idx].id,
+      toUserId: userId,
+    },
+  });
+
   return { ok: true, thread: state.dms[idx] };
 }
 
@@ -547,6 +680,25 @@ export function sendDirectMessage(
     updatedAt: msg.createdAt,
   };
   save(state);
+
+  const peerId = senderId === row.fromUserId ? row.toUserId : row.fromUserId;
+  if (peerId && !peerId.startsWith('demo_ref_')) {
+    const preview = (msg.text || '').slice(0, 120) || 'New message';
+    void recordCandidateNotification(peerId, {
+      type: 'system',
+      title: 'New message',
+      description: preview,
+      actionButton: 'Open chat',
+      actionPath: '/community?tab=chat',
+      metadata: {
+        kind: 'dm_message',
+        channel: 'alert',
+        threadId: row.id,
+        fromUserId: senderId,
+      },
+    });
+  }
+
   return { ok: true, thread: state.dms[idx] };
 }
 

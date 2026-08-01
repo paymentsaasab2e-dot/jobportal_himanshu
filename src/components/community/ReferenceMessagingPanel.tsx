@@ -19,6 +19,7 @@ import {
   getDmThread,
   respondDirectMessage,
   sendDirectMessage,
+  softPullSocialFromServer,
 } from '@/lib/social-store';
 import {
   getHryantraVerifiedChatById,
@@ -169,10 +170,24 @@ export function ReferenceMessagingPanel({
   useEffect(() => {
     const id = window.setInterval(() => setTick((n) => n + 1), 1500);
     const onHry = () => setTick((n) => n + 1);
+    const onSocial = () => setTick((n) => n + 1);
     window.addEventListener('saasa:hryantra-chat-updated', onHry);
+    window.addEventListener('saasa:social-updated', onSocial);
+    window.addEventListener('saasa:office-gossips-hydrated', onSocial);
+
+    let softTimer: number | undefined;
+    if (kind === 'dm') {
+      softTimer = window.setInterval(() => {
+        void softPullSocialFromServer();
+      }, 12_000);
+    }
+
     return () => {
       window.clearInterval(id);
+      if (softTimer) window.clearInterval(softTimer);
       window.removeEventListener('saasa:hryantra-chat-updated', onHry);
+      window.removeEventListener('saasa:social-updated', onSocial);
+      window.removeEventListener('saasa:office-gossips-hydrated', onSocial);
     };
   }, [chatId, kind]);
 
@@ -731,10 +746,10 @@ export function ReferenceMessagingPanel({
       {canRate ? (
         <div className="shrink-0 space-y-1.5 border-t border-slate-100 bg-white px-3 py-2">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-            Rate this response · unlocks their payout
+            Rate this response · % of fee goes to them
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {REFERENCE_RATING_OPTIONS.map(({ id, label }) => (
+            {REFERENCE_RATING_OPTIONS.map(({ id, label, payoutPct }) => (
               <button
                 key={id}
                 type="button"
@@ -742,7 +757,7 @@ export function ReferenceMessagingPanel({
                 onClick={() => void handleRate(id)}
                 className="rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
-                {label}
+                {label} · {payoutPct}%
               </button>
             ))}
           </div>

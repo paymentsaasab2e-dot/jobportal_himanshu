@@ -25,6 +25,8 @@ import {
   pendingFollowIncomingCount,
   respondDirectMessage,
   respondPeopleFollow,
+  softPullSocialFromServer,
+  SOCIAL_UPDATED_EVENT,
 } from '@/lib/social-store';
 import {
   ensureHryantraVerifiedChat,
@@ -78,12 +80,25 @@ export function ReferenceCheckPanel({
   useEffect(() => {
     const id = window.setInterval(() => setTick((n) => n + 1), 4000);
     const onHry = () => setTick((n) => n + 1);
+    const onSocial = () => setTick((n) => n + 1);
     window.addEventListener('saasa:hryantra-chat-updated', onHry);
+    window.addEventListener(SOCIAL_UPDATED_EVENT, onSocial);
+    window.addEventListener('saasa:office-gossips-hydrated', onSocial);
+
+    const softTimer = window.setInterval(() => {
+      if (variant === 'chat' || variant === 'all') {
+        void softPullSocialFromServer();
+      }
+    }, 15_000);
+
     return () => {
       window.clearInterval(id);
+      window.clearInterval(softTimer);
       window.removeEventListener('saasa:hryantra-chat-updated', onHry);
+      window.removeEventListener(SOCIAL_UPDATED_EVENT, onSocial);
+      window.removeEventListener('saasa:office-gossips-hydrated', onSocial);
     };
-  }, []);
+  }, [variant]);
 
   useEffect(() => {
     if (variant === 'chat' || variant === 'all') {
@@ -590,7 +605,7 @@ export function ReferenceCheckPanel({
                                 Your feedback
                               </p>
                               <div className="flex flex-wrap gap-1.5">
-                                {REFERENCE_RATING_OPTIONS.map(({ id, label }) => (
+                                {REFERENCE_RATING_OPTIONS.map(({ id, label, payoutPct }) => (
                                   <button
                                     key={id}
                                     type="button"
@@ -598,7 +613,7 @@ export function ReferenceCheckPanel({
                                     onClick={() => void handleRate(r.id, id)}
                                     className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                                   >
-                                    {label}
+                                    {label} · {payoutPct}%
                                   </button>
                                 ))}
                               </div>

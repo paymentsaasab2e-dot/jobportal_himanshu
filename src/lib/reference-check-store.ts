@@ -96,11 +96,13 @@ export const RATING_PAYOUT_WEIGHT: Record<ReferenceRating, number> = {
 export const REFERENCE_RATING_OPTIONS: Array<{
   id: ReferenceRating;
   label: string;
+  /** % of escrowed fee paid to the response giver */
+  payoutPct: number;
 }> = [
-  { id: 'satisfactory', label: 'Satisfactory' },
-  { id: 'good', label: 'Good' },
-  { id: 'top_notch', label: 'Top notch' },
-  { id: 'excellent', label: 'Excellent' },
+  { id: 'satisfactory', label: 'Satisfactory', payoutPct: 40 },
+  { id: 'good', label: 'Good', payoutPct: 75 },
+  { id: 'top_notch', label: 'Top notch', payoutPct: 90 },
+  { id: 'excellent', label: 'Excellent', payoutPct: 100 },
 ];
 
 function normalizeRating(raw: string | undefined): ReferenceRating | undefined {

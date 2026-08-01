@@ -382,7 +382,7 @@ export function ReferenceCheckDetailModal({
                     Your rating unlocks their token payout.
                   </p>
                   <div className="mt-2.5 flex flex-wrap gap-2">
-                    {REFERENCE_RATING_OPTIONS.map(({ id, label }) => (
+                    {REFERENCE_RATING_OPTIONS.map(({ id, label, payoutPct }) => (
                       <button
                         key={id}
                         type="button"
@@ -390,7 +390,7 @@ export function ReferenceCheckDetailModal({
                         onClick={() => void handleRate(id)}
                         className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-white disabled:opacity-50"
                       >
-                        {label}
+                        {label} · {payoutPct}%
                       </button>
                     ))}
                   </div>

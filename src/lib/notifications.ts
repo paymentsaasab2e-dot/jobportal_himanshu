@@ -64,6 +64,11 @@ const ALERT_KINDS = new Set([
   'recommendation',
   'hryantra_chat',
   'company_follow_post',
+  'people_follow_request',
+  'dm_request',
+  'dm_message',
+  'people_follow_accepted',
+  'dm_accepted',
 ]);
 
 /**

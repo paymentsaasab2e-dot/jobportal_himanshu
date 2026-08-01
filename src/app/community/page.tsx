@@ -41,6 +41,8 @@ import {
   listFollowedCompanyIds,
   pendingDmIncomingCount,
   pendingFollowIncomingCount,
+  softPullSocialFromServer,
+  SOCIAL_UPDATED_EVENT,
 } from '@/lib/social-store';
 import {
   ensureHryantraVerifiedChat,
@@ -177,6 +179,7 @@ function timeAgo(iso: string): string {
 
 const EVENTS_QUEUE_BATCH = 5;
 const EVENTS_BG_POLL_MS = 48_000;
+const SOCIAL_BG_POLL_MS = 20_000;
 
 type EventsLiveCompanyPost = CommunityPost & {
   liveSource: 'followed' | 'connected' | 'match';
@@ -263,8 +266,12 @@ export default function OfficeGossipsPage() {
   const [eventsDataReady, setEventsDataReady] = useState(false);
   const [eventsPullHint, setEventsPullHint] = useState<'idle' | 'loading' | 'empty'>('idle');
   const [eventsPullDistance, setEventsPullDistance] = useState(0);
+  const [socialRequestQueueCount, setSocialRequestQueueCount] = useState(0);
+  const [socialTick, setSocialTick] = useState(0);
   const eventsQueueRef = useRef<EventsTimelineItem[]>([]);
   const eventsSeenIdsRef = useRef<Set<string>>(new Set());
+  const socialSeenPendingRef = useRef(0);
+  const socialBaselineReadyRef = useRef(false);
   const eventsScrollRef = useRef<HTMLDivElement>(null);
   const eventsPullStartY = useRef<number | null>(null);
   const eventsPullDistanceRef = useRef(0);
@@ -1192,14 +1199,76 @@ export default function OfficeGossipsPage() {
   const followPendingCount = useMemo(
     () => (userId ? pendingFollowIncomingCount(userId) : 0),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userId, feed, referenceChatId],
+    [userId, feed, referenceChatId, socialTick],
   );
 
   const dmPendingCount = useMemo(
     () => (userId ? pendingDmIncomingCount(userId) : 0),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userId, feed, referenceChatId],
+    [userId, feed, referenceChatId, socialTick],
   );
+
+  // Events-style soft load for follow / message requests while browsing Feed
+  useEffect(() => {
+    if (!userId) return;
+    const onSocial = () => setSocialTick((n) => n + 1);
+    window.addEventListener(SOCIAL_UPDATED_EVENT, onSocial);
+    window.addEventListener('saasa:office-gossips-hydrated', onSocial);
+    return () => {
+      window.removeEventListener(SOCIAL_UPDATED_EVENT, onSocial);
+      window.removeEventListener('saasa:office-gossips-hydrated', onSocial);
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (ogTab !== 'feed' || !userId) return;
+    socialBaselineReadyRef.current = false;
+    socialSeenPendingRef.current = 0;
+    setSocialRequestQueueCount(0);
+
+    const softCheck = async () => {
+      await softPullSocialFromServer();
+      setSocialTick((n) => n + 1);
+      const pending =
+        pendingFollowIncomingCount(userId) + pendingDmIncomingCount(userId);
+      if (!socialBaselineReadyRef.current) {
+        socialSeenPendingRef.current = pending;
+        socialBaselineReadyRef.current = true;
+        setSocialRequestQueueCount(0);
+        return;
+      }
+      const delta = Math.max(0, pending - socialSeenPendingRef.current);
+      setSocialRequestQueueCount(delta);
+    };
+
+    void softCheck();
+    const timer = window.setInterval(() => {
+      void softCheck();
+    }, SOCIAL_BG_POLL_MS);
+    return () => window.clearInterval(timer);
+  }, [ogTab, userId]);
+
+  const releaseSocialRequestQueue = useCallback(() => {
+    if (!userId) return;
+    const pending =
+      pendingFollowIncomingCount(userId) + pendingDmIncomingCount(userId);
+    socialSeenPendingRef.current = pending;
+    setSocialRequestQueueCount(0);
+    setSocialTick((n) => n + 1);
+    refresh();
+    setOgTab('chat');
+  }, [userId, refresh]);
+
+  // Quiet soft-pull for social while browsing Chat (live inbox + open threads)
+  useEffect(() => {
+    if (ogTab !== 'chat' || !userId) return;
+    const softCheck = () => {
+      void softPullSocialFromServer().then(() => setSocialTick((n) => n + 1));
+    };
+    softCheck();
+    const timer = window.setInterval(softCheck, SOCIAL_BG_POLL_MS);
+    return () => window.clearInterval(timer);
+  }, [ogTab, userId]);
 
   const openComments = (postId: string) => {
     if (commentPostId === postId) {
@@ -1819,6 +1888,15 @@ export default function OfficeGossipsPage() {
                   placeholder="Search people, circles, posts…"
                   className="min-w-0 flex-1 bg-transparent text-[14px] font-medium text-slate-800 outline-none placeholder:font-normal placeholder:text-slate-400"
                 />
+                {socialRequestQueueCount > 0 && ogTab === 'feed' ? (
+                  <button
+                    type="button"
+                    onClick={() => releaseSocialRequestQueue()}
+                    className="shrink-0 rounded-full bg-[#FC9620] px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm"
+                  >
+                    {socialRequestQueueCount} new · load
+                  </button>
+                ) : null}
                 {companySearch ||
                 selectedProfileUserId ||
                 (selectedCompany && !isCompanyAccount) ? (

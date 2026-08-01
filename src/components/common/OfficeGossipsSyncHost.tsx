@@ -9,6 +9,7 @@ import {
   pushCommunityStateNow,
 } from '@/lib/community-store';
 import { hydrateReferenceChecksFromServer } from '@/lib/reference-check-store';
+import { getSocialState, hydrateSocialFromServer } from '@/lib/social-store';
 import { flushOfficeGossipsPush } from '@/lib/office-gossips-sync';
 
 /**
@@ -31,6 +32,8 @@ export function OfficeGossipsSyncHost() {
       if (cancelled) return;
       await hydrateReferenceChecksFromServer();
       if (cancelled) return;
+      await hydrateSocialFromServer();
+      if (cancelled) return;
 
       // Upload this device’s data (incl. companies created before sync existed)
       await pushCommunityStateNow();
@@ -46,6 +49,7 @@ export function OfficeGossipsSyncHost() {
       }
 
       const state = loadCommunityState();
+      const social = getSocialState();
       await flushOfficeGossipsPush(() => ({
         ...(identity ? { identity } : {}),
         referenceChecks: Array.isArray(referenceChecks) ? referenceChecks : [],
@@ -56,6 +60,7 @@ export function OfficeGossipsSyncHost() {
         })),
         posts: state.posts,
         comments: state.comments,
+        social,
       }));
 
       if (cancelled) return;

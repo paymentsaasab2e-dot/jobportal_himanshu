@@ -415,7 +415,7 @@ export function ReferenceCheckReviewPanel({
               <div className="rounded-[16px] border border-sky-100 bg-sky-50/80 p-3">
                 <p className="text-[12px] font-semibold text-slate-800">Rate this response</p>
                 <p className="mt-0.5 text-[11px] text-slate-500">
-                  Your rating releases their token payout.
+                  Rating % of their fee is credited as tokens.
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {REFERENCE_RATING_OPTIONS.map((opt) => (
@@ -426,7 +426,7 @@ export function ReferenceCheckReviewPanel({
                       onClick={() => void handleRate(opt.id)}
                       className="rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:border-[#0A66C2] hover:text-[#0A66C2] disabled:opacity-50"
                     >
-                      {opt.label}
+                      {opt.label} · {opt.payoutPct}%
                     </button>
                   ))}
                 </div>
