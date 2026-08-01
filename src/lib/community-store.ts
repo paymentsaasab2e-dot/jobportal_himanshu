@@ -1026,15 +1026,23 @@ export function getVisibleFeed(userId: string | null): CommunityPost[] {
 
 /**
  * Personalized Office Gossips feed:
- * ~60% from joined communities (recency),
- * ~40% from other public communities matched to interest ratings / behaviour.
+ * followed authors’ public-community posts first,
+ * then ~60% joined communities / ~40% interest discovery.
  */
 export function getPersonalizedCommunityFeed(
   userId: string | null,
-  options?: { joinedRatio?: number; limit?: number },
+  options?: {
+    joinedRatio?: number;
+    limit?: number;
+    /** Authors this user follows — public community posts surface in Feed. */
+    followedAuthorIds?: string[];
+  },
 ): CommunityPost[] {
   const joinedRatio = Math.min(0.9, Math.max(0.4, options?.joinedRatio ?? 0.6));
   const limit = options?.limit ?? 80;
+  const followedAuthors = new Set(
+    (options?.followedAuthorIds || []).filter(Boolean).map(String),
+  );
   const all = getVisibleFeed(userId).filter((p) => Boolean(p.communityId));
   if (!userId || all.length === 0) return all.slice(0, limit);
 
@@ -1044,9 +1052,25 @@ export function getPersonalizedCommunityFeed(
     state.communities.filter((c) => c.memberIds.includes(userId)).map((c) => c.id),
   );
 
-  const joinedPosts = all.filter((p) => p.communityId && joinedIds.has(p.communityId));
+  const followedPosts = followedAuthors.size
+    ? all
+        .filter((p) => {
+          if (!followedAuthors.has(p.authorId) || p.authorId === userId) return false;
+          const c = p.communityId ? byCommunity.get(p.communityId) : null;
+          // Public circles: followers see activity. Private: only if already a member.
+          if (!c) return false;
+          if (c.visibility === 'public') return true;
+          return joinedIds.has(c.id);
+        })
+        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
+    : [];
+
+  const followedIds = new Set(followedPosts.map((p) => p.id));
+  const joinedPosts = all.filter(
+    (p) => p.communityId && joinedIds.has(p.communityId) && !followedIds.has(p.id),
+  );
   const discoveryPool = all.filter((p) => {
-    if (!p.communityId || joinedIds.has(p.communityId)) return false;
+    if (!p.communityId || joinedIds.has(p.communityId) || followedIds.has(p.id)) return false;
     const c = byCommunity.get(p.communityId);
     return c?.visibility === 'public';
   });
@@ -1072,24 +1096,27 @@ export function getPersonalizedCommunityFeed(
     )
     .map((x) => x.p);
 
-  // If user has no joins yet, lean fully on interest discovery + public chrono
+  const followedTake = followedPosts.slice(0, Math.min(24, Math.round(limit * 0.35)));
+  const remaining = Math.max(0, limit - followedTake.length);
+
+  // If user has no joins yet, lean on follows + interest discovery + public chrono
   if (joinedPosts.length === 0) {
     const fallback = discoveryRanked.length
       ? discoveryRanked
       : all.filter((p) => {
           const c = p.communityId ? byCommunity.get(p.communityId) : null;
-          return c?.visibility === 'public';
+          return c?.visibility === 'public' && !followedIds.has(p.id);
         });
-    return fallback.slice(0, limit);
+    return [...followedTake, ...fallback].slice(0, limit);
   }
 
-  const targetJoined = Math.max(1, Math.round(limit * joinedRatio));
-  const targetDiscovery = Math.max(0, limit - targetJoined);
+  const targetJoined = Math.max(1, Math.round(remaining * joinedRatio));
+  const targetDiscovery = Math.max(0, remaining - targetJoined);
   const joinedTake = joinedPosts.slice(0, targetJoined);
   const discoveryTake = discoveryRanked.slice(0, targetDiscovery);
 
-  // Interleave ~3 joined : 2 discovery while preserving relative order
-  const out: CommunityPost[] = [];
+  // Followed activity first, then interleave ~3 joined : 2 discovery
+  const out: CommunityPost[] = [...followedTake];
   let ji = 0;
   let di = 0;
   while (out.length < limit && (ji < joinedTake.length || di < discoveryTake.length)) {

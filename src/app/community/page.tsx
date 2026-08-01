@@ -39,6 +39,7 @@ import {
   getDmPeerLabel,
   listDmThreadsForUser,
   listFollowedCompanyIds,
+  listFollowedPeopleIds,
   pendingDmIncomingCount,
   pendingFollowIncomingCount,
   softPullSocialFromServer,
@@ -336,7 +337,11 @@ export default function OfficeGossipsPage() {
     setCompanyFeed(visible.filter((p) => Boolean(p.companyPageId)));
     if (userId) {
       syncInterestsFromBehaviour(userId);
-      setFeed(getPersonalizedCommunityFeed(userId));
+      setFeed(
+        getPersonalizedCommunityFeed(userId, {
+          followedAuthorIds: listFollowedPeopleIds(userId),
+        }),
+      );
     } else {
       setFeed(visible.filter((p) => Boolean(p.communityId)));
     }
@@ -1211,14 +1216,17 @@ export default function OfficeGossipsPage() {
   // Events-style soft load for follow / message requests while browsing Feed
   useEffect(() => {
     if (!userId) return;
-    const onSocial = () => setSocialTick((n) => n + 1);
+    const onSocial = () => {
+      setSocialTick((n) => n + 1);
+      refresh();
+    };
     window.addEventListener(SOCIAL_UPDATED_EVENT, onSocial);
     window.addEventListener('saasa:office-gossips-hydrated', onSocial);
     return () => {
       window.removeEventListener(SOCIAL_UPDATED_EVENT, onSocial);
       window.removeEventListener('saasa:office-gossips-hydrated', onSocial);
     };
-  }, [userId]);
+  }, [userId, refresh]);
 
   useEffect(() => {
     if (ogTab !== 'feed' || !userId) return;

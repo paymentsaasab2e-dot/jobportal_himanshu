@@ -471,6 +471,17 @@ export function listAcceptedFollowsForUser(userId: string): PeopleFollow[] {
   );
 }
 
+/** People this user follows (accepted) — their public community posts belong in Feed. */
+export function listFollowedPeopleIds(userId: string): string[] {
+  if (!userId) return [];
+  const ids = new Set<string>();
+  for (const f of load().peopleFollows) {
+    if (f.status !== 'accepted') continue;
+    if (f.fromUserId === userId) ids.add(f.toUserId);
+  }
+  return [...ids];
+}
+
 /* ─── Direct messaging (no tokens) ─── */
 
 export function listDmThreadsForUser(userId: string): DirectMessageThread[] {
