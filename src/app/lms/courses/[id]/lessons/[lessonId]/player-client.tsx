@@ -10,6 +10,7 @@ import { LmsProgressBar } from '../../../../components/LmsProgressBar';
 import { useLmsState } from '../../../../state/LmsStateProvider';
 import { useLmsToast } from '../../../../components/ux/LmsToastProvider';
 import { LmsStatusBadge } from '../../../../components/ux/LmsStatusBadge';
+import { LmsVideoPlayer } from '../../../../components/LmsVideoPlayer';
 import type { FlatCourseLesson } from '../../../course-utils';
 
 type Mode = 'learn' | 'review';
@@ -22,6 +23,7 @@ type LessonDetailsMap = Record<
     keyTakeaways: string[];
     practiceTask: string;
     resources: string[];
+    videoUrl?: string | null;
   }
 >;
 
@@ -62,12 +64,13 @@ export function LessonPlayerClient({ course, courseMeta, flatLessons, initialInd
       return '';
     }
   });
-  const detail = lessonDetails[key] ?? {
+  const detail = lessonDetails[current.lessonId] ?? lessonDetails[key] ?? {
     type: 'reading' as LmsLessonType,
     intro: `This lesson content is a frontend-only placeholder for "${current.lessonTitle}".`,
     keyTakeaways: ['Understand the core idea', 'Apply it in one realistic task', 'Connect it to interviews'],
     practiceTask: 'Write a short summary and one concrete example from your own experience.',
     resources: ['Reference notes (mock)', 'Practice prompts (mock)'],
+    videoUrl: null,
   };
 
   useEffect(() => {
@@ -224,20 +227,25 @@ export function LessonPlayerClient({ course, courseMeta, flatLessons, initialInd
         <main className="xl:col-span-8 space-y-5">
           <section className={`${LMS_CARD_CLASS} min-h-[16rem]`}>
             <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">Learning canvas</p>
-            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-6">
-              <p className="text-base font-semibold text-gray-900">
-                {detail.type === 'video'
-                  ? 'Video lesson placeholder'
-                  : detail.type === 'exercise'
-                    ? 'Interactive exercise placeholder'
-                    : detail.type === 'mock'
-                      ? 'Mock interview drill placeholder'
-                      : 'Reading lesson placeholder'}
-              </p>
-              <p className="mt-2 text-sm text-gray-600">
-                Frontend-only content panel. Replace with real media/interactive backend sources later.
-              </p>
-            </div>
+            {detail.videoUrl ? (
+              <div className="space-y-3">
+                <LmsVideoPlayer url={detail.videoUrl} title={current.lessonTitle} />
+                {detail.intro ? <p className="text-sm text-gray-600">{detail.intro}</p> : null}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-6">
+                <p className="text-base font-semibold text-gray-900">
+                  {detail.type === 'video'
+                    ? 'Video lesson'
+                    : detail.type === 'exercise'
+                      ? 'Interactive exercise'
+                      : detail.type === 'mock'
+                        ? 'Mock interview drill'
+                        : 'Reading lesson'}
+                </p>
+                <p className="mt-2 text-sm text-gray-600">{detail.intro}</p>
+              </div>
+            )}
           </section>
 
           <section className={`${LMS_CARD_CLASS}`}>

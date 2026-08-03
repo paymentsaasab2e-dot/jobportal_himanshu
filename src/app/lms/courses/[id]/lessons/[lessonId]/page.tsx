@@ -72,15 +72,14 @@ export default function CourseLessonPage({
   // Transform backend lessons into frontend modules structure
   const modules = [
     {
-      moduleId: 'm-1',
-      moduleTitle: 'Course Content',
+      id: 'm-1',
+      title: 'Course Content',
       lessons: (course.lessons || []).map((l: any) => ({
-        lessonId: l.id,
-        lessonTitle: l.title,
-        type: l.type,
-        duration: `${l.durationMinutes} min`,
-      }))
-    }
+        id: l.id,
+        title: l.title,
+        estMin: Number(l.durationMinutes) || 0,
+      })),
+    },
   ];
 
   const flat = flattenCourseLessons(modules);
@@ -110,10 +109,31 @@ export default function CourseLessonPage({
   }
 
   // Build lesson details map from backend contentHtml and videoUrl
-  const lessonDetails: Record<string, string> = {};
+  const lessonDetails: Record<
+    string,
+    {
+      type: 'video' | 'reading' | 'exercise' | 'mock';
+      intro: string;
+      keyTakeaways: string[];
+      practiceTask: string;
+      resources: string[];
+      videoUrl?: string | null;
+    }
+  > = {};
   course.lessons?.forEach((l: any) => {
-    lessonDetails[l.id] = (l.videoUrl ? `**Video link**: [${l.videoUrl}](${l.videoUrl})\n\n` : '') + 
-                          (l.contentHtml || l.description || 'No detailed content provided yet.');
+    const type = (['video', 'reading', 'exercise', 'mock'].includes(l.type) ? l.type : 'video') as
+      | 'video'
+      | 'reading'
+      | 'exercise'
+      | 'mock';
+    lessonDetails[l.id] = {
+      type,
+      intro: String(l.contentHtml || l.description || 'No detailed content provided yet.'),
+      keyTakeaways: ['Watch the lesson carefully', 'Capture the key idea', 'Connect it to interviews'],
+      practiceTask: 'Write a short summary and one concrete takeaway from this lesson.',
+      resources: l.videoUrl ? [l.videoUrl] : [],
+      videoUrl: l.videoUrl || null,
+    };
   });
 
   return (

@@ -172,6 +172,8 @@ function LmsCoursesPageContent() {
       isLocked: Boolean(c.isLocked),
       enrollmentStatus: Boolean(c.enrollmentStatus),
       isFree: c.isFree !== false && !(Number(c.tokenCost) > 0),
+      videoUrl: c.videoUrl || null,
+      thumbnailUrl: c.thumbnailUrl || null,
     })).filter((course) => {
       const pct = course.progress;
       const st = courseStatusFromPct(pct);
@@ -185,31 +187,39 @@ function LmsCoursesPageContent() {
       if (durationBand === 'medium' && (mins < 180 || mins > 300)) return false;
       if (durationBand === 'long' && mins <= 300) return false;
 
-      // Goal-based relevance filter
-      if (careerGoal) {
-        const goalStr = careerGoal.toLowerCase();
-        const goalKeywords = goalStr.split(' ').filter(w => w.length > 2);
-        
-        const titleMatch = course.title.toLowerCase().includes(goalStr);
-        const catMatch = course.category?.toLowerCase().includes(goalStr);
-        const descMatch = course.description?.toLowerCase().includes(goalStr);
-        const tagMatch = course.tags.some((t: string) => t.toLowerCase().includes(goalStr));
-        
-        const keywordMatch = goalKeywords.some((w: string) => 
-          course.title.toLowerCase().includes(w) || 
-          course.description?.toLowerCase().includes(w) || 
-          course.tags.some((t: string) => t.toLowerCase().includes(w))
-        );
-
-        if (!titleMatch && !catMatch && !descMatch && !tagMatch && !keywordMatch) {
-          return false;
-        }
-      }
-
       return true;
     });
 
     const sorted = [...base];
+    // Career-goal matches first (do not hide HQ / other published courses)
+    if (careerGoal) {
+      const goalStr = careerGoal.toLowerCase();
+      const goalKeywords = goalStr.split(' ').filter((w) => w.length > 2);
+      const score = (course: (typeof base)[number]) => {
+        const title = course.title.toLowerCase();
+        const cat = course.category?.toLowerCase() || '';
+        const desc = course.description?.toLowerCase() || '';
+        const tags = course.tags.map((t: string) => t.toLowerCase());
+        if (
+          title.includes(goalStr) ||
+          cat.includes(goalStr) ||
+          desc.includes(goalStr) ||
+          tags.some((t) => t.includes(goalStr))
+        ) {
+          return 2;
+        }
+        if (
+          goalKeywords.some(
+            (w: string) =>
+              title.includes(w) || desc.includes(w) || tags.some((t) => t.includes(w)),
+          )
+        ) {
+          return 1;
+        }
+        return 0;
+      };
+      sorted.sort((a, b) => score(b) - score(a));
+    }
     if (sortBy === 'alphabetical') sorted.sort((a, b) => a.title.localeCompare(b.title));
     else if (sortBy === 'duration') sorted.sort((a, b) => parseDurationToMinutes(a.duration) - parseDurationToMinutes(b.duration));
     else if (sortBy === 'progress') {
@@ -431,18 +441,32 @@ function LmsCoursesPageContent() {
               >
                 <div className="-mx-6 -mt-6 overflow-hidden border-b border-slate-200/70 sm:-mx-7 sm:-mt-7">
                   <div className="relative aspect-[16/9] bg-slate-100">
-                    <Image
-                      src={cover.src}
-                      alt={cover.alt}
-                      fill
-                      sizes="(min-width: 1280px) 380px, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    />
+                    {course.thumbnailUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={course.thumbnailUrl}
+                        alt={course.title}
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <Image
+                        src={cover.src}
+                        alt={cover.alt}
+                        fill
+                        sizes="(min-width: 1280px) 380px, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 via-slate-900/5 to-transparent" />
                     <div className="absolute left-4 top-4 flex items-center gap-2">
                       <span className="rounded-full bg-white/92 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-800 shadow-sm">
-                        {cover.eyebrow}
+                        {course.category || cover.eyebrow}
                       </span>
+                      {course.videoUrl ? (
+                        <span className="rounded-full bg-[#28A8E1] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm">
+                          Video
+                        </span>
+                      ) : null}
                     </div>
                     <div className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl border border-white/60 bg-white/88 text-[#28A8E1] shadow-sm backdrop-blur-sm">
                       <Icon className="h-5 w-5" strokeWidth={2} />
