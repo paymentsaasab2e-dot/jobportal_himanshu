@@ -188,7 +188,7 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
           ) : null}
 
           <main
-            className={`profile-page-typography lms-page flex-1 min-w-0 flex flex-col relative z-10 w-full transition-all duration-300 overflow-x-hidden ${
+            className={`profile-page-typography lms-page flex-1 min-w-0 flex flex-col relative z-10 w-full transition-all duration-300 overflow-x-clip ${
               hideLmsSidebar ? 'lg:max-w-full' : collapsed ? 'lg:max-w-[calc(100%-68px)]' : 'lg:max-w-[calc(100%-16rem)]'
             }`}
           >
