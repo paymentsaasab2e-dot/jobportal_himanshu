@@ -32,6 +32,7 @@ import { eventsRecommendedIntro } from '../data/ai-mock';
 import { useLmsState } from '../state/LmsStateProvider';
 import { EventRegisterSheet } from './EventRegisterSheet';
 import { fetchEvents, registerForEvent, unregisterFromEvent } from '../api/client';
+import { fetchPublicEvents, type PortalEventRow } from '@/lib/public-events-api';
 import { LmsSkeleton } from '../components/states/LmsSkeleton';
 import {
   eventTypeLabel,
@@ -130,6 +131,26 @@ const KIND_FILTERS: { id: KindFilter; label: string }[] = [
   { id: 'workshop', label: 'LMS sessions' },
 ];
 
+function portalSourceLabel(source?: string, createdByName?: string) {
+  if (source === 'hq') {
+    return createdByName ? `Posted by HQ · ${createdByName}` : 'Posted by HQ';
+  }
+  if (source === 'tenant') {
+    return createdByName ? `Employer event · ${createdByName}` : 'Employer event';
+  }
+  return 'Live session on HRYantra';
+}
+
+function mapPortalKind(type: string): KindFilter {
+  const normalized = String(type || 'workshop').toLowerCase().replace(/\s+/g, '-');
+  if (normalized === 'walk-in' || normalized === 'walkin') return 'walk-in';
+  if (normalized === 'seminar') return 'seminar';
+  if (normalized === 'webinar') return 'webinar';
+  if (normalized === 'job-fair') return 'job-fair';
+  if (normalized === 'job') return 'job';
+  return 'workshop';
+}
+
 export default function LmsEventsPage() {
   const router = useRouter();
   const overlay = useLmsOverlay();
@@ -140,7 +161,8 @@ export default function LmsEventsPage() {
   const [kindFilter, setKindFilter] = useState<KindFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [backendEvents, setBackendEvents] = useState<any[]>([]);
+  const [portalEvents, setPortalEvents] = useState<PortalEventRow[]>([]);
+  const [registrationByEventId, setRegistrationByEventId] = useState<Record<string, boolean>>({});
   const [jobEvents, setJobEvents] = useState<DisplayEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -148,11 +170,19 @@ export default function LmsEventsPage() {
     async function init() {
       try {
         setLoading(true);
-        const [data, jobs] = await Promise.all([
+        const [publishedEvents, authEvents, jobs] = await Promise.all([
+          fetchPublicEvents(undefined, 'all').catch(() => []),
           fetchEvents().catch(() => []),
           fetchPortalJobsList(DEFAULT_LOCALE, 20).catch(() => []),
         ]);
-        setBackendEvents(Array.isArray(data) ? data : []);
+        setPortalEvents(Array.isArray(publishedEvents) ? publishedEvents : []);
+        const registrationMap: Record<string, boolean> = {};
+        if (Array.isArray(authEvents)) {
+          authEvents.forEach((ev: { id?: string; isRegistered?: boolean }) => {
+            if (ev?.id) registrationMap[String(ev.id)] = Boolean(ev.isRegistered);
+          });
+        }
+        setRegistrationByEventId(registrationMap);
         setJobEvents(
           mapJobsToOgEvents(jobs, 16).map((ev) => ({
             id: ev.id,
@@ -206,35 +236,34 @@ export default function LmsEventsPage() {
   }, []);
 
   const normalizedEvents = useMemo<DisplayEvent[]>(() => {
-    const lms = backendEvents.map((ev: any) => {
-      const typeRaw = String(ev.type || 'Workshop');
+    const lms = portalEvents.map((ev) => {
+      const typeRaw = String(ev.type || 'workshop');
+      const scheduled = new Date(ev.scheduledAt);
       return {
         id: String(ev.id),
         title: ev.title,
         description: ev.description,
-        type: typeRaw,
-        kind: 'workshop' as const,
+        type: eventTypeLabel(typeRaw as OgEventType) || typeRaw,
+        kind: mapPortalKind(typeRaw),
         mode: ev.mode || 'Online',
-        dateStr: new Date(ev.scheduledAt).toLocaleDateString(undefined, {
+        dateStr: scheduled.toLocaleDateString(undefined, {
           weekday: 'long',
           month: 'short',
           day: 'numeric',
         }),
-        status: (new Date(ev.scheduledAt) > new Date() ? 'upcoming' : 'past') as
-          | 'upcoming'
-          | 'past',
-        isRegistered: Boolean(ev.isRegistered),
-        tags: ev.tags || [],
-        registeredCount: Math.floor(Math.random() * 200) + 50,
+        status: (scheduled > new Date() ? 'upcoming' : 'past') as 'upcoming' | 'past',
+        isRegistered: Boolean(registrationByEventId[String(ev.id)]),
+        tags: [],
+        registeredCount: ev.registrationCount ?? 0,
         startsIn: ev.durationMinutes ? `${ev.durationMinutes} mins` : '60 mins',
-        matchLabel: 'LMS live session',
+        matchLabel: portalSourceLabel(ev.source, ev.createdByName),
         overview: ev.description,
         href: `/lms/events/${ev.id}`,
         source: 'lms' as const,
       };
     });
     return [...jobEvents, ...catalogEvents, ...lms];
-  }, [backendEvents, catalogEvents, jobEvents]);
+  }, [portalEvents, registrationByEventId, catalogEvents, jobEvents]);
 
   const displayedEvents = useMemo(() => {
     return normalizedEvents.filter((ev) => {
@@ -288,11 +317,10 @@ export default function LmsEventsPage() {
             }
             onClick={async () => {
               try {
-                setBackendEvents((prev) =>
-                  prev.map((ev) =>
-                    ev.id === id ? { ...ev, isRegistered: !currentlyRegistered } : ev,
-                  ),
-                );
+                setRegistrationByEventId((prev) => ({
+                  ...prev,
+                  [id]: !currentlyRegistered,
+                }));
 
                 if (currentlyRegistered) {
                   await unregisterFromEvent(id);
@@ -303,11 +331,10 @@ export default function LmsEventsPage() {
                 }
                 overlay.close();
               } catch {
-                setBackendEvents((prev) =>
-                  prev.map((ev) =>
-                    ev.id === id ? { ...ev, isRegistered: currentlyRegistered } : ev,
-                  ),
-                );
+                setRegistrationByEventId((prev) => ({
+                  ...prev,
+                  [id]: currentlyRegistered,
+                }));
                 toast.push({
                   title: 'Error',
                   message: 'Failed to update registration',
@@ -356,7 +383,7 @@ export default function LmsEventsPage() {
     <div className="space-y-8 pb-10">
       <LmsPageHeader
         title="Events"
-        subtitle="All event types in one place — LMS sessions, walk-ins, seminars, webinars, job fairs, and job postings. Office Gossips only shows profile matches."
+        subtitle="All event types in one place — HQ events, employer sessions, walk-ins, seminars, webinars, job fairs, and job postings."
       />
 
       {!loading &&

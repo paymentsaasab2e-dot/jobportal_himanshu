@@ -101,6 +101,19 @@ export function TokensProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   useEffect(() => {
+    const onFocus = () => void refresh();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') void refresh();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [refresh]);
+
+  useEffect(() => {
     const onBalance = (event: Event) => {
       const detail = (event as CustomEvent<{ tokenBalance?: number }>).detail;
       if (typeof detail?.tokenBalance === 'number') {
