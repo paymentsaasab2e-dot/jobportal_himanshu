@@ -2,11 +2,11 @@
   "realtime": {
     "9d5194355ec270f0b4a474a8": {
       "userId": "9d5194355ec270f0b4a474a8",
-      "capturedAt": "2026-08-04T11:26:17.759Z",
+      "capturedAt": "2026-08-04T11:27:31.755Z",
       "kind": "realtime_session",
       "session": {
         "logins": 7,
-        "visits": 33,
+        "visits": 34,
         "applies": 0,
         "activeMs": 735000,
         "sessionCount": 7,
@@ -31,21 +31,21 @@
   "latest": {
     "9d5194355ec270f0b4a474a8": {
       "userId": "9d5194355ec270f0b4a474a8",
-      "capturedAt": "2026-08-04T11:26:17.759Z",
-      "activityStateUpdatedAt": "2026-08-04T11:25:17.331Z",
+      "capturedAt": "2026-08-04T11:27:31.755Z",
+      "activityStateUpdatedAt": "2026-08-04T11:27:30.411Z",
       "rollup7d": {
         "userId": "9d5194355ec270f0b4a474a8",
         "range": "week",
         "fromDate": "2026-07-29",
         "toDate": "2026-08-04",
         "logins": 7,
-        "visits": 33,
+        "visits": 34,
         "jobCardClicks": 0,
         "applies": 0,
         "activeMs": 735000,
         "sessionCount": 7,
         "pageVisitsByCategory": {
-          "other": 13,
+          "other": 14,
           "dashboard": 9,
           "profile": 7,
           "premium": 4
@@ -77,10 +77,12 @@
           {
             "id": "sess_msek3pf3_rkg2u5",
             "startedAt": "2026-08-04T11:10:07.214Z",
-            "lastActiveAt": "2026-08-04T11:18:53.394Z",
+            "lastActiveAt": "2026-08-04T11:27:26.578Z",
             "durationMs": 60000,
-            "pageCount": 0,
-            "paths": [],
+            "pageCount": 1,
+            "paths": [
+              "/help"
+            ],
             "deviceType": "desktop",
             "browser": "Chrome",
             "operatingSystem": "Windows",
@@ -89,7 +91,10 @@
             "city": "Mangalore",
             "timezone": "Asia/Calcutta",
             "ipAddress": "49.36.111.184",
-            "lastCategory": "other"
+            "lastCategory": "other",
+            "endedAt": "2026-08-04T11:27:26.152Z",
+            "lastPath": "/help",
+            "firstPath": "/help"
           },
           {
             "id": "sess_msei0npc_h4sz0y",
@@ -219,6 +224,24 @@
           }
         ],
         "recentEvents": [
+          {
+            "id": "ev_msekpzea_ctdpod",
+            "at": "2026-08-04T11:27:26.578Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/help",
+            "sessionId": "sess_msek3pf3_rkg2u5"
+          },
+          {
+            "id": "ev_msekpz2g_8qz3mh",
+            "at": "2026-08-04T11:27:26.152Z",
+            "type": "session_end",
+            "category": "other",
+            "sessionId": "sess_msek3pf3_rkg2u5",
+            "meta": {
+              "durationMs": 60000
+            }
+          },
           {
             "id": "ev_msek3pf4_26u0jr",
             "at": "2026-08-04T11:10:07.216Z",
@@ -949,7 +972,7 @@
             "visa-work-authorization",
             "vaccination"
           ],
-          "updatedAt": "2026-08-04T11:25:17.331Z"
+          "updatedAt": "2026-08-04T11:27:30.411Z"
         },
         "behaviourSignals": {
           "userId": "9d5194355ec270f0b4a474a8",
@@ -975,7 +998,7 @@
             "profile": 180000
           },
           "pageVisitsByCategory7d": {
-            "other": 13,
+            "other": 14,
             "dashboard": 9,
             "profile": 7,
             "premium": 4
@@ -1027,7 +1050,7 @@
       },
       "suggestionMetrics": {
         "userId": "9d5194355ec270f0b4a474a8",
-        "updatedAt": "2026-08-04T11:26:15.991Z",
+        "updatedAt": "2026-08-04T11:27:29.491Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
@@ -1255,7 +1278,7 @@
       ],
       "sessionEngagement": {
         "sessionCount": 7,
-        "activeCount": 1,
+        "activeCount": 0,
         "totalDurationMs": 6885262,
         "avgDurationMs": 983609,
         "medianDurationMs": 75000,
@@ -2433,5 +2456,5 @@
     }
   ],
   "tickets": [],
-  "updatedAt": "2026-08-04T11:26:17.761Z"
+  "updatedAt": "2026-08-04T11:27:31.764Z"
 }
