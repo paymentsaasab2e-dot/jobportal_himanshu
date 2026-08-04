@@ -2,27 +2,27 @@
   "realtime": {
     "9d5194355ec270f0b4a474a8": {
       "userId": "9d5194355ec270f0b4a474a8",
-      "capturedAt": "2026-08-04T10:11:18.754Z",
+      "capturedAt": "2026-08-04T11:25:18.753Z",
       "kind": "realtime_session",
       "session": {
-        "logins": 5,
+        "logins": 7,
         "visits": 33,
         "applies": 0,
-        "activeMs": 660000,
-        "sessionCount": 5,
+        "activeMs": 735000,
+        "sessionCount": 7,
         "topInsightIds": [
           "premium_curious"
         ],
         "triggerFlags": [
           "sales_follow_up"
         ],
-        "alertWindow": "Mon / Tue · 2:00 PM–1:00 PM",
+        "alertWindow": "Tue / Mon · 3:00 PM–2:00 PM",
         "alertConfidence": "medium",
         "topLocation": "Mangalore, Karnataka, India",
         "preferredAlertHours": [
+          15,
           14,
-          13,
-          12
+          13
         ]
       },
       "hasFullLatest": true
@@ -31,19 +31,19 @@
   "latest": {
     "9d5194355ec270f0b4a474a8": {
       "userId": "9d5194355ec270f0b4a474a8",
-      "capturedAt": "2026-08-04T10:11:18.754Z",
-      "activityStateUpdatedAt": "2026-08-04T10:11:16.641Z",
+      "capturedAt": "2026-08-04T11:25:18.753Z",
+      "activityStateUpdatedAt": "2026-08-04T11:25:17.331Z",
       "rollup7d": {
         "userId": "9d5194355ec270f0b4a474a8",
         "range": "week",
         "fromDate": "2026-07-29",
         "toDate": "2026-08-04",
-        "logins": 5,
+        "logins": 7,
         "visits": 33,
         "jobCardClicks": 0,
         "applies": 0,
-        "activeMs": 660000,
-        "sessionCount": 5,
+        "activeMs": 735000,
+        "sessionCount": 7,
         "pageVisitsByCategory": {
           "other": 13,
           "dashboard": 9,
@@ -52,14 +52,14 @@
         },
         "activeMsByCategory": {
           "dashboard": 390000,
-          "other": 90000,
+          "other": 165000,
           "profile": 180000
         },
         "firstOpenBreakdown": {
           "dashboard": 1,
           "profile": 1
         },
-        "avgActiveMsPerDay": 330000,
+        "avgActiveMsPerDay": 367500,
         "daysActive": 2,
         "topFirstOpen": "dashboard",
         "insights": [
@@ -75,10 +75,10 @@
         ],
         "recentSessions": [
           {
-            "id": "sess_msegf8pk_qpffsq",
-            "startedAt": "2026-08-04T09:27:06.967Z",
-            "lastActiveAt": "2026-08-04T09:27:06.969Z",
-            "durationMs": 15000,
+            "id": "sess_msek3pf3_rkg2u5",
+            "startedAt": "2026-08-04T11:10:07.214Z",
+            "lastActiveAt": "2026-08-04T11:18:53.394Z",
+            "durationMs": 60000,
             "pageCount": 0,
             "paths": [],
             "deviceType": "desktop",
@@ -90,6 +90,42 @@
             "timezone": "Asia/Calcutta",
             "ipAddress": "49.36.111.184",
             "lastCategory": "other"
+          },
+          {
+            "id": "sess_msei0npc_h4sz0y",
+            "startedAt": "2026-08-04T10:11:45.792Z",
+            "lastActiveAt": "2026-08-04T10:12:29.980Z",
+            "durationMs": 3501422,
+            "pageCount": 0,
+            "paths": [],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "country": "India",
+            "state": "Karnataka",
+            "city": "Mangalore",
+            "timezone": "Asia/Calcutta",
+            "ipAddress": "49.36.111.184",
+            "lastCategory": "other",
+            "endedAt": "2026-08-04T11:10:07.214Z"
+          },
+          {
+            "id": "sess_msegf8pk_qpffsq",
+            "startedAt": "2026-08-04T09:27:06.967Z",
+            "lastActiveAt": "2026-08-04T09:27:06.969Z",
+            "durationMs": 2678825,
+            "pageCount": 0,
+            "paths": [],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "country": "India",
+            "state": "Karnataka",
+            "city": "Mangalore",
+            "timezone": "Asia/Calcutta",
+            "ipAddress": "49.36.111.184",
+            "lastCategory": "other",
+            "endedAt": "2026-08-04T10:11:45.792Z"
           },
           {
             "id": "sess_mseddfff_9rc6ku",
@@ -183,6 +219,84 @@
           }
         ],
         "recentEvents": [
+          {
+            "id": "ev_msek3pf4_26u0jr",
+            "at": "2026-08-04T11:10:07.216Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/help",
+            "sessionId": "sess_msek3pf3_rkg2u5",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msek3pf3_l5eeqr",
+            "at": "2026-08-04T11:10:07.215Z",
+            "type": "login",
+            "category": "other",
+            "sessionId": "sess_msek3pf3_rkg2u5",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows",
+              "country": "India",
+              "state": "Karnataka",
+              "city": "Mangalore",
+              "timezone": "Asia/Calcutta",
+              "ipAddress": "49.36.111.184"
+            }
+          },
+          {
+            "id": "ev_msek3pf2_6v91tg",
+            "at": "2026-08-04T11:10:07.214Z",
+            "type": "session_end",
+            "category": "other",
+            "sessionId": "sess_msei0npc_h4sz0y",
+            "meta": {
+              "durationMs": 3501422
+            }
+          },
+          {
+            "id": "ev_msei0npj_3phrpa",
+            "at": "2026-08-04T10:11:45.799Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/help",
+            "sessionId": "sess_msei0npc_h4sz0y",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msei0npc_phufcu",
+            "at": "2026-08-04T10:11:45.792Z",
+            "type": "login",
+            "category": "other",
+            "sessionId": "sess_msei0npc_h4sz0y",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows",
+              "country": "India",
+              "state": "Karnataka",
+              "city": "Mangalore",
+              "timezone": "Asia/Calcutta",
+              "ipAddress": "49.36.111.184"
+            }
+          },
+          {
+            "id": "ev_msei0npc_29qcdv",
+            "at": "2026-08-04T10:11:45.792Z",
+            "type": "session_end",
+            "category": "other",
+            "sessionId": "sess_msegf8pk_qpffsq",
+            "meta": {
+              "durationMs": 2678825
+            }
+          },
           {
             "id": "ev_msegf8pl_82exix",
             "at": "2026-08-04T09:27:06.969Z",
@@ -835,7 +949,7 @@
             "visa-work-authorization",
             "vaccination"
           ],
-          "updatedAt": "2026-08-04T10:11:16.641Z"
+          "updatedAt": "2026-08-04T11:25:17.331Z"
         },
         "behaviourSignals": {
           "userId": "9d5194355ec270f0b4a474a8",
@@ -854,10 +968,10 @@
           ],
           "jobCardClicks7d": 0,
           "applies7d": 0,
-          "activeMs7d": 660000,
+          "activeMs7d": 735000,
           "activeMsByCategory7d": {
             "dashboard": 390000,
-            "other": 90000,
+            "other": 165000,
             "profile": 180000
           },
           "pageVisitsByCategory7d": {
@@ -903,47 +1017,29 @@
           ],
           "userSuggestionHints": [],
           "preferredAlertHours": [
+            15,
             14,
-            13,
-            12
+            13
           ],
-          "preferredAlertWindowLabel": "Mon / Tue · 2:00 PM–1:00 PM",
+          "preferredAlertWindowLabel": "Tue / Mon · 3:00 PM–2:00 PM",
           "alertTimingConfidence": "medium"
         }
       },
       "suggestionMetrics": {
         "userId": "9d5194355ec270f0b4a474a8",
-        "updatedAt": "2026-08-04T10:11:17.323Z",
+        "updatedAt": "2026-08-04T11:25:16.639Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
-        "suggestionsPushed": 15,
+        "suggestionsPushed": 18,
         "suggestionsClicked": 0,
         "suggestionsPurchased": 0,
         "salesFollowUpScore": 10,
         "salesFollowUpReady": false,
         "byScenario": {
-          "profile_match": 15
+          "profile_match": 18
         },
         "recentSuggestions": [
-          {
-            "id": "sug_msczt7xn_aldzvp",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Professional Communication",
-            "actionUrl": "/lms/courses/c4",
-            "pushedAt": "2026-08-03T08:54:19.499Z"
-          },
-          {
-            "id": "sug_msd0wc2w_pe47rm",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Career Narrative Lab",
-            "actionUrl": "/lms/courses/c6",
-            "pushedAt": "2026-08-03T09:24:44.456Z"
-          },
           {
             "id": "sug_msd1zz7z_fytr9h",
             "dedupeKey": "engage:course",
@@ -1060,6 +1156,33 @@
             "title": "Professional Communication",
             "actionUrl": "/lms/courses/c4",
             "pushedAt": "2026-08-04T09:47:16.853Z"
+          },
+          {
+            "id": "sug_mseiab6c_1e32th",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Professional Communication",
+            "actionUrl": "/lms/courses/c4",
+            "pushedAt": "2026-08-04T10:19:16.116Z"
+          },
+          {
+            "id": "sug_mseje69y_2tj7n5",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Professional Communication",
+            "actionUrl": "/lms/courses/c4",
+            "pushedAt": "2026-08-04T10:50:16.006Z"
+          },
+          {
+            "id": "sug_msekiiho_omclnp",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Professional Communication",
+            "actionUrl": "/lms/courses/c4",
+            "pushedAt": "2026-08-04T11:21:38.076Z"
           }
         ]
       },
@@ -1131,11 +1254,11 @@
         }
       ],
       "sessionEngagement": {
-        "sessionCount": 5,
+        "sessionCount": 7,
         "activeCount": 1,
-        "totalDurationMs": 660015,
-        "avgDurationMs": 132003,
-        "medianDurationMs": 30000,
+        "totalDurationMs": 6885262,
+        "avgDurationMs": 983609,
+        "medianDurationMs": 75000,
         "uniqueIps": 1,
         "uniqueDevices": 1,
         "locations": [
@@ -1144,22 +1267,34 @@
             "city": "Mangalore",
             "state": "Karnataka",
             "country": "India",
-            "sessions": 5,
-            "totalDurationMs": 660015
+            "sessions": 7,
+            "totalDurationMs": 6885262
           }
         ],
         "byHour": [
           {
+            "hour": 15,
+            "label": "3:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 3501422
+          },
+          {
             "hour": 14,
             "label": "2:00 PM",
             "sessions": 3,
-            "totalDurationMs": 555015
+            "totalDurationMs": 3218840
           },
           {
             "hour": 13,
             "label": "1:00 PM",
             "sessions": 1,
             "totalDurationMs": 75000
+          },
+          {
+            "hour": 16,
+            "label": "4:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 60000
           },
           {
             "hour": 12,
@@ -1170,74 +1305,74 @@
         ],
         "byWeekday": [
           {
+            "weekday": 2,
+            "label": "Tue",
+            "sessions": 5,
+            "totalDurationMs": 6345247
+          },
+          {
             "weekday": 1,
             "label": "Mon",
             "sessions": 2,
             "totalDurationMs": 540015
-          },
-          {
-            "weekday": 2,
-            "label": "Tue",
-            "sessions": 3,
-            "totalDurationMs": 120000
           }
         ],
         "alertTiming": {
           "bestHours": [
+            15,
             14,
-            13,
-            12
+            13
           ],
           "bestHourLabels": [
+            "3:00 PM",
             "2:00 PM",
-            "1:00 PM",
-            "12:00 PM"
+            "1:00 PM"
           ],
           "bestWeekdays": [
-            "Mon",
-            "Tue"
+            "Tue",
+            "Mon"
           ],
-          "bestWindowLabel": "Mon / Tue · 2:00 PM–1:00 PM",
+          "bestWindowLabel": "Tue / Mon · 3:00 PM–2:00 PM",
           "avoidHours": [
             12,
-            13,
-            14
+            16,
+            13
           ],
           "timezone": "Asia/Calcutta",
           "confidence": "medium",
-          "reason": "Most active around 2:00 PM and 1:00 PM local time · avg session 2 min · often from Mangalore, Karnataka, India",
-          "sampleSessions": 5,
-          "avgDurationMs": 132003,
-          "medianDurationMs": 30000
+          "reason": "Most active around 3:00 PM and 2:00 PM local time · avg session 16 min · often from Mangalore, Karnataka, India",
+          "sampleSessions": 7,
+          "avgDurationMs": 983609,
+          "medianDurationMs": 75000
         }
       },
       "alertTiming": {
         "bestHours": [
+          15,
           14,
-          13,
-          12
+          13
         ],
         "bestHourLabels": [
+          "3:00 PM",
           "2:00 PM",
-          "1:00 PM",
-          "12:00 PM"
+          "1:00 PM"
         ],
         "bestWeekdays": [
-          "Mon",
-          "Tue"
+          "Tue",
+          "Mon"
         ],
-        "bestWindowLabel": "Mon / Tue · 2:00 PM–1:00 PM",
+        "bestWindowLabel": "Tue / Mon · 3:00 PM–2:00 PM",
         "avoidHours": [
           12,
-          13,
-          14
+          16,
+          13
         ],
         "timezone": "Asia/Calcutta",
         "confidence": "medium",
-        "reason": "Most active around 2:00 PM and 1:00 PM local time · avg session 2 min · often from Mangalore, Karnataka, India",
-        "sampleSessions": 5,
-        "avgDurationMs": 132003,
-        "medianDurationMs": 30000
+        "reason": "Most active around 3:00 PM and 2:00 PM local time · avg session 16 min · often from Mangalore, Karnataka, India",
+        "sampleSessions": 7,
+        "avgDurationMs": 983609,
+        "medianDurationMs": 75000
       },
       "locations": [
         {
@@ -1245,13 +1380,247 @@
           "city": "Mangalore",
           "state": "Karnataka",
           "country": "India",
-          "sessions": 5,
-          "totalDurationMs": 660015
+          "sessions": 7,
+          "totalDurationMs": 6885262
         }
       ]
     }
   },
   "history": [
+    {
+      "id": "hist_msekkh8k_8huj",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T11:23:09.757Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 735000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 3:00 PM–2:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msekdqvd_i4dr",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T11:17:55.652Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 735000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 3:00 PM–2:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msek6zw4_ms67",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T11:12:40.745Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 735000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 3:00 PM–2:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msek03gu_w4n9",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T11:07:18.789Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 675000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 2:00 PM–1:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msejsdo0_0ssm",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T11:01:18.759Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 675000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 2:00 PM–1:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msejknw6_ign8",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T10:55:18.753Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 675000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 2:00 PM–1:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msejcxck_ihy6",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T10:49:17.768Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 675000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 2:00 PM–1:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msej58ck_9c8j",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T10:43:18.775Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 675000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 2:00 PM–1:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_mseixhs8_td1g",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T10:37:17.755Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 675000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 2:00 PM–1:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_mseipss2_mod7",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T10:31:18.758Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 675000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 2:00 PM–1:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_mseii31h_mar1",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T10:25:18.807Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 675000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 2:00 PM–1:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_mseiacgb_iexp",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T10:19:17.755Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 675000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 2:00 PM–1:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msei1n60_hi4q",
+      "userId": "9d5194355ec270f0b4a474a8",
+      "capturedAt": "2026-08-04T10:12:31.750Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 675000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Tue / Mon · 2:00 PM–1:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
     {
       "id": "hist_msehuxns_6old",
       "userId": "9d5194355ec270f0b4a474a8",
@@ -2064,5 +2433,5 @@
     }
   ],
   "tickets": [],
-  "updatedAt": "2026-08-04T10:11:18.763Z"
+  "updatedAt": "2026-08-04T11:25:18.755Z"
 }
