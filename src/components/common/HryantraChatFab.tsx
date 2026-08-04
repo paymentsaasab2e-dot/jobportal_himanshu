@@ -69,10 +69,12 @@ function savePos(pos: FabPos) {
 /**
  * Floating HRYantra chat — hold & drag to move; tap to open chat.
  * Position is remembered. Hidden on Office Gossips Chat tab.
+ * Only shown when the user is logged in.
  */
 export function HryantraChatFab() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const userId = user?.id || null;
+  const loggedIn = Boolean(token && isAuthenticated && userId);
   const router = useRouter();
   const pathname = usePathname() || '/';
   const locale = (pathname.split('/').filter(Boolean)[0] || 'en') as AppLocale;
@@ -150,7 +152,11 @@ export function HryantraChatFab() {
   }, [pathname]);
 
   useEffect(() => {
-    if (!isAuthenticated || !userId) return;
+    if (!loggedIn || !userId) {
+      setUnread(0);
+      prevUnreadRef.current = 0;
+      return;
+    }
     refreshUnread();
 
     const onUpdated = (event: Event) => {
@@ -179,10 +185,10 @@ export function HryantraChatFab() {
     return () => {
       window.removeEventListener('saasa:hryantra-chat-updated', onUpdated as EventListener);
     };
-  }, [isAuthenticated, userId, refreshUnread]);
+  }, [loggedIn, userId, refreshUnread]);
 
   const openChat = () => {
-    if (!userId) return;
+    if (!loggedIn || !userId) return;
     openHryantraVerifiedChatInApp(userId);
     try {
       sessionStorage.setItem('saasa:og-tab', 'chat');
@@ -243,7 +249,8 @@ export function HryantraChatFab() {
     openChat();
   };
 
-  if (!mounted || isLoading || !isAuthenticated || !userId) {
+  // Logged-out / loading: never show the floating chat icon
+  if (!mounted || isLoading || !loggedIn) {
     return null;
   }
 

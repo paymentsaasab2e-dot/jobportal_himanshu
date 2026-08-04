@@ -198,6 +198,7 @@ function readCachedLoginGeo(): {
   state?: string;
   city?: string;
   timezone?: string;
+  ipAddress?: string;
 } {
   if (typeof window === 'undefined') return {};
   try {
@@ -209,6 +210,7 @@ function readCachedLoginGeo(): {
       state: parsed.state,
       city: parsed.city,
       timezone: parsed.timezone || parsed.timeZone,
+      ipAddress: parsed.clientPublicIp || parsed.ipAddress,
     };
   } catch {
     return {};

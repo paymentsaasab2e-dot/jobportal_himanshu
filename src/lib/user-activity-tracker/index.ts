@@ -1,5 +1,6 @@
 export * from './types';
 export * from './categories';
+export * from './alert-timing';
 export {
   USER_ACTIVITY_STORAGE_KEY,
   USER_ACTIVITY_HQ_EVENT,

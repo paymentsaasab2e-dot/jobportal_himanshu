@@ -736,13 +736,16 @@ function RequestRow({
   onAccept: () => void;
   onDecline: () => void;
 }) {
-  const initial = (name || '?').replace(/^@/, '').slice(0, 1).toUpperCase();
+  const displayName = (name || '').replace(/^@+/, '').trim() || 'Anonymous';
+  const initial = displayName.slice(0, 1).toUpperCase();
   return (
     <div className="flex items-center gap-2 rounded-[14px] border border-amber-200/70 bg-amber-50/50 px-2.5 py-1.5">
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1B3A5F] text-[11px] font-bold text-white">
         {initial}
       </span>
-      <p className="min-w-0 flex-1 truncate text-[12px] font-semibold text-slate-800">{name}</p>
+      <p className="min-w-0 flex-1 truncate text-[12px] font-semibold text-slate-800">
+        {displayName}
+      </p>
       <button
         type="button"
         disabled={busy}
@@ -788,7 +791,8 @@ function ChatListRow({
   pending?: boolean;
   onClick: () => void;
 }) {
-  const initial = (title || '?').replace(/^@/, '').slice(0, 1).toUpperCase();
+  const displayTitle = (title || '').replace(/^@+/, '').trim() || 'Chat';
+  const initial = displayTitle.slice(0, 1).toUpperCase();
   return (
     <button
       type="button"
@@ -825,7 +829,7 @@ function ChatListRow({
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1 text-[13px] font-semibold text-slate-900">
-            <span className="truncate">{title}</span>
+            <span className="truncate">{displayTitle}</span>
             {verified ? (
               <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-[#28A8E1]" aria-label="Verified" />
             ) : null}

@@ -74,7 +74,7 @@ export function isMeaningfulPath(pathname: string): boolean {
   if (path.startsWith('/login') || path.startsWith('/signup') || path.startsWith('/whatsapp')) {
     return false;
   }
-  if (path.startsWith('/privacypolicy') || path.startsWith('/terms') || path.startsWith('/help')) {
+  if (path.startsWith('/privacypolicy') || path.startsWith('/terms') || path.startsWith('/help') || path.startsWith('/faq')) {
     return false;
   }
   if (path === '/user-stats') return false;

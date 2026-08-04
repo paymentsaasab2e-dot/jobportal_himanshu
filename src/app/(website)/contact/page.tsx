@@ -204,10 +204,17 @@ export default function ContactPage() {
         {/* Support Section */}
         <div className="bg-gradient-to-r from-accent-primary to-accent-secondary rounded-xl p-6 text-center text-white fade-in-up mt-4">
            <h2 className="text-2xl font-bold mb-2">Need Immediate Support?</h2>
-           <p className="text-white/80 mb-4 max-w-lg mx-auto text-sm">Check out our Help Center for quick answers to common questions about resumes, interviews, and more.</p>
-           <Link href="/help" className="px-10 py-4 bg-white text-accent-primary rounded-full font-bold hover:bg-gray-100 transition-all inline-block">
-             Visit Help Center
-           </Link>
+           <p className="text-white/80 mb-4 max-w-lg mx-auto text-sm">
+             Browse the FAQ for product answers, or open Help to fix common problems and raise a support ticket.
+           </p>
+           <div className="flex flex-wrap items-center justify-center gap-3">
+             <Link href="/faq" className="px-8 py-3.5 bg-white/15 text-white ring-1 ring-white/40 rounded-full font-bold hover:bg-white/25 transition-all inline-block">
+               FAQ
+             </Link>
+             <Link href="/help" className="px-10 py-4 bg-white text-accent-primary rounded-full font-bold hover:bg-gray-100 transition-all inline-block">
+               Help · raise ticket
+             </Link>
+           </div>
         </div>
       </section>
     </div>

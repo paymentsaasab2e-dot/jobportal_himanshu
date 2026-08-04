@@ -5,9 +5,12 @@ import {
   type HqPersonalizedRec,
 } from '@/lib/interest-affinity-store';
 import {
+  buildSessionEngagementStats,
   buildUserActivityRollup,
   getUserActivityState,
   type HqBehaviourTrigger,
+  type SessionEngagementStats,
+  type SessionLikeForTiming,
   type UserActivityRollup,
 } from '@/lib/user-activity-tracker';
 
@@ -24,16 +27,30 @@ export type HqBehaviorPayload = {
   interests: HqInterestTopic[];
   /** Short, simple personalized recs HQ can push via chat / sales */
   personalizedRecs: HqPersonalizedRec[];
+  /**
+   * Session duration + location → best local hours/days to send alerts / suggestions.
+   * Prefer serverSessions when provided; otherwise local browsing sessions.
+   */
+  sessionEngagement: SessionEngagementStats | null;
+  alertTiming: SessionEngagementStats['alertTiming'] | null;
+  locations: SessionEngagementStats['locations'];
 };
 
 export function buildHqBehaviorPayload(
   userId: string,
   suggestionMetrics?: HqSuggestionMetrics | null,
+  serverSessions?: SessionLikeForTiming[] | null,
 ): HqBehaviorPayload | null {
   if (!userId) return null;
   const rollup7d = buildUserActivityRollup(userId, 'week');
   const updatedAt = getUserActivityState(userId)?.updatedAt;
   const { topics: interests, personalizedRecs } = buildHqInterestSnapshot(userId);
+  const localSessions = rollup7d?.recentSessions || getUserActivityState(userId)?.sessions || [];
+  const sessionsForTiming =
+    Array.isArray(serverSessions) && serverSessions.length > 0
+      ? serverSessions
+      : localSessions;
+  const sessionEngagement = buildSessionEngagementStats(sessionsForTiming);
   return {
     userId,
     capturedAt: new Date().toISOString(),
@@ -43,6 +60,9 @@ export function buildHqBehaviorPayload(
     triggers: rollup7d?.hqTriggers || [],
     interests,
     personalizedRecs,
+    sessionEngagement,
+    alertTiming: sessionEngagement.alertTiming,
+    locations: sessionEngagement.locations,
   };
 }
 

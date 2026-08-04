@@ -1,389 +1,458 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
+  Briefcase,
+  CheckCircle2,
   ChevronDown,
-  Search,
-  HelpCircle,
-  Mail,
-  Clock,
+  CircleHelp,
+  Coins,
+  FileUser,
+  KeyRound,
+  LifeBuoy,
+  MessageSquareText,
+  Send,
   Sparkles,
-  BadgeCheck,
+  Ticket,
+  UserRound,
+  Wrench,
 } from 'lucide-react';
-import { faqIcon, questionRowIcon, HELP_FAQ_CATEGORIES, type FaqCategory } from './data/faqs';
+import {
+  HELP_PROBLEMS,
+  HELP_TICKET_CATEGORIES,
+  postHelpTicketToHq,
+  saveHelpTicket,
+  type HelpProblem,
+} from './data/problems';
+import { useAuth } from '@/components/auth/AuthContext';
 
-type AudienceFilter = 'all' | 'candidate' | 'employer';
-
-/** Employee / candmain homepage palette */
 const C = {
   bg: '#FAFBFC',
   surface: '#FFFFFF',
   brand: '#08428C',
   brandDeep: '#053366',
   bright: '#28A8E1',
+  orange: '#FC9620',
   ink: '#0F172A',
   muted: '#64748B',
   border: 'rgba(15, 23, 42, 0.08)',
-  soft: 'rgba(8, 66, 140, 0.08)',
   softBright: 'rgba(40, 168, 225, 0.12)',
   shadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.05)',
-  shadowOpen: '0 4px 6px rgba(5,51,102,0.06), 0 12px 28px rgba(8,66,140,0.12)',
 } as const;
 
-export default function HelpPage() {
-  /** All questions start closed — open one at a time. */
-  const [openId, setOpenId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [audience, setAudience] = useState<AudienceFilter>('all');
+function ProblemIcon({ id, className = 'h-4 w-4' }: { id: string; className?: string }) {
+  // Topic icons for common problems (no alert/warning glyphs)
+  switch (id) {
+    case 'login-otp':
+      return <KeyRound className={className} strokeWidth={2.1} />;
+    case 'duplicate-email-phone':
+      return <UserRound className={className} strokeWidth={2.1} />;
+    case 'few-jobs':
+    case 'apply-failed':
+      return <Briefcase className={className} strokeWidth={2.1} />;
+    case 'tokens':
+      return <Coins className={className} strokeWidth={2.1} />;
+    case 'og-setup':
+    case 'hryantra-alerts':
+      return <MessageSquareText className={className} strokeWidth={2.1} />;
+    case 'reference-check':
+      return <FileUser className={className} strokeWidth={2.1} />;
+    case 'profile-save':
+      return <Sparkles className={className} strokeWidth={2.1} />;
+    case 'employer-access':
+      return <Briefcase className={className} strokeWidth={2.1} />;
+    default:
+      return <Wrench className={className} strokeWidth={2.1} />;
+  }
+}
 
-  const toggleFaq = (id: string) => {
-    setOpenId((prev) => (prev === id ? null : id));
+export default function HelpPage() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const [openProblemId, setOpenProblemId] = useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [category, setCategory] = useState<string>(HELP_TICKET_CATEGORIES[0]);
+  const [subject, setSubject] = useState('');
+  const [description, setDescription] = useState('');
+  const [problemId, setProblemId] = useState<string | undefined>();
+  const [submittedId, setSubmittedId] = useState<string | null>(null);
+  const [hqSynced, setHqSynced] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const loggedIn = Boolean(isAuthenticated && user?.id);
+
+  // Logged in → auto-fill name/email from account. Guest → leave empty.
+  useEffect(() => {
+    if (isLoading) return;
+    if (loggedIn) {
+      const accountName = String(user?.name || '').trim();
+      const accountEmail = String(user?.email || '').trim();
+      setName(accountName && accountName !== 'User' && accountName !== 'Candidate' ? accountName : accountName);
+      setEmail(accountEmail);
+    } else {
+      setName('');
+      setEmail('');
+    }
+  }, [isLoading, loggedIn, user?.id, user?.name, user?.email]);
+
+  const selectedProblem = useMemo(
+    () => HELP_PROBLEMS.find((p) => p.id === problemId) || null,
+    [problemId],
+  );
+
+  const prefillFromProblem = (problem: HelpProblem) => {
+    setProblemId(problem.id);
+    setCategory(problem.ticketCategory);
+    setSubject(problem.title);
+    setDescription(
+      `I am hitting: ${problem.title}\n\nWhat I already tried:\n- ${problem.steps.slice(0, 2).join('\n- ')}\n\nMore details:\n`,
+    );
+    setOpenProblemId(problem.id);
+    const form = document.getElementById('help-ticket-form');
+    form?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const filteredFaqs = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    return HELP_FAQ_CATEGORIES.map((cat) => {
-      if (audience !== 'all' && cat.audience !== 'both' && cat.audience !== audience) {
-        return { ...cat, questions: [] as FaqCategory['questions'] };
-      }
-      return {
-        ...cat,
-        questions: cat.questions.filter(
-          (item) =>
-            !q ||
-            item.q.toLowerCase().includes(q) ||
-            item.a.toLowerCase().includes(q) ||
-            cat.category.toLowerCase().includes(q),
-        ),
-      };
-    }).filter((cat) => cat.questions.length > 0);
-  }, [searchQuery, audience]);
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSubmittedId(null);
+    setHqSynced(null);
+    if (!name.trim() || !email.trim() || !subject.trim() || !description.trim()) {
+      setError(
+        loggedIn
+          ? 'Please fill subject and description.'
+          : 'Please fill name, email, subject, and description.',
+      );
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Enter a valid email so we can reply.');
+      return;
+    }
 
-  const totalQuestions = filteredFaqs.reduce((n, c) => n + c.questions.length, 0);
+    const ticket = saveHelpTicket({
+      name: name.trim(),
+      email: email.trim(),
+      category,
+      subject: subject.trim(),
+      description: description.trim(),
+      problemId,
+      userId: user?.id || undefined,
+    });
+    setSubmittedId(ticket.id);
+    const synced = await postHelpTicketToHq(ticket);
+    setHqSynced(synced);
+
+    const mailBody = [
+      `Ticket: ${ticket.id}`,
+      `Name: ${ticket.name}`,
+      `Email: ${ticket.email}`,
+      `Category: ${ticket.category}`,
+      user?.id ? `User id: ${user.id}` : null,
+      selectedProblem ? `Related problem: ${selectedProblem.title}` : null,
+      synced ? 'HQ: posted to /api/hq-tickets' : 'HQ: sync failed — check /api/hq-tickets later',
+      '',
+      ticket.description,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const mailto = `mailto:support@saasab2e.com?subject=${encodeURIComponent(
+      `[Help ${ticket.id}] ${ticket.subject}`,
+    )}&body=${encodeURIComponent(mailBody)}`;
+    window.location.href = mailto;
+  };
 
   return (
     <div className="flex min-h-screen flex-col font-sans" style={{ background: C.bg, color: C.ink }}>
-      {/* Hero — candmain soft gradient wash */}
       <section
-        className="relative overflow-hidden border-b pb-16 pt-28"
+        className={`relative overflow-hidden border-b pb-14 ${loggedIn ? 'pt-10' : 'pt-28'}`}
         style={{
           borderColor: C.border,
-          background: `linear-gradient(165deg, #FFFFFF 0%, #F0F9FF 42%, ${C.bg} 100%)`,
+          background: `linear-gradient(165deg, #FFFFFF 0%, #FFF7ED 38%, ${C.bg} 100%)`,
         }}
       >
-        <div
-          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full opacity-40 blur-3xl"
-          style={{ background: 'radial-gradient(circle, rgba(40,168,225,0.35), transparent 70%)' }}
-        />
-        <div
-          className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full opacity-30 blur-3xl"
-          style={{ background: 'radial-gradient(circle, rgba(8,66,140,0.25), transparent 70%)' }}
-        />
-
         <div className="relative mx-auto max-w-3xl px-6 text-center">
           <div
             className="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold"
             style={{
-              background: C.softBright,
-              color: C.brand,
-              border: `1px solid rgba(40,168,225,0.28)`,
+              background: 'rgba(252,150,32,0.14)',
+              color: C.brandDeep,
+              border: '1px solid rgba(252,150,32,0.35)',
             }}
           >
-            <HelpCircle className="h-4 w-4" style={{ color: C.bright }} />
-            Help &amp; FAQ
+            <LifeBuoy className="h-4 w-4" style={{ color: C.orange }} />
+            Help &amp; support
           </div>
-
-          <h1 className="mb-3 text-4xl font-extrabold tracking-tight sm:text-5xl" style={{ color: C.ink }}>
-            Guides for{' '}
+          <h1 className="mb-3 text-4xl font-extrabold tracking-tight sm:text-5xl">
+            Fix issues &amp;{' '}
             <span
               className="bg-clip-text text-transparent"
               style={{
-                backgroundImage: `linear-gradient(135deg, ${C.brand} 0%, ${C.bright} 55%, #7DD3FC 100%)`,
+                backgroundImage: `linear-gradient(135deg, ${C.brand} 0%, ${C.orange} 100%)`,
               }}
             >
-              employees
-            </span>{' '}
-            &amp; employers
+              raise a ticket
+            </span>
           </h1>
-          <p className="mx-auto mb-8 max-w-xl text-base font-medium leading-relaxed" style={{ color: C.muted }}>
-            Short answers for Office Gossips, jobs, AI CV, LMS, interview prep, tokens, reference
-            check, and employer setup.
+          <p className="mx-auto mb-6 max-w-xl text-base font-medium leading-relaxed" style={{ color: C.muted }}>
+            Common problems you may hit, quick steps to try, then a ticket form if you still need us.
+            Product how-tos live on FAQ.
           </p>
-
-          <div className="mx-auto mb-6 flex max-w-lg flex-wrap justify-center gap-2">
-            {(
-              [
-                ['all', 'All'],
-                ['candidate', 'Employees / candidates'],
-                ['employer', 'Employers'],
-              ] as const
-            ).map(([id, label]) => {
-              const active = audience === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setAudience(id)}
-                  className="rounded-full px-4 py-2 text-xs font-bold transition"
-                  style={
-                    active
-                      ? {
-                          background: `linear-gradient(135deg, ${C.brandDeep}, ${C.brand} 50%, ${C.bright})`,
-                          color: '#fff',
-                          boxShadow: '0 4px 14px rgba(8,66,140,0.28)',
-                        }
-                      : {
-                          background: C.surface,
-                          color: C.muted,
-                          border: `1px solid ${C.border}`,
-                        }
-                  }
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="relative mx-auto max-w-xl">
-            <div className="absolute left-5 top-1/2 -translate-y-1/2" style={{ color: C.bright }}>
-              <Search className="h-5 w-5" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search questions…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-14 w-full rounded-[20px] border bg-white pl-14 pr-6 text-[15px] outline-none transition placeholder:text-slate-400 focus:border-[#28A8E1] focus:ring-4 focus:ring-[#28A8E1]/20"
-              style={{
-                borderColor: C.border,
-                color: C.ink,
-                boxShadow: C.shadow,
-              }}
-            />
-            {totalQuestions > 0 ? (
-              <p className="mt-3 text-xs font-semibold" style={{ color: C.muted }}>
-                {totalQuestions} question{totalQuestions === 1 ? '' : 's'} · all closed by default —
-                tap to open
-              </p>
-            ) : null}
-          </div>
+          <Link
+            href="/faq"
+            className="inline-flex items-center gap-1.5 rounded-full border bg-white px-4 py-2 text-xs font-bold"
+            style={{ borderColor: C.border, color: C.brand }}
+          >
+            <CircleHelp className="h-3.5 w-3.5" />
+            Browse FAQ instead
+          </Link>
         </div>
       </section>
 
       <section className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
-        {filteredFaqs.length === 0 ? (
-          <p
-            className="rounded-[20px] border bg-white px-6 py-14 text-center text-sm"
-            style={{ borderColor: C.border, color: C.muted, boxShadow: C.shadow }}
-          >
-            No matching questions. Try another search or audience filter.
+        <div className="mb-8">
+          <h2 className="flex items-center gap-2 text-lg font-bold" style={{ color: C.ink }}>
+            <Wrench className="h-5 w-5" style={{ color: C.bright }} />
+            Common problems right now
+          </h2>
+          <p className="mt-1 text-sm" style={{ color: C.muted }}>
+            Start here — many issues clear with these steps. Use “Raise ticket” to prefill the form.
           </p>
-        ) : (
-          <div className="space-y-10">
-            {filteredFaqs.map((cat) => (
-              <div key={cat.id}>
-                {/* Category header */}
-                <div className="mb-3.5 flex items-center gap-3 px-0.5">
-                  <span
-                    className="flex h-11 w-11 items-center justify-center rounded-2xl shadow-md"
-                    style={{
-                      background: `linear-gradient(145deg, ${C.brandDeep} 0%, ${C.brand} 48%, ${C.bright} 100%)`,
-                      boxShadow: '0 8px 20px rgba(8,66,140,0.22)',
-                    }}
+        </div>
+
+        <ul className="mb-14 space-y-3">
+          {HELP_PROBLEMS.map((problem) => {
+            const open = openProblemId === problem.id;
+            return (
+              <li key={problem.id}>
+                <div
+                  className="overflow-hidden rounded-[18px] border bg-white"
+                  style={{ borderColor: C.border, boxShadow: C.shadow }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenProblemId(open ? null : problem.id)}
+                    className="flex w-full items-start gap-3 px-4 py-4 text-left sm:px-5"
+                    aria-expanded={open}
                   >
-                    {faqIcon(cat.iconName, 'h-[22px] w-[22px]')}
-                  </span>
-                  <div>
-                    <h2 className="text-lg font-bold tracking-tight" style={{ color: C.ink }}>
-                      {cat.category}
-                    </h2>
-                    <p
-                      className="text-[11px] font-bold uppercase tracking-[0.08em]"
-                      style={{ color: C.bright }}
+                    <span
+                      className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                      style={{ background: C.softBright, color: C.brand }}
                     >
-                      {cat.audience === 'employer'
-                        ? 'Employers'
-                        : cat.audience === 'candidate'
-                          ? 'Employees / candidates'
-                          : 'Everyone'}
-                    </p>
-                  </div>
+                      <ProblemIcon id={problem.id} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[15px] font-semibold" style={{ color: C.ink }}>
+                        {problem.title}
+                      </span>
+                      <span className="mt-0.5 block text-sm" style={{ color: C.muted }}>
+                        {problem.summary}
+                      </span>
+                    </span>
+                    <ChevronDown
+                      className={`mt-1 h-4 w-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+                      style={{ color: C.muted }}
+                    />
+                  </button>
+                  {open ? (
+                    <div className="border-t px-4 pb-4 pt-3 sm:px-5" style={{ borderColor: C.border }}>
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wide" style={{ color: C.bright }}>
+                        Try this
+                      </p>
+                      <ol className="list-decimal space-y-1.5 pl-4 text-sm" style={{ color: C.ink }}>
+                        {problem.steps.map((step) => (
+                          <li key={step}>{step}</li>
+                        ))}
+                      </ol>
+                      <button
+                        type="button"
+                        onClick={() => prefillFromProblem(problem)}
+                        className="mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold text-white"
+                        style={{
+                          background: `linear-gradient(135deg, ${C.brandDeep}, ${C.bright})`,
+                        }}
+                      >
+                        <Ticket className="h-3.5 w-3.5" />
+                        Raise ticket for this
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
+              </li>
+            );
+          })}
+        </ul>
 
-                {/* Individual question cards — closed by default */}
-                <ul className="space-y-2.5">
-                  {cat.questions.map((item, qIndex) => {
-                    const open = openId === item.id;
-                    return (
-                      <li key={item.id}>
-                        <div
-                          className="overflow-hidden rounded-[18px] border bg-white transition-all duration-300"
-                          style={{
-                            borderColor: open ? 'rgba(40,168,225,0.45)' : C.border,
-                            boxShadow: open ? C.shadowOpen : C.shadow,
-                            background: open
-                              ? `linear-gradient(165deg, #FFFFFF 0%, #F0F9FF 55%, #E8F6FD 100%)`
-                              : C.surface,
-                          }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => toggleFaq(item.id)}
-                            aria-expanded={open}
-                            className="flex w-full items-start gap-3 px-4 py-4 text-left sm:px-5"
-                          >
-                            <span
-                              className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition"
-                              style={{
-                                background: open
-                                  ? `linear-gradient(145deg, ${C.brandDeep}, ${C.bright})`
-                                  : `linear-gradient(145deg, rgba(40,168,225,0.14), rgba(8,66,140,0.08))`,
-                                color: open ? '#fff' : C.brand,
-                                boxShadow: open
-                                  ? '0 6px 14px rgba(8,66,140,0.28)'
-                                  : 'inset 0 1px 0 rgba(255,255,255,0.7)',
-                              }}
-                            >
-                              {questionRowIcon(qIndex, 'h-4 w-4', open)}
-                            </span>
-                            <span
-                              className="min-w-0 flex-1 pt-1.5 text-[15px] font-semibold leading-snug"
-                              style={{ color: C.ink }}
-                            >
-                              {item.q}
-                            </span>
-                            <span
-                              className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition"
-                              style={{
-                                background: open
-                                  ? `linear-gradient(135deg, ${C.brand}, ${C.bright})`
-                                  : 'rgba(15,23,42,0.05)',
-                                color: open ? '#fff' : C.muted,
-                              }}
-                            >
-                              <ChevronDown
-                                className={`h-4 w-4 transition-transform duration-300 ${
-                                  open ? 'rotate-180' : ''
-                                }`}
-                              />
-                            </span>
-                          </button>
-
-                          <div
-                            className="grid transition-[grid-template-rows] duration-300 ease-out"
-                            style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
-                          >
-                            <div className="overflow-hidden">
-                              <div className="px-4 pb-4 sm:px-5">
-                                <div
-                                  className="relative overflow-hidden rounded-2xl border p-4 sm:p-5"
-                                  style={{
-                                    borderColor: 'rgba(40,168,225,0.28)',
-                                    background: `linear-gradient(145deg, #053366 0%, #08428C 42%, #0A5AB5 78%, #28A8E1 100%)`,
-                                    boxShadow:
-                                      '0 10px 28px rgba(8,66,140,0.22), inset 0 1px 0 rgba(255,255,255,0.18)',
-                                  }}
-                                >
-                                  {/* soft glow */}
-                                  <div
-                                    className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full opacity-50 blur-2xl"
-                                    style={{
-                                      background:
-                                        'radial-gradient(circle, rgba(125,211,252,0.55), transparent 70%)',
-                                    }}
-                                  />
-                                  <div
-                                    className="pointer-events-none absolute -bottom-10 left-6 h-24 w-24 rounded-full opacity-40 blur-2xl"
-                                    style={{
-                                      background:
-                                        'radial-gradient(circle, rgba(40,168,225,0.5), transparent 70%)',
-                                    }}
-                                  />
-
-                                  <div className="relative flex items-center gap-2">
-                                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/25 backdrop-blur-sm">
-                                      <Sparkles className="h-4 w-4 text-sky-100" strokeWidth={2.25} />
-                                    </span>
-                                    <div>
-                                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sky-100/90">
-                                        Solution
-                                      </p>
-                                      <p className="flex items-center gap-1 text-xs font-semibold text-white/90">
-                                        <BadgeCheck className="h-3.5 w-3.5 text-sky-200" />
-                                        Quick answer
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  <p className="relative mt-3 text-[14px] font-medium leading-relaxed text-white/95 sm:text-[15px]">
-                                    {item.a}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Support cards */}
-        <div className="mt-14 grid gap-4 sm:grid-cols-2">
-          <div
-            className="rounded-[20px] border bg-white p-5"
-            style={{ borderColor: C.border, boxShadow: C.shadow }}
-          >
+        <div
+          id="help-ticket-form"
+          className="rounded-[22px] border bg-white p-5 sm:p-7"
+          style={{ borderColor: C.border, boxShadow: C.shadow }}
+        >
+          <div className="mb-5 flex items-start gap-3">
             <span
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl"
-              style={{ background: C.softBright }}
+              className="flex h-11 w-11 items-center justify-center rounded-2xl text-white"
+              style={{
+                background: `linear-gradient(145deg, ${C.brandDeep}, ${C.bright})`,
+              }}
             >
-              <Mail className="h-5 w-5" style={{ color: C.bright }} />
+              <Ticket className="h-5 w-5" />
             </span>
-            <h3 className="mt-3 text-sm font-bold" style={{ color: C.ink }}>
-              Still need help?
-            </h3>
-            <p className="mt-1 text-sm" style={{ color: C.muted }}>
-              Email support or open Contact — we will guide you through setup.
-            </p>
-            <Link
-              href="/contact"
-              className="mt-3 inline-flex text-sm font-bold hover:underline"
-              style={{ color: C.brand }}
-            >
-              Contact us →
-            </Link>
+            <div>
+              <h2 className="text-lg font-bold" style={{ color: C.ink }}>
+                Raise a support ticket
+              </h2>
+              <p className="mt-0.5 text-sm" style={{ color: C.muted }}>
+                {loggedIn
+                  ? 'Name and email are filled from your account. Add the issue details below.'
+                  : 'Enter your contact details, then describe the issue. Posted to HQ at '}
+                {loggedIn ? null : (
+                  <span className="font-mono text-slate-700">/api/hq-tickets</span>
+                )}
+                {loggedIn ? null : '.'}
+              </p>
+            </div>
           </div>
-          <div
-            className="rounded-[20px] border bg-white p-5"
-            style={{ borderColor: C.border, boxShadow: C.shadow }}
-          >
-            <span
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl"
-              style={{ background: 'rgba(251,146,60,0.12)' }}
-            >
-              <Clock className="h-5 w-5 text-orange-500" />
-            </span>
-            <h3 className="mt-3 text-sm font-bold" style={{ color: C.ink }}>
-              Employer demo
-            </h3>
-            <p className="mt-1 text-sm" style={{ color: C.muted }}>
-              Hiring teams can book a SAASA B2E demo from the footer or Employers page.
+
+          {loggedIn ? null : (
+            <p className="mb-4 text-xs" style={{ color: C.muted }}>
+              Not signed in — please enter your name and email so we can reply.
             </p>
-            <Link
-              href="/employers"
-              className="mt-3 inline-flex text-sm font-bold hover:underline"
-              style={{ color: C.brand }}
+          )}
+
+          {submittedId ? (
+            <div
+              className="mb-4 flex items-start gap-2 rounded-xl border px-3 py-3 text-sm"
+              style={{
+                borderColor: 'rgba(16,185,129,0.35)',
+                background: 'rgba(16,185,129,0.08)',
+                color: C.ink,
+              }}
             >
-              Employers →
-            </Link>
-          </div>
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+              <span>
+                Ticket <span className="font-mono font-semibold">{submittedId}</span> created
+                {hqSynced === true
+                  ? ' and sent to HQ (/api/hq-tickets).'
+                  : hqSynced === false
+                    ? ' locally — HQ sync failed; email still opened.'
+                    : '.'}{' '}
+                Complete the email draft if your mail app opened.
+              </span>
+            </div>
+          ) : null}
+
+          {error ? (
+            <p className="mb-4 text-sm font-medium text-red-600">{error}</p>
+          ) : null}
+
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm">
+                <span className="mb-1.5 block font-semibold" style={{ color: C.ink }}>
+                  Name{loggedIn ? '' : ' *'}
+                </span>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  readOnly={loggedIn && Boolean(name)}
+                  className={`h-11 w-full rounded-xl border px-3 outline-none focus:border-[#28A8E1] focus:ring-2 focus:ring-[#28A8E1]/20 ${
+                    loggedIn && name ? 'bg-slate-50 text-slate-700' : ''
+                  }`}
+                  style={{ borderColor: C.border }}
+                  placeholder={loggedIn ? 'Loading your name…' : 'Your name'}
+                  autoComplete="name"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1.5 block font-semibold" style={{ color: C.ink }}>
+                  Email{loggedIn ? '' : ' *'}
+                </span>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  readOnly={loggedIn && Boolean(email)}
+                  className={`h-11 w-full rounded-xl border px-3 outline-none focus:border-[#28A8E1] focus:ring-2 focus:ring-[#28A8E1]/20 ${
+                    loggedIn && email ? 'bg-slate-50 text-slate-700' : ''
+                  }`}
+                  style={{ borderColor: C.border }}
+                  placeholder={loggedIn ? 'Loading your email…' : 'you@email.com'}
+                  autoComplete="email"
+                />
+              </label>
+            </div>
+
+            {loggedIn && !email ? (
+              <p className="text-xs text-amber-700">
+                No email on your profile yet — please type one so we can reply.
+              </p>
+            ) : null}
+
+            <label className="block text-sm">
+              <span className="mb-1.5 block font-semibold" style={{ color: C.ink }}>
+                Category
+              </span>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="h-11 w-full rounded-xl border bg-white px-3 outline-none focus:border-[#28A8E1] focus:ring-2 focus:ring-[#28A8E1]/20"
+                style={{ borderColor: C.border }}
+              >
+                {HELP_TICKET_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block text-sm">
+              <span className="mb-1.5 block font-semibold" style={{ color: C.ink }}>
+                Subject
+              </span>
+              <input
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="h-11 w-full rounded-xl border px-3 outline-none focus:border-[#28A8E1] focus:ring-2 focus:ring-[#28A8E1]/20"
+                style={{ borderColor: C.border }}
+                placeholder="Short summary of the issue"
+              />
+            </label>
+
+            <label className="block text-sm">
+              <span className="mb-1.5 block font-semibold" style={{ color: C.ink }}>
+                Description
+              </span>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={5}
+                className="w-full rounded-xl border px-3 py-2.5 outline-none focus:border-[#28A8E1] focus:ring-2 focus:ring-[#28A8E1]/20"
+                style={{ borderColor: C.border }}
+                placeholder="What happened, what you expected, and steps you already tried…"
+              />
+            </label>
+
+            {selectedProblem ? (
+              <p className="text-xs" style={{ color: C.muted }}>
+                Linked problem: <span className="font-semibold text-slate-700">{selectedProblem.title}</span>
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-bold text-white sm:w-auto"
+              style={{
+                background: `linear-gradient(135deg, ${C.brandDeep}, ${C.brand} 45%, ${C.bright})`,
+                boxShadow: '0 8px 20px rgba(8,66,140,0.25)',
+              }}
+            >
+              <Send className="h-4 w-4" />
+              Submit ticket
+            </button>
+          </form>
         </div>
       </section>
     </div>

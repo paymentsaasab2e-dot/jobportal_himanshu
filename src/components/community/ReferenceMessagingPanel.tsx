@@ -215,7 +215,7 @@ export function ReferenceMessagingPanel({
           : dmLive.fromUserId
         : null;
 
-  const other =
+  const otherRaw =
     kind === 'hryantra'
       ? 'HRYantra'
       : kind === 'reference' && refLive
@@ -223,6 +223,7 @@ export function ReferenceMessagingPanel({
         : dmLive
           ? getDmPeerLabel(dmLive, userId)
           : 'Chat';
+  const other = otherRaw.replace(/^@+/, '').trim() || 'Chat';
   const otherInitial = kind === 'hryantra' ? 'H' : other.slice(0, 1).toUpperCase();
   const online = kind === 'hryantra' ? true : isUserOnline(otherUserId);
   const status =

@@ -79,10 +79,14 @@ export type DirectMessageThread = {
 export function privacyMaskedLabel(userId: string): string {
   const identity = getGossipIdentity(userId);
   if (identity?.username?.trim()) {
-    const u = identity.username.trim();
-    return u.startsWith('@') ? u : `@${u}`;
+    // Show username without "@" — cleaner in Chat list / headers
+    return identity.username.trim().replace(/^@+/, '');
   }
   return 'Anonymous';
+}
+
+function stripAtPrefix(label: string): string {
+  return label.trim().replace(/^@+/, '');
 }
 
 /**
@@ -98,7 +102,10 @@ export function resolveRevealedLabel(
   if (identity?.isAnonymous || stayAnonymous) {
     return privacyMaskedLabel(userId);
   }
-  return realName.trim() || getGossipDisplayName(userId, privacyMaskedLabel(userId));
+  return (
+    stripAtPrefix(realName) ||
+    stripAtPrefix(getGossipDisplayName(userId, privacyMaskedLabel(userId)))
+  );
 }
 
 /** Peer label for a DM thread from the viewer’s perspective. */
@@ -113,7 +120,7 @@ export function getDmPeerLabel(thread: DirectMessageThread, viewerId: string): s
     return privacyMaskedLabel(peerId);
   }
   if (peerAnon) return privacyMaskedLabel(peerId);
-  return peerReal || stored || privacyMaskedLabel(peerId);
+  return stripAtPrefix(peerReal || stored || '') || privacyMaskedLabel(peerId);
 }
 
 /** Requester label for a follow request (masked while pending). */
@@ -122,7 +129,7 @@ export function getFollowRequesterLabel(follow: PeopleFollow): string {
     return privacyMaskedLabel(follow.fromUserId);
   }
   if (follow.anonymous) return privacyMaskedLabel(follow.fromUserId);
-  return follow.fromRealName || follow.fromName;
+  return stripAtPrefix(follow.fromRealName || follow.fromName || '') || privacyMaskedLabel(follow.fromUserId);
 }
 
 function effectiveAnonymousChoice(userId: string, wantAnonymous?: boolean): boolean {

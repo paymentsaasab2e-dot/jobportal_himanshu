@@ -14,6 +14,13 @@ import {
   type UserActivityRollup,
 } from '@/lib/user-activity-tracker';
 import {
+  buildHqInterestSnapshot,
+  INTEREST_AFFINITY_HQ_EVENT,
+  type HqInterestTopic,
+} from '@/lib/interest-affinity-store';
+import { API_BASE_URL } from '@/lib/api-base';
+import { getAuthHeaders } from '@/lib/auth-storage';
+import {
   Activity,
   Clock3,
   MousePointerClick,
@@ -22,9 +29,37 @@ import {
   Send,
   Lightbulb,
   MonitorSmartphone,
+  MapPin,
+  Globe,
+  Sparkles,
 } from 'lucide-react';
 
 type RangeKey = UserActivityRollup['range'];
+
+type ServerSession = {
+  id: string;
+  loginAt?: string;
+  logoutAt?: string | null;
+  durationMs?: number | null;
+  ipAddress?: string | null;
+  deviceType?: string | null;
+  browser?: string | null;
+  operatingSystem?: string | null;
+  country?: string | null;
+  state?: string | null;
+  city?: string | null;
+  timezone?: string | null;
+  isActive?: boolean | null;
+  createdAt?: string;
+  lastUsedAt?: string;
+};
+
+type ServerSessionSummary = {
+  total: number;
+  active: number;
+  uniqueIps: number;
+  uniqueDevices: number;
+};
 
 const RANGES: Array<{ id: RangeKey; label: string }> = [
   { id: 'today', label: 'Today' },
@@ -62,16 +97,97 @@ function severityStyles(severity: string) {
   return 'border-slate-200 bg-slate-50 text-slate-800';
 }
 
+function formatSessionDuration(ms?: number | null) {
+  if (ms == null || !Number.isFinite(ms) || ms <= 0) return '—';
+  return formatDuration(ms);
+}
+
+const INTEREST_BAR_COLORS = [
+  '#28A8E1',
+  '#08428C',
+  '#FC9620',
+  '#0D9488',
+  '#6366F1',
+  '#DB2777',
+  '#CA8A04',
+  '#475569',
+];
+
+function InterestBars({ topics }: { topics: HqInterestTopic[] }) {
+  if (!topics.length) {
+    return (
+      <p className="text-sm text-slate-500">
+        No multi-interest scores yet. Browse jobs, LMS, or Office Gossips to build them.
+      </p>
+    );
+  }
+  const max = Math.max(100, ...topics.map((t) => t.score));
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-4 py-4">
+      <ul className="space-y-3">
+        {topics.map((topic, i) => {
+          const pct = Math.max(2, Math.round((topic.score / max) * 100));
+          const color = INTEREST_BAR_COLORS[i % INTEREST_BAR_COLORS.length]!;
+          return (
+            <li key={topic.key}>
+              <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
+                <span className="font-medium text-slate-800">{topic.label}</span>
+                <span className="tabular-nums text-slate-600">
+                  {Math.round(topic.score)}
+                  <span className="text-xs text-slate-400"> / 100</span>
+                </span>
+              </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${pct}%`, background: color }}
+                  title={`${topic.label}: ${Math.round(topic.score)}`}
+                />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      {/* Simple column spark for top interests */}
+      <div className="mt-5 flex h-28 items-end justify-between gap-1.5 border-t border-slate-100 pt-4">
+        {topics.slice(0, 8).map((topic, i) => {
+          const barPx = Math.max(8, Math.round((Math.min(100, topic.score) / 100) * 88));
+          const color = INTEREST_BAR_COLORS[i % INTEREST_BAR_COLORS.length]!;
+          return (
+            <div key={topic.key} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+              <span className="text-[10px] font-semibold tabular-nums text-slate-600">
+                {Math.round(topic.score)}
+              </span>
+              <div
+                className="w-full max-w-[28px] rounded-t-md transition-all"
+                style={{ height: barPx, background: color }}
+                title={topic.label}
+              />
+              <span className="w-full truncate text-center text-[9px] text-slate-500">
+                {topic.label.split(' ')[0]}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function UserStatsPage() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const userId = user?.id || null;
   const [range, setRange] = useState<RangeKey>('week');
   const [rollup, setRollup] = useState<UserActivityRollup | null>(null);
   const [rawUpdatedAt, setRawUpdatedAt] = useState<string | null>(null);
+  const [serverSessions, setServerSessions] = useState<ServerSession[]>([]);
+  const [serverSummary, setServerSummary] = useState<ServerSessionSummary | null>(null);
+  const [interestTopics, setInterestTopics] = useState<HqInterestTopic[]>([]);
 
   const refresh = useCallback(() => {
     if (!userId) {
       setRollup(null);
+      setInterestTopics([]);
       return;
     }
     setRollup(buildUserActivityRollup(userId, range));
@@ -80,7 +196,36 @@ export default function UserStatsPage() {
     } catch {
       setRawUpdatedAt(null);
     }
+    try {
+      setInterestTopics(buildHqInterestSnapshot(userId).topics);
+    } catch {
+      setInterestTopics([]);
+    }
   }, [userId, range]);
+
+  const refreshServerSessions = useCallback(async () => {
+    if (!token || !isAuthenticated) {
+      setServerSessions([]);
+      setServerSummary(null);
+      return;
+    }
+    try {
+      const base = String(API_BASE_URL || '').replace(/\/$/, '');
+      const res = await fetch(`${base}/auth/sessions?limit=40`, {
+        headers: getAuthHeaders(),
+        cache: 'no-store',
+      });
+      const json = (await res.json().catch(() => null)) as {
+        success?: boolean;
+        data?: { sessions?: ServerSession[]; summary?: ServerSessionSummary };
+      } | null;
+      if (!res.ok || !json?.success || !json.data) return;
+      setServerSessions(Array.isArray(json.data.sessions) ? json.data.sessions : []);
+      setServerSummary(json.data.summary || null);
+    } catch {
+      /* keep local rollup if API unavailable */
+    }
+  }, [token, isAuthenticated]);
 
   useEffect(() => {
     refresh();
@@ -88,15 +233,24 @@ export default function UserStatsPage() {
       if (e.key === USER_ACTIVITY_STORAGE_KEY) refresh();
     };
     const onHq = () => refresh();
+    const onInterest = () => refresh();
     window.addEventListener('storage', onStorage);
     window.addEventListener('saasa:hq-user-activity', onHq as EventListener);
+    window.addEventListener(INTEREST_AFFINITY_HQ_EVENT, onInterest as EventListener);
     const timer = window.setInterval(refresh, 10_000);
     return () => {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('saasa:hq-user-activity', onHq as EventListener);
+      window.removeEventListener(INTEREST_AFFINITY_HQ_EVENT, onInterest as EventListener);
       window.clearInterval(timer);
     };
   }, [refresh]);
+
+  useEffect(() => {
+    void refreshServerSessions();
+    const timer = window.setInterval(() => void refreshServerSessions(), 60_000);
+    return () => window.clearInterval(timer);
+  }, [refreshServerSessions]);
 
   const categoryRows = useMemo(() => {
     if (!rollup) return [];
@@ -182,12 +336,106 @@ export default function UserStatsPage() {
         ))}
         <button
           type="button"
-          onClick={refresh}
+          onClick={() => {
+            refresh();
+            void refreshServerSessions();
+          }}
           className="rounded-full border border-slate-200 px-3.5 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
         >
           Refresh
         </button>
       </div>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-lg font-semibold text-slate-900">
+          Login sessions (server)
+        </h2>
+        <p className="mb-3 text-sm text-slate-600">
+          Each successful sign-in creates a session id with device, IP, and location when
+          available.
+        </p>
+        {serverSummary ? (
+          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Metric
+              icon={LogIn}
+              label="Sessions loaded"
+              value={serverSummary.total}
+              hint={`${serverSummary.active} active`}
+            />
+            <Metric icon={Globe} label="Unique IPs" value={serverSummary.uniqueIps} />
+            <Metric
+              icon={MonitorSmartphone}
+              label="Unique devices"
+              value={serverSummary.uniqueDevices}
+            />
+            <Metric
+              icon={MapPin}
+              label="With location"
+              value={serverSessions.filter((s) => s.country || s.city).length}
+            />
+          </div>
+        ) : null}
+        {serverSessions.length === 0 ? (
+          <p className="text-sm text-slate-500">
+            No server login sessions yet. Sign out and sign in again to create one.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {serverSessions.map((s) => (
+              <li
+                key={s.id}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-mono text-xs text-slate-500">{s.id}</span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                      s.isActive !== false
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {s.isActive !== false ? 'Active' : 'Closed'}
+                  </span>
+                </div>
+                <p className="mt-1 text-slate-700">
+                  Login:{' '}
+                  {s.loginAt || s.createdAt
+                    ? new Date(String(s.loginAt || s.createdAt)).toLocaleString()
+                    : '—'}
+                  {s.logoutAt
+                    ? ` · Logout: ${new Date(s.logoutAt).toLocaleString()}`
+                    : ''}
+                  {` · ${formatSessionDuration(s.durationMs)}`}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {[s.deviceType, s.browser, s.operatingSystem]
+                    .filter(Boolean)
+                    .join(' · ') || 'Device unknown'}
+                  {s.ipAddress ? ` · IP ${s.ipAddress}` : ''}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {[s.city, s.state, s.country].filter(Boolean).join(', ') ||
+                    'Location unknown'}
+                  {s.timezone ? ` · ${s.timezone}` : ''}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <Sparkles className="h-5 w-5 text-sky-500" />
+          Multi-interest scores
+        </h2>
+        <p className="mb-3 text-sm text-slate-600">
+          Strength of each interest topic (0–100) from behaviour + Office Gossips —
+          used for suggestions and HQ personalization.
+        </p>
+        <InterestBars topics={interestTopics} />
+      </section>
 
       {rollup ? (
         <>
@@ -439,7 +687,7 @@ export default function UserStatsPage() {
 
           <section>
             <h2 className="mb-3 text-lg font-semibold text-slate-900">
-              Recent sessions
+              Recent browsing sessions (this device)
             </h2>
             {rollup.recentSessions.length === 0 ? (
               <p className="text-sm text-slate-500">No sessions recorded yet.</p>
@@ -470,6 +718,7 @@ export default function UserStatsPage() {
                       ]
                         .filter(Boolean)
                         .join(' · ') || 'Device unknown'}
+                      {s.ipAddress ? ` · IP ${s.ipAddress}` : ''}
                       {[s.city, s.state, s.country].filter(Boolean).length
                         ? ` · ${[s.city, s.state, s.country].filter(Boolean).join(', ')}`
                         : ''}

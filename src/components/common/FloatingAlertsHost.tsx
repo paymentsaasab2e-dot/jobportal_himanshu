@@ -26,6 +26,7 @@ import ProfileMissingSectionNudge from '@/components/profile/ProfileMissingSecti
 import {
   fetchNotifications,
   getNotificationChannel,
+  sortNotificationsNewestFirst,
   NOTIFICATIONS_UPDATED_EVENT,
   type Notification,
 } from '@/lib/notifications';
@@ -218,7 +219,7 @@ export function FloatingAlertsHost() {
       if (!candidateId) return;
       try {
         const res = await fetchNotifications(candidateId);
-        const list = res.data?.notifications || [];
+        const list = sortNotificationsNewestFirst(res.data?.notifications || []);
         if (opts?.bootstrap || !bootstrappedRef.current) {
           seenRef.current = new Set(list.map((n) => n.id));
           saveSeenIds(candidateId, seenRef.current);
@@ -234,8 +235,9 @@ export function FloatingAlertsHost() {
         }
         if (fresh.length > 0) {
           saveSeenIds(candidateId, seenRef.current);
-          // Newest first, float a few
-          for (const n of fresh.slice(0, MAX_FLOATS).reverse()) {
+          // Newest first in list; push oldest→newest so stack ends with latest on top
+          const ordered = sortNotificationsNewestFirst(fresh).slice(0, MAX_FLOATS);
+          for (const n of [...ordered].reverse()) {
             const kindMeta = String(n.metadata?.kind || '');
             // Dedicated top-stack cards handle earn + profile — skip duplicates
             if (

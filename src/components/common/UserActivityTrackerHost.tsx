@@ -3,7 +3,8 @@
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthContext';
-import { resolveCandidateIdForApi } from '@/lib/auth-storage';
+import { getAuthHeaders, resolveCandidateIdForApi } from '@/lib/auth-storage';
+import { API_BASE_URL } from '@/lib/api-base';
 import {
   fetchPortalApplications,
   fetchPortalCvDashboard,
@@ -17,6 +18,7 @@ import {
   syncProfileActivitySnapshot,
   endActivitySession,
   USER_ACTIVITY_HQ_EVENT,
+  type SessionLikeForTiming,
 } from '@/lib/user-activity-tracker';
 import { stripLocaleFromPathname } from '@/lib/i18n';
 import {
@@ -28,6 +30,25 @@ import { INTEREST_AFFINITY_HQ_EVENT } from '@/lib/interest-affinity-store';
 
 const HEARTBEAT_MS = 15_000;
 const PROFILE_SYNC_MS = 120_000;
+
+async function fetchServerSessionsForHq(): Promise<SessionLikeForTiming[]> {
+  try {
+    const base = String(API_BASE_URL || '').replace(/\/$/, '');
+    if (!base) return [];
+    const res = await fetch(`${base}/auth/sessions?limit=40`, {
+      headers: getAuthHeaders(),
+      cache: 'no-store',
+    });
+    const json = (await res.json().catch(() => null)) as {
+      success?: boolean;
+      data?: { sessions?: SessionLikeForTiming[] };
+    } | null;
+    if (!res.ok || !json?.success) return [];
+    return Array.isArray(json.data?.sessions) ? json.data!.sessions! : [];
+  } catch {
+    return [];
+  }
+}
 
 function isRejectedStatus(status: unknown): boolean {
   const s = String(status || '').toLowerCase();
@@ -167,9 +188,16 @@ export function UserActivityTrackerHost() {
     const flush = () => {
       if (timer) window.clearTimeout(timer);
       timer = window.setTimeout(() => {
-        const payload = buildHqBehaviorPayload(userId, latestSuggestionMetricsRef.current);
-        if (!payload) return;
-        void postHqBehaviorPayload(payload);
+        void (async () => {
+          const serverSessions = await fetchServerSessionsForHq();
+          const payload = buildHqBehaviorPayload(
+            userId,
+            latestSuggestionMetricsRef.current,
+            serverSessions,
+          );
+          if (!payload) return;
+          void postHqBehaviorPayload(payload);
+        })();
       }, 900);
     };
 

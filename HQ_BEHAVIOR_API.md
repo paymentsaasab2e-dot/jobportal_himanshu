@@ -1,10 +1,40 @@
 # HQ Behavior API
 
-This app now sends per-user behavior summaries and HQ trigger flags to:
+HQ is **display / analytics only**. The behaviour engine **does save** data; insights are computed from it, then forwarded here.
+
+## Does the behaviour engine save?
+
+**Yes.**
+
+| Layer | What is saved |
+|-------|----------------|
+| Browser | Full activity in `saasa:user-activity-v1` (sessions, visits, time, events) |
+| Insights | Computed from that saved data (triggers, alert timing, etc.) |
+| Login DB | Server `Session` rows (IP, device, geo, duration) |
+| HQ store | Realtime snapshot + latest + history + **many tickets** in `data/hq-analytics.json` |
+
+## HQ endpoints (analytics display)
+
+| Call | Use |
+|------|-----|
+| `GET /api/hq-behavior` | **Realtime** session-style feed (live board) |
+| `GET /api/hq-behavior?mode=realtime` | Same |
+| `GET /api/hq-behavior?mode=latest&userId=` | Full latest when HQ drills in |
+| `GET /api/hq-behavior?mode=history&userId=` | **Past** points for reports (fetch on demand) |
+| `POST /api/hq-behavior` | Client forward → updates realtime + latest; appends history ~every 5 min |
+| `GET /api/hq-tickets` | **Multiple** tickets (append model, never wipe older) |
+| `POST /api/hq-tickets` | Raise another ticket |
+| `GET /api/hq-sessions` / `?userId=` | Login sessions + alert windows |
+
+Flow: save locally → compute insights → forward realtime to HQ → HQ fetches history only for reports.
+
+Also:
 
 - `POST /api/hq-behavior`
 - `GET /api/hq-behavior`
 - `GET /api/hq-behavior?userId=<candidateId>`
+- `GET /api/hq-sessions` → backend `GET /api/hq/sessions` (recent logins + alert windows)
+- `GET /api/hq-sessions?userId=<candidateId>` → backend `GET /api/hq/sessions/:id`
 
 ## Purpose
 
@@ -19,7 +49,7 @@ Use this endpoint for HQ / sales / operations follow-up when the product detects
 - multi-signal combos (premium + company intent, incomplete profile + job hunting, etc.)
 - user shows strong intent but low conversion
 
-The current implementation stores the latest payload per user in-memory in the Next app route for demo/integration purposes. HQ can later replace this route with a backend service, CRM webhook, or queue consumer.
+The current implementation persists HQ analytics in `data/hq-analytics.json` (realtime + latest + history + tickets). HQ only displays / reports; product logic stays in the behaviour engine.
 
 ## Payload shape
 
@@ -134,19 +164,54 @@ The current implementation stores the latest payload per user in-memory in the N
       "text": "You’re about 43 on Interview prep — try one short mock today.",
       "actionUrl": "/lms/interview-prep",
       "priority": 86
-    },
-    {
-      "id": "rec_job_search",
-      "interestKey": "job_search",
-      "interestScore": 38,
-      "title": "Jobs that match your focus",
-      "text": "Strong Job search signal (38). Open 2–3 matching roles and apply to one.",
-      "actionUrl": "/explore-jobs",
-      "priority": 84
     }
-  ]
+  ],
+  "alertTiming": {
+    "bestHours": [10, 21, 9],
+    "bestHourLabels": ["10:00 AM", "9:00 PM", "9:00 AM"],
+    "bestWeekdays": ["Tue", "Wed"],
+    "bestWindowLabel": "Tue / Wed · 10:00 AM–9:00 PM",
+    "avoidHours": [3, 4, 5],
+    "timezone": "Asia/Kolkata",
+    "confidence": "medium",
+    "reason": "Most active around 10:00 AM and 9:00 PM local time · avg session 18 min · often from Mumbai, Maharashtra, India",
+    "sampleSessions": 12,
+    "avgDurationMs": 1080000,
+    "medianDurationMs": 900000
+  },
+  "locations": [
+    {
+      "key": "Mumbai, Maharashtra, India",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "country": "India",
+      "sessions": 8,
+      "totalDurationMs": 7200000
+    }
+  ],
+  "sessionEngagement": {
+    "sessionCount": 12,
+    "avgDurationMs": 1080000,
+    "uniqueIps": 2,
+    "uniqueDevices": 2,
+    "byHour": [],
+    "byWeekday": []
+  }
 }
 ```
+
+### Alert timing (`alertTiming`)
+
+Derived from **login session start times + duration** (and location when present). HQ / sales should prefer `bestWindowLabel` when pushing HRYantra alerts or suggestion nudges.
+
+Also available on:
+
+| Endpoint | Auth |
+|----------|------|
+| `GET /api/hq/sessions/:candidateId` (backend1) | `x-internal-admin-key` |
+| `GET /api/hq/sessions` (backend1 feed) | `x-internal-admin-key` |
+| `GET /api/hq-sessions?userId=` (Next proxy) | same header optional |
+| `GET /hq/candidates/:id/behavior` (phase2 HQ) | HQ auth |
 
 ### Multi-interest ratings (`interests`)
 

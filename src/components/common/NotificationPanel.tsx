@@ -19,6 +19,7 @@ import {
   markNotificationAsRead,
   deleteNotification,
   partitionNotifications,
+  sortNotificationsNewestFirst,
   NOTIFICATIONS_UPDATED_EVENT,
   type Notification,
 } from '@/lib/notifications';
@@ -30,6 +31,7 @@ const ALERT_FILTERS = ['All', 'Jobs', 'Interviews', 'System'] as const;
 const ACTIVITY_FILTERS = ['All', 'Applications', 'Interviews', 'Courses'] as const;
 
 const PAGE_SIZE = 8;
+const PANEL_POLL_MS = 20_000;
 
 type PanelTab = 'notifications' | 'activity';
 
@@ -68,6 +70,7 @@ function formatTimestamp(timestamp: string): string {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
+  if (diffSecs < 15) return 'Now';
   if (diffSecs < 60) return 'Just now';
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
@@ -307,6 +310,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
   const earnLifecycleRef = useRef(tokensCtx?.earnLifecycle || []);
   const hasLoadedRef = useRef(false);
   const loadingRef = useRef(false);
+  const pendingReloadRef = useRef(false);
 
   earnLifecycleRef.current = tokensCtx?.earnLifecycle || [];
 
@@ -322,8 +326,8 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
     }
 
     const alerts: Notification[] = [];
-    // Stable timestamps so live cards don't look like they "refresh" every poll
-    const stableTs = '2099-01-01T00:00:00.000Z';
+    // Fresh "now" so live cards rank with latest-first sorting (still pinned via metadata.live)
+    const stableTs = new Date().toISOString();
 
     try {
       const completeness = await fetchProfileCompleteness(candidateId);
@@ -397,7 +401,11 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
 
   const loadNotifications = useCallback(
     async (opts?: { silent?: boolean }) => {
-      if (!candidateId || loadingRef.current) return;
+      if (!candidateId) return;
+      if (loadingRef.current) {
+        pendingReloadRef.current = true;
+        return;
+      }
 
       const silent = Boolean(opts?.silent) && hasLoadedRef.current;
       loadingRef.current = true;
@@ -408,7 +416,7 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
         }
         const response = await fetchNotifications(candidateId);
         if (response.success && response.data.notifications) {
-          setNotifications(response.data.notifications);
+          setNotifications(sortNotificationsNewestFirst(response.data.notifications));
         } else {
           setNotifications([]);
         }
@@ -423,6 +431,10 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
       } finally {
         loadingRef.current = false;
         if (!silent) setLoading(false);
+        if (pendingReloadRef.current) {
+          pendingReloadRef.current = false;
+          void loadNotifications({ silent: true });
+        }
       }
     },
     [candidateId, buildLiveAlerts],
@@ -441,21 +453,37 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
     };
 
     let debounceTimer: number | undefined;
-    const handleUpdated = () => {
+    const scheduleReload = () => {
       window.clearTimeout(debounceTimer);
       debounceTimer = window.setTimeout(() => {
         void loadNotifications({ silent: true });
-      }, 400);
+      }, 250);
     };
+
+    const handleUpdated = () => scheduleReload();
+
+    // Same event floating toasts use — keep panel lined up with newest at top
+    const handleChatUpdated = () => scheduleReload();
 
     document.addEventListener('keydown', handleEsc);
     window.addEventListener(NOTIFICATIONS_UPDATED_EVENT, handleUpdated);
+    window.addEventListener('saasa:hryantra-chat-updated', handleChatUpdated as EventListener);
+
+    const poll = window.setInterval(() => {
+      void loadNotifications({ silent: true });
+    }, PANEL_POLL_MS);
+
     return () => {
       document.removeEventListener('keydown', handleEsc);
       window.removeEventListener(NOTIFICATIONS_UPDATED_EVENT, handleUpdated);
+      window.removeEventListener(
+        'saasa:hryantra-chat-updated',
+        handleChatUpdated as EventListener,
+      );
       window.clearTimeout(debounceTimer);
+      window.clearInterval(poll);
     };
-    // Intentionally omit onClose / loadNotifications identity — only re-fetch when panel opens
+    // Intentionally omit onClose / loadNotifications identity — only rebind when panel opens
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
@@ -465,10 +493,13 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
     void buildLiveAlerts();
   }, [isOpen, buildLiveAlerts, tokensCtx?.earnLifecycle?.length]);
 
-  const { alerts: storedAlerts, activity: activityItems } = useMemo(
-    () => partitionNotifications(notifications),
-    [notifications],
-  );
+  const { alerts: storedAlerts, activity: activityItems } = useMemo(() => {
+    const partitioned = partitionNotifications(notifications);
+    return {
+      alerts: sortNotificationsNewestFirst(partitioned.alerts),
+      activity: sortNotificationsNewestFirst(partitioned.activity),
+    };
+  }, [notifications]);
 
   const alertPool = useMemo(() => {
     // Prefer live profile/earn cards; hide duplicate stored pending_earn / profile alerts
@@ -482,17 +513,21 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
       }
       return true;
     });
-    return [...liveAlerts, ...filteredStored];
+    return sortNotificationsNewestFirst([...liveAlerts, ...filteredStored]);
   }, [liveAlerts, storedAlerts]);
 
   const categoryNotifications = useMemo(() => {
     if (panelTab === 'activity') {
       const filterType = getActivityFilterType(activityFilter);
-      return activityItems.filter((item) => matchesTypeFilter(item, filterType));
+      return sortNotificationsNewestFirst(
+        activityItems.filter((item) => matchesTypeFilter(item, filterType)),
+      );
     }
     const filterType = getAlertFilterType(alertFilter);
-    return alertPool.filter((item) =>
-      matchesTypeFilter(item, filterType, alertFilter === 'Jobs'),
+    return sortNotificationsNewestFirst(
+      alertPool.filter((item) =>
+        matchesTypeFilter(item, filterType, alertFilter === 'Jobs'),
+      ),
     );
   }, [panelTab, activityFilter, alertFilter, activityItems, alertPool]);
 
@@ -507,8 +542,10 @@ export default function NotificationPanel({ isOpen, onClose, onNavigate }: Props
 
   const filteredNotifications = useMemo(() => {
     if (panelTab === 'activity') return categoryNotifications;
-    return categoryNotifications.filter((item) =>
-      readView === 'read' ? item.isRead : !item.isRead,
+    return sortNotificationsNewestFirst(
+      categoryNotifications.filter((item) =>
+        readView === 'read' ? item.isRead : !item.isRead,
+      ),
     );
   }, [categoryNotifications, readView, panelTab]);
 

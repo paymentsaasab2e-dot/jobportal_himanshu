@@ -476,7 +476,7 @@ function WhatsAppLoginInner() {
             ? { email: normalizedEmail, password: passwordValue }
             : {
                 whatsappNumber: cleanNumber,
-                countryCode: selectedCountry.dialCode,
+                countryCode: selectedCountry.dialCode || "+91",
                 password: passwordValue,
               }),
           ...(await import("@/lib/login-geo").then((m) => m.collectLoginGeoPayload()).then((geo) => {

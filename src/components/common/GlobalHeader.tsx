@@ -28,6 +28,7 @@ export default function GlobalHeader() {
         '/contact',
         '/explore-jobs',
         '/help',
+        '/faq',
         '/sa',
         '/candmain',
         '/apply',

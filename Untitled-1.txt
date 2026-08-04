@@ -1,0 +1,44 @@
+1. Company page — where / how / logo
+Where: Intended home is Office Gossips (/community). Reference Check (/reference-check) only searches/opens existing pages — it does not create them.
+
+How create is supposed to work: There is a modal “Add company page” (CreateCompanyModal) that calls upsertCompanyPage in community-store. Rules:
+
+Domain required (e.g. aitikit.com)
+One page per domain
+Creator needs a verified work email on that domain (not Gmail/Yahoo/etc.)
+Stored in browser localStorage (saasa:office-gossips-v5) — not backend yet
+Gap: The modal exists, but no button currently opens it (setShowCreateCompany(true) is never called). So users can’t actually create a company page from the UI right now — only seeded/demo pages show.
+
+Logo: There is no company logo upload. Pages use logoLetter (first letter of the name) as an avatar. Post image upload on OG is separate and only for posts, not company logos.
+
+2. Why Office Gossips keeps asking “Be anonymous”
+On each visit, if isGossipSetupDone(userId) is false, the Create gossip account modal opens again. “Be anonymous” defaults to unchecked in React state every time that modal mounts.
+
+Setup is “done” only when:
+
+a gossip identity exists for that userId, or
+localStorage['saasa:og-setup-done:' + userId] === '1'
+So it feels like a new session when identity / setup flag is missing (never finished create, storage cleared, or userId mismatch).
+
+What is already saved (after you finish setup once):
+
+Data	Storage
+Anonymity + username + fees
+saasa:office-gossips-identity-v1
+Setup done flag
+saasa:og-setup-done:{userId}
+Posts / companies / communities
+saasa:office-gossips-v5
+DMs / follows
+saasa:office-social-v1
+All of that is browser localStorage — same machine/browser only, not synced to server. Preference itself is not “session-only”; the prompt reappears when setup isn’t marked done.
+
+Editable later under Settings via the same identity store.
+
+3. Reference check — similar pattern
+Uses the same gossip identity for “am I anonymous by default?”
+
+Creating an enquiry: can force anon from profile + checkbox → saved on that request (saasa:reference-checks-v2)
+Accepting as referee: “Stay anonymous” is UI state until accept → then stored per request
+Chats: local social/reference stores — again browser-only demo
+So global anon can persist, but each request/accept still has its own checkbox until you submit. It is not a second full “create account” flow like OG, but per-action anon isn’t a permanent global toggle unless profile isAnonymous is on.
