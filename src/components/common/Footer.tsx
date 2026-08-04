@@ -71,6 +71,7 @@ export default function Footer() {
         { href: "/courses", label: t("footer.coursesLms") },
         { href: "/services", label: t("footer.expertServices") },
         { href: "/help", label: t("footer.helpCenter") },
+        { href: "/faq", label: t("footer.faq") },
       ],
     },
     {

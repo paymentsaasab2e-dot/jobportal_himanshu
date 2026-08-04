@@ -2,13 +2,13 @@ import { QueryClient } from '@tanstack/react-query';
 
 export const STALE_TIMES = {
   /** List pages — show cached data instantly, refresh in background. */
-  list: 60_000,
-  /** Dashboard summary — moderate freshness. */
-  dashboard: 60_000,
+  list: 90_000,
+  /** Dashboard summary — align with session cache (~5 min). */
+  dashboard: 5 * 60_000,
   /** Detail pages — slightly longer cache for back-navigation. */
   detail: 120_000,
   /** Job catalog — changes infrequently during a session. */
-  jobs: 90_000,
+  jobs: 5 * 60_000,
 } as const;
 
 export function createQueryClient() {

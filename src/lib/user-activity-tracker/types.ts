@@ -70,6 +70,8 @@ export type ActivitySession = {
   state?: string;
   city?: string;
   timezone?: string;
+  /** Public IP when available from login geo payload */
+  ipAddress?: string;
 };
 
 export type ProfileActivitySnapshot = {
@@ -145,6 +147,10 @@ export type BehaviourSuggestionSignals = {
   deprioritizeSlotIds: string[];
   /** Short user-facing nudge lines derived from combo triggers */
   userSuggestionHints: string[];
+  /** Local hours (0–23) when the user is most active — prefer sending alerts then */
+  preferredAlertHours?: number[];
+  preferredAlertWindowLabel?: string;
+  alertTimingConfidence?: 'low' | 'medium' | 'high';
 };
 
 export type UserActivityState = {

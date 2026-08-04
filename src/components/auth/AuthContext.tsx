@@ -54,6 +54,7 @@ const PUBLIC_ROUTES = [
   '/terms',
   '/trust-safety',
   '/help',
+  '/faq',
   '/services',
   '/employers',
   '/aicveditor',

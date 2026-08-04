@@ -129,6 +129,19 @@ export function partitionNotifications(items: Notification[]): {
   return { alerts, activity };
 }
 
+/** Newest first. Live/action cards stay pinned above ordinary rows. */
+export function sortNotificationsNewestFirst(items: Notification[]): Notification[] {
+  return [...items].sort((a, b) => {
+    const aLive = Boolean(a.metadata?.live);
+    const bLive = Boolean(b.metadata?.live);
+    if (aLive !== bLive) return aLive ? -1 : 1;
+    const aTs = Date.parse(String(a.timestamp || '')) || 0;
+    const bTs = Date.parse(String(b.timestamp || '')) || 0;
+    if (bTs !== aTs) return bTs - aTs;
+    return String(b.id || '').localeCompare(String(a.id || ''));
+  });
+}
+
 export async function fetchNotifications(
   candidateId: string,
   type?: NotificationType,
@@ -143,12 +156,27 @@ export async function fetchNotifications(
     headers: {
       'Content-Type': 'application/json',
     },
+    cache: 'no-store',
   });
 
   const result = (await response.json()) as NotificationsResponse;
 
   if (!response.ok || !result.success) {
     throw new Error(result.message || 'Failed to fetch notifications');
+  }
+
+  if (Array.isArray(result.data?.notifications)) {
+    result.data.notifications = sortNotificationsNewestFirst(
+      result.data.notifications.map((n) => ({
+        ...n,
+        timestamp:
+          typeof n.timestamp === 'string'
+            ? n.timestamp
+            : n.timestamp
+              ? new Date(n.timestamp as unknown as string | number | Date).toISOString()
+              : new Date().toISOString(),
+      })),
+    );
   }
 
   return result;

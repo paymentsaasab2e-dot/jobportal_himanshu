@@ -17,26 +17,32 @@ export default function WebsiteSiteLayout({
 
   const isCandMainHome = normalizedPath === "/";
 
-  // Pages under (website) that must always show the marketing Navbar
-  const marketingNavbarPaths = new Set<string>([
+  // Always marketing chrome (even when signed in)
+  const alwaysMarketingNavbarPaths = new Set<string>([
     "/employers",
     "/events",
     "/services",
+    "/ats-check",
+    "/courses",
+  ]);
+
+  // Guest marketing chrome — signed-in users get the app Header instead
+  const guestMarketingNavbarPaths = new Set<string>([
     "/aboutus",
     "/contact",
     "/privacypolicy",
     "/terms",
     "/trust-safety",
     "/help",
-    "/ats-check",
-    "/courses",
+    "/faq",
   ]);
 
   const usesMarketingNavbar =
-    marketingNavbarPaths.has(normalizedPath) ||
+    alwaysMarketingNavbarPaths.has(normalizedPath) ||
     normalizedPath.startsWith("/employers/") ||
     normalizedPath.startsWith("/events/") ||
-    normalizedPath.startsWith("/services/");
+    normalizedPath.startsWith("/services/") ||
+    (!isAuthenticated && guestMarketingNavbarPaths.has(normalizedPath));
 
   if (isCandMainHome) {
     return <>{children}</>;

@@ -24,6 +24,8 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children })
     normalizedPathname.startsWith('/trust-safety/') ||
     normalizedPathname === '/help' ||
     normalizedPathname.startsWith('/help/') ||
+    normalizedPathname === '/faq' ||
+    normalizedPathname.startsWith('/faq/') ||
     normalizedPathname === '/services' ||
     normalizedPathname.startsWith('/services/') ||
     normalizedPathname === '/employers' ||

@@ -59,7 +59,10 @@ function dateToIsoYmd(d: Date): string {
 interface BasicInfoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: BasicInfoData) => void | Promise<void>;
+  onSave: (
+    data: BasicInfoData,
+    opts?: { silent?: boolean },
+  ) => void | Promise<void>;
   initialData?: BasicInfoData;
 }
 
@@ -481,8 +484,49 @@ export default function BasicInfoModal({
       return;
     }
 
-    await onSave(payload);
+    await onSave(payload, { silent: false });
   };
+
+  // Debounced silent persist while typing — UI already holds values; DB catches up shortly after
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = window.setTimeout(() => {
+      const payload = buildPayload();
+      const nextErrors = validate(payload);
+      if (Object.keys(nextErrors).length > 0) return;
+      const same =
+        initialData &&
+        payload.firstName === (initialData.firstName || '') &&
+        payload.lastName === (initialData.lastName || '') &&
+        payload.email === (initialData.email || '') &&
+        payload.phone === (initialData.phone || '') &&
+        payload.city === (initialData.city || '') &&
+        payload.country === (initialData.country || '') &&
+        payload.dob === (initialData.dob || '') &&
+        payload.gender === (initialData.gender || '') &&
+        payload.employment === (initialData.employment || '') &&
+        (payload.passportNumber || '') === (initialData.passportNumber || '') &&
+        (payload.whatsappNumber || '') === (initialData.whatsappNumber || '') &&
+        payload.middleName === (initialData.middleName || '');
+      if (same) return;
+      void onSave(payload, { silent: true });
+    }, 750);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate field deps for debounce
+  }, [
+    isOpen,
+    firstNameValue,
+    middleNameValue,
+    lastNameValue,
+    emailValue,
+    phoneValue,
+    genderValue,
+    dobDisplay,
+    countryValue,
+    cityValue,
+    employmentValue,
+    passportNumberValue,
+  ]);
 
   useEffect(() => {
     if (!isOpen) return;

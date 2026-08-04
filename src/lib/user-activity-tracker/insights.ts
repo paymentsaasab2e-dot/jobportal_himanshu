@@ -1,5 +1,6 @@
 import { listDateKeysInRange, getUserActivityState } from './store';
 import { localDateKey } from './categories';
+import { buildSessionEngagementStats } from './alert-timing';
 import { buildUserBehaviourSuggestions } from '@/lib/behaviour-user-suggestions';
 import type {
   ActivityCategory,
@@ -871,6 +872,9 @@ export function getBehaviourSignalsForSuggestions(
   }
   const userSuggestionHints = behaviourTasks.slice(0, 5).map((s) => `${s.title} — ${s.text}`);
 
+  const engagement = buildSessionEngagementStats(state.sessions || []);
+  const alertTiming = engagement.alertTiming;
+
   return {
     userId,
     topCategories,
@@ -894,6 +898,9 @@ export function getBehaviourSignalsForSuggestions(
       (id) => !new Set(preferSlotIds).has(id),
     ),
     userSuggestionHints: [...new Set(userSuggestionHints)].slice(0, 5),
+    preferredAlertHours: alertTiming.bestHours,
+    preferredAlertWindowLabel: alertTiming.bestWindowLabel,
+    alertTimingConfidence: alertTiming.confidence,
   };
 }
 

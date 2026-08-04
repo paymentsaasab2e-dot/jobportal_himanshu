@@ -37,6 +37,7 @@ const drawerMenuActions: Item[] = [
   { label: 'Office Gossips', path: '/community', icon: 'community' },
   { label: 'Reference Check', path: '/reference-check', icon: 'reference' },
   { label: 'Help & Support', path: '/help', icon: 'help' },
+  { label: 'FAQ', path: '/faq', icon: 'help' },
   { label: 'Settings', path: '/settings', icon: 'settings' },
 ];
 

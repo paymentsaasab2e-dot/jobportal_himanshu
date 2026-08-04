@@ -50,6 +50,13 @@ import {
 import { ProfilePageShell } from "@/components/profile/layout";
 import { getMissingProfileSections } from "@/lib/profile-section-routes";
 import { useTokensOptional } from "@/components/tokens/TokensContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { portalQueryKeys } from "@/lib/query/portal-query-keys";
+import {
+  isDashboardSessionCacheFresh,
+  readDashboardSessionCache,
+  writeDashboardSessionCache,
+} from "@/lib/dashboard-session-cache";
 
 const SAVED_JOBS_STORAGE_PREFIX = "dashboardSavedJobs";
 
@@ -191,6 +198,7 @@ export default function CandidateDashboardPage() {
   const matchesArrivalTimeoutRef = useRef<number | null>(null);
   const pendingApplyInFlightRef = useRef<string | null>(null);
   const [candidateId, setCandidateId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const dashboardQuery = useCvDashboard(candidateId);
   const invalidateCvDashboard = useInvalidateCvDashboard();
   const dashboardData = dashboardQuery.data ?? null;
@@ -233,6 +241,27 @@ export default function CandidateDashboardPage() {
       setCandidateId(idFromUser || idFromStorage);
     }
   }, [authLoading, isAuthenticated, user]);
+
+  // Paint dashboard from session cache immediately (Events-style)
+  useEffect(() => {
+    if (!candidateId) return;
+    const cached = readDashboardSessionCache(candidateId);
+    if (!cached?.dashboard) return;
+    queryClient.setQueryData(portalQueryKeys.cvDashboard(candidateId), cached.dashboard);
+    if (cached.completeness) setProfileCompletionDetails(cached.completeness);
+    if (cached.snapshot) setProfileSnapshot(cached.snapshot);
+  }, [candidateId, queryClient]);
+
+  // Persist successful loads into session cache
+  useEffect(() => {
+    if (!candidateId || !dashboardData) return;
+    writeDashboardSessionCache({
+      candidateId,
+      dashboard: dashboardData,
+      completeness: profileCompletionDetails,
+      snapshot: profileSnapshot,
+    });
+  }, [candidateId, dashboardData, profileCompletionDetails, profileSnapshot]);
 
   useEffect(() => {
     if (!dashboardData?.stats) return;
@@ -293,14 +322,16 @@ export default function CandidateDashboardPage() {
   }, []);
 
   const refreshProfileSnapshot = useCallback(
-    async (id?: string) => {
+    async (id?: string, signal?: AbortSignal) => {
       const resolvedCandidateId = id || candidateId || user?.id;
       if (!resolvedCandidateId) return null;
 
       try {
-        const response = await fetch(`${API_BASE_URL}/profile/${resolvedCandidateId}`, {
+        const base = String(API_BASE_URL || '').replace(/\/$/, '');
+        const response = await fetch(`${base}/profile/${resolvedCandidateId}`, {
           method: "GET",
           headers: getAuthHeaders(),
+          signal,
         });
         const result = (await response.json()) as {
           success?: boolean;
@@ -311,7 +342,10 @@ export default function CandidateDashboardPage() {
           return result.data;
         }
       } catch (error) {
-        console.error("Error fetching profile snapshot:", error);
+        // Abort / offline / backend restart — keep cached UI, don't throw to Next overlay
+        if (error instanceof DOMException && error.name === 'AbortError') return null;
+        if (error instanceof TypeError) return null;
+        console.warn("Profile snapshot soft-refresh skipped:", error);
       }
       return null;
     },
@@ -355,28 +389,47 @@ export default function CandidateDashboardPage() {
         }
         return details;
       } catch (error) {
-        console.error("Error fetching profile completeness:", error);
+        if (error instanceof TypeError) return null;
+        console.warn("Profile completeness soft-refresh skipped:", error);
         return null;
       }
     },
     [candidateId, user?.id, tokensCtx]
   );
 
+  const dashboardRefetchRef = useRef(dashboardQuery.refetch);
+  dashboardRefetchRef.current = dashboardQuery.refetch;
+
   const fetchDashboardData = useCallback(
     async (_id?: string) => {
-      await dashboardQuery.refetch();
+      await dashboardRefetchRef.current();
     },
-    [dashboardQuery],
+    [],
   );
 
   useEffect(() => {
     if (!candidateId) return;
-    void refreshProfileCompleteness(candidateId);
-    void refreshProfileSnapshot(candidateId);
+    const cached = readDashboardSessionCache(candidateId);
+    const fresh = isDashboardSessionCacheFresh(cached);
+    const delay = fresh ? 800 : 0;
+    const controller = new AbortController();
+
+    const timer = window.setTimeout(() => {
+      // When session cache is fresh, soft-pull quietly; don't blank UI on network blips
+      void refreshProfileCompleteness(candidateId);
+      void refreshProfileSnapshot(candidateId, controller.signal);
+      if (fresh) {
+        void dashboardRefetchRef.current().catch(() => null);
+      }
+    }, delay);
     const syncTimer = window.setTimeout(() => {
-      void syncProfileToCommonDatabase(candidateId);
-    }, 2500);
-    return () => window.clearTimeout(syncTimer);
+      void syncProfileToCommonDatabase(candidateId).catch(() => null);
+    }, 2500 + delay);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+      window.clearTimeout(syncTimer);
+    };
   }, [candidateId, refreshProfileCompleteness, refreshProfileSnapshot]);
 
   useEffect(() => {
@@ -482,7 +535,14 @@ export default function CandidateDashboardPage() {
     const id = candidateId || user?.id || getStoredCandidateId();
     if (!id) return;
     if (!candidateId) setCandidateId(id);
-    void syncProfileToCommonDatabase(id);
+    const cached = readDashboardSessionCache(id);
+    if (isDashboardSessionCacheFresh(cached)) {
+      // Soft background refresh only — keep painted UI
+      void refreshProfileCompleteness(id);
+      void dashboardRefetchRef.current().catch(() => null);
+      return;
+    }
+    void syncProfileToCommonDatabase(id).catch(() => null);
     void refreshProfileCompleteness(id);
     void refreshProfileSnapshot(id);
     void fetchDashboardData(id);

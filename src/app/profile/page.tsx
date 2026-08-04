@@ -142,6 +142,18 @@ import { useAuth } from '@/components/auth/AuthContext';
 import { useTabVisibilityRefresh } from '@/hooks/useTabVisibilityRefresh';
 import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
 import {
+  isProfileSessionCacheFresh,
+  patchProfileSessionCache,
+  readProfileSessionCache,
+  writeProfileSessionCache,
+} from '@/lib/profile-session-cache';
+import {
+  inferAlertTone,
+  showErrorToast,
+  showSuccessToast,
+  showToast,
+} from '@/components/common/toast/toast';
+import {
   extractStoredDocumentUrl,
   getProfileDocumentDisplayName,
   normalizeVisaWorkAuthorizationFromApi,
@@ -393,15 +405,8 @@ export default function ProfilePage() {
   const isPersistedId = (value?: string) => Boolean(value && /^[a-f\d]{24}$/i.test(value));
 
   const showAlert = useCallback((message: string, title = 'Notice') => {
-    setPopupState({
-      isOpen: true,
-      variant: 'alert',
-      title,
-      message,
-      confirmLabel: 'OK',
-      cancelLabel: 'Cancel',
-      resolver: null,
-    });
+    // Right-side toast stack (same family as other app notifications) — no center modal
+    showToast({ title, message, tone: inferAlertTone(message) });
   }, []);
 
   const showConfirm = useCallback((
@@ -570,8 +575,14 @@ export default function ProfilePage() {
     async () => null,
   );
 
-  const refreshProfileData = async (candidateId: string) => {
+  const refreshProfileData = async (
+    candidateId: string,
+    seed?: Record<string, any> | null,
+  ) => {
     try {
+      let profileData: any = seed || null;
+
+      if (!profileData) {
       const url = `${API_BASE_URL}/profile/${candidateId}`;
       console.log('🔄 Fetching profile data from:', url);
       
@@ -607,7 +618,8 @@ export default function ProfilePage() {
       return null;
     }
 
-    const profileData = result.data;
+    profileData = result.data;
+      }
 
     if (
       profileData.profilePhotoUrl !== undefined ||
@@ -859,7 +871,14 @@ export default function ProfilePage() {
     // Preserve existing vaccinationData if not in response
 
       // Credit earn tasks immediately after profile data changes (no page refresh needed).
-      await syncProfileEarnRewardsRef.current(candidateId);
+      if (!seed) {
+        await syncProfileEarnRewardsRef.current(candidateId);
+        writeProfileSessionCache({
+          candidateId,
+          profile: profileData as Record<string, unknown>,
+          completeness: null,
+        });
+      }
 
       return profileData;
     } catch (error) {
@@ -895,9 +914,14 @@ export default function ProfilePage() {
   useTabVisibilityRefresh(() => {
     syncAuthStorage();
     const id = resolveCandidateIdForApi(user?.id);
-    if (id) {
+    if (!id) return;
+    const cached = readProfileSessionCache(id);
+    if (isProfileSessionCacheFresh(cached)) {
+      // Soft pull only — don't blank the page
       void refreshProfileDataRef.current(id);
+      return;
     }
+    void refreshProfileDataRef.current(id);
   });
 
   // Fetch and populate profile data on component mount
@@ -911,24 +935,57 @@ export default function ProfilePage() {
         return;
       }
 
-      try {
+      const cached = readProfileSessionCache(candidateId);
+      const hasCache = Boolean(cached?.profile);
+
+      // Paint from session cache first (Events-style) — skip full-page loader
+      if (hasCache) {
+        setIsLoadingProfile(false);
+        setProfileSessionReady(true);
+        await refreshProfileData(candidateId, cached!.profile as Record<string, any>);
+        if (cached!.completeness) {
+          setProfileCompleteness({
+            percentage: cached!.completeness.percentage || 0,
+            completedSections: cached!.completeness.completedSections || [],
+            missingSections: cached!.completeness.missingSections || [],
+            sections: (cached!.completeness.sections || []) as import('@/lib/profile-completion').ProfileSectionStatus[],
+          });
+        }
+      } else {
         setIsLoadingProfile(true);
-        if (await refreshProfileData(candidateId)) {
-          console.log('✅ Profile data loaded from database');
-          await loadResumeVersions();
+      }
+
+      const softDelay = hasCache && isProfileSessionCacheFresh(cached) ? 400 : 0;
+
+      try {
+        const run = async () => {
+          if (await refreshProfileData(candidateId)) {
+            await loadResumeVersions();
+          }
+        };
+        if (softDelay > 0) {
+          window.setTimeout(() => {
+            void run().finally(() => {
+              setIsLoadingProfile(false);
+              sessionStorage.setItem(PROFILE_SESSION_LOADED_KEY, '1');
+              setProfileSessionReady(true);
+            });
+          }, softDelay);
         } else {
-          console.error('Failed to fetch profile data');
+          await run();
         }
       } catch (error) {
         console.error('Error fetching profile data:', error);
       } finally {
-        setIsLoadingProfile(false);
-        sessionStorage.setItem(PROFILE_SESSION_LOADED_KEY, '1');
-        setProfileSessionReady(true);
+        if (softDelay === 0) {
+          setIsLoadingProfile(false);
+          sessionStorage.setItem(PROFILE_SESSION_LOADED_KEY, '1');
+          setProfileSessionReady(true);
+        }
       }
     };
 
-    fetchProfileData();
+    void fetchProfileData();
   }, [user?.id]);
 
   // Fetch CV Analysis on component mount
@@ -981,6 +1038,19 @@ export default function ProfilePage() {
         missingSections: details.missingSections || [],
         sections: details.sections || [],
       });
+
+      const cached = readProfileSessionCache(candidateId);
+      if (cached) {
+        writeProfileSessionCache({
+          ...cached,
+          completeness: {
+            percentage: details.percentage,
+            completedSections: details.completedSections || [],
+            missingSections: details.missingSections || [],
+            sections: details.sections || [],
+          },
+        });
+      }
 
       const earns = details.tokenEarns;
       if (Array.isArray(earns) && earns.length > 0) {
@@ -3435,21 +3505,19 @@ export default function ProfilePage() {
       </div>
     </main>
 
-      {popupState.isOpen && (
+      {popupState.isOpen && popupState.variant === 'confirm' && (
         <div className="fixed inset-0 z-[10040] flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
             <h3 className="text-base font-semibold text-slate-900">{popupState.title}</h3>
             <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">{popupState.message}</p>
             <div className="mt-5 flex justify-end gap-2">
-              {popupState.variant === 'confirm' && (
-                <button
-                  type="button"
-                  onClick={() => closePopup(false)}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  {popupState.cancelLabel || 'Cancel'}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => closePopup(false)}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                {popupState.cancelLabel || 'Cancel'}
+              </button>
               <button
                 type="button"
                 onClick={() => closePopup(true)}
@@ -3466,7 +3534,7 @@ export default function ProfilePage() {
       <BasicInfoModal
         isOpen={isBasicInfoModalOpen}
         onClose={() => setIsBasicInfoModalOpen(false)}
-        onSave={async (data) => {
+        onSave={async (data, opts) => {
           const candidateId = resolveCandidateIdForApi(user?.id);
           if (!candidateId) {
             showAlert('Session expired. Please log in again.');
@@ -3475,6 +3543,7 @@ export default function ProfilePage() {
 
           const previousBasicInfo = basicInfoData;
           setBasicInfoData(data);
+          patchProfileSessionCache(candidateId, { personalInfo: data });
 
           try {
             const response = await fetch(`${API_BASE_URL}/profile/personal-info/${candidateId}`, {
@@ -3502,19 +3571,27 @@ export default function ProfilePage() {
                 ...savedPersonalInfo,
                 email: savedPersonalInfo.email || data.email,
               }));
-            } else {
-              setBasicInfoData(data);
+              patchProfileSessionCache(savedCandidateId, {
+                personalInfo: {
+                  ...(data as object),
+                  ...savedPersonalInfo,
+                },
+              });
             }
 
-            await refreshProfileData(savedCandidateId);
-            await refreshUser();
-            setIsBasicInfoModalOpen(false);
-            showAlert('Personal details updated');
+            // Soft completeness refresh — skip full profile reload for speed
+            void syncProfileEarnRewardsRef.current(savedCandidateId);
+            if (!opts?.silent) {
+              await refreshUser();
+              setIsBasicInfoModalOpen(false);
+              showSuccessToast('Saved', 'Personal details updated');
+            }
           } catch (error) {
             setBasicInfoData(previousBasicInfo);
             console.error('Error saving personal info:', error);
-            showAlert(
-              error instanceof Error ? error.message : 'Error saving personal information'
+            showErrorToast(
+              'Save failed',
+              error instanceof Error ? error.message : 'Error saving personal information',
             );
           }
         }}
@@ -3543,12 +3620,13 @@ export default function ProfilePage() {
               throw new Error('Failed to save summary');
             }
 
-            await refreshProfileData(candidateId);
-          setIsSummaryModalOpen(false);
-          showAlert('Summary updated');
+            patchProfileSessionCache(candidateId, { summaryText });
+            void syncProfileEarnRewardsRef.current(candidateId);
+            setIsSummaryModalOpen(false);
+            showSuccessToast('Saved', 'Summary updated');
           } catch (error) {
             console.error('Error saving summary:', error);
-            showAlert('Error saving summary');
+            showErrorToast('Save failed', 'Error saving summary');
           }
         }}
       />
