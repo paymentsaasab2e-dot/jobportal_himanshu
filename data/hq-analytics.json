@@ -2,7 +2,7 @@
   "realtime": {
     "9d5194355ec270f0b4a474a8": {
       "userId": "9d5194355ec270f0b4a474a8",
-      "capturedAt": "2026-08-04T11:25:18.753Z",
+      "capturedAt": "2026-08-04T11:26:17.759Z",
       "kind": "realtime_session",
       "session": {
         "logins": 7,
@@ -31,7 +31,7 @@
   "latest": {
     "9d5194355ec270f0b4a474a8": {
       "userId": "9d5194355ec270f0b4a474a8",
-      "capturedAt": "2026-08-04T11:25:18.753Z",
+      "capturedAt": "2026-08-04T11:26:17.759Z",
       "activityStateUpdatedAt": "2026-08-04T11:25:17.331Z",
       "rollup7d": {
         "userId": "9d5194355ec270f0b4a474a8",
@@ -1027,7 +1027,7 @@
       },
       "suggestionMetrics": {
         "userId": "9d5194355ec270f0b4a474a8",
-        "updatedAt": "2026-08-04T11:25:16.639Z",
+        "updatedAt": "2026-08-04T11:26:15.991Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
@@ -2433,5 +2433,5 @@
     }
   ],
   "tickets": [],
-  "updatedAt": "2026-08-04T11:25:18.755Z"
+  "updatedAt": "2026-08-04T11:26:17.761Z"
 }
