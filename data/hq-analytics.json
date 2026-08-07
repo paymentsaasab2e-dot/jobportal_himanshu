@@ -26,6 +26,31 @@
         ]
       },
       "hasFullLatest": true
+    },
+    "b1c869d84e75048c5c61c5e3": {
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-06T07:54:34.834Z",
+      "kind": "realtime_session",
+      "session": {
+        "logins": 12,
+        "visits": 59,
+        "applies": 0,
+        "activeMs": 1185000,
+        "sessionCount": 12,
+        "topInsightIds": [
+          "lms_heavy"
+        ],
+        "triggerFlags": [],
+        "alertWindow": "Wed / Tue · 2:00 PM–12:00 PM",
+        "alertConfidence": "high",
+        "topLocation": "Mangalore, Karnataka, India",
+        "preferredAlertHours": [
+          14,
+          12,
+          15
+        ]
+      },
+      "hasFullLatest": true
     }
   },
   "latest": {
@@ -1407,9 +1432,2209 @@
           "totalDurationMs": 6885262
         }
       ]
+    },
+    "b1c869d84e75048c5c61c5e3": {
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-06T07:54:34.834Z",
+      "activityStateUpdatedAt": "2026-08-06T07:54:09.292Z",
+      "rollup7d": {
+        "userId": "b1c869d84e75048c5c61c5e3",
+        "range": "week",
+        "fromDate": "2026-07-31",
+        "toDate": "2026-08-06",
+        "logins": 12,
+        "visits": 59,
+        "jobCardClicks": 0,
+        "applies": 0,
+        "activeMs": 1185000,
+        "sessionCount": 12,
+        "pageVisitsByCategory": {
+          "other": 16,
+          "dashboard": 2,
+          "courses": 39,
+          "community": 2
+        },
+        "activeMsByCategory": {
+          "other": 330000,
+          "dashboard": 30000,
+          "courses": 795000,
+          "community": 30000
+        },
+        "firstOpenBreakdown": {
+          "dashboard": 1
+        },
+        "avgActiveMsPerDay": 296250,
+        "daysActive": 4,
+        "topFirstOpen": "dashboard",
+        "insights": [
+          {
+            "id": "lms_heavy",
+            "label": "Learning-heavy, low job activity",
+            "severity": "info",
+            "summary": "Spends time in LMS/courses more than jobs. Good for upskilling; may need job reminders.",
+            "evidence": [
+              "39 LMS/course visits · 13m learning",
+              "0 job views"
+            ]
+          }
+        ],
+        "recentSessions": [
+          {
+            "id": "sess_msh7o6wk_1xnu25",
+            "startedAt": "2026-08-06T07:45:26.514Z",
+            "lastActiveAt": "2026-08-06T07:45:26.520Z",
+            "durationMs": 0,
+            "pageCount": 1,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows"
+          },
+          {
+            "id": "sess_msh57t5a_3chzhp",
+            "startedAt": "2026-08-06T06:36:42.957Z",
+            "lastActiveAt": "2026-08-06T06:58:13.818Z",
+            "durationMs": 0,
+            "pageCount": 4,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-06T06:36:49.386Z"
+          },
+          {
+            "id": "sess_msftzowd_c6ov45",
+            "startedAt": "2026-08-05T08:34:42.252Z",
+            "lastActiveAt": "2026-08-05T08:59:57.285Z",
+            "durationMs": 79320705,
+            "pageCount": 1,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-06T06:36:42.957Z"
+          },
+          {
+            "id": "sess_msfrcwqm_qobqwy",
+            "startedAt": "2026-08-05T07:21:00.092Z",
+            "lastActiveAt": "2026-08-05T07:39:24.618Z",
+            "durationMs": 4422160,
+            "pageCount": 2,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-05T08:34:42.252Z"
+          },
+          {
+            "id": "sess_msfpqdfb_y8l7xt",
+            "startedAt": "2026-08-05T06:35:29.014Z",
+            "lastActiveAt": "2026-08-05T06:40:36.880Z",
+            "durationMs": 0,
+            "pageCount": 1,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-05T06:40:36.880Z"
+          },
+          {
+            "id": "sess_msefydmv_tzzkp9",
+            "startedAt": "2026-08-04T09:14:00.198Z",
+            "lastActiveAt": "2026-08-04T09:31:25.957Z",
+            "durationMs": 0,
+            "pageCount": 1,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-04T09:31:25.957Z"
+          },
+          {
+            "id": "sess_mseb15ll_gz5xu4",
+            "startedAt": "2026-08-04T06:56:11.670Z",
+            "lastActiveAt": "2026-08-04T06:56:11.680Z",
+            "durationMs": 8268528,
+            "pageCount": 1,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-04T09:14:00.198Z"
+          },
+          {
+            "id": "sess_msd2garb_7vqzol",
+            "startedAt": "2026-08-03T10:08:15.478Z",
+            "lastActiveAt": "2026-08-03T11:43:18.679Z",
+            "durationMs": 570000,
+            "pageCount": 10,
+            "paths": [
+              "/use-stat",
+              "/user-stat",
+              "/user-stats",
+              "/lms/courses/6a7058b4ef789093d6479ec9",
+              "/lms/courses"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "country": "India",
+            "state": "Karnataka",
+            "city": "Mangalore",
+            "timezone": "Asia/Calcutta",
+            "lastCategory": "courses",
+            "lastPath": "/lms/courses",
+            "firstPath": "/use-stat",
+            "endedAt": "2026-08-03T10:22:08.307Z"
+          },
+          {
+            "id": "sess_mscznxaz_i8w7lz",
+            "startedAt": "2026-08-03T08:50:12.442Z",
+            "lastActiveAt": "2026-08-03T09:33:32.172Z",
+            "durationMs": 225000,
+            "pageCount": 21,
+            "paths": [
+              "/lms/courses/6a704aabef789093d6479ec7",
+              "/lms/courses/6a704aabef789093d6479ec7/lessons/6a704aabef789093d6479ec8",
+              "/lms/courses",
+              "/lms/courses/6a7058b4ef789093d6479ec9"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "country": "India",
+            "state": "Karnataka",
+            "city": "Mangalore",
+            "timezone": "Asia/Calcutta",
+            "lastCategory": "courses",
+            "lastPath": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "firstPath": "/lms/courses/6a704aabef789093d6479ec7",
+            "endedAt": "2026-08-03T08:51:07.948Z"
+          },
+          {
+            "id": "sess_mscwhano_wg8rgr",
+            "startedAt": "2026-08-03T07:21:04.307Z",
+            "lastActiveAt": "2026-08-03T08:08:57.557Z",
+            "durationMs": 345000,
+            "pageCount": 16,
+            "paths": [
+              "/candidate-dashboard",
+              "/lms/courses",
+              "/community",
+              "/lms/courses/6a704aabef789093d6479ec7"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "country": "India",
+            "state": "Karnataka",
+            "city": "Mangalore",
+            "timezone": "Asia/Calcutta",
+            "lastPath": "/lms/courses",
+            "lastCategory": "courses",
+            "firstPath": "/candidate-dashboard",
+            "endedAt": "2026-08-03T07:27:48.793Z"
+          },
+          {
+            "id": "sess_mscwgzfl_7vrwbj",
+            "startedAt": "2026-08-03T07:20:49.760Z",
+            "lastActiveAt": "2026-08-03T07:21:02.701Z",
+            "durationMs": 15000,
+            "pageCount": 0,
+            "paths": [],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "country": "India",
+            "state": "Karnataka",
+            "city": "Mangalore",
+            "timezone": "Asia/Calcutta",
+            "lastCategory": "other",
+            "endedAt": "2026-08-03T07:21:04.307Z"
+          },
+          {
+            "id": "sess_mscwgxqp_kku8ju",
+            "startedAt": "2026-08-03T07:20:47.558Z",
+            "lastActiveAt": "2026-08-03T07:20:47.660Z",
+            "durationMs": 2202,
+            "pageCount": 1,
+            "firstPath": "/whatsapp",
+            "lastPath": "/whatsapp",
+            "lastCategory": "other",
+            "paths": [
+              "/whatsapp"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "country": "India",
+            "state": "Karnataka",
+            "city": "Mangalore",
+            "timezone": "Asia/Calcutta",
+            "endedAt": "2026-08-03T07:20:49.760Z"
+          }
+        ],
+        "recentEvents": [
+          {
+            "id": "ev_msh7o6wo_sns5ho",
+            "at": "2026-08-06T07:45:26.520Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msh7o6wk_1xnu25"
+          },
+          {
+            "id": "ev_msh7o6wk_oop19y",
+            "at": "2026-08-06T07:45:26.516Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msh7o6wk_1xnu25",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_msh5zh6j_5ntxkx",
+            "at": "2026-08-06T06:58:13.819Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msh57t5a_3chzhp"
+          },
+          {
+            "id": "ev_msh5stsy_thzl2m",
+            "at": "2026-08-06T06:53:03.586Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msh57t5a_3chzhp"
+          },
+          {
+            "id": "ev_msh5gwwr_vyzmmx",
+            "at": "2026-08-06T06:43:47.739Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msh57t5a_3chzhp"
+          },
+          {
+            "id": "ev_msh57y3u_1bhg00",
+            "at": "2026-08-06T06:36:49.386Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msh57t5a_3chzhp",
+            "meta": {
+              "durationMs": 0
+            }
+          },
+          {
+            "id": "ev_msh57t5i_e9lw2d",
+            "at": "2026-08-06T06:36:42.966Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msh57t5a_3chzhp"
+          },
+          {
+            "id": "ev_msh57t5a_rzfs32",
+            "at": "2026-08-06T06:36:42.958Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msh57t5a_3chzhp",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_msh57t59_nvs1fi",
+            "at": "2026-08-06T06:36:42.957Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msftzowd_c6ov45",
+            "meta": {
+              "durationMs": 79320705
+            }
+          },
+          {
+            "id": "ev_msfuw5wl_1hc4oc",
+            "at": "2026-08-05T08:59:57.285Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msftzowd_c6ov45",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msfurauu_bx6iy9",
+            "at": "2026-08-05T08:56:10.422Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msftzowd_c6ov45",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msftzowk_u5pqdk",
+            "at": "2026-08-05T08:34:42.260Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msftzowd_c6ov45"
+          },
+          {
+            "id": "ev_msftzowe_twvqmk",
+            "at": "2026-08-05T08:34:42.254Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msftzowd_c6ov45",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_msftzowd_6cm53r",
+            "at": "2026-08-05T08:34:42.253Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msfrcwqm_qobqwy",
+            "meta": {
+              "durationMs": 4422160
+            }
+          },
+          {
+            "id": "ev_msfs0kzu_c72i9c",
+            "at": "2026-08-05T07:39:24.618Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msfrcwqm_qobqwy"
+          },
+          {
+            "id": "ev_msfrcwqv_rafl8d",
+            "at": "2026-08-05T07:21:00.103Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msfrcwqm_qobqwy"
+          },
+          {
+            "id": "ev_msfrcwqm_lsrxkt",
+            "at": "2026-08-05T07:21:00.094Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msfrcwqm_qobqwy",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_msfpwyz4_h21wsq",
+            "at": "2026-08-05T06:40:36.880Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msfpqdfb_y8l7xt",
+            "meta": {
+              "durationMs": 0
+            }
+          },
+          {
+            "id": "ev_msfpqdfh_0wp7ki",
+            "at": "2026-08-05T06:35:29.021Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msfpqdfb_y8l7xt"
+          },
+          {
+            "id": "ev_msfpqdfb_tz2cg2",
+            "at": "2026-08-05T06:35:29.016Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msfpqdfb_y8l7xt",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_msegksjp_px5bkm",
+            "at": "2026-08-04T09:31:25.957Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msefydmv_tzzkp9",
+            "meta": {
+              "durationMs": 0
+            }
+          },
+          {
+            "id": "ev_msefydn0_2i2eiz",
+            "at": "2026-08-04T09:14:00.204Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msefydmv_tzzkp9"
+          },
+          {
+            "id": "ev_msefydmw_5uh5x9",
+            "at": "2026-08-04T09:14:00.200Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msefydmv_tzzkp9",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_msefydmv_pwh1mp",
+            "at": "2026-08-04T09:14:00.199Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mseb15ll_gz5xu4",
+            "meta": {
+              "durationMs": 8268528
+            }
+          },
+          {
+            "id": "ev_mseb15ls_z8df02",
+            "at": "2026-08-04T06:56:11.680Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mseb15ll_gz5xu4"
+          },
+          {
+            "id": "ev_mseb15lm_42le6o",
+            "at": "2026-08-04T06:56:11.674Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mseb15ll_gz5xu4",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_msd5ujbn_kh1ogm",
+            "at": "2026-08-03T11:43:18.611Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_msd2garb_7vqzol"
+          },
+          {
+            "id": "ev_msd578ik_yiiqt5",
+            "at": "2026-08-03T11:25:11.516Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_msd2garb_7vqzol"
+          },
+          {
+            "id": "ev_msd55zvr_wb6gz6",
+            "at": "2026-08-03T11:24:13.671Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd53vnm_30zrj3",
+            "at": "2026-08-03T11:22:34.882Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd53k0i_vy9iac",
+            "at": "2026-08-03T11:22:19.794Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_msd2garb_7vqzol"
+          },
+          {
+            "id": "ev_msd52z97_do7aau",
+            "at": "2026-08-03T11:21:52.891Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/user-stats",
+            "sessionId": "sess_msd2garb_7vqzol"
+          },
+          {
+            "id": "ev_msd4zrkr_ozl9rs",
+            "at": "2026-08-03T11:19:22.971Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd4rcax_e1c107",
+            "at": "2026-08-03T11:12:49.929Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_msd2garb_7vqzol"
+          },
+          {
+            "id": "ev_msd4mn91_tfxahy",
+            "at": "2026-08-03T11:09:10.837Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd4ewis_r4jcbb",
+            "at": "2026-08-03T11:03:09.604Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/user-stats",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd3v2i4_oqtk06",
+            "at": "2026-08-03T10:47:44.236Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd3tgmv_h2fnvk",
+            "at": "2026-08-03T10:46:29.239Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd3r7m3_uzasop",
+            "at": "2026-08-03T10:44:44.235Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd3p7lt_iul4zn",
+            "at": "2026-08-03T10:43:10.913Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/user-stats",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd3n150_5d0cvq",
+            "at": "2026-08-03T10:41:29.220Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_msd2garb_7vqzol"
+          },
+          {
+            "id": "ev_msd3mym3_w4lfb1",
+            "at": "2026-08-03T10:41:25.947Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd3do5l_8odqik",
+            "at": "2026-08-03T10:34:12.489Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd3baz6_wantof",
+            "at": "2026-08-03T10:32:22.098Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/user-stats",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd34968_bac949",
+            "at": "2026-08-03T10:26:53.168Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/user-stats",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd31wsa_n2igq4",
+            "at": "2026-08-03T10:25:03.802Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_msd2garb_7vqzol"
+          },
+          {
+            "id": "ev_msd31ngh_84xlzo",
+            "at": "2026-08-03T10:24:51.713Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/user-stats",
+            "sessionId": "sess_msd2garb_7vqzol"
+          },
+          {
+            "id": "ev_msd3136x_3b3498",
+            "at": "2026-08-03T10:24:25.449Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/user-stat",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd2zsvy_srfb38",
+            "at": "2026-08-03T10:23:25.438Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/user-stat",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd2y6zl_ys4yqf",
+            "at": "2026-08-03T10:22:10.401Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/user-stat",
+            "sessionId": "sess_msd2garb_7vqzol"
+          },
+          {
+            "id": "ev_msd2y5df_k31nq5",
+            "at": "2026-08-03T10:22:08.307Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/use-stat",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 75000
+            }
+          },
+          {
+            "id": "ev_msd2wvpa_a0qlhz",
+            "at": "2026-08-03T10:21:09.118Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/use-stat",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd2wk2v_fsgwpc",
+            "at": "2026-08-03T10:20:54.055Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/use-stat",
+            "sessionId": "sess_msd2garb_7vqzol"
+          },
+          {
+            "id": "ev_msd2gav9_lzkvza",
+            "at": "2026-08-03T10:08:15.621Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd2garb_5b6v9o",
+            "at": "2026-08-03T10:08:15.479Z",
+            "type": "login",
+            "category": "other",
+            "sessionId": "sess_msd2garb_7vqzol",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows",
+              "country": "India",
+              "state": "Karnataka",
+              "city": "Mangalore",
+              "timezone": "Asia/Calcutta"
+            }
+          },
+          {
+            "id": "ev_msd17n9p_qb3tio",
+            "at": "2026-08-03T09:33:32.173Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_mscznxaz_i8w7lz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd0bxjr_wu4w78",
+            "at": "2026-08-03T09:08:52.503Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_mscznxaz_i8w7lz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd0bly8_xr8zqv",
+            "at": "2026-08-03T09:08:37.472Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msd09vqk_08fqjz",
+            "at": "2026-08-03T09:07:16.844Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msd09qej_mbvveb",
+            "at": "2026-08-03T09:07:09.931Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_mscznxaz_i8w7lz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd09esn_xwj0hw",
+            "at": "2026-08-03T09:06:54.887Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msd07gy0_a5nd4j",
+            "at": "2026-08-03T09:05:24.360Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_mscznxaz_i8w7lz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd075cb_re73wz",
+            "at": "2026-08-03T09:05:09.323Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msd055od_ckwdkp",
+            "at": "2026-08-03T09:03:36.445Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_mscznxaz_i8w7lz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msd04u3c_grvffu",
+            "at": "2026-08-03T09:03:21.432Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msd03rqo_ai18ad",
+            "at": "2026-08-03T09:02:31.728Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msd03q2l_t52wv0",
+            "at": "2026-08-03T09:02:29.565Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a704aabef789093d6479ec7",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msd03ns9_qhrxwl",
+            "at": "2026-08-03T09:02:26.601Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msd03jh9_bu29wz",
+            "at": "2026-08-03T09:02:21.021Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msd01nyc_seydd2",
+            "at": "2026-08-03T09:00:53.508Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a7058b4ef789093d6479ec9",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msd01kve_fwbnx0",
+            "at": "2026-08-03T09:00:49.514Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msczwhjb_wbp2gg",
+            "at": "2026-08-03T08:56:51.911Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses/6a704aabef789093d6479ec7",
+            "sessionId": "sess_mscznxaz_i8w7lz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msczvucm_ombn0c",
+            "at": "2026-08-03T08:56:21.862Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a704aabef789093d6479ec7",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msczvivd_4p9blc",
+            "at": "2026-08-03T08:56:06.985Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a704aabef789093d6479ec7",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_mscztnzo_6hcgwa",
+            "at": "2026-08-03T08:54:40.308Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a704aabef789093d6479ec7",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msczt20r_7hycez",
+            "at": "2026-08-03T08:54:11.835Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msczr4ik_idg5yu",
+            "at": "2026-08-03T08:52:41.756Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscznxaz_i8w7lz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msczqswn_xlnuu9",
+            "at": "2026-08-03T08:52:26.711Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msczptxt_68jz1x",
+            "at": "2026-08-03T08:51:41.393Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msczphm6_mz74uu",
+            "at": "2026-08-03T08:51:25.422Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscznxaz_i8w7lz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msczp60h_1avx8h",
+            "at": "2026-08-03T08:51:10.385Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msczp44s_eh93ae",
+            "at": "2026-08-03T08:51:07.948Z",
+            "type": "session_end",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscznxaz_i8w7lz",
+            "meta": {
+              "durationMs": 45000
+            }
+          },
+          {
+            "id": "ev_msczoyqe_t9jli4",
+            "at": "2026-08-03T08:51:00.950Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msczovx6_tdx4gl",
+            "at": "2026-08-03T08:50:57.306Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a704aabef789093d6479ec7/lessons/6a704aabef789093d6479ec8",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_msczo0ly_jzhl7k",
+            "at": "2026-08-03T08:50:16.727Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a704aabef789093d6479ec7",
+            "sessionId": "sess_mscznxaz_i8w7lz"
+          },
+          {
+            "id": "ev_mscznxej_p4ovto",
+            "at": "2026-08-03T08:50:12.571Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscznxaz_i8w7lz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mscznxaz_95k3x7",
+            "at": "2026-08-03T08:50:12.443Z",
+            "type": "login",
+            "category": "other",
+            "sessionId": "sess_mscznxaz_i8w7lz",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows",
+              "country": "India",
+              "state": "Karnataka",
+              "city": "Mangalore",
+              "timezone": "Asia/Calcutta"
+            }
+          },
+          {
+            "id": "ev_mscy6vke_9yqb4j",
+            "at": "2026-08-03T08:08:57.422Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscwhano_wg8rgr"
+          },
+          {
+            "id": "ev_mscy481v_9itp7h",
+            "at": "2026-08-03T08:06:53.635Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscwhano_wg8rgr"
+          },
+          {
+            "id": "ev_mscy44mq_k0xj3n",
+            "at": "2026-08-03T08:06:49.202Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses/6a704aabef789093d6479ec7",
+            "sessionId": "sess_mscwhano_wg8rgr",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mscy2ioe_se09eb",
+            "at": "2026-08-03T08:05:34.094Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a704aabef789093d6479ec7",
+            "sessionId": "sess_mscwhano_wg8rgr"
+          },
+          {
+            "id": "ev_mscy27hy_sl39lj",
+            "at": "2026-08-03T08:05:19.606Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a704aabef789093d6479ec7",
+            "sessionId": "sess_mscwhano_wg8rgr"
+          },
+          {
+            "id": "ev_mscxxhb6_n58h57",
+            "at": "2026-08-03T08:01:39.042Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses/6a704aabef789093d6479ec7",
+            "sessionId": "sess_mscwhano_wg8rgr"
+          },
+          {
+            "id": "ev_mscxx23y_vzez6b",
+            "at": "2026-08-03T08:01:19.342Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscwhano_wg8rgr",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mscxwqi0_y13wf2",
+            "at": "2026-08-03T08:01:04.296Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscwhano_wg8rgr"
+          },
+          {
+            "id": "ev_mscxvmtw_ylgqvf",
+            "at": "2026-08-03T08:00:12.884Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscwhano_wg8rgr",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mscxvb71_fntbgj",
+            "at": "2026-08-03T07:59:57.805Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscwhano_wg8rgr"
+          },
+          {
+            "id": "ev_mscxq2vb_hprb0h",
+            "at": "2026-08-03T07:55:53.735Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscwhano_wg8rgr"
+          },
+          {
+            "id": "ev_mscxb19k_7hm26l",
+            "at": "2026-08-03T07:44:11.816Z",
+            "type": "time_slice",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscwhano_wg8rgr",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mscx7pr6_k971gs",
+            "at": "2026-08-03T07:41:36.930Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mscwhano_wg8rgr"
+          }
+        ],
+        "topCompanies": [],
+        "topRoles": [],
+        "hqTriggers": [],
+        "profileSnapshot": {
+          "skillsCount": 8,
+          "profileCompleteness": 73,
+          "cvScore": 83,
+          "marketFit": 0,
+          "applicationsTotal": 1,
+          "rejectionsTotal": 0,
+          "postInterviewRejections": 0,
+          "missingSectionsCount": 11,
+          "missingSectionKeys": [
+            "work-experience",
+            "internships",
+            "gap-explanation",
+            "education",
+            "academic-achievements",
+            "competitive-exams",
+            "projects",
+            "certifications",
+            "accomplishments",
+            "visa-work-authorization",
+            "vaccination"
+          ],
+          "updatedAt": "2026-08-06T07:54:09.292Z"
+        },
+        "behaviourSignals": {
+          "userId": "b1c869d84e75048c5c61c5e3",
+          "topCategories": [
+            "courses",
+            "community",
+            "jobs"
+          ],
+          "weakCategories": [
+            "premium",
+            "events",
+            "profile"
+          ],
+          "insightIds": [
+            "lms_heavy"
+          ],
+          "jobCardClicks7d": 0,
+          "applies7d": 0,
+          "activeMs7d": 1185000,
+          "activeMsByCategory7d": {
+            "other": 330000,
+            "dashboard": 30000,
+            "courses": 795000,
+            "community": 30000
+          },
+          "pageVisitsByCategory7d": {
+            "other": 16,
+            "dashboard": 2,
+            "courses": 39,
+            "community": 2
+          },
+          "skillsCount": 8,
+          "rejectionsTotal": 0,
+          "cvScore": 83,
+          "marketFit": 0,
+          "missingSectionsCount": 11,
+          "topCompanies": [],
+          "topRoles": [],
+          "hqTriggers": [],
+          "preferSlotIds": [
+            "jobs",
+            "course",
+            "events",
+            "profile"
+          ],
+          "deprioritizeSlotIds": [
+            "career_path",
+            "quizzes",
+            "community"
+          ],
+          "userSuggestionHints": [],
+          "preferredAlertHours": [
+            14,
+            12,
+            15
+          ],
+          "preferredAlertWindowLabel": "Wed / Tue · 2:00 PM–12:00 PM",
+          "alertTimingConfidence": "high"
+        }
+      },
+      "suggestionMetrics": {
+        "userId": "b1c869d84e75048c5c61c5e3",
+        "updatedAt": "2026-08-06T07:54:32.355Z",
+        "totalRejections": 0,
+        "postInterviewRejections": 0,
+        "repeatRejectionCount": 0,
+        "suggestionsPushed": 20,
+        "suggestionsClicked": 0,
+        "suggestionsPurchased": 0,
+        "salesFollowUpScore": 10,
+        "salesFollowUpReady": false,
+        "byScenario": {
+          "profile_match": 5,
+          "engagement": 15
+        },
+        "recentSuggestions": [
+          {
+            "id": "sug_msd0yvda_4su313",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-03T09:26:42.766Z"
+          },
+          {
+            "id": "sug_msd21oie_un4gjv",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-03T09:56:53.462Z"
+          },
+          {
+            "id": "sug_msd35kfh_2qf94w",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-03T10:27:54.413Z"
+          },
+          {
+            "id": "sug_msd48fzq_w26joy",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-03T10:58:08.246Z"
+          },
+          {
+            "id": "sug_msd5b52b_wng1ds",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-03T11:28:13.667Z"
+          },
+          {
+            "id": "sug_mseb1f2o_5bkewv",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-08-04T06:56:23.952Z"
+          },
+          {
+            "id": "sug_msefyhap_8vqgew",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-04T09:14:04.945Z"
+          },
+          {
+            "id": "sug_msfpqm6y_mq38ok",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-08-05T06:35:40.378Z"
+          },
+          {
+            "id": "sug_msfrcygx_7l4evj",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-05T07:21:02.337Z"
+          },
+          {
+            "id": "sug_msfsg93y_ilglct",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-05T07:51:35.710Z"
+          },
+          {
+            "id": "sug_msftzrnu_ks9bwm",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-05T08:34:45.834Z"
+          },
+          {
+            "id": "sug_msfv2hxf_l2xpdr",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-05T09:04:52.803Z"
+          },
+          {
+            "id": "sug_msfw5z55_t4s8za",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-05T09:35:34.697Z"
+          },
+          {
+            "id": "sug_msh5h9fq_td2hk6",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-06T06:44:03.974Z"
+          },
+          {
+            "id": "sug_msh6jxmq_unntoo",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-06T07:14:08.258Z"
+          },
+          {
+            "id": "sug_msh7ofis_p8ot5f",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-08-06T07:45:37.684Z"
+          }
+        ]
+      },
+      "triggers": [],
+      "interests": [
+        {
+          "key": "learning",
+          "label": "Learning & courses",
+          "score": 18,
+          "updatedAt": "2026-08-03T07:20:50.444Z"
+        },
+        {
+          "key": "watercooler",
+          "label": "Workplace chat",
+          "score": 18,
+          "updatedAt": "2026-08-03T07:20:50.445Z"
+        },
+        {
+          "key": "job_search",
+          "label": "Job search",
+          "score": 18,
+          "updatedAt": "2026-08-03T08:21:03.494Z"
+        },
+        {
+          "key": "profile",
+          "label": "profile",
+          "score": 12,
+          "updatedAt": "2026-08-03T08:21:03.495Z"
+        }
+      ],
+      "personalizedRecs": [
+        {
+          "id": "rec_job_search",
+          "interestKey": "job_search",
+          "interestScore": 18,
+          "title": "Jobs that match your focus",
+          "text": "Strong Job search signal (18). Open 2–3 matching roles and apply to one.",
+          "actionUrl": "/explore-jobs",
+          "priority": 83
+        },
+        {
+          "id": "rec_learning",
+          "interestKey": "learning",
+          "interestScore": 18,
+          "title": "One course module",
+          "text": "Your Learning & courses interest is 18. Finish one LMS module this week.",
+          "actionUrl": "/lms/courses",
+          "priority": 77
+        },
+        {
+          "id": "rec_watercooler",
+          "interestKey": "watercooler",
+          "interestScore": 18,
+          "title": "Join the conversation",
+          "text": "You engage with Workplace chat — check one new circle post today.",
+          "actionUrl": "/community",
+          "priority": 61
+        },
+        {
+          "id": "rec_profile",
+          "interestKey": "profile",
+          "interestScore": 12,
+          "title": "Stay on profile",
+          "text": "You’re 12 into profile — pick one job, course, or post on that theme.",
+          "actionUrl": "/explore-jobs",
+          "priority": 44
+        }
+      ],
+      "sessionEngagement": {
+        "sessionCount": 12,
+        "activeCount": 1,
+        "totalDurationMs": 93168595,
+        "avgDurationMs": 7764050,
+        "medianDurationMs": 120000,
+        "uniqueIps": 0,
+        "uniqueDevices": 1,
+        "locations": [
+          {
+            "key": "Mangalore, Karnataka, India",
+            "city": "Mangalore",
+            "state": "Karnataka",
+            "country": "India",
+            "sessions": 5,
+            "totalDurationMs": 1157202
+          }
+        ],
+        "byHour": [
+          {
+            "hour": 14,
+            "label": "2:00 PM",
+            "sessions": 3,
+            "totalDurationMs": 79545705
+          },
+          {
+            "hour": 12,
+            "label": "12:00 PM",
+            "sessions": 7,
+            "totalDurationMs": 13052890
+          },
+          {
+            "hour": 15,
+            "label": "3:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 570000
+          },
+          {
+            "hour": 13,
+            "label": "1:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 0
+          }
+        ],
+        "byWeekday": [
+          {
+            "weekday": 3,
+            "label": "Wed",
+            "sessions": 3,
+            "totalDurationMs": 83742865
+          },
+          {
+            "weekday": 2,
+            "label": "Tue",
+            "sessions": 2,
+            "totalDurationMs": 8268528
+          },
+          {
+            "weekday": 1,
+            "label": "Mon",
+            "sessions": 5,
+            "totalDurationMs": 1157202
+          },
+          {
+            "weekday": 4,
+            "label": "Thu",
+            "sessions": 2,
+            "totalDurationMs": 0
+          }
+        ],
+        "alertTiming": {
+          "bestHours": [
+            14,
+            12,
+            15
+          ],
+          "bestHourLabels": [
+            "2:00 PM",
+            "12:00 PM",
+            "3:00 PM"
+          ],
+          "bestWeekdays": [
+            "Wed",
+            "Tue"
+          ],
+          "bestWindowLabel": "Wed / Tue · 2:00 PM–12:00 PM",
+          "avoidHours": [
+            13,
+            15,
+            12
+          ],
+          "timezone": "Asia/Calcutta",
+          "confidence": "high",
+          "reason": "Most active around 2:00 PM and 12:00 PM local time · avg session 129 min · often from Mangalore, Karnataka, India",
+          "sampleSessions": 12,
+          "avgDurationMs": 7764050,
+          "medianDurationMs": 120000
+        }
+      },
+      "alertTiming": {
+        "bestHours": [
+          14,
+          12,
+          15
+        ],
+        "bestHourLabels": [
+          "2:00 PM",
+          "12:00 PM",
+          "3:00 PM"
+        ],
+        "bestWeekdays": [
+          "Wed",
+          "Tue"
+        ],
+        "bestWindowLabel": "Wed / Tue · 2:00 PM–12:00 PM",
+        "avoidHours": [
+          13,
+          15,
+          12
+        ],
+        "timezone": "Asia/Calcutta",
+        "confidence": "high",
+        "reason": "Most active around 2:00 PM and 12:00 PM local time · avg session 129 min · often from Mangalore, Karnataka, India",
+        "sampleSessions": 12,
+        "avgDurationMs": 7764050,
+        "medianDurationMs": 120000
+      },
+      "locations": [
+        {
+          "key": "Mangalore, Karnataka, India",
+          "city": "Mangalore",
+          "state": "Karnataka",
+          "country": "India",
+          "sessions": 5,
+          "totalDurationMs": 1157202
+        }
+      ]
     }
   },
   "history": [
+    {
+      "id": "hist_msh7wff0_t3er",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-06T07:51:50.748Z",
+      "snapshot": {
+        "logins": 12,
+        "visits": 59,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Wed / Tue · 2:00 PM–12:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msh7oa4t_dz7c",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-06T07:45:30.659Z",
+      "snapshot": {
+        "logins": 12,
+        "visits": 59,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Wed / Tue · 2:00 PM–12:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msh6lcn1_ib41",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-06T07:15:14.324Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 58,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Wed / Tue · 2:00 PM–12:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msh6eant_2mos",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-06T07:09:45.170Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 58,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Wed / Tue · 2:00 PM–12:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msh67cu8_66p6",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-06T07:04:21.391Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 58,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Wed / Tue · 2:00 PM–12:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msh5zj6h_rtww",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-06T06:58:16.378Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 58,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Wed / Tue · 2:00 PM–12:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msh5sdcy_25yd",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-06T06:52:37.811Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 56,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Wed / Tue · 2:00 PM–12:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msh5ny5u_ujug",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-06T06:49:15.874Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 56,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Wed / Tue · 2:00 PM–12:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msh5gym1_u8r7",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-06T06:43:49.192Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 56,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Wed / Tue · 2:00 PM–12:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfw62ef_epaa",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T09:35:38.884Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 54,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Wed · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfvyc6p_7jld",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T09:29:38.337Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 54,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Wed · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfvqlwb_pcmw",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T09:23:37.671Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 54,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Wed · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfvivu9_xko5",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T09:17:37.305Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 54,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Wed · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfvb63f_muwo",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T09:11:37.303Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 54,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Wed · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfv2krg_yntg",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T09:04:54.991Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 54,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Wed · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfuunxx_g6hh",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T08:58:47.300Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 54,
+        "applies": 0,
+        "activeMs": 1170000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Wed · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfuo0qd_22t5",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T08:53:37.300Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 54,
+        "applies": 0,
+        "activeMs": 1155000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Wed · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfuf6t5_r8af",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T08:46:45.280Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 54,
+        "applies": 0,
+        "activeMs": 1155000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Wed · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfu7hw9_ux4v",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T08:40:46.360Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 54,
+        "applies": 0,
+        "activeMs": 1155000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Wed · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msftzq6i_mfun",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T08:34:43.767Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 54,
+        "applies": 0,
+        "activeMs": 1155000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Wed · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfslxy2_m9yk",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T07:56:00.950Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 53,
+        "applies": 0,
+        "activeMs": 1155000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Mon · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfsezkf_yftl",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T07:50:36.627Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 53,
+        "applies": 0,
+        "activeMs": 1155000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Mon · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfs8dwm_ktlg",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T07:45:28.420Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 53,
+        "applies": 0,
+        "activeMs": 1155000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Mon · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfs0lsx_7ovx",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T07:39:25.610Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 53,
+        "applies": 0,
+        "activeMs": 1155000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Mon · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfrkqok_pzo8",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T07:27:05.428Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 52,
+        "applies": 0,
+        "activeMs": 1155000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Mon · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
+    {
+      "id": "hist_msfrcyyj_84b0",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-05T07:21:01.313Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 52,
+        "applies": 0,
+        "activeMs": 1155000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "lms_heavy"
+        ],
+        "alertWindow": "Tue / Mon · 12:00 PM–3:00 PM",
+        "topLocation": "Mangalore, Karnataka, India"
+      }
+    },
     {
       "id": "hist_msekkh8k_8huj",
       "userId": "9d5194355ec270f0b4a474a8",
@@ -2456,5 +4681,5 @@
     }
   ],
   "tickets": [],
-  "updatedAt": "2026-08-04T11:27:31.764Z"
+  "updatedAt": "2026-08-06T07:54:35.239Z"
 }
