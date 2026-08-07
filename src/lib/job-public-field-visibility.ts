@@ -83,7 +83,11 @@ export function redactPortalJobListing<T extends Record<string, unknown>>(
     out.company = '';
     out.companyOverview = '';
     out.logo = '/perosn_icon.png';
+    out.companyLogo = '';
     out.contactPerson = '';
+    out.showClientNamePublicly = false;
+    out.client = undefined;
+    out.clientId = undefined;
   }
   if (!show('jobTitle')) {
     out.title = '';

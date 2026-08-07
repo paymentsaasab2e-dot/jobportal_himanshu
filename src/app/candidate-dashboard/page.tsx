@@ -21,7 +21,7 @@ import {
   getDashboardName,
   getDynamicGreeting,
 } from "@/components/dashboard/dashboard-utils";
-import { resolvePortalCompanyLogo, resolvePortalCompanyName } from "@/lib/map-portal-job";
+import { resolvePortalCompanyLogo, isClientNamePubliclyVisible } from "@/lib/map-portal-job";
 import { redactPortalJobListing } from "@/lib/job-public-field-visibility";
 import type {
   DashboardCourse,
@@ -149,8 +149,10 @@ function mapJobRecord(job: Record<string, unknown>, fallbackId: string): Dashboa
   return {
     id: asString(redacted.id) ?? asString(redacted._id) ?? asString(job.id) ?? asString(job._id) ?? fallbackId,
     title: asString(redacted.title) ?? asString(redacted.jobTitle) ?? "",
-    company: String(redacted.company || resolvePortalCompanyName(redacted) || ""),
-    companyLogo: resolvePortalCompanyLogo(redacted, ""),
+    company: String(redacted.company || ''),
+    companyLogo: isClientNamePubliclyVisible(redacted)
+      ? resolvePortalCompanyLogo(redacted, '')
+      : '',
     location: asNullableString(redacted.location),
     salaryMin:
       asNullableNumber(redacted.salaryMin) ??

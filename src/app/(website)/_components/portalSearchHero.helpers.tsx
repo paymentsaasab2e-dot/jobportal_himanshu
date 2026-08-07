@@ -67,6 +67,45 @@ export const buildSearchJobsUrl = (locale: AppLocale, title: string, location: s
   return params.toString() ? `${basePath}?${params.toString()}` : basePath;
 };
 
+/** Unique trimmed labels from a list (case-insensitive). */
+export function uniqueLabels(values: Array<string | null | undefined>, limit = 24): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of values) {
+    const label = String(raw || '').trim();
+    if (!label) continue;
+    const key = label.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(label);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+/** Split industry / category strings like "Financial Services; Manufacturing". */
+export function splitCategoryLabels(raw: string | null | undefined): string[] {
+  return String(raw || '')
+    .split(/[;,|/]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+export const TRENDING_CHIP_STYLES = [
+  { color: 'text-sky-600', tint: 'rgba(56, 189, 248, 0.22)' },
+  { color: 'text-emerald-600', tint: 'rgba(52, 211, 153, 0.22)' },
+  { color: 'text-blue-600', tint: 'rgba(59, 130, 246, 0.22)' },
+  { color: 'text-indigo-600', tint: 'rgba(99, 102, 241, 0.22)' },
+  { color: 'text-violet-600', tint: 'rgba(167, 139, 250, 0.22)' },
+  { color: 'text-rose-600', tint: 'rgba(244, 63, 94, 0.2)' },
+  { color: 'text-amber-600', tint: 'rgba(251, 191, 36, 0.22)' },
+  { color: 'text-orange-600', tint: 'rgba(251, 146, 60, 0.22)' },
+  { color: 'text-pink-600', tint: 'rgba(236, 72, 153, 0.2)' },
+  { color: 'text-cyan-600', tint: 'rgba(34, 211, 238, 0.22)' },
+  { color: 'text-lime-600', tint: 'rgba(163, 230, 53, 0.22)' },
+  { color: 'text-teal-600', tint: 'rgba(45, 212, 191, 0.22)' },
+] as const;
+
 export const portalSearchHeroStyles = `
   @keyframes slideAndStay {
     0% { transform: translateY(100%) rotateX(-90deg); opacity: 0; }

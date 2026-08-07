@@ -139,6 +139,8 @@ function shouldHideOnPath(pathname: string | null): boolean {
     path === '/signup' ||
     path === '/whatsapp' ||
     path.startsWith('/whatsapp/') ||
+    path === '/apply' ||
+    path.startsWith('/apply/') ||
     path === '/sa' ||
     path.startsWith('/sa/') ||
     path === '/candmain' ||
