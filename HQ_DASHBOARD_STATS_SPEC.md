@@ -9,6 +9,9 @@ Related docs:
 
 - [`HQ_HELP_TICKETS_API.md`](./HQ_HELP_TICKETS_API.md) — support tickets
 - [`HQ_BEHAVIOR_API.md`](./HQ_BEHAVIOR_API.md) — behaviour / sessions
+- [`EMPLOYEES_DASHBOARD_STATS_SPEC.md`](./EMPLOYEES_DASHBOARD_STATS_SPEC.md) — Phase 1 employees board
+- [`HQ_CRM_DASHBOARD_STATS_SPEC.md`](./HQ_CRM_DASHBOARD_STATS_SPEC.md) — HQ CRM board
+- **Implementation:** Phase 2 `frontphase2` → `/hq` employer tab → `HqPhase2CommandDashboard` + `backendphase2` `hq-analytics.service.js` `buildEmployerAnalytics()`
 - Screenshots reference: current Phase 2 HQ live boards (KPI row, charts, activity, quick actions)
 
 ---

@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
       mode: 'realtime',
       count: users.length,
       users,
-      note: 'Live session-style snapshots. Use mode=history&userId= for past analytics; mode=latest&userId= for full detail.',
+      note: 'Live session + rollup/interests for HQ boards. Use mode=history&userId= for past analytics; mode=latest&userId= for full detail.',
     },
   });
 }

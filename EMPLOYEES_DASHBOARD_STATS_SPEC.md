@@ -159,11 +159,16 @@ Related docs:
 
 1. Logins 7d / Candidate DAU·WAU  
 2. Visits → Clicks → Applies conversion  
-3. Page Mix  
-4. Geo (country / region)  
-5. Session trend line  
+3. **Premium services usage** (services / AI CV / interview prep / courses — most → least)  
+4. **Popular features** + most/least  
+5. **Entry points** (first meaningful open — e.g. landed on `/services` then logged in)  
+6. **Community & chat** (Office Gossip, reference check, chat signals)  
+7. **Top interests** + **trending topics** (affinity engine + role/company intent)  
+8. Page Mix  
+9. Geo (country / region)  
+10. Session trend / recent sessions  
 
-**Ops drawer (not main):** Live heartbeats debug, named Recent Sessions, raw Live Feed.
+**Ops drawer (not main):** Live heartbeats debug, named Recent Sessions detail, raw Live Feed.
 
 ---
 
@@ -231,10 +236,74 @@ Each block is setup-ready.
 |-------|--------|
 | **Tag** | `EMP_KEEP` |
 | **Purpose** | Where candidates spend attention (jobs, profile, applications, LMS, etc.). |
-| **Graph type** | **Doughnut / pie** + legend. |
-| **Data to show** | `pages[{ pathOrCategory, visits, pct }]` |
-| **Simple logic** | Group page views by category (map routes → `dashboard` / `jobs` / `profile` / `applications` / `other`). `pct = visits / totalVisits`. |
+| **Graph type** | **Doughnut / pie** + legend **or** ranked bars. |
+| **Data to show** | `pages[{ pathOrCategory, visits, pct }]` → `liveTracking.pageVisitsByCategory` |
+| **Simple logic** | Group page views by category (map routes → `dashboard` / `jobs` / `profile` / `applications` / `premium` / `community` / …). `pct = visits / totalVisits`. |
 | **Functional** | Empty state: “No page visits yet” until tracker ships. |
+
+---
+
+### 6.5a Premium services usage (`EMP_ADD`)
+
+| Field | Detail |
+|-------|--------|
+| **Tag** | `EMP_ADD` / `EMP_KEEP` |
+| **Purpose** | Which paid / prep surfaces candidates use most (Services page, AI CV, interview prep, courses). |
+| **Graph type** | Ranked horizontal bars (most → least). |
+| **Data to show** | `liveTracking.premiumServicesUsage[]`, `premiumVisits7d` |
+| **Simple logic** | Sum `rollup7d.pageVisitsByCategory` for `{ premium, courses, interview_prep, ai_cv, lms, events }`. Label via category map (`/services` + `/subscriptions` → premium). |
+| **Functional** | Sourced from Phase 1 behaviour engine via `/api/hq-behavior` → Phase 2 `liveTracking`. |
+
+---
+
+### 6.5b Entry points / first open (`EMP_ADD`)
+
+| Field | Detail |
+|-------|--------|
+| **Tag** | `EMP_ADD` |
+| **Purpose** | Capture intent before/at first session — e.g. user opens Services wanting a feature, then logs in. |
+| **Graph type** | Ranked bars. |
+| **Data to show** | `liveTracking.entryPoints[]` from `rollup7d.firstOpenBreakdown` |
+| **Simple logic** | Per day, first meaningful path (not login/marketing) → category. Aggregate counts across tracked users. Premium-high entry = strong sales intent. |
+| **Functional** | Behaviour tracker `firstOpenCategory` / `firstOpens[]`. |
+
+---
+
+### 6.5c Community behaviour — Office Gossip / chat / reference check (`EMP_ADD`)
+
+| Field | Detail |
+|-------|--------|
+| **Tag** | `EMP_ADD` |
+| **Purpose** | Behavioural engagement beyond job apply (circles, chat, ref checks). |
+| **Graph type** | Ranked bars. |
+| **Data to show** | `liveTracking.communityBehavior[]`, `communityVisits7d` |
+| **Simple logic** | Category `community` covers `/community` + `/reference-check`. Plus HQ triggers matching gossip/chat/reference keywords. |
+| **Functional** | Same behaviour pipe; interest affinity also tags `watercooler` / workplace chat. |
+
+---
+
+### 6.5d Top interests & trending topics (`EMP_ADD`)
+
+| Field | Detail |
+|-------|--------|
+| **Tag** | `EMP_ADD` |
+| **Purpose** | What candidates care about (interview prep, job search, frontend, workplace chat, …) and rising role/company intent. |
+| **Graph type** | Ranked bars; optional kind chip (interest / role / company). |
+| **Data to show** | `liveTracking.topInterests[{ name, value:userCount, avgScore, scoreSum }]`, `trendingTopics[]` |
+| **Simple logic** | Aggregate `interests[]` from each behaviour latest payload (affinity engine). Blend with `rollup7d.topRoles` / `topCompanies` for trending. |
+| **Functional** | Requires interest heartbeats posted with `/api/hq-behavior`. |
+
+---
+
+### 6.5e Popular features (`EMP_KEEP`)
+
+| Field | Detail |
+|-------|--------|
+| **Tag** | `EMP_KEEP` |
+| **Purpose** | Cross-product most-used features (triggers + page mix). |
+| **Graph type** | Ranked bars + most/least highlight cards. |
+| **Data to show** | `liveTracking.popularFeatures[]` (trigger titles) falling back to page mix / portal KPIs. |
+| **Simple logic** | Count distinct trigger titles across users; else page categories; else KPI volumes. |
 
 ---
 

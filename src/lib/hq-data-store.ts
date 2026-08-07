@@ -245,11 +245,73 @@ export function upsertBehaviorLatest(payload: HqBehaviorLatest, opts?: { forceHi
   };
 }
 
+/** Slim rollup fields HQ board aggregation needs (keeps payload small). */
+function slimRollupForBoard(rollup: unknown) {
+  if (!rollup || typeof rollup !== 'object') return null;
+  const r = rollup as Record<string, unknown>;
+  return {
+    logins: asNum(r.logins),
+    visits: asNum(r.visits),
+    applies: asNum(r.applies),
+    activeMs: asNum(r.activeMs),
+    sessionCount: asNum(r.sessionCount),
+    jobCardClicks: asNum(r.jobCardClicks),
+    pageVisitsByCategory:
+      r.pageVisitsByCategory && typeof r.pageVisitsByCategory === 'object'
+        ? r.pageVisitsByCategory
+        : {},
+    activeMsByCategory:
+      r.activeMsByCategory && typeof r.activeMsByCategory === 'object'
+        ? r.activeMsByCategory
+        : {},
+    firstOpenBreakdown:
+      r.firstOpenBreakdown && typeof r.firstOpenBreakdown === 'object'
+        ? r.firstOpenBreakdown
+        : {},
+    topFirstOpen: typeof r.topFirstOpen === 'string' ? r.topFirstOpen : null,
+    hqTriggers: Array.isArray(r.hqTriggers) ? r.hqTriggers.slice(0, 10) : [],
+    topCompanies: Array.isArray(r.topCompanies) ? r.topCompanies.slice(0, 5) : [],
+    topRoles: Array.isArray(r.topRoles) ? r.topRoles.slice(0, 5) : [],
+  };
+}
+
+function slimInterestsForBoard(interests: unknown) {
+  if (!Array.isArray(interests)) return [];
+  return interests
+    .map((raw) => {
+      const t = raw as { key?: string; label?: string; score?: number };
+      const key = String(t?.key || '').trim();
+      if (!key) return null;
+      return {
+        key,
+        label: String(t?.label || key).trim() || key,
+        score: typeof t?.score === 'number' && Number.isFinite(t.score) ? t.score : 0,
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 12) as Array<{ key: string; label: string; score: number }>;
+}
+
+/**
+ * Live board rows: realtime pulse + latest rollup / interests / triggers
+ * so Phase 2 HQ can aggregate premium, entry points, and interest trends.
+ */
 export function listRealtime(limit = 100) {
   const bundle = ensureLoaded();
   return Object.values(bundle.realtime)
     .sort((a, b) => String(b.capturedAt).localeCompare(String(a.capturedAt)))
-    .slice(0, limit);
+    .slice(0, limit)
+    .map((rt) => {
+      const latest = bundle.latest[rt.userId];
+      if (!latest) return rt;
+      return {
+        ...rt,
+        activityStateUpdatedAt: latest.activityStateUpdatedAt || null,
+        rollup7d: slimRollupForBoard(latest.rollup7d),
+        triggers: Array.isArray(latest.triggers) ? latest.triggers.slice(0, 10) : [],
+        interests: slimInterestsForBoard(latest.interests),
+      };
+    });
 }
 
 export function getLatest(userId: string) {
