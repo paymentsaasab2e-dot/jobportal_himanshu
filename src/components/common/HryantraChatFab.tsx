@@ -257,8 +257,10 @@ export function HryantraChatFab() {
   const barePath = stripLocaleFromPathname(pathname);
   const onCommunity =
     barePath === '/community' || barePath.startsWith('/community/');
-  // Hide while already reading Chat, or when everything is read
-  if ((onCommunity && ogTab === 'chat') || unread <= 0) {
+  const onApply =
+    barePath === '/apply' || barePath.startsWith('/apply/');
+  // Hide on apply flows, while already reading Chat, or when everything is read
+  if (onApply || (onCommunity && ogTab === 'chat') || unread <= 0) {
     return null;
   }
 

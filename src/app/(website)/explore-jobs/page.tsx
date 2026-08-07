@@ -1073,7 +1073,7 @@ const ExploreJobsPageContent = () => {
               ? asString(job.jobTitle) || asString(job.title) || ''
               : '',
             company: companyName,
-            logo: resolveCompanyLogo(job),
+            logo: fieldVisible('client') ? resolveCompanyLogo(job) : '/perosn_icon.png',
             location: resolvedLocation,
             city: parsedLoc.city || undefined,
             country: parsedLoc.country || undefined,
@@ -2222,9 +2222,11 @@ const ExploreJobsPageContent = () => {
     </button>
   )
 
-  const JobLogoBadge = ({ job, compact = false }: { job: JobListing; compact?: boolean }) => {
-    const logoSrc = job.logo && job.logo !== '/perosn_icon.png' ? job.logo : null
-    const monogram = job.company ? getMonogram(job.company) : ''
+  const JobLogoBadge = ({ job, compact = false, companyLabel = '' }: { job: JobListing; compact?: boolean; companyLabel?: string }) => {
+    const displayCompany = String(companyLabel || '').trim()
+    const logoSrc =
+      displayCompany && job.logo && job.logo !== '/perosn_icon.png' ? job.logo : null
+    const monogram = displayCompany ? getMonogram(displayCompany) : ''
 
     return (
       <div
@@ -2235,7 +2237,7 @@ const ExploreJobsPageContent = () => {
         {logoSrc ? (
           <Image
             src={logoSrc}
-            alt={job.company ? te('companyLogoAlt', { company: job.company }) : te('companyLogo')}
+            alt={displayCompany ? te('companyLogoAlt', { company: displayCompany }) : te('companyLogo')}
             fill
             className="object-contain"
             unoptimized
@@ -2318,7 +2320,7 @@ const ExploreJobsPageContent = () => {
 
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
-            <JobLogoBadge job={job} compact={isCompact} />
+            <JobLogoBadge job={job} compact={isCompact} companyLabel={displayCompany} />
             <div className="min-w-0">
               {displayCompany ? (
                 <p className="truncate text-[12px] font-semibold text-slate-500">{displayCompany}</p>
@@ -2528,6 +2530,7 @@ const ExploreJobsPageContent = () => {
       listFieldVisible('location') ? job.location : '',
       listFieldVisible('salary') ? job.salary : '',
     ]
+    const listCompany = listFieldVisible('client') ? String(job.company || '').trim() : ''
     return (
       <div
         key={job.id}
@@ -2538,7 +2541,7 @@ const ExploreJobsPageContent = () => {
         className="group w-full cursor-pointer rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 transition-all duration-300 ease-out hover:shadow-md"
       >
         <div className="flex items-start gap-4">
-          <JobLogoBadge job={job} />
+          <JobLogoBadge job={job} companyLabel={listCompany} />
 
           {/* Left content */}
           <div className="flex-1 min-w-0">
@@ -3240,7 +3243,18 @@ const ExploreJobsPageContent = () => {
                         {/* Job detail header — title, company • location, salary • experience */}
                         <div className="mb-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0">
                           <div className="flex min-w-0 flex-1 items-center gap-4">
-                            <JobLogoBadge job={selectedJob} />
+                            <JobLogoBadge
+                              job={selectedJob}
+                              companyLabel={
+                                isJobFieldPubliclyVisible(
+                                  parseJobPublicFieldVisibility(selectedJob.publicFieldVisibility),
+                                  'client',
+                                  selectedJob.showClientNamePublicly !== false,
+                                )
+                                  ? String(selectedJob.company || '').trim()
+                                  : ''
+                              }
+                            />
                             <div className="min-w-0 flex-1">
                               {selectedJob.title ? (
                                 <h1 className="text-xl font-bold leading-tight text-slate-900 wrap-break-word sm:text-2xl">

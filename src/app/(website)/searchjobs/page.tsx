@@ -1,14 +1,15 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, Briefcase, Clock3, MapPin, Search, Sparkles } from 'lucide-react';
+import { ArrowRight, Briefcase, Clock3, MapPin, Search, Sparkles, Wifi } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import { API_BASE_URL } from '@/lib/api-base';
 import { AppLocale } from '@/lib/i18n';
 import { withJobApiLocale } from '@/lib/jobApiLocale';
-import { resolvePortalCompanyLogo, resolvePortalCompanyName } from '@/lib/map-portal-job';
+import { resolvePortalCompanyLogo } from '@/lib/map-portal-job';
 import { redactPortalJobListing } from '@/lib/job-public-field-visibility';
+import { toPlainJobText } from '@/lib/job-description';
 
 /** HRYANTRA Phase 1 brand palette for this page */
 const THEME = {
@@ -30,6 +31,8 @@ type SearchJob = {
   company: string;
   logo: string;
   location: string;
+  country: string;
+  industry: string;
   salary: string;
   type: string;
   workMode: string;
@@ -37,24 +40,79 @@ type SearchJob = {
   description: string;
 };
 
-function formatSalary(job: any) {
-  const amount = job?.salary?.amount;
-  if (amount) return String(amount);
+function asText(value: unknown): string {
+  if (value === undefined || value === null) return '';
+  return String(value).trim();
+}
 
-  const min = job?.salary?.min ?? job?.salaryMin ?? null;
-  const max = job?.salary?.max ?? job?.salaryMax ?? null;
-  const currency = job?.salary?.currency ?? job?.salaryCurrency ?? '$';
-  const currencySymbol = currency === 'USD' ? '$' : currency === 'EUR' ? 'EUR ' : currency === 'GBP' ? 'GBP ' : `${currency} `;
+function toFiniteNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : null;
+}
 
-  if (!min && !max) return 'Salary not specified';
-  if (min && max) return `${currencySymbol}${min.toLocaleString()} - ${currencySymbol}${max.toLocaleString()}`;
-  if (min) return `${currencySymbol}${min.toLocaleString()}+`;
-  return `${currencySymbol}${max?.toLocaleString()}`;
+function formatEmploymentType(raw: string): string {
+  if (!raw) return '';
+  return raw
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+}
+
+function formatWorkMode(raw: string): string {
+  if (!raw) return '';
+  const key = raw.toLowerCase().replace(/[_-]+/g, ' ').trim();
+  if (key.includes('remote')) return 'Remote';
+  if (key.includes('hybrid')) return 'Hybrid';
+  if (key.includes('onsite') || key.includes('on site') || key.includes('office')) return 'On-site';
+  return formatEmploymentType(raw);
+}
+
+function formatCurrencySymbol(currency: unknown): string {
+  const cur = asText(currency);
+  if (!cur) return '$';
+  const u = cur.toUpperCase();
+  if (u === 'USD' || cur === '$') return '$';
+  if (u === 'EUR' || cur === '€') return '€';
+  if (u === 'GBP' || cur === '£') return '£';
+  if (u === 'INR' || /₹|rupee/i.test(cur)) return '₹';
+  if (cur.length <= 4) return cur;
+  return '';
+}
+
+function formatSalary(job: Record<string, unknown>): string {
+  const salaryObj =
+    job.salary && typeof job.salary === 'object' && !Array.isArray(job.salary)
+      ? (job.salary as Record<string, unknown>)
+      : null;
+
+  const amount = asText(salaryObj?.amount);
+  if (amount) return amount;
+
+  let min = toFiniteNumber(salaryObj?.min ?? job.salaryMin);
+  let max = toFiniteNumber(salaryObj?.max ?? job.salaryMax);
+  if (min != null && max != null && min > max) {
+    const swap = min;
+    min = max;
+    max = swap;
+  }
+
+  const currencyRaw = salaryObj?.currency ?? job.salaryCurrency ?? 'USD';
+  const symbol = formatCurrencySymbol(currencyRaw);
+  const suffix = !symbol && asText(currencyRaw) ? ` ${asText(currencyRaw)}` : '';
+
+  if (min == null && max == null) return '';
+  if (min != null && max != null) {
+    return `${symbol}${min.toLocaleString()} – ${symbol}${max.toLocaleString()}${suffix}`.trim();
+  }
+  if (min != null) return `${symbol}${min.toLocaleString()}+${suffix}`.trim();
+  return `${symbol}${max!.toLocaleString()}${suffix}`.trim();
 }
 
 function formatTimeAgo(date: Date | string) {
   const now = new Date();
   const postedDate = typeof date === 'string' ? new Date(date) : date;
+  if (Number.isNaN(postedDate.getTime())) return '';
   const diffInDays = Math.floor((now.getTime() - postedDate.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffInDays <= 0) return 'Just now';
@@ -64,30 +122,128 @@ function formatTimeAgo(date: Date | string) {
   return `${Math.floor(diffInDays / 30)}mo ago`;
 }
 
+function normalizeCompareText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** True when text is empty, tiny, or basically just the job title. */
+function isWeakJobBlurb(text: string, title: string): boolean {
+  const plain = toPlainJobText(text).trim();
+  if (!plain) return true;
+  if (plain.length < 24) return true;
+  const normPlain = normalizeCompareText(plain);
+  const normTitle = normalizeCompareText(title);
+  if (!normTitle) return plain.length < 40;
+  if (normPlain === normTitle) return true;
+  if (normPlain === `${normTitle}.` || normPlain.startsWith(`${normTitle} `) && normPlain.length < normTitle.length + 12) {
+    return true;
+  }
+  // "The HR Manager will..." can be fine — only reject near-exact title echoes.
+  const words = normPlain.split(' ').filter(Boolean);
+  if (words.length <= 3 && normPlain.includes(normTitle)) return true;
+  return false;
+}
+
+function pickBestBlurb(candidates: unknown[], title: string): string {
+  let best = '';
+  for (const raw of candidates) {
+    const plain = toPlainJobText(asText(raw)).trim();
+    if (!plain || isWeakJobBlurb(plain, title)) continue;
+    if (plain.length > best.length) best = plain;
+  }
+  return best;
+}
+
+function buildDescription(job: Record<string, unknown>): string {
+  const title = asText(job.title || job.jobTitle);
+
+  const fromNarrative = pickBestBlurb(
+    [
+      job.description,
+      job.jobDescription,
+      job.jobDescriptionHtml,
+      job.overview,
+      job.aboutRole,
+      job.jobSummary,
+      job.responsibilities,
+    ],
+    title,
+  );
+  if (fromNarrative) return fromNarrative;
+
+  if (Array.isArray(job.keyResponsibilities) && job.keyResponsibilities.length) {
+    const joined = job.keyResponsibilities
+      .map((item) => toPlainJobText(String(item)))
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(' · ');
+    if (!isWeakJobBlurb(joined, title)) return joined;
+  }
+
+  if (Array.isArray(job.requirements) && job.requirements.length) {
+    const joined = job.requirements
+      .map((item) => toPlainJobText(String(item)))
+      .filter(Boolean)
+      .slice(0, 2)
+      .join(' · ');
+    if (!isWeakJobBlurb(joined, title)) return joined;
+  }
+
+  if (Array.isArray(job.skills) && job.skills.length) {
+    const skills = job.skills.map((s) => asText(s)).filter(Boolean).slice(0, 6);
+    if (skills.length) return `Key skills: ${skills.join(', ')}.`;
+  }
+
+  return title
+    ? `Open the ${title} role to view full details and apply.`
+    : 'Open this role to view full details.';
+}
+
+function buildLocation(job: Record<string, unknown>): string {
+  const direct = asText(job.location);
+  if (direct) return direct;
+  const parts = [asText(job.city), asText(job.state), asText(job.country)].filter(Boolean);
+  return parts.join(', ');
+}
+
 function mapJob(job: any, index: number): SearchJob {
   const redacted = redactPortalJobListing(job, {
     showClientNamePublicly: job.showClientNamePublicly !== false,
     publicFieldVisibility: job.publicFieldVisibility,
-  });
-  const title = String(redacted.title || redacted.jobTitle || '').trim();
-  const company = String(redacted.company || resolvePortalCompanyName(redacted) || '').trim();
-  const location = String(redacted.location || '').trim();
-  const salary =
-    redacted.salaryMin != null || redacted.salaryMax != null || redacted.salary
-      ? formatSalary(redacted)
+  }) as Record<string, unknown>;
+
+  const title = asText(redacted.title || redacted.jobTitle);
+  const company = asText(redacted.company);
+  const location = buildLocation(redacted);
+  const country = asText(redacted.country);
+  const industry = [
+    asText(redacted.industry),
+    asText(redacted.jobCategory),
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const salary = formatSalary(redacted);
+  const type = formatEmploymentType(asText(redacted.type || redacted.employmentType));
+  const workMode = formatWorkMode(asText(redacted.workMode || redacted.jobLocationType));
+  const description = buildDescription(redacted);
+  const logoRaw = resolvePortalCompanyLogo(redacted, '');
+  const logo =
+    company && logoRaw && logoRaw !== '/perosn_icon.png' && !logoRaw.includes('perosn_icon')
+      ? logoRaw
       : '';
-  const type = String(redacted.type || redacted.employmentType || '').trim();
-  const workMode = String(redacted.workMode || redacted.jobLocationType || '').trim();
-  const description = String(
-    redacted.overview || redacted.aboutRole || redacted.description || '',
-  ).trim();
 
   return {
-    id: redacted.id || redacted._id || job.id || job._id || `job-${index}`,
-    title,
+    id: (redacted.id as string) || (redacted._id as string) || job.id || job._id || `job-${index}`,
+    title: title || 'Untitled role',
     company,
-    logo: resolvePortalCompanyLogo(redacted, ''),
+    logo,
     location,
+    country,
+    industry,
     salary,
     type,
     workMode,
@@ -155,6 +311,30 @@ function SearchJobsAuthModal({
   );
 }
 
+function MetaChip({
+  icon,
+  label,
+  tone = 'cyan',
+}: {
+  icon: ReactNode;
+  label: string;
+  tone?: 'cyan' | 'orange';
+}) {
+  if (!label) return null;
+  return (
+    <span
+      className="inline-flex max-w-full items-center rounded-xl border px-3 py-1.5 text-[11px] font-bold text-slate-600"
+      style={{
+        borderColor: tone === 'orange' ? 'rgba(252,150,32,0.28)' : THEME.cyanBorder,
+        background: tone === 'orange' ? THEME.orangeSoft : 'rgba(240,249,252,0.9)',
+      }}
+    >
+      <span className="mr-1.5 shrink-0">{icon}</span>
+      <span className="truncate">{label}</span>
+    </span>
+  );
+}
+
 function SearchJobsContent() {
   const locale = useLocale() as AppLocale;
   const searchParams = useSearchParams();
@@ -171,14 +351,16 @@ function SearchJobsContent() {
     async function loadJobs() {
       try {
         setLoading(true);
-        const response = await fetch(withJobApiLocale(`${API_BASE_URL}/jobs?limit=500`, locale), { method: 'GET' });
+        const response = await fetch(withJobApiLocale(`${API_BASE_URL}/jobs?limit=500`, locale), {
+          method: 'GET',
+        });
         const result = await response.json();
         if (!response.ok || !result?.success) {
           throw new Error(result?.message || 'Failed to load jobs');
         }
 
         const rawData = result?.data || [];
-        const rawJobs = Array.isArray(rawData) ? rawData : (rawData.jobs || []);
+        const rawJobs = Array.isArray(rawData) ? rawData : rawData.jobs || [];
         if (!cancelled) {
           setJobs(rawJobs.map(mapJob));
         }
@@ -198,9 +380,12 @@ function SearchJobsContent() {
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
-      const hay = `${job.title} ${job.company} ${job.location} ${job.type} ${job.workMode} ${job.description}`.toLowerCase();
+      const hay = `${job.title} ${job.company} ${job.location} ${job.country} ${job.industry} ${job.type} ${job.workMode} ${job.description}`.toLowerCase();
       const matchesQuery = !searchQuery || hay.includes(searchQuery);
-      const matchesLocation = !locationQuery || job.location.toLowerCase().includes(locationQuery);
+      const matchesLocation =
+        !locationQuery ||
+        job.location.toLowerCase().includes(locationQuery) ||
+        job.country.toLowerCase().includes(locationQuery);
       return matchesQuery && matchesLocation;
     });
   }, [jobs, searchQuery, locationQuery]);
@@ -214,7 +399,9 @@ function SearchJobsContent() {
         >
           <div
             className="h-1.5 w-full"
-            style={{ background: `linear-gradient(90deg, ${THEME.cyan} 0%, ${THEME.cyanDeep} 45%, ${THEME.orange} 100%)` }}
+            style={{
+              background: `linear-gradient(90deg, ${THEME.cyan} 0%, ${THEME.cyanDeep} 45%, ${THEME.orange} 100%)`,
+            }}
           />
 
           <div className="p-8">
@@ -275,18 +462,18 @@ function SearchJobsContent() {
                     key={job.id}
                     type="button"
                     onClick={() => setSelectedJob(job)}
-                    className="group flex h-full flex-col rounded-[28px] border border-slate-200/90 bg-white p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#28A8E1] hover:shadow-[0_20px_40px_-20px_rgba(40,168,225,0.35)]"
+                    className="group flex h-full min-h-[320px] flex-col rounded-[28px] border border-slate-200/90 bg-white p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#28A8E1] hover:shadow-[0_20px_40px_-20px_rgba(40,168,225,0.35)]"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-center gap-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-start gap-3">
                         <div
-                          className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border bg-slate-50"
+                          className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border bg-slate-50"
                           style={{ borderColor: THEME.cyanBorder }}
                         >
                           {job.logo ? (
                             <img
                               src={job.logo}
-                              alt={job.company}
+                              alt={job.company || job.title}
                               className="h-full w-full object-contain bg-white"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
@@ -296,15 +483,19 @@ function SearchJobsContent() {
                             <Briefcase className="h-6 w-6" style={{ color: THEME.cyan }} />
                           )}
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <h2 className="text-lg font-black leading-tight text-slate-900 transition-colors group-hover:text-[#1A8FC4]">
                             {job.title}
                           </h2>
-                          <p className="mt-1 text-sm font-semibold text-slate-600">{job.company}</p>
+                          {job.company ? (
+                            <p className="mt-1 truncate text-sm font-semibold text-slate-600">
+                              {job.company}
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                       <span
-                        className="rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em]"
+                        className="shrink-0 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em]"
                         style={{ background: THEME.cyanSoft, color: THEME.cyanDeep }}
                       >
                         Open
@@ -312,41 +503,42 @@ function SearchJobsContent() {
                     </div>
 
                     <div className="mt-5 flex flex-wrap gap-2">
-                      <span
-                        className="inline-flex items-center rounded-xl border px-3 py-1.5 text-[11px] font-bold text-slate-600"
-                        style={{ borderColor: THEME.cyanBorder, background: 'rgba(240,249,252,0.9)' }}
-                      >
-                        <MapPin className="mr-1.5 h-3.5 w-3.5" style={{ color: THEME.cyan }} /> {job.location}
-                      </span>
-                      <span
-                        className="inline-flex items-center rounded-xl border px-3 py-1.5 text-[11px] font-bold text-slate-600"
-                        style={{ borderColor: THEME.cyanBorder, background: 'rgba(240,249,252,0.9)' }}
-                      >
-                        <Briefcase className="mr-1.5 h-3.5 w-3.5" style={{ color: THEME.cyan }} /> {job.type}
-                      </span>
-                      <span
-                        className="inline-flex items-center rounded-xl border px-3 py-1.5 text-[11px] font-bold text-slate-600"
-                        style={{ borderColor: 'rgba(252,150,32,0.28)', background: THEME.orangeSoft }}
-                      >
-                        <Clock3 className="mr-1.5 h-3.5 w-3.5" style={{ color: THEME.orange }} />{' '}
-                        {job.postedAtLabel}
-                      </span>
+                      <MetaChip
+                        icon={<MapPin className="h-3.5 w-3.5" style={{ color: THEME.cyan }} />}
+                        label={job.location}
+                      />
+                      <MetaChip
+                        icon={<Briefcase className="h-3.5 w-3.5" style={{ color: THEME.cyan }} />}
+                        label={job.type}
+                      />
+                      <MetaChip
+                        icon={<Wifi className="h-3.5 w-3.5" style={{ color: THEME.cyan }} />}
+                        label={job.workMode}
+                      />
+                      <MetaChip
+                        icon={<Clock3 className="h-3.5 w-3.5" style={{ color: THEME.orange }} />}
+                        label={job.postedAtLabel}
+                        tone="orange"
+                      />
                     </div>
 
-                    <p className="mt-5 line-clamp-4 text-sm font-medium leading-6 text-slate-500">
+                    <p className="mt-5 line-clamp-3 flex-1 text-sm font-medium leading-6 text-slate-500">
                       {job.description}
                     </p>
 
-                    <div className="mt-auto flex items-end justify-between pt-6">
-                      <div>
+                    <div className="mt-auto flex items-end justify-between gap-3 pt-6">
+                      <div className="min-w-0">
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                           Salary
                         </p>
-                        <p className="mt-1 text-lg font-black" style={{ color: THEME.cyanDeep }}>
-                          {job.salary}
+                        <p
+                          className="mt-1 truncate text-lg font-black"
+                          style={{ color: THEME.cyanDeep }}
+                        >
+                          {job.salary || 'Not specified'}
                         </p>
                       </div>
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#28A8E1] text-white shadow-[0_8px_18px_-8px_rgba(40,168,225,0.75)] transition-all group-hover:bg-[#1A8FC4] group-hover:scale-105">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#28A8E1] text-white shadow-[0_8px_18px_-8px_rgba(40,168,225,0.75)] transition-all group-hover:scale-105 group-hover:bg-[#1A8FC4]">
                         <ArrowRight className="h-4 w-4" />
                       </div>
                     </div>
@@ -369,11 +561,7 @@ function SearchJobsContent() {
 
 export default function SearchJobsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen pt-28" style={{ background: THEME.pageBg }} />
-      }
-    >
+    <Suspense fallback={<div className="min-h-screen pt-28" style={{ background: THEME.pageBg }} />}>
       <SearchJobsContent />
     </Suspense>
   );

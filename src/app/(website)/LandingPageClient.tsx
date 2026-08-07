@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/components/auth/AuthContext";
 import { API_BASE_URL, getApiBaseUrl } from "@/lib/api-base";
-import { resolvePortalCompanyLogo, resolvePortalCompanyName } from "@/lib/map-portal-job";
+import { resolvePortalCompanyLogo } from "@/lib/map-portal-job";
 import { redactPortalJobListing } from "@/lib/job-public-field-visibility";
 import { AppLocale, localizePath } from "@/lib/i18n";
 import { withJobApiLocale } from "@/lib/jobApiLocale";
@@ -249,7 +249,7 @@ export default function LandingPage() {
             return {
             id: String(redacted.id || redacted._id || job.id || job._id || ''),
             title: String(redacted.title || '').trim(),
-            company: String(redacted.company || resolvePortalCompanyName(redacted) || '').trim(),
+            company: String(redacted.company || '').trim(),
             location: String(redacted.location || '').trim(),
             workStyle: resolveLandingWorkStyle(redacted, jobLabels),
             type: resolveLandingJobType(redacted.type || redacted.employmentType, jobLabels),

@@ -8,10 +8,7 @@ import { getApiBaseUrl } from '@/lib/api-base';
 import { AppLocale, localizePath } from '@/lib/i18n';
 import {
   Search, MapPin, ChevronRight,
-  Home, Building2, BarChart2, Package, GraduationCap,
-  Code2, TrendingUp, BadgeDollarSign, Cpu, Users,
-  Globe2, HeartPulse, Factory, ShoppingBag, BookOpen, Hotel,
-  Briefcase, UserRound, Award, Landmark,
+  Globe2, Factory, Briefcase,
 } from 'lucide-react';
 import {
   buildSearchJobsUrl,
@@ -20,6 +17,9 @@ import {
   HighlightMatch,
   portalSearchHeroStyles,
   scoreMatch,
+  splitCategoryLabels,
+  TRENDING_CHIP_STYLES,
+  uniqueLabels,
 } from './portalSearchHero.helpers';
 
 export function PortalSearchHero() {
@@ -34,6 +34,12 @@ export function PortalSearchHero() {
   const [showLocSuggestions, setShowLocSuggestions] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [exploreTab, setExploreTab] = useState<'country' | 'industries' | 'departments'>('country');
+  const [dbTitles, setDbTitles] = useState<string[]>([]);
+  const [dbLocations, setDbLocations] = useState<string[]>([]);
+  const [dbCountries, setDbCountries] = useState<string[]>([]);
+  const [dbIndustries, setDbIndustries] = useState<string[]>([]);
+  const [dbDepartments, setDbDepartments] = useState<string[]>([]);
+  const [catalogJobs, setCatalogJobs] = useState<any[]>([]);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const locationInputRef = useRef<HTMLInputElement | null>(null);
   const shineWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -41,6 +47,90 @@ export function PortalSearchHero() {
   const [shineRing, setShineRing] = useState<ReturnType<
     typeof computeShineRingMetrics
   > | null>(null);
+
+  // Load real job titles / locations from the database for placeholders + empty-focus suggestions.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/jobs?page=1&limit=80`);
+        if (!res.ok) return;
+        const result = await res.json();
+        const jobs = Array.isArray(result?.data?.jobs)
+          ? result.data.jobs
+          : Array.isArray(result?.data)
+            ? result.data
+            : Array.isArray(result?.jobs)
+              ? result.jobs
+              : [];
+        if (cancelled || !jobs.length) return;
+
+        const titleSeen = new Set<string>();
+        const titles: string[] = [];
+        const locationSeen = new Set<string>();
+        const locations: string[] = [];
+        const countryRaw: string[] = [];
+        const industryRaw: string[] = [];
+        const catalog: any[] = [];
+
+        for (const job of jobs) {
+          const title = String(job?.title || '').trim();
+          if (title) {
+            const key = title.toLowerCase();
+            if (!titleSeen.has(key)) {
+              titleSeen.add(key);
+              titles.push(title);
+              catalog.push({
+                id: job.id,
+                title,
+                company: job.company?.name || job.companyName || job.client?.companyName || null,
+                location: job.location || '',
+                type: job.type || job.employmentType || '',
+                logo: job.logo || job.company?.logoUrl || '',
+                isAiSuggestion: false,
+              });
+            }
+          }
+
+          const country = String(job?.country || '').trim();
+          if (country) countryRaw.push(country);
+
+          industryRaw.push(
+            ...splitCategoryLabels(job?.industry),
+            ...splitCategoryLabels(job?.jobCategory),
+          );
+
+          const locCandidates = [
+            job?.location,
+            [job?.city, job?.state, job?.country].filter(Boolean).join(', '),
+            job?.city,
+            job?.country,
+          ]
+            .map((v) => String(v || '').trim())
+            .filter(Boolean);
+          for (const loc of locCandidates) {
+            const key = loc.toLowerCase();
+            if (locationSeen.has(key)) continue;
+            locationSeen.add(key);
+            locations.push(loc);
+          }
+        }
+
+        setDbTitles(titles);
+        setDbLocations(locations);
+        setDbCountries(uniqueLabels(countryRaw));
+        setDbIndustries(uniqueLabels(industryRaw));
+        // Departments tab: live job titles from DB (roles actually hiring)
+        setDbDepartments(titles);
+        setCatalogJobs(catalog);
+      } catch (err) {
+        console.error('Failed to load search catalog from database', err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const el = shineWrapperRef.current;
@@ -80,91 +170,121 @@ export function PortalSearchHero() {
     return () => window.clearInterval(timer);
   }, []);
 
-  // Debounced Search Suggestions
+  // Debounced Search Suggestions (database jobs only)
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (heroSearch.title.length >= 2 && searchMode === 'search') {
-        try {
-          setIsSuggesting(true);
-          const res = await fetch(`${getApiBaseUrl()}/jobs/recommend?q=${encodeURIComponent(heroSearch.title)}`);
-          if (res.ok) {
-            const result = await res.json();
-            const rawSuggestions = Array.isArray(result.data) ? result.data : [];
-            const dbOnlySuggestions = rawSuggestions
-              .filter((item: any) => {
-                if (!item) return false;
-                if (item.isAiSuggestion || item.isAi) return false;
-                const label = getSuggestionLabel(item);
-                if (!String(label || '').trim()) return false;
-                // Only keep suggestions that actually match the typed characters
-                return scoreMatch(String(label), heroSearch.title) > 0;
-              })
-              .sort((a: any, b: any) => {
-                const scoreA = scoreMatch(String(getSuggestionLabel(a)), heroSearch.title);
-                const scoreB = scoreMatch(String(getSuggestionLabel(b)), heroSearch.title);
-                return scoreB - scoreA; // highest score first
-              })
-              .slice(0, 8); // cap at 8 suggestions
-            setSuggestions(dbOnlySuggestions);
-            if (document.activeElement === titleInputRef.current) {
-              setShowSuggestions(dbOnlySuggestions.length > 0);
-            }
-          }
-        } catch (err) {
-          console.error("Suggestion fetch failed", err);
-          setSuggestions([]);
-          setShowSuggestions(false);
-        } finally {
-          setIsSuggesting(false);
-        }
-      } else {
+      if (searchMode !== 'search') {
         setSuggestions([]);
         setShowSuggestions(false);
+        return;
+      }
+
+      const query = heroSearch.title.trim();
+
+      // Empty query: show catalog titles from DB while focused
+      if (query.length < 2) {
+        const catalogSuggestions = catalogJobs.slice(0, 8);
+        setSuggestions(catalogSuggestions);
+        if (document.activeElement === titleInputRef.current) {
+          setShowSuggestions(catalogSuggestions.length > 0);
+        } else {
+          setShowSuggestions(false);
+        }
+        return;
+      }
+
+      try {
+        setIsSuggesting(true);
+        const res = await fetch(`${getApiBaseUrl()}/jobs/recommend?q=${encodeURIComponent(query)}`);
+        if (res.ok) {
+          const result = await res.json();
+          const rawSuggestions = Array.isArray(result.data) ? result.data : [];
+          const dbOnlySuggestions = rawSuggestions
+            .filter((item: any) => {
+              if (!item) return false;
+              if (item.isAiSuggestion || item.isAi) return false;
+              const label = getSuggestionLabel(item);
+              if (!String(label || '').trim()) return false;
+              return scoreMatch(String(label), query) > 0;
+            })
+            .sort((a: any, b: any) => {
+              const scoreA = scoreMatch(String(getSuggestionLabel(a)), query);
+              const scoreB = scoreMatch(String(getSuggestionLabel(b)), query);
+              return scoreB - scoreA;
+            })
+            .slice(0, 8);
+          setSuggestions(dbOnlySuggestions);
+          if (document.activeElement === titleInputRef.current) {
+            setShowSuggestions(dbOnlySuggestions.length > 0);
+          }
+        }
+      } catch (err) {
+        console.error("Suggestion fetch failed", err);
+        setSuggestions([]);
+        setShowSuggestions(false);
+      } finally {
+        setIsSuggesting(false);
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [heroSearch.title, searchMode]);
+  }, [heroSearch.title, searchMode, catalogJobs]);
 
-  // Debounced Location Suggestions
+  // Debounced Location Suggestions (database locations only)
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (heroSearch.location.length >= 1 && searchMode === 'search') {
-        try {
-          const res = await fetch(`${getApiBaseUrl()}/jobs/location-recommend?q=${encodeURIComponent(heroSearch.location)}`);
-          if (res.ok) {
-            const result = await res.json();
-            const rawLocationSuggestions = Array.isArray(result.data) ? result.data : [];
-            const dbOnlyLocationSuggestions = rawLocationSuggestions
-              .filter((item: any) => {
-                if (!item) return false;
-                if (item.isAiSuggestion || item.isAi) return false;
-                const label = getSuggestionLabel(item);
-                if (!String(label || '').trim()) return false;
-                return scoreMatch(String(label), heroSearch.location) > 0;
-              })
-              .sort((a: any, b: any) => {
-                const scoreA = scoreMatch(String(getSuggestionLabel(a)), heroSearch.location);
-                const scoreB = scoreMatch(String(getSuggestionLabel(b)), heroSearch.location);
-                return scoreB - scoreA;
-              })
-              .slice(0, 6);
-            setLocSuggestions(dbOnlyLocationSuggestions);
-            if (document.activeElement === locationInputRef.current) {
-              setShowLocSuggestions(dbOnlyLocationSuggestions.length > 0);
-            }
-          }
-        } catch (err) {
-          console.error("Loc suggestion fetch failed", err);
-          setLocSuggestions([]);
+      if (searchMode !== 'search') {
+        setLocSuggestions([]);
+        setShowLocSuggestions(false);
+        return;
+      }
+
+      const query = heroSearch.location.trim();
+
+      if (query.length < 1) {
+        const catalogLocs = dbLocations.slice(0, 6).map((name) => ({ name, isAi: false, isDb: true }));
+        setLocSuggestions(catalogLocs);
+        if (document.activeElement === locationInputRef.current) {
+          setShowLocSuggestions(catalogLocs.length > 0);
+        } else {
           setShowLocSuggestions(false);
         }
-      } else {
+        return;
+      }
+
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/jobs/location-recommend?q=${encodeURIComponent(query)}`);
+        if (res.ok) {
+          const result = await res.json();
+          const rawLocationSuggestions = Array.isArray(result.data) ? result.data : [];
+          const dbOnlyLocationSuggestions = rawLocationSuggestions
+            .filter((item: any) => {
+              if (!item) return false;
+              if (item.isAiSuggestion || item.isAi) return false;
+              // Prefer explicitly DB-backed rows; allow when flag omitted (older API)
+              if (item.isDb === false) return false;
+              const label = getSuggestionLabel(item);
+              if (!String(label || '').trim()) return false;
+              return scoreMatch(String(label), query) > 0;
+            })
+            .sort((a: any, b: any) => {
+              const scoreA = scoreMatch(String(getSuggestionLabel(a)), query);
+              const scoreB = scoreMatch(String(getSuggestionLabel(b)), query);
+              return scoreB - scoreA;
+            })
+            .slice(0, 6);
+          setLocSuggestions(dbOnlyLocationSuggestions);
+          if (document.activeElement === locationInputRef.current) {
+            setShowLocSuggestions(dbOnlyLocationSuggestions.length > 0);
+          }
+        }
+      } catch (err) {
+        console.error("Loc suggestion fetch failed", err);
         setLocSuggestions([]);
         setShowLocSuggestions(false);
       }
     }, 250);
     return () => clearTimeout(timer);
-  }, [heroSearch.location, searchMode]);
+  }, [heroSearch.location, searchMode, dbLocations]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,14 +335,15 @@ export function PortalSearchHero() {
     }
   };
 
-  const rotatingWords = useMemo(
-    () => t.raw("landing.rotatingWords") as string[],
-    [locale, t],
-  );
-  const rotatingLocations = useMemo(
-    () => t.raw("landing.rotatingLocations") as string[],
-    [locale, t],
-  );
+  // Rolling placeholders: real DB titles/locations only (no fake i18n hubs).
+  const rotatingWords = useMemo(() => {
+    if (dbTitles.length > 0) return dbTitles;
+    return ['Job title'];
+  }, [dbTitles]);
+  const rotatingLocations = useMemo(() => {
+    if (dbLocations.length > 0) return dbLocations;
+    return ['Location'];
+  }, [dbLocations]);
   const rotatingAIPrompts = useMemo(
     () => t.raw("landing.rotatingAiPrompts") as string[],
     [locale, t],
@@ -469,7 +590,12 @@ export function PortalSearchHero() {
                           onKeyDown={preventEnterSubmit}
                           onFocus={() => {
                             setShowLocSuggestions(false);
-                            if (suggestions.length > 0) setShowSuggestions(true);
+                            if (heroSearch.title.trim().length < 2 && catalogJobs.length > 0) {
+                              setSuggestions(catalogJobs.slice(0, 8));
+                              setShowSuggestions(true);
+                            } else if (suggestions.length > 0) {
+                              setShowSuggestions(true);
+                            }
                           }}
                           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                         />
@@ -530,7 +656,14 @@ export function PortalSearchHero() {
                           onKeyDown={preventEnterSubmit}
                           onFocus={() => {
                             setShowSuggestions(false);
-                            if (locSuggestions.length > 0) setShowLocSuggestions(true);
+                            if (heroSearch.location.trim().length < 1 && dbLocations.length > 0) {
+                              setLocSuggestions(
+                                dbLocations.slice(0, 6).map((name) => ({ name, isAi: false, isDb: true })),
+                              );
+                              setShowLocSuggestions(true);
+                            } else if (locSuggestions.length > 0) {
+                              setShowLocSuggestions(true);
+                            }
                           }}
                           onBlur={() => setTimeout(() => setShowLocSuggestions(false), 200)}
                         />
@@ -708,65 +841,24 @@ export function PortalSearchHero() {
                   <div className="category-glass-orb category-glass-orb-3" aria-hidden />
 
                   {(() => {
-                    const countryItems = [
-                      { label: t('landing.countryIndia'), Icon: Globe2, q: 'India', color: 'text-sky-600', tint: 'rgba(56, 189, 248, 0.22)' },
-                      { label: t('landing.countryUae'), Icon: Building2, q: 'UAE', color: 'text-emerald-600', tint: 'rgba(52, 211, 153, 0.22)' },
-                      { label: t('landing.countryUsa'), Icon: Home, q: 'USA', color: 'text-blue-600', tint: 'rgba(59, 130, 246, 0.22)' },
-                      { label: t('landing.countryUk'), Icon: Landmark, q: 'UK', color: 'text-indigo-600', tint: 'rgba(99, 102, 241, 0.22)' },
-                      { label: t('landing.countrySingapore'), Icon: Globe2, q: 'Singapore', color: 'text-violet-600', tint: 'rgba(167, 139, 250, 0.22)' },
-                      { label: t('landing.countryCanada'), Icon: MapPin, q: 'Canada', color: 'text-rose-600', tint: 'rgba(244, 63, 94, 0.2)' },
-                      { label: t('landing.countryGermany'), Icon: Factory, q: 'Germany', color: 'text-amber-600', tint: 'rgba(251, 191, 36, 0.22)' },
-                      { label: t('landing.countryAustralia'), Icon: Globe2, q: 'Australia', color: 'text-orange-600', tint: 'rgba(251, 146, 60, 0.22)' },
-                      { label: t('landing.countryJapan'), Icon: Building2, q: 'Japan', color: 'text-pink-600', tint: 'rgba(236, 72, 153, 0.2)' },
-                      { label: t('landing.countryFrance'), Icon: Landmark, q: 'France', color: 'text-cyan-600', tint: 'rgba(34, 211, 238, 0.22)' },
-                      { label: t('landing.countryNetherlands'), Icon: Home, q: 'Netherlands', color: 'text-lime-600', tint: 'rgba(163, 230, 53, 0.22)' },
-                      { label: t('landing.countrySaudi'), Icon: Building2, q: 'Saudi Arabia', color: 'text-teal-600', tint: 'rgba(45, 212, 191, 0.22)' },
-                    ] as const;
+                    const toChips = (
+                      labels: string[],
+                      Icon: typeof Globe2,
+                    ) =>
+                      labels.map((label, index) => {
+                        const style = TRENDING_CHIP_STYLES[index % TRENDING_CHIP_STYLES.length];
+                        return {
+                          label,
+                          q: label,
+                          Icon,
+                          color: style.color,
+                          tint: style.tint,
+                        };
+                      });
 
-                    const industryItems = [
-                      { label: t('landing.industryTechnology'), Icon: Code2, q: 'Technology', color: 'text-blue-600', tint: 'rgba(59, 130, 246, 0.22)' },
-                      { label: t('landing.industryHealthcare'), Icon: HeartPulse, q: 'Healthcare', color: 'text-rose-600', tint: 'rgba(244, 63, 94, 0.2)' },
-                      { label: t('landing.industryFinance'), Icon: BadgeDollarSign, q: 'Finance', color: 'text-green-600', tint: 'rgba(34, 197, 94, 0.2)' },
-                      { label: t('landing.industryManufacturing'), Icon: Factory, q: 'Manufacturing', color: 'text-slate-600', tint: 'rgba(100, 116, 139, 0.18)' },
-                      { label: t('landing.industryRetail'), Icon: ShoppingBag, q: 'Retail', color: 'text-orange-600', tint: 'rgba(251, 146, 60, 0.22)' },
-                      { label: t('landing.industryEducation'), Icon: BookOpen, q: 'Education', color: 'text-violet-600', tint: 'rgba(167, 139, 250, 0.22)' },
-                      { label: t('landing.industryLogistics'), Icon: Package, q: 'Logistics', color: 'text-amber-600', tint: 'rgba(251, 191, 36, 0.22)' },
-                      { label: t('landing.industryHospitality'), Icon: Hotel, q: 'Hospitality', color: 'text-pink-600', tint: 'rgba(236, 72, 153, 0.2)' },
-                      { label: t('landing.industryTelecom'), Icon: Cpu, q: 'Telecom', color: 'text-sky-600', tint: 'rgba(56, 189, 248, 0.22)' },
-                      { label: t('landing.industryEnergy'), Icon: TrendingUp, q: 'Energy', color: 'text-lime-600', tint: 'rgba(163, 230, 53, 0.22)' },
-                      { label: t('landing.industryMedia'), Icon: BarChart2, q: 'Media', color: 'text-fuchsia-600', tint: 'rgba(217, 70, 239, 0.2)' },
-                      { label: t('landing.industryRealEstate'), Icon: Building2, q: 'Real Estate', color: 'text-cyan-600', tint: 'rgba(34, 211, 238, 0.22)' },
-                    ] as const;
-
-                    const departmentRows = [
-                      {
-                        label: t('landing.exploreJrLevel'),
-                        items: [
-                          { label: t('landing.deptFresher'), Icon: GraduationCap, q: 'Fresher', color: 'text-emerald-600', tint: 'rgba(52, 211, 153, 0.22)' },
-                          { label: t('landing.deptInternship'), Icon: UserRound, q: 'Internship', color: 'text-sky-600', tint: 'rgba(56, 189, 248, 0.22)' },
-                          { label: t('landing.deptJrSoftware'), Icon: Code2, q: 'Junior Software', color: 'text-blue-600', tint: 'rgba(59, 130, 246, 0.22)' },
-                          { label: t('landing.deptJrSales'), Icon: TrendingUp, q: 'Junior Sales', color: 'text-rose-600', tint: 'rgba(244, 63, 94, 0.2)' },
-                        ],
-                      },
-                      {
-                        label: t('landing.exploreMidLevel'),
-                        items: [
-                          { label: t('landing.deptMidSoftware'), Icon: Code2, q: 'Mid Software', color: 'text-blue-600', tint: 'rgba(59, 130, 246, 0.22)' },
-                          { label: t('landing.deptMidSales'), Icon: TrendingUp, q: 'Mid Sales', color: 'text-rose-600', tint: 'rgba(244, 63, 94, 0.2)' },
-                          { label: t('landing.deptMidFinance'), Icon: BadgeDollarSign, q: 'Mid Finance', color: 'text-green-600', tint: 'rgba(34, 197, 94, 0.2)' },
-                          { label: t('landing.deptMidMarketing'), Icon: BarChart2, q: 'Mid Marketing', color: 'text-amber-600', tint: 'rgba(251, 191, 36, 0.22)' },
-                        ],
-                      },
-                      {
-                        label: t('landing.exploreSrLevel'),
-                        items: [
-                          { label: t('landing.deptSrEngineering'), Icon: Cpu, q: 'Senior Engineering', color: 'text-slate-600', tint: 'rgba(100, 116, 139, 0.18)' },
-                          { label: t('landing.deptManager'), Icon: Briefcase, q: 'Manager', color: 'text-violet-600', tint: 'rgba(167, 139, 250, 0.22)' },
-                          { label: t('landing.deptLeadership'), Icon: Users, q: 'Leadership', color: 'text-indigo-600', tint: 'rgba(99, 102, 241, 0.22)' },
-                          { label: t('landing.deptDirector'), Icon: Award, q: 'Director', color: 'text-orange-600', tint: 'rgba(251, 146, 60, 0.22)' },
-                        ],
-                      },
-                    ] as const;
+                    const countryItems = toChips(dbCountries, Globe2);
+                    const industryItems = toChips(dbIndustries, Factory);
+                    const departmentItems = toChips(dbDepartments, Briefcase);
 
                     const chunk = <T,>(items: readonly T[], size: number) => {
                       const rows: T[][] = [];
@@ -774,12 +866,32 @@ export function PortalSearchHero() {
                       return rows;
                     };
 
-                    const rows =
+                    const activeItems =
                       exploreTab === 'country'
-                        ? chunk(countryItems, 4).map((items) => ({ label: '', items, isLocation: true }))
+                        ? countryItems
                         : exploreTab === 'industries'
-                          ? chunk(industryItems, 4).map((items) => ({ label: '', items, isLocation: false }))
-                          : departmentRows.map((row) => ({ label: row.label, items: row.items, isLocation: false }));
+                          ? industryItems
+                          : departmentItems;
+                    const isLocation = exploreTab === 'country';
+                    const rows = chunk(activeItems, 4).map((items) => ({
+                      label: '',
+                      items,
+                      isLocation,
+                    }));
+
+                    if (activeItems.length === 0) {
+                      return (
+                        <div className="category-glass-panel">
+                          <p className="py-8 text-center text-sm font-medium text-slate-500">
+                            {exploreTab === 'country'
+                              ? 'No countries available from open jobs yet.'
+                              : exploreTab === 'industries'
+                                ? 'No industries available from open jobs yet.'
+                                : 'No departments available from open jobs yet.'}
+                          </p>
+                        </div>
+                      );
+                    }
 
                     return (
                       <div className="category-glass-panel">
