@@ -63,6 +63,23 @@ export default function GlobalAIAssistant() {
   const barePath = stripLocaleFromPathname(pathname);
   const hideOnOfficeGossips =
     barePath === '/community' || barePath.startsWith('/community/');
+  const hideOnSearchJobs =
+    barePath === '/searchjobs' || barePath.startsWith('/searchjobs/');
+  const hideOnCourses =
+    barePath === '/courses' || barePath.startsWith('/courses/');
+  const hideOnPublicMarketing =
+    barePath === '/' ||
+    barePath === '' ||
+    barePath === '/employers' ||
+    barePath.startsWith('/employers/') ||
+    barePath === '/events' ||
+    barePath.startsWith('/events/') ||
+    barePath === '/services' ||
+    barePath.startsWith('/services/') ||
+    barePath === '/login' ||
+    barePath === '/signup' ||
+    barePath === '/whatsapp' ||
+    barePath.startsWith('/whatsapp/');
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -148,7 +165,7 @@ export default function GlobalAIAssistant() {
     handleSendMessage(func.prompt);
   };
 
-  if (hideOnOfficeGossips) return null;
+  if (hideOnOfficeGossips || hideOnSearchJobs || hideOnCourses || hideOnPublicMarketing) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end">

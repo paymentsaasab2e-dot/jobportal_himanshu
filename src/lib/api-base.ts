@@ -50,6 +50,34 @@ export const switchToLocalBackend = () => {
   _effectiveApiBaseUrl = `${LOCAL_API_ORIGIN}/api`;
 };
 
+/** Prefer hosted api1 when local Phase 1 backend is down (common in local UI-only sessions). */
+export const switchToHostedBackend = () => {
+  const hosted = `${HOSTED_API_ORIGIN}/api`;
+  if (_effectiveApiBaseUrl === hosted) return;
+  console.warn('⚠️ Switching to Hosted Backend (api1.hryantra.com) — local :5000 unreachable');
+  _effectiveApiBaseUrl = hosted;
+};
+
+function isLocalApiBase(base: string) {
+  return /localhost|127\.0\.0\.1/i.test(base);
+}
+
+/**
+ * fetch against getApiBaseUrl(); on network failure against localhost,
+ * flip to hosted api1 and retry once so Trendings / search keep working.
+ */
+export async function fetchFromApi(pathWithQuery: string, init?: RequestInit): Promise<Response> {
+  const path = pathWithQuery.startsWith('/') ? pathWithQuery : `/${pathWithQuery}`;
+  const primary = `${getApiBaseUrl()}${path}`;
+  try {
+    return await fetch(primary, init);
+  } catch (err) {
+    if (!isLocalApiBase(getApiBaseUrl())) throw err;
+    switchToHostedBackend();
+    return fetch(`${getApiBaseUrl()}${path}`, init);
+  }
+}
+
 export const API_ORIGIN = (() => {
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL.trim().replace(/\/api\/?$/, '');
   if (process.env.NEXT_PUBLIC_VERCEL_URL) return HOSTED_API_ORIGIN;

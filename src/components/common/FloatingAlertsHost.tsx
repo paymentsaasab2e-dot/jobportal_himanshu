@@ -133,23 +133,49 @@ function shellForFloat(item: FloatItem) {
 
 function shouldHideOnPath(pathname: string | null): boolean {
   const path = stripLocaleFromPathname(pathname || '/');
+  // Public / marketing surfaces — never show Earn / Profile Alert / floats here,
+  // even if a session cookie still exists.
+  const exact = new Set([
+    '/',
+    '/login',
+    '/signup',
+    '/whatsapp',
+    '/apply',
+    '/searchjobs',
+    '/courses',
+    '/sa',
+    '/candmain',
+    '/employers',
+    '/events',
+    '/services',
+    '/ats-check',
+    '/explore-jobs',
+    '/aboutus',
+    '/contact',
+    '/privacypolicy',
+    '/terms',
+    '/trust-safety',
+    '/help',
+    '/faq',
+    '/executive-services',
+  ]);
+  if (exact.has(path)) return true;
   return (
-    path === '/' ||
-    path === '/login' ||
-    path === '/signup' ||
-    path === '/whatsapp' ||
     path.startsWith('/whatsapp/') ||
-    path === '/apply' ||
     path.startsWith('/apply/') ||
-    path === '/sa' ||
+    path.startsWith('/searchjobs/') ||
+    path.startsWith('/courses/') ||
     path.startsWith('/sa/') ||
-    path === '/candmain' ||
-    path.startsWith('/candmain/')
+    path.startsWith('/candmain/') ||
+    path.startsWith('/employers/') ||
+    path.startsWith('/events/') ||
+    path.startsWith('/services/') ||
+    path.startsWith('/explore-jobs/')
   );
 }
 
 export function FloatingAlertsHost() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, token, isAuthenticated, isLoading } = useAuth();
   const tokensCtx = useTokensOptional();
   const router = useRouter();
   const pathname = usePathname();
@@ -163,6 +189,7 @@ export function FloatingAlertsHost() {
   const timersRef = useRef<Map<string, number>>(new Map());
 
   const candidateId = user?.id || '';
+  const loggedIn = Boolean(mounted && !isLoading && isAuthenticated && token && candidateId);
   const hidden = shouldHideOnPath(pathname);
 
   const pendingEarn = useMemo(() => {
@@ -288,7 +315,7 @@ export function FloatingAlertsHost() {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated || isLoading || !candidateId || hidden) return;
+    if (!loggedIn || hidden) return;
 
     seenRef.current = loadSeenIds(candidateId);
     bootstrappedRef.current = seenRef.current.size > 0;
@@ -344,8 +371,7 @@ export function FloatingAlertsHost() {
       window.removeEventListener('saasa:hryantra-chat-updated', onChatUpdated as EventListener);
     };
   }, [
-    isAuthenticated,
-    isLoading,
+    loggedIn,
     candidateId,
     hidden,
     refreshMissing,
@@ -353,9 +379,17 @@ export function FloatingAlertsHost() {
     pushFloat,
   ]);
 
+  // Logged out / public page → clear any leftover cards immediately
+  useEffect(() => {
+    if (loggedIn && !hidden) return;
+    setFloats([]);
+    setEarnVisible(false);
+    setMissingSections([]);
+    bootstrappedRef.current = false;
+  }, [loggedIn, hidden]);
   // Pending earn floating nudge (dismissible, 30m cooldown)
   useEffect(() => {
-    if (!isAuthenticated || !candidateId || hidden || pendingEarn.length === 0) {
+    if (!loggedIn || hidden || pendingEarn.length === 0) {
       setEarnVisible(false);
       return;
     }
@@ -378,7 +412,7 @@ export function FloatingAlertsHost() {
       /* ignore */
     }
     setEarnVisible(true);
-  }, [isAuthenticated, candidateId, hidden, pendingEarn]);
+  }, [loggedIn, candidateId, hidden, pendingEarn]);
 
   useEffect(() => {
     return () => {
@@ -387,7 +421,7 @@ export function FloatingAlertsHost() {
     };
   }, []);
 
-  if (!mounted || !isAuthenticated || isLoading || hidden || !candidateId) {
+  if (!loggedIn || hidden) {
     return null;
   }
 

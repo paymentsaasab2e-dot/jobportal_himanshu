@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from './api-base';
+import { fetchFromApi, getApiBaseUrl } from './api-base';
 
 export type PortalEventSection = {
   id: string;
@@ -69,7 +69,7 @@ export async function fetchPublicEvents(
   if (search?.trim()) params.set('search', search.trim());
   if (scope) params.set('scope', scope);
   const qs = params.toString();
-  const res = await fetch(`${apiRoot()}/events/public${qs ? `?${qs}` : ''}`, { cache: 'no-store' });
+  const res = await fetchFromApi(`/events/public${qs ? `?${qs}` : ''}`);
   const payload = await parseJson<{ success: boolean; data: { events: PortalEventRow[] } }>(res);
   return Array.isArray(payload.data?.events) ? payload.data.events : [];
 }

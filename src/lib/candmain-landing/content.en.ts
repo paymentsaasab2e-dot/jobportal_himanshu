@@ -35,9 +35,9 @@ export const candmainLandingEn: CandmainLandingContent = {
     subtitle:
       'Every recruiter view, interview update, shortlist, role match, and skill signal is streamed live for candidates across tech, business, healthcare, finance, sales, design, operations, and more.',
     stats: [
-      { label: 'Live Profile Views', value: '42' },
-      { label: 'Role Matches Found', value: '12.5K+' },
-      { label: 'Interview Updates', value: '8' },
+      { label: 'Candidates', value: '—' },
+      { label: 'Interviews', value: '—' },
+      { label: 'Communities / Posts', value: '—' },
     ],
     streamTitle: 'Activity Stream',
     latestUpdate: 'Latest update',

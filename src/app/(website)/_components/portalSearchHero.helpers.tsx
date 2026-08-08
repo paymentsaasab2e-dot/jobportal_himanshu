@@ -67,11 +67,25 @@ export const buildSearchJobsUrl = (locale: AppLocale, title: string, location: s
   return params.toString() ? `${basePath}?${params.toString()}` : basePath;
 };
 
-/** Unique trimmed labels from a list (case-insensitive). */
-export function uniqueLabels(values: Array<string | null | undefined>, limit = 24): string[] {
+/** Unique trimmed labels from a list (case-insensitive). Caps to recent/first N (default 12). */
+export function uniqueLabels(values: Array<string | null | undefined>, limit = 12): string[] {
+  return recentTrendingLabels(values, limit);
+}
+
+/**
+ * Trendings sliding window (max `limit`):
+ * - `valuesNewestFirst` must list labels from newest jobs → oldest.
+ * - First time a label appears = its most recent appearance → higher rank.
+ * - A newly seen label becomes #1 in that pass; once the list is full, older
+ *   labels beyond `limit` are dropped (remove last / keep newest 12).
+ */
+export function recentTrendingLabels(
+  valuesNewestFirst: Array<string | null | undefined>,
+  limit = 12,
+): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
-  for (const raw of values) {
+  for (const raw of valuesNewestFirst) {
     const label = String(raw || '').trim();
     if (!label) continue;
     const key = label.toLowerCase();
@@ -81,6 +95,17 @@ export function uniqueLabels(values: Array<string | null | undefined>, limit = 2
     if (out.length >= limit) break;
   }
   return out;
+}
+
+/** Sort jobs newest-first for Trendings (postedAt → createdAt → updatedAt). */
+export function sortJobsNewestFirst<T extends Record<string, unknown>>(jobs: T[]): T[] {
+  const ts = (job: T) => {
+    const raw =
+      job.postedAt || job.createdAt || job.updatedAt || job.publishedAt || 0;
+    const n = new Date(String(raw)).getTime();
+    return Number.isFinite(n) ? n : 0;
+  };
+  return [...jobs].sort((a, b) => ts(b) - ts(a));
 }
 
 /** Split industry / category strings like "Financial Services; Manufacturing". */
