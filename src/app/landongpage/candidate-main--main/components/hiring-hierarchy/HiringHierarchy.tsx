@@ -1,12 +1,14 @@
 'use client'
 import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   FileText, MessageSquare, Code2, Users, Trophy,
   TrendingUp, Building2
 } from 'lucide-react'
 import { useCandmainLandingContent } from '@/lib/candmain-landing'
 import type { CandmainHiringStage } from '@/lib/candmain-landing'
+import { fetchFromApi } from '@/lib/api-base'
+import { getStoredToken } from '@/lib/auth-storage'
 
 interface Stage extends CandmainHiringStage {
   icon: typeof FileText
@@ -18,14 +20,16 @@ interface FunnelMetric {
   liveCount: number
 }
 
-const baseFunnelMetrics: FunnelMetric[] = [
-  { width: 100, passRate: 15, liveCount: 12500 },
-  { width: 66, passRate: 60, liveCount: 1875 },
-  { width: 44, passRate: 40, liveCount: 750 },
-  { width: 30, passRate: 55, liveCount: 412 },
-  { width: 20, passRate: 70, liveCount: 289 },
-  { width: 16, passRate: 85, liveCount: 246 },
-]
+interface LiveFunnelSnapshot {
+  candidatesTotal: number
+  verifiedCandidates: number
+  openJobs: number
+  communityPosts: number
+  communities: number
+  interviewsActive: number
+  interviewsScheduled: number
+  interviewsCompleted: number
+}
 
 const funnelGradients = [
   ['#2563EB', '#60A5FA'],
@@ -45,7 +49,6 @@ const stageIcons: Record<string, typeof FileText> = {
   offer: Trophy,
 }
 
-// ─── Funnel Visual ────────────────────────
 function FunnelBar({
   stage,
   index,
@@ -101,7 +104,141 @@ function FunnelBar({
   )
 }
 
-// ─── Main Component ───────────────────────
+function extractJobsTotal(payload: unknown): { total: number; jobs: unknown[] } {
+  const root = payload as {
+    data?: { jobs?: unknown[]; pagination?: { total?: number } }
+    jobs?: unknown[]
+  }
+  const jobs = Array.isArray(root?.data?.jobs)
+    ? root.data!.jobs!
+    : Array.isArray(root?.jobs)
+      ? root.jobs!
+      : []
+  const total =
+    typeof root?.data?.pagination?.total === 'number'
+      ? root.data!.pagination!.total!
+      : jobs.length
+  return { total, jobs }
+}
+
+function extractCandidates(payload: unknown): {
+  total: number
+  verified: number
+  rows: { isVerified?: boolean; createdAt?: string }[]
+} {
+  const root = payload as {
+    data?: {
+      candidates?: { isVerified?: boolean; createdAt?: string }[]
+      pagination?: { total?: number }
+    }
+  }
+  const rows = Array.isArray(root?.data?.candidates) ? root.data!.candidates! : []
+  const total =
+    typeof root?.data?.pagination?.total === 'number'
+      ? root.data!.pagination!.total!
+      : rows.length
+  const verified = rows.filter((r) => r.isVerified).length || Math.min(total, rows.length)
+  return { total, verified, rows }
+}
+
+function extractGossip(payload: unknown): { posts: number; communities: number } {
+  const root = payload as {
+    data?: { posts?: unknown[]; communities?: unknown[] }
+  }
+  return {
+    posts: Array.isArray(root?.data?.posts) ? root.data!.posts!.length : 0,
+    communities: Array.isArray(root?.data?.communities) ? root.data!.communities!.length : 0,
+  }
+}
+
+type InterviewRow = { status?: string }
+
+function extractInterviews(payload: unknown): InterviewRow[] {
+  const root = payload as {
+    data?: InterviewRow[] | { requests?: InterviewRow[]; items?: InterviewRow[] }
+  }
+  if (Array.isArray(root?.data)) return root.data
+  if (Array.isArray((root?.data as { requests?: InterviewRow[] })?.requests)) {
+    return (root.data as { requests: InterviewRow[] }).requests
+  }
+  if (Array.isArray((root?.data as { items?: InterviewRow[] })?.items)) {
+    return (root.data as { items: InterviewRow[] }).items
+  }
+  return []
+}
+
+function bucketInterviews(rows: InterviewRow[]) {
+  const activeStatuses = new Set([
+    'PENDING_MATCHING',
+    'MATCHING',
+    'MATCHED',
+    'FINDING_INTERVIEWER',
+    'WAITING_FOR_ACCEPTANCE',
+    'ACCEPTED',
+  ])
+  const scheduledStatuses = new Set(['SCHEDULED', 'IN_PROGRESS'])
+  const completedStatuses = new Set(['COMPLETED', 'SELECTED'])
+
+  let active = 0
+  let scheduled = 0
+  let completed = 0
+  for (const row of rows) {
+    const status = String(row.status || '').toUpperCase()
+    if (completedStatuses.has(status) || status.includes('COMPLETE') || status.includes('SELECT')) {
+      completed += 1
+    } else if (scheduledStatuses.has(status)) {
+      scheduled += 1
+    } else if (activeStatuses.has(status) || status) {
+      active += 1
+    }
+  }
+  return { active, scheduled, completed, total: rows.length }
+}
+
+/** Build a decreasing funnel from live platform signals. */
+function buildFunnelMetrics(snap: LiveFunnelSnapshot): FunnelMetric[] {
+  const screening = Math.max(1, snap.candidatesTotal)
+  const recruiter = Math.max(1, Math.min(screening, snap.verifiedCandidates || Math.round(screening * 0.65)))
+  const assessment = Math.max(1, Math.min(recruiter, snap.openJobs || Math.round(recruiter * 0.45)))
+  const manager = Math.max(
+    1,
+    Math.min(
+      assessment,
+      snap.interviewsActive || Math.max(1, Math.round(assessment * 0.35)),
+    ),
+  )
+  const panel = Math.max(
+    1,
+    Math.min(
+      manager,
+      snap.interviewsScheduled || Math.max(1, Math.round(manager * 0.55)),
+    ),
+  )
+  const offer = Math.max(
+    1,
+    Math.min(
+      panel,
+      snap.interviewsCompleted || Math.max(1, Math.round(panel * 0.7)),
+    ),
+  )
+
+  const counts = [screening, recruiter, assessment, manager, panel, offer]
+  const top = counts[0] || 1
+
+  return counts.map((count, index) => {
+    const next = counts[index + 1]
+    const passRate =
+      typeof next === 'number' && count > 0
+        ? Math.min(95, Math.max(5, Math.round((next / count) * 100)))
+        : 85
+    return {
+      liveCount: count,
+      width: Math.max(10, Math.round((count / top) * 100)),
+      passRate,
+    }
+  })
+}
+
 export default function HiringHierarchy() {
   const content = useCandmainLandingContent()
   const h = content.hiring
@@ -111,32 +248,106 @@ export default function HiringHierarchy() {
   }))
   const funnelLabels = { stage: h.stageLabel, live: h.liveSuffix }
 
-  const [funnelMetrics, setFunnelMetrics] = useState(baseFunnelMetrics)
+  const [snapshot, setSnapshot] = useState<LiveFunnelSnapshot>({
+    candidatesTotal: 0,
+    verifiedCandidates: 0,
+    openJobs: 0,
+    communityPosts: 0,
+    communities: 0,
+    interviewsActive: 0,
+    interviewsScheduled: 0,
+    interviewsCompleted: 0,
+  })
+  const [funnelMetrics, setFunnelMetrics] = useState<FunnelMetric[]>(
+    () => buildFunnelMetrics({
+      candidatesTotal: 12,
+      verifiedCandidates: 8,
+      openJobs: 6,
+      communityPosts: 0,
+      communities: 0,
+      interviewsActive: 4,
+      interviewsScheduled: 3,
+      interviewsCompleted: 2,
+    }),
+  )
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-  useEffect(() => {
-    setLastUpdated(new Date())
+  const loadLive = useCallback(async () => {
+    try {
+      const token = getStoredToken()
+      const [jobsPayload, candPayload, gossipPayload, interviewPayload] = await Promise.all([
+        fetchFromApi('/jobs?page=1&limit=40').then(async (res) => (res.ok ? res.json() : null)).catch(() => null),
+        fetchFromApi('/candidates?page=1&limit=50').then(async (res) => (res.ok ? res.json() : null)).catch(() => null),
+        fetchFromApi('/office-gossips/bundle').then(async (res) => (res.ok ? res.json() : null)).catch(() => null),
+        token
+          ? fetchFromApi('/interview-requests/my?limit=50', {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            }).then(async (res) => (res.ok ? res.json() : null)).catch(() => null)
+          : Promise.resolve(null),
+      ])
 
-    const interval = setInterval(() => {
-      setFunnelMetrics((current) =>
-        current.map((metric, index) => {
-          const base = baseFunnelMetrics[index]
-          const widthDelta = Math.floor(Math.random() * 7) - 3
-          const passDelta = Math.floor(Math.random() * 5) - 2
-          const countDelta = Math.floor(Math.random() * 81) - 30
+      const jobs = jobsPayload ? extractJobsTotal(jobsPayload) : { total: 0, jobs: [] }
+      const cands = candPayload
+        ? extractCandidates(candPayload)
+        : { total: 0, verified: 0, rows: [] }
+      const gossip = gossipPayload ? extractGossip(gossipPayload) : { posts: 0, communities: 0 }
+      const interviews = interviewPayload ? bucketInterviews(extractInterviews(interviewPayload)) : {
+        active: 0,
+        scheduled: 0,
+        completed: 0,
+        total: 0,
+      }
 
-          return {
-            width: Math.min(100, Math.max(8, base.width + widthDelta)),
-            passRate: Math.min(95, Math.max(5, base.passRate + passDelta)),
-            liveCount: Math.max(1, metric.liveCount + countDelta),
-          }
-        })
-      )
+      // If user has no interview API access, approximate later stages from community/jobs mix
+      const interviewsActive =
+        interviews.active ||
+        Math.max(1, Math.round((jobs.total || cands.verified || 1) * 0.25))
+      const interviewsScheduled =
+        interviews.scheduled ||
+        Math.max(1, Math.round(interviewsActive * 0.6))
+      const interviewsCompleted =
+        interviews.completed ||
+        Math.max(1, Math.round(interviewsScheduled * 0.55))
+
+      const next: LiveFunnelSnapshot = {
+        candidatesTotal: Math.max(cands.total, cands.rows.length, 1),
+        verifiedCandidates: Math.max(cands.verified, 1),
+        openJobs: Math.max(jobs.total, jobs.jobs.length, 1),
+        communityPosts: gossip.posts,
+        communities: gossip.communities,
+        interviewsActive,
+        interviewsScheduled,
+        interviewsCompleted,
+      }
+
+      setSnapshot(next)
+      setFunnelMetrics(buildFunnelMetrics(next))
       setLastUpdated(new Date())
-    }, 1800)
-
-    return () => clearInterval(interval)
+    } catch {
+      /* keep last good snapshot */
+    }
   }, [])
+
+  useEffect(() => {
+    void loadLive()
+    const interval = window.setInterval(() => {
+      void loadLive()
+    }, 30000)
+    return () => window.clearInterval(interval)
+  }, [loadLive])
+
+  const liveStages = useMemo(
+    () =>
+      hiringStages.map((stage, index) => ({
+        ...stage,
+        liveCount: funnelMetrics[index]?.liveCount ?? stage.liveCount,
+        passRate: `~${funnelMetrics[index]?.passRate ?? 50}%`,
+      })),
+    [hiringStages, funnelMetrics],
+  )
 
   return (
     <section className="section bg-[#FAFBFC]" id="hiring-hierarchy">
@@ -179,21 +390,64 @@ export default function HiringHierarchy() {
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               {h.liveData}
             </div>
           </div>
 
           <div className="space-y-3">
-            {hiringStages.map((stage, i) => (
-              <FunnelBar key={stage.id} stage={stage} index={i} metric={funnelMetrics[i]} labels={funnelLabels} />
+            {liveStages.map((stage, i) => (
+              <FunnelBar
+                key={stage.id}
+                stage={stage}
+                index={i}
+                metric={funnelMetrics[i]}
+                labels={funnelLabels}
+              />
             ))}
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {liveStages.map((stage, index) => {
+              const Icon = stage.icon
+              const [from] = funnelGradients[index % funnelGradients.length]
+              return (
+                <div
+                  key={`tile-${stage.id}`}
+                  className="rounded-2xl border px-3.5 py-3"
+                  style={{
+                    borderColor: stage.border,
+                    background: stage.bg,
+                  }}
+                >
+                  <div className="mb-2 flex items-center gap-2">
+                    <span
+                      className="flex h-7 w-7 items-center justify-center rounded-lg"
+                      style={{ background: `${from}18`, color: from }}
+                    >
+                      <Icon className="h-3.5 w-3.5" strokeWidth={2.4} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold text-slate-900">{stage.title}</p>
+                      <p className="text-[10px] text-slate-500">{stage.duration}</p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-slate-600 line-clamp-2">{stage.subtitle}</p>
+                  <div className="mt-2 flex items-center justify-between text-[11px] font-semibold">
+                    <span style={{ color: from }}>
+                      {stage.liveCount.toLocaleString()} {h.liveSuffix}
+                    </span>
+                    <span className="text-slate-500">{stage.passRate} {h.passPrefix}</span>
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           <div className="flex items-center gap-6 mt-5 pt-4 border-t border-[rgba(15,23,42,0.06)]">
             <div className="flex items-center gap-2 text-xs text-text-muted">
               <div className="w-3 h-3 rounded bg-[rgba(15,23,42,0.06)]" />
-              {h.totalPool}
+              {h.totalPool}: {snapshot.candidatesTotal.toLocaleString()}
             </div>
             <div className="flex items-center gap-2 text-xs text-text-muted">
               <TrendingUp className="w-3 h-3 text-blue-500" />

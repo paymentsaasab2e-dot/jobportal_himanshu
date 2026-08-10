@@ -35,9 +35,9 @@ export const candmainLandingFr: CandmainLandingContent = {
     subtitle:
       'Chaque consultation recruteur, mise a jour d\'entretien, preselection, correspondance de poste et signal de competence est diffuse en direct pour les candidats en tech, business, sante, finance, ventes, design, operations et plus.',
     stats: [
-      { label: 'Consultations de profil', value: '42' },
-      { label: 'Correspondances trouvees', value: '12,5K+' },
-      { label: 'Mises a jour entretien', value: '8' },
+      { label: 'Candidats', value: '—' },
+      { label: 'Entretiens', value: '—' },
+      { label: 'Communautes / Posts', value: '—' },
     ],
     streamTitle: 'Flux d\'activite',
     latestUpdate: 'Derniere mise a jour',

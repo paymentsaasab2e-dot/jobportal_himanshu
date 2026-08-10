@@ -4,11 +4,11 @@ import { useState, useEffect, useMemo, useRef, useId } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { getApiBaseUrl } from '@/lib/api-base';
+import { fetchFromApi } from '@/lib/api-base';
 import { AppLocale, localizePath } from '@/lib/i18n';
 import {
   Search, MapPin, ChevronRight,
-  Globe2, Factory, Briefcase,
+  Globe2, Building2, Briefcase,
 } from 'lucide-react';
 import {
   buildSearchJobsUrl,
@@ -16,10 +16,11 @@ import {
   getSuggestionLabel,
   HighlightMatch,
   portalSearchHeroStyles,
+  recentTrendingLabels,
   scoreMatch,
+  sortJobsNewestFirst,
   splitCategoryLabels,
   TRENDING_CHIP_STYLES,
-  uniqueLabels,
 } from './portalSearchHero.helpers';
 
 export function PortalSearchHero() {
@@ -53,7 +54,7 @@ export function PortalSearchHero() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${getApiBaseUrl()}/jobs?page=1&limit=80`);
+        const res = await fetchFromApi('/jobs?page=1&limit=80');
         if (!res.ok) return;
         const result = await res.json();
         const jobs = Array.isArray(result?.data?.jobs)
@@ -65,17 +66,23 @@ export function PortalSearchHero() {
               : [];
         if (cancelled || !jobs.length) return;
 
+        const TRENDING_LIMIT = 12;
+        const newestFirst = sortJobsNewestFirst(jobs);
+
         const titleSeen = new Set<string>();
         const titles: string[] = [];
         const locationSeen = new Set<string>();
         const locations: string[] = [];
         const countryRaw: string[] = [];
         const industryRaw: string[] = [];
+        const departmentRaw: string[] = [];
         const catalog: any[] = [];
 
-        for (const job of jobs) {
+        // Walk newest → oldest so first-seen labels rank highest in Trendings.
+        for (const job of newestFirst) {
           const title = String(job?.title || '').trim();
           if (title) {
+            departmentRaw.push(title);
             const key = title.toLowerCase();
             if (!titleSeen.has(key)) {
               titleSeen.add(key);
@@ -92,6 +99,7 @@ export function PortalSearchHero() {
             }
           }
 
+          // Country tab: country field only (never city / full location)
           const country = String(job?.country || '').trim();
           if (country) countryRaw.push(country);
 
@@ -118,10 +126,10 @@ export function PortalSearchHero() {
 
         setDbTitles(titles);
         setDbLocations(locations);
-        setDbCountries(uniqueLabels(countryRaw));
-        setDbIndustries(uniqueLabels(industryRaw));
-        // Departments tab: live job titles from DB (roles actually hiring)
-        setDbDepartments(titles);
+        // Sliding window of 12 per tab: newest unique → #1; overflow drops the oldest.
+        setDbCountries(recentTrendingLabels(countryRaw, TRENDING_LIMIT));
+        setDbIndustries(recentTrendingLabels(industryRaw, TRENDING_LIMIT));
+        setDbDepartments(recentTrendingLabels(departmentRaw, TRENDING_LIMIT));
         setCatalogJobs(catalog);
       } catch (err) {
         console.error('Failed to load search catalog from database', err);
@@ -195,7 +203,7 @@ export function PortalSearchHero() {
 
       try {
         setIsSuggesting(true);
-        const res = await fetch(`${getApiBaseUrl()}/jobs/recommend?q=${encodeURIComponent(query)}`);
+        const res = await fetchFromApi(`/jobs/recommend?q=${encodeURIComponent(query)}`);
         if (res.ok) {
           const result = await res.json();
           const rawSuggestions = Array.isArray(result.data) ? result.data : [];
@@ -252,7 +260,7 @@ export function PortalSearchHero() {
       }
 
       try {
-        const res = await fetch(`${getApiBaseUrl()}/jobs/location-recommend?q=${encodeURIComponent(query)}`);
+        const res = await fetchFromApi(`/jobs/location-recommend?q=${encodeURIComponent(query)}`);
         if (res.ok) {
           const result = await res.json();
           const rawLocationSuggestions = Array.isArray(result.data) ? result.data : [];
@@ -857,7 +865,7 @@ export function PortalSearchHero() {
                       });
 
                     const countryItems = toChips(dbCountries, Globe2);
-                    const industryItems = toChips(dbIndustries, Factory);
+                    const industryItems = toChips(dbIndustries, Building2);
                     const departmentItems = toChips(dbDepartments, Briefcase);
 
                     const chunk = <T,>(items: readonly T[], size: number) => {
@@ -866,12 +874,14 @@ export function PortalSearchHero() {
                       return rows;
                     };
 
-                    const activeItems =
+                    // Hard cap: Trendings shows at most 12 chips per tab
+                    const activeItems = (
                       exploreTab === 'country'
                         ? countryItems
                         : exploreTab === 'industries'
                           ? industryItems
-                          : departmentItems;
+                          : departmentItems
+                    ).slice(0, 12);
                     const isLocation = exploreTab === 'country';
                     const rows = chunk(activeItems, 4).map((items) => ({
                       label: '',
@@ -896,10 +906,8 @@ export function PortalSearchHero() {
                     return (
                       <div className="category-glass-panel">
                         {rows.map((row, rowIndex) => (
-                          <div key={`${exploreTab}-${row.label || rowIndex}`} className="category-glass-row">
-                            <p className={`category-glass-row-label ${row.label ? '' : 'is-spacer'}`}>
-                              {row.label || 'Level'}
-                            </p>
+                          <div key={`${exploreTab}-${rowIndex}`} className="category-glass-row">
+                            <p className="category-glass-row-label is-spacer">Level</p>
                             <div className="category-glass-grid grid h-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
                               {row.items.map((cat) => (
                                 <button

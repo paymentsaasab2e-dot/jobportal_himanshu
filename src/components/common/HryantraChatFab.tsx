@@ -255,12 +255,50 @@ export function HryantraChatFab() {
   }
 
   const barePath = stripLocaleFromPathname(pathname);
+  const onLanding = barePath === '/' || barePath === '';
   const onCommunity =
     barePath === '/community' || barePath.startsWith('/community/');
   const onApply =
     barePath === '/apply' || barePath.startsWith('/apply/');
-  // Hide on apply flows, while already reading Chat, or when everything is read
-  if (onApply || (onCommunity && ogTab === 'chat') || unread <= 0) {
+  const onSearchJobs =
+    barePath === '/searchjobs' || barePath.startsWith('/searchjobs/');
+  const onCourses =
+    barePath === '/courses' || barePath.startsWith('/courses/');
+  const onPublicMarketing =
+    barePath === '/employers' ||
+    barePath.startsWith('/employers/') ||
+    barePath === '/events' ||
+    barePath.startsWith('/events/') ||
+    barePath === '/services' ||
+    barePath.startsWith('/services/') ||
+    barePath === '/ats-check' ||
+    barePath === '/explore-jobs' ||
+    barePath.startsWith('/explore-jobs/') ||
+    barePath === '/aboutus' ||
+    barePath === '/contact' ||
+    barePath === '/help' ||
+    barePath === '/faq' ||
+    barePath === '/privacypolicy' ||
+    barePath === '/terms' ||
+    barePath === '/trust-safety' ||
+    barePath === '/candmain' ||
+    barePath.startsWith('/candmain/') ||
+    barePath === '/sa' ||
+    barePath.startsWith('/sa/') ||
+    barePath === '/login' ||
+    barePath === '/signup' ||
+    barePath === '/whatsapp' ||
+    barePath.startsWith('/whatsapp/');
+  // Hide on landing, public/marketing pages, apply flows, while already reading Chat, or when everything is read
+  if (
+    onLanding ||
+    onSearchJobs ||
+    onCourses ||
+    onApply ||
+    onPublicMarketing ||
+    (onCommunity && ogTab === 'chat') ||
+    unread <= 0
+  ) {
     return null;
   }
 

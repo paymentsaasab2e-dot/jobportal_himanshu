@@ -1,28 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import { useAuth } from '@/components/auth/AuthContext';
 import { AppLocale, localizePath } from '@/lib/i18n';
+import { fetchPublicCourses, type PortalCourseRow } from '@/lib/public-courses-api';
 
-interface Course {
-  id: number;
-  title: string;
-  provider: string;
-  duration: string;
-  price: string;
-  description: string;
-  image?: string;
+type CourseCard = PortalCourseRow & {
   aiRecommended: boolean;
-  rating?: number;
-  students?: number;
-  skillLevel?: string;
-  certificate?: boolean;
-  language?: string;
-}
+};
 
 function AuthInterceptModal({
   isOpen,
@@ -94,766 +82,169 @@ function AuthInterceptModal({
   );
 }
 
+function CourseThumb({ src, title }: { src: string | null; title: string }) {
+  if (!src) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sky-100 to-orange-50">
+        <BookOpen className="h-8 w-8 text-[#28A8DF]" />
+      </div>
+    );
+  }
+  return <img src={src} alt={title} className="h-full w-full object-cover" />;
+}
+
 export default function CoursesPage() {
   const router = useRouter();
   const locale = useLocale() as AppLocale;
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [skillLevel, setSkillLevel] = useState('all');
-  const [provider, setProvider] = useState('all');
-  const [price, setPrice] = useState('all');
-  const [duration, setDuration] = useState('all');
-  const [sortBy, setSortBy] = useState('relevance');
+  const [courses, setCourses] = useState<CourseCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authRedirectUrl, setAuthRedirectUrl] = useState('/courses');
+  const [authRedirectUrl, setAuthRedirectUrl] = useState('/lms/courses');
 
-  const openCourseDetails = (courseId: number) => {
-    const detailsPath = localizePath(`/courses/${courseId}`, locale);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setLoadError('');
+      try {
+        const rows = await fetchPublicCourses();
+        if (cancelled) return;
+        setCourses(
+          rows.map((row) => ({
+            ...row,
+            aiRecommended: true,
+          })),
+        );
+      } catch (err) {
+        if (cancelled) return;
+        console.error('[courses] failed to load HQ courses', err);
+        setCourses([]);
+        setLoadError('Could not load courses. Please try again.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const sortedCourses = useMemo(
+    () =>
+      [...courses].sort(
+        (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
+      ),
+    [courses],
+  );
+
+  const openCourseDetails = (courseId: string) => {
+    const lmsPath = localizePath(`/lms/courses/${courseId}`, locale);
     if (isAuthLoading) return;
     if (!isAuthenticated) {
-      setAuthRedirectUrl(detailsPath);
+      setAuthRedirectUrl(lmsPath);
       setIsAuthModalOpen(true);
       return;
     }
-    router.push(detailsPath);
+    router.push(lmsPath);
   };
 
-  const courses: Course[] = [
-    {
-      id: 1,
-      title: 'Agile Project Management Fundamentals',
-      provider: 'SAASA B2E',
-      duration: '4 weeks',
-      price: 'Free',
-      description: 'Learn the core principles and practices of Agile methodology to efficiently manage projects and deliver value.',
-      image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=200&fit=crop',
-      aiRecommended: true,
-      rating: 4.7,
-      students: 1250,
-      skillLevel: 'Beginner',
-      certificate: true,
-      language: 'English',
-    },
-    {
-      id: 2,
-      title: 'Introduction to Data Science with Python',
-      provider: 'Udemy',
-      duration: '8 weeks',
-      price: '$99.99',
-      description: 'Master the basics of data science, including Python programming, data manipulation, and analysis techniques.',
-      image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=200&fit=crop',
-      aiRecommended: true,
-      rating: 4.8,
-      students: 3200,
-      skillLevel: 'Intermediate',
-      certificate: true,
-      language: 'English',
-    },
-    {
-      id: 3,
-      title: 'Effective Communication Strategies',
-      provider: 'Coursera',
-      duration: '3 weeks',
-      price: 'Free',
-      description: 'Enhance your verbal and written communication skills for professional success and better team collaboration.',
-      image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=200&fit=crop',
-      aiRecommended: true,
-      rating: 4.6,
-      students: 890,
-      skillLevel: 'Beginner',
-      certificate: true,
-      language: 'English',
-    },
-    {
-      id: 4,
-      title: 'Effective Leadership and Team Management',
-      provider: 'Coursera',
-      duration: '6 weeks',
-      price: '$199.00',
-      description: 'Cultivate essential leadership qualities and learn to motivate, inspire, and manage high-performing teams.',
-      image: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&h=200&fit=crop',
-      aiRecommended: true,
-      rating: 4.9,
-      students: 2100,
-      skillLevel: 'Intermediate',
-      certificate: true,
-      language: 'English',
-    },
-    {
-      id: 5,
-      title: 'Cloud Computing Essentials (AWS)',
-      provider: 'SAASA B2E',
-      duration: '6 weeks',
-      price: '$149.00',
-      description: 'Gain foundational knowledge of cloud computing, focusing on Amazon Web Services (AWS) infrastructure.',
-      image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=200&fit=crop',
-      aiRecommended: true,
-      rating: 4.8,
-      students: 1850,
-      skillLevel: 'Intermediate',
-      certificate: true,
-      language: 'English',
-    },
-    {
-      id: 6,
-      title: 'UX/UI Design Principles',
-      provider: 'Udemy',
-      duration: '5 weeks',
-      price: '$79.99',
-      description: 'Explore the fundamental principles of User Experience (UX) and User Interface (UI) design for intuitive digital products.',
-      image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=200&fit=crop',
-      aiRecommended: true,
-      rating: 4.7,
-      students: 2450,
-      skillLevel: 'Beginner',
-      certificate: true,
-      language: 'English',
-    },
-    {
-      id: 7,
-      title: 'Cybersecurity for Beginners',
-      provider: 'Coursera',
-      duration: '7 weeks',
-      price: '$129.00',
-      description: 'Understand key cybersecurity concepts, threats, and protective measures to safeguard digital assets and information.',
-      image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=200&fit=crop',
-      aiRecommended: true,
-      rating: 4.6,
-      students: 1650,
-      skillLevel: 'Beginner',
-      certificate: true,
-      language: 'English',
-    },
-    {
-      id: 8,
-      title: 'Digital Marketing Fundamentals',
-      provider: 'SAASA B2E',
-      duration: '4 weeks',
-      price: 'Free',
-      description: 'Learn the essentials of digital marketing, including SEO, social media, and content strategy for online presence.',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=200&fit=crop',
-      aiRecommended: true,
-      rating: 4.5,
-      students: 1100,
-      skillLevel: 'Beginner',
-      certificate: true,
-      language: 'English',
-    },
-    {
-      id: 9,
-      title: 'Personal Financial Planning',
-      provider: 'Udemy',
-      duration: '2 weeks',
-      price: '$49.99',
-      description: 'Develop strategies for budgeting, saving, investing, and managing debt to achieve financial independence.',
-      image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400&h=200&fit=crop',
-      aiRecommended: true,
-      rating: 4.7,
-      students: 980,
-      skillLevel: 'Beginner',
-      certificate: true,
-      language: 'English',
-    },
-    {
-      id: 10,
-      title: 'Machine Learning Basics',
-      provider: 'Coursera',
-      duration: '10 weeks',
-      price: '$179.00',
-      description: 'Introduction to machine learning algorithms, neural networks, and practical applications in real-world scenarios.',
-      image: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=200&fit=crop',
-      aiRecommended: true,
-      rating: 4.9,
-      students: 2800,
-      skillLevel: 'Advanced',
-      certificate: true,
-      language: 'English',
-    },
-    {
-      id: 11,
-      title: 'Full Stack Web Development',
-      provider: 'SAASA B2E',
-      duration: '12 weeks',
-      price: '$249.00',
-      description: 'Master frontend and backend development with modern frameworks and tools to build complete web applications.',
-      image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=200&fit=crop',
-      aiRecommended: true,
-      rating: 4.8,
-      students: 3500,
-      skillLevel: 'Intermediate',
-      certificate: true,
-      language: 'English',
-    },
-    {
-      id: 12,
-      title: 'Business Analytics and Data Visualization',
-      provider: 'Udemy',
-      duration: '6 weeks',
-      price: '$89.99',
-      description: 'Learn to analyze business data and create compelling visualizations to drive data-driven decision making.',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop',
-      aiRecommended: true,
-      rating: 4.6,
-      students: 1400,
-      skillLevel: 'Intermediate',
-      certificate: true,
-      language: 'English',
-    },
-  ];
-
-  const filteredCourses = courses.filter(course => {
-    // Search query
-    const matchesSearch = !searchQuery || 
-      course.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      course.description.toLowerCase().includes(searchQuery.toLowerCase());
-      
-    // Skill Level
-    const matchesSkill = skillLevel === 'all' || course.skillLevel?.toLowerCase() === skillLevel.toLowerCase();
-    
-    // Provider
-    const matchesProvider = provider === 'all' || course.provider.toLowerCase().includes(provider.toLowerCase());
-    
-    // Price
-    let matchesPrice = true;
-    if (price === 'free') matchesPrice = course.price.toLowerCase() === 'free';
-    else if (price === 'paid') matchesPrice = course.price.toLowerCase() !== 'free';
-    
-    // Duration
-    let matchesDuration = true;
-    if (duration !== 'all') {
-      const weeksMatch = course.duration.match(/(\d+)/);
-      if (weeksMatch) {
-        const weeks = parseInt(weeksMatch[1], 10);
-        if (duration === 'short') matchesDuration = weeks <= 4;
-        else if (duration === 'medium') matchesDuration = weeks >= 5 && weeks <= 8;
-        else if (duration === 'long') matchesDuration = weeks >= 9;
-      }
-    }
-    
-    return matchesSearch && matchesSkill && matchesProvider && matchesPrice && matchesDuration;
-  }).sort((a, b) => {
-    if (sortBy === 'price') {
-      const priceA = a.price.toLowerCase() === 'free' ? 0 : parseFloat(a.price.replace(/[^0-9.]/g, ''));
-      const priceB = b.price.toLowerCase() === 'free' ? 0 : parseFloat(b.price.replace(/[^0-9.]/g, ''));
-      return priceA - priceB;
-    }
-    if (sortBy === 'duration') {
-      const durationA = parseInt(a.duration.match(/(\d+)/)?.[1] || '0', 10);
-      const durationB = parseInt(b.duration.match(/(\d+)/)?.[1] || '0', 10);
-      return durationA - durationB;
-    }
-    if (sortBy === 'newest') {
-      return b.id - a.id;
-    }
-    return 0; // relevance
-  });
-
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(135deg, #fde9d4, #fafbfb, #bddffb)" }}>
+    <div className="min-h-screen bg-[linear-gradient(135deg,#fde9d4,#fafbfb,#bddffb)]">
       <main className="mx-auto max-w-[1180px] px-4 pb-8 pt-24 sm:px-5 lg:px-6">
-        {/* Title Section */}
-        <div className="mb-6">
-          <h1
-            style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '36px',
-              fontWeight: 700,
-              color: '#111827',
-              marginBottom: '10px',
-              letterSpacing: '-0.5px',
-            }}
-          >
+        <div className="mb-8">
+          <h1 className="mb-2.5 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
             Recommended Courses for You
           </h1>
-          <p
-            style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '16px',
-              color: '#6B7280',
-              lineHeight: '1.6',
-              maxWidth: '800px',
-            }}
-          >
-            Based on your CV, job preferences, and feedback. AI has analyzed your profile and recommends these courses to improve your job-fit score.
+          <p className="max-w-3xl text-base leading-relaxed text-gray-500">
+            Live courses published by HQ. Browse without logging in - sign in when you are ready to
+            open a course and start learning.
           </p>
         </div>
 
-        {/* Search and Filter Section */}
-        <div className="mb-8 flex w-full justify-center">
-          {/* Search Bar and Filters Container */}
-          <div
-            className="flex w-full max-w-6xl flex-col gap-4 p-6"
-            style={{
-              borderRadius: '16px',
-              background: '#FFF',
-              boxShadow: '0 4px 18px 0 rgba(23, 26, 31, 0.08)',
-            }}
-          >
-            {/* Search Input */}
-            <div className="relative w-full">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#9095A1"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <path d="m21 21-4.35-4.35"></path>
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="Search courses..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-black"
-                style={{
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                }}
-              />
-            </div>
-
-            {/* Filters Row */}
-            <div className="flex gap-4">
-              {/* Skill Level */}
-              <div className="flex flex-col gap-1.5 flex-1 relative">
-                <label
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: '#374151',
-                  }}
-                >
-                  Skill Level
-                </label>
-                <select
-                  value={skillLevel}
-                  onChange={(e) => setSkillLevel(e.target.value)}
-                  className="w-full px-3 py-2.5 pr-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 appearance-none"
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '14px',
-                  }}
-                >
-                  <option value="all">All Levels</option>
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
-                </select>
-                <div className="pointer-events-none absolute right-3 top-9 flex items-center">
-                  <svg className="h-4 w-4 text-[#9095A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Provider */}
-              <div className="flex flex-col gap-1.5 flex-1 relative">
-                <label
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: '#374151',
-                  }}
-                >
-                  Provider
-                </label>
-                <select
-                  value={provider}
-                  onChange={(e) => setProvider(e.target.value)}
-                  className="w-full px-3 py-2.5 pr-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 appearance-none"
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '14px',
-                  }}
-                >
-                  <option value="all">All Providers</option>
-                  <option value="saasa">SAASA B2E</option>
-                  <option value="udemy">Udemy</option>
-                  <option value="coursera">Coursera</option>
-                </select>
-                <div className="pointer-events-none absolute right-3 top-9 flex items-center">
-                  <svg className="h-4 w-4 text-[#9095A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Price */}
-              <div className="flex flex-col gap-1.5 flex-1 relative">
-                <label
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: '#374151',
-                  }}
-                >
-                  Price
-                </label>
-                <select
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="w-full px-3 py-2.5 pr-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 appearance-none"
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '14px',
-                  }}
-                >
-                  <option value="all">All</option>
-                  <option value="free">Free</option>
-                  <option value="paid">Paid</option>
-                </select>
-                <div className="pointer-events-none absolute right-3 top-9 flex items-center">
-                  <svg className="h-4 w-4 text-[#9095A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Duration */}
-              <div className="flex flex-col gap-1.5 flex-1 relative">
-                <label
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: '#374151',
-                  }}
-                >
-                  Duration
-                </label>
-                <select
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  className="w-full px-3 py-2.5 pr-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 appearance-none"
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '14px',
-                  }}
-                >
-                  <option value="all">All</option>
-                  <option value="short">1-4 weeks</option>
-                  <option value="medium">5-8 weeks</option>
-                  <option value="long">9+ weeks</option>
-                </select>
-                <div className="pointer-events-none absolute right-3 top-9 flex items-center">
-                  <svg className="h-4 w-4 text-[#9095A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Sort By */}
-              <div className="flex flex-col gap-1.5 flex-1 relative">
-                <label
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: '#374151',
-                  }}
-                >
-                  Sort By
-                </label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-3 py-2.5 pr-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 appearance-none"
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '14px',
-                  }}
-                >
-                  <option value="relevance">Relevance</option>
-                  <option value="price">Price</option>
-                  <option value="duration">Duration</option>
-                  <option value="newest">Newest</option>
-                </select>
-                <div className="pointer-events-none absolute right-3 top-9 flex items-center">
-                  <svg className="h-4 w-4 text-[#9095A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-            </div>
+        {loading ? (
+          <div className="mx-auto mb-8 grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-[280px] animate-pulse rounded-xl bg-white/80 shadow-sm" />
+            ))}
           </div>
-        </div>
-
-        {/* Course Cards Grid */}
-        {filteredCourses.length > 0 ? (
-          <div className="mx-auto mb-8 flex max-w-6xl flex-wrap justify-center gap-8">
-            {filteredCourses.map((course) => (
+        ) : loadError ? (
+          <div className="mb-8 py-16 text-center">
+            <p className="text-lg font-medium text-red-600">{loadError}</p>
+          </div>
+        ) : sortedCourses.length > 0 ? (
+          <div className="mx-auto mb-8 grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {sortedCourses.map((course) => (
               <div
-              key={course.id}
-              className="overflow-hidden transition-all duration-300 flex flex-col border-2 border-gray-200 hover:border-[#28A8DF] group"
-              style={{
-                borderRadius: '16px',
-                background: '#FFF',
-                boxShadow: '0 4px 18px 0 rgba(23, 26, 31, 0.08)',
-                width: '340px',
-                minHeight: '580px',
-              }}
-            >
-              {/* Course Image */}
-              <div className="w-full h-48 bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {course.image ? (
-                  <Image
-                    src={course.image}
-                    alt={course.title}
-                    width={400}
-                    height={200}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                    <svg
-                      width="64"
-                      height="64"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#9CA3AF"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                    </svg>
-                  </div>
-                )}
-              </div>
+                key={course.id}
+                className="group flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#28A8DF] hover:shadow-md"
+              >
+                <div className="h-28 w-full flex-shrink-0 overflow-hidden bg-gray-200">
+                  <CourseThumb src={course.thumbnailUrl} title={course.title} />
+                </div>
 
-              {/* Course Content */}
-              <div className="px-6 pt-5 pb-6 flex flex-col flex-1" style={{ minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                {/* Provider and AI Recommended */}
-                <div className="flex items-center justify-between mb-2">
-                  <span
-                    style={{
-                      fontFamily: 'Inter, sans-serif',
-                      fontSize: '14px',
-                      color: '#6B7280',
-                      fontWeight: 500,
-                    }}
-                  >
-                    {course.provider}
-                  </span>
-                  {course.aiRecommended && (
-                    <span
-                      className="px-2.5 py-1 rounded-full"
-                      style={{
-                        fontFamily: 'Inter, sans-serif',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        color: '#28A8DF',
-                        backgroundColor: '#DBEAFE',
-                      }}
-                    >
-                      AI Recommended
+                <div className="flex flex-1 flex-col px-3.5 pb-3.5 pt-3">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <span className="truncate text-[11px] font-medium text-gray-500">
+                      {course.category || 'Course'}
                     </span>
-                  )}
-                </div>
-
-                {/* Course Title */}
-                <h3
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '20px',
-                    fontWeight: 600,
-                    color: '#111827',
-                    marginBottom: '10px',
-                    lineHeight: '1.3',
-                  }}
-                >
-                  {course.title}
-                </h3>
-
-                {/* Duration and Price */}
-                <div className="flex items-center gap-4 mb-2">
-                  <span
-                    style={{
-                      fontFamily: 'Inter, sans-serif',
-                      fontSize: '13px',
-                      color: '#6B7280',
-                    }}
-                  >
-                    {course.duration}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: 'Inter, sans-serif',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      color: '#111827',
-                    }}
-                  >
-                    {course.price}
-                  </span>
-                </div>
-
-                {/* Rating and Students */}
-                {(course.rating || course.students) && (
-                  <div className="flex items-center gap-3 mb-2">
-                    {course.rating && (
-                      <div className="flex items-center gap-1">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#FBBF24" stroke="none">
-                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </svg>
-                        <span
-                          style={{
-                            fontFamily: 'Inter, sans-serif',
-                            fontSize: '12px',
-                            color: '#111827',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {course.rating}
-                        </span>
-                      </div>
-                    )}
-                    {course.students && (
-                      <span
-                        style={{
-                          fontFamily: 'Inter, sans-serif',
-                          fontSize: '12px',
-                          color: '#6B7280',
-                        }}
-                      >
-                        ({course.students.toLocaleString()} students)
+                    {course.aiRecommended ? (
+                      <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-[#28A8DF]">
+                        AI
                       </span>
-                    )}
+                    ) : null}
                   </div>
-                )}
 
-                {/* Skill Level and Certificate */}
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  {course.skillLevel && (
-                    <span
-                      className="px-2 py-0.5 rounded"
-                      style={{
-                        fontFamily: 'Inter, sans-serif',
-                        fontSize: '11px',
-                        fontWeight: 500,
-                        color: '#059669',
-                        backgroundColor: '#D1FAE5',
-                      }}
-                    >
-                      {course.skillLevel}
-                    </span>
-                  )}
-                  {course.certificate && (
-                    <span
-                      className="px-2 py-0.5 rounded flex items-center gap-1"
-                      style={{
-                        fontFamily: 'Inter, sans-serif',
-                        fontSize: '11px',
-                        fontWeight: 500,
-                        color: '#7C3AED',
-                        backgroundColor: '#EDE9FE',
-                      }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                      </svg>
-                      Certificate
-                    </span>
-                  )}
-                  {course.language && (
-                    <span
-                      style={{
-                        fontFamily: 'Inter, sans-serif',
-                        fontSize: '11px',
-                        color: '#6B7280',
-                      }}
-                    >
-                      • {course.language}
-                    </span>
-                  )}
+                  <h3 className="mb-1.5 line-clamp-2 text-sm font-semibold leading-snug text-gray-900">
+                    {course.title}
+                  </h3>
+
+                  <div className="mb-1.5 flex items-center gap-2 text-[11px]">
+                    <span className="truncate text-gray-500">{course.duration || 'Self-paced'}</span>
+                    <span className="font-semibold text-gray-900">{course.price}</span>
+                  </div>
+
+                  <div className="mb-2 flex flex-wrap items-center gap-1">
+                    {course.skillLevel ? (
+                      <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                        {course.skillLevel}
+                      </span>
+                    ) : null}
+                    {course.isCertified ? (
+                      <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
+                        Certificate
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-gray-500">
+                    {course.description}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => openCourseDetails(course.id)}
+                    className="mt-auto w-full rounded-lg bg-[#FC9620] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#EA580C]"
+                  >
+                    View Details
+                  </button>
                 </div>
-
-                {/* Description */}
-                <p
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '14px',
-                    color: '#6B7280',
-                    lineHeight: '1.5',
-                    marginBottom: '12px',
-                    maxHeight: '63px',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {course.description}
-                </p>
-
-                {/* View Details Button */}
-                <button
-                  type="button"
-                  onClick={() => openCourseDetails(course.id)}
-                  className="w-full px-4 py-2.5 rounded-lg font-medium transition-colors"
-                  style={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontSize: '14px',
-                    backgroundColor: '#FC9620',
-                    color: '#FFFFFF',
-                    marginTop: 'auto',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#EA580C';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#FC9620';
-                  }}
-                >
-                  View Details
-                </button>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         ) : (
-          <div className="flex justify-center items-center py-20 w-full mb-8">
-            <p className="text-gray-500 text-lg font-medium" style={{ fontFamily: 'Inter, sans-serif' }}>No courses found matching your criteria.</p>
+          <div className="mb-8 flex w-full items-center justify-center py-20">
+            <p className="text-lg font-medium text-gray-500">No published courses from HQ yet.</p>
           </div>
         )}
-
-        {/* Explore All Courses Button */}
-        <div className="flex justify-center mb-8">
-          <button
-            className="px-8 py-3 rounded-lg font-medium border-2 transition-colors"
-            style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '15px',
-              color: '#28A8DF',
-              borderColor: '#28A8DF',
-              backgroundColor: 'transparent',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#EFF6FF';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            Explore All Courses
-          </button>
-        </div>
       </main>
 
       <AuthInterceptModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         title="Login required"
-        description="Sign in with WhatsApp to view full course details and start learning with AI-recommended courses."
+        description="Sign in with WhatsApp to open this HQ course and start learning in LMS."
         redirectUrl={authRedirectUrl}
       />
     </div>

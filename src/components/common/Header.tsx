@@ -718,7 +718,8 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
             />
             {isLoggedIn &&
                 !isLandingPage &&
-                !normalizedPath.startsWith('/community') && <GlobalAIAssistant />}
+                !normalizedPath.startsWith('/community') &&
+                !normalizedPath.startsWith('/searchjobs') && <GlobalAIAssistant />}
         </>
     );
 }

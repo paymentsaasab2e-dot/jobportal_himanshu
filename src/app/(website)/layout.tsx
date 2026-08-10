@@ -24,6 +24,7 @@ export default function WebsiteSiteLayout({
     "/services",
     "/ats-check",
     "/courses",
+    "/searchjobs",
   ]);
 
   // Guest marketing chrome — signed-in users get the app Header instead
@@ -42,6 +43,7 @@ export default function WebsiteSiteLayout({
     normalizedPath.startsWith("/employers/") ||
     normalizedPath.startsWith("/events/") ||
     normalizedPath.startsWith("/services/") ||
+    normalizedPath.startsWith("/searchjobs/") ||
     (!isAuthenticated && guestMarketingNavbarPaths.has(normalizedPath));
 
   if (isCandMainHome) {

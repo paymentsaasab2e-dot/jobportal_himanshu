@@ -1,12 +1,14 @@
 'use client'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   CheckCircle2, Layers, Search, Shield, Rocket,
-  Gauge, MessageSquare, BarChart2, Globe, FileText
+  Gauge, MessageSquare, BarChart2, Globe, FileText, Users, Mic2
 } from 'lucide-react'
 import { useCandmainLandingContent } from '@/lib/candmain-landing'
 import type { CandmainActivityItem } from '@/lib/candmain-landing'
+import { fetchFromApi } from '@/lib/api-base'
+import { getStoredToken } from '@/lib/auth-storage'
 
 const typeIcons: Record<string, typeof CheckCircle2> = {
   design: Layers,
@@ -18,6 +20,9 @@ const typeIcons: Record<string, typeof CheckCircle2> = {
   metrics: BarChart2,
   deploy: Globe,
   report: FileText,
+  candidates: Users,
+  interviews: Mic2,
+  communities: MessageSquare,
 }
 
 const typeColors: Record<string, string> = {
@@ -30,6 +35,9 @@ const typeColors: Record<string, string> = {
   metrics: '#14B8A6',
   deploy: '#06B6D4',
   report: '#6366F1',
+  candidates: '#2563EB',
+  interviews: '#8B5CF6',
+  communities: '#EC4899',
 }
 
 const typeThemes: Record<
@@ -99,6 +107,27 @@ const typeThemes: Record<
     tagBg: 'rgba(99, 102, 241, 0.12)',
     accent: '#6366F1',
   },
+  candidates: {
+    bg: 'rgba(37, 99, 235, 0.08)',
+    border: 'rgba(37, 99, 235, 0.2)',
+    iconBg: 'rgba(37, 99, 235, 0.14)',
+    tagBg: 'rgba(37, 99, 235, 0.12)',
+    accent: '#2563EB',
+  },
+  interviews: {
+    bg: 'rgba(139, 92, 246, 0.08)',
+    border: 'rgba(139, 92, 246, 0.2)',
+    iconBg: 'rgba(139, 92, 246, 0.14)',
+    tagBg: 'rgba(139, 92, 246, 0.12)',
+    accent: '#8B5CF6',
+  },
+  communities: {
+    bg: 'rgba(236, 72, 153, 0.08)',
+    border: 'rgba(236, 72, 153, 0.2)',
+    iconBg: 'rgba(236, 72, 153, 0.14)',
+    tagBg: 'rgba(236, 72, 153, 0.12)',
+    accent: '#EC4899',
+  },
 }
 
 const defaultTheme = {
@@ -107,6 +136,40 @@ const defaultTheme = {
   iconBg: 'rgba(100, 116, 139, 0.14)',
   tagBg: 'rgba(100, 116, 139, 0.12)',
   accent: '#64748B',
+}
+
+function relativeTime(iso?: string | null): string {
+  const t = new Date(String(iso || '')).getTime()
+  if (!Number.isFinite(t)) return 'just now'
+  const diff = Math.max(0, Date.now() - t)
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'now'
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 14) return `${days}d ago`
+  try {
+    return new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  } catch {
+    return 'recently'
+  }
+}
+
+/** Public-safe candidate label — never show email/phone. */
+function publicCandidateName(fullName?: string | null): string {
+  const name = String(fullName || '').trim()
+  if (!name || /^n\/?a$/i.test(name)) return 'New member'
+  const parts = name.split(/\s+/).filter(Boolean)
+  if (parts.length === 1) return parts[0]
+  const last = parts[parts.length - 1]
+  return `${parts[0]} ${last.charAt(0).toUpperCase()}.`
+}
+
+function clip(text: string, max = 72): string {
+  const t = text.replace(/\s+/g, ' ').trim()
+  if (t.length <= max) return t
+  return `${t.slice(0, max - 1)}…`
 }
 
 function ActivityItem({
@@ -187,12 +250,14 @@ function StreamCard({
   dateLocale,
   latestUpdate,
   delay,
+  emptyLabel,
 }: {
   title: string
   feed: CandmainActivityItem[]
   dateLocale: string
   latestUpdate: string
   delay: number
+  emptyLabel: string
 }) {
   const [visibleItems, setVisibleItems] = useState(() =>
     feed.slice(0, VISIBLE_PER_CARD).map((item) => ({ item, feedKey: `initial-${item.id}` }))
@@ -200,7 +265,14 @@ function StreamCard({
   const [currentIndex, setCurrentIndex] = useState(VISIBLE_PER_CARD)
 
   useEffect(() => {
-    if (!feed.length) return
+    setVisibleItems(
+      feed.slice(0, VISIBLE_PER_CARD).map((item) => ({ item, feedKey: `boot-${item.id}` })),
+    )
+    setCurrentIndex(VISIBLE_PER_CARD)
+  }, [feed])
+
+  useEffect(() => {
+    if (feed.length <= VISIBLE_PER_CARD) return
     const interval = setInterval(() => {
       setVisibleItems((prev) => {
         const newItem = feed[currentIndex % feed.length]
@@ -255,31 +327,223 @@ function StreamCard({
               'linear-gradient(180deg, rgba(248, 250, 252, 0.92) 0%, rgba(239, 246, 255, 0.88) 100%)',
           }}
         >
-          <div className="flex h-full flex-col gap-1.5">
-            <AnimatePresence initial={false} mode="popLayout">
-              {visibleItems.map(({ item, feedKey }, i) => (
-                <ActivityItem key={feedKey} item={item} index={i} latestUpdate={latestUpdate} />
-              ))}
-            </AnimatePresence>
-          </div>
+          {visibleItems.length === 0 ? (
+            <div className="flex h-full items-center justify-center px-4 text-center text-sm text-text-muted">
+              {emptyLabel}
+            </div>
+          ) : (
+            <div className="flex h-full flex-col gap-1.5">
+              <AnimatePresence initial={false} mode="popLayout">
+                {visibleItems.map(({ item, feedKey }, i) => (
+                  <ActivityItem key={feedKey} item={item} index={i} latestUpdate={latestUpdate} />
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
   )
 }
 
+type LiveCandidate = {
+  id?: string
+  fullName?: string
+  createdAt?: string
+  isVerified?: boolean
+}
+
+type LivePost = {
+  id?: string
+  communityName?: string
+  companyName?: string
+  authorName?: string
+  text?: string
+  createdAt?: string
+}
+
+type LiveInterview = {
+  id?: string
+  requestId?: string
+  targetRole?: string
+  interviewType?: string
+  category?: string
+  status?: string
+  preferredDate?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+function extractCandidates(payload: unknown): LiveCandidate[] {
+  const root = payload as { data?: { candidates?: LiveCandidate[] }; candidates?: LiveCandidate[] }
+  if (Array.isArray(root?.data?.candidates)) return root.data!.candidates!
+  if (Array.isArray(root?.candidates)) return root.candidates!
+  return []
+}
+
+function extractPosts(payload: unknown): LivePost[] {
+  const root = payload as { ok?: boolean; data?: { posts?: LivePost[] }; posts?: LivePost[] }
+  if (Array.isArray(root?.data?.posts)) return root.data!.posts!
+  if (Array.isArray(root?.posts)) return root.posts!
+  return []
+}
+
+function extractInterviews(payload: unknown): LiveInterview[] {
+  const root = payload as {
+    success?: boolean
+    data?: LiveInterview[] | { requests?: LiveInterview[]; items?: LiveInterview[] }
+  }
+  if (Array.isArray(root?.data)) return root.data
+  if (Array.isArray((root?.data as { requests?: LiveInterview[] })?.requests)) {
+    return (root.data as { requests: LiveInterview[] }).requests
+  }
+  if (Array.isArray((root?.data as { items?: LiveInterview[] })?.items)) {
+    return (root.data as { items: LiveInterview[] }).items
+  }
+  return []
+}
+
+function interviewLooksPublic(post: LivePost): boolean {
+  const hay = `${post.text || ''} ${post.communityName || ''}`.toLowerCase()
+  return /interview|mock interview|hiring round|hr round|panel/.test(hay)
+}
+
 export default function ActivityStream() {
   const content = useCandmainLandingContent()
   const { activity: a } = content
+  const [candidateFeed, setCandidateFeed] = useState<CandmainActivityItem[]>([])
+  const [interviewFeed, setInterviewFeed] = useState<CandmainActivityItem[]>([])
+  const [communityFeed, setCommunityFeed] = useState<CandmainActivityItem[]>([])
 
-  // First card cycles through the full feed (all notifications); the other two
-  // cards keep their own slices so items aren't duplicated between them.
-  const sliceSize = Math.ceil(a.feed.length / 2)
-  const cards = [
-    { title: a.stats[0]?.label || a.streamTitle, feed: a.feed },
-    { title: a.stats[1]?.label || a.streamTitle, feed: a.feed.slice(0, sliceSize) },
-    { title: a.stats[2]?.label || a.streamTitle, feed: a.feed.slice(sliceSize) },
-  ]
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const token = getStoredToken()
+        const [candRes, gossipRes, interviewRes] = await Promise.all([
+          fetchFromApi('/candidates?page=1&limit=20').then(async (res) => {
+            if (!res.ok) return [] as LiveCandidate[]
+            return extractCandidates(await res.json())
+          }),
+          fetchFromApi('/office-gossips/bundle').then(async (res) => {
+            if (!res.ok) return [] as LivePost[]
+            return extractPosts(await res.json())
+          }),
+          token
+            ? fetchFromApi('/interview-requests/my?limit=20', {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+              }).then(async (res) => {
+                if (!res.ok) return [] as LiveInterview[]
+                return extractInterviews(await res.json())
+              }).catch(() => [] as LiveInterview[])
+            : Promise.resolve([] as LiveInterview[]),
+        ])
+
+        if (cancelled) return
+
+        const candidates = [...candRes].sort(
+          (a, b) => +new Date(b.createdAt || 0) - +new Date(a.createdAt || 0),
+        )
+        setCandidateFeed(
+          candidates.slice(0, 12).map((row, index) => ({
+            id: index + 1,
+            type: 'candidates',
+            typeLabel: row.isVerified ? 'Verified' : 'Joined',
+            message: `New candidate joined — ${publicCandidateName(row.fullName)}`,
+            time: relativeTime(row.createdAt),
+            status: 'success',
+          })),
+        )
+
+        const posts = [...gossipRes].sort(
+          (a, b) => +new Date(b.createdAt || 0) - +new Date(a.createdAt || 0),
+        )
+        setCommunityFeed(
+          posts.slice(0, 12).map((post, index) => {
+            const where = post.communityName || post.companyName || 'Community'
+            const author = String(post.authorName || 'Member').trim() || 'Member'
+            const body = clip(String(post.text || 'New community post'))
+            return {
+              id: index + 1,
+              type: 'communities',
+              typeLabel: where,
+              message: `${author}: ${body}`,
+              time: relativeTime(post.createdAt),
+              status: 'success',
+            }
+          }),
+        )
+
+        const fromApi = [...interviewRes].sort(
+          (a, b) =>
+            +new Date(b.updatedAt || b.createdAt || b.preferredDate || 0) -
+            +new Date(a.updatedAt || a.createdAt || a.preferredDate || 0),
+        )
+        if (fromApi.length > 0) {
+          setInterviewFeed(
+            fromApi.slice(0, 12).map((row, index) => {
+              const role = String(row.targetRole || row.category || 'Interview').trim()
+              const kind = String(row.interviewType || row.status || 'Interview').trim()
+              return {
+                id: index + 1,
+                type: 'interviews',
+                typeLabel: kind,
+                message: `Interview — ${role}${row.status ? ` · ${row.status.replace(/_/g, ' ')}` : ''}`,
+                time: relativeTime(row.updatedAt || row.createdAt || row.preferredDate),
+                status: 'success',
+              }
+            }),
+          )
+        } else {
+          // Public fallback: interview-related community posts
+          const interviewPosts = posts.filter(interviewLooksPublic).slice(0, 12)
+          setInterviewFeed(
+            interviewPosts.map((post, index) => ({
+              id: index + 1,
+              type: 'interviews',
+              typeLabel: 'Community',
+              message: clip(`Interview buzz — ${String(post.text || 'Interview activity')}`),
+              time: relativeTime(post.createdAt),
+              status: 'info',
+            })),
+          )
+        }
+      } catch {
+        if (!cancelled) {
+          setCandidateFeed([])
+          setInterviewFeed([])
+          setCommunityFeed([])
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const cards = useMemo(
+    () => [
+      {
+        title: a.stats[0]?.label || 'Candidates',
+        feed: candidateFeed,
+        emptyLabel: 'No newly joined candidates yet.',
+      },
+      {
+        title: a.stats[1]?.label || 'Interviews',
+        feed: interviewFeed,
+        emptyLabel: 'No interview activity yet.',
+      },
+      {
+        title: a.stats[2]?.label || 'Communities / Posts',
+        feed: communityFeed,
+        emptyLabel: 'No community posts yet.',
+      },
+    ],
+    [a.stats, candidateFeed, interviewFeed, communityFeed],
+  )
 
   return (
     <section className="section" id="activity">
@@ -309,6 +573,7 @@ export default function ActivityStream() {
               dateLocale={content.dateLocale}
               latestUpdate={a.latestUpdate}
               delay={0.1 * i}
+              emptyLabel={card.emptyLabel}
             />
           ))}
         </div>

@@ -1,13 +1,75 @@
 'use client'
 import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Users, MessageSquare, Gift, Mic2, Sparkles, Building2, ChevronDown
 } from 'lucide-react'
 import { useCandmainLandingContent } from '@/lib/candmain-landing'
 import type { CandmainStat } from '@/lib/candmain-landing'
+import { fetchFromApi } from '@/lib/api-base'
+import { getStoredToken } from '@/lib/auth-storage'
+import { fetchPublicEvents, type PortalEventRow } from '@/lib/public-events-api'
+import { SUGGESTION_COURSE_CATALOG } from '@/lib/suggestions-engine/catalog'
 
 const icons = [Users, MessageSquare, Gift, Mic2, Sparkles, Building2]
+
+type LiveJobRow = {
+  id?: string | number
+  title?: string
+  company?: { name?: string } | string
+  companyName?: string
+  location?: string
+  city?: string
+  country?: string
+  industry?: string
+  postedAt?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+function jobCompanyName(job: LiveJobRow): string {
+  if (typeof job.company === 'string' && job.company.trim()) return job.company.trim()
+  if (job.company && typeof job.company === 'object' && job.company.name?.trim()) {
+    return job.company.name.trim()
+  }
+  return String(job.companyName || '').trim()
+}
+
+function jobPlace(job: LiveJobRow): string {
+  return String(job.location || job.city || job.country || '').trim()
+}
+
+function jobTime(job: LiveJobRow): number {
+  const raw = job.postedAt || job.createdAt || job.updatedAt || 0
+  const n = new Date(String(raw)).getTime()
+  return Number.isFinite(n) ? n : 0
+}
+
+function formatEventWhen(iso: string): string {
+  const t = new Date(iso).getTime()
+  if (!Number.isFinite(t)) return ''
+  try {
+    return new Date(t).toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+  } catch {
+    return ''
+  }
+}
+
+function extractJobs(payload: unknown): LiveJobRow[] {
+  const root = payload as {
+    data?: { jobs?: LiveJobRow[] } | LiveJobRow[]
+    jobs?: LiveJobRow[]
+  }
+  if (Array.isArray(root?.data?.jobs)) return root.data!.jobs as LiveJobRow[]
+  if (Array.isArray(root?.data)) return root.data as LiveJobRow[]
+  if (Array.isArray(root?.jobs)) return root.jobs
+  return []
+}
 
 function StatCard({ stat, index }: { stat: CandmainStat; index: number }) {
   const [displayValue, setDisplayValue] = useState(
@@ -79,7 +141,17 @@ function StatCard({ stat, index }: { stat: CandmainStat; index: number }) {
   )
 }
 
-function TickerBar({ items, label }: { items: string[]; label: string }) {
+function TickerBar({
+  items,
+  label,
+  loading,
+}: {
+  items: string[]
+  label: string
+  loading?: boolean
+}) {
+  const loop = items.length > 0 ? [...items, ...items] : []
+
   return (
     <div className="overflow-hidden rounded-xl bg-[#0F172A] px-6 py-3 flex items-center gap-4">
       <span className="flex-shrink-0 flex items-center gap-2 text-xs font-bold text-white uppercase tracking-widest">
@@ -90,26 +162,169 @@ function TickerBar({ items, label }: { items: string[]; label: string }) {
         {label}
       </span>
       <div className="overflow-hidden flex-1">
-        <motion.div
-          animate={{ x: [0, -2000] }}
-          transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-          className="flex gap-8 whitespace-nowrap"
-        >
-          {[...items, ...items].map((item, i) => (
-            <span key={i} className="text-xs text-white/60 font-medium flex items-center gap-2">
-              <span className="text-blue-primary">◆</span>
-              {item}
-            </span>
-          ))}
-        </motion.div>
+        {loading && items.length === 0 ? (
+          <span className="text-xs text-white/50 font-medium">Loading live updates…</span>
+        ) : items.length === 0 ? (
+          <span className="text-xs text-white/50 font-medium">No live items yet</span>
+        ) : (
+          <motion.div
+            key={label + items.slice(0, 3).join('|')}
+            animate={{ x: [0, -Math.max(800, items.length * 220)] }}
+            transition={{ duration: Math.max(20, items.length * 4), repeat: Infinity, ease: 'linear' }}
+            className="flex gap-8 whitespace-nowrap"
+          >
+            {loop.map((item, i) => (
+              <span key={`${item}-${i}`} className="text-xs text-white/60 font-medium flex items-center gap-2">
+                <span className="text-blue-primary">◆</span>
+                {item}
+              </span>
+            ))}
+          </motion.div>
+        )}
       </div>
     </div>
   )
 }
 
+function extractCourses(payload: unknown): { title?: string; level?: string; category?: string }[] {
+  const root = payload as {
+    data?: unknown
+    success?: boolean
+  }
+  const data = root?.data
+  if (Array.isArray(data)) return data as { title?: string; level?: string; category?: string }[]
+  if (data && typeof data === 'object' && Array.isArray((data as { courses?: unknown }).courses)) {
+    return (data as { courses: { title?: string; level?: string; category?: string }[] }).courses
+  }
+  return []
+}
+
 export default function CommandCenter() {
   const content = useCandmainLandingContent()
   const { commandCenter: c } = content
+  const [jobs, setJobs] = useState<LiveJobRow[]>([])
+  const [events, setEvents] = useState<PortalEventRow[]>([])
+  const [courses, setCourses] = useState<{ title: string; meta?: string }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      setLoading(true)
+      try {
+        const token = getStoredToken()
+        const [jobsRes, eventRows, courseRows] = await Promise.all([
+          fetchFromApi('/jobs?page=1&limit=40').then(async (res) => {
+            if (!res.ok) return [] as LiveJobRow[]
+            return extractJobs(await res.json())
+          }),
+          fetchPublicEvents(undefined, 'upcoming').catch(() => [] as PortalEventRow[]),
+          (async () => {
+            if (!token) return [] as { title: string; meta?: string }[]
+            try {
+              const res = await fetchFromApi('/lms/courses', {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+              })
+              if (!res.ok) return [] as { title: string; meta?: string }[]
+              return extractCourses(await res.json())
+                .map((row) => {
+                  const title = String(row.title || '').trim()
+                  if (!title) return null
+                  const meta = [row.level, row.category].map((v) => String(v || '').trim()).filter(Boolean).join(' · ')
+                  return { title, meta: meta || undefined }
+                })
+                .filter(Boolean) as { title: string; meta?: string }[]
+            } catch {
+              return [] as { title: string; meta?: string }[]
+            }
+          })(),
+        ])
+        if (cancelled) return
+        setJobs(Array.isArray(jobsRes) ? jobsRes : [])
+        setEvents(Array.isArray(eventRows) ? eventRows : [])
+        if (courseRows.length > 0) {
+          setCourses(courseRows)
+        } else {
+          // Public landing fallback: LMS catalog (API requires login)
+          setCourses(
+            SUGGESTION_COURSE_CATALOG.slice(0, 8).map((course) => ({
+              title: course.title,
+              meta: course.paid ? 'LMS' : undefined,
+            })),
+          )
+        }
+      } catch {
+        if (!cancelled) {
+          setJobs([])
+          setEvents([])
+          setCourses(
+            SUGGESTION_COURSE_CATALOG.slice(0, 8).map((course) => ({
+              title: course.title,
+              meta: 'LMS',
+            })),
+          )
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const tickerItems = useMemo(() => {
+    const sortedJobs = [...jobs].sort((a, b) => jobTime(b) - jobTime(a))
+
+    const openedJobs = sortedJobs
+      .map((job) => {
+        const title = String(job.title || '').trim()
+        if (!title) return ''
+        const company = jobCompanyName(job)
+        const place = jobPlace(job)
+        const bits = [title, company ? `@ ${company}` : '', place ? `· ${place}` : '']
+          .filter(Boolean)
+          .join(' ')
+        return `Opened Job: ${bits}`
+      })
+      .filter(Boolean)
+      .slice(0, 10)
+
+    const liveEvents = events
+      .map((ev) => {
+        const title = String(ev.title || '').trim()
+        if (!title) return ''
+        const when = formatEventWhen(ev.scheduledAt)
+        const place = String(ev.location || ev.mode || '').trim()
+        return `Live Event: ${title}${when ? ` · ${when}` : ''}${place ? ` · ${place}` : ''}`
+      })
+      .filter(Boolean)
+      .slice(0, 10)
+
+    const liveCourses = courses
+      .map((course) => {
+        const title = String(course.title || '').trim()
+        if (!title) return ''
+        return `Course: ${title}${course.meta ? ` · ${course.meta}` : ''}`
+      })
+      .filter(Boolean)
+      .slice(0, 10)
+
+    // Interleave: events → opened jobs → courses for a mixed Live Feed
+    const mixed: string[] = []
+    const max = Math.max(liveEvents.length, openedJobs.length, liveCourses.length)
+    for (let i = 0; i < max; i += 1) {
+      if (liveEvents[i]) mixed.push(liveEvents[i])
+      if (openedJobs[i]) mixed.push(openedJobs[i])
+      if (liveCourses[i]) mixed.push(liveCourses[i])
+    }
+
+    const unique = Array.from(new Set(mixed)).slice(0, 24)
+    return unique.length ? unique : c.ticker
+  }, [jobs, events, courses, c.ticker])
 
   return (
     <section className="section command-center-section bg-[#FAFBFC]" id="command">
@@ -139,7 +354,7 @@ export default function CommandCenter() {
           ))}
         </div>
 
-        <TickerBar items={c.ticker} label={c.liveFeed} />
+        <TickerBar items={tickerItems} label={c.liveFeed} loading={loading} />
       </div>
     </section>
   )
