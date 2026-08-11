@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
-import { RequestDemoClient } from "../request-demo/RequestDemoClient";
-import { TRIAL_DURATION_DAYS } from "@/lib/employers/constants";
+import { TryFreeLoginClient } from "./TryFreeLoginClient";
 
 export const metadata: Metadata = {
   title: "Try it free",
-  description: `Start your ${TRIAL_DURATION_DAYS}-day free trial of the SAASA B2E employer platform.`,
+  description:
+    "Sign in with HQ-granted try-free credentials to access the SAASA B2E employer workspace.",
 };
 
 export default function TryFreePage() {
-  return <RequestDemoClient intent="trial" />;
+  return (
+    <main className="min-h-[70vh] bg-[linear-gradient(135deg,#fde9d4,#fafbfb,#bddffb)] px-4 pt-28 pb-16 sm:px-6 sm:pt-36">
+      <TryFreeLoginClient />
+    </main>
+  );
 }

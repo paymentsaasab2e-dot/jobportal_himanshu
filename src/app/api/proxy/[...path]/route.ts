@@ -29,6 +29,10 @@ const PHASE2_INTERVIEW_FORMS_BASE =
   process.env.NODE_ENV === 'development'
     ? 'http://localhost:5001/api/v1/interview-applications'
     : 'https://api2.hryantra.com/api/v1/interview-applications';
+const PHASE2_AUTH_BASE =
+  process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5001/api/v1/auth'
+    : 'https://api2.hryantra.com/api/v1/auth';
 
 const buildTargetUrl = (req: NextRequest, pathParts: string[]) => {
   if (pathParts[0] === 'phase2-public-jobs') {
@@ -57,6 +61,13 @@ const buildTargetUrl = (req: NextRequest, pathParts: string[]) => {
       /\/$/,
       '',
     );
+    return `${base}/${subPath}${query}`;
+  }
+
+  if (pathParts[0] === 'phase2-auth') {
+    const subPath = pathParts.slice(1).join('/');
+    const query = req.nextUrl.search || '';
+    const base = (process.env.PHASE2_AUTH_URL || PHASE2_AUTH_BASE).replace(/\/$/, '');
     return `${base}/${subPath}${query}`;
   }
 
@@ -104,6 +115,10 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
     }
   }
 
+  if (pathParts[0] === 'phase2-auth') {
+    headers.delete('authorization');
+  }
+
   const method = req.method.toUpperCase();
   const hasBody = !['GET', 'HEAD'].includes(method);
 
@@ -143,6 +158,12 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
     }
     if (pathParts[0] === 'phase2-interview-forms') {
       return NextResponse.json({ success: false, message: 'Interview forms unavailable' }, { status: 503 });
+    }
+    if (pathParts[0] === 'phase2-auth') {
+      return NextResponse.json(
+        { success: false, message: 'Employer workspace is unavailable. Is Phase 2 API running?' },
+        { status: 503 },
+      );
     }
     return NextResponse.json({ error: 'Backend service unavailable' }, { status: 503 });
   }

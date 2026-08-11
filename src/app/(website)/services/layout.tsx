@@ -4,7 +4,7 @@ import { ServicesProvider } from "./context/ServicesContext";
 export const metadata: Metadata = {
   title: "Transforming HR into Value for Talent and Enterprise",
   description:
-    "Where Visionary Entrepreneurs and Top Talent Connect, Grow, and Scale.",
+    "Where Visionary Entrepreneurs and Top Talent Connect, Grow, and Scale. Employee services and Entrepreneurs ATS + CRM.",
 };
 
 export default function ServicesLayout({

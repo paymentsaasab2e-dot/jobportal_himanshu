@@ -904,11 +904,11 @@ export function RequestDemoClient({ intent = "demo" }: { intent?: "demo" | "tria
             <h1 className="text-4xl font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-5xl">
               {isTrial ? (
                 <>
-                  Start your{" "}
+                  Get{" "}
                   <span className="bg-linear-to-r from-violet-600 via-indigo-500 to-sky-500 bg-clip-text text-transparent">
-                    {TRIAL_DURATION_DAYS}-day free trial
+                    HQ-approved try-free
                   </span>{" "}
-                  on SAASA B2E.
+                  access on SAASA B2E.
                 </>
               ) : (
                 <>
@@ -923,7 +923,7 @@ export function RequestDemoClient({ intent = "demo" }: { intent?: "demo" | "tria
 
             <p className="mt-5 text-lg leading-relaxed text-slate-600">
               {isTrial
-                ? "Create your employer workspace in minutes. Verify your email, get instant access to recruitment, HR, and pipeline tools."
+                ? "Request access and HQ will email try-free credentials when your demo is approved. Sign in on the Try it free page."
                 : "Share your basics, pick an open date and time, then confirm your booking."}
             </p>
 
