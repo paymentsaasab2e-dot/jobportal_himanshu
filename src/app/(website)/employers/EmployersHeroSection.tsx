@@ -28,7 +28,7 @@ export function EmployersHeroSection() {
 
       <aside className="mb-8 inline-flex max-w-full flex-wrap items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 backdrop-blur-sm">
         <span className="whitespace-nowrap text-center text-xs text-slate-300">
-          HRYantra CRM — leads, jobs, AI matching, placements & HQ analytics
+          HRYantra CRM — leads, jobs, AI matching, placements and live command center
         </span>
         <a
           href="#overview"

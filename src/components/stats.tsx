@@ -12,36 +12,37 @@ type Stat = {
 	value: string;
 	delta: number;
 	footnote: string;
-	/** When true, a negative delta is treated as favorable (e.g. queue depth, reply time). */
+	/** When true, a negative delta is treated as favorable. */
 	lowerIsBetter: boolean;
 };
 
+/** Phase 2 recruitment CRM live metrics for the employers hero preview. */
 const stats: readonly Stat[] = [
 	{
-		label: "Open queue",
-		value: "38",
-		delta: -12.4,
+		label: "Open leads",
+		value: "42",
+		delta: 8.2,
 		footnote: "vs yesterday",
-		lowerIsBetter: true,
+		lowerIsBetter: false,
 	},
 	{
-		label: "Active conversations",
-		value: "126",
-		delta: 5.2,
+		label: "Active jobs",
+		value: "16",
+		delta: 3.1,
 		footnote: "vs last week",
 		lowerIsBetter: false,
 	},
 	{
-		label: "Median first reply",
-		value: "4.1m",
-		delta: -8.0,
-		footnote: "vs last week",
-		lowerIsBetter: true,
+		label: "AI matches today",
+		value: "128",
+		delta: 12.4,
+		footnote: "vs yesterday",
+		lowerIsBetter: false,
 	},
 	{
-		label: "CSAT (30d)",
-		value: "94%",
-		delta: 1.1,
+		label: "Placements (30d)",
+		value: "9",
+		delta: 4.6,
 		footnote: "vs prior 30d",
 		lowerIsBetter: false,
 	},

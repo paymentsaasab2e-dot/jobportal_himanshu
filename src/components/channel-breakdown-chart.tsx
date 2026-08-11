@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/chart";
 import { Delta, DeltaIcon, DeltaValue } from "@/components/delta";
 
-type ChannelKey = "direct" | "email" | "social";
+type ChannelKey = "portal" | "referral" | "linkedin";
 
 type ChannelDatum = {
 	channel: ChannelKey;
@@ -27,25 +27,25 @@ type ChannelDatum = {
 };
 
 const chartData: ChannelDatum[] = [
-	{ channel: "direct", share: 44, fill: "var(--color-direct)" },
-	{ channel: "email", share: 36, fill: "var(--color-email)" },
-	{ channel: "social", share: 20, fill: "var(--color-social)" },
+	{ channel: "portal", share: 44, fill: "var(--color-portal)" },
+	{ channel: "referral", share: 36, fill: "var(--color-referral)" },
+	{ channel: "linkedin", share: 20, fill: "var(--color-linkedin)" },
 ];
 
 const chartConfig = {
 	share: {
 		label: "Share",
 	},
-	direct: {
-		label: "Direct",
+	portal: {
+		label: "Portal apply",
 		color: "var(--chart-1)",
 	},
-	email: {
-		label: "Email",
+	referral: {
+		label: "Referral",
 		color: "var(--chart-3)",
 	},
-	social: {
-		label: "Social",
+	linkedin: {
+		label: "LinkedIn",
 		color: "var(--chart-5)",
 	},
 } satisfies ChartConfig;
@@ -61,14 +61,14 @@ export function ChannelBreakdownChart({
 		>
 			<CardHeader className="items-center space-y-1 pb-0 sm:items-start">
 				<div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-					<CardTitle>Traffic by channel</CardTitle>
+					<CardTitle>Hire sources</CardTitle>
 					<Delta value={2.4} variant="badge">
 						<DeltaIcon variant="trend" />
 						<DeltaValue suffix="pp" />
 					</Delta>
 				</div>
 				<CardDescription>
-					Share of new conversations in last 7 days
+					Share of new candidates in last 7 days
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="my-auto">

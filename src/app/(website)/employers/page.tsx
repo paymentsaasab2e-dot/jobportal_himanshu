@@ -1,14 +1,12 @@
 import { Metadata } from "next";
 import EmployerLandingPage from "./EmployersClient";
-import { fetchEmployerPricingPlans } from "@/lib/employers/hqPackages";
 
 export const metadata: Metadata = {
-  title: "Employers — HRYantra CRM",
+  title: "HRYantra for Employers | AI-Powered Recruitment & Business Platform",
   description:
-    "SAASA B2E employer platform: leads, jobs, AI matching, interviews, placements, billing, and HQ analytics in one unified CRM.",
+    "Manage leads, clients, candidates, jobs, interviews, placements and recruitment operations with HRYantra's intelligent employer platform.",
 };
 
-export default async function Page() {
-  const initialPlans = await fetchEmployerPricingPlans("en");
-  return <EmployerLandingPage initialPlans={initialPlans} />;
+export default function Page() {
+  return <EmployerLandingPage />;
 }

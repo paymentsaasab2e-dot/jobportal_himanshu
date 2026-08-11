@@ -144,7 +144,7 @@ const volumeChartReferenceDate = parseIsoCalendarDate(lastChartRow.date);
 
 const chartConfig = {
 	conversations: {
-		label: "New threads",
+		label: "Applications",
 		color: "var(--chart-2)",
 	},
 } satisfies ChartConfig;
@@ -203,14 +203,14 @@ export function ConversationVolumeChart({
 			<CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div className="min-w-0 space-y-2">
 					<div className="flex flex-wrap items-center gap-2">
-						<CardTitle>Conversation volume</CardTitle>
+						<CardTitle>Application volume</CardTitle>
 						<Delta value={growthPctNum} variant="badge">
 							<DeltaIcon variant="trend" />
 							<DeltaValue />
 						</Delta>
 					</div>
 					<CardDescription>
-						New threads per day for the selected window.
+						New candidate applications per day for the selected window.
 					</CardDescription>
 				</div>
 				<Select
@@ -221,7 +221,7 @@ export function ConversationVolumeChart({
 					value={String(periodDays)}
 				>
 					<SelectTrigger
-						aria-label="Conversation volume time range"
+						aria-label="Application volume time range"
 						className="w-full min-w-36 sm:w-fit"
 						size="sm"
 					>
