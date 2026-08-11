@@ -1,67 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
+import {
+  ArrowDown,
+  ArrowRight,
+  Award,
+  BarChart3,
+  Bot,
+  Briefcase,
+  Building2,
+  CheckCircle2,
+  ClipboardCheck,
+  FileText,
+  GitBranch,
+  GraduationCap,
+  LayoutDashboard,
+  Linkedin,
+  Mic2,
+  ScanSearch,
+  Shield,
+  Sparkles,
+  Target,
+  Users,
+  Wallet,
+  Zap,
+} from "lucide-react";
 
 const styles = `
+  .svc-gradient-text,
   .gradient-text {
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
     background-image: linear-gradient(to right, #4f46e5, #9333ea, #db2777);
   }
-  
   .fade-in-up {
     opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(24px);
+    transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
   .fade-in-up.visible {
     opacity: 1;
     transform: translateY(0);
   }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
-  }
-
-  @keyframes pulse-glow {
-    0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.3); }
-    70% { box-shadow: 0 0 0 20px rgba(79, 70, 229, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
-  }
-
-  @keyframes rotate {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  @keyframes counter-rotate {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(-360deg); }
-  }
-
   @keyframes fadeIn {
       to { opacity: 1; }
   }
-
-  @keyframes shimmer {
-    100% { transform: translateX(100%); }
-  }
-
-  @keyframes scan {
-    0%, 100% { top: 0; opacity: 0; }
-    10%, 90% { opacity: 1; }
-    50% { top: 100%; }
-  }
-
-  @keyframes grow {
-    from { height: 0%; }
-    to { height: 100%; }
-  }
-
+  .animate-fade-in { animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
   .hero-bg-glow {
       position: absolute;
       top: -20%;
@@ -73,613 +59,676 @@ const styles = `
       z-index: 0;
       pointer-events: none;
   }
-
-  .cta-glow {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(79, 70, 229, 0.08) 0%, rgba(252, 252, 253, 0) 70%);
-      z-index: 0;
-  }
-
-  .center-glow {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 150px;
-      height: 150px;
-      background: radial-gradient(circle, rgba(147, 51, 234, 0.1) 0%, rgba(0,0,0,0) 70%);
-      border-radius: 50%;
-  }
-
-  .card-glow {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 200px;
-      height: 200px;
-      background: radial-gradient(circle, rgba(79, 70, 229, 0.08) 0%, rgba(0,0,0,0) 70%);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      opacity: 0;
-  }
-  .group:hover .card-glow {
-      opacity: 1;
-  }
-
-  .journey-line {
-      position: absolute;
-      top: 50%;
-      left: 5%;
-      right: 5%;
-      height: 2px;
-      background: #e5e7eb;
-      transform: translateY(-50%);
-      z-index: 1;
-  }
-
-  @keyframes journeyFill {
-      0% { width: 0%; opacity: 1; }
-      90% { width: 100%; opacity: 1; }
-      95% { width: 100%; opacity: 0; }
-      100% { width: 0%; opacity: 0; }
-  }
-
-  @keyframes journeyFillMobile {
-      0% { height: 0%; opacity: 1; }
-      90% { height: 100%; opacity: 1; }
-      95% { height: 100%; opacity: 0; }
-      100% { height: 0%; opacity: 0; }
-  }
-
-  @keyframes journeyNodePulse {
-      0%, 100% { box-shadow: none; border-color: #e5e7eb; transform: scale(1); color: #4b5563; }
-      10% { 
-          box-shadow: 0 0 0 10px rgba(79, 70, 229, 0.1), 0 0 25px rgba(79, 70, 229, 0.3);
-          border-color: #4f46e5;
-          color: #4f46e5;
-          transform: scale(1.15);
-      }
-      20% { box-shadow: none; border-color: #e5e7eb; transform: scale(1); color: #4b5563; }
-  }
-
-  @keyframes journeyNodePulseEnd {
-      0%, 100% { box-shadow: none; border-color: #e5e7eb; transform: scale(1); background-color: white; color: #4b5563; }
-      10% { 
-          box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.15), 0 0 25px rgba(16, 185, 129, 0.4);
-          border-color: #059669;
-          background-color: #10b981;
-          transform: scale(1.15);
-          color: white;
-      }
-      20% { box-shadow: none; border-color: #e5e7eb; transform: scale(1); background-color: white; color: #4b5563; }
-  }
-
-  .journey-line::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(to right, #4f46e5, #9333ea, #10b981);
-      box-shadow: 0 0 10px rgba(79, 70, 229, 0.4);
-      animation: journeyFill 9s ease-in-out infinite;
-  }
-
-  @media (max-width: 768px) {
-      .journey-line {
-          top: 0; left: 32px; right: auto; width: 2px; height: 100%;
-          transform: none;
-      }
-      .journey-line::after { 
-          width: 100%; 
-          height: 0%; 
-          background: linear-gradient(to bottom, #4f46e5, #9333ea, #10b981);
-          animation: journeyFillMobile 9s ease-in-out infinite;
-      }
-  }
-
-  /* Utility mapping for Tailwind Arbitrary Config */
-  .animate-float { animation: float 6s ease-in-out infinite; }
-  .animate-pulse-glow { animation: pulse-glow 2s infinite; }
-  .animate-rotate { animation: rotate 20s linear infinite; }
-  .animate-counter-rotate { animation: counter-rotate 20s linear infinite; }
-  .animate-fade-in { animation: fadeIn 1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 `;
 
-export default function Home() {
+const PHASE1_CORE = [
+  { title: "Job search & apply", line: "Find roles and apply in one place", icon: Briefcase },
+  { title: "Candidate dashboard", line: "Track applications, views, and progress", icon: LayoutDashboard },
+  { title: "Profile + CV upload", line: "Build a recruiter-ready profile", icon: FileText },
+  { title: "AI Resume Builder", line: "Improve resume sections with AI", icon: Sparkles },
+  { title: "ATS check", line: "See how ATS-friendly your CV is", icon: ScanSearch },
+  { title: "Job match", line: "Roles that fit your skills", icon: Target },
+  { title: "LMS / courses", line: "Learn skills tied to hiring goals", icon: GraduationCap },
+  { title: "Mock interview AI", line: "Practice interviews with scoring", icon: Mic2 },
+];
 
+const PHASE1_PREMIUM = [
+  {
+    title: "AI Resume Review",
+    detail: "ATS score, keyword gaps, and actionable improvement tips.",
+    badge: "Best starter",
+    href: "/services/ai-resume-review",
+    icon: ScanSearch,
+  },
+  {
+    title: "Job-Specific CV Optimization",
+    detail: "Tailor your CV to one job description for higher match scores.",
+    badge: "High convert",
+    href: "/services/job-specific-cv-optimization",
+    icon: Target,
+  },
+  {
+    title: "Mock Interview",
+    detail: "AI or expert practice sessions with structured feedback.",
+    badge: "Interview bait",
+    href: "/services/mock-interview",
+    icon: Mic2,
+  },
+  {
+    title: "LinkedIn Optimization",
+    detail: "Stronger headline, about section, and recruiter visibility.",
+    badge: "Profile boost",
+    href: "/services/linkedin-profile-optimization",
+    icon: Linkedin,
+  },
+  {
+    title: "Skill Assessment",
+    detail: "Scorecard, strengths/weaknesses, and a learning path.",
+    badge: "Readiness",
+    href: "/services/skill-assessment",
+    icon: ClipboardCheck,
+  },
+  {
+    title: "Premium / Certified Courses",
+    detail: "Unlock premium and certified LMS paths with token packs.",
+    badge: "Learning upsell",
+    href: "/services/upskilling-certification",
+    icon: GraduationCap,
+  },
+  {
+    title: "Resume Writing Upgrade",
+    detail: "Expert rewrite with revisions — highest-ticket candidate service.",
+    badge: "Highest ticket",
+    href: "/services/resume-writing-upgrade",
+    icon: FileText,
+  },
+];
+
+const TOKEN_PACKS = [
+  { name: "Starter", line: "Light resume tools & LMS unlocks", price: "Entry" },
+  { name: "Plus", line: "Interview prep + course unlocks", price: "Popular" },
+  { name: "Pro", line: "Mock sessions + certified courses", price: "Power" },
+];
+
+const PHASE2_MODULES = [
+  {
+    title: "CRM & Revenue",
+    items: ["Leads & follow-ups", "Client CRM", "Contacts", "Smart search"],
+    icon: Target,
+  },
+  {
+    title: "Recruitment Engine",
+    items: ["AI job wizard", "Bulk CV intake", "4-pass AI matching", "Pipeline · Interviews · Placements"],
+    icon: Briefcase,
+  },
+  {
+    title: "Operations Hub",
+    items: ["Command dashboard", "Reports", "Tasks & inbox", "Billing / invoices"],
+    icon: BarChart3,
+  },
+  {
+    title: "Platform & Control",
+    items: ["Team + RBAC", "Portal sync (Employees)", "HQ tab/module control", "Agency or standalone"],
+    icon: Shield,
+  },
+];
+
+const PHASE2_AI = [
+  { title: "AI Job Creation", line: "Job post in minutes from a short brief", icon: Sparkles },
+  { title: "4-pass AI Matching", line: "Ranked shortlists with explainable scores", icon: Zap },
+  { title: "Bulk CV parse", line: "Resume intake + duplicate detection", icon: FileText },
+  { title: "Pre-screen assessments", line: "AI screening tests tied to each role", icon: ClipboardCheck },
+  { title: "ARIA / Workspace brief", line: "Daily “what needs attention” AI operator", icon: Bot },
+  { title: "Placement + billing", line: "Track hires, invoices, and revenue", icon: Wallet },
+];
+
+const PHASE2_PLANS = [
+  { name: "Starter", line: "Small teams hiring their first roles" },
+  { name: "Professional", line: "Growing hiring + HR in one workspace" },
+  { name: "Enterprise", line: "Complex ops, multi-team, HQ control" },
+];
+
+export default function ServicesPage() {
   useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: "0px",
-      threshold: 0.15,
-    };
-
-    const observer = new IntersectionObserver((entries) => {
+    const observer = new IntersectionObserver(
+      (entries) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible");
-        }
-      });
-    }, observerOptions);
-
-    const animatedElements = document.querySelectorAll(".fade-in-up");
-    animatedElements.forEach((el) => observer.observe(el));
-
-    return () => {
-      animatedElements.forEach((el) => observer.unobserve(el));
-    };
+          if (entry.isIntersecting) entry.target.classList.add("visible");
+        });
+      },
+      { root: null, rootMargin: "0px", threshold: 0.12 },
+    );
+    const els = document.querySelectorAll(".fade-in-up");
+    els.forEach((el) => observer.observe(el));
+    return () => els.forEach((el) => observer.unobserve(el));
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-[#fcfcfd] text-[#111827] font-inter overflow-x-clip">
+    <div className="relative min-h-screen overflow-x-clip bg-[#fcfcfd] font-sans text-[#111827]">
       <style dangerouslySetInnerHTML={{ __html: styles }} />
 
-      {/* Hero Section */}
-      <header className="relative pt-[140px] pb-[80px] min-h-screen flex items-center overflow-hidden">
-        <div className="hero-bg-glow"></div>
-        <div className="max-w-7xl mx-auto px-6 relative z-10 flex w-full flex-col items-center gap-10 lg:gap-12">
-          <div className="opacity-0 animate-fade-in w-full max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-[rgba(40,168,225,0.28)] bg-white px-5 py-2 shadow-[0_10px_28px_rgba(40,168,225,0.18)]">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-[#28A8E1]" />
-              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1B6FA8]">
+      {/* Hero — text only (resume mockup removed) */}
+      <header className="relative overflow-hidden pb-20 pt-[140px] md:pb-28 md:pt-[160px]">
+        <div className="hero-bg-glow" />
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col items-center px-6">
+          <div className="w-full max-w-6xl animate-fade-in text-center opacity-0">
+            <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-[rgba(40,168,225,0.28)] bg-white px-6 py-2.5 shadow-[0_10px_28px_rgba(40,168,225,0.18)]">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#28A8E1]" />
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#1B6FA8] md:text-sm">
                 HR Yantra: Connect. Value. Grow.
               </span>
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] mb-5 tracking-tight text-gray-900 leading-tight">
-              Transforming HR into Value for{' '}
-              <span className="gradient-text">Talent and Enterprise.</span>
+            <h1 className="mb-6 text-4xl font-bold leading-[1.12] tracking-tight text-gray-900 sm:text-5xl md:text-6xl lg:text-[4.25rem]">
+              <span className="block md:whitespace-nowrap">Transforming HR into Value for</span>
+              <span className="gradient-text block">Talent and Enterprise.</span>
             </h1>
-            <p className="text-lg text-gray-600 mb-8 mx-auto max-w-2xl">
+            <p className="mx-auto mb-10 max-w-3xl text-xl leading-relaxed text-gray-600 md:text-2xl">
               Where Visionary Entrepreneurs and Top Talent Connect, Grow, and Scale.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Link
                 href="/whatsapp"
-                className="px-7 py-3.5 rounded-full font-medium text-base text-white bg-gradient-to-br from-[#4f46e5] to-[#9333ea] shadow-[0_4px_14px_0_rgba(79,70,229,0.25)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.4)] hover:-translate-y-0.5 transition inline-flex items-center justify-center gap-2"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#9333ea] px-9 py-4 text-lg font-medium text-white shadow-[0_4px_14px_0_rgba(79,70,229,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(79,70,229,0.4)]"
               >
                 Start Your Journey
               </Link>
-              <Link
-                href="#services"
-                className="px-7 py-3.5 rounded-full font-medium text-base border border-gray-200 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)] hover:bg-gray-100 transition inline-flex items-center justify-center gap-2"
+              <a
+                href="#candidate-services"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-9 py-4 text-lg font-medium shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition hover:bg-gray-100"
               >
-                Explore AI Tools <i className="fa-solid fa-arrow-down"></i>
-              </Link>
-            </div>
-          </div>
-
-          <div className="relative h-[460px] md:h-[500px] flex justify-center items-center opacity-0 animate-fade-in [animation-delay:200ms] w-full">
-            
-            {/* Background decorative rings */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-[350px] h-[350px] md:w-[450px] md:h-[450px] border border-accent-primary/10 rounded-full absolute animate-[pulse-glow_4s_ease-in-out_infinite]"></div>
-              <div className="w-[250px] h-[250px] md:w-[320px] md:h-[320px] border border-accent-secondary/20 rounded-full absolute animate-[pulse-glow_4s_ease-in-out_infinite_1s]"></div>
-            </div>
-
-            {/* Floating Pills */}
-            <div className="absolute top-[10%] right-[0%] md:right-[18%] bg-white/95 backdrop-blur-md border border-gray-100 py-3 px-5 rounded-2xl flex items-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.08)] z-30 animate-float hover:scale-105 active:scale-95 cursor-pointer transition-all duration-300 hover:border-accent-primary/30 hover:shadow-[0_8px_30px_rgba(79,70,229,0.15)] group">
-              <div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center text-accent-primary text-lg group-hover:rotate-12 group-hover:bg-accent-primary group-hover:text-white transition-all duration-300">
-                <i className="fa-solid fa-robot"></i>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-gray-900 text-sm font-bold font-outfit group-hover:text-accent-primary transition-colors duration-300">AI Analysis</span>
-                <span className="text-accent-primary text-[10px] font-bold uppercase tracking-wider">Scanning...</span>
-              </div>
-            </div>
-            
-            <div className="absolute bottom-[20%] left-[0%] md:left-[14%] bg-white/95 backdrop-blur-md border border-gray-100 py-3 px-5 rounded-2xl flex items-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.08)] z-30 animate-float [animation-delay:2s] hover:scale-105 active:scale-95 cursor-pointer transition-all duration-300 hover:border-[#10b981]/30 hover:shadow-[0_8px_30px_rgba(16,185,129,0.15)] group">
-              <div className="w-10 h-10 rounded-full bg-[#10b981]/10 flex items-center justify-center text-[#10b981] text-lg group-hover:-rotate-12 group-hover:bg-[#10b981] group-hover:text-white transition-all duration-300">
-                <i className="fa-solid fa-bolt"></i>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-gray-900 text-sm font-bold font-outfit group-hover:text-[#10b981] transition-colors duration-300">ATS Match</span>
-                <span className="text-[#10b981] text-[10px] font-bold uppercase tracking-wider">Excellent</span>
-              </div>
-            </div>
-            
-            {/* Main Mockup Card */}
-            <div className="w-full max-w-[380px] md:max-w-[420px] bg-white/80 backdrop-blur-2xl border border-gray-200/80 rounded-[2rem] p-6 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] relative z-20 overflow-hidden group/card hover:-translate-y-2 hover:shadow-[0_30px_60px_-15px_rgba(79,70,229,0.15)] hover:border-accent-primary/30 transition-all duration-500 cursor-pointer">
-              {/* Glass reflection */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/60 to-transparent pointer-events-none"></div>
-              
-              {/* Top Bar */}
-              <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4 relative z-10">
-                <div className="flex gap-2">
-                  <span className="w-3 h-3 rounded-full bg-[#ef4444] shadow-sm hover:scale-150 transition-transform duration-200 cursor-pointer"></span>
-                  <span className="w-3 h-3 rounded-full bg-[#f59e0b] shadow-sm hover:scale-150 transition-transform duration-200 cursor-pointer"></span>
-                  <span className="w-3 h-3 rounded-full bg-[#10b981] shadow-sm hover:scale-150 transition-transform duration-200 cursor-pointer"></span>
-                </div>
-                <div className="text-[10px] font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100 flex items-center gap-2 hover:bg-gray-100 hover:text-gray-600 transition-colors duration-200">
-                  <i className="fa-regular fa-file-pdf"></i> resume_vfinal.pdf
-                </div>
-              </div>
-              
-              {/* Content Area with Scanner */}
-              <div className="relative mb-6 z-10">
-                {/* Scanner Line Animation */}
-                <div className="absolute left-0 right-0 h-[2px] bg-accent-primary shadow-[0_0_15px_3px_rgba(79,70,229,0.4)] z-20 animate-[scan_3s_ease-in-out_infinite] group-hover/card:bg-accent-secondary group-hover/card:shadow-[0_0_15px_3px_rgba(147,51,234,0.4)] transition-colors duration-500"></div>
-                
-                {/* Mock Content */}
-                <div className="space-y-4">
-                  {/* Mock Header */}
-                  <div className="flex gap-4 items-center hover:bg-gray-50 p-2 -mx-2 rounded-xl transition-colors duration-200 cursor-default">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-50 to-gray-200 border border-gray-200 flex-shrink-0 hover:scale-110 transition-transform duration-200 flex items-center justify-center overflow-hidden">
-                      <i className="fa-solid fa-user text-gray-400 text-xl"></i>
-                    </div>
-                    <div className="w-full">
-                      <div className="text-sm font-bold text-gray-900 leading-tight">Alex Sterling</div>
-                      <div className="text-[10px] text-gray-500 font-medium">Senior Software Engineer</div>
-                      <div className="text-[9px] text-gray-400 mt-1 flex gap-2">
-                        <span><i className="fa-solid fa-location-dot"></i> San Francisco, CA</span>
-                        <span><i className="fa-solid fa-envelope"></i> alex@example.com</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Mock Experience */}
-                  <div className="pt-1 px-2 hover:bg-gray-50 -mx-2 p-2 rounded-xl transition-colors duration-200 cursor-default">
-                    <div className="text-[11px] font-bold text-gray-800 mb-1">Experience</div>
-                    <div className="text-[10px] font-semibold text-gray-700">TechNova Solutions <span className="text-gray-400 font-normal">| 2021 - Present</span></div>
-                    <ul className="text-[9.5px] text-gray-500 list-disc pl-3 mt-1.5 space-y-1.5 leading-relaxed">
-                      <li>Architected and migrated a legacy monolithic application to microservices using Node.js and Docker, improving system uptime by 99.9%.</li>
-                      <li>Led a team of 5 engineers to deliver a real-time analytics dashboard in React, increasing user engagement by 40%.</li>
-                    </ul>
-                  </div>
-                  
-                  {/* Mock Skills */}
-                  <div className="flex flex-wrap gap-1.5 pt-1 px-2">
-                    <div className="text-[10px] font-semibold text-accent-primary bg-accent-primary/10 px-2.5 py-1 rounded-md border border-accent-primary/20 hover:scale-110 hover:shadow-md hover:bg-accent-primary hover:text-white transition-all duration-300 cursor-default">React.js</div>
-                    <div className="text-[10px] font-semibold text-gray-700 bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200 hover:scale-110 hover:shadow-md hover:bg-gray-800 hover:text-white transition-all duration-300 cursor-default">TypeScript</div>
-                    <div className="text-[10px] font-semibold text-accent-secondary bg-accent-secondary/10 px-2.5 py-1 rounded-md border border-accent-secondary/20 hover:scale-110 hover:shadow-md hover:bg-accent-secondary hover:text-white transition-all duration-300 cursor-default">Node.js</div>
-                    <div className="text-[10px] font-semibold text-gray-700 bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200 hover:scale-110 hover:shadow-md hover:bg-gray-800 hover:text-white transition-all duration-300 cursor-default">AWS</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom AI Assessment Box */}
-              <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden z-10 group/box hover:shadow-md hover:-translate-y-1 hover:border-accent-primary/30 transition-all duration-300">
-                <div className="absolute right-0 top-0 w-32 h-32 bg-accent-primary/5 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2 group-hover/box:bg-accent-primary/10 transition-colors duration-300"></div>
-                <div className="flex justify-between items-end relative z-10">
-                  <div>
-                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 group-hover/box:text-accent-primary transition-colors duration-300">Impact Score</div>
-                    <div className="text-4xl font-outfit font-bold text-gray-900 group-hover/box:text-accent-primary transition-colors duration-300">92<span className="text-lg text-gray-400 font-medium group-hover/box:text-accent-primary/60">/100</span></div>
-                  </div>
-                  <div className="flex gap-2 items-end">
-                    <div className="w-2.5 bg-gray-200 rounded-t-sm h-4 group-hover/box:bg-accent-secondary/20 group-hover/box:h-6 transition-all duration-300"></div>
-                    <div className="w-2.5 bg-gray-200 rounded-t-sm h-6 group-hover/box:bg-accent-secondary/40 group-hover/box:h-10 transition-all duration-300"></div>
-                    <div className="w-2.5 bg-accent-primary/20 rounded-t-sm h-10 relative overflow-hidden group-hover/box:h-14 transition-all duration-300"><div className="absolute bottom-0 w-full bg-accent-primary rounded-t-sm animate-[grow_2s_ease-out_forwards]"></div></div>
-                    <div className="w-2.5 bg-[#10b981]/20 rounded-t-sm h-14 relative overflow-hidden group-hover/box:h-16 transition-all duration-300"><div className="absolute bottom-0 w-full bg-[#10b981] rounded-t-sm animate-[grow_2s_ease-out_forwards_0.5s]"></div></div>
-                  </div>
-                </div>
-              </div>
-              
+                Explore AI Tools
+                <ArrowDown className="h-5 w-5" />
+              </a>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Trust / Proof Section */}
-      <section className="py-16 border-y border-black/5 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 text-center fade-in-up">
-            <div className="group hover:-translate-y-1 transition-transform duration-300 cursor-default">
-              <h3 className="text-4xl md:text-5xl mb-2 gradient-text font-outfit inline-block group-hover:scale-110 group-hover:drop-shadow-sm transition-all duration-300">3.5x</h3>
-              <p className="text-gray-600 font-medium group-hover:text-gray-900 transition-colors duration-300">Higher Shortlist Rate</p>
+      {/* Employee */}
+      <section
+        id="candidate-services"
+        className="relative scroll-mt-24 overflow-hidden border-t border-slate-200/60 bg-[#F4F8FB] py-24 md:py-28"
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_10%_-10%,rgba(40,168,225,0.14),transparent),radial-gradient(ellipse_60%_40%_at_90%_0%,rgba(15,90,122,0.08),transparent)]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:linear-gradient(to_bottom,black,transparent)]"
+        />
+
+        <div className="relative z-10 mx-auto max-w-7xl px-6">
+          <div className="fade-in-up mb-14 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="mb-4 inline-flex items-center gap-2.5">
+                <span className="h-1.5 w-10 rounded-full bg-[#28A8E1]" />
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#176F96]">
+                  Employee
+                </p>
+              </div>
+              <h2 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl md:leading-[1.1]">
+                Everything employees need to{" "}
+                <span className="bg-gradient-to-r from-[#28A8E1] to-[#0F5A7A] bg-clip-text text-transparent">
+                  stand out
+                </span>
+              </h2>
+              <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 md:text-lg">
+                Free product tools to get started — then unlock premium services when you&apos;re ready
+                to convert interviews.
+              </p>
             </div>
-            <div className="group hover:-translate-y-1 transition-transform duration-300 cursor-default">
-              <h3 className="text-4xl md:text-5xl mb-2 gradient-text font-outfit inline-block group-hover:scale-110 group-hover:drop-shadow-sm transition-all duration-300">92%</h3>
-              <p className="text-gray-600 font-medium group-hover:text-gray-900 transition-colors duration-300">Interview Success Score</p>
-            </div>
-            <div className="group hover:-translate-y-1 transition-transform duration-300 cursor-default">
-              <h3 className="text-4xl md:text-5xl mb-2 gradient-text font-outfit inline-block group-hover:scale-110 group-hover:drop-shadow-sm transition-all duration-300">60+</h3>
-              <p className="text-gray-600 font-medium group-hover:text-gray-900 transition-colors duration-300">Days Faster Placement</p>
-            </div>
-            <div className="group hover:-translate-y-1 transition-transform duration-300 cursor-default">
-              <h3 className="text-4xl md:text-5xl mb-2 gradient-text font-outfit inline-block group-hover:scale-110 group-hover:drop-shadow-sm transition-all duration-300">1M+</h3>
-              <p className="text-gray-600 font-medium group-hover:text-gray-900 transition-colors duration-300">Resumes Optimized</p>
+            <div className="flex flex-wrap gap-2 lg:justify-end">
+              {["ATS score", "Mock interview", "CV upgrade", "Courses"].map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-full border border-white/80 bg-white/70 px-3.5 py-1.5 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur"
+                >
+                  {chip}
+                </span>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* User Journey Flow */}
-      <section id="journey" className="py-[120px]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-16 text-center fade-in-up">
-            <h2 className="text-4xl mb-4 text-gray-900">Your Path to Job Success</h2>
-            <p className="text-lg text-gray-600 max-w-[600px] mx-auto">
-              A connected ecosystem that builds your confidence and competence at every single step.
-            </p>
-          </div>
-          
-          <div className="relative py-10 fade-in-up [transition-delay:200ms]">
-            <div className="journey-line"></div>
-            <div className="flex flex-col md:flex-row justify-between relative z-10 gap-8 md:gap-0 pl-8 md:pl-0">
-              
-              <div className="group text-left md:text-center w-full md:w-[140px] bg-transparent md:bg-[#fcfcfd] p-0 md:p-3 flex md:block items-center gap-5 md:gap-0 hover:-translate-y-2 hover:bg-white md:hover:shadow-[0_15px_30px_rgba(0,0,0,0.06)] rounded-2xl transition-all duration-300 cursor-pointer">
-                <div className="w-16 h-16 shrink-0 bg-white border border-gray-200 rounded-full flex items-center justify-center mx-0 md:mx-auto mb-0 md:mb-4 text-2xl text-gray-600 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-accent-primary group-hover:text-accent-primary group-hover:shadow-md animate-[journeyNodePulse_9s_infinite] [animation-delay:0s]">
-                  <i className="fa-regular fa-user"></i>
-                </div>
-                <div className="grow md:grow-0">
-                  <h4 className="text-lg mb-1 text-gray-900 font-outfit group-hover:text-accent-primary transition-colors duration-300">Profile</h4>
-                  <p className="text-sm text-gray-600">Build your base</p>
-                </div>
-              </div>
-
-              <div className="group text-left md:text-center w-full md:w-[140px] bg-transparent md:bg-[#fcfcfd] p-0 md:p-3 flex md:block items-center gap-5 md:gap-0 hover:-translate-y-2 hover:bg-white md:hover:shadow-[0_15px_30px_rgba(0,0,0,0.06)] rounded-2xl transition-all duration-300 cursor-pointer">
-                <div className="w-16 h-16 shrink-0 bg-white border border-gray-200 rounded-full flex items-center justify-center mx-0 md:mx-auto mb-0 md:mb-4 text-2xl text-gray-600 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-accent-primary group-hover:text-accent-primary group-hover:shadow-md animate-[journeyNodePulse_9s_infinite] [animation-delay:1.5s]">
-                  <i className="fa-regular fa-file-lines"></i>
-                </div>
-                <div className="grow md:grow-0">
-                  <h4 className="text-lg mb-1 text-gray-900 font-outfit group-hover:text-accent-primary transition-colors duration-300">Resume</h4>
-                  <p className="text-sm text-gray-600">AI generation</p>
-                </div>
-              </div>
-
-              <div className="group text-left md:text-center w-full md:w-[140px] bg-transparent md:bg-[#fcfcfd] p-0 md:p-3 flex md:block items-center gap-5 md:gap-0 hover:-translate-y-2 hover:bg-white md:hover:shadow-[0_15px_30px_rgba(0,0,0,0.06)] rounded-2xl transition-all duration-300 cursor-pointer relative z-20">
-                <div className="w-16 h-16 shrink-0 bg-white border border-gray-200 rounded-full flex items-center justify-center mx-0 md:mx-auto mb-0 md:mb-4 text-2xl text-gray-600 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:bg-accent-primary group-hover:text-white group-hover:shadow-[0_0_20px_rgba(147,51,234,0.3)] animate-[journeyNodePulse_9s_infinite] [animation-delay:3s]">
-                  <i className="fa-solid fa-magnifying-glass-chart"></i>
-                </div>
-                <div className="grow md:grow-0">
-                  <h4 className="text-lg mb-1 text-gray-900 font-outfit group-hover:text-accent-primary transition-colors duration-300">Analysis</h4>
-                  <p className="text-sm text-gray-600">ATS scoring</p>
-                </div>
-              </div>
-
-              <div className="group text-left md:text-center w-full md:w-[140px] bg-transparent md:bg-[#fcfcfd] p-0 md:p-3 flex md:block items-center gap-5 md:gap-0 hover:-translate-y-2 hover:bg-white md:hover:shadow-[0_15px_30px_rgba(0,0,0,0.06)] rounded-2xl transition-all duration-300 cursor-pointer">
-                <div className="w-16 h-16 shrink-0 bg-white border border-gray-200 rounded-full flex items-center justify-center mx-0 md:mx-auto mb-0 md:mb-4 text-2xl text-gray-600 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-accent-secondary group-hover:text-accent-secondary group-hover:shadow-md animate-[journeyNodePulse_9s_infinite] [animation-delay:4.5s]">
-                  <i className="fa-solid fa-arrow-trend-up"></i>
-                </div>
-                <div className="grow md:grow-0">
-                  <h4 className="text-lg mb-1 text-gray-900 font-outfit group-hover:text-accent-secondary transition-colors duration-300">Improvement</h4>
-                  <p className="text-sm text-gray-600">Skill gap fix</p>
-                </div>
-              </div>
-
-              <div className="group text-left md:text-center w-full md:w-[140px] bg-transparent md:bg-[#fcfcfd] p-0 md:p-3 flex md:block items-center gap-5 md:gap-0 hover:-translate-y-2 hover:bg-white md:hover:shadow-[0_15px_30px_rgba(0,0,0,0.06)] rounded-2xl transition-all duration-300 cursor-pointer">
-                <div className="w-16 h-16 shrink-0 bg-white border border-gray-200 rounded-full flex items-center justify-center mx-0 md:mx-auto mb-0 md:mb-4 text-2xl text-gray-600 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:border-accent-secondary group-hover:text-accent-secondary group-hover:shadow-md animate-[journeyNodePulse_9s_infinite] [animation-delay:6s]">
-                  <i className="fa-regular fa-comments"></i>
-                </div>
-                <div className="grow md:grow-0">
-                  <h4 className="text-lg mb-1 text-gray-900 font-outfit group-hover:text-accent-secondary transition-colors duration-300">Practice</h4>
-                  <p className="text-sm text-gray-600">Mock interviews</p>
-                </div>
-              </div>
-
-              <div className="group text-left md:text-center w-full md:w-[140px] bg-transparent md:bg-[#fcfcfd] p-0 md:p-3 flex md:block items-center gap-5 md:gap-0 hover:-translate-y-2 hover:bg-white md:hover:shadow-[0_15px_30px_rgba(0,0,0,0.06)] rounded-2xl transition-all duration-300 cursor-pointer">
-                <div className="w-16 h-16 shrink-0 bg-white border border-gray-200 rounded-full flex items-center justify-center mx-0 md:mx-auto mb-0 md:mb-4 text-2xl text-gray-600 shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] animate-[journeyNodePulseEnd_9s_infinite] [animation-delay:7.5s]">
-                  <i className="fa-solid fa-check-double"></i>
-                </div>
-                <div className="grow md:grow-0">
-                  <h4 className="text-lg mb-1 text-gray-900 font-outfit group-hover:text-[#10b981] transition-colors duration-300">Hired</h4>
-                  <p className="text-sm text-gray-600">Job Success</p>
-                </div>
-              </div>
-
+          {/* Core free bait */}
+          <div className="fade-in-up mb-16">
+            <div className="mb-6 flex items-center justify-between gap-3">
+              <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
+                Core features
+              </h3>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100">
+                Included free
+              </span>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section id="services" className="py-[120px] bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.03)_0%,rgba(252,252,253,0)_70%)]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-16 text-center fade-in-up">
-            <h2 className="text-4xl mb-4 text-gray-900">Everything you need to <span className="gradient-text">stand out</span></h2>
-            <p className="text-lg text-gray-600 max-w-[600px] mx-auto">
-              Our AI-powered services work seamlessly together to ensure you're the top candidate for the role.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
-            
-            {/* Service 1 */}
-            <div className="group bg-gradient-to-b from-white to-[#fafafa] border border-gray-200/80 rounded-[1.5rem] p-6 lg:p-8 relative overflow-hidden transition-all duration-500 shadow-sm hover:shadow-2xl hover:shadow-accent-primary/10 hover:-translate-y-2 hover:border-accent-primary/30 flex flex-col fade-in-up">
-              <div className="absolute top-0 right-0 w-[250px] h-[250px] bg-gradient-to-br from-accent-primary/10 to-transparent blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-              
-              <div className="w-12 h-12 bg-gradient-to-br from-white to-gray-50 shadow-[0_4px_10px_rgba(0,0,0,0.03)] border border-gray-100 rounded-xl flex items-center justify-center text-xl text-accent-primary mb-6 relative z-10 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
-                <i className="fa-solid fa-wand-magic-sparkles"></i>
-              </div>
-              <h3 className="text-xl lg:text-2xl mb-3 text-gray-900 font-outfit font-bold tracking-tight relative z-10">AI Resume Builder</h3>
-              <p className="text-gray-600 mb-8 text-base leading-relaxed grow relative z-10">
-                Beat the ATS every time. Our AI suggests high-impact keywords, rewrites your bullet points, and perfectly tailors your resume.
-              </p>
-              
-              <div className="bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-xl p-5 mt-auto relative z-10 group-hover:-translate-y-1 transition-transform duration-500">
-                <div className="flex justify-between items-center mb-3">
-                  <div className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">ATS Match</div>
-                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-[#10b981]/10 text-[#059669] rounded-full text-[10px] font-bold">
-                    <i className="fa-solid fa-arrow-trend-up"></i> +32%
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="grow h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#34d399] to-[#059669] w-[94%] relative overflow-hidden group-hover:after:absolute group-hover:after:inset-0 group-hover:after:bg-white/20 group-hover:after:-translate-x-full group-hover:after:animate-[shimmer_1.5s_infinite]"></div>
-                  </div>
-                  <span className="font-outfit font-bold text-lg text-gray-900">94%</span>
-                </div>
-              </div>
-              
-              <Link href="/lms/courses" className="inline-flex items-center gap-2 font-semibold text-gray-900 mt-6 relative z-10 group/cta text-base">
-                Try Resume Builder <span className="bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center group-hover/cta:bg-accent-primary group-hover/cta:text-white transition-colors duration-300"><i className="fa-solid fa-arrow-right text-[10px]"></i></span>
-              </Link>
-            </div>
-
-            {/* Service 2 */}
-            <div className="group bg-gradient-to-b from-white to-[#fafafa] border border-gray-200/80 rounded-[1.5rem] p-6 lg:p-8 relative overflow-hidden transition-all duration-500 shadow-sm hover:shadow-2xl hover:shadow-accent-secondary/10 hover:-translate-y-2 hover:border-accent-secondary/30 flex flex-col fade-in-up [transition-delay:150ms]">
-              <div className="absolute top-0 right-0 w-[250px] h-[250px] bg-gradient-to-br from-accent-secondary/10 to-transparent blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-              
-              <div className="w-12 h-12 bg-gradient-to-br from-white to-gray-50 shadow-[0_4px_10px_rgba(0,0,0,0.03)] border border-gray-100 rounded-xl flex items-center justify-center text-xl text-accent-secondary mb-6 relative z-10 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500">
-                <i className="fa-solid fa-video"></i>
-              </div>
-              <h3 className="text-xl lg:text-2xl mb-3 text-gray-900 font-outfit font-bold tracking-tight relative z-10">AI Interview Prep</h3>
-              <p className="text-gray-600 mb-8 text-base leading-relaxed grow relative z-10">
-                Practice with a realistic AI interviewer. Get real-time feedback on your pacing, tone, and the strength of your answers.
-              </p>
-              
-              <div className="bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-xl p-4 mt-auto relative z-10 flex flex-col gap-3 group-hover:-translate-y-1 transition-transform duration-500">
-                <div className="px-3 py-2.5 text-xs max-w-[85%] bg-gray-50 border border-gray-100 rounded-xl rounded-bl-sm self-start text-gray-700 shadow-sm">
-                  Tell me about a time you overcame a challenge.
-                </div>
-                <div className="px-3 py-2.5 text-xs max-w-[85%] bg-gradient-to-r from-accent-primary to-accent-secondary text-white rounded-xl rounded-br-sm self-end shadow-md relative overflow-hidden group-hover:shadow-lg transition-shadow">
-                  In my last role, we faced a tight deadline...
-                </div>
-                <div className="self-center mt-1 text-[0.7rem] text-[#b45309] bg-[#f59e0b]/10 px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <i className="fa-solid fa-lightbulb"></i> Great STAR method
-                </div>
-              </div>
-              
-              <Link href="/lms/courses" className="inline-flex items-center gap-2 font-semibold text-gray-900 mt-6 relative z-10 group/cta text-base">
-                Start Mock Interview <span className="bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center group-hover/cta:bg-accent-secondary group-hover/cta:text-white transition-colors duration-300"><i className="fa-solid fa-arrow-right text-[10px]"></i></span>
-              </Link>
-            </div>
-
-            {/* Service 3 */}
-            <div className="group bg-gradient-to-b from-white to-[#fafafa] border border-gray-200/80 rounded-[1.5rem] p-6 lg:p-8 relative overflow-hidden transition-all duration-500 shadow-sm hover:shadow-2xl hover:shadow-accent-primary/10 hover:-translate-y-2 hover:border-accent-primary/30 flex flex-col fade-in-up [transition-delay:300ms]">
-              <div className="absolute top-0 right-0 w-[250px] h-[250px] bg-gradient-to-br from-accent-primary/10 to-transparent blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-              
-              <div className="w-12 h-12 bg-gradient-to-br from-white to-gray-50 shadow-[0_4px_10px_rgba(0,0,0,0.03)] border border-gray-100 rounded-xl flex items-center justify-center text-xl text-accent-primary mb-6 relative z-10 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
-                <i className="fa-solid fa-list-check"></i>
-              </div>
-              <h3 className="text-xl lg:text-2xl mb-3 text-gray-900 font-outfit font-bold tracking-tight relative z-10">Quizzes & Assessment</h3>
-              <p className="text-gray-600 mb-8 text-base leading-relaxed grow relative z-10">
-                Prove your expertise. Take AI-generated skill assessments that evaluate your readiness and identify areas for improvement.
-              </p>
-              
-              <div className="mt-auto relative z-10 flex flex-col gap-2.5 group-hover:-translate-y-1 transition-transform duration-500">
-                <div className="flex justify-between items-center px-4 py-3 bg-white border-l-4 border-l-[#10b981] border-y border-r border-gray-100 rounded-lg text-sm font-semibold shadow-[0_4px_20px_rgb(0,0,0,0.03)] group-hover:translate-x-1 transition-transform">
-                  <span className="text-gray-900 text-sm">React.js</span> <span className="text-[#10b981] bg-[#10b981]/10 px-2 py-0.5 rounded text-xs">9/10</span>
-                </div>
-                <div className="flex justify-between items-center px-4 py-3 bg-white border-l-4 border-l-[#10b981] border-y border-r border-gray-100 rounded-lg text-sm font-semibold shadow-[0_4px_20px_rgb(0,0,0,0.03)] group-hover:translate-x-1 transition-transform [transition-delay:50ms]">
-                  <span className="text-gray-900 text-sm">System Design</span> <span className="text-[#10b981] bg-[#10b981]/10 px-2 py-0.5 rounded text-xs">7/10</span>
-                </div>
-                <div className="flex justify-between items-center px-4 py-3 bg-white border-l-4 border-l-[#f59e0b] border-y border-r border-gray-100 rounded-lg text-sm font-semibold shadow-[0_4px_20px_rgb(0,0,0,0.03)] group-hover:translate-x-1 transition-transform [transition-delay:100ms]">
-                  <span className="text-gray-900 text-sm">Data Structures</span> <span className="text-[#f59e0b] bg-[#f59e0b]/10 px-2 py-0.5 rounded text-xs">Needs Work</span>
-                </div>
-              </div>
-              
-              <Link href="/lms/courses" className="inline-flex items-center gap-2 font-semibold text-gray-900 mt-6 relative z-10 group/cta text-base">
-                Test Your Skills <span className="bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center group-hover/cta:bg-accent-primary group-hover/cta:text-white transition-colors duration-300"><i className="fa-solid fa-arrow-right text-[10px]"></i></span>
-              </Link>
-            </div>
-
-            {/* Service 4 */}
-            <div className="group bg-gradient-to-b from-white to-[#fafafa] border border-gray-200/80 rounded-[1.5rem] p-6 lg:p-8 relative overflow-hidden transition-all duration-500 shadow-sm hover:shadow-2xl hover:shadow-accent-secondary/10 hover:-translate-y-2 hover:border-accent-secondary/30 flex flex-col fade-in-up [transition-delay:450ms]">
-              <div className="absolute top-0 right-0 w-[250px] h-[250px] bg-gradient-to-br from-accent-secondary/10 to-transparent blur-[60px] rounded-full translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-              
-              <div className="w-12 h-12 bg-gradient-to-br from-white to-gray-50 shadow-[0_4px_10px_rgba(0,0,0,0.03)] border border-gray-100 rounded-xl flex items-center justify-center text-xl text-accent-secondary mb-6 relative z-10 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500">
-                <i className="fa-solid fa-graduation-cap"></i>
-              </div>
-              <h3 className="text-xl lg:text-2xl mb-3 text-gray-900 font-outfit font-bold tracking-tight relative z-10">Targeted Learning</h3>
-              <p className="text-gray-600 mb-8 text-base leading-relaxed grow relative z-10">
-                Bridge the gap between where you are and where you want to be. Our AI recommends hyper-specific mini-courses.
-              </p>
-              
-              <div className="mt-auto relative z-10 group-hover:-translate-y-1 transition-transform duration-500">
-                <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
-                  <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-5"></div>
-                  <div className="flex items-center gap-4 relative z-10">
-                    <div className="w-12 h-12 bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-lg flex items-center justify-center shrink-0 shadow-lg group-hover:scale-105 transition-transform duration-500">
-                      <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                        <i className="fa-solid fa-play text-[10px] ml-0.5"></i>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {PHASE1_CORE.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.title}
+                    className="group relative overflow-hidden rounded-[1.35rem] border border-white/80 bg-white/80 p-5 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_18px_40px_-28px_rgba(15,23,42,0.35)] backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-[#28A8E1]/35 hover:shadow-[0_24px_48px_-28px_rgba(40,168,225,0.45)]"
+                  >
+                    <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-[#28A8E1]/10 opacity-0 blur-2xl transition group-hover:opacity-100" />
+                    <div className="mb-4 flex items-center justify-between">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E8F6FC] to-white text-[#28A8E1] ring-1 ring-[#28A8E1]/15 transition group-hover:scale-105 group-hover:from-[#28A8E1] group-hover:to-[#1A86B3] group-hover:text-white">
+                        <Icon className="h-5 w-5" />
                       </div>
+                      <span className="text-[10px] font-bold tabular-nums text-slate-300">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
                     </div>
-                    <div className="flex flex-col">
-                      <strong className="text-gray-900 font-outfit text-base mb-0.5 leading-tight">Advanced Data Structures</strong>
-                      <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Recommended Module</span>
-                    </div>
+                    <p className="text-[15px] font-bold tracking-tight text-slate-900">{item.title}</p>
+                    <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{item.line}</p>
                   </div>
-                </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Premium services */}
+          <div className="fade-in-up mb-16">
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
+                  Premium services
+                </h3>
+                <p className="mt-1.5 text-sm text-slate-600 md:text-base">
+                  High-intent offerings employees unlock when they&apos;re ready to convert.
+                </p>
               </div>
-              
-              <Link href="/lms/courses" className="inline-flex items-center gap-2 font-semibold text-gray-900 mt-6 relative z-10 group/cta text-base">
-                Explore Courses <span className="bg-gray-100 w-7 h-7 rounded-full flex items-center justify-center group-hover/cta:bg-accent-secondary group-hover/cta:text-white transition-colors duration-300"><i className="fa-solid fa-arrow-right text-[10px]"></i></span>
+              <Link
+                href="/services/ai-resume-review"
+                className="inline-flex items-center gap-1.5 text-sm font-bold text-[#176F96] transition hover:text-[#28A8E1]"
+              >
+                Browse catalog
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {PHASE1_PREMIUM.map((svc, index) => {
+                const Icon = svc.icon;
+                const featured = index === 0 || index === 6;
+                return (
+                  <Link
+                    key={svc.title}
+                    href={svc.href}
+                    className={`group relative flex flex-col overflow-hidden rounded-[1.5rem] border p-6 transition duration-300 hover:-translate-y-1 ${
+                      featured
+                        ? "border-[#28A8E1]/35 bg-gradient-to-br from-[#0F5A7A] via-[#176F96] to-[#28A8E1] text-white shadow-[0_28px_56px_-32px_rgba(15,90,122,0.7)]"
+                        : "border-slate-200/90 bg-white shadow-[0_18px_40px_-28px_rgba(15,23,42,0.28)] hover:border-[#28A8E1]/40 hover:shadow-[0_28px_56px_-28px_rgba(40,168,225,0.35)]"
+                    }`}
+                  >
+                    {!featured ? (
+                      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-[#28A8E1]/50 to-transparent opacity-0 transition group-hover:opacity-100" />
+                    ) : null}
+                    <div className="mb-5 flex items-start justify-between gap-3">
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center rounded-2xl transition ${
+                          featured
+                            ? "bg-white/15 text-white ring-1 ring-white/25"
+                            : "bg-[#E8F6FC] text-[#28A8E1] ring-1 ring-[#28A8E1]/15 group-hover:bg-[#28A8E1] group-hover:text-white"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                          featured
+                            ? "bg-white/15 text-white ring-1 ring-white/20"
+                            : "bg-[#E8F6FC] text-[#176F96] ring-1 ring-[#28A8E1]/15"
+                        }`}
+                      >
+                        {svc.badge}
+                      </span>
+                    </div>
+                    <h4
+                      className={`text-xl font-bold tracking-tight ${
+                        featured ? "text-white" : "text-slate-900"
+                      }`}
+                    >
+                      {svc.title}
+                    </h4>
+                    <p
+                      className={`mt-2 flex-1 text-sm leading-relaxed ${
+                        featured ? "text-white/80" : "text-slate-600"
+                      }`}
+                    >
+                      {svc.detail}
+                    </p>
+                    <span
+                      className={`mt-5 inline-flex items-center gap-1.5 text-sm font-semibold ${
+                        featured ? "text-white" : "text-[#28A8E1]"
+                      }`}
+                    >
+                      View service
+                      <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
 
+          {/* Token packs */}
+          <div className="fade-in-up relative overflow-hidden rounded-[1.75rem] border border-[#28A8E1]/20 bg-slate-950 p-6 text-white shadow-[0_32px_64px_-36px_rgba(15,23,42,0.55)] md:p-8">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#28A8E1]/25 blur-3xl"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -bottom-20 left-10 h-48 w-48 rounded-full bg-cyan-400/15 blur-3xl"
+            />
+            <div className="relative z-10 mb-6 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7DD3FC]">
+                  Token packs
+                </p>
+                <h3 className="mt-1 text-2xl font-black tracking-tight">Upsell ladder</h3>
+                <p className="mt-2 max-w-lg text-sm text-slate-300">
+                  Unlock AI CV edits, ATS checks, mock interviews, and premium courses.
+                </p>
+              </div>
+              <Link
+                href="/subscriptions"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-sm font-bold text-slate-900 transition hover:bg-[#E8F6FC]"
+              >
+                See packs
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="relative z-10 grid gap-3 md:grid-cols-3">
+              {TOKEN_PACKS.map((pack, index) => (
+                <div
+                  key={pack.name}
+                  className={`rounded-2xl border p-5 backdrop-blur ${
+                    index === 1
+                      ? "border-[#28A8E1]/50 bg-[#28A8E1]/15"
+                      : "border-white/10 bg-white/5"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-lg font-bold">{pack.name}</p>
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                        index === 1
+                          ? "bg-[#28A8E1] text-white"
+                          : "bg-white/10 text-slate-300"
+                      }`}
+                    >
+                      {pack.price}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-300">{pack.line}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* AI Feedback Loop Section */}
-      <section className="py-[120px] bg-white border-y border-black/5">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-16 items-center fade-in-up">
-            <div>
-              <h2 className="text-4xl mb-4 text-gray-900 font-outfit">The Ultimate AI Feedback Loop</h2>
-              <p className="text-lg text-gray-600 mb-10">
-                We turn rejection into your biggest advantage. Our system continuously learns from your performance to refine your strategy.
+      {/* Entrepreneurs */}
+      <section
+        id="employer-services"
+        className="relative scroll-mt-24 overflow-hidden border-y border-slate-800/10 bg-slate-950 py-24 md:py-28"
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_80%_-10%,rgba(245,158,11,0.18),transparent),radial-gradient(ellipse_50%_40%_at_10%_20%,rgba(56,189,248,0.1),transparent)]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.2] [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:56px_56px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]"
+        />
+
+        <div className="relative z-10 mx-auto max-w-7xl px-6">
+          <div className="fade-in-up mb-14 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="mb-4 inline-flex items-center gap-2.5">
+                <span className="h-1.5 w-10 rounded-full bg-amber-400" />
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-300">
+                  Entrepreneurs
+                </p>
+              </div>
+              <h2 className="text-4xl font-black tracking-tight text-white md:text-5xl md:leading-[1.1]">
+                Run hiring end-to-end in{" "}
+                <span className="bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text text-transparent">
+                  one workspace
+                </span>
+              </h2>
+              <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-300 md:text-lg">
+                Leads, jobs, AI matching, interviews, placements, and billing — bridged to the Employee
+                portal.
               </p>
-              <ul className="flex flex-col gap-6">
-                <li className="flex items-start gap-4 text-lg text-gray-600">
-                  <i className="fa-solid fa-circle-xmark text-accent-primary text-2xl mt-0.5"></i>
-                  <div><strong className="text-gray-900">Identify Gaps:</strong> AI analyzes why you might be getting rejected.</div>
-                </li>
-                <li className="flex items-start gap-4 text-lg text-gray-600">
-                  <i className="fa-solid fa-wand-magic text-accent-primary text-2xl mt-0.5"></i>
-                  <div><strong className="text-gray-900">Smart Suggestions:</strong> Get targeted resume tweaks and skill goals.</div>
-                </li>
-                <li className="flex items-start gap-4 text-lg text-gray-600">
-                  <i className="fa-solid fa-book-open text-accent-primary text-2xl mt-0.5"></i>
-                  <div><strong className="text-gray-900">Rapid Learning:</strong> Take recommended courses to fix weaknesses.</div>
-                </li>
-                <li className="flex items-start gap-4 text-lg text-gray-600">
-                  <i className="fa-solid fa-rocket text-accent-primary text-2xl mt-0.5"></i>
-                  <div><strong className="text-gray-900">Continuous Improvement:</strong> Apply again with a massively higher success rate.</div>
-                </li>
-              </ul>
             </div>
-            <div className="relative h-[400px] flex items-center justify-center">
-              <div className="w-[300px] h-[300px] border-2 border-dashed border-black/10 rounded-full relative animate-rotate">
-                <div className="absolute w-[100px] h-[100px] bg-white border border-accent-primary/20 rounded-full flex items-center justify-center font-semibold text-sm shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] text-accent-primary -top-[50px] left-[100px] animate-counter-rotate">
-                  Analysis
+            <div className="flex flex-wrap gap-2 lg:justify-end">
+              {["AI matching", "Bulk CV", "Pipeline", "Billing"].map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-semibold text-slate-200 backdrop-blur"
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Modules */}
+          <div className="fade-in-up mb-16">
+            <div className="mb-6 flex items-center justify-between gap-3">
+              <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-400">
+                Core modules
+              </h3>
+              <span className="rounded-full bg-amber-400/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-300 ring-1 ring-amber-400/20">
+                Full stack
+              </span>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {PHASE2_MODULES.map((mod, index) => {
+                const Icon = mod.icon;
+                return (
+                  <div
+                    key={mod.title}
+                    className="group relative overflow-hidden rounded-[1.35rem] border border-white/10 bg-white/[0.04] p-5 shadow-[0_24px_48px_-32px_rgba(0,0,0,0.6)] backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-amber-400/35 hover:bg-white/[0.07]"
+                  >
+                    <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-amber-400/15 opacity-0 blur-2xl transition group-hover:opacity-100" />
+                    <div className="mb-4 flex items-center justify-between">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-400/10 text-amber-300 ring-1 ring-amber-400/20 transition group-hover:scale-105 group-hover:bg-amber-400 group-hover:text-slate-950">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <span className="text-[10px] font-bold tabular-nums text-slate-500">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                    </div>
+                    <h3 className="text-[15px] font-bold tracking-tight text-white">{mod.title}</h3>
+                    <ul className="mt-3 space-y-2">
+                      {mod.items.map((item) => (
+                        <li key={item} className="flex items-start gap-2 text-sm text-slate-300">
+                          <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Premium AI */}
+          <div className="fade-in-up mb-16">
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-400">
+                  Premium AI
+                </h3>
+                <p className="mt-1.5 text-sm text-slate-300 md:text-base">
+                  Coin-powered tools that turn entrepreneur demos into conversions.
+                </p>
+              </div>
+              <Link
+                href="/employers"
+                className="inline-flex items-center gap-1.5 text-sm font-bold text-amber-300 transition hover:text-amber-200"
+              >
+                Entrepreneurs product tour
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {PHASE2_AI.map((item, index) => {
+                const Icon = item.icon;
+                const featured = index === 0 || index === 1;
+                return (
+                  <div
+                    key={item.title}
+                    className={`group relative flex items-start gap-3.5 overflow-hidden rounded-[1.35rem] border p-5 transition duration-300 hover:-translate-y-0.5 ${
+                      featured
+                        ? "border-amber-400/30 bg-gradient-to-br from-amber-400/15 via-white/[0.06] to-transparent"
+                        : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition ${
+                        featured
+                          ? "bg-amber-400 text-slate-950"
+                          : "bg-white/5 text-sky-300 ring-1 ring-white/10 group-hover:bg-sky-400/20"
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[15px] font-bold tracking-tight text-white">{item.title}</p>
+                      <p className="mt-1 text-sm leading-relaxed text-slate-400">{item.line}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Plans + CTA */}
+          <div className="fade-in-up grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur md:p-8">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -left-10 top-0 h-40 w-40 rounded-full bg-sky-400/10 blur-3xl"
+              />
+              <div className="relative z-10 mb-5 flex items-center gap-2.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-amber-300 ring-1 ring-white/10">
+                  <Building2 className="h-5 w-5" />
                 </div>
-                <div className="absolute w-[100px] h-[100px] bg-white border border-[#10b981]/20 rounded-full flex items-center justify-center font-semibold text-sm shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] text-[#10b981] bottom-[20px] -right-[30px] animate-counter-rotate">
-                  Learning
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                    Plans
+                  </p>
+                  <h3 className="text-xl font-black text-white">Entrepreneurs plans</h3>
                 </div>
-                <div className="absolute w-[100px] h-[100px] bg-white border border-[#f59e0b]/20 rounded-full flex items-center justify-center font-semibold text-sm shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05)] text-[#f59e0b] bottom-[20px] -left-[30px] animate-counter-rotate">
-                  Improvement
-                </div>
-                <div className="center-glow"></div>
+              </div>
+              <div className="relative z-10 grid gap-3 sm:grid-cols-3">
+                {PHASE2_PLANS.map((plan, index) => (
+                  <div
+                    key={plan.name}
+                    className={`rounded-2xl border p-4 ${
+                      index === 1
+                        ? "border-amber-400/40 bg-amber-400/10"
+                        : "border-white/10 bg-white/[0.03]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-bold text-white">{plan.name}</p>
+                      {index === 1 ? (
+                        <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[9px] font-bold uppercase text-slate-950">
+                          Popular
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-400">{plan.line}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="relative z-10 mt-5 text-xs text-slate-500">
+                Includes AI coins, HQ tab/module control, and agency vs standalone modes.
+              </p>
+            </div>
+
+            <div className="relative flex flex-col justify-between overflow-hidden rounded-[1.75rem] border border-amber-400/30 bg-gradient-to-br from-amber-400 via-orange-400 to-amber-500 p-6 text-slate-950 shadow-[0_32px_64px_-36px_rgba(245,158,11,0.55)] md:p-8">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white/25 blur-2xl"
+              />
+              <div className="relative z-10">
+                <Users className="mb-3 h-7 w-7" />
+                <h3 className="text-2xl font-black tracking-tight">Demo the full ATS + CRM</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-900/75">
+                  AI job creation, ranked matching, bulk CV parse, placements, and billing — trial to
+                  paid when you&apos;re ready.
+                </p>
+              </div>
+              <div className="relative z-10 mt-6 flex flex-col gap-2">
+                <Link
+                  href="/employers"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+                >
+                  Explore Entrepreneurs product
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/employers#pricing"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-950/15 bg-white/40 px-5 py-3 text-sm font-semibold text-slate-950 backdrop-blur transition hover:bg-white/70"
+                >
+                  View pricing
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-[120px] text-center relative overflow-hidden fade-in-up">
-        <div className="cta-glow"></div>
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <h2 className="text-[3.5rem] mb-6 text-gray-900 font-outfit leading-tight">
-            Your dream job is waiting. <br />Let's go get it.
-          </h2>
-          <p className="text-xl text-gray-600 mb-10">
-            Join thousands of jobseekers who have transformed their careers with SAASA B2E.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link
-              href="/whatsapp"
-              className="px-7 py-3.5 rounded-full font-medium text-base text-white bg-gradient-to-br from-accent-primary to-accent-secondary shadow-[0_4px_14px_0_rgba(79,70,229,0.25)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.4)] hover:-translate-y-0.5 transition inline-flex items-center justify-center gap-2"
-            >
-              Upload Resume to Start
-            </Link>
-            <Link
-              href="/whatsapp"
-              className="px-7 py-3.5 rounded-full font-medium text-base border border-gray-200 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)] hover:bg-gray-100 transition inline-flex items-center justify-center gap-2"
-            >
-              View Pricing
-            </Link>
+      {/* Dual CTA */}
+      <section className="py-20 md:py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="fade-in-up grid gap-4 md:grid-cols-2">
+            <div className="rounded-[1.75rem] border border-[#28A8E1]/25 bg-gradient-to-br from-[#E8F6FC] to-white p-7 md:p-8">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#176F96]">
+                Employees
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">
+                Unlock premium coaching when you&apos;re ready
+              </h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Start with AI CV tools and mock interviews — then upgrade with token packs and expert
+                services.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                <a
+                  href="#candidate-services"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#28A8E1] px-5 py-2.5 text-sm font-bold text-white"
+                >
+                  Browse employee services
+                </a>
+                <Link
+                  href="/explore-jobs"
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700"
+                >
+                  Explore jobs
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-[1.75rem] border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-7 md:p-8">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700">
+                Entrepreneurs
+              </p>
+              <h3 className="mt-2 text-2xl font-black text-slate-900">
+                Book a demo or start your trial
+              </h3>
+              <p className="mt-2 text-sm text-slate-600">
+                Run leads, hiring, matching, interviews, and placements in one AI-powered ATS + CRM.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Link
+                  href="/employers"
+                  className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-bold text-white"
+                >
+                  Entrepreneurs tour
+                  <GitBranch className="h-4 w-4" />
+                </Link>
+                <a
+                  href="#employer-services"
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700"
+                >
+                  See Entrepreneurs
+                </a>
+              </div>
+            </div>
           </div>
+
+          <p className="fade-in-up mt-8 flex items-center justify-center gap-2 text-center text-xs text-slate-400">
+            <Award className="h-3.5 w-3.5" />
+            HRYantra by SAASA B2E · Connect. Value. Grow.
+          </p>
         </div>
       </section>
-
     </div>
   );
 }
