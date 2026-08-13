@@ -143,25 +143,6 @@ export default function HelpPage() {
     setSubmittedId(ticket.id);
     const synced = await postHelpTicketToHq(ticket);
     setHqSynced(synced);
-
-    const mailBody = [
-      `Ticket: ${ticket.id}`,
-      `Name: ${ticket.name}`,
-      `Email: ${ticket.email}`,
-      `Category: ${ticket.category}`,
-      user?.id ? `User id: ${user.id}` : null,
-      selectedProblem ? `Related problem: ${selectedProblem.title}` : null,
-      synced ? 'HQ: posted to /api/hq-tickets' : 'HQ: sync failed — check /api/hq-tickets later',
-      '',
-      ticket.description,
-    ]
-      .filter(Boolean)
-      .join('\n');
-
-    const mailto = `mailto:support@saasab2e.com?subject=${encodeURIComponent(
-      `[Help ${ticket.id}] ${ticket.subject}`,
-    )}&body=${encodeURIComponent(mailBody)}`;
-    window.location.href = mailto;
   };
 
   return (
@@ -305,12 +286,8 @@ export default function HelpPage() {
               </h2>
               <p className="mt-0.5 text-sm" style={{ color: C.muted }}>
                 {loggedIn
-                  ? 'Name and email are filled from your account. Add the issue details below.'
-                  : 'Enter your contact details, then describe the issue. Posted to HQ at '}
-                {loggedIn ? null : (
-                  <span className="font-mono text-slate-700">/api/hq-tickets</span>
-                )}
-                {loggedIn ? null : '.'}
+                  ? 'Name and email are filled from your account. Add the issue details — we will email you a solution.'
+                  : 'Enter your contact details and describe the issue. We register the ticket with HQ and email you a solution later.'}
               </p>
             </div>
           </div>
@@ -332,13 +309,13 @@ export default function HelpPage() {
             >
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
               <span>
-                Ticket <span className="font-mono font-semibold">{submittedId}</span> created
+                Ticket <span className="font-mono font-semibold">{submittedId}</span> registered
                 {hqSynced === true
-                  ? ' and sent to HQ (/api/hq-tickets).'
+                  ? ' with HQ.'
                   : hqSynced === false
-                    ? ' locally — HQ sync failed; email still opened.'
+                    ? ' locally — HQ sync failed; try again later.'
                     : '.'}{' '}
-                Complete the email draft if your mail app opened.
+                We will email you at the address you provided with a solution.
               </span>
             </div>
           ) : null}

@@ -8,6 +8,7 @@ Setup-ready spec for the **HQ / Management** dashboard: what to show, what to mo
 Related docs:
 
 - [`HQ_HELP_TICKETS_API.md`](./HQ_HELP_TICKETS_API.md) — support tickets
+- [`HQ_API_TEST_CHEATSHEET.md`](./HQ_API_TEST_CHEATSHEET.md) — copy-paste curl / browser URLs (local + deployed) for behavior, audit, tickets
 - [`HQ_BEHAVIOR_API.md`](./HQ_BEHAVIOR_API.md) — behaviour / sessions
 - [`EMPLOYEES_DASHBOARD_STATS_SPEC.md`](./EMPLOYEES_DASHBOARD_STATS_SPEC.md) — Phase 1 employees board
 - [`HQ_CRM_DASHBOARD_STATS_SPEC.md`](./HQ_CRM_DASHBOARD_STATS_SPEC.md) — HQ CRM board
