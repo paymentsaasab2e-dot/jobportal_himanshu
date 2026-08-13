@@ -32,7 +32,7 @@ export function EmployersDashboardPreview() {
 	return (
 		<TooltipProvider delay={300}>
 			<div
-				aria-label="Interactive employer dashboard preview"
+				aria-label="HRYantra Phase 2 employer CRM dashboard preview"
 				className="employers-dashboard-preview dark relative z-20 mx-auto w-full max-w-[min(100%,1280px)] px-3 sm:px-5"
 				onClickCapture={preventDemoNavigation}
 				role="region"

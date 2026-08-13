@@ -18,29 +18,29 @@ import {
 } from "@/components/ui/chart";
 
 const chartData = [
-	{ day: "Apr 8", direct: 11, email: 9, social: 4 },
-	{ day: "Apr 9", direct: 15, email: 11, social: 5 },
-	{ day: "Apr 10", direct: 13, email: 10, social: 5 },
-	{ day: "Apr 11", direct: 16, email: 12, social: 5 },
-	{ day: "Apr 12", direct: 12, email: 10, social: 5 },
-	{ day: "Apr 13", direct: 14, email: 10, social: 6 },
-	{ day: "Apr 14", direct: 11, email: 9, social: 5 },
-	{ day: "Apr 15", direct: 16, email: 7, social: 4 },
-	{ day: "Apr 16", direct: 13, email: 11, social: 5 },
-	{ day: "Apr 17", direct: 15, email: 11, social: 6 },
+	{ day: "Apr 8", portal: 11, referral: 9, linkedin: 4 },
+	{ day: "Apr 9", portal: 15, referral: 11, linkedin: 5 },
+	{ day: "Apr 10", portal: 13, referral: 10, linkedin: 5 },
+	{ day: "Apr 11", portal: 16, referral: 12, linkedin: 5 },
+	{ day: "Apr 12", portal: 12, referral: 10, linkedin: 5 },
+	{ day: "Apr 13", portal: 14, referral: 10, linkedin: 6 },
+	{ day: "Apr 14", portal: 11, referral: 9, linkedin: 5 },
+	{ day: "Apr 15", portal: 16, referral: 7, linkedin: 4 },
+	{ day: "Apr 16", portal: 13, referral: 11, linkedin: 5 },
+	{ day: "Apr 17", portal: 15, referral: 11, linkedin: 6 },
 ] as const;
 
 const chartConfig = {
-	direct: {
-		label: "Direct",
+	portal: {
+		label: "Portal",
 		color: "var(--chart-1)",
 	},
-	email: {
-		label: "Email",
+	referral: {
+		label: "Referral",
 		color: "var(--chart-3)",
 	},
-	social: {
-		label: "Social",
+	linkedin: {
+		label: "LinkedIn",
 		color: "var(--chart-5)",
 	},
 } satisfies ChartConfig;
@@ -73,9 +73,9 @@ export function CsatResponsesChart({
 			{...props}
 		>
 			<CardHeader>
-				<CardTitle>CSAT responses</CardTitle>
+				<CardTitle>Candidate intake</CardTitle>
 				<CardDescription>
-					Post-resolution surveys submitted per day by channel, last 10 days.
+					New candidates per day by source, last 10 days.
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -100,27 +100,27 @@ export function CsatResponsesChart({
 								radius: BAR_RADIUS,
 							}}
 							barSize={8}
-							dataKey="social"
-							fill="var(--color-social)"
+							dataKey="linkedin"
+							fill="var(--color-linkedin)"
 							overflow="visible"
 							radius={[0, 0, BAR_RADIUS, BAR_RADIUS]}
-							stackId="csat"
+							stackId="intake"
 						/>
 						<Bar
 							barSize={8}
-							dataKey="email"
-							fill="var(--color-email)"
+							dataKey="referral"
+							fill="var(--color-referral)"
 							overflow="visible"
 							radius={0}
-							stackId="csat"
+							stackId="intake"
 						/>
 						<Bar
 							barSize={8}
-							dataKey="direct"
-							fill="var(--color-direct)"
+							dataKey="portal"
+							fill="var(--color-portal)"
 							overflow="visible"
 							radius={[BAR_RADIUS, BAR_RADIUS, 0, 0]}
-							stackId="csat"
+							stackId="intake"
 						/>
 					</BarChart>
 				</ChartContainer>

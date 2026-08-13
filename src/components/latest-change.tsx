@@ -7,9 +7,9 @@ import { XIcon } from "lucide-react";
 
 const latestChange = {
 	badge: "NEW",
-	title: "Smarter queue triage",
-	description: "One-click triage for your queue.", // TIP: Use a single line of text for the description. (max 5 words)
-	readMore: { href: "#", label: "Release notes" },
+	title: "4-pass AI matching",
+	description: "Rank shortlists in minutes.",
+	readMore: { href: "#/matches", label: "See matches" },
 } as const;
 
 export function LatestChange() {
@@ -24,7 +24,7 @@ export function LatestChange() {
 			className={cn(
 				"rounded-lg group/latest-change size-full min-h-27 justify-center border bg-background",
 				"relative flex size-full flex-col gap-1 overflow-hidden px-4 pt-3 pb-1 *:text-nowrap",
-				"transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0"
+				"transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0",
 			)}
 		>
 			<span className="font-light font-mono text-[10px] text-muted-foreground">
@@ -34,7 +34,15 @@ export function LatestChange() {
 			<span className="text-[10px] text-muted-foreground">
 				{latestChange.description}
 			</span>
-			<Button className="w-max px-0 font-light text-xs" size="sm" variant="link" render={<a href={latestChange.readMore.href} />} nativeButton={false}>{latestChange.readMore.label}</Button>
+			<Button
+				className="w-max px-0 font-light text-xs"
+				size="sm"
+				variant="link"
+				render={<a href={latestChange.readMore.href} />}
+				nativeButton={false}
+			>
+				{latestChange.readMore.label}
+			</Button>
 			<Button
 				className="absolute top-2 right-2 z-10 size-6 rounded-full opacity-0 transition-opacity group-hover/latest-change:opacity-100"
 				onClick={() => setIsOpen(false)}

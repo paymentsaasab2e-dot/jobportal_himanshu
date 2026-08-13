@@ -1,5 +1,22 @@
 import type { ReactNode } from "react";
-import { LayoutGridIcon, ListChecksIcon, BarChart3Icon, MessageSquareTextIcon, UsersIcon, PlugIcon, SettingsIcon, HelpCircleIcon, ActivityIcon } from "lucide-react";
+import {
+	LayoutGridIcon,
+	TargetIcon,
+	BriefcaseIcon,
+	UserRoundSearchIcon,
+	KanbanIcon,
+	SparklesIcon,
+	CalendarDaysIcon,
+	UserCheckIcon,
+	InboxIcon,
+	WalletIcon,
+	UsersIcon,
+	BarChart3Icon,
+	SettingsIcon,
+	HelpCircleIcon,
+	ActivityIcon,
+	Building2Icon,
+} from "lucide-react";
 
 export type SidebarNavItem = {
 	title: string;
@@ -14,89 +31,105 @@ export type SidebarNavGroup = {
 	items: SidebarNavItem[];
 };
 
+/** Phase 2 employer CRM sidenav — used by the employers hero dashboard preview. */
 export const navGroups: SidebarNavGroup[] = [
 	{
 		items: [
 			{
-				title: "Overview",
-				path: "#/overview",
-				icon: (
-					<LayoutGridIcon
-					/>
-				),
+				title: "Dashboard",
+				path: "#/dashboard",
+				icon: <LayoutGridIcon />,
 				isActive: true,
 			},
 		],
 	},
 	{
-		label: "Today",
+		label: "CRM",
 		items: [
 			{
-				title: "Queue",
-				path: "#/queue",
-				icon: (
-					<ListChecksIcon
-					/>
-				),
+				title: "Leads",
+				path: "#/leads",
+				icon: <TargetIcon />,
 			},
 			{
-				title: "Team insights",
-				path: "#/team-insights",
-				icon: (
-					<BarChart3Icon
-					/>
-				),
+				title: "Clients",
+				path: "#/clients",
+				icon: <Building2Icon />,
+			},
+			{
+				title: "Contacts",
+				path: "#/contacts",
+				icon: <UsersIcon />,
 			},
 		],
 	},
 	{
-		label: "Inbox",
+		label: "Recruitment",
 		items: [
 			{
-				title: "Conversations",
-				icon: (
-					<MessageSquareTextIcon
-					/>
-				),
+				title: "Jobs",
+				path: "#/jobs",
+				icon: <BriefcaseIcon />,
+			},
+			{
+				title: "Candidates",
+				path: "#/candidates",
+				icon: <UserRoundSearchIcon />,
+			},
+			{
+				title: "Pipeline",
+				path: "#/pipeline",
+				icon: <KanbanIcon />,
+			},
+			{
+				title: "AI Matches",
+				path: "#/matches",
+				icon: <SparklesIcon />,
 				subItems: [
-					{ title: "Unassigned", path: "#/inbox/unassigned" },
-					{ title: "Assigned to me", path: "#/inbox/assigned" },
-					{ title: "Recently closed", path: "#/inbox/closed" },
+					{ title: "4-pass scoring", path: "#/matches/scoring" },
+					{ title: "Shortlists", path: "#/matches/shortlists" },
+					{ title: "Bulk actions", path: "#/matches/bulk" },
 				],
 			},
 			{
-				title: "Customers",
-				path: "#/customers",
-				icon: (
-					<UsersIcon
-					/>
-				),
+				title: "Interviews",
+				path: "#/interviews",
+				icon: <CalendarDaysIcon />,
 			},
 			{
-				title: "Channels",
-				path: "#/channels",
-				icon: (
-					<PlugIcon
-					/>
-				),
+				title: "Placements",
+				path: "#/placements",
+				icon: <UserCheckIcon />,
 			},
 		],
 	},
 	{
-		label: "Organization",
+		label: "Operations",
 		items: [
 			{
-				title: "Workspace",
-				icon: (
-					<SettingsIcon
-					/>
-				),
+				title: "Inbox",
+				path: "#/inbox",
+				icon: <InboxIcon />,
+			},
+			{
+				title: "Reports",
+				path: "#/reports",
+				icon: <BarChart3Icon />,
+			},
+			{
+				title: "Billing",
+				path: "#/billing",
+				icon: <WalletIcon />,
+			},
+			{
+				title: "Team & RBAC",
+				icon: <SettingsIcon />,
 				subItems: [
-					{ title: "Branding", path: "#/workspace/branding" },
-					{ title: "Team & roles", path: "#/workspace/team" },
-					{ title: "API keys", path: "#/workspace/api-keys" },
-					{ title: "Webhooks", path: "#/workspace/webhooks" },
-					{ title: "Billing", path: "#/workspace/billing" },
+					{ title: "Members", path: "#/team/members" },
+					{ title: "Roles", path: "#/team/roles" },
+					{ title: "Departments", path: "#/team/departments" },
+					{ title: "AI Coins", path: "#/settings/ai-coins" },
+					{ title: "Org settings", path: "#/settings" },
 				],
 			},
 		],
@@ -107,26 +140,20 @@ export const footerNavLinks: SidebarNavItem[] = [
 	{
 		title: "Help Center",
 		path: "#/help",
-		icon: (
-			<HelpCircleIcon
-			/>
-		),
+		icon: <HelpCircleIcon />,
 	},
 	{
-		title: "System status",
-		path: "#/status",
-		icon: (
-			<ActivityIcon
-			/>
-		),
+		title: "Behaviour Engine",
+		path: "#/thebehave",
+		icon: <ActivityIcon />,
 	},
 ];
 
 export const navLinks: SidebarNavItem[] = [
 	...navGroups.flatMap((group) =>
 		group.items.flatMap((item) =>
-			item.subItems?.length ? [item, ...item.subItems] : [item]
-		)
+			item.subItems?.length ? [item, ...item.subItems] : [item],
+		),
 	),
 	...footerNavLinks,
 ];

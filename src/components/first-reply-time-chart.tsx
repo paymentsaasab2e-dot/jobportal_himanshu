@@ -36,13 +36,13 @@ const chartRows: ReplyRow[] = [
 const firstMinutes = chartRows[0]?.minutes ?? 0;
 const lastMinutes = chartRows.at(-1)?.minutes ?? firstMinutes;
 
-/** Positive when median first reply faster Mon → Sun. */
+/** Positive when time-to-shortlist improves Mon → Sun. */
 const replyImprovementPct =
 	firstMinutes > 0 ? ((firstMinutes - lastMinutes) / firstMinutes) * 100 : 0;
 
 const chartConfig = {
 	minutes: {
-		label: "Minutes",
+		label: "Days",
 		color: "var(--chart-2)",
 	},
 } satisfies ChartConfig;
@@ -58,14 +58,14 @@ export function FirstReplyTimeChart({
 		>
 			<CardHeader className="space-y-1">
 				<div className="flex flex-wrap items-center gap-2">
-					<CardTitle>Median first reply</CardTitle>
+					<CardTitle>Time to shortlist</CardTitle>
 					<Delta value={replyImprovementPct} variant="badge">
 						<DeltaIcon variant="trend" />
 						<DeltaValue />
 					</Delta>
 				</div>
 				<CardDescription>
-					Minutes to first agent message, last 7 days.
+					Avg days from application to AI shortlist, last 7 days.
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -103,7 +103,7 @@ export function FirstReplyTimeChart({
 								formatter={(label) => {
 									const n = Number(label);
 									return Number.isFinite(n)
-										? `${n.toFixed(1)}m`
+										? `${n.toFixed(1)}d`
 										: String(label ?? "");
 								}}
 								offset={12}

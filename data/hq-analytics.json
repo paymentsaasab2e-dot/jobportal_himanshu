@@ -23,32 +23,27 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-11T10:16:45.902Z",
+      "capturedAt": "2026-08-13T08:37:46.115Z",
       "kind": "realtime_session",
       "session": {
-        "logins": 18,
-        "visits": 169,
+        "logins": 22,
+        "visits": 215,
         "applies": 0,
-        "activeMs": 3900000,
-        "sessionCount": 18,
+        "activeMs": 5340000,
+        "sessionCount": 22,
         "topInsightIds": [
-          "skills_no_apply",
           "browser_not_applier",
-          "incomplete_profile_active",
-          "low_market_fit_active",
           "premium_curious"
         ],
         "triggerFlags": [
-          "sales_follow_up",
-          "user_nudge",
-          "career_assist"
+          "sales_follow_up"
         ],
-        "alertWindow": "Mon / Sat · 6:00 PM–11:00 AM",
+        "alertWindow": "Wed / Thu · 5:00 PM–11:00 AM",
         "alertConfidence": "high",
         "topLocation": null,
         "preferredAlertHours": [
-          13,
           14,
+          13,
           18
         ]
       },
