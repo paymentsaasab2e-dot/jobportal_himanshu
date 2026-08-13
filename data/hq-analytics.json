@@ -29,27 +29,22 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-12T12:29:09.579Z",
+      "capturedAt": "2026-08-13T08:37:46.115Z",
       "kind": "realtime_session",
       "session": {
-        "logins": 21,
-        "visits": 214,
+        "logins": 22,
+        "visits": 215,
         "applies": 0,
-        "activeMs": 5115000,
-        "sessionCount": 21,
+        "activeMs": 5340000,
+        "sessionCount": 22,
         "topInsightIds": [
-          "skills_no_apply",
           "browser_not_applier",
-          "incomplete_profile_active",
-          "low_market_fit_active",
           "premium_curious"
         ],
         "triggerFlags": [
-          "sales_follow_up",
-          "user_nudge",
-          "career_assist"
+          "sales_follow_up"
         ],
-        "alertWindow": "Mon / Wed · 6:00 PM–4:00 PM",
+        "alertWindow": "Wed / Thu · 5:00 PM–11:00 AM",
         "alertConfidence": "high",
         "topLocation": null,
         "preferredAlertHours": [
@@ -1673,21 +1668,21 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-12T12:29:09.579Z",
-      "activityStateUpdatedAt": "2026-08-12T12:28:36.326Z",
+      "capturedAt": "2026-08-13T08:37:46.115Z",
+      "activityStateUpdatedAt": "2026-08-13T08:37:44.141Z",
       "rollup7d": {
         "userId": "b1c869d84e75048c5c61c5e3",
         "range": "week",
-        "fromDate": "2026-08-06",
-        "toDate": "2026-08-12",
-        "logins": 21,
-        "visits": 214,
+        "fromDate": "2026-08-07",
+        "toDate": "2026-08-13",
+        "logins": 22,
+        "visits": 215,
         "jobCardClicks": 1,
         "applies": 0,
-        "activeMs": 5115000,
-        "sessionCount": 21,
+        "activeMs": 5340000,
+        "sessionCount": 22,
         "pageVisitsByCategory": {
-          "other": 120,
+          "other": 121,
           "dashboard": 25,
           "premium": 34,
           "jobs": 16,
@@ -1696,7 +1691,7 @@
           "applications": 1
         },
         "activeMsByCategory": {
-          "other": 3195000,
+          "other": 3420000,
           "dashboard": 810000,
           "premium": 555000,
           "jobs": 210000,
@@ -1707,23 +1702,12 @@
         "firstOpenBreakdown": {
           "dashboard": 1,
           "community": 1,
-          "other": 3
+          "other": 4
         },
-        "avgActiveMsPerDay": 852500,
+        "avgActiveMsPerDay": 890000,
         "daysActive": 6,
         "topFirstOpen": "other",
         "insights": [
-          {
-            "id": "skills_no_apply",
-            "label": "Skills but low applications",
-            "severity": "action",
-            "summary": "Profile has solid skills and job browsing, but few applications. Nudge to apply.",
-            "evidence": [
-              "8 skills on profile",
-              "17 job views/clicks · 4m on jobs",
-              "1 applications tracked"
-            ]
-          },
           {
             "id": "browser_not_applier",
             "label": "Browsing jobs, not applying",
@@ -1732,28 +1716,6 @@
             "evidence": [
               "1 job card clicks · 4m on jobs",
               "0 applies recorded this period"
-            ]
-          },
-          {
-            "id": "incomplete_profile_active",
-            "label": "Active on jobs with incomplete profile",
-            "severity": "watch",
-            "summary": "Profile gaps will hurt match scores and ATS — finish sections before more applies.",
-            "evidence": [
-              "11 missing sections",
-              "Completeness 73%",
-              "17 job views"
-            ]
-          },
-          {
-            "id": "low_market_fit_active",
-            "label": "Low market fit while job hunting",
-            "severity": "watch",
-            "summary": "Market-fit score is weak relative to activity — retarget skills/keywords to the role.",
-            "evidence": [
-              "Market fit 0%",
-              "17 job views",
-              "1 apps"
             ]
           },
           {
@@ -1768,10 +1730,61 @@
         ],
         "recentSessions": [
           {
+            "id": "sess_msr9l5hc_ugg0fk",
+            "startedAt": "2026-08-13T08:36:45.695Z",
+            "lastActiveAt": "2026-08-13T08:37:44.141Z",
+            "durationMs": 30000,
+            "pageCount": 2,
+            "firstPath": "/",
+            "lastPath": "/employers",
+            "lastCategory": "other",
+            "paths": [
+              "/",
+              "/employers"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows"
+          },
+          {
+            "id": "sess_msr6h4ey_zgx86d",
+            "startedAt": "2026-08-13T07:09:38.842Z",
+            "lastActiveAt": "2026-08-13T07:26:53.743Z",
+            "durationMs": 150000,
+            "pageCount": 3,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-13T07:10:20.434Z"
+          },
+          {
+            "id": "sess_msr3pmd0_4sc3n3",
+            "startedAt": "2026-08-13T05:52:16.499Z",
+            "lastActiveAt": "2026-08-13T05:56:01.518Z",
+            "durationMs": 4642343,
+            "pageCount": 1,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-13T07:09:38.842Z"
+          },
+          {
             "id": "sess_msq22kl0_3lc494",
             "startedAt": "2026-08-12T12:18:35.316Z",
             "lastActiveAt": "2026-08-12T12:18:40.550Z",
-            "durationMs": 0,
+            "durationMs": 63221183,
             "pageCount": 1,
             "firstPath": "/community",
             "lastPath": "/community",
@@ -1781,7 +1794,8 @@
             ],
             "deviceType": "desktop",
             "browser": "Chrome",
-            "operatingSystem": "Windows"
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-13T05:52:16.499Z"
           },
           {
             "id": "sess_mspzmzwd_t9l5kd",
@@ -1931,58 +1945,189 @@
             "endedAt": "2026-08-11T07:15:47.138Z",
             "lastPath": "/services",
             "firstPath": "/"
-          },
-          {
-            "id": "sess_msn8wrec_ahjybt",
-            "startedAt": "2026-08-10T13:06:42.993Z",
-            "lastActiveAt": "2026-08-10T13:06:43.192Z",
-            "durationMs": 65315873,
-            "pageCount": 0,
-            "paths": [],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "lastCategory": "other",
-            "endedAt": "2026-08-11T07:15:18.866Z"
-          },
-          {
-            "id": "sess_msn5gh55_ky5n2v",
-            "startedAt": "2026-08-10T11:30:04.360Z",
-            "lastActiveAt": "2026-08-10T12:01:09.760Z",
-            "durationMs": 75000,
-            "pageCount": 5,
-            "firstPath": "/",
-            "lastPath": "/employers/try-free",
-            "lastCategory": "other",
-            "paths": [
-              "/",
-              "/employers",
-              "/employers/try-free"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-08-10T11:50:45.331Z"
-          },
-          {
-            "id": "sess_msn4cvr9_rdpf2k",
-            "startedAt": "2026-08-10T10:59:17.061Z",
-            "lastActiveAt": "2026-08-10T10:59:32.779Z",
-            "durationMs": 1847299,
-            "pageCount": 1,
-            "firstPath": "/",
-            "lastPath": "/",
-            "lastCategory": "other",
-            "paths": [
-              "/"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-08-10T11:30:04.360Z"
           }
         ],
         "recentEvents": [
+          {
+            "id": "ev_msr9mekt_dzinkq",
+            "at": "2026-08-13T08:37:44.141Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_msr9l5hc_ugg0fk"
+          },
+          {
+            "id": "ev_msr9lh2t_1obu88",
+            "at": "2026-08-13T08:37:00.725Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr9l5hc_ugg0fk",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msr9l5hn_ln4tnq",
+            "at": "2026-08-13T08:36:45.707Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr9l5hc_ugg0fk"
+          },
+          {
+            "id": "ev_msr9l5hd_szxc1p",
+            "at": "2026-08-13T08:36:45.697Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr9l5hc_ugg0fk",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_msr72nsj_cyafbg",
+            "at": "2026-08-13T07:26:23.731Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr6h4ey_zgx86d",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msr71abz_t9rdr2",
+            "at": "2026-08-13T07:25:19.631Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr6h4ey_zgx86d",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msr6vwpw_k1izzc",
+            "at": "2026-08-13T07:21:08.708Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr6h4ey_zgx86d"
+          },
+          {
+            "id": "ev_msr6i33a_7mw2zy",
+            "at": "2026-08-13T07:10:23.782Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr6h4ey_zgx86d"
+          },
+          {
+            "id": "ev_msr6i0ia_q2s10e",
+            "at": "2026-08-13T07:10:20.434Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr6h4ey_zgx86d",
+            "meta": {
+              "durationMs": 30000
+            }
+          },
+          {
+            "id": "ev_msr6hg0l_l5kc3z",
+            "at": "2026-08-13T07:09:53.877Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr6h4ey_zgx86d",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msr6h4f6_08ub81",
+            "at": "2026-08-13T07:09:38.850Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr6h4ey_zgx86d"
+          },
+          {
+            "id": "ev_msr6h4ey_fgngi3",
+            "at": "2026-08-13T07:09:38.842Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr6h4ey_zgx86d",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_msr6h4ey_wp79o7",
+            "at": "2026-08-13T07:09:38.842Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr3pmd0_4sc3n3",
+            "meta": {
+              "durationMs": 4642343
+            }
+          },
+          {
+            "id": "ev_msr3t5p8_gzvezf",
+            "at": "2026-08-13T05:55:01.532Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr3pmd0_4sc3n3",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_msr3pmdc_mk286r",
+            "at": "2026-08-13T05:52:16.512Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr3pmd0_4sc3n3"
+          },
+          {
+            "id": "ev_msr3pmd0_6vz4qo",
+            "at": "2026-08-13T05:52:16.500Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_msr3pmd0_4sc3n3",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_msr3pmd0_r8tnv0",
+            "at": "2026-08-13T05:52:16.500Z",
+            "type": "session_end",
+            "category": "community",
+            "path": "/community",
+            "sessionId": "sess_msq22kl0_3lc494",
+            "meta": {
+              "durationMs": 63221183
+            }
+          },
           {
             "id": "ev_msq22kl6_y7wiks",
             "at": "2026-08-12T12:18:35.322Z",
@@ -2806,167 +2951,6 @@
             "meta": {
               "durationMs": 90000
             }
-          },
-          {
-            "id": "ev_msolpvtv_htdrz0",
-            "at": "2026-08-11T11:53:03.331Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_msol84cf_ylmp3s"
-          },
-          {
-            "id": "ev_msolpgof_m2s2td",
-            "at": "2026-08-11T11:52:43.695Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_msol84cf_ylmp3s",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_msol8ri6_p81ne6",
-            "at": "2026-08-11T11:39:44.574Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_msol84cf_ylmp3s",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_msol84ck_1a35rk",
-            "at": "2026-08-11T11:39:14.564Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_msol84cf_ylmp3s"
-          },
-          {
-            "id": "ev_msol84cf_7w8784",
-            "at": "2026-08-11T11:39:14.559Z",
-            "type": "login",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_msol84cf_ylmp3s",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_msoj6hg3_nzt808",
-            "at": "2026-08-11T10:41:58.995Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers/try-free",
-            "sessionId": "sess_msoi7fk6_j4n346"
-          },
-          {
-            "id": "ev_msoj6f3e_dw64p9",
-            "at": "2026-08-11T10:41:55.946Z",
-            "type": "page_visit",
-            "category": "premium",
-            "path": "/services",
-            "sessionId": "sess_msoi7fk6_j4n346"
-          },
-          {
-            "id": "ev_msoj6ahg_2ipsvx",
-            "at": "2026-08-11T10:41:49.972Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers/request-demo",
-            "sessionId": "sess_msoi7fk6_j4n346"
-          },
-          {
-            "id": "ev_msoiluff_8l3w7r",
-            "at": "2026-08-11T10:25:56.043Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/employers/request-demo",
-            "sessionId": "sess_msoi7fk6_j4n346",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_msoido7t_v6ccok",
-            "at": "2026-08-11T10:19:34.745Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers/request-demo",
-            "sessionId": "sess_msoi7fk6_j4n346"
-          },
-          {
-            "id": "ev_msoicar7_8hfu63",
-            "at": "2026-08-11T10:18:30.643Z",
-            "type": "session_end",
-            "category": "other",
-            "path": "/employers/request-demo",
-            "sessionId": "sess_msoi7fk6_j4n346",
-            "meta": {
-              "durationMs": 0
-            }
-          },
-          {
-            "id": "ev_msoi7fkd_vqeqpu",
-            "at": "2026-08-11T10:14:43.597Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers/request-demo",
-            "sessionId": "sess_msoi7fk6_j4n346"
-          },
-          {
-            "id": "ev_msoi7fk6_u256k9",
-            "at": "2026-08-11T10:14:43.590Z",
-            "type": "login",
-            "category": "other",
-            "path": "/employers/request-demo",
-            "sessionId": "sess_msoi7fk6_j4n346",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_msogykvw_82tuob",
-            "at": "2026-08-11T09:39:50.972Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers/request-demo",
-            "sessionId": "sess_msoen9xb_0nan16"
-          },
-          {
-            "id": "ev_msogmndb_cfcjm5",
-            "at": "2026-08-11T09:30:34.319Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers/try-free",
-            "sessionId": "sess_msoen9xb_0nan16"
-          },
-          {
-            "id": "ev_msoggvrm_td04nf",
-            "at": "2026-08-11T09:26:05.266Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers/try-free",
-            "sessionId": "sess_msoen9xb_0nan16"
-          },
-          {
-            "id": "ev_msoge3v2_yahnr4",
-            "at": "2026-08-11T09:23:55.790Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers/try-free",
-            "sessionId": "sess_msoen9xb_0nan16"
           }
         ],
         "topCompanies": [
@@ -3001,68 +2985,19 @@
               "premium_visits",
               "no_apply"
             ]
-          },
-          {
-            "id": "hq_profile_incomplete_job_hunter",
-            "flag": "user_nudge",
-            "title": "Job hunting with incomplete profile",
-            "reason": "Browsing/applying interest is high but profile gaps reduce match and ATS pass rate.",
-            "evidence": [
-              "11 missing sections",
-              "Completeness 73%",
-              "1 job clicks · 4m on jobs"
-            ],
-            "recommendedAction": "User: finish missing profile sections. Sales: guided profile completion service.",
-            "priority": 80,
-            "audience": "both",
-            "comboSignals": [
-              "missing_sections",
-              "job_activity"
-            ]
-          },
-          {
-            "id": "hq_ready_but_not_applying",
-            "flag": "career_assist",
-            "title": "Profile looks ready but user is not applying",
-            "reason": "Skills and browsing exist; friction is likely confidence, fit, or process — not empty profile.",
-            "evidence": [
-              "8 skills",
-              "1 job clicks",
-              "0 applies"
-            ],
-            "recommendedAction": "Nudge one-click apply + interview prep; sales can offer application coaching.",
-            "priority": 76,
-            "audience": "both",
-            "comboSignals": [
-              "skills",
-              "browse_heavy",
-              "low_apply"
-            ]
           }
         ],
         "profileSnapshot": {
-          "skillsCount": 8,
-          "profileCompleteness": 73,
-          "cvScore": 83,
-          "marketFit": 0,
+          "skillsCount": 0,
+          "profileCompleteness": null,
+          "cvScore": null,
+          "marketFit": null,
           "applicationsTotal": 1,
           "rejectionsTotal": 0,
           "postInterviewRejections": 0,
-          "missingSectionsCount": 11,
-          "missingSectionKeys": [
-            "work-experience",
-            "internships",
-            "gap-explanation",
-            "education",
-            "academic-achievements",
-            "competitive-exams",
-            "projects",
-            "certifications",
-            "accomplishments",
-            "visa-work-authorization",
-            "vaccination"
-          ],
-          "updatedAt": "2026-08-12T12:28:36.326Z"
+          "missingSectionsCount": 0,
+          "missingSectionKeys": [],
+          "updatedAt": "2026-08-13T08:36:58.270Z"
         },
         "behaviourSignals": {
           "userId": "b1c869d84e75048c5c61c5e3",
@@ -3077,17 +3012,14 @@
             "ai_cv"
           ],
           "insightIds": [
-            "skills_no_apply",
             "browser_not_applier",
-            "incomplete_profile_active",
-            "low_market_fit_active",
             "premium_curious"
           ],
           "jobCardClicks7d": 1,
           "applies7d": 0,
-          "activeMs7d": 5115000,
+          "activeMs7d": 5340000,
           "activeMsByCategory7d": {
-            "other": 3195000,
+            "other": 3420000,
             "dashboard": 810000,
             "premium": 555000,
             "jobs": 210000,
@@ -3096,7 +3028,7 @@
             "applications": 45000
           },
           "pageVisitsByCategory7d": {
-            "other": 120,
+            "other": 121,
             "dashboard": 25,
             "premium": 34,
             "jobs": 16,
@@ -3104,11 +3036,11 @@
             "courses": 9,
             "applications": 1
           },
-          "skillsCount": 8,
+          "skillsCount": 0,
           "rejectionsTotal": 0,
-          "cvScore": 83,
-          "marketFit": 0,
-          "missingSectionsCount": 11,
+          "cvScore": null,
+          "marketFit": null,
+          "missingSectionsCount": 0,
           "topCompanies": [
             {
               "key": "QuantumByte Security",
@@ -3141,60 +3073,19 @@
                 "premium_visits",
                 "no_apply"
               ]
-            },
-            {
-              "id": "hq_profile_incomplete_job_hunter",
-              "flag": "user_nudge",
-              "title": "Job hunting with incomplete profile",
-              "reason": "Browsing/applying interest is high but profile gaps reduce match and ATS pass rate.",
-              "evidence": [
-                "11 missing sections",
-                "Completeness 73%",
-                "1 job clicks · 4m on jobs"
-              ],
-              "recommendedAction": "User: finish missing profile sections. Sales: guided profile completion service.",
-              "priority": 80,
-              "audience": "both",
-              "comboSignals": [
-                "missing_sections",
-                "job_activity"
-              ]
-            },
-            {
-              "id": "hq_ready_but_not_applying",
-              "flag": "career_assist",
-              "title": "Profile looks ready but user is not applying",
-              "reason": "Skills and browsing exist; friction is likely confidence, fit, or process — not empty profile.",
-              "evidence": [
-                "8 skills",
-                "1 job clicks",
-                "0 applies"
-              ],
-              "recommendedAction": "Nudge one-click apply + interview prep; sales can offer application coaching.",
-              "priority": 76,
-              "audience": "both",
-              "comboSignals": [
-                "skills",
-                "browse_heavy",
-                "low_apply"
-              ]
             }
           ],
           "preferSlotIds": [
             "jobs",
-            "profile",
-            "ai_cv",
             "course",
-            "quizzes",
-            "events"
+            "events",
+            "profile",
+            "ai_cv"
           ],
           "deprioritizeSlotIds": [
             "community"
           ],
-          "userSuggestionHints": [
-            "Prepare for “React Developer” before you apply — You’ve been looking at QuantumByte Security roles, but your scores look low (market fit ~0%, CV ~83%). Start “Frontend Interview Readiness” or open a guided premium service to close the gap, then apply when you’re stronger. Target role to aim for: “React Developer”.",
-            "Finish missing profile sections — You are browsing jobs, but your profile is still incomplete. Open Profile and fill the missing sections first — then apply."
-          ],
+          "userSuggestionHints": [],
           "preferredAlertHours": [
             14,
             13,
@@ -3206,48 +3097,21 @@
       },
       "suggestionMetrics": {
         "userId": "b1c869d84e75048c5c61c5e3",
-        "updatedAt": "2026-08-12T12:29:07.913Z",
+        "updatedAt": "2026-08-13T08:36:58.209Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
-        "suggestionsPushed": 64,
+        "suggestionsPushed": 67,
         "suggestionsClicked": 0,
         "suggestionsPurchased": 0,
         "salesFollowUpScore": 10,
         "salesFollowUpReady": false,
         "byScenario": {
           "profile_match": 7,
-          "engagement": 56,
+          "engagement": 59,
           "interest_nudge": 1
         },
         "recentSuggestions": [
-          {
-            "id": "sug_msof2z7b_lkscwu",
-            "dedupeKey": "engage:behaviour:hq_ready_but_not_applying",
-            "scenario": "engagement",
-            "kind": "sales_followup",
-            "title": "Prepare for “React Developer” before you apply",
-            "actionUrl": "/services/mock-interview",
-            "pushedAt": "2026-08-11T08:47:16.919Z"
-          },
-          {
-            "id": "sug_msog5tnv_g42dbl",
-            "dedupeKey": "engage:behaviour:hq_ready_but_not_applying",
-            "scenario": "engagement",
-            "kind": "sales_followup",
-            "title": "Prepare for “React Developer” before you apply",
-            "actionUrl": "/services/mock-interview",
-            "pushedAt": "2026-08-11T09:17:29.323Z"
-          },
-          {
-            "id": "sug_msoha9kk_ysyqxm",
-            "dedupeKey": "engage:behaviour:hq_ready_but_not_applying",
-            "scenario": "engagement",
-            "kind": "sales_followup",
-            "title": "Prepare for “React Developer” before you apply",
-            "actionUrl": "/services/mock-interview",
-            "pushedAt": "2026-08-11T09:48:56.180Z"
-          },
           {
             "id": "sug_msoidvlc_eimoko",
             "dedupeKey": "engage:behaviour:hq_profile_incomplete_job_hunter",
@@ -3364,6 +3228,33 @@
             "title": "Prepare for “React Developer” before you apply",
             "actionUrl": "/services/mock-interview",
             "pushedAt": "2026-08-12T12:18:42.496Z"
+          },
+          {
+            "id": "sug_msr3pvn9_ubdnji",
+            "dedupeKey": "engage:behaviour:hq_ready_but_not_applying",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for “React Developer” before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-13T05:52:28.533Z"
+          },
+          {
+            "id": "sug_msr6hets_qao7i5",
+            "dedupeKey": "engage:behaviour:hq_ready_but_not_applying",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for “Business Development Manager” before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-13T07:09:52.336Z"
+          },
+          {
+            "id": "sug_msr9lf4m_z7j5gu",
+            "dedupeKey": "engage:behaviour:hq_ready_but_not_applying",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for “React Developer” before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-13T08:36:58.198Z"
           }
         ]
       },
@@ -3382,43 +3273,6 @@
           "comboSignals": [
             "premium_visits",
             "no_apply"
-          ]
-        },
-        {
-          "id": "hq_profile_incomplete_job_hunter",
-          "flag": "user_nudge",
-          "title": "Job hunting with incomplete profile",
-          "reason": "Browsing/applying interest is high but profile gaps reduce match and ATS pass rate.",
-          "evidence": [
-            "11 missing sections",
-            "Completeness 73%",
-            "1 job clicks · 4m on jobs"
-          ],
-          "recommendedAction": "User: finish missing profile sections. Sales: guided profile completion service.",
-          "priority": 80,
-          "audience": "both",
-          "comboSignals": [
-            "missing_sections",
-            "job_activity"
-          ]
-        },
-        {
-          "id": "hq_ready_but_not_applying",
-          "flag": "career_assist",
-          "title": "Profile looks ready but user is not applying",
-          "reason": "Skills and browsing exist; friction is likely confidence, fit, or process — not empty profile.",
-          "evidence": [
-            "8 skills",
-            "1 job clicks",
-            "0 applies"
-          ],
-          "recommendedAction": "Nudge one-click apply + interview prep; sales can offer application coaching.",
-          "priority": 76,
-          "audience": "both",
-          "comboSignals": [
-            "skills",
-            "browse_heavy",
-            "low_apply"
           ]
         }
       ],
@@ -3463,19 +3317,19 @@
           "key": "product",
           "label": "Product / PM",
           "score": 9,
-          "updatedAt": "2026-08-12T12:18:35.300Z"
+          "updatedAt": "2026-08-13T08:36:47.796Z"
         },
         {
           "key": "leadership",
           "label": "Leadership",
           "score": 9,
-          "updatedAt": "2026-08-12T12:18:35.300Z"
+          "updatedAt": "2026-08-13T08:36:47.796Z"
         },
         {
           "key": "manager",
           "label": "Manager",
           "score": 9,
-          "updatedAt": "2026-08-12T12:18:35.300Z"
+          "updatedAt": "2026-08-13T08:36:47.796Z"
         },
         {
           "key": "interview_prep",
@@ -3546,68 +3400,62 @@
       "sessionEngagement": {
         "sessionCount": 12,
         "activeCount": 1,
-        "totalDurationMs": 76538055,
-        "avgDurationMs": 6378171,
+        "totalDurationMs": 77343409,
+        "avgDurationMs": 6445284,
         "medianDurationMs": 397500,
         "uniqueIps": 0,
         "uniqueDevices": 1,
         "locations": [],
         "byHour": [
           {
-            "hour": 18,
-            "label": "6:00 PM",
-            "sessions": 1,
-            "totalDurationMs": 65315873
+            "hour": 17,
+            "label": "5:00 PM",
+            "sessions": 2,
+            "totalDurationMs": 63926183
+          },
+          {
+            "hour": 11,
+            "label": "11:00 AM",
+            "sessions": 2,
+            "totalDurationMs": 4732343
           },
           {
             "hour": 16,
             "label": "4:00 PM",
-            "sessions": 2,
-            "totalDurationMs": 5933179
+            "sessions": 1,
+            "totalDurationMs": 4085880
           },
           {
             "hour": 14,
             "label": "2:00 PM",
-            "sessions": 2,
-            "totalDurationMs": 3804003
+            "sessions": 3,
+            "totalDurationMs": 3834003
           },
           {
-            "hour": 17,
-            "label": "5:00 PM",
-            "sessions": 3,
-            "totalDurationMs": 780000
+            "hour": 12,
+            "label": "12:00 PM",
+            "sessions": 2,
+            "totalDurationMs": 435000
           },
           {
             "hour": 15,
             "label": "3:00 PM",
             "sessions": 2,
             "totalDurationMs": 330000
-          },
-          {
-            "hour": 12,
-            "label": "12:00 PM",
-            "sessions": 1,
-            "totalDurationMs": 285000
-          },
-          {
-            "hour": 11,
-            "label": "11:00 AM",
-            "sessions": 1,
-            "totalDurationMs": 90000
           }
         ],
         "byWeekday": [
           {
-            "weekday": 1,
-            "label": "Mon",
-            "sessions": 3,
-            "totalDurationMs": 67238172
-          },
-          {
             "weekday": 3,
             "label": "Wed",
             "sessions": 5,
-            "totalDurationMs": 7814883
+            "totalDurationMs": 71036066
+          },
+          {
+            "weekday": 4,
+            "label": "Thu",
+            "sessions": 3,
+            "totalDurationMs": 4822343
           },
           {
             "weekday": 2,
@@ -3618,65 +3466,285 @@
         ],
         "alertTiming": {
           "bestHours": [
-            18,
-            16,
-            14
+            17,
+            11,
+            16
           ],
           "bestHourLabels": [
-            "6:00 PM",
-            "4:00 PM",
-            "2:00 PM"
+            "5:00 PM",
+            "11:00 AM",
+            "4:00 PM"
           ],
           "bestWeekdays": [
-            "Mon",
-            "Wed"
+            "Wed",
+            "Thu"
           ],
-          "bestWindowLabel": "Mon / Wed · 6:00 PM–4:00 PM",
+          "bestWindowLabel": "Wed / Thu · 5:00 PM–11:00 AM",
           "avoidHours": [
-            11,
+            15,
             12,
-            15
+            14
           ],
           "timezone": null,
           "confidence": "high",
-          "reason": "Most active around 6:00 PM and 4:00 PM local time · avg session 106 min",
+          "reason": "Most active around 5:00 PM and 11:00 AM local time · avg session 107 min",
           "sampleSessions": 12,
-          "avgDurationMs": 6378171,
+          "avgDurationMs": 6445284,
           "medianDurationMs": 397500
         }
       },
       "alertTiming": {
         "bestHours": [
-          18,
-          16,
-          14
+          17,
+          11,
+          16
         ],
         "bestHourLabels": [
-          "6:00 PM",
-          "4:00 PM",
-          "2:00 PM"
+          "5:00 PM",
+          "11:00 AM",
+          "4:00 PM"
         ],
         "bestWeekdays": [
-          "Mon",
-          "Wed"
+          "Wed",
+          "Thu"
         ],
-        "bestWindowLabel": "Mon / Wed · 6:00 PM–4:00 PM",
+        "bestWindowLabel": "Wed / Thu · 5:00 PM–11:00 AM",
         "avoidHours": [
-          11,
+          15,
           12,
-          15
+          14
         ],
         "timezone": null,
         "confidence": "high",
-        "reason": "Most active around 6:00 PM and 4:00 PM local time · avg session 106 min",
+        "reason": "Most active around 5:00 PM and 11:00 AM local time · avg session 107 min",
         "sampleSessions": 12,
-        "avgDurationMs": 6378171,
+        "avgDurationMs": 6445284,
         "medianDurationMs": 397500
       },
       "locations": []
     }
   },
   "history": [
+    {
+      "id": "hist_msr9l778_4m1n",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-13T08:36:47.799Z",
+      "snapshot": {
+        "logins": 22,
+        "visits": 214,
+        "applies": 0,
+        "activeMs": 5310000,
+        "jobCardClicks": 1,
+        "triggerCount": 3,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier",
+          "incomplete_profile_active",
+          "low_market_fit_active",
+          "premium_curious"
+        ],
+        "alertWindow": "Wed / Thu · 5:00 PM–11:00 AM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msr7g3n9_045a",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-13T07:36:50.759Z",
+      "snapshot": {
+        "logins": 21,
+        "visits": 213,
+        "applies": 0,
+        "activeMs": 5310000,
+        "jobCardClicks": 1,
+        "triggerCount": 3,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier",
+          "incomplete_profile_active",
+          "low_market_fit_active",
+          "premium_curious"
+        ],
+        "alertWindow": "Wed / Mon · 6:00 PM–5:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msr78u57_1c6f",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-13T07:31:11.645Z",
+      "snapshot": {
+        "logins": 21,
+        "visits": 213,
+        "applies": 0,
+        "activeMs": 5310000,
+        "jobCardClicks": 1,
+        "triggerCount": 3,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier",
+          "incomplete_profile_active",
+          "low_market_fit_active",
+          "premium_curious"
+        ],
+        "alertWindow": "Wed / Mon · 6:00 PM–5:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msr71qk7_tjn2",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-13T07:25:40.620Z",
+      "snapshot": {
+        "logins": 21,
+        "visits": 213,
+        "applies": 0,
+        "activeMs": 5235000,
+        "jobCardClicks": 1,
+        "triggerCount": 3,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier",
+          "incomplete_profile_active",
+          "low_market_fit_active",
+          "premium_curious"
+        ],
+        "alertWindow": "Wed / Mon · 6:00 PM–5:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msr6v09h_xthk",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-13T07:20:26.584Z",
+      "snapshot": {
+        "logins": 21,
+        "visits": 212,
+        "applies": 0,
+        "activeMs": 5190000,
+        "jobCardClicks": 1,
+        "triggerCount": 3,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier",
+          "incomplete_profile_active",
+          "low_market_fit_active",
+          "premium_curious"
+        ],
+        "alertWindow": "Wed / Mon · 6:00 PM–5:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msr6nxoh_lhol",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-13T07:14:56.613Z",
+      "snapshot": {
+        "logins": 21,
+        "visits": 212,
+        "applies": 0,
+        "activeMs": 5190000,
+        "jobCardClicks": 1,
+        "triggerCount": 3,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier",
+          "incomplete_profile_active",
+          "low_market_fit_active",
+          "premium_curious"
+        ],
+        "alertWindow": "Wed / Mon · 6:00 PM–5:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msr6h7gj_tjd8",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-13T07:09:41.194Z",
+      "snapshot": {
+        "logins": 21,
+        "visits": 211,
+        "applies": 0,
+        "activeMs": 5160000,
+        "jobCardClicks": 1,
+        "triggerCount": 3,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier",
+          "incomplete_profile_active",
+          "low_market_fit_active",
+          "premium_curious"
+        ],
+        "alertWindow": "Wed / Mon · 6:00 PM–5:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msr4556h_txiv",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-13T06:04:20.239Z",
+      "snapshot": {
+        "logins": 20,
+        "visits": 210,
+        "applies": 0,
+        "activeMs": 5160000,
+        "jobCardClicks": 1,
+        "triggerCount": 3,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier",
+          "incomplete_profile_active",
+          "low_market_fit_active",
+          "premium_curious"
+        ],
+        "alertWindow": "Wed / Mon · 6:00 PM–5:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msr3xg1x_hd32",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-13T05:58:21.277Z",
+      "snapshot": {
+        "logins": 20,
+        "visits": 210,
+        "applies": 0,
+        "activeMs": 5160000,
+        "jobCardClicks": 1,
+        "triggerCount": 3,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier",
+          "incomplete_profile_active",
+          "low_market_fit_active",
+          "premium_curious"
+        ],
+        "alertWindow": "Wed / Mon · 6:00 PM–5:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msr3pqap_kohu",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-13T05:52:20.542Z",
+      "snapshot": {
+        "logins": 20,
+        "visits": 210,
+        "applies": 0,
+        "activeMs": 5115000,
+        "jobCardClicks": 1,
+        "triggerCount": 3,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier",
+          "incomplete_profile_active",
+          "low_market_fit_active",
+          "premium_curious"
+        ],
+        "alertWindow": "Wed / Mon · 6:00 PM–5:00 PM",
+        "topLocation": null
+      }
+    },
     {
       "id": "hist_msq2ag1f_3n0o",
       "userId": "b1c869d84e75048c5c61c5e3",
@@ -9719,5 +9787,5 @@
     }
   ],
   "tickets": [],
-  "updatedAt": "2026-08-12T12:29:09.630Z"
+  "updatedAt": "2026-08-13T08:37:46.183Z"
 }
