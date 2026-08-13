@@ -38,13 +38,8 @@ Ticket always includes `userId` when signed in.
 
 ### Optional email
 
-On submit, the browser also opens:
-
-```
-mailto:support@saasab2e.com?subject=[Help tkt_…] …
-```
-
-Email is a side channel; **HQ source of truth is `POST/GET /api/hq-tickets`**.
+On submit, the ticket is **only** registered via `POST /api/hq-tickets` (plus a localStorage copy).  
+**No mail client is opened.** Ops reply later by email with a solution; in-app notify is planned separately.
 
 ---
 
@@ -55,8 +50,8 @@ User opens /help
   → (optional) expands a common problem → “Raise ticket for this” prefills category/subject
   → fills / confirms form → Submit
        ├─ save local copy (localStorage `saasa:help-tickets-v1`)
-       ├─ POST /api/hq-tickets   → append ticket (status: open)
-       └─ optional mailto to support@saasab2e.com
+       └─ POST /api/hq-tickets   → append ticket (status: open)
+          (no mailto / no mail-app popup)
 
 HQ / ops
   → GET /api/hq-tickets              → list (newest first)
@@ -213,7 +208,7 @@ Help tickets are **user-initiated**, not behaviour-engine triggers.
 
 | Trigger | When | What happens |
 |---------|------|----------------|
-| Form submit on `/help` | User clicks Submit ticket | `POST /api/hq-tickets` + localStorage + optional mailto |
+| Form submit on `/help` | User clicks Submit ticket | `POST /api/hq-tickets` + localStorage only (no mailto) |
 | Prefill from problem | User clicks “Raise ticket for this” | Scrolls to form; sets category / subject / description / `problemId` |
 | HQ status PATCH | Ops updates ticket | Status stored only — **no** automatic user notification / bell yet |
 
@@ -246,16 +241,19 @@ Behaviour `hqTriggers` / insights (e.g. `hq_service_no_purchase`) are **sales/ca
 
 | Piece | Path |
 |-------|------|
-| Help page UI | `src/app/(website)/help/page.tsx` |
-| Problems + categories + client POST | `src/app/(website)/help/data/problems.ts` |
-| Next API route | `src/app/api/hq-tickets/route.ts` |
-| Persist append/list/update | `src/lib/hq-data-store.ts` |
-| Storage file | `data/hq-analytics.json` |
-| Navbar: logged-in Header on `/help` | `src/app/(website)/layout.tsx` |
+| Help page UI | [`src/app/(website)/help/page.tsx`](./src/app/(website)/help/page.tsx) |
+| Problems + categories + client POST | [`src/app/(website)/help/data/problems.ts`](./src/app/(website)/help/data/problems.ts) |
+| Next API route | [`src/app/api/hq-tickets/route.ts`](./src/app/api/hq-tickets/route.ts) |
+| Persist append/list/update | [`src/lib/hq-data-store.ts`](./src/lib/hq-data-store.ts) |
+| Storage file | [`data/hq-analytics.json`](./data/hq-analytics.json) |
+| Navbar: logged-in Header on `/help` | [`src/app/(website)/layout.tsx`](./src/app/(website)/layout.tsx) |
+| Curl cheatsheet (local + deployed) | [`HQ_API_TEST_CHEATSHEET.md`](./HQ_API_TEST_CHEATSHEET.md) |
 
 ---
 
 ## Quick curl examples
+
+Full local + deployed copy-paste suite: [`HQ_API_TEST_CHEATSHEET.md`](./HQ_API_TEST_CHEATSHEET.md).
 
 ```bash
 # List open tickets
