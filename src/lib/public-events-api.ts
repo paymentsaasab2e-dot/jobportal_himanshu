@@ -30,7 +30,47 @@ export type PortalEventRow = {
   registrationCount: number;
   createdByName?: string;
   hostName?: string;
+  accessType?: 'free' | 'purchase' | string;
+  tokenCost?: number;
+  isFree?: boolean;
+  ctaLabel?: string;
 };
+
+export const DEFAULT_EVENT_CTA = 'Join';
+export const EVENT_CTA_PRESETS = ['Learn', 'Apply', 'Join', 'Register', 'Attend'] as const;
+
+export function normalizeEventCtaLabel(raw?: string | null, fallback = DEFAULT_EVENT_CTA): string {
+  const text = String(raw || '').replace(/\s+/g, ' ').trim();
+  if (!text) return fallback;
+  return text.slice(0, 32);
+}
+
+export function eventCtaButtonLabel(opts: {
+  ctaLabel?: string | null;
+  tokenCost?: number;
+  registered?: boolean;
+  past?: boolean;
+}): string {
+  if (opts.past) return 'Event Ended';
+  if (opts.registered) return 'Registered';
+  const label = normalizeEventCtaLabel(opts.ctaLabel);
+  const cost = Number(opts.tokenCost) || 0;
+  return cost > 0 ? `${label} · ${cost} tokens` : label;
+}
+
+export function firstPortalEventCover(
+  media?: PortalEventMediaItem[] | null,
+): { src: string; type: 'image' | 'video' } | null {
+  if (!Array.isArray(media)) return null;
+  const withUrl = media.filter((item) => item?.url);
+  const image = withUrl.find((item) => String(item.type).toLowerCase() === 'image');
+  const pick = image || withUrl[0];
+  if (!pick?.url) return null;
+  return {
+    src: pick.url,
+    type: String(pick.type).toLowerCase() === 'video' ? 'video' : 'image',
+  };
+}
 
 export type PortalEventRegistrationRow = {
   id: string;
@@ -92,5 +132,18 @@ export async function registerForPublicEvent(
     headers: authHeaders(token),
     body: JSON.stringify({ eventId }),
   });
-  await parseJson(res);
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    if (res.status === 402) {
+      const { InsufficientTokensError } = await import('@/lib/tokens-api');
+      throw new InsufficientTokensError({
+        message: payload?.message || payload?.error || 'Insufficient tokens',
+        balance: payload?.balance,
+        required: payload?.required,
+        shortfall: payload?.shortfall,
+        service: payload?.service,
+      });
+    }
+    throw new Error(payload?.message || payload?.error || `Request failed (${res.status})`);
+  }
 }

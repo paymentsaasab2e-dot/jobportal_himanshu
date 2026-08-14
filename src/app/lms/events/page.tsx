@@ -32,7 +32,12 @@ import { eventsRecommendedIntro } from '../data/ai-mock';
 import { useLmsState } from '../state/LmsStateProvider';
 import { EventRegisterSheet } from './EventRegisterSheet';
 import { fetchEvents, registerForEvent, unregisterFromEvent } from '../api/client';
-import { fetchPublicEvents, type PortalEventRow } from '@/lib/public-events-api';
+import {
+  eventCtaButtonLabel,
+  fetchPublicEvents,
+  firstPortalEventCover,
+  type PortalEventRow,
+} from '@/lib/public-events-api';
 import { LmsSkeleton } from '../components/states/LmsSkeleton';
 import {
   eventTypeLabel,
@@ -88,7 +93,11 @@ type DisplayEvent = {
   overview: string;
   href: string;
   coverSrc?: string;
+  coverType?: 'image' | 'video';
   source: 'lms' | 'catalog' | 'job';
+  tokenCost?: number;
+  accessType?: string;
+  ctaLabel?: string;
 };
 
 const EVENT_COVER_MAP: Record<
@@ -175,13 +184,24 @@ export default function LmsEventsPage() {
           fetchEvents().catch(() => []),
           fetchPortalJobsList(DEFAULT_LOCALE, 20).catch(() => []),
         ]);
-        setPortalEvents(Array.isArray(publishedEvents) ? publishedEvents : []);
+        const published = Array.isArray(publishedEvents) ? publishedEvents : [];
+        const authList = Array.isArray(authEvents) ? authEvents : [];
+        const mediaById = new Map<string, PortalEventRow['media']>();
         const registrationMap: Record<string, boolean> = {};
-        if (Array.isArray(authEvents)) {
-          authEvents.forEach((ev: { id?: string; isRegistered?: boolean }) => {
-            if (ev?.id) registrationMap[String(ev.id)] = Boolean(ev.isRegistered);
-          });
-        }
+        authList.forEach((ev: { id?: string; isRegistered?: boolean; media?: PortalEventRow['media'] }) => {
+          if (!ev?.id) return;
+          registrationMap[String(ev.id)] = Boolean(ev.isRegistered);
+          if (Array.isArray(ev.media) && ev.media.length) mediaById.set(String(ev.id), ev.media);
+        });
+        setPortalEvents(
+          published.map((ev) => ({
+            ...ev,
+            media:
+              Array.isArray(ev.media) && ev.media.length
+                ? ev.media
+                : mediaById.get(String(ev.id)) || [],
+          })),
+        );
         setRegistrationByEventId(registrationMap);
         setJobEvents(
           mapJobsToOgEvents(jobs, 16).map((ev) => ({
@@ -239,6 +259,7 @@ export default function LmsEventsPage() {
     const lms = portalEvents.map((ev) => {
       const typeRaw = String(ev.type || 'workshop');
       const scheduled = new Date(ev.scheduledAt);
+      const cover = firstPortalEventCover(ev.media);
       return {
         id: String(ev.id),
         title: ev.title,
@@ -259,7 +280,12 @@ export default function LmsEventsPage() {
         matchLabel: portalSourceLabel(ev.source, ev.createdByName),
         overview: ev.description,
         href: `/lms/events/${ev.id}`,
+        coverSrc: cover?.src,
+        coverType: cover?.type,
         source: 'lms' as const,
+        tokenCost: Number(ev.tokenCost) || 0,
+        accessType: ev.accessType || (Number(ev.tokenCost) > 0 ? 'purchase' : 'free'),
+        ctaLabel: ev.ctaLabel || 'Join',
       };
     });
     return [...jobEvents, ...catalogEvents, ...lms];
@@ -296,16 +322,24 @@ export default function LmsEventsPage() {
     id: string,
     title: string,
     currentlyRegistered: boolean,
+    tokenCost = 0,
+    ctaLabel?: string,
   ) => {
     e.preventDefault();
     e.stopPropagation();
 
     overlay.openSheet({
-      title: currentlyRegistered ? 'Cancel Registration' : 'Register for Event',
+      title: currentlyRegistered
+        ? 'Cancel Registration'
+        : eventCtaButtonLabel({ ctaLabel, tokenCost }),
       description: currentlyRegistered
         ? 'You are about to cancel your spot.'
-        : 'Connects right to the backend DB.',
-      content: <EventRegisterSheet title={title} isRegistered={currentlyRegistered} />,
+        : tokenCost > 0
+          ? `This event costs ${tokenCost} tokens.`
+          : 'Free event — confirm to save your seat.',
+      content: (
+        <EventRegisterSheet title={title} isRegistered={currentlyRegistered} tokenCost={tokenCost} />
+      ),
       footer: (
         <div className="flex flex-col gap-2 sm:flex-row">
           <button
@@ -330,14 +364,14 @@ export default function LmsEventsPage() {
                   toast.push({ title: 'Registered', message: title, tone: 'success' });
                 }
                 overlay.close();
-              } catch {
+              } catch (err) {
                 setRegistrationByEventId((prev) => ({
                   ...prev,
                   [id]: currentlyRegistered,
                 }));
                 toast.push({
                   title: 'Error',
-                  message: 'Failed to update registration',
+                  message: err instanceof Error ? err.message : 'Failed to update registration',
                   tone: 'destructive',
                 });
                 overlay.close();
@@ -400,7 +434,9 @@ export default function LmsEventsPage() {
                 key={`rec-${ev.id}`}
                 ev={ev}
                 registered={ev.isRegistered}
-                onRegister={(e) => openRegister(e, ev.id, ev.title, ev.isRegistered)}
+                onRegister={(e) =>
+                  openRegister(e, ev.id, ev.title, ev.isRegistered, ev.tokenCost, ev.ctaLabel)
+                }
                 onPlan={(e) => handlePlanClick(e, ev)}
                 onApply={(e) => {
                   e.preventDefault();
@@ -503,7 +539,9 @@ export default function LmsEventsPage() {
                 key={`list-${ev.id}`}
                 ev={ev}
                 registered={ev.isRegistered}
-                onRegister={(e) => openRegister(e, ev.id, ev.title, ev.isRegistered)}
+                onRegister={(e) =>
+                  openRegister(e, ev.id, ev.title, ev.isRegistered, ev.tokenCost, ev.ctaLabel)
+                }
                 onPlan={(e) => handlePlanClick(e, ev)}
                 onApply={(e) => {
                   e.preventDefault();
@@ -550,7 +588,7 @@ function EventCard({
   const coverKey = keys[index % keys.length] || 'default';
   const mapped = EVENT_COVER_MAP[coverKey] ?? EVENT_COVER_MAP.default;
   const coverSrc = ev.coverSrc || mapped.src;
-  const isExternalCover = Boolean(ev.coverSrc?.startsWith('http'));
+  const uploadedCover = Boolean(ev.coverSrc);
   const isJob = ev.source === 'job';
   const isLms = ev.source === 'lms';
 
@@ -558,7 +596,15 @@ function EventCard({
     <Link href={ev.href} className={`${LMS_CARD_INTERACTIVE} group`}>
       <div className="-mx-6 -mt-6 overflow-hidden border-b border-slate-200/70 sm:-mx-7 sm:-mt-7">
         <div className="relative aspect-[16/9] bg-slate-100">
-          {isExternalCover ? (
+          {uploadedCover && ev.coverType === 'video' ? (
+            <video
+              src={coverSrc}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              muted
+              playsInline
+              preload="metadata"
+            />
+          ) : uploadedCover ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={coverSrc}
@@ -612,6 +658,17 @@ function EventCard({
         <div className="flex flex-wrap items-center gap-2">
           {typeBadge(ev.type)}
           {modeBadge(ev.mode)}
+          {ev.source === 'lms' ? (
+            Number(ev.tokenCost) > 0 ? (
+              <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
+                {ev.tokenCost} tokens
+              </span>
+            ) : (
+              <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+                Free
+              </span>
+            )
+          ) : null}
         </div>
 
         {ev.status !== 'past' ? (
@@ -666,7 +723,9 @@ function EventCard({
                     : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50'
                 }`}
               >
-                {registered ? 'Registered' : 'Register'}
+                {registered
+                  ? 'Registered'
+                  : eventCtaButtonLabel({ ctaLabel: ev.ctaLabel, tokenCost: ev.tokenCost })}
               </button>
             ) : (
               <button

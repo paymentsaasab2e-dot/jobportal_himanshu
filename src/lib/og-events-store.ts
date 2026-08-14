@@ -17,6 +17,7 @@ export type OgEventPost = {
   location?: string;
   whenLabel: string;
   imageUrl: string;
+  imageType?: 'image' | 'video';
   tags: string[];
   interestedCount: number;
   createdAt: string;
@@ -25,6 +26,8 @@ export type OgEventPost = {
   /** Live job posting — click opens apply page */
   jobId?: string;
   actionHref?: string;
+  tokenCost?: number;
+  ctaLabel?: string;
 };
 
 const DEMO_JOB_IMAGE =
@@ -232,6 +235,24 @@ function inferOgTypeFromLms(raw: Record<string, unknown>): OgEventType {
   return 'seminar';
 }
 
+function coverFromLmsRow(row: Record<string, unknown>): { src: string; type: 'image' | 'video' } | null {
+  const direct = asString(row.coverUrl || row.imageUrl || row.thumbnailUrl || row.thumbnail);
+  if (direct) return { src: direct, type: 'image' };
+
+  const media = row.media;
+  if (!Array.isArray(media)) return null;
+  const withUrl = media
+    .map((item) => asRecord(item))
+    .filter((item) => asString(item.url));
+  const image = withUrl.find((item) => asString(item.type).toLowerCase() === 'image');
+  const pick = image || withUrl[0];
+  if (!pick) return null;
+  return {
+    src: asString(pick.url),
+    type: asString(pick.type).toLowerCase() === 'video' ? 'video' : 'image',
+  };
+}
+
 function tokensFromText(...parts: string[]): string[] {
   const blob = parts.filter(Boolean).join(' ').toLowerCase();
   const stop = new Set([
@@ -281,6 +302,7 @@ export function mapLmsEventsToOgEvents(rawEvents: unknown[], limit = 40): OgEven
         ? asString(row.location || row.venue) || 'Offline'
         : undefined;
     const matchKeys = tokensFromText(title, body, hostName, type, ...tagsRaw);
+    const cover = coverFromLmsRow(row);
 
     out.push({
       id: `lms-${id}`,
@@ -291,12 +313,15 @@ export function mapLmsEventsToOgEvents(rawEvents: unknown[], limit = 40): OgEven
       hostInitial: hostName.slice(0, 1).toUpperCase() || 'L',
       location,
       whenLabel,
-      imageUrl: asString(row.coverUrl || row.imageUrl) || LMS_EVENT_IMAGE,
+      imageUrl: cover?.src || LMS_EVENT_IMAGE,
+      imageType: cover?.type,
       tags: [eventTypeLabel(type), ...tagsRaw].filter(Boolean).slice(0, 4),
       interestedCount: Number(row.registeredCount || row.attendeeCount || 0) || 40,
       createdAt,
       matchKeys,
       actionHref: `/lms/events/${encodeURIComponent(id)}`,
+      tokenCost: Math.max(0, Number(row.tokenCost) || 0),
+      ctaLabel: asString(row.ctaLabel || row.cta || row.buttonLabel) || 'Join',
     });
   }
   return out;

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { use, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   CalendarDays,
@@ -14,6 +15,7 @@ import {
   Users,
 } from 'lucide-react';
 import { LMS_SECTION_TITLE } from '../../constants';
+import { CourseAccessBadge } from '../../components/ux/TokenSpendButton';
 import { EventDetailClient } from './event-detail-client';
 import { EventMediaCarousel } from './EventMediaCarousel';
 import { fetchPublicEventById, type PortalEventMediaItem, type PortalEventRow } from '@/lib/public-events-api';
@@ -38,6 +40,9 @@ type EventDetail = {
   location: string;
   sections: { id: string; title: string; content: string }[];
   media: PortalEventMediaItem[];
+  tokenCost: number;
+  accessType: string;
+  ctaLabel: string;
 };
 
 function portalSourceLabel(source?: string, createdByName?: string) {
@@ -88,15 +93,47 @@ function mapPublicEvent(found: PortalEventRow, isRegistered = false): EventDetai
     location: found.location || 'Location TBA',
     sections,
     media: Array.isArray(found.media) ? found.media : [],
+    tokenCost: Number(found.tokenCost) || 0,
+    accessType: found.accessType || (Number(found.tokenCost) > 0 ? 'purchase' : 'free'),
+    ctaLabel: found.ctaLabel || 'Join',
   };
 }
 
 export default function LmsEventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [openSectionId, setOpenSectionId] = useState<string | null>(null);
+
+  function handleBack() {
+    const from = searchParams.get('from');
+    if (from && from.startsWith('/') && !from.startsWith('//') && !from.includes('://')) {
+      router.push(from);
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      const ref = document.referrer;
+      if (ref) {
+        try {
+          const url = new URL(ref);
+          if (url.origin === window.location.origin && !url.pathname.includes(`/lms/events/${id}`)) {
+            router.back();
+            return;
+          }
+        } catch {
+          // ignore invalid referrer
+        }
+      }
+      if (window.history.length > 1) {
+        router.back();
+        return;
+      }
+    }
+    router.push('/lms/events');
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -165,9 +202,13 @@ export default function LmsEventDetailPage({ params }: { params: Promise<{ id: s
   if (notFound || !event) {
     return (
       <div className="space-y-8 pb-10">
-        <Link href="/lms/events" className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900 hover:underline">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900 hover:underline"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to events
-        </Link>
+        </button>
         <div className="flex flex-col items-center justify-center rounded-3xl border border-gray-100 bg-gray-50 py-24">
           <CalendarDays className="mb-4 h-10 w-10 text-gray-300" strokeWidth={1.5} />
           <h2 className="mb-2 text-xl font-bold text-gray-900">Event Not Found</h2>
@@ -185,13 +226,14 @@ export default function LmsEventDetailPage({ params }: { params: Promise<{ id: s
   return (
     <div className="space-y-8 pb-12">
       <div className="flex items-center justify-between gap-4">
-        <Link
-          href="/lms/events"
+        <button
+          type="button"
+          onClick={handleBack}
           className="inline-flex items-center gap-2 rounded-full border border-[#e8dfd3] bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-[#faf7f2]"
         >
           <ArrowLeft className="h-4 w-4" strokeWidth={2} />
           Back
-        </Link>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)]">
@@ -267,6 +309,10 @@ export default function LmsEventDetailPage({ params }: { params: Promise<{ id: s
                 <span className="rounded-full bg-[#1f9d8f] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
                   {event.type}
                 </span>
+                <CourseAccessBadge
+                  accessTier={event.accessType === 'purchase' ? 'premium' : 'free'}
+                  tokenCost={event.tokenCost}
+                />
                 {event.mode.toLowerCase() === 'online' ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-[#0f2744] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
                     <Monitor className="h-3.5 w-3.5" />
@@ -341,13 +387,15 @@ export default function LmsEventDetailPage({ params }: { params: Promise<{ id: s
                 title={event.title}
                 status={event.status}
                 isRegistered={event.isRegistered}
+                tokenCost={event.tokenCost}
+                ctaLabel={event.ctaLabel}
                 onRegistrationChange={(registered) =>
                   setEvent((prev) => (prev ? { ...prev, isRegistered: registered } : prev))
                 }
               />
 
               <p className="mt-4 border-t border-[#efe7dc] pt-4 text-center text-xs text-slate-500">
-                Hosted by {event.speaker}. Register to save your spot on this event.
+                Hosted by {event.speaker}. {event.ctaLabel || 'Join'} to save your spot on this event.
               </p>
             </div>
           </div>

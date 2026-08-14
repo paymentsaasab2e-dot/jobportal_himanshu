@@ -5,18 +5,23 @@ import { useLmsOverlay } from '../../components/overlays/LmsOverlayProvider';
 import { useLmsToast } from '../../components/ux/LmsToastProvider';
 import { EventRegisterSheet } from '../EventRegisterSheet';
 import { registerForEvent, unregisterFromEvent } from '../../api/client';
+import { eventCtaButtonLabel, normalizeEventCtaLabel } from '@/lib/public-events-api';
 
 export function EventDetailClient({
   eventId,
   title,
   status,
   isRegistered,
+  tokenCost = 0,
+  ctaLabel,
   onRegistrationChange,
 }: {
   eventId: string;
   title: string;
   status: 'upcoming' | 'past';
   isRegistered: boolean;
+  tokenCost?: number;
+  ctaLabel?: string;
   onRegistrationChange?: (registered: boolean) => void;
 }) {
   const { registerEvent, unregisterEvent, addPlannedItem, state } = useLmsState();
@@ -27,9 +32,17 @@ export function EventDetailClient({
 
   const handleRegisterClick = () => {
     overlay.openSheet({
-      title: isRegistered ? 'Cancel Registration' : 'Register for Event',
-      description: isRegistered ? 'You are about to cancel your spot.' : 'Save your seat for this event.',
-      content: <EventRegisterSheet title={title} isRegistered={isRegistered} />,
+      title: isRegistered
+        ? 'Cancel Registration'
+        : tokenCost > 0
+          ? `${normalizeEventCtaLabel(ctaLabel)} with tokens`
+          : normalizeEventCtaLabel(ctaLabel),
+      description: isRegistered
+        ? 'You are about to cancel your spot.'
+        : tokenCost > 0
+          ? `This event costs ${tokenCost} tokens.`
+          : 'Save your seat for this event.',
+      content: <EventRegisterSheet title={title} isRegistered={isRegistered} tokenCost={tokenCost} />,
       footer: (
         <div className="flex flex-col sm:flex-row gap-2">
           <button
@@ -49,10 +62,10 @@ export function EventDetailClient({
                   toast.push({ title: 'Registered', message: `${title}`, tone: 'success' });
                 }
                 overlay.close();
-              } catch {
+              } catch (err) {
                 toast.push({
                   title: 'Error',
-                  message: 'Failed to update registration',
+                  message: err instanceof Error ? err.message : 'Failed to update registration',
                   tone: 'destructive',
                 });
               }
@@ -93,7 +106,11 @@ export function EventDetailClient({
         onClick={handleRegisterClick}
         className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 hover:shadow-sm active:scale-[0.98] ${status === 'past' ? 'bg-gray-100 text-gray-500 cursor-not-allowed border border-gray-200' : isRegistered ? 'bg-emerald-50 text-emerald-800 border-emerald-200 border hover:bg-emerald-100' : 'bg-[#28A8E1] text-white hover:bg-[#208bc0]'}`}
       >
-        {status === 'past' ? 'Event Ended' : isRegistered ? 'Manage Registration (Registered)' : 'Register Now'}
+        {status === 'past'
+          ? 'Event Ended'
+          : isRegistered
+            ? 'Manage Registration (Registered)'
+            : eventCtaButtonLabel({ ctaLabel, tokenCost })}
       </button>
 
       <button
