@@ -671,4 +671,24 @@ Each module section above has:
 2. System audit → §2  
 3. Help tickets → §3  
 
+---
+
+## 9. Employers behaviour engine (Phase 2 HQ — stats + ids)
+
+Separate from Phase 1 `/api/hq-behavior` and from HQ `GET /hq/tenants/:tenantDbName/behavior`.
+
+**API:** `GET /api/v1/hq/tenants/:tenantDbName/behavior-engine` on **backendphase2** (`$P2`, local `http://localhost:5001`).
+
+Doc: [`../../job-seek-backend/hrayntra_aws/backendphase2/EMPLOYER_BEHAVIOR_ENGINE_API.md`](../../job-seek-backend/hrayntra_aws/backendphase2/EMPLOYER_BEHAVIOR_ENGINE_API.md)
+
+```powershell
+$P2 = "http://localhost:5001"
+$HQTOKEN = "<HQ JWT>"
+$TENANT = "<tenantDbName>"
+Invoke-RestMethod -Headers @{ Authorization = "Bearer $HQTOKEN" } `
+  "$P2/api/v1/hq/tenants/$TENANT/behavior-engine?range=week"
+```
+
+Returns **tenantWide** activity/workload counts and **users[]** (userId + task/lead/job ids, no duplicated names). Optional `&userId=`.
+
 Shared store for behaviour + employee tickets: [`src/lib/hq-data-store.ts`](./src/lib/hq-data-store.ts) → [`data/hq-analytics.json`](./data/hq-analytics.json).

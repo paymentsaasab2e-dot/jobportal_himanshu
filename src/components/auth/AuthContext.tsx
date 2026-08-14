@@ -120,6 +120,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     showSuccessToast(logoutAll ? 'Logged out from all devices' : 'Logged out successfully');
 
+    try {
+      const { clearAllPortalPageCaches } = await import('@/lib/portal-page-caches');
+      clearAllPortalPageCaches();
+    } catch {
+      /* ignore */
+    }
+
     // Keep Office Gossips identity / setup + HRYantra chat so re-login does not
     // re-ask "be anonymous" or wipe verified chat history.
     const preservePrefixes = [
