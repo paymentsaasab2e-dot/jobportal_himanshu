@@ -17,7 +17,7 @@ export type OgEventsCacheEntry = {
 };
 
 const memory = new Map<string, OgEventsCacheEntry>();
-const STORAGE_PREFIX = 'saasa:og-events-cache:v1:';
+const STORAGE_PREFIX = 'saasa:og-events-cache:v3:';
 
 export function ogEventsCacheKey(userId: string | null): string {
   return userId || 'guest';

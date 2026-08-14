@@ -119,16 +119,30 @@ export async function fetchEventDetail(eventId: string) {
 
 export async function registerForEvent(eventId: string) {
   const res = await lmsFetch(`${LMS_API_BASE}/events/register`, { method: 'POST', body: JSON.stringify({ eventId }) });
-  if (!res) return null;
-  if (!res.ok) throw new Error('Failed to register');
-  const data = await res.json(); return data.data;
+  if (!res) throw new Error('No authentication token found. Please log in again.');
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    if (res.status === 402) {
+      const { InsufficientTokensError } = await import('@/lib/tokens-api');
+      throw new InsufficientTokensError({
+        message: data?.message || data?.error || 'Insufficient tokens',
+        balance: data?.balance,
+        required: data?.required,
+        shortfall: data?.shortfall,
+        service: data?.service,
+      });
+    }
+    throw new Error(data?.message || data?.error || 'Failed to register');
+  }
+  return data.data;
 }
 
 export async function unregisterFromEvent(eventId: string) {
   const res = await lmsFetch(`${LMS_API_BASE}/events/unregister`, { method: 'POST', body: JSON.stringify({ eventId }) });
   if (!res) return null;
-  if (!res.ok) throw new Error('Failed to unregister');
-  const data = await res.json(); return data.data;
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || data?.error || 'Failed to unregister');
+  return data.data;
 }
 
 export async function fetchCompletedQuizzes() {

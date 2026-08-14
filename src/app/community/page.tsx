@@ -70,6 +70,7 @@ import {
   fetchPortalCvDashboard,
 } from '@/lib/query/portal-api';
 import { fetchEvents } from '@/app/lms/api/client';
+import { fetchPublicEvents } from '@/lib/public-events-api';
 import {
   isOgEventsCacheFresh,
   readOgEventsCache,
@@ -1021,7 +1022,7 @@ export default function OfficeGossipsPage() {
 
     async function loadEventsSources(opts?: { soft?: boolean }) {
       try {
-        const [jobsResult, lmsRaw, dashboard] = await Promise.all([
+        const [jobsResult, lmsRaw, publicEvents, dashboard] = await Promise.all([
           (async () => {
             // Prefer explore-jobs cache when still fresh (skip network)
             const ej = readExploreJobsCache(
@@ -1047,6 +1048,7 @@ export default function OfficeGossipsPage() {
             return { jobs, personalized };
           })(),
           fetchEvents().catch(() => []),
+          fetchPublicEvents(undefined, 'all').catch(() => []),
           candidateId
             ? fetchPortalCvDashboard(candidateId).catch(() => null)
             : Promise.resolve(null),
@@ -1058,10 +1060,21 @@ export default function OfficeGossipsPage() {
           jobsResult.jobs,
           jobsResult.personalized ? 8 : 12,
         );
-        const nextLms = mapLmsEventsToOgEvents(
-          Array.isArray(lmsRaw) ? lmsRaw : [],
-          40,
-        );
+        const publicRows = Array.isArray(publicEvents) ? publicEvents : [];
+        const publicById = new Map(publicRows.map((row) => [String(row.id), row]));
+        const lmsRows = (Array.isArray(lmsRaw) ? lmsRaw : []).map((row: { id?: string; media?: unknown[] }) => {
+          const pub = publicById.get(String(row?.id || ''));
+          const media =
+            Array.isArray(row?.media) && row.media.length
+              ? row.media
+              : pub?.media || [];
+          return { ...row, media };
+        });
+        const seen = new Set(lmsRows.map((row) => String(row?.id || '')).filter(Boolean));
+        for (const pub of publicRows) {
+          if (!seen.has(String(pub.id))) lmsRows.push(pub);
+        }
+        const nextLms = mapLmsEventsToOgEvents(lmsRows, 40);
 
         const profileSignals = dashboard
           ? buildProfileSignalsFromDashboard(dashboard)
@@ -1198,6 +1211,15 @@ export default function OfficeGossipsPage() {
         },
       });
     });
+    const from =
+      typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}`
+        : '/community';
+    if (href.startsWith('/lms/events')) {
+      const sep = href.includes('?') ? '&' : '?';
+      router.push(`${href}${sep}from=${encodeURIComponent(from)}`);
+      return;
+    }
     router.push(href);
   };
 
@@ -3556,17 +3578,31 @@ export default function OfficeGossipsPage() {
                         isTalkEvent ? 'py-1.5' : 'py-2'
                       }`}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={ev.imageUrl}
-                        alt=""
-                        className={
-                          isTalkEvent
-                            ? 'max-h-[140px] w-auto max-w-[min(100%,360px)] object-contain'
-                            : 'max-h-[220px] w-auto max-w-[min(100%,480px)] object-contain'
-                        }
-                        loading="lazy"
-                      />
+                      {ev.imageType === 'video' ? (
+                        <video
+                          src={ev.imageUrl}
+                          className={
+                            isTalkEvent
+                              ? 'max-h-[140px] w-auto max-w-[min(100%,360px)] object-contain'
+                              : 'max-h-[220px] w-auto max-w-[min(100%,480px)] object-contain'
+                          }
+                          muted
+                          playsInline
+                          preload="metadata"
+                        />
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={ev.imageUrl}
+                          alt={ev.title}
+                          className={
+                            isTalkEvent
+                              ? 'max-h-[140px] w-auto max-w-[min(100%,360px)] object-contain'
+                              : 'max-h-[220px] w-auto max-w-[min(100%,480px)] object-contain'
+                          }
+                          loading="lazy"
+                        />
+                      )}
                     </div>
 
                     <div className={`space-y-2 px-4 sm:px-5 ${isTalkEvent ? 'py-3' : 'space-y-2.5 py-3.5'}`}>
@@ -3647,7 +3683,9 @@ export default function OfficeGossipsPage() {
                                 className="inline-flex items-center gap-1.5 rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#004182]"
                               >
                                 <Calendar className="h-3.5 w-3.5" />
-                                Open in LMS
+                                {Number(ev.tokenCost) > 0
+                                  ? `${ev.ctaLabel?.trim() || 'Join'} · ${ev.tokenCost} tokens`
+                                  : ev.ctaLabel?.trim() || 'Join'}
                               </button>
                             ) : null}
                             <button
