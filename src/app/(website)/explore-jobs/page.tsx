@@ -1763,6 +1763,12 @@ const ExploreJobsPageContent = () => {
       }
 
       if (result.success) {
+        try {
+          const { invalidatePortalAfterApplication } = await import('@/lib/portal-page-caches');
+          invalidatePortalAfterApplication(candidateId);
+        } catch {
+          /* ignore */
+        }
         const data = result?.data as Record<string, unknown> | undefined
         const appliedAtDate =
           data?.appliedAt ? formatDate(new Date(String(data.appliedAt))) : formatDate(new Date())

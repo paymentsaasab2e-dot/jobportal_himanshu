@@ -73,3 +73,29 @@ export function isOgEventsCacheFresh(
   }
   return Date.now() - entry.updatedAt < staleMs;
 }
+
+export function clearOgEventsCache(userId?: string | null) {
+  if (typeof userId === 'string' || userId === null) {
+    const key = ogEventsCacheKey(userId);
+    memory.delete(key);
+    if (typeof window === 'undefined') return;
+    try {
+      sessionStorage.removeItem(storageKey(key));
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+  memory.clear();
+  if (typeof window === 'undefined') return;
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i += 1) {
+      const k = sessionStorage.key(i);
+      if (k?.startsWith(STORAGE_PREFIX)) keys.push(k);
+    }
+    keys.forEach((k) => sessionStorage.removeItem(k));
+  } catch {
+    /* ignore */
+  }
+}
