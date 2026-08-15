@@ -48,6 +48,13 @@ type PublicApplyJob = {
   salary?: unknown;
   showClientNamePublicly?: boolean;
   publicFieldVisibility?: Record<string, boolean> | null;
+  aboutCompany?: string | null;
+  recruiterProfile?: {
+    id?: string;
+    name?: string;
+    designation?: string | null;
+    avatarUrl?: string | null;
+  } | null;
 };
 
 function asStringList(value: unknown): string[] {
@@ -138,6 +145,8 @@ function mapPublicJobToDetails(job: PublicApplyJob): JobPostingDetailsJob {
     jobOverview: job.overview || undefined,
     showClientNamePublicly: job.showClientNamePublicly,
     publicFieldVisibility: job.publicFieldVisibility,
+    aboutCompany: job.aboutCompany || undefined,
+    recruiterProfile: job.recruiterProfile || null,
   };
 }
 

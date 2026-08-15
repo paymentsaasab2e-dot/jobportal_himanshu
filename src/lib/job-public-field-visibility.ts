@@ -19,6 +19,8 @@ export const JOB_PUBLIC_VISIBILITY_FIELDS = [
   'videoMediaLink',
   'forecastRevenue',
   'priority',
+  'aboutCompany',
+  'recruiterProfile',
 ] as const;
 
 export type JobPublicVisibilityField = (typeof JOB_PUBLIC_VISIBILITY_FIELDS)[number];
@@ -166,6 +168,13 @@ export function redactPortalJobListing<T extends Record<string, unknown>>(
   if (!show('contactPerson')) {
     out.contactPerson = '';
   }
+  if (!show('aboutCompany')) {
+    out.aboutCompany = '';
+    out.companyOverview = '';
+  }
+  if (!show('recruiterProfile')) {
+    out.recruiterProfile = null;
+  }
 
   return out as T;
 }
@@ -191,5 +200,8 @@ export function htmlSectionTitleVisibleOnPortal(
   if (/^skills$|^key skills$/.test(normalized)) return show('skills');
   if (/benefits|compensation/.test(normalized)) return show('jobDescription');
   if (/^overview$|^job summary$|^about this role$/.test(normalized)) return show('jobDescription');
+  if (/^about (the )?company$|^company overview$|^about us$/.test(normalized)) {
+    return show('aboutCompany');
+  }
   return show('jobDescription');
 }
