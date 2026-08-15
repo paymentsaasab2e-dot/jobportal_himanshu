@@ -37,6 +37,7 @@ import {
 } from '../employersPhase2Features';
 import { AppLocale, localizePath } from '@/lib/i18n';
 import { EMPLOYERS_DEMO_PATH, EMPLOYERS_TRIAL_PATH } from '@/lib/employers/constants';
+import { Phase3Features } from './phase3/Phase3Features';
 
 function useLandingMetrics() {
   const [data, setData] = useState<EmployerLandingMetrics>(DEMO_LANDING_METRICS);
@@ -789,6 +790,8 @@ export function EmployersServicesStyleBody() {
           </div>
         </div>
       </section>
+
+      <Phase3Features />
 
       {/* Comparison */}
       <section className="border-t border-slate-200/60 bg-[#F4F8FB] py-20 md:py-24">

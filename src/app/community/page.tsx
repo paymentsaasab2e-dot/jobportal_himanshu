@@ -322,6 +322,7 @@ export default function OfficeGossipsPage() {
   const chunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
+  const pendingCompanyDeepLinkRef = useRef<{ id?: string; domain?: string } | null>(null);
 
   const userId = user?.id || null;
   const realName = displayName(user);
@@ -371,16 +372,46 @@ export default function OfficeGossipsPage() {
       const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}`;
       window.history.replaceState({}, '', next);
     }
-    const companyId = params.get('company');
-    if (companyId) {
-      setSelectedCompanyId(companyId);
-      setCompanyPageInitialTab('posts');
-      setOgTab('feed');
+    const companyId = params.get('company')?.trim() || '';
+    const domainKey = params.get('domain')?.trim().toLowerCase() || '';
+    if (companyId || domainKey) {
+      pendingCompanyDeepLinkRef.current = {
+        id: companyId || undefined,
+        domain: domainKey || undefined,
+      };
+      if (companyId) {
+        setSelectedCompanyId(companyId);
+        setSelectedProfileUserId(null);
+        setCompanyPageInitialTab('posts');
+        setOgTab('feed');
+      }
       params.delete('company');
+      params.delete('domain');
       const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}`;
       window.history.replaceState({}, '', next);
     }
   }, []);
+
+  // Resolve deep-linked company after local/remote company pages load (id or domain).
+  useEffect(() => {
+    const pending = pendingCompanyDeepLinkRef.current;
+    if (!pending || companyPages.length === 0) return;
+    const byId = pending.id
+      ? companyPages.find((p) => p.id === pending.id)
+      : undefined;
+    const byDomain = pending.domain
+      ? companyPages.find(
+          (p) => String(p.domainKey || '').toLowerCase() === pending.domain,
+        )
+      : undefined;
+    const match = byId || byDomain;
+    if (!match) return;
+    setSelectedCompanyId(match.id);
+    setSelectedProfileUserId(null);
+    setCompanyPageInitialTab('posts');
+    setOgTab('feed');
+    pendingCompanyDeepLinkRef.current = null;
+  }, [companyPages]);
 
   useEffect(() => {
     const onUp = () => setProfileViewTick((n) => n + 1);

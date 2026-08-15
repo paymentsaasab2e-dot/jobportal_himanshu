@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import {
   ArrowDown,
   ArrowRight,
@@ -10,22 +12,24 @@ import {
   Bot,
   Briefcase,
   Building2,
+  CalendarDays,
   CheckCircle2,
   ClipboardCheck,
   FileText,
   GitBranch,
   GraduationCap,
-  LayoutDashboard,
-  Linkedin,
   Mic2,
-  ScanSearch,
   Shield,
   Sparkles,
   Target,
   Users,
+  UsersRound,
   Wallet,
   Zap,
+  Lock,
 } from "lucide-react";
+import { useAuth } from "@/components/auth/AuthContext";
+import { AppLocale, localizePath } from "@/lib/i18n";
 
 const styles = `
   .svc-gradient-text,
@@ -61,73 +65,73 @@ const styles = `
   }
 `;
 
-const PHASE1_CORE = [
-  { title: "Job search & apply", line: "Find roles and apply in one place", icon: Briefcase },
-  { title: "Candidate dashboard", line: "Track applications, views, and progress", icon: LayoutDashboard },
-  { title: "Profile + CV upload", line: "Build a recruiter-ready profile", icon: FileText },
-  { title: "AI Resume Builder", line: "Improve resume sections with AI", icon: Sparkles },
-  { title: "ATS check", line: "See how ATS-friendly your CV is", icon: ScanSearch },
-  { title: "Job match", line: "Roles that fit your skills", icon: Target },
-  { title: "LMS / courses", line: "Learn skills tied to hiring goals", icon: GraduationCap },
-  { title: "Mock interview AI", line: "Practice interviews with scoring", icon: Mic2 },
-];
+type FeatureItem = {
+  title: string;
+  line: string;
+  detail: string;
+  icon: typeof Briefcase;
+  href: string;
+  requiresAuth?: boolean;
+};
 
-const PHASE1_PREMIUM = [
+/** Phase 1 employee features shown on /services */
+const PHASE1_FEATURES: FeatureItem[] = [
   {
-    title: "AI Resume Review",
-    detail: "ATS score, keyword gaps, and actionable improvement tips.",
-    badge: "Best starter",
-    href: "/services/ai-resume-review",
-    icon: ScanSearch,
+    title: "Job search & apply",
+    line: "Find roles and apply in one place",
+    detail: "Browse live openings, filter by role and location, and apply with your profile.",
+    icon: Briefcase,
+    href: "/searchjobs",
+    requiresAuth: false,
   },
   {
-    title: "Job-Specific CV Optimization",
-    detail: "Tailor your CV to one job description for higher match scores.",
-    badge: "High convert",
-    href: "/services/job-specific-cv-optimization",
-    icon: Target,
+    title: "AI Resume Builder",
+    line: "Build a stronger CV with AI",
+    detail: "Create and improve your resume with AI guidance built for ATS and recruiters.",
+    icon: Sparkles,
+    href: "/lms/resume-builder",
+    requiresAuth: true,
   },
   {
-    title: "Mock Interview",
-    detail: "AI or expert practice sessions with structured feedback.",
-    badge: "Interview bait",
-    href: "/services/mock-interview",
+    title: "Mock interview AI",
+    line: "Practice interviews with scoring",
+    detail: "Run AI mock sessions, get feedback, and prepare for real interviews.",
     icon: Mic2,
+    href: "/lms/interview-prep",
+    requiresAuth: true,
   },
   {
-    title: "LinkedIn Optimization",
-    detail: "Stronger headline, about section, and recruiter visibility.",
-    badge: "Profile boost",
-    href: "/services/linkedin-profile-optimization",
-    icon: Linkedin,
+    title: "Become an interviewer",
+    line: "Conduct interviews and earn",
+    detail: "Apply to become an interviewer and start taking mock interview sessions.",
+    icon: Users,
+    href: "/lms/interview-prep/become-interviewer",
+    requiresAuth: true,
   },
   {
-    title: "Skill Assessment",
-    detail: "Scorecard, strengths/weaknesses, and a learning path.",
-    badge: "Readiness",
-    href: "/services/skill-assessment",
-    icon: ClipboardCheck,
-  },
-  {
-    title: "Premium / Certified Courses",
-    detail: "Unlock premium and certified LMS paths with token packs.",
-    badge: "Learning upsell",
-    href: "/services/upskilling-certification",
+    title: "Courses",
+    line: "Learn skills tied to hiring goals",
+    detail: "Explore LMS courses published for candidates — learn and unlock premium paths.",
     icon: GraduationCap,
+    href: "/courses",
+    requiresAuth: false,
   },
   {
-    title: "Resume Writing Upgrade",
-    detail: "Expert rewrite with revisions — highest-ticket candidate service.",
-    badge: "Highest ticket",
-    href: "/services/resume-writing-upgrade",
-    icon: FileText,
+    title: "Events",
+    line: "Join live career events",
+    detail: "Discover workshops, webinars, and hiring events you can register for.",
+    icon: CalendarDays,
+    href: "/community?tab=events",
+    requiresAuth: false,
   },
-];
-
-const TOKEN_PACKS = [
-  { name: "Starter", line: "Light resume tools & LMS unlocks", price: "Entry" },
-  { name: "Plus", line: "Interview prep + course unlocks", price: "Popular" },
-  { name: "Pro", line: "Mock sessions + certified courses", price: "Power" },
+  {
+    title: "Communities",
+    line: "Connect, share, and grow",
+    detail: "Join communities and feeds to network with peers, mentors, and talent circles.",
+    icon: UsersRound,
+    href: "/community",
+    requiresAuth: true,
+  },
 ];
 
 const PHASE2_MODULES = [
@@ -168,7 +172,87 @@ const PHASE2_PLANS = [
   { name: "Enterprise", line: "Complex ops, multi-team, HQ control" },
 ];
 
+function AuthInterceptModal({
+  isOpen,
+  onClose,
+  title,
+  description,
+  redirectUrl,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  description: string;
+  redirectUrl: string;
+}) {
+  const router = useRouter();
+  const locale = useLocale() as AppLocale;
+
+  if (!isOpen) return null;
+
+  const handleContinue = () => {
+    sessionStorage.setItem("postLoginRedirect", redirectUrl);
+    router.push(localizePath("/whatsapp", locale));
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="w-full max-w-md rounded-[28px] bg-white p-8 shadow-2xl ring-1 ring-slate-900/5"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="services-auth-modal-title"
+      >
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-sky-50">
+          <Lock className="h-7 w-7 text-[#28A8DF]" />
+        </div>
+        <h2
+          id="services-auth-modal-title"
+          className="mb-3 text-center text-2xl font-bold tracking-tight text-slate-900"
+        >
+          {title}
+        </h2>
+        <p className="mb-8 text-center text-[15px] font-medium leading-relaxed text-slate-500">
+          {description}
+        </p>
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={handleContinue}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#28A8DF] px-4 py-3.5 text-[15px] font-semibold text-white transition-all hover:bg-[#1f97cb]"
+          >
+            Continue with WhatsApp Login
+            <ArrowRight className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-xl border border-slate-200 px-4 py-3.5 text-[15px] font-semibold text-slate-600 transition-all hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ServicesPage() {
+  const router = useRouter();
+  const locale = useLocale() as AppLocale;
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authConfig, setAuthConfig] = useState({
+    title: "Sign in to continue",
+    description: "Log in to open this feature on your account.",
+    redirectUrl: "/candidate-dashboard",
+  });
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -182,6 +266,26 @@ export default function ServicesPage() {
     els.forEach((el) => observer.observe(el));
     return () => els.forEach((el) => observer.unobserve(el));
   }, []);
+
+  const openFeature = (
+    href: string,
+    title: string,
+    requiresAuth = true,
+    description = `Sign in to open ${title} and continue where you left off.`,
+  ) => {
+    if (isAuthLoading) return;
+    const target = localizePath(href, locale);
+    if (!requiresAuth || isAuthenticated) {
+      router.push(target);
+      return;
+    }
+    setAuthConfig({
+      title: `Sign in for ${title}`,
+      description,
+      redirectUrl: target,
+    });
+    setIsAuthModalOpen(true);
+  };
 
   return (
     <div className="relative min-h-screen overflow-x-clip bg-[#fcfcfd] font-sans text-[#111827]">
@@ -206,12 +310,20 @@ export default function ServicesPage() {
               Where Visionary Entrepreneurs and Top Talent Connect, Grow, and Scale.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Link
-                href="/whatsapp"
+              <button
+                type="button"
+                onClick={() =>
+                  openFeature(
+                    "/candidate-dashboard",
+                    "your journey",
+                    true,
+                    "Sign in to open your dashboard and start using HR Yantra features.",
+                  )
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#9333ea] px-9 py-4 text-lg font-medium text-white shadow-[0_4px_14px_0_rgba(79,70,229,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(79,70,229,0.4)]"
               >
                 Start Your Journey
-              </Link>
+              </button>
               <a
                 href="#candidate-services"
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-9 py-4 text-lg font-medium shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition hover:bg-gray-100"
@@ -246,7 +358,7 @@ export default function ServicesPage() {
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#176F96]">
                   Employee
                 </p>
-              </div>
+            </div>
               <h2 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl md:leading-[1.1]">
                 Everything employees need to{" "}
                 <span className="bg-gradient-to-r from-[#28A8E1] to-[#0F5A7A] bg-clip-text text-transparent">
@@ -254,12 +366,20 @@ export default function ServicesPage() {
                 </span>
               </h2>
               <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 md:text-lg">
-                Free product tools to get started — then unlock premium services when you&apos;re ready
-                to convert interviews.
+                Phase 1 tools for your career. Signed in? We open the feature. Not signed in?
+                We&apos;ll ask you to log in first.
               </p>
             </div>
             <div className="flex flex-wrap gap-2 lg:justify-end">
-              {["ATS score", "Mock interview", "CV upgrade", "Courses"].map((chip) => (
+              {[
+                "Job search",
+                "Resume AI",
+                "Mock interview",
+                "Interviewer",
+                "Courses",
+                "Events",
+                "Communities",
+              ].map((chip) => (
                 <span
                   key={chip}
                   className="rounded-full border border-white/80 bg-white/70 px-3.5 py-1.5 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur"
@@ -270,178 +390,41 @@ export default function ServicesPage() {
             </div>
           </div>
 
-          {/* Core free bait */}
-          <div className="fade-in-up mb-16">
-            <div className="mb-6 flex items-center justify-between gap-3">
-              <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
-                Core features
-              </h3>
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100">
-                Included free
-              </span>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {PHASE1_CORE.map((item, index) => {
+          <div className="fade-in-up">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {PHASE1_FEATURES.map((item, index) => {
                 const Icon = item.icon;
                 return (
-                  <div
+                  <button
                     key={item.title}
-                    className="group relative overflow-hidden rounded-[1.35rem] border border-white/80 bg-white/80 p-5 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_18px_40px_-28px_rgba(15,23,42,0.35)] backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-[#28A8E1]/35 hover:shadow-[0_24px_48px_-28px_rgba(40,168,225,0.45)]"
+                    type="button"
+                    onClick={() => openFeature(item.href, item.title, item.requiresAuth !== false)}
+                    className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border border-slate-200/90 bg-white p-6 text-left shadow-[0_18px_40px_-28px_rgba(15,23,42,0.28)] transition duration-300 hover:-translate-y-1 hover:border-[#28A8E1]/40 hover:shadow-[0_28px_56px_-28px_rgba(40,168,225,0.35)]"
                   >
-                    <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-[#28A8E1]/10 opacity-0 blur-2xl transition group-hover:opacity-100" />
-                    <div className="mb-4 flex items-center justify-between">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E8F6FC] to-white text-[#28A8E1] ring-1 ring-[#28A8E1]/15 transition group-hover:scale-105 group-hover:from-[#28A8E1] group-hover:to-[#1A86B3] group-hover:text-white">
+                    <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-[#28A8E1]/50 to-transparent opacity-0 transition group-hover:opacity-100" />
+                    <div className="mb-5 flex items-start justify-between gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E8F6FC] text-[#28A8E1] ring-1 ring-[#28A8E1]/15 transition group-hover:bg-[#28A8E1] group-hover:text-white">
                         <Icon className="h-5 w-5" />
-                      </div>
-                      <span className="text-[10px] font-bold tabular-nums text-slate-300">
+                </div>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold tabular-nums text-slate-300">
+                        {item.requiresAuth !== false ? (
+                          <Lock className="h-3 w-3 text-slate-300 group-hover:text-[#28A8E1]" />
+                        ) : null}
                         {String(index + 1).padStart(2, "0")}
                       </span>
-                    </div>
-                    <p className="text-[15px] font-bold tracking-tight text-slate-900">{item.title}</p>
-                    <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{item.line}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Premium services */}
-          <div className="fade-in-up mb-16">
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
-                  Premium services
-                </h3>
-                <p className="mt-1.5 text-sm text-slate-600 md:text-base">
-                  High-intent offerings employees unlock when they&apos;re ready to convert.
-                </p>
-              </div>
-              <Link
-                href="/services/ai-resume-review"
-                className="inline-flex items-center gap-1.5 text-sm font-bold text-[#176F96] transition hover:text-[#28A8E1]"
-              >
-                Browse catalog
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {PHASE1_PREMIUM.map((svc, index) => {
-                const Icon = svc.icon;
-                const featured = index === 0 || index === 6;
-                return (
-                  <Link
-                    key={svc.title}
-                    href={svc.href}
-                    className={`group relative flex flex-col overflow-hidden rounded-[1.5rem] border p-6 transition duration-300 hover:-translate-y-1 ${
-                      featured
-                        ? "border-[#28A8E1]/35 bg-gradient-to-br from-[#0F5A7A] via-[#176F96] to-[#28A8E1] text-white shadow-[0_28px_56px_-32px_rgba(15,90,122,0.7)]"
-                        : "border-slate-200/90 bg-white shadow-[0_18px_40px_-28px_rgba(15,23,42,0.28)] hover:border-[#28A8E1]/40 hover:shadow-[0_28px_56px_-28px_rgba(40,168,225,0.35)]"
-                    }`}
-                  >
-                    {!featured ? (
-                      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-[#28A8E1]/50 to-transparent opacity-0 transition group-hover:opacity-100" />
-                    ) : null}
-                    <div className="mb-5 flex items-start justify-between gap-3">
-                      <div
-                        className={`flex h-12 w-12 items-center justify-center rounded-2xl transition ${
-                          featured
-                            ? "bg-white/15 text-white ring-1 ring-white/25"
-                            : "bg-[#E8F6FC] text-[#28A8E1] ring-1 ring-[#28A8E1]/15 group-hover:bg-[#28A8E1] group-hover:text-white"
-                        }`}
-                      >
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
-                          featured
-                            ? "bg-white/15 text-white ring-1 ring-white/20"
-                            : "bg-[#E8F6FC] text-[#176F96] ring-1 ring-[#28A8E1]/15"
-                        }`}
-                      >
-                        {svc.badge}
-                      </span>
-                    </div>
-                    <h4
-                      className={`text-xl font-bold tracking-tight ${
-                        featured ? "text-white" : "text-slate-900"
-                      }`}
-                    >
-                      {svc.title}
-                    </h4>
-                    <p
-                      className={`mt-2 flex-1 text-sm leading-relaxed ${
-                        featured ? "text-white/80" : "text-slate-600"
-                      }`}
-                    >
-                      {svc.detail}
-                    </p>
-                    <span
-                      className={`mt-5 inline-flex items-center gap-1.5 text-sm font-semibold ${
-                        featured ? "text-white" : "text-[#28A8E1]"
-                      }`}
-                    >
-                      View service
+                </div>
+                    <h4 className="text-xl font-bold tracking-tight text-slate-900">{item.title}</h4>
+                    <p className="mt-1.5 text-sm font-medium text-[#176F96]">{item.line}</p>
+                    <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{item.detail}</p>
+                    <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#28A8E1]">
+                      {item.requiresAuth !== false && !isAuthenticated
+                        ? "Log in to open"
+                        : "Open feature"}
                       <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
                     </span>
-                  </Link>
+                  </button>
                 );
               })}
-            </div>
-          </div>
-
-          {/* Token packs */}
-          <div className="fade-in-up relative overflow-hidden rounded-[1.75rem] border border-[#28A8E1]/20 bg-slate-950 p-6 text-white shadow-[0_32px_64px_-36px_rgba(15,23,42,0.55)] md:p-8">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#28A8E1]/25 blur-3xl"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -bottom-20 left-10 h-48 w-48 rounded-full bg-cyan-400/15 blur-3xl"
-            />
-            <div className="relative z-10 mb-6 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7DD3FC]">
-                  Token packs
-                </p>
-                <h3 className="mt-1 text-2xl font-black tracking-tight">Upsell ladder</h3>
-                <p className="mt-2 max-w-lg text-sm text-slate-300">
-                  Unlock AI CV edits, ATS checks, mock interviews, and premium courses.
-                </p>
-              </div>
-              <Link
-                href="/subscriptions"
-                className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-sm font-bold text-slate-900 transition hover:bg-[#E8F6FC]"
-              >
-                See packs
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="relative z-10 grid gap-3 md:grid-cols-3">
-              {TOKEN_PACKS.map((pack, index) => (
-                <div
-                  key={pack.name}
-                  className={`rounded-2xl border p-5 backdrop-blur ${
-                    index === 1
-                      ? "border-[#28A8E1]/50 bg-[#28A8E1]/15"
-                      : "border-white/10 bg-white/5"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-lg font-bold">{pack.name}</p>
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                        index === 1
-                          ? "bg-[#28A8E1] text-white"
-                          : "bg-white/10 text-slate-300"
-                      }`}
-                    >
-                      {pack.price}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-300">{pack.line}</p>
-                </div>
-              ))}
             </div>
           </div>
         </div>
@@ -480,7 +463,7 @@ export default function ServicesPage() {
                 Leads, jobs, AI matching, interviews, placements, and billing — bridged to the Employee
                 portal.
               </p>
-            </div>
+                  </div>
             <div className="flex flex-wrap gap-2 lg:justify-end">
               {["AI matching", "Bulk CV", "Pipeline", "Billing"].map((chip) => (
                 <span
@@ -490,9 +473,9 @@ export default function ServicesPage() {
                   {chip}
                 </span>
               ))}
-            </div>
-          </div>
-
+                </div>
+              </div>
+              
           {/* Modules */}
           <div className="fade-in-up mb-16">
             <div className="mb-6 flex items-center justify-between gap-3">
@@ -515,11 +498,11 @@ export default function ServicesPage() {
                     <div className="mb-4 flex items-center justify-between">
                       <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-400/10 text-amber-300 ring-1 ring-amber-400/20 transition group-hover:scale-105 group-hover:bg-amber-400 group-hover:text-slate-950">
                         <Icon className="h-5 w-5" />
-                      </div>
+              </div>
                       <span className="text-[10px] font-bold tabular-nums text-slate-500">
                         {String(index + 1).padStart(2, "0")}
                       </span>
-                    </div>
+                </div>
                     <h3 className="text-[15px] font-bold tracking-tight text-white">{mod.title}</h3>
                     <ul className="mt-3 space-y-2">
                       {mod.items.map((item) => (
@@ -529,12 +512,12 @@ export default function ServicesPage() {
                         </li>
                       ))}
                     </ul>
-                  </div>
+                </div>
                 );
               })}
-            </div>
-          </div>
-
+                </div>
+              </div>
+              
           {/* Premium AI */}
           <div className="fade-in-up mb-16">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -621,11 +604,11 @@ export default function ServicesPage() {
                           Popular
                         </span>
                       ) : null}
-                    </div>
+            </div>
                     <p className="mt-2 text-xs leading-relaxed text-slate-400">{plan.line}</p>
-                  </div>
+          </div>
                 ))}
-              </div>
+        </div>
               <p className="relative z-10 mt-5 text-xs text-slate-500">
                 Includes AI coins, HQ tab/module control, and agency vs standalone modes.
               </p>
@@ -643,7 +626,7 @@ export default function ServicesPage() {
                   AI job creation, ranked matching, bulk CV parse, placements, and billing — trial to
                   paid when you&apos;re ready.
                 </p>
-              </div>
+                </div>
               <div className="relative z-10 mt-6 flex flex-col gap-2">
                 <Link
                   href="/employers"
@@ -686,12 +669,12 @@ export default function ServicesPage() {
                 >
                   Browse employee services
                 </a>
-                <Link
+            <Link
                   href="/explore-jobs"
                   className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700"
-                >
+            >
                   Explore jobs
-                </Link>
+            </Link>
               </div>
             </div>
 
@@ -706,13 +689,13 @@ export default function ServicesPage() {
                 Run leads, hiring, matching, interviews, and placements in one AI-powered ATS + CRM.
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
-                <Link
+            <Link
                   href="/employers"
                   className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-bold text-white"
-                >
+            >
                   Entrepreneurs tour
                   <GitBranch className="h-4 w-4" />
-                </Link>
+            </Link>
                 <a
                   href="#employer-services"
                   className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700"
@@ -729,6 +712,13 @@ export default function ServicesPage() {
           </p>
         </div>
       </section>
+      <AuthInterceptModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        title={authConfig.title}
+        description={authConfig.description}
+        redirectUrl={authConfig.redirectUrl}
+      />
     </div>
   );
 }

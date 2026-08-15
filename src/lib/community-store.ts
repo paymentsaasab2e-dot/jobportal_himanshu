@@ -73,6 +73,15 @@ export type CompanyPage = {
   documents?: CompanyPageDocument[];
   /** Creator email at create time (any email allowed for now) */
   createdByEmail?: string;
+  /** Origin of the page — Phase 2 employer CRM syncs as 'phase2' */
+  source?: 'phase2' | 'portal' | string;
+  tenantDbName?: string;
+  website?: string;
+  industry?: string;
+  location?: string;
+  industries?: string[];
+  locations?: string[];
+  updatedAt?: string;
 };
 
 export type CommunityComment = {
