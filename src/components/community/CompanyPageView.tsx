@@ -825,9 +825,16 @@ export function CompanyPageView({
           </div>
 
             <div className="mt-3 pb-4">
-              <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-[24px]">
-              {company.name}
-            </h1>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-[24px]">
+                  {company.name}
+                </h1>
+                {company.source === 'phase2' ? (
+                  <span className="inline-flex items-center rounded-full bg-[#E8F6FC] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#176F96] ring-1 ring-[#28A8E1]/25">
+                    Employer page
+                  </span>
+                ) : null}
+              </div>
             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-slate-500">
                 <span className="inline-flex items-center gap-1 font-semibold text-[#28A8E1]">
                   <Globe2 className="h-3.5 w-3.5" />
