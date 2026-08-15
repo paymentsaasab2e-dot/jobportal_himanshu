@@ -38,6 +38,7 @@ import {
   formatExploreMatchLabel,
   formatExploreTimeAgo,
   MATCH_SCORE_FILTER_KEYS,
+  parseExploreMatchScore,
   translateFitLabel,
 } from '@/lib/explore-jobs-i18n';
 import {
@@ -502,35 +503,34 @@ function resolveCardFitLabel(job: Pick<JobListing, 'matchLabel' | 'confidenceTag
   return confidenceTag || matchLabel
 }
 
-function getCardFitLabelClasses(label?: string) {
-  const normalized = (label || '').toLowerCase()
-  if (
-    normalized.includes('weak') ||
-    normalized.includes('reject') ||
-    normalized.includes('gap') ||
-    normalized.includes('low')
-  ) {
-    return 'border-rose-200 bg-rose-50 text-rose-700'
-  }
-  if (normalized.includes('partial') || normalized.includes('potential')) {
-    return getConfidenceBadgeClasses(label)
-  }
-  if (normalized.includes('excellent') || normalized.includes('strong')) {
-    return getMatchLabelClasses(label)
-  }
-  return getMatchLabelClasses(label)
+function isExploreSkillChip(value: string) {
+  const token = value.trim()
+  if (token.length < 2 || token.length > 42) return false
+  if (/^\/[a-z][a-z0-9]*$/i.test(token)) return false
+  if (/^[<>/\\]+$/.test(token)) return false
+  return true
 }
 
-function getScoreBadgeClasses(scoreColorHint?: string) {
-  if (scoreColorHint === 'high') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+function uniqueExploreSkillChips(values: string[], limit: number, exclude: string[] = []) {
+  const blocked = new Set(exclude.map((item) => item.trim().toLowerCase()).filter(Boolean))
+  const seen = new Set<string>()
+  const chips: string[] = []
+  for (const raw of values) {
+    const skill = String(raw || '').trim()
+    if (!isExploreSkillChip(skill)) continue
+    const key = skill.toLowerCase()
+    if (blocked.has(key) || seen.has(key)) continue
+    seen.add(key)
+    chips.push(skill)
+    if (chips.length >= limit) break
   }
+  return chips
+}
 
-  if (scoreColorHint === 'medium') {
-    return 'border-amber-200 bg-amber-50 text-amber-700'
-  }
-
-  return 'border-rose-200 bg-rose-50 text-rose-700'
+function getMatchBarFillClass(scoreColorHint?: string) {
+  if (scoreColorHint === 'high') return 'bg-emerald-500'
+  if (scoreColorHint === 'medium') return 'bg-amber-500'
+  return 'bg-rose-400'
 }
 
 const ExploreJobsPageContent = () => {
@@ -1763,6 +1763,12 @@ const ExploreJobsPageContent = () => {
       }
 
       if (result.success) {
+        try {
+          const { invalidatePortalAfterApplication } = await import('@/lib/portal-page-caches');
+          invalidatePortalAfterApplication(candidateId);
+        } catch {
+          /* ignore */
+        }
         const data = result?.data as Record<string, unknown> | undefined
         const appliedAtDate =
           data?.appliedAt ? formatDate(new Date(String(data.appliedAt))) : formatDate(new Date())
@@ -2280,7 +2286,6 @@ const ExploreJobsPageContent = () => {
     const isSaved = isSavedJob(job.id)
     const isApplied = appliedJobIds.has(String(job.id))
     const skills = cardFieldVisible('skills') && Array.isArray(job.skills) ? job.skills : []
-    const shownSkills = skills.slice(0, isCompact ? 2 : 3)
     const displayCompany = cardFieldVisible('client') ? String(job.company || '').trim() : ''
     const metaLocation = cardFieldVisible('location') ? String(job.location || '').trim() : ''
     const metaSalary = cardFieldVisible('salary') ? String(job.salary || '').trim() : ''
@@ -2296,10 +2301,25 @@ const ExploreJobsPageContent = () => {
       job.matchSource === 'cv',
     )
     const cardFitLabel = translateFitLabel(resolveCardFitLabel(job), te)
-    const cardFitLabelClasses = getCardFitLabelClasses(cardFitLabel)
-    const scoreBadgeClasses = getScoreBadgeClasses(job.scoreColorHint)
-    const topMatchedSkills = Array.isArray(job.topMatchedSkills) ? job.topMatchedSkills.slice(0, isCompact ? 2 : 3) : []
-    const topMissingSkills = Array.isArray(job.topMissingSkills) ? job.topMissingSkills.slice(0, isCompact ? 2 : 3) : []
+    const matchPct = parseExploreMatchScore(job.match, job.matchScore)
+    const hasScore = job.matchScore != null || Boolean(job.match)
+    const skillCap = isCompact ? 2 : 3
+    const foundSkills = uniqueExploreSkillChips(
+      [
+        ...(Array.isArray(job.topMatchedSkills) ? job.topMatchedSkills : []),
+        ...(Array.isArray(job.matchedSkills) ? job.matchedSkills : []),
+      ],
+      skillCap,
+    )
+    const gapSkills = uniqueExploreSkillChips(
+      [
+        ...(Array.isArray(job.topMissingSkills) ? job.topMissingSkills : []),
+        ...(Array.isArray(job.missingSkills) ? job.missingSkills : []),
+      ],
+      skillCap,
+      foundSkills,
+    )
+    const fallbackSkills = foundSkills.length ? [] : uniqueExploreSkillChips(skills, skillCap)
 
     return (
       <div
@@ -2308,11 +2328,11 @@ const ExploreJobsPageContent = () => {
           handleJobClick(job)
           if (!isCompact) setViewMode('detail')
         }}
-        className={`group relative flex w-full max-w-full cursor-pointer flex-col overflow-hidden rounded-[24px] border p-4 transition-all duration-300 ${
+        className={`group relative flex w-full max-w-full cursor-pointer flex-col overflow-hidden rounded-[24px] border transition-all duration-300 ${
           isSelected
             ? 'border-[rgba(40,168,225,0.30)] bg-[linear-gradient(180deg,rgba(40,168,225,0.10),rgba(255,255,255,0.96))] shadow-[0_18px_40px_rgba(40,168,225,0.12)]'
             : 'border-white/80 bg-white/88 shadow-[0_14px_34px_rgba(15,23,42,0.06)] hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)]'
-        } ${isCompact ? 'mb-3' : 'h-full'}`}
+        } ${isCompact ? 'p-3.5' : 'h-full p-4'}`}
       >
         {isSelected ? (
           <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-[#28A8E1] via-[#28A8DF] to-[#FC9620]" />
@@ -2356,47 +2376,6 @@ const ExploreJobsPageContent = () => {
           </div>
         </div>
 
-        {/* Meta line (Location • Salary • Type) */}
-        <div className="mt-3 hidden text-[13px] font-medium text-slate-500">
-          <span
-            className={`wrap-break-word transition-colors duration-500 ${isCompact ? (isSelected ? 'text-gray-400' : 'text-gray-500') : 'text-gray-500 group-hover:text-gray-300'}`}
-            style={{ fontSize: isCompact ? "11px" : "12px" }}
-          >
-            {job.location}
-          </span>
-          <span className={`opacity-50 ${isCompact ? (isSelected ? 'text-gray-500' : 'text-gray-400') : 'text-gray-400 group-hover:text-gray-500'}`}>•</span>
-          <span
-            className={`wrap-break-word font-semibold transition-colors duration-500 ${isCompact ? (isSelected ? 'text-gray-300' : 'text-blue-700') : 'text-blue-700 group-hover:text-blue-300'}`}
-            style={{ fontSize: isCompact ? "11px" : "12px" }}
-          >
-            {job.salary}
-          </span>
-          <span className={`opacity-50 ${isCompact ? (isSelected ? 'text-gray-500' : 'text-gray-400') : 'text-gray-400 group-hover:text-gray-500'}`}>•</span>
-          <span
-            className={`wrap-break-word transition-colors duration-500 ${isCompact ? (isSelected ? 'text-gray-400' : 'text-gray-500') : 'text-gray-500 group-hover:text-gray-300'}`}
-            style={{ fontSize: isCompact ? "11px" : "12px" }}
-          >
-            {job.type}
-          </span>
-        </div>
-
-        {/* Skills Tags */}
-        <div className={`hidden ${isCompact ? 'mb-1.5' : 'mb-2'}`}>
-          {job.skills.slice(0, isCompact ? 3 : 4).map((skill, index) => (
-            <span
-              key={index}
-              className={`px-2.5 py-1 rounded-full font-medium transition-colors duration-500 shrink-0 wrap-break-word ${
-                isCompact
-                  ? (isSelected ? 'bg-white/10 text-gray-200 border border-white/15' : 'bg-gray-100 text-gray-700 border border-gray-200')
-                  : 'bg-gray-100 text-gray-700 border border-gray-200 group-hover:bg-gray-800 group-hover:text-gray-200 group-hover:border-white/10'
-              }`}
-              style={{ fontSize: "11px" }}
-            >
-              {skill}
-            </span>
-          ))}
-        </div>
-
         {(hasMetaLine || hasTypeLine) ? (
           <div className="mt-3 space-y-1.5">
             {hasMetaLine ? (
@@ -2428,91 +2407,71 @@ const ExploreJobsPageContent = () => {
           </div>
         ) : null}
 
-        <div className={`mt-3 flex flex-wrap gap-1.5 ${isCompact ? '' : 'mb-1'}`}>
-          {shownSkills.map((skill, index) => (
-            <span
-              key={`${job.id}-card-skill-${index}`}
-              className="inline-flex rounded-full border border-slate-200 bg-white/78 px-2.5 py-1 text-[11px] font-medium text-slate-600 shadow-[0_8px_18px_rgba(15,23,42,0.04)]"
-            >
-              {skill}
-            </span>
-          ))}
-        </div>
-
-        {(topMatchedSkills.length > 0 || topMissingSkills.length > 0) ? (
-          <div className="mt-3 space-y-2">
-            {topMatchedSkills.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">{te('matched')}</span>
-                {topMatchedSkills.map((skill, index) => (
-                  <span
-                    key={`${job.id}-top-matched-${index}`}
-                    className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700"
-                  >
-                    {skill}
-                  </span>
-                ))}
+        {foundSkills.length || gapSkills.length || fallbackSkills.length ? (
+          <div className={`mt-3 grid gap-1.5 ${isCompact ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
+            {(foundSkills.length || fallbackSkills.length) ? (
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600">
+                  {foundSkills.length ? te('foundSkills') : te('matched')}
+                </p>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {(foundSkills.length ? foundSkills : fallbackSkills).map((skill, index) => (
+                    <span
+                      key={`${job.id}-found-${index}`}
+                      className="inline-flex max-w-full truncate rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
               </div>
             ) : null}
-
-            {topMissingSkills.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">{te('missing')}</span>
-                {topMissingSkills.map((skill, index) => (
-                  <span
-                    key={`${job.id}-top-missing-${index}`}
-                    className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700"
-                  >
-                    {skill}
-                  </span>
-                ))}
+            {gapSkills.length ? (
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-600">{te('missing')}</p>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {gapSkills.map((skill, index) => (
+                    <span
+                      key={`${job.id}-gap-${index}`}
+                      className="inline-flex max-w-full truncate rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>
         ) : null}
 
-        <div className={`mt-4 flex items-end justify-between gap-3 ${isCompact ? '' : 'mt-auto'}`}>
-          <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold ${scoreBadgeClasses}`}>
-                {matchBadge}
-              </span>
+        <div className={`mt-3 border-t border-slate-100 pt-3 ${isCompact ? '' : 'mt-auto'}`}>
+          <div className="flex items-center justify-between gap-2">
+            <p className="min-w-0 truncate text-[11px] font-semibold text-slate-700">
+              {hasScore ? matchBadge.replace(/\s+Match$/i, '') : te('notScoredYet')}
+            </p>
+            <div className="flex shrink-0 items-center gap-1.5">
               {cardFitLabel ? (
-                <span className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-semibold ${cardFitLabelClasses}`}>
-                  {cardFitLabel}
-                </span>
+                <span className="max-w-[9rem] truncate text-[11px] font-medium text-slate-500">{cardFitLabel}</span>
               ) : null}
               {isApplied ? (
-                <span className="inline-flex rounded-full border border-emerald-200/80 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
+                <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
                   {te('applied')}
                 </span>
               ) : null}
             </div>
-
-            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+          </div>
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className={`h-full rounded-full ${getMatchBarFillClass(job.scoreColorHint)}`}
+              style={{ width: `${hasScore ? matchPct : 0}%` }}
+            />
+          </div>
+          {isCompact ? (
+            <div className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
               <Clock3 className="h-3.5 w-3.5" strokeWidth={2.1} />
               <span>{when}</span>
             </div>
-          </div>
-
-        </div>
-
-        <div className={`mt-4 hidden ${isCompact ? '' : 'mt-auto'}`}>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full bg-[rgba(40,168,225,0.10)] px-3 py-1 text-[11px] font-semibold text-[#28A8E1]">
-              {formatExploreMatchLabel(te, job.match, job.matchScore, isPersonalized, job.matchSource === 'cv')}
-            </span>
-            {job.confidenceTag ? (
-              <span className="inline-flex rounded-full bg-[rgba(252,150,32,0.12)] px-3 py-1 text-[11px] font-semibold text-[#FC9620]">
-                {translateFitLabel(job.confidenceTag, te)}
-              </span>
-            ) : null}
-            {isApplied ? (
-              <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200/80">
-                {te('applied')}
-              </span>
-            ) : null}
-          </div>
+          ) : null}
         </div>
       </div>
     );
@@ -3209,10 +3168,10 @@ const ExploreJobsPageContent = () => {
           {/* Main Content Area */}
           {viewMode === 'detail' ? (
             <div ref={detailsRef} className="w-full min-w-0">
-              <div className="grid min-w-0 items-stretch gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
-                {/* Left Sidebar - Job Listings (matches detail height, internal scroll) */}
-                <div className="h-full min-h-0 min-w-0">
-                  <div className="flex h-full max-h-[70vh] min-h-[280px] w-full max-w-full flex-col rounded-[28px] border border-white/80 bg-white/82 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur-md sm:p-5 lg:p-6 xl:max-h-none xl:p-7">
+              <div className="grid min-w-0 items-start gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
+                {/* Left Sidebar — sticky, independent scroll */}
+                <div className="min-h-0 min-w-0 xl:sticky xl:top-[calc(var(--app-header-height,92px)+8px)] xl:self-start">
+                  <div className="flex max-h-[70vh] min-h-[280px] w-full max-w-full flex-col rounded-[28px] border border-white/80 bg-white/82 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur-md sm:p-5 lg:p-6 xl:h-[calc(100vh-var(--app-header-height,92px)-24px)] xl:max-h-[calc(100vh-var(--app-header-height,92px)-24px)] xl:p-6">
                     <div className="mb-4 flex shrink-0 items-center justify-between gap-3 px-1 min-w-0">
                       <div className="min-w-0">
                         <h2 className="profile-page-section-title truncate">{te('mostRecentJobs')}</h2>
@@ -3227,9 +3186,7 @@ const ExploreJobsPageContent = () => {
                       </button>
                     </div>
 
-                    <div
-                      className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-                    >
+                    <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(148,163,184,0.7)_transparent]">
                       {filteredJobs.map(job => renderJobCard(job, true))}
                     </div>
                   </div>

@@ -69,3 +69,29 @@ export function isDashboardSessionCacheFresh(
   if (!entry?.dashboard) return false;
   return Date.now() - entry.updatedAt < staleMs;
 }
+
+export function clearDashboardSessionCache(candidateId?: string) {
+  if (!candidateId) {
+    memory.clear();
+    if (typeof window === 'undefined') return;
+    try {
+      const keys: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i += 1) {
+        const k = sessionStorage.key(i);
+        if (k?.startsWith(STORAGE_PREFIX)) keys.push(k);
+      }
+      keys.forEach((k) => sessionStorage.removeItem(k));
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+  const id = String(candidateId).trim();
+  memory.delete(id);
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.removeItem(storageKey(id));
+  } catch {
+    /* ignore */
+  }
+}

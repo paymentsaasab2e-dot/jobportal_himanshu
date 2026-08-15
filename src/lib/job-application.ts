@@ -124,6 +124,12 @@ export async function submitJobApplication(params: {
   }
 
   if (result.success) {
+    try {
+      const { invalidatePortalAfterApplication } = await import('@/lib/portal-page-caches');
+      invalidatePortalAfterApplication(params.candidateId);
+    } catch {
+      /* ignore */
+    }
     return { ok: true, data: (result.data || {}) as Record<string, unknown> };
   }
 
