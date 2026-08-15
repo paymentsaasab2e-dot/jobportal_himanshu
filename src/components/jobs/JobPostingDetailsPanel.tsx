@@ -9,6 +9,7 @@ import {
   IndianRupee,
   Languages,
   MapPin,
+  UserRound,
   Users,
 } from 'lucide-react'
 import type { JobLanguageRow } from '@/lib/map-portal-job'
@@ -62,6 +63,14 @@ export type JobPostingDetailsJob = {
   priority?: string | null
   targetHireDate?: string | null
   contactPerson?: string | null
+  aboutCompany?: string | null
+  recruiterProfile?: {
+    id?: string
+    name?: string
+    designation?: string | null
+    avatarUrl?: string | null
+    email?: string | null
+  } | null
 }
 
 function formatExperienceRange(job: JobPostingDetailsJob): { min: string; max: string } {
@@ -429,6 +438,41 @@ export function JobPostingDetailsPanel({ job }: { job: JobPostingDetailsJob }) {
               <MetaRow key={row.label} label={row.label} value={row.value} />
             ))}
           </dl>
+        </ContentSection>
+      ) : null}
+
+      {show('aboutCompany') && String(job.aboutCompany || '').trim() ? (
+        <ContentSection title="About the company">
+          <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+            {String(job.aboutCompany).trim()}
+          </p>
+        </ContentSection>
+      ) : null}
+
+      {show('recruiterProfile') && job.recruiterProfile?.name ? (
+        <ContentSection title="Recruiter">
+          <div className="mt-3 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-3">
+            {job.recruiterProfile.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={job.recruiterProfile.avatarUrl}
+                alt={job.recruiterProfile.name}
+                className="h-12 w-12 rounded-full object-cover ring-1 ring-slate-200"
+              />
+            ) : (
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+                <UserRound size={22} />
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-900">{job.recruiterProfile.name}</p>
+              {job.recruiterProfile.designation ? (
+                <p className="mt-0.5 text-xs text-slate-500">{job.recruiterProfile.designation}</p>
+              ) : (
+                <p className="mt-0.5 text-xs text-slate-500">Hiring recruiter</p>
+              )}
+            </div>
+          </div>
         </ContentSection>
       ) : null}
 

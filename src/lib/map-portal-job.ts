@@ -27,6 +27,14 @@ export type PortalJobMeta = {
   videoMediaLink?: string
   forecastRevenue?: string
   contactPerson?: string
+  recruiterProfile?: {
+    id?: string
+    name?: string
+    designation?: string | null
+    avatarUrl?: string | null
+    email?: string | null
+  } | null
+  aboutCompany?: string
   fullDescription?: string
 }
 
@@ -41,6 +49,20 @@ function formatEmploymentTypeLabel(raw: string): string {
 function asString(v: unknown): string {
   if (v === undefined || v === null) return ''
   return String(v).trim()
+}
+
+function parseRecruiterProfile(raw: unknown): PortalJobMeta['recruiterProfile'] {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  const row = raw as Record<string, unknown>
+  const name = asString(row.name)
+  if (!name) return null
+  return {
+    id: asString(row.id) || undefined,
+    name,
+    designation: asString(row.designation) || null,
+    avatarUrl: asString(row.avatarUrl || row.avatar) || null,
+    email: asString(row.email) || null,
+  }
 }
 
 /** @deprecated Hidden client names are omitted (empty), not labeled confidential. */
@@ -197,6 +219,8 @@ export function extractPortalJobMeta(job: Record<string, unknown>): PortalJobMet
     videoMediaLink: asString(job.videoMediaLink) || undefined,
     forecastRevenue: asString(job.forecastRevenue) || undefined,
     contactPerson: asString(job.hiringManager) || undefined,
+    aboutCompany: asString(job.aboutCompany) || undefined,
+    recruiterProfile: parseRecruiterProfile(job.recruiterProfile),
     fullDescription:
       asString(job.description || job.jobDescriptionHtml || job.jobDescription) || undefined,
   }

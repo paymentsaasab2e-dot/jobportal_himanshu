@@ -177,6 +177,14 @@ interface JobListing {
   videoMediaLink?: string
   forecastRevenue?: string
   contactPerson?: string
+  aboutCompany?: string
+  recruiterProfile?: {
+    id?: string
+    name?: string
+    designation?: string | null
+    avatarUrl?: string | null
+    email?: string | null
+  } | null
   industryType?: string
   fullDescription?: string
   showClientNamePublicly?: boolean
@@ -1165,6 +1173,8 @@ const ExploreJobsPageContent = () => {
             ...portalMeta,
             nationality: fieldVisible('nationality') ? portalMeta.nationality : undefined,
             contactPerson: fieldVisible('contactPerson') ? portalMeta.contactPerson : undefined,
+            aboutCompany: fieldVisible('aboutCompany') ? portalMeta.aboutCompany : undefined,
+            recruiterProfile: fieldVisible('recruiterProfile') ? portalMeta.recruiterProfile : undefined,
             priority: fieldVisible('priority') ? portalMeta.priority : undefined,
             openings: fieldVisible('openings') ? portalMeta.openings : undefined,
             targetHireDate: fieldVisible('targetHireDate') ? portalMeta.targetHireDate : undefined,
@@ -1473,6 +1483,8 @@ const ExploreJobsPageContent = () => {
         ? asString(apiJob.workMode || apiJob.jobLocationType) || prev.workMode
         : '',
       contactPerson: fieldVisible('contactPerson') ? portalMeta.contactPerson || '' : '',
+      aboutCompany: fieldVisible('aboutCompany') ? portalMeta.aboutCompany || '' : '',
+      recruiterProfile: fieldVisible('recruiterProfile') ? portalMeta.recruiterProfile || null : null,
       education: fieldVisible('qualifications') ? asString(apiJob.education) || '-' : '-',
       benefits: fieldVisible('jobDescription')
         ? Array.isArray(apiJob.benefits) && (apiJob.benefits as unknown[]).length
@@ -1487,7 +1499,6 @@ const ExploreJobsPageContent = () => {
       showClientNamePublicly,
       publicFieldVisibility,
       nationality: fieldVisible('nationality') ? portalMeta.nationality : undefined,
-      contactPerson: fieldVisible('contactPerson') ? portalMeta.contactPerson || '' : '',
       priority: fieldVisible('priority') ? portalMeta.priority : undefined,
       openings: fieldVisible('openings') ? portalMeta.openings : undefined,
       targetHireDate: fieldVisible('targetHireDate') ? portalMeta.targetHireDate : undefined,

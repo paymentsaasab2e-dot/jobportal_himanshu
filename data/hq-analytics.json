@@ -26,14 +26,14 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-15T12:17:12.119Z",
+      "capturedAt": "2026-08-15T13:21:47.832Z",
       "kind": "realtime_session",
       "session": {
-        "logins": 28,
-        "visits": 251,
+        "logins": 29,
+        "visits": 252,
         "applies": 0,
-        "activeMs": 4785000,
-        "sessionCount": 28,
+        "activeMs": 4815000,
+        "sessionCount": 29,
         "topInsightIds": [
           "premium_curious"
         ],
@@ -578,21 +578,21 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-15T12:17:12.119Z",
-      "activityStateUpdatedAt": "2026-08-15T12:17:01.632Z",
+      "capturedAt": "2026-08-15T13:21:47.832Z",
+      "activityStateUpdatedAt": "2026-08-15T13:20:42.728Z",
       "rollup7d": {
         "userId": "b1c869d84e75048c5c61c5e3",
         "range": "week",
         "fromDate": "2026-08-09",
         "toDate": "2026-08-15",
-        "logins": 28,
-        "visits": 251,
+        "logins": 29,
+        "visits": 252,
         "jobCardClicks": 0,
         "applies": 0,
-        "activeMs": 4785000,
-        "sessionCount": 28,
+        "activeMs": 4815000,
+        "sessionCount": 29,
         "pageVisitsByCategory": {
-          "other": 105,
+          "other": 106,
           "premium": 44,
           "applications": 1,
           "dashboard": 13,
@@ -606,7 +606,7 @@
           "other": 2715000,
           "premium": 630000,
           "applications": 45000,
-          "dashboard": 150000,
+          "dashboard": 180000,
           "community": 960000,
           "events": 135000,
           "interview_prep": 30000,
@@ -616,7 +616,7 @@
           "other": 4,
           "community": 2
         },
-        "avgActiveMsPerDay": 797500,
+        "avgActiveMsPerDay": 802500,
         "daysActive": 6,
         "topFirstOpen": "other",
         "insights": [
@@ -632,10 +632,26 @@
         ],
         "recentSessions": [
           {
+            "id": "sess_msuejdvl_4ho3rz",
+            "startedAt": "2026-08-15T13:18:39.872Z",
+            "lastActiveAt": "2026-08-15T13:18:39.878Z",
+            "durationMs": 0,
+            "pageCount": 1,
+            "firstPath": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "lastPath": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "lastCategory": "other",
+            "paths": [
+              "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows"
+          },
+          {
             "id": "sess_msuby1hn_pxnxgj",
             "startedAt": "2026-08-15T12:06:04.810Z",
-            "lastActiveAt": "2026-08-15T12:17:01.632Z",
-            "durationMs": 45000,
+            "lastActiveAt": "2026-08-15T12:17:40.391Z",
+            "durationMs": 75000,
             "pageCount": 6,
             "firstPath": "/candidate-dashboard",
             "lastPath": "/candidate-dashboard",
@@ -834,28 +850,42 @@
             "browser": "Chrome",
             "operatingSystem": "Windows",
             "endedAt": "2026-08-13T13:02:19.971Z"
-          },
-          {
-            "id": "sess_msrdfhb3_bbqgkm",
-            "startedAt": "2026-08-13T10:24:19.549Z",
-            "lastActiveAt": "2026-08-13T11:42:18.079Z",
-            "durationMs": 435000,
-            "pageCount": 7,
-            "firstPath": "/",
-            "lastPath": "/employers",
-            "lastCategory": "other",
-            "paths": [
-              "/",
-              "/employers",
-              "/services"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-08-13T10:29:04.117Z"
           }
         ],
         "recentEvents": [
+          {
+            "id": "ev_msuejdvr_oulf3t",
+            "at": "2026-08-15T13:18:39.879Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "sessionId": "sess_msuejdvl_4ho3rz"
+          },
+          {
+            "id": "ev_msuejdvl_dyc0du",
+            "at": "2026-08-15T13:18:39.873Z",
+            "type": "login",
+            "category": "other",
+            "path": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "sessionId": "sess_msuejdvl_4ho3rz",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_msuccmmt_zsvuf6",
+            "at": "2026-08-15T12:17:25.397Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_msuby1hn_pxnxgj",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
           {
             "id": "ev_msucbzgh_yzy2k5",
             "at": "2026-08-15T12:16:55.361Z",
@@ -1840,30 +1870,6 @@
             "category": "premium",
             "path": "/services",
             "sessionId": "sess_mssvirf2_zae0sr"
-          },
-          {
-            "id": "ev_mssvriga_nsq7te",
-            "at": "2026-08-14T11:45:20.170Z",
-            "type": "page_visit",
-            "category": "premium",
-            "path": "/services",
-            "sessionId": "sess_mssvirf2_zae0sr"
-          },
-          {
-            "id": "ev_mssvr25f_8vrq99",
-            "at": "2026-08-14T11:44:59.043Z",
-            "type": "page_visit",
-            "category": "premium",
-            "path": "/services",
-            "sessionId": "sess_mssvirf2_zae0sr"
-          },
-          {
-            "id": "ev_mssvqkro_7uyke3",
-            "at": "2026-08-14T11:44:36.516Z",
-            "type": "page_visit",
-            "category": "premium",
-            "path": "/services",
-            "sessionId": "sess_mssvirf2_zae0sr"
           }
         ],
         "topCompanies": [
@@ -2015,7 +2021,7 @@
             "visa-work-authorization",
             "vaccination"
           ],
-          "updatedAt": "2026-08-15T12:13:10.302Z"
+          "updatedAt": "2026-08-15T13:20:42.728Z"
         },
         "behaviourSignals": {
           "userId": "b1c869d84e75048c5c61c5e3",
@@ -2034,19 +2040,19 @@
           ],
           "jobCardClicks7d": 0,
           "applies7d": 0,
-          "activeMs7d": 4785000,
+          "activeMs7d": 4815000,
           "activeMsByCategory7d": {
             "other": 2715000,
             "premium": 630000,
             "applications": 45000,
-            "dashboard": 150000,
+            "dashboard": 180000,
             "community": 960000,
             "events": 135000,
             "interview_prep": 30000,
             "jobs": 120000
           },
           "pageVisitsByCategory7d": {
-            "other": 105,
+            "other": 106,
             "premium": 44,
             "applications": 1,
             "dashboard": 13,
@@ -2212,7 +2218,169 @@
           "alertTimingConfidence": "high"
         }
       },
-      "suggestionMetrics": null,
+      "suggestionMetrics": {
+        "userId": "b1c869d84e75048c5c61c5e3",
+        "updatedAt": "2026-08-15T13:21:46.185Z",
+        "totalRejections": 0,
+        "postInterviewRejections": 0,
+        "repeatRejectionCount": 0,
+        "suggestionsPushed": 95,
+        "suggestionsClicked": 0,
+        "suggestionsPurchased": 0,
+        "salesFollowUpScore": 10,
+        "salesFollowUpReady": false,
+        "byScenario": {
+          "profile_match": 7,
+          "engagement": 87,
+          "interest_nudge": 1
+        },
+        "recentSuggestions": [
+          {
+            "id": "sug_mssq5o03_036b80",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for “SDE” before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-14T09:08:22.851Z"
+          },
+          {
+            "id": "sug_mssr88ws_sh5p6f",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for “SDE” before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-14T09:38:22.876Z"
+          },
+          {
+            "id": "sug_msssc56a_4hb93s",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for “SDE” before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-14T10:09:24.274Z"
+          },
+          {
+            "id": "sug_mssu2ke0_07xw4n",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "course",
+            "title": "Build skills while sha has no openings",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-14T10:57:56.664Z"
+          },
+          {
+            "id": "sug_mssvj0dw_8aj0ip",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for “SDE” before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-14T11:38:43.508Z"
+          },
+          {
+            "id": "sug_msswme44_jx3z79",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for “SDE” before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-14T12:09:20.884Z"
+          },
+          {
+            "id": "sug_mssxrohu_7vwble",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for “SDE” before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-14T12:41:27.234Z"
+          },
+          {
+            "id": "sug_mssyuywq_bbii9n",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for aitikit.com before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-14T13:12:00.314Z"
+          },
+          {
+            "id": "sug_msszxle2_7fbvqx",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for aitikit.com before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-14T13:42:02.379Z"
+          },
+          {
+            "id": "sug_mst7kjc8_0s7lam",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "course",
+            "title": "Build skills while AiTikit has no openings",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-14T17:15:50.120Z"
+          },
+          {
+            "id": "sug_mst8nuya_x6tt23",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for aitikit.com before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-14T17:46:24.754Z"
+          },
+          {
+            "id": "sug_msu5rjdw_ol7pw4",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for aitikit.com before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-15T09:13:03.716Z"
+          },
+          {
+            "id": "sug_msu6u4sf_7qczo3",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for aitikit.com before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-15T09:43:04.383Z"
+          },
+          {
+            "id": "sug_msu7xi7p_lrk7cu",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for aitikit.com before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-15T10:13:41.365Z"
+          },
+          {
+            "id": "sug_msubzpck_8zayuu",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "course",
+            "title": "Build skills while AiTikit has no openings",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-15T12:07:22.388Z"
+          },
+          {
+            "id": "sug_msuejhh4_vorrep",
+            "dedupeKey": "engage:behaviour:hq_company_research_no_apply",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare for aitikit.com before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-08-15T13:18:44.536Z"
+          }
+        ]
+      },
       "triggers": [
         {
           "id": "hq_premium_plus_intent",
@@ -2423,9 +2591,9 @@
       ],
       "sessionEngagement": {
         "sessionCount": 12,
-        "activeCount": 0,
-        "totalDurationMs": 124615251,
-        "avgDurationMs": 10384604,
+        "activeCount": 1,
+        "totalDurationMs": 124210251,
+        "avgDurationMs": 10350854,
         "medianDurationMs": 2286253,
         "uniqueIps": 0,
         "uniqueDevices": 1,
@@ -2462,27 +2630,27 @@
             "totalDurationMs": 4553438
           },
           {
-            "hour": 15,
-            "label": "3:00 PM",
-            "sessions": 2,
-            "totalDurationMs": 2553976
-          },
-          {
             "hour": 16,
             "label": "4:00 PM",
             "sessions": 1,
             "totalDurationMs": 2453530
           },
           {
+            "hour": 15,
+            "label": "3:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 2118976
+          },
+          {
             "hour": 17,
             "label": "5:00 PM",
             "sessions": 2,
-            "totalDurationMs": 705000
+            "totalDurationMs": 735000
           },
           {
             "hour": 18,
             "label": "6:00 PM",
-            "sessions": 1,
+            "sessions": 2,
             "totalDurationMs": 675000
           }
         ],
@@ -2496,14 +2664,14 @@
           {
             "weekday": 4,
             "label": "Thu",
-            "sessions": 3,
-            "totalDurationMs": 46570435
+            "sessions": 2,
+            "totalDurationMs": 46135435
           },
           {
             "weekday": 6,
             "label": "Sat",
-            "sessions": 2,
-            "totalDurationMs": 225000
+            "sessions": 3,
+            "totalDurationMs": 255000
           }
         ],
         "alertTiming": {
@@ -2525,13 +2693,13 @@
           "avoidHours": [
             18,
             17,
-            16
+            15
           ],
           "timezone": null,
           "confidence": "high",
           "reason": "Most active around 10:00 PM and 11:00 PM local time · avg session 173 min",
           "sampleSessions": 12,
-          "avgDurationMs": 10384604,
+          "avgDurationMs": 10350854,
           "medianDurationMs": 2286253
         }
       },
@@ -2554,19 +2722,37 @@
         "avoidHours": [
           18,
           17,
-          16
+          15
         ],
         "timezone": null,
         "confidence": "high",
         "reason": "Most active around 10:00 PM and 11:00 PM local time · avg session 173 min",
         "sampleSessions": 12,
-        "avgDurationMs": 10384604,
+        "avgDurationMs": 10350854,
         "medianDurationMs": 2286253
       },
       "locations": []
     }
   },
   "history": [
+    {
+      "id": "hist_msuejf4z_9lg5",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-15T13:18:41.441Z",
+      "snapshot": {
+        "logins": 29,
+        "visits": 252,
+        "applies": 0,
+        "activeMs": 4815000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Thu · 10:00 PM–11:00 PM",
+        "topLocation": null
+      }
+    },
     {
       "id": "hist_msucccem_zo2y",
       "userId": "b1c869d84e75048c5c61c5e3",
@@ -10828,5 +11014,5 @@
     }
   ],
   "tickets": [],
-  "updatedAt": "2026-08-15T12:17:12.143Z"
+  "updatedAt": "2026-08-15T13:21:47.888Z"
 }
