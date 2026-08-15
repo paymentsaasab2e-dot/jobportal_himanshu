@@ -18,13 +18,17 @@ import { dispatchTokenEarn } from "@/lib/token-earn-events";
 import { recordCandidateNotification, notifyBellRefresh } from "@/lib/notifications";
 import RecommendedCoursesPanel from "@/components/dashboard/RecommendedCoursesPanel";
 import {
+  collectProfileSkillNames,
   getDashboardName,
   getDynamicGreeting,
+  rankUploadedCoursesForProfile,
+  type UploadedLmsCourse,
 } from "@/components/dashboard/dashboard-utils";
+import { fetchCourses } from "@/app/lms/api/client";
+import { fetchPublicCourses } from "@/lib/public-courses-api";
 import { resolvePortalCompanyLogo, isClientNamePubliclyVisible } from "@/lib/map-portal-job";
 import { redactPortalJobListing } from "@/lib/job-public-field-visibility";
 import type {
-  DashboardCourse,
   DashboardData,
   DashboardJob,
   JobFilterKey,
@@ -90,51 +94,13 @@ function formatAppliedDate(locale: AppLocale, value?: string | null) {
   return date.toLocaleDateString(getDateLocale(locale));
 }
 
-function createFallbackCourses(
-  dashboardData: DashboardData | null,
-  jobs: DashboardJob[],
-  t: (key: string, values?: Record<string, string | number>) => string
-): DashboardCourse[] {
-  const targetRole =
-    jobs[0]?.title ||
-    dashboardData?.recentApplications[0]?.jobTitle ||
-    t("yourNextRole");
-
-  const leadingSkill = dashboardData?.topSkills[0]?.name || t("coreProductExecution");
-  const secondarySkill = dashboardData?.topSkills[1]?.name || t("careerStorytelling");
-
-  return [
-    {
-      id: "career-reactivation-lab",
-      title: t("resumeLabTitle"),
-      provider: t("providerSaasa"),
-      duration: "4h 30m",
-      level: t("levelIntermediate"),
-      rating: 4.9,
-      imageUrl: "/lms/course-covers/premium-resume-positioning-lab.webp.png",
-      reasonLabel: t("reasonFillsGap"),
-    },
-    {
-      id: "skill-gap-sprint",
-      title: t("skillSprintTitle", { skill: leadingSkill }),
-      provider: t("providerAccelerator"),
-      duration: "6h 10m",
-      level: t("levelIntermediate"),
-      rating: 4.8,
-      imageUrl: "/lms/course-covers/javascript-skill-sprint.webp.png",
-      reasonLabel: t("reasonRequiredFor", { role: targetRole }),
-    },
-    {
-      id: "confidence-stack",
-      title: t("communicateSkillTitle", { skill: secondarySkill }),
-      provider: t("providerInterview"),
-      duration: "3h 45m",
-      level: t("levelBeginner"),
-      rating: 4.7,
-      imageUrl: "/lms/course-covers/communicate-typescript-with-impact.webp.png",
-      reasonLabel: t("reasonBoostsConfidence"),
-    },
-  ];
+function asUploadedCourses(value: unknown): UploadedLmsCourse[] {
+  if (Array.isArray(value)) return value as UploadedLmsCourse[];
+  if (value && typeof value === "object") {
+    const rows = (value as { courses?: unknown }).courses;
+    if (Array.isArray(rows)) return rows as UploadedLmsCourse[];
+  }
+  return [];
 }
 
 function mapJobRecord(job: Record<string, unknown>, fallbackId: string): DashboardJob {
@@ -210,6 +176,7 @@ export default function CandidateDashboardPage() {
   const generalJobsQuery = usePortalJobsList(locale);
   const personalizedJobsQuery = usePortalPersonalizedJobs(candidateId, locale);
   const [jobs, setJobs] = useState<DashboardJob[]>([]);
+  const [uploadedCourses, setUploadedCourses] = useState<UploadedLmsCourse[]>([]);
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
 
@@ -296,9 +263,42 @@ export default function CandidateDashboardPage() {
   }, [candidateId, dashboardData?.stats, tokensCtx]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setCoursesLoading(false), 360);
-    return () => window.clearTimeout(timer);
-  }, []);
+    let cancelled = false;
+    (async () => {
+      setCoursesLoading(true);
+      try {
+        let rows: UploadedLmsCourse[] = [];
+        try {
+          rows = asUploadedCourses(await fetchCourses());
+        } catch {
+          rows = [];
+        }
+        if (!rows.length) {
+          const publicRows = await fetchPublicCourses().catch(() => []);
+          rows = publicRows.map((row) => ({
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            category: row.category,
+            level: row.level || row.skillLevel,
+            thumbnailUrl: row.thumbnailUrl,
+            instructorName: row.instructorName,
+            estimatedHours: row.estimatedHours,
+            duration: row.duration,
+            tags: row.tags,
+          }));
+        }
+        if (!cancelled) setUploadedCourses(rows);
+      } catch {
+        if (!cancelled) setUploadedCourses([]);
+      } finally {
+        if (!cancelled) setCoursesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [candidateId, isAuthenticated]);
 
   useEffect(() => {
     return () => {
@@ -930,8 +930,14 @@ export default function CandidateDashboardPage() {
   }, [dashboardData?.topSkills, locale]);
 
   const recommendedCourses = useMemo(
-    () => createFallbackCourses(dashboardData, localizedJobMatches, tCourses),
-    [dashboardData, localizedJobMatches, tCourses]
+    () =>
+      rankUploadedCoursesForProfile(uploadedCourses, {
+        skills: collectProfileSkillNames(dashboardData, profileSnapshot),
+        jobs: localizedJobMatches,
+        translate: tCourses,
+        limit: 3,
+      }),
+    [uploadedCourses, dashboardData, profileSnapshot, localizedJobMatches, tCourses],
   );
 
   const profileCompletionPercentage =
@@ -1199,8 +1205,10 @@ export default function CandidateDashboardPage() {
               <RecommendedCoursesPanel
                 courses={recommendedCourses}
                 loading={coursesLoading}
-                onBrowseAll={() => router.push(localizePath("/courses", locale))}
-                onOpenCourse={(courseId) => router.push(localizePath(`/courses/${courseId}`, locale))}
+                onBrowseAll={() => router.push(localizePath("/lms/courses", locale))}
+                onOpenCourse={(courseId) =>
+                  router.push(localizePath(`/lms/courses/${courseId}`, locale))
+                }
               />
             </div>
           </div>

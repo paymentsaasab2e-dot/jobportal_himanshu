@@ -92,8 +92,10 @@ import {
   buildJobCvTailorContext,
   computeExploreJobCvMatch,
   htmlResumeToPlainText,
+  isValidJdSkillToken,
   normalizeResumeDraftToSections,
   resumeSectionsHaveContent,
+  sanitizeJdSkillTokens,
   saveJobCvTailorContext,
   type CvResumeSections,
 } from '@/lib/job-cv-tailor';
@@ -503,24 +505,14 @@ function resolveCardFitLabel(job: Pick<JobListing, 'matchLabel' | 'confidenceTag
   return confidenceTag || matchLabel
 }
 
-function isExploreSkillChip(value: string) {
-  const token = value.trim()
-  if (token.length < 2 || token.length > 42) return false
-  if (/^\/[a-z][a-z0-9]*$/i.test(token)) return false
-  if (/^[<>/\\]+$/.test(token)) return false
-  return true
-}
-
 function uniqueExploreSkillChips(values: string[], limit: number, exclude: string[] = []) {
+  const cleaned = sanitizeJdSkillTokens(values)
   const blocked = new Set(exclude.map((item) => item.trim().toLowerCase()).filter(Boolean))
-  const seen = new Set<string>()
   const chips: string[] = []
-  for (const raw of values) {
-    const skill = String(raw || '').trim()
-    if (!isExploreSkillChip(skill)) continue
+  for (const skill of cleaned) {
+    if (!isValidJdSkillToken(skill)) continue
     const key = skill.toLowerCase()
-    if (blocked.has(key) || seen.has(key)) continue
-    seen.add(key)
+    if (blocked.has(key)) continue
     chips.push(skill)
     if (chips.length >= limit) break
   }
@@ -554,15 +546,18 @@ const ExploreJobsPageContent = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let cancelled = false
     const loadCandidateCv = async () => {
       try {
         let sections: CvResumeSections | null = null
-        const draft = await fetchResumeDraft()
+        const draft = await fetchResumeDraft().catch(() => null)
+        if (cancelled) return
         if (draft) {
           sections = normalizeResumeDraftToSections(draft as Record<string, unknown>)
         }
         if (!resumeSectionsHaveContent(sections)) {
-          const htmlData = await fetchResumeHtml()
+          const htmlData = await fetchResumeHtml().catch(() => null)
+          if (cancelled) return
           const plain = htmlData?.resume_html ? htmlResumeToPlainText(htmlData.resume_html) : ''
           if (plain.length > 80) {
             sections = sections || normalizeResumeDraftToSections(null)
@@ -572,14 +567,17 @@ const ExploreJobsPageContent = () => {
             }
           }
         }
-        if (resumeSectionsHaveContent(sections)) {
+        if (!cancelled && resumeSectionsHaveContent(sections)) {
           setCvResumeSections(sections)
         }
       } catch {
-        // Keep profile-based scores when CV cannot be loaded.
+        // Optional CV enrichment — keep profile-based scores when LMS/CV API is unreachable.
       }
     }
     void loadCandidateCv()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const usesCvMatchScore = resumeSectionsHaveContent(cvResumeSections)
@@ -1096,9 +1094,11 @@ const ExploreJobsPageContent = () => {
               ? formatExploreEmploymentType(resolvedType, tJobs)
               : '',
             skills: fieldVisible('skills')
-              ? Array.isArray(job.skills)
-                ? job.skills
-                : (job.matchedSkills || [])
+              ? sanitizeJdSkillTokens(
+                  Array.isArray(job.skills)
+                    ? job.skills
+                    : (job.matchedSkills || []),
+                )
               : [],
             match: hasRealMatchScore
               ? te('percentMatch', { score: matchScore })
@@ -1118,20 +1118,24 @@ const ExploreJobsPageContent = () => {
                 ''
               : '',
             preferredSkills: fieldVisible('skills')
-              ? Array.isArray(job.preferredSkills)
-                ? job.preferredSkills
-                : Array.isArray(job.normalizedJobProfile?.preferredSkills)
-                ? job.normalizedJobProfile.preferredSkills
-                : []
+              ? sanitizeJdSkillTokens(
+                  Array.isArray(job.preferredSkills)
+                    ? job.preferredSkills
+                    : Array.isArray(job.normalizedJobProfile?.preferredSkills)
+                    ? job.normalizedJobProfile.preferredSkills
+                    : [],
+                )
               : [],
             responsibilities: resolvedResponsibilities,
-            requiredSkills: resolvedRequiredSkills,
+            requiredSkills: sanitizeJdSkillTokens(resolvedRequiredSkills),
             niceToHaveSkills: fieldVisible('skills')
-              ? Array.isArray(job.preferredSkills)
-                ? job.preferredSkills
-                : Array.isArray(job.normalizedJobProfile?.preferredSkills)
-                ? job.normalizedJobProfile.preferredSkills
-                : []
+              ? sanitizeJdSkillTokens(
+                  Array.isArray(job.preferredSkills)
+                    ? job.preferredSkills
+                    : Array.isArray(job.normalizedJobProfile?.preferredSkills)
+                    ? job.normalizedJobProfile.preferredSkills
+                    : [],
+                )
               : [],
             companyOverview: isClientNamePubliclyVisible(job as Record<string, unknown>)
               ? toPlainJobText(asString(job.companyOverview)) ||
@@ -1169,18 +1173,43 @@ const ExploreJobsPageContent = () => {
               resolvedType,
             confidenceTag: job.confidenceTag,
             reasoning: job.shortReason || job.reasoning,
-            matchedSkills: job.matchedSkills,
-            missingSkills: job.missingSkills,
-            topMatchedSkills: Array.isArray(job.topMatchedSkills)
-              ? job.topMatchedSkills
-              : Array.isArray(job.matchedSkills)
-              ? job.matchedSkills.slice(0, 3)
-              : [],
-            topMissingSkills: Array.isArray(job.topMissingSkills)
-              ? job.topMissingSkills
-              : Array.isArray(job.missingSkills)
-              ? job.missingSkills.slice(0, 3)
-              : [],
+            matchedSkills: sanitizeJdSkillTokens(
+              Array.isArray(job.matchedSkills) ? job.matchedSkills : [],
+            ),
+            missingSkills: (() => {
+              const matched = new Set(
+                sanitizeJdSkillTokens(
+                  Array.isArray(job.matchedSkills) ? job.matchedSkills : [],
+                ).map((s) => s.toLowerCase()),
+              )
+              return sanitizeJdSkillTokens(
+                Array.isArray(job.missingSkills) ? job.missingSkills : [],
+              ).filter((s) => !matched.has(s.toLowerCase()))
+            })(),
+            topMatchedSkills: sanitizeJdSkillTokens(
+              Array.isArray(job.topMatchedSkills)
+                ? job.topMatchedSkills
+                : Array.isArray(job.matchedSkills)
+                ? job.matchedSkills.slice(0, 3)
+                : [],
+            ).slice(0, 3),
+            topMissingSkills: (() => {
+              const matched = new Set(
+                sanitizeJdSkillTokens([
+                  ...(Array.isArray(job.topMatchedSkills) ? job.topMatchedSkills : []),
+                  ...(Array.isArray(job.matchedSkills) ? job.matchedSkills : []),
+                ]).map((s) => s.toLowerCase()),
+              )
+              return sanitizeJdSkillTokens(
+                Array.isArray(job.topMissingSkills)
+                  ? job.topMissingSkills
+                  : Array.isArray(job.missingSkills)
+                  ? job.missingSkills.slice(0, 3)
+                  : [],
+              )
+                .filter((s) => !matched.has(s.toLowerCase()))
+                .slice(0, 3)
+            })(),
             matchLabel: job.matchLabel,
             scoreColorHint: job.scoreColorHint || (matchScore >= 85 ? 'high' : matchScore >= 55 ? 'medium' : 'low'),
             whyNotMatched: typeof job.whyNotMatched === 'string' ? job.whyNotMatched : null,
@@ -2155,15 +2184,16 @@ const ExploreJobsPageContent = () => {
     : 0
 
   const selectedJobMatchedSkills = detailJob
-    ? detailJob.matchedSkills?.length
-      ? detailJob.matchedSkills
-      : detailJob.skills?.slice(0, 4) || []
+    ? uniqueExploreSkillChips(
+        detailJob.matchedSkills?.length
+          ? detailJob.matchedSkills
+          : detailJob.skills || [],
+        6,
+      )
     : []
 
   const selectedJobMissingSkills = detailJob
-    ? detailJob.missingSkills?.length
-      ? detailJob.missingSkills
-      : ['Advanced Scaling', 'System Optimization']
+    ? uniqueExploreSkillChips(detailJob.missingSkills || [], 6, selectedJobMatchedSkills)
     : []
 
   const selectedJobConfidenceTag =
@@ -2319,7 +2349,13 @@ const ExploreJobsPageContent = () => {
       skillCap,
       foundSkills,
     )
-    const fallbackSkills = foundSkills.length ? [] : uniqueExploreSkillChips(skills, skillCap)
+    // Only fall back to raw job.skills when there is no match insight at all.
+    // Otherwise empty "Found" + Gaps would duplicate the same chips under "Matched".
+    const hasMatchInsight = foundSkills.length > 0 || gapSkills.length > 0
+    const fallbackSkills =
+      foundSkills.length || hasMatchInsight
+        ? []
+        : uniqueExploreSkillChips(skills, skillCap)
 
     return (
       <div
@@ -3259,8 +3295,15 @@ const ExploreJobsPageContent = () => {
                           if (!insightJob) return null
                           const insightMatchValue = parseMatchPercentage(insightJob.match, insightJob.matchScore);
                           const insightConfidenceTag = insightJob.confidenceTag || (insightMatchValue >= 85 ? 'Excellent Alignment' : insightMatchValue >= 60 ? 'Partial Match' : 'Gap Identified');
-                          const insightMatchedSkills = insightJob.matchedSkills || [];
-                          const insightMissingSkills = insightJob.missingSkills || [];
+                          const insightMatchedSkills = uniqueExploreSkillChips(
+                            insightJob.matchedSkills || [],
+                            8,
+                          );
+                          const insightMissingSkills = uniqueExploreSkillChips(
+                            insightJob.missingSkills || [],
+                            8,
+                            insightMatchedSkills,
+                          );
 
                           return (insightJob.reasoning || insightJob.matchScore) ? (
                             <section className="mt-8 w-full">

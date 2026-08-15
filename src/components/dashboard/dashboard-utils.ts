@@ -1,4 +1,4 @@
-import type { DashboardData, DashboardJob } from "./dashboard-types";
+import type { DashboardCourse, DashboardData, DashboardJob } from "./dashboard-types";
 import { formatCompactSalarySafe } from "@/lib/format-salary";
 import type { AppLocale } from "@/lib/i18n";
 import { getSalaryNumberLocale } from "@/lib/displayContentLocale";
@@ -201,6 +201,182 @@ export function normalizeEnumLabel(value?: string | null) {
     .replace(/_/g, " ")
     .toLowerCase()
     .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+export type UploadedLmsCourse = {
+  id?: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  level?: string;
+  thumbnailUrl?: string | null;
+  instructorName?: string | null;
+  estimatedHours?: number;
+  duration?: string;
+  tags?: string[];
+  goalMatch?: boolean;
+  focusReason?: string;
+};
+
+const COURSE_STOP_WORDS = new Set([
+  "the",
+  "and",
+  "for",
+  "with",
+  "your",
+  "from",
+  "into",
+  "that",
+  "this",
+  "skill",
+  "skills",
+  "course",
+  "role",
+  "next",
+]);
+
+function formatCourseDuration(hours?: number, fallback?: string) {
+  const trimmed = String(fallback || "").trim();
+  if (trimmed) return trimmed;
+  const n = Number(hours) || 0;
+  if (n <= 0) return "";
+  if (n < 1) return `${Math.max(1, Math.round(n * 60))}m`;
+  const h = Math.floor(n);
+  const m = Math.round((n - h) * 60);
+  if (m <= 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+function formatCourseLevel(level?: string) {
+  const raw = String(level || "").trim();
+  if (!raw) return "Beginner";
+  return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+}
+
+function tokenizeForCourseMatch(value: string) {
+  return value
+    .toLowerCase()
+    .split(/[^a-z0-9+#]+/i)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 1 && !COURSE_STOP_WORDS.has(part));
+}
+
+export function collectProfileSkillNames(
+  dashboardData: DashboardData | null,
+  snapshot?: Record<string, unknown> | null,
+): string[] {
+  const names: string[] = [];
+  for (const skill of dashboardData?.topSkills || []) {
+    if (skill?.name?.trim()) names.push(skill.name.trim());
+  }
+  const raw = snapshot?.skills;
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      if (typeof item === "string" && item.trim()) names.push(item.trim());
+      else if (item && typeof item === "object") {
+        const row = item as Record<string, unknown>;
+        const label = [row.name, row.skill, row.skillName, row.title].find(
+          (value) => typeof value === "string" && value.trim(),
+        ) as string | undefined;
+        if (label) names.push(label.trim());
+      }
+    }
+  }
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const name of names) {
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(name);
+  }
+  return unique;
+}
+
+export function rankUploadedCoursesForProfile(
+  courses: UploadedLmsCourse[],
+  options: {
+    skills: string[];
+    jobs: DashboardJob[];
+    translate: DashboardTranslate;
+    limit?: number;
+  },
+): DashboardCourse[] {
+  const limit = options.limit ?? 3;
+  const skills = options.skills.filter(Boolean);
+  const skillNeedles = skills.map((skill) => skill.toLowerCase());
+  const jobTitles = options.jobs.map((job) => job.title).filter(Boolean);
+  const jobTokens = new Set(jobTitles.flatMap((title) => tokenizeForCourseMatch(title)));
+  const targetRole = jobTitles[0] || options.translate("yourNextRole");
+
+  const scored = courses
+    .filter((course) => String(course.id || "").trim() && String(course.title || "").trim())
+    .map((course) => {
+      const title = String(course.title || "").trim();
+      const hay = [
+        title,
+        course.description,
+        course.category,
+        ...(Array.isArray(course.tags) ? course.tags : []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const tags = (Array.isArray(course.tags) ? course.tags : []).map((tag) =>
+        String(tag).toLowerCase(),
+      );
+
+      let score = 0;
+      let matchedSkill = "";
+      for (const skill of skills) {
+        const needle = skill.toLowerCase();
+        if (!needle) continue;
+        if (tags.some((tag) => tag === needle || tag.includes(needle) || needle.includes(tag))) {
+          score += 6;
+          if (!matchedSkill) matchedSkill = skill;
+        } else if (hay.includes(needle)) {
+          score += 4;
+          if (!matchedSkill) matchedSkill = skill;
+        }
+      }
+
+      const titleTokens = tokenizeForCourseMatch(title);
+      const jobOverlap = titleTokens.filter((token) => jobTokens.has(token)).length;
+      if (jobOverlap > 0) score += Math.min(4, jobOverlap * 2);
+      if (course.goalMatch) score += 3;
+      if (course.focusReason) score += 2;
+
+      let reasonLabel = options.translate("reasonMatchesProfile");
+      if (matchedSkill) {
+        reasonLabel = options.translate("reasonMatchesSkill", { skill: matchedSkill });
+      } else if (jobOverlap > 0) {
+        reasonLabel = options.translate("reasonRequiredFor", { role: targetRole });
+      } else if (
+        /resume|cv|profile|interview|communication/i.test(hay)
+      ) {
+        reasonLabel = options.translate("reasonBoostsConfidence");
+      } else if (course.focusReason) {
+        reasonLabel = course.focusReason;
+      }
+
+      const mapped: DashboardCourse = {
+        id: String(course.id),
+        title,
+        provider: String(course.instructorName || course.category || "HR Yantra").trim() || "HR Yantra",
+        duration: formatCourseDuration(course.estimatedHours, course.duration),
+        level: formatCourseLevel(course.level),
+        imageUrl: course.thumbnailUrl || undefined,
+        reasonLabel,
+      };
+
+      return { mapped, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  const matched = scored.filter((row) => row.score > 0).slice(0, limit);
+  if (matched.length >= limit) return matched.map((row) => row.mapped);
+  const rest = scored.filter((row) => row.score <= 0).slice(0, limit - matched.length);
+  return [...matched, ...rest].map((row) => row.mapped);
 }
 
 function normalizeJobEnumToken(value?: string | null) {

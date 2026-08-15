@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from '@/lib/api-base';
+import { getApiBaseUrl, switchToHostedBackend } from '@/lib/api-base';
 import { getStoredToken } from '@/lib/auth-storage';
 import { assertTokensOk, InsufficientTokensError } from '@/lib/tokens-api';
 
@@ -16,26 +16,66 @@ function getAuthHeaders(): HeadersInit | null {
   };
 }
 
+function rewriteLocalHostAlternate(url: string): string | null {
+  if (/:\/\/localhost([:/]|$)/i.test(url)) {
+    return url.replace(/:\/\/localhost/i, '://127.0.0.1');
+  }
+  if (/:\/\/127\.0\.0\.1([:/]|$)/i.test(url)) {
+    return url.replace(/:\/\/127\.0\.0\.1/i, '://localhost');
+  }
+  return null;
+}
+
+function rewriteToCurrentApiBase(url: string): string | null {
+  const match = url.match(/\/api(\/.*)$/i);
+  if (!match) return null;
+  return `${getApiBaseUrl()}${match[1]}`;
+}
+
 async function lmsFetch(url: string, options: RequestInit = {}) {
   const headers = getAuthHeaders();
   if (!headers) {
-    console.warn(`LMS Client: Skipping fetch to ${url} due to missing token.`);
     return null;
   }
-  console.log(`[LMS FETCH] ${url}`, options);
-  let res: Response;
-  try {
-    res = await fetch(url, {
+
+  const attempt = (target: string) =>
+    fetch(target, {
       ...options,
-      headers: { ...(headers as any), ...(options.headers || {}) },
+      headers: { ...(headers as Record<string, string>), ...(options.headers || {}) },
     });
-  } catch (error) {
-    console.error(`LMS Client: Network error while calling ${url}`, error);
+
+  const candidates: string[] = [url];
+  const localAlt = rewriteLocalHostAlternate(url);
+  if (localAlt) candidates.push(localAlt);
+
+  let res: Response | null = null;
+  for (const target of candidates) {
+    try {
+      res = await attempt(target);
+      break;
+    } catch {
+      res = null;
+    }
+  }
+
+  if (!res && /localhost|127\.0\.0\.1/i.test(url)) {
+    try {
+      switchToHostedBackend();
+      const hosted = rewriteToCurrentApiBase(url);
+      if (hosted) res = await attempt(hosted);
+    } catch {
+      res = null;
+    }
+  }
+
+  if (!res) {
+    // String-only warn — passing a TypeError to console.error triggers Next.js error overlay.
+    console.warn(`LMS Client: network unavailable (${url})`);
     return null;
   }
 
   if (res.status === 401) {
-    console.error('LMS Client: Session expired (401).');
+    console.warn('LMS Client: Session expired (401).');
   }
 
   if (res.status === 402) {
