@@ -46,18 +46,141 @@ type JobListingLike = {
   strengths?: string[];
 };
 
+/** CSS / HTML / resume-template noise that must never count as JD skills. */
+const JD_SKILL_NOISE = new Set([
+  'style',
+  'text-align',
+  'text-align:',
+  'justify',
+  'left',
+  'right',
+  'center',
+  'font-family',
+  'font-size',
+  'font-weight',
+  'font-style',
+  'calibri',
+  'arial',
+  'times',
+  'helvetica',
+  'color',
+  'background',
+  'background-color',
+  'margin',
+  'padding',
+  'border',
+  'display',
+  'flex',
+  'width',
+  'height',
+  'line-height',
+  'letter-spacing',
+  'vertical-align',
+  'white-space',
+  'overflow',
+  'position',
+  'absolute',
+  'relative',
+  'important',
+  'px',
+  'pt',
+  'em',
+  'rem',
+  'span',
+  'div',
+  'class',
+  'body',
+  'nbsp',
+  // Generic JD fluff / education requirements (not skills)
+  'bachelor',
+  'bachelors',
+  "bachelor's",
+  'master',
+  'masters',
+  "master's",
+  'degree',
+  'diploma',
+  'licence',
+  'license',
+  'education',
+  'minimum',
+  'years',
+  'year',
+  'experience',
+  'proven',
+  'hands-on',
+  'handson',
+  'one',
+  'two',
+  'three',
+  'job',
+  'title',
+  'role',
+  'objective',
+  'requested',
+  'required',
+  'preference',
+  'preferred',
+  'must',
+  'should',
+  'ability',
+  'able',
+  'strong',
+  'good',
+  'excellent',
+  'etc',
+  'including',
+  'using',
+  'knowledge',
+  'understanding',
+  'familiarity',
+]);
+
+function normalizeJdSkillToken(raw: string): string {
+  return String(raw || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/^[#*_`"'“”‘’]+|[#*_`"'“”‘’]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** True when a token looks like a real skill/keyword rather than markup or JD fluff. */
+export function isValidJdSkillToken(value: string): boolean {
+  const token = normalizeJdSkillToken(value);
+  if (token.length < 2 || token.length > 48) return false;
+  const key = token.toLowerCase();
+  if (JD_SKILL_NOISE.has(key)) return false;
+  if (/^\/[a-z][a-z0-9]*$/i.test(token)) return false;
+  if (/^[<>/\\]+$/.test(token)) return false;
+  // CSS property or property:value fragments
+  if (/^(text|font|background|margin|padding|border|line|letter|vertical|white)-[a-z-]+$/i.test(token)) {
+    return false;
+  }
+  if (/^[a-z-]+:\s*[^;]+;?$/i.test(token)) return false;
+  if (/^\d+(\.\d+)?(px|pt|em|rem|%|vh|vw)$/i.test(token)) return false;
+  // Lone punctuation / single letter with period (e.g. "d.")
+  if (/^[a-z]\.?$/i.test(token)) return false;
+  if (!/[a-z0-9+#.]/i.test(token)) return false;
+  return true;
+}
+
 function uniqueTokens(values: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const raw of values) {
-    const token = String(raw || '').trim();
-    if (!token) continue;
+    const token = normalizeJdSkillToken(String(raw || ''));
+    if (!token || !isValidJdSkillToken(token)) continue;
     const key = token.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(token);
   }
   return out;
+}
+
+/** Sanitize skill chips for Explore Jobs UI and CV–JD scoring. */
+export function sanitizeJdSkillTokens(values: string[] | null | undefined): string[] {
+  return uniqueTokens(Array.isArray(values) ? values : []);
 }
 
 /** JD-side terms only — excludes CV-derived missing-skill overlays on tailor context. */
@@ -73,11 +196,15 @@ export function collectJdKeywords(ctx: JobCvTailorContext): string[] {
 }
 
 function collectJdSkillsFromJob(job: JobListingLike): string[] {
-  return uniqueTokens([
+  // Prefer explicit JD skill fields; fall back to API match overlays only when empty.
+  const jdSide = uniqueTokens([
     ...(job.requiredSkills || []),
     ...(job.skills || []),
     ...(job.preferredSkills || []),
     ...(job.niceToHaveSkills || []),
+  ]);
+  if (jdSide.length) return jdSide;
+  return uniqueTokens([
     ...(job.missingSkills || []),
     ...(job.topMissingSkills || []),
     ...(job.matchedSkills || []),
@@ -86,7 +213,7 @@ function collectJdSkillsFromJob(job: JobListingLike): string[] {
 }
 
 function collectJdSkillPoolFromContext(ctx: JobCvTailorContext): string[] {
-  if (ctx.jdSkillPool?.length) return ctx.jdSkillPool;
+  if (ctx.jdSkillPool?.length) return sanitizeJdSkillTokens(ctx.jdSkillPool);
   return uniqueTokens([...collectJdKeywordsForScoring(ctx), ...ctx.matchedSkills, ...ctx.missingSkills]);
 }
 

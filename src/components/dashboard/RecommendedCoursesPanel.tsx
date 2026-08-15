@@ -222,6 +222,13 @@ export default function RecommendedCoursesPanel({
                   <div className="mt-4 h-8 rounded-xl bg-slate-200" />
                 </div>
               ))
+            : courses.length === 0
+              ? (
+                <div className="col-span-full rounded-[20px] border border-dashed border-slate-200 bg-white/70 px-4 py-10 text-center">
+                  <p className="text-sm font-semibold text-slate-800">{t("emptyTitle")}</p>
+                  <p className="mt-1 text-sm text-slate-500">{t("emptyDescription")}</p>
+                </div>
+              )
             : courses.map((course, index) => (
                 <div
                   key={course.id}
@@ -244,10 +251,12 @@ export default function RecommendedCoursesPanel({
                     </span>
 
                     <div className="flex flex-wrap gap-1.5 text-[11px] font-semibold text-slate-600">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm">
-                        <Clock3 className="h-3 w-3" strokeWidth={2.1} />
-                        {course.duration}
-                      </span>
+                      {course.duration ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm">
+                          <Clock3 className="h-3 w-3" strokeWidth={2.1} />
+                          {course.duration}
+                        </span>
+                      ) : null}
                       {course.rating ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm">
                           <Star
