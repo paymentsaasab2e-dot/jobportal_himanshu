@@ -67,6 +67,16 @@ export type HqHistoryEntry = {
   };
 };
 
+export type HqHelpTicketMessage = {
+  id: string;
+  ticketId: string;
+  senderRole: 'candidate' | 'hq';
+  senderName?: string;
+  senderId?: string | null;
+  body: string;
+  createdAt: string;
+};
+
 export type HqHelpTicket = {
   id: string;
   createdAt: string;
@@ -79,6 +89,7 @@ export type HqHelpTicket = {
   userId?: string | null;
   status: 'open' | 'in_progress' | 'closed';
   source: 'help_page';
+  messages?: HqHelpTicketMessage[];
 };
 
 type HqFileBundle = {
@@ -330,18 +341,43 @@ export function listHistory(userId: string, limit = 50) {
     .slice(0, limit);
 }
 
+export function isFiveDigitTicketId(id?: string | null) {
+  return /^\d{5}$/.test(String(id || '').trim());
+}
+
+/** Sequential public ticket IDs: 10000–99999. */
+export function nextFiveDigitTicketId(existing: Array<{ id?: string }> = []): string {
+  let max = 9999;
+  for (const row of existing) {
+    const n = Number(String(row?.id || '').trim());
+    if (Number.isInteger(n) && n >= 10000 && n <= 99999) {
+      max = Math.max(max, n);
+    }
+  }
+  const next = max + 1;
+  if (next > 99999) {
+    throw new Error('Ticket ID range exhausted');
+  }
+  return String(next);
+}
+
 export function appendTicket(ticket: HqHelpTicket) {
   const bundle = ensureLoaded();
-  // Multi-ticket: always append; never overwrite another ticket id
-  const existingIdx = bundle.tickets.findIndex((t) => t.id === ticket.id);
+  const incomingId = String(ticket.id || '').trim();
+  const canReuse =
+    isFiveDigitTicketId(incomingId) && !bundle.tickets.some((t) => t.id === incomingId);
+  const id = canReuse ? incomingId : nextFiveDigitTicketId(bundle.tickets);
+  const saved: HqHelpTicket = { ...ticket, id };
+
+  const existingIdx = bundle.tickets.findIndex((t) => t.id === saved.id);
   if (existingIdx >= 0) {
-    bundle.tickets[existingIdx] = { ...bundle.tickets[existingIdx]!, ...ticket };
+    bundle.tickets[existingIdx] = { ...bundle.tickets[existingIdx]!, ...saved };
   } else {
-    bundle.tickets.unshift(ticket);
+    bundle.tickets.unshift(saved);
   }
   bundle.tickets = bundle.tickets.slice(0, MAX_TICKETS);
   persist(bundle);
-  return ticket;
+  return saved;
 }
 
 export function listTickets(opts?: {
@@ -378,4 +414,57 @@ export function updateTicketStatus(id: string, status: HqHelpTicket['status']) {
   bundle.tickets[idx] = { ...bundle.tickets[idx]!, status };
   persist(bundle);
   return bundle.tickets[idx]!;
+}
+
+export function getTicketById(id: string): HqHelpTicket | null {
+  const bundle = ensureLoaded();
+  return bundle.tickets.find((t) => t.id === id) || null;
+}
+
+export function getTicketMessages(ticketId: string): HqHelpTicketMessage[] {
+  const ticket = getTicketById(ticketId);
+  return Array.isArray(ticket?.messages) ? [...ticket.messages] : [];
+}
+
+export function addTicketMessage(
+  ticketId: string,
+  message: Omit<HqHelpTicketMessage, 'id' | 'ticketId' | 'createdAt'>,
+): HqHelpTicketMessage | null {
+  const bundle = ensureLoaded();
+  const idx = bundle.tickets.findIndex((t) => t.id === ticketId);
+  if (idx < 0) return null;
+
+  const full: HqHelpTicketMessage = {
+    id: `msg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+    ticketId,
+    createdAt: new Date().toISOString(),
+    ...message,
+  };
+
+  const ticket = bundle.tickets[idx]!;
+  const messages = [...(ticket.messages || []), full].slice(-200);
+  bundle.tickets[idx] = { ...ticket, messages };
+  persist(bundle);
+  return full;
+}
+
+function ticketMatchesUser(
+  ticket: HqHelpTicket,
+  opts: { email?: string; userId?: string },
+): boolean {
+  const email = opts.email?.trim().toLowerCase();
+  const userId = opts.userId?.trim();
+  if (userId && ticket.userId === userId) return true;
+  if (email && ticket.email.trim().toLowerCase() === email) return true;
+  return false;
+}
+
+export function canAccessTicketMessages(
+  ticketId: string,
+  opts: { email?: string; userId?: string; hq?: boolean },
+): boolean {
+  if (opts.hq) return Boolean(getTicketById(ticketId));
+  const ticket = getTicketById(ticketId);
+  if (!ticket) return false;
+  return ticketMatchesUser(ticket, opts);
 }

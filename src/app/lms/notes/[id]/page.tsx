@@ -67,8 +67,8 @@ function LmsNoteDetailPageContent() {
           Back to notes
         </Link>
         <div className={`${LMS_CARD_CLASS} text-sm text-gray-600 bg-rose-50/20 border-rose-100`}>
-          <p className="font-bold text-rose-800">Note not found</p>
-          <p className="mt-1">This note does not exist in your database or was removed.</p>
+          <p className="font-bold text-rose-800">We couldn’t find this</p>
+          <p className="mt-1">This note isn’t available.</p>
         </div>
       </div>
     );

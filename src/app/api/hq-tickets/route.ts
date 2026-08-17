@@ -20,10 +20,6 @@ export const revalidate = 0;
  * PATCH /api/hq-tickets  { id, status }
  */
 
-function uid() {
-  return `tkt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id') || '';
   const email = (req.nextUrl.searchParams.get('email') || '').trim().toLowerCase();
@@ -60,7 +56,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ticket: HqHelpTicket = {
-    id: body.id?.trim() || uid(),
+    id: body.id?.trim() || '',
     createdAt: body.createdAt || new Date().toISOString(),
     name: String(body.name).trim(),
     email: String(body.email).trim(),
@@ -73,11 +69,11 @@ export async function POST(req: NextRequest) {
     source: 'help_page',
   };
 
-  appendTicket(ticket);
+  const saved = appendTicket(ticket);
 
   return NextResponse.json({
     success: true,
-    data: ticket,
+    data: saved,
   });
 }
 

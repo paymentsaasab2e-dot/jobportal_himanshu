@@ -175,7 +175,7 @@ export default function CandidateHomePage() {
         <main className="mx-auto max-w-5xl px-6 py-20">
           <div className="rounded-[28px] border border-white/70 bg-white/80 px-8 py-14 text-center shadow-[0_22px_60px_rgba(15,23,42,0.12)] backdrop-blur-xl">
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Please sign in</h1>
-            <p className="mt-3 text-slate-600">Sign in to view your personalized home page.</p>
+            <p className="mt-3 text-slate-600">Sign in to continue.</p>
             <button
               type="button"
               onClick={() => router.push(localizePath('/whatsapp', locale))}

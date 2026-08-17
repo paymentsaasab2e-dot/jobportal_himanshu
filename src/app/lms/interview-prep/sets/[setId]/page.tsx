@@ -53,7 +53,8 @@ export default function QuestionSetWorkspace() {
           </Link>
         </div>
         <div className="flex flex-col items-center justify-center py-20 bg-gray-50 border border-gray-100 rounded-3xl">
-          <p className="text-gray-500 font-medium">Question set not found or no longer exists.</p>
+          <p className="text-lg font-semibold text-gray-900">We couldn’t find this</p>
+          <p className="mt-1 text-sm text-gray-500">This set isn’t available any more.</p>
           <Link href="/lms/interview-prep" className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#208bc0]">
             Return to dashboard
           </Link>

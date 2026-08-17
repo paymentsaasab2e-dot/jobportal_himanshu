@@ -151,21 +151,30 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
       return NextResponse.json({ jobs: [], total: 0, page: 1, limit: 120 }, { status: 200 });
     }
     if (pathParts[0] === 'phase2-public-apply') {
-      return NextResponse.json({ success: false, message: 'Apply page unavailable' }, { status: 503 });
+      return NextResponse.json(
+        { success: false, message: 'Unable to connect right now. Please try again in a little while. Your work is safe.' },
+        { status: 503 },
+      );
     }
     if (pathParts[0] === 'phase2-pre-screen-assessments') {
       return NextResponse.json({ success: true, data: [] }, { status: 200 });
     }
     if (pathParts[0] === 'phase2-interview-forms') {
-      return NextResponse.json({ success: false, message: 'Interview forms unavailable' }, { status: 503 });
-    }
-    if (pathParts[0] === 'phase2-auth') {
       return NextResponse.json(
-        { success: false, message: 'Employer workspace is unavailable. Is Phase 2 API running?' },
+        { success: false, message: 'Unable to connect right now. Please try again in a little while. Your work is safe.' },
         { status: 503 },
       );
     }
-    return NextResponse.json({ error: 'Backend service unavailable' }, { status: 503 });
+    if (pathParts[0] === 'phase2-auth') {
+      return NextResponse.json(
+        { success: false, message: 'Unable to connect right now. Please try again in a little while. Your work is safe.' },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json(
+      { error: 'Unable to connect right now. Please try again in a little while. Your work is safe.' },
+      { status: 503 },
+    );
   }
 }
 

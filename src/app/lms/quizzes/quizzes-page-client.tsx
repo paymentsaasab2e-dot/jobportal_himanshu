@@ -279,7 +279,7 @@ export function LmsQuizzesPageContent() {
         ) : (
           <LmsEmptyState
             title="No completed quizzes yet"
-            body="Generate a quiz above, complete it, and your score will appear here."
+            body="Finish a quiz and it will show up here."
           />
         )}
       </section>

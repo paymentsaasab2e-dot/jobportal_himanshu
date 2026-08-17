@@ -69,13 +69,13 @@ async function lmsFetch(url: string, options: RequestInit = {}) {
   }
 
   if (!res) {
-    // String-only warn — passing a TypeError to console.error triggers Next.js error overlay.
-    console.warn(`LMS Client: network unavailable (${url})`);
-    return null;
+    throw new Error('Unable to connect right now');
   }
 
   if (res.status === 401) {
-    console.warn('LMS Client: Session expired (401).');
+    const err = new Error('Please sign in again') as Error & { status?: number };
+    err.status = 401;
+    throw err;
   }
 
   if (res.status === 402) {
@@ -99,14 +99,14 @@ export async function fetchCourses(filters?: Record<string, string>) {
   const query = new URLSearchParams(filters).toString();
   const res = await lmsFetch(`${LMS_API_BASE}/courses${query ? `?${query}` : ''}`, { method: 'GET' });
   if (!res) return [];
-  if (!res.ok) throw new Error('Failed to fetch courses');
+  if (!res.ok) throw new Error('Unable to connect right now');
   const data = await res.json(); return data.data;
 }
 
 export async function fetchCourseDetail(courseId: string) {
   const res = await lmsFetch(`${LMS_API_BASE}/courses/${courseId}`, { method: 'GET' });
   if (!res) return null;
-  if (!res.ok) { if (res.status === 404) return null; throw new Error('Failed to fetch course details'); }
+  if (!res.ok) { if (res.status === 404) return null; throw new Error('Unable to connect right now'); }
   const data = await res.json(); return data.data;
 }
 
@@ -144,7 +144,7 @@ export async function fetchEvents(filters?: Record<string, string>) {
   const query = new URLSearchParams(filters).toString();
   const res = await lmsFetch(`${LMS_API_BASE}/events${query ? `?${query}` : ''}`, { method: 'GET' });
   if (!res) return [];
-  if (!res.ok) throw new Error('Failed to fetch events');
+  if (!res.ok) throw new Error('Unable to connect right now');
   const data = await res.json(); return data.data;
 }
 
@@ -152,7 +152,7 @@ export async function fetchEventDetail(eventId: string) {
   const res = await lmsFetch(`${LMS_API_BASE}/events/${encodeURIComponent(eventId)}`, { method: 'GET' });
   if (!res) return null;
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error('Failed to fetch event details');
+  if (!res.ok) throw new Error('Unable to connect right now');
   const data = await res.json();
   return data.data;
 }
@@ -188,7 +188,7 @@ export async function unregisterFromEvent(eventId: string) {
 export async function fetchCompletedQuizzes() {
   const res = await lmsFetch(`${LMS_API_BASE}/quizzes/completed`, { method: 'GET' });
   if (!res) return [];
-  if (!res.ok) throw new Error('Failed to fetch completed quizzes');
+  if (!res.ok) throw new Error('Unable to connect right now');
   const data = await res.json();
   return data.data;
 }
@@ -196,7 +196,7 @@ export async function fetchCompletedQuizzes() {
 export async function fetchQuizzes() {
   const res = await lmsFetch(`${LMS_API_BASE}/quizzes`, { method: 'GET' });
   if (!res) return [];
-  if (!res.ok) throw new Error('Failed to fetch quizzes');
+  if (!res.ok) throw new Error('Unable to connect right now');
   const data = await res.json(); return data.data;
 }
 
@@ -207,7 +207,7 @@ export async function fetchQuizTopicSuggestions(query: string) {
     { method: 'GET' }
   );
   if (!res) return [];
-  if (!res.ok) throw new Error('Failed to fetch topic suggestions');
+  if (!res.ok) throw new Error('Unable to connect right now');
   const data = await res.json();
   return Array.isArray(data.data) ? data.data.filter((item: unknown) => typeof item === 'string') : [];
 }
@@ -244,7 +244,7 @@ export async function fetchQuizDetail(quizId: string) {
   if (!res) return null;
   if (!res.ok) {
     if (res.status === 404) return null;
-    throw new Error('Failed to fetch quiz details');
+    throw new Error('Unable to connect right now');
   }
   const data = await res.json();
   return data.data;
@@ -296,7 +296,7 @@ export async function fetchAttemptResult(quizId: string, attemptId: string) {
   if (!res) return null;
   if (!res.ok) {
     if (res.status === 404) return null;
-    throw new Error('Failed to fetch quiz result');
+    throw new Error('Unable to connect right now');
   }
   const data = await res.json();
   return data.data as QuizAttemptResult;
@@ -305,14 +305,14 @@ export async function fetchAttemptResult(quizId: string, attemptId: string) {
 export async function fetchNotes() {
   const res = await lmsFetch(`${LMS_API_BASE}/notes`, { method: 'GET' });
   if (!res) return [];
-  if (!res.ok) throw new Error('Failed to fetch notes');
+  if (!res.ok) throw new Error('Unable to connect right now');
   const data = await res.json(); return data.data;
 }
 
 export async function fetchNoteDetail(noteId: string) {
   const res = await lmsFetch(`${LMS_API_BASE}/notes/${noteId}`, { method: 'GET' });
   if (!res) return null;
-  if (!res.ok) { if (res.status === 404) return null; throw new Error('Failed to fetch note'); }
+  if (!res.ok) { if (res.status === 404) return null; throw new Error('Unable to connect right now'); }
   const data = await res.json(); return data.data;
 }
 
@@ -340,7 +340,7 @@ export async function deleteNote(noteId: string) {
 export async function fetchCareerPath() {
   const res = await lmsFetch(`${LMS_API_BASE}/career-path`, { method: 'GET' });
   if (!res) return null;
-  if (!res.ok) throw new Error('Failed to fetch career path');
+  if (!res.ok) throw new Error('Unable to connect right now');
   const data = await res.json(); return data.data;
 }
 
@@ -369,7 +369,7 @@ export async function fetchGoalRecommendations(query: string) {
   if (!query || query.length < 2) return [];
   const res = await lmsFetch(`${LMS_API_BASE}/career-path/recommend-goal?q=${encodeURIComponent(query)}`, { method: 'GET' });
   if (!res) return [];
-  if (!res.ok) throw new Error('Failed to fetch recommendations');
+  if (!res.ok) throw new Error('Unable to connect right now');
   const data = await res.json(); 
   return data.data;
 }
@@ -377,7 +377,7 @@ export async function fetchGoalRecommendations(query: string) {
 export async function fetchResumeDraft() {
   const res = await lmsFetch(`${LMS_API_BASE}/resume/draft`, { method: 'GET' });
   if (!res) return null;
-  if (!res.ok) { if (res.status === 404) return null; throw new Error('Failed to fetch resume draft'); }
+  if (!res.ok) { if (res.status === 404) return null; throw new Error('Unable to connect right now'); }
   const data = await res.json(); return data.data;
 }
 
@@ -419,7 +419,7 @@ export async function fetchResumeRoleVersions(): Promise<ResumeVersionsResponse 
   if (!res) return null;
   if (!res.ok) {
     if (res.status === 404) return { original: null, versions: [] };
-    throw new Error('Failed to fetch resume versions');
+    throw new Error('Unable to connect right now');
   }
   const data = await res.json();
   return data.data as ResumeVersionsResponse;
@@ -434,7 +434,7 @@ export async function fetchResumeRoleVersion(versionId: string): Promise<ResumeR
   if (!res) return null;
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to fetch CV version');
+    throw new Error(errorData.message || 'Unable to connect right now');
   }
   const data = await res.json();
   return data.data as ResumeRoleVersionItem;
@@ -520,7 +520,7 @@ export async function fetchInterviewPrep() {
   if (!res) return [];
   if (!res.ok) {
     if (res.status === 404) return [];
-    throw new Error('Failed to fetch interview prep sessions');
+    throw new Error('Unable to connect right now');
   }
   const data = await res.json();
   return data.data?.recentSessions ?? [];
@@ -544,7 +544,7 @@ export async function startInterviewSession(payload: { type: string; topic?: str
 export async function fetchLmsDashboard() {
   const res = await lmsFetch(`${LMS_API_BASE}/dashboard`, { method: 'GET' });
   if (!res) return null;
-  if (!res.ok) throw new Error('Failed to fetch lms dashboard');
+  if (!res.ok) throw new Error('Unable to connect right now');
   const data = await res.json(); return data.data;
 }
 
@@ -559,7 +559,7 @@ export async function fetchResumeHtml() {
   
   const res = await lmsFetch(`${CV_API_BASE}/resume/${candidateId}`, { method: 'GET' });
   if (!res) return null;
-  if (!res.ok) { if (res.status === 404) return null; throw new Error('Failed to fetch resume HTML'); }
+  if (!res.ok) { if (res.status === 404) return null; throw new Error('Unable to connect right now'); }
   const data = await res.json(); return data.data;
 }
 

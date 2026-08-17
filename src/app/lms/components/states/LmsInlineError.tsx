@@ -7,7 +7,7 @@ type LmsInlineErrorProps = {
   className?: string;
 };
 
-export function LmsInlineError({ title = 'Something went wrong', message, className = '' }: LmsInlineErrorProps) {
+export function LmsInlineError({ title = 'Unable to connect right now', message, className = '' }: LmsInlineErrorProps) {
   return (
     <div className={`${LMS_CARD_CLASS} border-rose-200 bg-rose-50/30 ${className}`} role="alert">
       <div className="flex items-start gap-3">

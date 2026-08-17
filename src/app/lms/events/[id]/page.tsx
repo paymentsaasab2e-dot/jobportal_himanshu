@@ -211,9 +211,9 @@ export default function LmsEventDetailPage({ params }: { params: Promise<{ id: s
         </button>
         <div className="flex flex-col items-center justify-center rounded-3xl border border-gray-100 bg-gray-50 py-24">
           <CalendarDays className="mb-4 h-10 w-10 text-gray-300" strokeWidth={1.5} />
-          <h2 className="mb-2 text-xl font-bold text-gray-900">Event Not Found</h2>
+          <h2 className="mb-2 text-xl font-bold text-gray-900">We couldn’t find this</h2>
           <p className="max-w-sm text-center text-sm font-medium text-gray-500">
-            The event you&apos;re looking for was not found or has been removed from the catalog.
+            This event isn’t available. It may have been removed.
           </p>
           <Link href="/lms/events" className="mt-6 rounded-xl bg-[#28A8E1] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#208bc0]">
             Browse Events

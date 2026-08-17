@@ -106,13 +106,39 @@ function WhatsAppLoginInner() {
   const [captchaError, setCaptchaError] = useState("");
   const [captchaChallenge, setCaptchaChallenge] = useState<MathCaptchaChallenge | null>(null);
   const [otpDisplay, setOtpDisplay] = useState("");
+  const [otpValue, setOtpValue] = useState("");
+  const [signInOtpSent, setSignInOtpSent] = useState(false);
+  const [otpResendTimer, setOtpResendTimer] = useState(0);
+  const [signInOtpContext, setSignInOtpContext] = useState<{
+    whatsappNumber: string;
+    countryCode: string;
+    email: string;
+    candidateId?: string;
+  } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownPanelRef = useRef<HTMLDivElement>(null);
   const hasAutoDetectedCountry = useRef(false);
 
   const isSignIn = authMode === "signin";
   const isOtpSignIn = isSignIn && signInMethod === "otp";
   const showCaptcha = !isSignIn;
   const showSignInWhatsApp = isSignIn && signInContact === "whatsapp";
+
+  useEffect(() => {
+    if (otpResendTimer <= 0) return;
+    const interval = setInterval(() => {
+      setOtpResendTimer((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [otpResendTimer]);
+
+  const resetSignInOtpFlow = () => {
+    setOtpValue("");
+    setSignInOtpSent(false);
+    setOtpResendTimer(0);
+    setSignInOtpContext(null);
+    setOtpDisplay("");
+  };
 
   useEffect(() => {
     const mode = searchParams.get("mode");
@@ -128,6 +154,7 @@ function WhatsAppLoginInner() {
     setError("");
     setCaptchaError("");
     setOtpDisplay("");
+    resetSignInOtpFlow();
     setShowAccountNotFound(false);
     setPasswordValue("");
     if (mode === "signin") {
@@ -145,6 +172,11 @@ function WhatsAppLoginInner() {
     setWhatsappNumberValue(""); // Clear number when country changes
   };
 
+  const toggleCountryDropdown = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setIsDropdownOpen((open) => !open);
+  };
+
   // Auto-detect browser country once and preselect the matching dial code.
   useEffect(() => {
     if (hasAutoDetectedCountry.current || !countryOptions.length) return;
@@ -159,31 +191,6 @@ function WhatsAppLoginInner() {
     // Fallback to first sorted option when no browser hint is available.
     setSelectedCountryCode(countryOptions[0].code);
   }, [countryOptions]);
-
-  // Handle keyboard typing when dropdown is open for inline search
-  const handleDropdownKeyDown = (e: React.KeyboardEvent) => {
-    // Ignore navigation keys
-    if (['ArrowUp', 'ArrowDown', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
-      if (e.key === 'Escape') {
-        setIsDropdownOpen(false);
-        setCountrySearch("");
-      }
-      return;
-    }
-    
-    // Allow typing to search
-    if (e.key.length === 1) {
-      e.preventDefault();
-      const char = e.key.toLowerCase();
-      setCountrySearch(prev => {
-        const newSearch = prev + char;
-        return newSearch.slice(0, 20); // Limit search length
-      });
-    } else if (e.key === 'Backspace') {
-      e.preventDefault();
-      setCountrySearch(prev => prev.slice(0, -1));
-    }
-  };
 
   const filteredCountries = countryOptions
     .filter((country) => {
@@ -237,26 +244,114 @@ function WhatsAppLoginInner() {
       return 0;
     });
 
+  const countryDropdownPanel = isDropdownOpen ? (
+    <div
+      ref={dropdownPanelRef}
+      className="absolute top-[calc(100%+8px)] left-0 right-0 z-[120] max-h-[min(280px,42vh)] overflow-x-hidden overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_16px_40px_rgba(15,23,42,0.16)]"
+      onMouseDown={(event) => event.stopPropagation()}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          setIsDropdownOpen(false);
+          setCountrySearch("");
+        }
+      }}
+    >
+      <div className="sticky top-0 z-10 border-b border-slate-100 bg-white">
+        <div className="flex items-center gap-2 px-3 py-2.5">
+          <div className="flex flex-1 items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
+            <span className="shrink-0 whitespace-nowrap text-xs text-slate-400">{t("whatsapp.searchLabel")}</span>
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={countrySearch}
+              onChange={(e) => setCountrySearch(e.target.value)}
+              placeholder={t("whatsapp.typeCountryOrCode")}
+              className="flex-1 bg-transparent text-[13px] font-semibold text-slate-700 outline-none placeholder:text-slate-400"
+            />
+            {countrySearch ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setCountrySearch("");
+                  searchInputRef.current?.focus();
+                }}
+                className="text-xs text-slate-400 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            ) : null}
+          </div>
+        </div>
+        {countrySearch ? (
+          <div className="px-3 pb-2 text-[11px] text-slate-500">
+            {t("whatsapp.foundResults", { count: filteredCountries.length })}
+          </div>
+        ) : null}
+      </div>
+      <div className="py-1">
+        {filteredCountries.map((country) => (
+          <button
+            key={`${country.code}-${country.dialCode}`}
+            type="button"
+            className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => handleCountrySelect(country)}
+          >
+            <span className="shrink-0 text-[20px] leading-none">{countryCodeToFlag(country.code)}</span>
+            <span className="min-w-16 shrink-0 whitespace-nowrap text-[14px] font-bold tabular-nums text-slate-800">
+              {country.dialCode}
+            </span>
+            <span className="min-w-0 flex-1 text-[13px] font-semibold leading-snug text-slate-600">
+              {country.displayName}
+            </span>
+          </button>
+        ))}
+        {filteredCountries.length === 0 ? (
+          <div className="px-4 py-4 text-center">
+            <p className="text-[13px] font-medium text-slate-500">{t("whatsapp.noCountryFound")}</p>
+            <button
+              type="button"
+              onClick={() => setCountrySearch("")}
+              className="mt-2 text-[12px] font-semibold text-sky-600 hover:text-sky-700"
+            >
+              {t("whatsapp.clearSearch")}
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  ) : null;
+
   // Close dropdown when clicking outside + auto-focus search when opened
   useEffect(() => {
+    if (!isDropdownOpen) return;
+
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+      if (dropdownRef.current?.contains(target) || dropdownPanelRef.current?.contains(target)) {
+        return;
+      }
+      setIsDropdownOpen(false);
+      setCountrySearch("");
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
         setIsDropdownOpen(false);
         setCountrySearch("");
       }
     };
 
-    if (isDropdownOpen) {
+    const timer = window.setTimeout(() => {
       document.addEventListener("mousedown", handleClickOutside);
-      // Auto-focus the search input when dropdown opens
-      setTimeout(() => searchInputRef.current?.focus(), 10);
-    }
+      document.addEventListener("keydown", handleKeyDown);
+      searchInputRef.current?.focus();
+    }, 50);
 
     return () => {
+      window.clearTimeout(timer);
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isDropdownOpen]);
 
@@ -403,6 +498,20 @@ function WhatsAppLoginInner() {
         sessionStorage.removeItem("otpPreview");
       }
 
+      if (isOtpSignIn) {
+        setSignInOtpContext({
+          whatsappNumber: resolvedLocal,
+          countryCode: resolvedCountry,
+          email: resolvedEmail,
+          candidateId: data.data?.candidateId ? String(data.data.candidateId) : undefined,
+        });
+        setSignInOtpSent(true);
+        setOtpResendTimer(29);
+        setOtpValue("");
+        showSuccessToast(t("whatsapp.otpSent"), t("whatsapp.checkEmailForCode"));
+        return;
+      }
+
       showSuccessToast(t("whatsapp.otpSent"), t("whatsapp.checkEmailForCode"));
       router.push(localizePath("/whatsapp/verify", locale));
     } catch (err: unknown) {
@@ -422,12 +531,131 @@ function WhatsAppLoginInner() {
     }
   };
 
+  const handleResendSignInOtp = async () => {
+    if (otpResendTimer > 0 || !signInOtpContext) return;
+    setError("");
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          whatsappNumber: signInOtpContext.whatsappNumber,
+          countryCode: signInOtpContext.countryCode,
+          email: signInOtpContext.email,
+          ...(signInOtpContext.candidateId ? { candidateId: signInOtpContext.candidateId } : {}),
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || t("whatsapp.verify.failedToResendOtp"));
+      }
+      if (data.data?.otp) {
+        setOtpDisplay(data.data.otp);
+      }
+      setOtpResendTimer(29);
+      showSuccessToast(t("whatsapp.verify.otpResentTitle"), t("whatsapp.verify.otpResentDescription"));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("whatsapp.verify.failedToResendOtp"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifySignInOtp = async () => {
+    setError("");
+    setShowAccountNotFound(false);
+
+    if (!otpValue || otpValue.length !== 6) {
+      setError(t("whatsapp.verify.enterValidOtp"));
+      return;
+    }
+
+    const ctx = signInOtpContext;
+    if (!ctx) {
+      setError(t("whatsapp.signInOtpSendFirst"));
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const geo = await import("@/lib/login-geo").then((m) => m.collectLoginGeoPayload());
+      try {
+        sessionStorage.setItem("saasa:login-geo", JSON.stringify(geo));
+      } catch {
+        /* ignore */
+      }
+
+      const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          whatsappNumber: ctx.whatsappNumber,
+          countryCode: ctx.countryCode,
+          email: ctx.email,
+          otp: otpValue,
+          ...(ctx.candidateId ? { candidateId: ctx.candidateId } : {}),
+          ...geo,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || t("whatsapp.verify.invalidOtp"));
+      }
+
+      if (data.data?.token && data.data?.candidateId) {
+        login(data.data.token, data.data.candidateId);
+      }
+
+      const needsPassword = data.data?.needsPassword === true;
+      const skipCv = data.data?.skipCvUpload === true;
+      resetSignInOtpFlow();
+
+      if (needsPassword) {
+        sessionStorage.setItem("skipCvUpload", skipCv ? "true" : "false");
+        showSuccessToast(t("whatsapp.verify.setPasswordNextTitle"), t("whatsapp.verify.setPasswordNextDescription"));
+        router.push(localizePath("/whatsapp/set-password", locale));
+        return;
+      }
+
+      const postLoginRedirect = sessionStorage.getItem("postLoginRedirect");
+      showSuccessToast(t("whatsapp.verify.loginSuccessfulTitle"), t("whatsapp.verify.loginSuccessfulDescription"));
+
+      if (!skipCv) {
+        router.push(localizePath("/uploadcv", locale));
+      } else if (postLoginRedirect) {
+        sessionStorage.removeItem("postLoginRedirect");
+        router.push(postLoginRedirect);
+      } else {
+        router.push(localizePath("/candidate-dashboard", locale));
+      }
+    } catch (err: unknown) {
+      const isNetworkFail =
+        err instanceof TypeError &&
+        (err.message === "Failed to fetch" || err.message.includes("fetch"));
+      setError(
+        isNetworkFail
+          ? t("whatsapp.cannotReachApi", { apiBaseUrl: API_BASE_URL })
+          : err instanceof Error
+            ? err.message
+            : t("whatsapp.verify.verificationFailed"),
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (signInMethod === "otp") {
       if (signInContact === "whatsapp") {
         setError(t("whatsapp.mobileOtpComingSoon"));
         setShowAccountNotFound(false);
+        return;
+      }
+      if (signInOtpSent) {
+        await handleVerifySignInOtp();
         return;
       }
       await handleSendOTP(e);
@@ -545,17 +773,21 @@ function WhatsAppLoginInner() {
 
   const ctaLabel = isSignIn
     ? signInMethod === "otp"
-      ? t("whatsapp.continue")
+      ? signInOtpSent
+        ? t("whatsapp.signInOtpVerifyCta")
+        : t("whatsapp.continue")
       : t("whatsapp.signInCta")
     : t("whatsapp.continue");
   const ctaLoadingLabel = isSignIn
     ? signInMethod === "otp"
-      ? t("whatsapp.sendingCode")
+      ? signInOtpSent
+        ? t("whatsapp.verify.verifying")
+        : t("whatsapp.sendingCode")
       : t("whatsapp.signingIn")
     : t("whatsapp.sendingCode");
 
   return (
-    <div className="min-h-dvh lg:h-dvh lg:max-h-dvh bg-[#F4F8FC] text-slate-900 flex flex-col relative overflow-x-hidden lg:overflow-hidden font-sans">
+    <div className={`min-h-dvh lg:h-dvh lg:max-h-dvh bg-[#F4F8FC] text-slate-900 flex flex-col relative font-sans ${isDropdownOpen ? "overflow-visible" : "overflow-x-hidden lg:overflow-hidden"}`}>
       
       {/* Background Atmosphere */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -651,6 +883,7 @@ function WhatsAppLoginInner() {
                         onClick={() => {
                           setSignInContact("whatsapp");
                           setError("");
+                          resetSignInOtpFlow();
                           setShowAccountNotFound(false);
                         }}
                         className={`relative z-10 flex h-8 w-9 items-center justify-center rounded-full transition-colors duration-500 ${
@@ -673,6 +906,7 @@ function WhatsAppLoginInner() {
                         onClick={() => {
                           setSignInContact("email");
                           setError("");
+                          resetSignInOtpFlow();
                           setShowAccountNotFound(false);
                         }}
                         className={`relative z-10 flex h-8 w-9 items-center justify-center rounded-full transition-colors duration-500 ${
@@ -701,110 +935,42 @@ function WhatsAppLoginInner() {
                         animate={{ opacity: 1, height: "auto", y: 0 }}
                         exit={{ opacity: 0, height: 0, y: -4 }}
                         transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-                        className="overflow-hidden"
+                        className={isDropdownOpen ? "overflow-visible relative z-50 pb-[min(288px,42vh)]" : "overflow-hidden"}
+                        style={isDropdownOpen ? { overflow: "visible" } : undefined}
                       >
-                        <div
-                          className="flex relative rounded-[14px] border border-slate-200 shadow-sm overflow-visible bg-white focus-within:ring-4 focus-within:ring-[#28a8e1]/15 focus-within:border-[#28a8e1] transition-all"
-                          ref={dropdownRef}
-                        >
-                          <div className="relative shrink-0">
-                            <button
-                              type="button"
-                              className="flex h-[50px] px-3.5 items-center gap-2 hover:bg-slate-50 transition-colors rounded-l-[14px] text-slate-700 font-medium text-[14px]"
-                              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            >
-                              <span className="text-[20px] leading-none">{countryCodeToFlag(selectedCountry.code)}</span>
-                              <span className="text-slate-400 text-[10px] ml-0.5">▼</span>
-                            </button>
-                          </div>
-
-                          {isDropdownOpen && (
-                            <div
-                              className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 w-full max-h-[360px] overflow-x-hidden overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
-                              onKeyDown={handleDropdownKeyDown}
-                              tabIndex={-1}
-                            >
-                              <div className="sticky top-0 bg-white z-10 border-b border-slate-100">
-                                <div className="px-3 py-2.5 flex items-center gap-2">
-                                  <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
-                                    <span className="shrink-0 text-slate-400 text-xs whitespace-nowrap">{t("whatsapp.searchLabel")}</span>
-                                    <input
-                                      ref={searchInputRef}
-                                      type="text"
-                                      value={countrySearch}
-                                      onChange={(e) => setCountrySearch(e.target.value)}
-                                      placeholder={t("whatsapp.typeCountryOrCode")}
-                                      className="flex-1 bg-transparent text-[13px] font-semibold text-slate-700 outline-none placeholder:text-slate-400"
-                                    />
-                                    {countrySearch && (
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setCountrySearch("");
-                                          searchInputRef.current?.focus();
-                                        }}
-                                        className="text-slate-400 hover:text-slate-600 text-xs"
-                                      >
-                                        ✕
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                                {countrySearch && (
-                                  <div className="px-3 pb-2 text-[11px] text-slate-500">
-                                    {t("whatsapp.foundResults", { count: filteredCountries.length })}
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="py-1">
-                                {filteredCountries.map((country) => (
-                                  <div
-                                    key={`${country.code}-${country.dialCode}`}
-                                    className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
-                                    onClick={() => handleCountrySelect(country)}
-                                  >
-                                    <span className="shrink-0 text-[20px] leading-none">{countryCodeToFlag(country.code)}</span>
-                                    <span className="shrink-0 min-w-16 whitespace-nowrap font-bold text-slate-800 text-[14px] tabular-nums">
-                                      {country.dialCode}
-                                    </span>
-                                    <span className="min-w-0 flex-1 text-[13px] font-semibold text-slate-600 leading-snug">
-                                      {country.displayName}
-                                    </span>
-                                  </div>
-                                ))}
-                                {filteredCountries.length === 0 && (
-                                  <div className="px-4 py-4 text-center">
-                                    <p className="text-[13px] font-medium text-slate-500">{t("whatsapp.noCountryFound")}</p>
-                                    <button
-                                      type="button"
-                                      onClick={() => setCountrySearch("")}
-                                      className="mt-2 text-[12px] text-sky-600 hover:text-sky-700 font-semibold"
-                                    >
-                                      {t("whatsapp.clearSearch")}
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
+                        <div className="relative z-50" ref={dropdownRef}>
+                          <div className="flex rounded-[14px] border border-slate-200 shadow-sm overflow-visible bg-white focus-within:ring-4 focus-within:ring-[#28a8e1]/15 focus-within:border-[#28a8e1] transition-all">
+                            <div className="relative shrink-0">
+                              <button
+                                type="button"
+                                aria-expanded={isDropdownOpen}
+                                aria-haspopup="listbox"
+                                className="flex h-[50px] px-3.5 items-center gap-2 hover:bg-slate-50 transition-colors rounded-l-[14px] text-slate-700 font-medium text-[14px]"
+                                onClick={toggleCountryDropdown}
+                              >
+                                <span className="text-[20px] leading-none">{countryCodeToFlag(selectedCountry.code)}</span>
+                                <span className="text-slate-400 text-[10px] ml-0.5">▼</span>
+                              </button>
                             </div>
-                          )}
 
-                          <div className="w-px h-7 bg-slate-200 my-auto" />
+                            <div className="w-px h-7 bg-slate-200 my-auto" />
 
-                          <div className="flex-1 relative">
-                            <div className="absolute left-3 top-0 bottom-0 flex items-center text-slate-400 pointer-events-none font-semibold text-[14px]">
-                              {selectedCountry.dialCode}
+                            <div className="flex-1 relative">
+                              <div className="absolute left-3 top-0 bottom-0 flex items-center text-slate-400 pointer-events-none font-semibold text-[14px]">
+                                {selectedCountry.dialCode}
+                              </div>
+                              <input
+                                type="tel"
+                                value={whatsappNumberValue}
+                                onChange={(e) => setWhatsappNumberValue(e.target.value.replace(/\D/g, "").slice(0, selectedCountry.phoneLength))}
+                                maxLength={selectedCountry.phoneLength}
+                                inputMode="numeric"
+                                className="w-full h-[50px] pl-[52px] pr-4 bg-transparent outline-none text-slate-900 font-bold text-[15px] placeholder:text-slate-300 placeholder:font-semibold rounded-r-[14px]"
+                                placeholder={`${selectedCountry.phoneLength} digits`}
+                              />
                             </div>
-                            <input
-                              type="tel"
-                              value={whatsappNumberValue}
-                              onChange={(e) => setWhatsappNumberValue(e.target.value.replace(/\D/g, "").slice(0, selectedCountry.phoneLength))}
-                              maxLength={selectedCountry.phoneLength}
-                              inputMode="numeric"
-                              className="w-full h-[50px] pl-[52px] pr-4 bg-transparent outline-none text-slate-900 font-bold text-[15px] placeholder:text-slate-300 placeholder:font-semibold rounded-r-[14px]"
-                              placeholder={`${selectedCountry.phoneLength} digits`}
-                            />
                           </div>
+                          {countryDropdownPanel}
                         </div>
                         <div className="flex items-center justify-between mt-1 px-1">
                           <p className="text-[10px] font-bold text-slate-400">
@@ -831,7 +997,10 @@ function WhatsAppLoginInner() {
                           <input
                             type="email"
                             value={emailValue}
-                            onChange={(e) => setEmailValue(e.target.value)}
+                            onChange={(e) => {
+                              setEmailValue(e.target.value);
+                              if (signInOtpSent) resetSignInOtpFlow();
+                            }}
                             className="w-full h-[50px] pl-[48px] pr-4 bg-transparent outline-none text-slate-900 font-bold text-[15px] placeholder:text-slate-300 placeholder:font-semibold"
                             placeholder="name@company.com"
                             autoComplete="email"
@@ -851,110 +1020,41 @@ function WhatsAppLoginInner() {
               {/* CREATE ACCOUNT: WhatsApp + Email fields restored (both visible) */}
               {!isSignIn && (
                 <>
-                  <div>
+                  <div className={isDropdownOpen ? "relative z-50" : "relative"}>
                     <label className="block text-[11px] font-black text-slate-700 uppercase tracking-widest mb-1.5 ml-1">{t("whatsapp.whatsappNumber")}</label>
-                    <div
-                      className="flex relative rounded-[14px] border border-slate-200 shadow-sm overflow-visible bg-white focus-within:ring-4 focus-within:ring-[#28a8e1]/15 focus-within:border-[#28a8e1] transition-all"
-                      ref={dropdownRef}
-                    >
-                      <div className="relative shrink-0">
-                        <button
-                          type="button"
-                          className="flex h-[50px] px-3.5 items-center gap-2 hover:bg-slate-50 transition-colors rounded-l-[14px] text-slate-700 font-medium text-[14px]"
-                          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        >
-                          <span className="text-[20px] leading-none">{countryCodeToFlag(selectedCountry.code)}</span>
-                          <span className="text-slate-400 text-[10px] ml-0.5">▼</span>
-                        </button>
-                      </div>
-
-                      {isDropdownOpen && (
-                        <div
-                          className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 w-full max-h-[360px] overflow-x-hidden overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
-                          onKeyDown={handleDropdownKeyDown}
-                          tabIndex={-1}
-                        >
-                          <div className="sticky top-0 bg-white z-10 border-b border-slate-100">
-                            <div className="px-3 py-2.5 flex items-center gap-2">
-                              <div className="flex-1 flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
-                                <span className="shrink-0 text-slate-400 text-xs whitespace-nowrap">{t("whatsapp.searchLabel")}</span>
-                                <input
-                                  ref={searchInputRef}
-                                  type="text"
-                                  value={countrySearch}
-                                  onChange={(e) => setCountrySearch(e.target.value)}
-                                  placeholder={t("whatsapp.typeCountryOrCode")}
-                                  className="flex-1 bg-transparent text-[13px] font-semibold text-slate-700 outline-none placeholder:text-slate-400"
-                                />
-                                {countrySearch && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setCountrySearch("");
-                                      searchInputRef.current?.focus();
-                                    }}
-                                    className="text-slate-400 hover:text-slate-600 text-xs"
-                                  >
-                                    ✕
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                            {countrySearch && (
-                              <div className="px-3 pb-2 text-[11px] text-slate-500">
-                                {t("whatsapp.foundResults", { count: filteredCountries.length })}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="py-1">
-                            {filteredCountries.map((country) => (
-                              <div
-                                key={`${country.code}-${country.dialCode}`}
-                                className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
-                                onClick={() => handleCountrySelect(country)}
-                              >
-                                <span className="shrink-0 text-[20px] leading-none">{countryCodeToFlag(country.code)}</span>
-                                <span className="shrink-0 min-w-16 whitespace-nowrap font-bold text-slate-800 text-[14px] tabular-nums">
-                                  {country.dialCode}
-                                </span>
-                                <span className="min-w-0 flex-1 text-[13px] font-semibold text-slate-600 leading-snug">
-                                  {country.displayName}
-                                </span>
-                              </div>
-                            ))}
-                            {filteredCountries.length === 0 && (
-                              <div className="px-4 py-4 text-center">
-                                <p className="text-[13px] font-medium text-slate-500">{t("whatsapp.noCountryFound")}</p>
-                                <button
-                                  type="button"
-                                  onClick={() => setCountrySearch("")}
-                                  className="mt-2 text-[12px] text-sky-600 hover:text-sky-700 font-semibold"
-                                >
-                                  {t("whatsapp.clearSearch")}
-                                </button>
-                              </div>
-                            )}
-                          </div>
+                    <div className={`relative ${isDropdownOpen ? "z-50" : "z-30"}`} ref={dropdownRef}>
+                      <div className="flex rounded-[14px] border border-slate-200 shadow-sm overflow-visible bg-white focus-within:ring-4 focus-within:ring-[#28a8e1]/15 focus-within:border-[#28a8e1] transition-all">
+                        <div className="relative shrink-0">
+                          <button
+                            type="button"
+                            aria-expanded={isDropdownOpen}
+                            aria-haspopup="listbox"
+                            className="flex h-[50px] px-3.5 items-center gap-2 hover:bg-slate-50 transition-colors rounded-l-[14px] text-slate-700 font-medium text-[14px]"
+                            onClick={toggleCountryDropdown}
+                          >
+                            <span className="text-[20px] leading-none">{countryCodeToFlag(selectedCountry.code)}</span>
+                            <span className="text-slate-400 text-[10px] ml-0.5">▼</span>
+                          </button>
                         </div>
-                      )}
 
-                      <div className="w-px h-7 bg-slate-200 my-auto" />
+                        <div className="w-px h-7 bg-slate-200 my-auto" />
 
-                      <div className="flex-1 relative">
-                        <div className="absolute left-3 top-0 bottom-0 flex items-center text-slate-400 pointer-events-none font-semibold text-[14px]">
-                          {selectedCountry.dialCode}
+                        <div className="flex-1 relative">
+                          <div className="absolute left-3 top-0 bottom-0 flex items-center text-slate-400 pointer-events-none font-semibold text-[14px]">
+                            {selectedCountry.dialCode}
+                          </div>
+                          <input
+                            type="tel"
+                            value={whatsappNumberValue}
+                            onChange={(e) => setWhatsappNumberValue(e.target.value.replace(/\D/g, "").slice(0, selectedCountry.phoneLength))}
+                            maxLength={selectedCountry.phoneLength}
+                            inputMode="numeric"
+                            className="w-full h-[50px] pl-[52px] pr-4 bg-transparent outline-none text-slate-900 font-bold text-[15px] placeholder:text-slate-300 placeholder:font-semibold rounded-r-[14px]"
+                            placeholder={`${selectedCountry.phoneLength} digits`}
+                          />
                         </div>
-                        <input
-                          type="tel"
-                          value={whatsappNumberValue}
-                          onChange={(e) => setWhatsappNumberValue(e.target.value.replace(/\D/g, "").slice(0, selectedCountry.phoneLength))}
-                          maxLength={selectedCountry.phoneLength}
-                          inputMode="numeric"
-                          className="w-full h-[50px] pl-[52px] pr-4 bg-transparent outline-none text-slate-900 font-bold text-[15px] placeholder:text-slate-300 placeholder:font-semibold rounded-r-[14px]"
-                          placeholder={`${selectedCountry.phoneLength} digits`}
-                        />
                       </div>
+                      {countryDropdownPanel}
                     </div>
                     <div className="flex items-center justify-between mt-1 px-1">
                       <p className="text-[10px] font-bold text-slate-400">{t("whatsapp.whatsappHint")}</p>
@@ -999,6 +1099,7 @@ function WhatsAppLoginInner() {
                         onClick={() => {
                           setSignInMethod("password");
                           setError("");
+                          resetSignInOtpFlow();
                           setShowAccountNotFound(false);
                         }}
                         className={`relative z-10 px-3 h-7 rounded-full transition-colors duration-500 ${
@@ -1020,6 +1121,7 @@ function WhatsAppLoginInner() {
                           setSignInMethod("otp");
                           setError("");
                           setPasswordValue("");
+                          resetSignInOtpFlow();
                           setShowAccountNotFound(false);
                         }}
                         className={`relative z-10 px-3 h-7 rounded-full transition-colors duration-500 ${
@@ -1038,7 +1140,7 @@ function WhatsAppLoginInner() {
                     </div>
                   </div>
 
-                  <div className="relative overflow-hidden">
+                  <div className="relative z-0 overflow-hidden">
                     <AnimatePresence mode="wait" initial={false}>
                       {signInMethod === "password" ? (
                         <motion.div
@@ -1070,6 +1172,18 @@ function WhatsAppLoginInner() {
                               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                           </div>
+                          <div className="mt-2 flex justify-end px-1">
+                            <Link
+                              href={`${localizePath("/whatsapp/forgot-password", locale)}${
+                                signInContact === "email" && emailValue.trim()
+                                  ? `?email=${encodeURIComponent(emailValue.trim().toLowerCase())}`
+                                  : ""
+                              }`}
+                              className="text-[11px] font-bold text-[#08428c] hover:text-[#28a8e1] transition-colors"
+                            >
+                              {t("whatsapp.forgotPasswordLink")}
+                            </Link>
+                          </div>
                         </motion.div>
                       ) : signInContact === "whatsapp" ? (
                         <motion.div
@@ -1085,16 +1199,65 @@ function WhatsAppLoginInner() {
                           </p>
                         </motion.div>
                       ) : (
-                        <motion.p
-                          key="otp-hint"
+                        <motion.div
+                          key="otp-email-field"
                           initial={{ opacity: 0, height: 0, y: 6 }}
                           animate={{ opacity: 1, height: "auto", y: 0 }}
                           exit={{ opacity: 0, height: 0, y: -4 }}
                           transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-                          className="text-[12px] font-medium text-slate-500 leading-relaxed px-1 overflow-hidden"
+                          className="overflow-hidden space-y-2"
                         >
-                          {t("whatsapp.signInOtpSubtitle")}
-                        </motion.p>
+                          <p className="text-[12px] font-medium text-slate-500 leading-relaxed px-1">
+                            {signInOtpSent
+                              ? t("whatsapp.signInOtpEnterCode", {
+                                  email: signInOtpContext?.email || emailValue.trim().toLowerCase(),
+                                })
+                              : t("whatsapp.signInOtpSubtitle")}
+                          </p>
+                          <div className="relative rounded-[14px] border border-slate-200 shadow-sm overflow-hidden bg-white focus-within:ring-4 focus-within:ring-[#28a8e1]/15 focus-within:border-[#28a8e1] transition-all">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={6}
+                              value={otpValue}
+                              onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ""))}
+                              disabled={!signInOtpSent || isLoading}
+                              className="w-full h-[50px] px-4 bg-transparent outline-none text-slate-900 font-bold text-[20px] text-center tracking-[0.45em] placeholder:text-slate-300 placeholder:font-semibold placeholder:tracking-[0.35em] disabled:cursor-not-allowed disabled:bg-slate-50/80"
+                              placeholder={t("whatsapp.signInOtpPlaceholder")}
+                              autoComplete="one-time-code"
+                            />
+                          </div>
+                          {signInOtpSent ? (
+                            <div className="flex items-center justify-between px-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  resetSignInOtpFlow();
+                                  setError("");
+                                }}
+                                className="text-[11px] font-bold text-slate-500 hover:text-slate-800 transition-colors"
+                              >
+                                {t("whatsapp.signInOtpChangeEmail")}
+                              </button>
+                              {otpResendTimer > 0 ? (
+                                <span className="text-[11px] font-medium text-slate-400">
+                                  {t("whatsapp.verify.resendIn", {
+                                    time: `00:${String(otpResendTimer).padStart(2, "0")}`,
+                                  })}
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => void handleResendSignInOtp()}
+                                  disabled={isLoading}
+                                  className="text-[11px] font-bold text-[#08428c] hover:text-[#28a8e1] transition-colors disabled:opacity-50"
+                                >
+                                  {t("whatsapp.verify.resendCode")}
+                                </button>
+                              )}
+                            </div>
+                          ) : null}
+                        </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
@@ -1161,7 +1324,10 @@ function WhatsAppLoginInner() {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={
+                  isLoading ||
+                  (isOtpSignIn && signInOtpSent && otpValue.length !== 6)
+                }
                 className={`w-full flex justify-center items-center gap-2 rounded-full bg-linear-to-r from-[#08428c] to-[#28a8e1] hover:brightness-105 active:brightness-95 text-white font-bold text-[14px] shadow-[0_10px_24px_rgba(8,66,140,0.32)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 transform ${isSignIn ? "h-[48px] mt-5" : "h-[46px] mt-3.5"}`}
               >
                 {isLoading ? (

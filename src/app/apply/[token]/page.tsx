@@ -239,18 +239,21 @@ export default function ApplyLandingPage() {
           job?: PublicApplyJob;
         };
         if (!response.ok) {
-          throw new Error(json?.message || "Unable to load job");
+          if (response.status === 404) {
+            throw new Error("This job isn’t available");
+          }
+          throw new Error("Unable to connect right now");
         }
         return json?.data?.job || json?.job || null;
       })
       .then((nextJob) => {
         if (cancelled) return;
         setJob(nextJob);
-        if (!nextJob) setError("Job not found");
+        if (!nextJob) setError("This job isn’t available");
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Unable to load job");
+          setError(err instanceof Error ? err.message : "Unable to connect right now");
         }
       })
       .finally(() => {
@@ -434,9 +437,15 @@ export default function ApplyLandingPage() {
           </div>
         ) : error || !job || !detailsJob ? (
           <div className="mx-auto max-w-lg rounded-3xl border border-red-200/80 bg-white/90 px-6 py-8 text-center shadow-sm">
-            <p className="text-base font-semibold text-red-700">{error || "Job not found"}</p>
+            <p className="text-base font-semibold text-slate-900">
+              {error === "Unable to connect right now"
+                ? "Unable to connect right now"
+                : "This job isn’t available"}
+            </p>
             <p className="mt-2 text-sm text-[var(--apply-muted)]">
-              Ask the recruiter for a fresh apply link and try again.
+              {error === "Unable to connect right now"
+                ? "Please try again in a little while. Your work is safe."
+                : "Ask the recruiter for a new link and try again."}
             </p>
           </div>
         ) : (

@@ -6,49 +6,60 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Delta, DeltaIcon, DeltaValue } from "@/components/delta";
+import {
+	buildDemoDashboard,
+	type EmployerLandingDashboard,
+} from "@/lib/employers/landingMetrics";
 
 type Stat = {
 	label: string;
 	value: string;
 	delta: number;
 	footnote: string;
-	/** When true, a negative delta is treated as favorable. */
 	lowerIsBetter: boolean;
 };
 
-/** Phase 2 recruitment CRM live metrics for the employers hero preview. */
-const stats: readonly Stat[] = [
-	{
-		label: "Open leads",
-		value: "42",
-		delta: 8.2,
-		footnote: "vs yesterday",
-		lowerIsBetter: false,
-	},
-	{
-		label: "Active jobs",
-		value: "16",
-		delta: 3.1,
-		footnote: "vs last week",
-		lowerIsBetter: false,
-	},
-	{
-		label: "AI matches today",
-		value: "128",
-		delta: 12.4,
-		footnote: "vs yesterday",
-		lowerIsBetter: false,
-	},
-	{
-		label: "Placements (30d)",
-		value: "9",
-		delta: 4.6,
-		footnote: "vs prior 30d",
-		lowerIsBetter: false,
-	},
-];
+function statsFromDashboard(dashboard: EmployerLandingDashboard): Stat[] {
+	const { openLeads, activeJobs, aiMatchesToday, placements30d } = dashboard.kpis;
+	return [
+		{
+			label: "Open leads",
+			value: String(openLeads.value),
+			delta: openLeads.delta,
+			footnote: openLeads.footnote,
+			lowerIsBetter: false,
+		},
+		{
+			label: "Active jobs",
+			value: String(activeJobs.value),
+			delta: activeJobs.delta,
+			footnote: activeJobs.footnote,
+			lowerIsBetter: false,
+		},
+		{
+			label: "AI matches today",
+			value: String(aiMatchesToday.value),
+			delta: aiMatchesToday.delta,
+			footnote: aiMatchesToday.footnote,
+			lowerIsBetter: false,
+		},
+		{
+			label: "Placements (30d)",
+			value: String(placements30d.value),
+			delta: placements30d.delta,
+			footnote: placements30d.footnote,
+			lowerIsBetter: false,
+		},
+	];
+}
 
-export function DashboardStats() {
+export function DashboardStats({
+	dashboard,
+}: {
+	dashboard?: EmployerLandingDashboard;
+}) {
+	const stats = statsFromDashboard(dashboard || buildDemoDashboard());
+
 	return (
 		<>
 			{stats.map((s) => (

@@ -48,6 +48,7 @@ const PUBLIC_ROUTES = [
   '/whatsapp', 
   '/whatsapp/verify',
   '/whatsapp/set-password',
+  '/whatsapp/forgot-password',
   '/login', 
   '/signup',
   '/privacypolicy',

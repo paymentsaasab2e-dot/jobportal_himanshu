@@ -13,7 +13,11 @@ export async function GET() {
     const { DEMO_LANDING_METRICS } = await import('@/lib/employers/landingMetrics');
     return NextResponse.json({
       success: true,
-      data: { ...DEMO_LANDING_METRICS, capturedAt: new Date().toISOString() },
+      data: {
+        ...DEMO_LANDING_METRICS,
+        capturedAt: new Date().toISOString(),
+        dashboard: (await import('@/lib/employers/landingMetrics')).buildDemoDashboard(),
+      },
     });
   }
 }
