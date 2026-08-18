@@ -872,7 +872,7 @@ function WhatsAppLoginInner() {
               
               {/* SIGN IN: WhatsApp | Email icon toggle */}
               {isSignIn && (
-                <div>
+                <div className={isDropdownOpen ? "relative z-50" : "relative"}>
                   <div className="flex items-center justify-between mb-1.5 ml-1 gap-2">
                     <label className="block text-[11px] font-black text-slate-700 uppercase tracking-widest">
                       {signInContact === "whatsapp" ? t("whatsapp.whatsappNumber") : t("whatsapp.mailAddress")}
@@ -935,7 +935,7 @@ function WhatsAppLoginInner() {
                         animate={{ opacity: 1, height: "auto", y: 0 }}
                         exit={{ opacity: 0, height: 0, y: -4 }}
                         transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-                        className={isDropdownOpen ? "overflow-visible relative z-50 pb-[min(288px,42vh)]" : "overflow-hidden"}
+                        className={isDropdownOpen ? "relative z-50 overflow-visible" : "overflow-hidden"}
                         style={isDropdownOpen ? { overflow: "visible" } : undefined}
                       >
                         <div className="relative z-50" ref={dropdownRef}>
@@ -1087,7 +1087,7 @@ function WhatsAppLoginInner() {
               )}
 
               {isSignIn && (
-                <div>
+                <div className="relative z-0">
                   <div className="flex items-center justify-between mb-1.5 ml-1">
                     <label className="block text-[11px] font-black text-slate-700 uppercase tracking-widest">
                       {signInMethod === "password" ? t("whatsapp.passwordLabel") : t("whatsapp.methodOtp")}
