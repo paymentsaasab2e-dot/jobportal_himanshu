@@ -102,8 +102,8 @@ export default function LmsCourseDetailPage({
           Back to courses
         </Link>
         <LmsEmptyState
-          title="Course not found"
-          body={`We couldn't find a course with id “${id}”.`}
+          title="We couldn’t find this"
+          body="It may have been removed. Go back and choose another course."
           action={
             <Link
               href="/lms/courses"

@@ -84,7 +84,8 @@ export default function PublicEventDetailPage({ eventId }: { eventId: string }) 
   if (!event) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-28 text-center">
-        <p className="text-lg font-semibold text-slate-900">Event not found</p>
+        <p className="text-lg font-semibold text-slate-900">We couldn’t find this</p>
+        <p className="mt-2 text-sm text-slate-500">This event isn’t available. It may have been removed.</p>
         <Link
           href={localizePath('/events', DEFAULT_LOCALE)}
           className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-sky-600"

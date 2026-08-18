@@ -24,8 +24,8 @@ export default function CompanyResearchPage() {
           <ArrowLeft className="h-4 w-4" /> Back to prep
         </Link>
         <LmsInlineError
-          title="Company research not found"
-          message="This company does not have a supported mock research profile yet. Please return to Interview Prep and choose one of the suggested companies."
+          title="We couldn’t find this"
+          message="This company isn’t available yet. Go back and choose another option."
         />
       </div>
     );

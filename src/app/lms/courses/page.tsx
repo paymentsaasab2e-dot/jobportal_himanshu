@@ -137,7 +137,7 @@ function LmsCoursesPageContent() {
         const data = await fetchCourses({ search: query, level: level !== 'all' ? level.toLowerCase() : '', focusTopic: focusParam });
         setBackendCourses(data || []);
       } catch (err) {
-        toast.push({ title: 'Error', message: 'Failed to load courses', tone: 'destructive' });
+        toast.push({ title: 'Unable to connect right now', message: 'Please try again in a little while.', tone: 'destructive' });
       } finally {
         setLoading(false);
       }
@@ -389,8 +389,8 @@ function LmsCoursesPageContent() {
         </div>
       ) : courses.length === 0 ? (
         <LmsEmptyState
-          title="No courses match your filters"
-          body="Try clearing filters or using fewer keywords."
+          title="No results"
+          body="Try fewer filters or a different search."
           action={
             <button
               type="button"

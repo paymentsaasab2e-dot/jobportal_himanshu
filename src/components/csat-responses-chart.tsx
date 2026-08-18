@@ -16,19 +16,12 @@ import {
 	ChartTooltip,
 	ChartTooltipContent,
 } from "@/components/ui/chart";
+import {
+	buildDemoDashboard,
+	type CandidateIntakeRow,
+} from "@/lib/employers/landingMetrics";
 
-const chartData = [
-	{ day: "Apr 8", portal: 11, referral: 9, linkedin: 4 },
-	{ day: "Apr 9", portal: 15, referral: 11, linkedin: 5 },
-	{ day: "Apr 10", portal: 13, referral: 10, linkedin: 5 },
-	{ day: "Apr 11", portal: 16, referral: 12, linkedin: 5 },
-	{ day: "Apr 12", portal: 12, referral: 10, linkedin: 5 },
-	{ day: "Apr 13", portal: 14, referral: 10, linkedin: 6 },
-	{ day: "Apr 14", portal: 11, referral: 9, linkedin: 5 },
-	{ day: "Apr 15", portal: 16, referral: 7, linkedin: 4 },
-	{ day: "Apr 16", portal: 13, referral: 11, linkedin: 5 },
-	{ day: "Apr 17", portal: 15, referral: 11, linkedin: 6 },
-] as const;
+const chartDataFallback = buildDemoDashboard().candidateIntake;
 
 const chartConfig = {
 	portal: {
@@ -65,8 +58,11 @@ function ColumnHoverCursor(props: React.ComponentProps<typeof Rectangle>) {
 
 export function CsatResponsesChart({
 	className,
+	data,
+	demoFallback = true,
 	...props
-}: ComponentProps<typeof Card>) {
+}: ComponentProps<typeof Card> & { data?: CandidateIntakeRow[]; demoFallback?: boolean }) {
+	const chartData = data ?? (demoFallback ? chartDataFallback : []);
 	return (
 		<Card
 			className={cn("shadow-none md:col-span-2 dark:ring-0", className)}
@@ -80,7 +76,7 @@ export function CsatResponsesChart({
 			</CardHeader>
 			<CardContent>
 				<ChartContainer className="aspect-video w-full" config={chartConfig}>
-					<BarChart accessibilityLayer data={[...chartData]}>
+					<BarChart accessibilityLayer data={chartData}>
 						<XAxis
 							axisLine={false}
 							dataKey="day"

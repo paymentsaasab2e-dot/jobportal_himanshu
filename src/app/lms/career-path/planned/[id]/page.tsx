@@ -104,8 +104,8 @@ export default function PlannedItemDetailPage() {
           Back to Career Path
         </Link>
         <LmsInlineError
-          title="Planned item not found"
-          message="This item may have been removed, completed, or never saved to your plan."
+          title="We couldn’t find this"
+          message="It may have been removed. Go back and choose another option."
         />
       </div>
     );

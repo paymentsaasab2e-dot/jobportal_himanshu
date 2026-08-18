@@ -54,8 +54,8 @@ export default function CourseLessonPage({
           Back to courses
         </Link>
         <LmsEmptyState
-          title="Course not found"
-          body={`No course found for id “${id}”.`}
+          title="We couldn’t find this"
+          body="It may have been removed. Go back and choose another course."
           action={
             <Link
               href="/lms/courses"
@@ -93,8 +93,8 @@ export default function CourseLessonPage({
           Back to course
         </Link>
         <LmsEmptyState
-          title="Lesson not found"
-          body={`No lesson “${lessonId}” exists for this course.`}
+          title="We couldn’t find this"
+          body="It may have been removed. Go back and choose another lesson."
           action={
             <Link
               href={`/lms/courses/${id}`}

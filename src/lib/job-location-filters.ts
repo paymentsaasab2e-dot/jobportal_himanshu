@@ -52,8 +52,49 @@ const COUNTRY_ALIASES: Record<string, string> = {
   uk: 'United Kingdom',
   uae: 'United Arab Emirates',
   bharat: 'India',
+  hindustan: 'India',
   'republic of india': 'India',
+  in: 'India',
+  za: 'South Africa',
+  rsa: 'South Africa',
+  'republic of south africa': 'South Africa',
+  ug: 'Uganda',
+  tz: 'Tanzania',
+  'united republic of tanzania': 'Tanzania',
+  cm: 'Cameroon',
+  zm: 'Zambia',
+  af: 'Afghanistan',
+  bh: 'Bahrain',
+  cg: 'Congo',
+  'republic of the congo': 'Congo',
+  'congo-brazzaville': 'Congo',
+  'congo brazzaville': 'Congo',
+  cd: 'Democratic Republic of the Congo',
+  drc: 'Democratic Republic of the Congo',
+  'dr congo': 'Democratic Republic of the Congo',
+  'd.r. congo': 'Democratic Republic of the Congo',
+  'congo-kinshasa': 'Democratic Republic of the Congo',
+  'congo kinshasa': 'Democratic Republic of the Congo',
+  'democratic republic of congo': 'Democratic Republic of the Congo',
+  'congo, the democratic republic of the congo': 'Democratic Republic of the Congo',
+  'congo, the democratic republic of the': 'Democratic Republic of the Congo',
 };
+
+const COUNTRY_DISPLAY_NAMES: Record<string, string> = {
+  'congo, the democratic republic of the congo': 'Democratic Republic of the Congo',
+  'congo, the democratic republic of the': 'Democratic Republic of the Congo',
+};
+
+const ALIAS_KEYS_BY_LENGTH = Object.keys(COUNTRY_ALIASES)
+  .filter((key) => key.length >= 3)
+  .sort((a, b) => b.length - a.length);
+
+function canonicalCountryDisplayName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return '';
+  const mapped = COUNTRY_DISPLAY_NAMES[trimmed.toLowerCase()];
+  return mapped || trimmed;
+}
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -66,6 +107,23 @@ function countryNameMatchesSegment(countryName: string, segment: string): boolea
   return re.test(seg);
 }
 
+function detectCountryInText(text: string): string {
+  const raw = String(text || '').trim();
+  if (!raw) return '';
+
+  for (const alias of ALIAS_KEYS_BY_LENGTH) {
+    const re = new RegExp(`(?:^|[^a-z])${escapeRegExp(alias)}(?:$|[^a-z])`, 'i');
+    if (re.test(raw)) return COUNTRY_ALIASES[alias];
+  }
+
+  for (const name of COUNTRY_NAMES_BY_LENGTH) {
+    const re = new RegExp(`(?:^|[^a-z])${escapeRegExp(name)}(?:$|[^a-z])`, 'i');
+    if (re.test(raw)) return canonicalCountryDisplayName(name);
+  }
+
+  return '';
+}
+
 /** Resolve country from a single location segment (city/state/country part), not a full address string. */
 function resolveCountryFromSegment(segment: string): string {
   const trimmed = segment.trim();
@@ -75,14 +133,19 @@ function resolveCountryFromSegment(segment: string): string {
   const alias = COUNTRY_ALIASES[lower];
   if (alias) return alias;
 
-  const exact = COUNTRY_NAME_BY_LOWER.get(lower);
-  if (exact) return exact;
-
-  for (const name of COUNTRY_NAMES_BY_LENGTH) {
-    if (countryNameMatchesSegment(name, trimmed)) return name;
+  if (/^[a-z]{2}$/i.test(trimmed)) {
+    const fromIso = ISO_TO_COUNTRY_NAME.get(trimmed.toUpperCase());
+    if (fromIso) return canonicalCountryDisplayName(fromIso);
   }
 
-  return '';
+  const exact = COUNTRY_NAME_BY_LOWER.get(lower);
+  if (exact) return canonicalCountryDisplayName(exact);
+
+  for (const name of COUNTRY_NAMES_BY_LENGTH) {
+    if (countryNameMatchesSegment(name, trimmed)) return canonicalCountryDisplayName(name);
+  }
+
+  return detectCountryInText(trimmed);
 }
 
 export function parseJobLocation(
@@ -95,10 +158,12 @@ export function parseJobLocation(
   const countryFromDb = (countryRaw || '').trim();
 
   if (/^remote$/i.test(raw) || /^remote$/i.test(cityFromDb)) {
-    return { city: 'Remote', country: countryFromDb, raw: raw || 'Remote' };
+    const remoteCountry =
+      resolveCountryFromSegment(countryFromDb) || detectCountryInText(countryFromDb);
+    return { city: 'Remote', country: remoteCountry, raw: raw || 'Remote' };
   }
 
-  let country = countryFromDb ? resolveCountryFromSegment(countryFromDb) || countryFromDb : '';
+  let country = countryFromDb ? resolveCountryFromSegment(countryFromDb) : '';
   let city = cityFromDb;
 
   if (raw) {
@@ -108,21 +173,75 @@ export function parseJobLocation(
       country = resolveCountryFromSegment(parts[parts.length - 1]);
     }
     if (!country && parts.length === 1) {
-      country = inferCountryFromCityName(parts[0]);
+      country = resolveCountryFromSegment(parts[0]) || inferCountryFromCityName(parts[0]);
+    }
+    if (!country) {
+      country = detectCountryInText(raw);
     }
   }
 
   if (!city && raw) city = raw;
 
   if (!country && city) {
-    country = inferCountryFromCityName(city);
+    country = resolveCountryFromSegment(city) || inferCountryFromCityName(city);
   }
 
-  return { city: city.trim(), country: country.trim(), raw };
+  if (!country) {
+    country = detectCountryInText([raw, cityFromDb, countryFromDb].filter(Boolean).join(', '));
+  }
+
+  return { city: city.trim(), country: isKnownCountryName(country) ? canonicalCountryDisplayName(country.trim()) : '', raw };
 }
 
-function jobParsedCountry(job: { location: string; city?: string; country?: string }): string {
+function jobParsedCountry(job: {
+  location?: string | null;
+  city?: string | null;
+  country?: string | null;
+}): string {
   return parseJobLocation(job.location, job.city, job.country).country;
+}
+
+const KNOWN_COUNTRY_LABELS = new Set<string>([
+  ...Country.getAllCountries().map((c) => canonicalCountryDisplayName(c.name).toLowerCase()),
+  ...Object.values(COUNTRY_ALIASES).map((name) => name.toLowerCase()),
+  ...Object.values(COUNTRY_DISPLAY_NAMES).map((name) => name.toLowerCase()),
+]);
+
+export function isKnownCountryName(value: string | null | undefined): boolean {
+  const label = canonicalCountryDisplayName(String(value || '').trim());
+  if (!label) return false;
+  return KNOWN_COUNTRY_LABELS.has(label.toLowerCase());
+}
+
+/** Unique canonical country names only (no cities, no duplicate chips). */
+export function uniqueCountryNames(values: Array<string | null | undefined>, limit = 12): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of values) {
+    const label = canonicalCountryDisplayName(String(raw || '').trim());
+    if (!isKnownCountryName(label)) continue;
+    const key = label.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(label);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+/** Canonical country label for Trendings / filters (country name only, never city). */
+export function extractJobCountry(job: {
+  location?: string | null;
+  city?: string | null;
+  country?: string | null;
+  nationality?: string | null;
+}): string {
+  const fromFields = parseJobLocation(job.location, job.city, job.country).country;
+  if (isKnownCountryName(fromFields)) return canonicalCountryDisplayName(fromFields);
+  const fromText = detectCountryInText(
+    [job.location, job.city, job.country, job.nationality].filter(Boolean).join(', '),
+  );
+  return isKnownCountryName(fromText) ? fromText : '';
 }
 
 export function jobMatchesCountry(

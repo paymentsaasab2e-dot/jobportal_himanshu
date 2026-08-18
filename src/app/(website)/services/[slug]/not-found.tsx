@@ -9,10 +9,10 @@ export default function ServiceNotFound() {
         <SearchX className="h-10 w-10 text-gray-400" strokeWidth={1.5} />
       </div>
       <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 tracking-tight">
-        Service Not Found
+        Page not found
       </h1>
       <p className="text-base text-gray-500 font-normal mb-8 max-w-sm">
-        We couldn't find the service you're looking for. It may have been moved or removed.
+        This page isn’t available. It may have been moved or the link is no longer valid.
       </p>
       
       <Link href="/services" className={SVC_PRIMARY_BTN}>

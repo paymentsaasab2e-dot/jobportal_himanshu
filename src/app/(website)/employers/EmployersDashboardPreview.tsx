@@ -8,15 +8,48 @@ import { CsatResponsesChart } from "@/components/csat-responses-chart";
 import { FirstReplyTimeChart } from "@/components/first-reply-time-chart";
 import { DashboardStats } from "@/components/stats";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useLandingMetrics } from "./sections/cinematic/useLandingMetrics";
+import { buildDemoDashboard } from "@/lib/employers/landingMetrics";
 
-function EmployersDashboardContent() {
+function DashboardSkeleton() {
 	return (
 		<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-			<DashboardStats />
-			<ConversationVolumeChart />
-			<ChannelBreakdownChart />
-			<CsatResponsesChart />
-			<FirstReplyTimeChart />
+			{Array.from({ length: 4 }).map((_, i) => (
+				<div
+					key={i}
+					className="h-28 animate-pulse rounded-xl border border-white/10 bg-white/5"
+				/>
+			))}
+			<div className="h-64 animate-pulse rounded-xl border border-white/10 bg-white/5 sm:col-span-2 lg:col-span-3" />
+			<div className="h-64 animate-pulse rounded-xl border border-white/10 bg-white/5" />
+			<div className="h-64 animate-pulse rounded-xl border border-white/10 bg-white/5 sm:col-span-2" />
+			<div className="h-64 animate-pulse rounded-xl border border-white/10 bg-white/5 sm:col-span-2" />
+		</div>
+	);
+}
+
+function EmployersDashboardContent() {
+	const { data, loading } = useLandingMetrics();
+	const isLive = data.mode === "live";
+	const dashboard = isLive
+		? data.dashboard!
+		: data.dashboard || buildDemoDashboard();
+
+	if (loading) {
+		return <DashboardSkeleton />;
+	}
+
+	return (
+		<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			<DashboardStats dashboard={dashboard} />
+			<ConversationVolumeChart data={dashboard.applicationVolume} demoFallback={!isLive} />
+			<ChannelBreakdownChart
+				data={dashboard.hireSources}
+				delta={dashboard.hireSourcesDelta}
+				demoFallback={!isLive}
+			/>
+			<CsatResponsesChart data={dashboard.candidateIntake} demoFallback={!isLive} />
+			<FirstReplyTimeChart data={dashboard.timeToShortlist} demoFallback={!isLive} />
 		</div>
 	);
 }

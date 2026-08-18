@@ -22,6 +22,7 @@ import {
   splitCategoryLabels,
   TRENDING_CHIP_STYLES,
 } from './portalSearchHero.helpers';
+import { extractJobCountry, uniqueCountryNames } from '@/lib/job-location-filters';
 
 export function PortalSearchHero() {
   const router = useRouter();
@@ -99,8 +100,8 @@ export function PortalSearchHero() {
             }
           }
 
-          // Country tab: country field only (never city / full location)
-          const country = String(job?.country || '').trim();
+          // Country tab: detect country names in country / city / location (e.g. India, Uganda, Tanzania).
+          const country = extractJobCountry(job);
           if (country) countryRaw.push(country);
 
           industryRaw.push(
@@ -127,7 +128,7 @@ export function PortalSearchHero() {
         setDbTitles(titles);
         setDbLocations(locations);
         // Sliding window of 12 per tab: newest unique → #1; overflow drops the oldest.
-        setDbCountries(recentTrendingLabels(countryRaw, TRENDING_LIMIT));
+        setDbCountries(uniqueCountryNames(countryRaw, TRENDING_LIMIT));
         setDbIndustries(recentTrendingLabels(industryRaw, TRENDING_LIMIT));
         setDbDepartments(recentTrendingLabels(departmentRaw, TRENDING_LIMIT));
         setCatalogJobs(catalog);

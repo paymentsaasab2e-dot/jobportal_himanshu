@@ -17,28 +17,12 @@ import {
 	ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Delta, DeltaIcon, DeltaValue } from "@/components/delta";
+import {
+	buildDemoDashboard,
+	type TimeToShortlistRow,
+} from "@/lib/employers/landingMetrics";
 
-type ReplyRow = {
-	day: string;
-	minutes: number;
-};
-
-const chartRows: ReplyRow[] = [
-	{ day: "Mon", minutes: 5.4 },
-	{ day: "Tue", minutes: 4.9 },
-	{ day: "Wed", minutes: 5.2 },
-	{ day: "Thu", minutes: 4.7 },
-	{ day: "Fri", minutes: 4.5 },
-	{ day: "Sat", minutes: 5.0 },
-	{ day: "Sun", minutes: 4.1 },
-];
-
-const firstMinutes = chartRows[0]?.minutes ?? 0;
-const lastMinutes = chartRows.at(-1)?.minutes ?? firstMinutes;
-
-/** Positive when time-to-shortlist improves Mon → Sun. */
-const replyImprovementPct =
-	firstMinutes > 0 ? ((firstMinutes - lastMinutes) / firstMinutes) * 100 : 0;
+type ReplyRow = TimeToShortlistRow;
 
 const chartConfig = {
 	minutes: {
@@ -49,8 +33,15 @@ const chartConfig = {
 
 export function FirstReplyTimeChart({
 	className,
+	data,
+	demoFallback = true,
 	...props
-}: ComponentProps<typeof Card>) {
+}: ComponentProps<typeof Card> & { data?: ReplyRow[]; demoFallback?: boolean }) {
+	const chartRows = data ?? (demoFallback ? buildDemoDashboard().timeToShortlist : []);
+	const firstMinutes = chartRows[0]?.minutes ?? 0;
+	const lastMinutes = chartRows.at(-1)?.minutes ?? firstMinutes;
+	const replyImprovementPct =
+		firstMinutes > 0 ? ((firstMinutes - lastMinutes) / firstMinutes) * 100 : 0;
 	return (
 		<Card
 			className={cn("shadow-none md:col-span-2 dark:ring-0", className)}

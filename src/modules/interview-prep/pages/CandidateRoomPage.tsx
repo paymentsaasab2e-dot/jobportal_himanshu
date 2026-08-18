@@ -198,11 +198,11 @@ export default function CandidateRoomPage() {
           <p className="mt-4 text-sm text-slate-600">Loading room details...</p>
         ) : requestQuery.isError ? (
           <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            Unable to load interview room right now.
+            Unable to connect right now. Please try again in a little while.
           </p>
         ) : !record ? (
           <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-600">
-            Interview request not found.
+            Interview not found. This interview isn’t available, or you don’t have access.
           </p>
         ) : (
           <div className="mt-4 space-y-4">

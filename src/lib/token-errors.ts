@@ -10,13 +10,12 @@ export function notifyInsufficientTokens(
 ): boolean {
   if (!(error instanceof InsufficientTokensError)) return false;
 
-  const msg = `Need ${error.required} tokens (you have ${error.balance}). Short by ${error.shortfall}.`;
-  showErrorToast('Insufficient tokens', msg);
+  showErrorToast('Not enough tokens', 'You need more tokens to continue. Open Subscriptions to add some.');
   onGoToSubscriptions?.();
   return true;
 }
 
 export function insufficientTokensMessage(error: unknown): string | null {
   if (!(error instanceof InsufficientTokensError)) return null;
-  return `Insufficient tokens: need ${error.required}, you have ${error.balance}. Buy more on Subscriptions.`;
+  return 'You need more tokens to continue. Open Subscriptions to add some.';
 }

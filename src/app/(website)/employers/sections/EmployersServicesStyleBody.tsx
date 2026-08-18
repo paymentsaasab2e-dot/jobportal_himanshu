@@ -22,10 +22,9 @@ import {
   Zap,
 } from 'lucide-react';
 import {
-  DEMO_LANDING_METRICS,
   formatCompact,
-  type EmployerLandingMetrics,
 } from '@/lib/employers/landingMetrics';
+import { useLandingMetrics } from './cinematic/useLandingMetrics';
 import {
   featuresByCategory,
   highlightFeatures,
@@ -38,26 +37,6 @@ import {
 import { AppLocale, localizePath } from '@/lib/i18n';
 import { EMPLOYERS_DEMO_PATH, EMPLOYERS_TRIAL_PATH } from '@/lib/employers/constants';
 import { Phase3Features } from './phase3/Phase3Features';
-
-function useLandingMetrics() {
-  const [data, setData] = useState<EmployerLandingMetrics>(DEMO_LANDING_METRICS);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/employers/landing-metrics', { cache: 'no-store' });
-        const json = await res.json();
-        if (!cancelled && json?.data?.metrics) setData(json.data as EmployerLandingMetrics);
-      } catch {
-        /* demo */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return data;
-}
 
 const HOW_IT_WORKS = [
   { step: '01', title: 'Capture the lead', detail: 'Inbound forms, import, or CRM create — every prospect lands in one workspace.' },
@@ -120,7 +99,14 @@ function Eyebrow({ children, dark = false }: { children: React.ReactNode; dark?:
   );
 }
 
-function DemoBadge({ mode }: { mode: string }) {
+function DemoBadge({ mode, loading }: { mode: string; loading?: boolean }) {
+  if (loading) {
+    return (
+      <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">
+        Loading live data…
+      </span>
+    );
+  }
   return (
     <span
       className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide ring-1 ${
@@ -135,7 +121,7 @@ function DemoBadge({ mode }: { mode: string }) {
 }
 
 export function EmployersServicesStyleBody() {
-  const data = useLandingMetrics();
+  const { data, loading } = useLandingMetrics();
   const locale = useLocale() as AppLocale;
   const trialHref = localizePath(EMPLOYERS_TRIAL_PATH, locale);
   const demoHref = localizePath(EMPLOYERS_DEMO_PATH, locale);
@@ -229,10 +215,17 @@ export function EmployersServicesStyleBody() {
             <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
               Platform snapshot
             </p>
-            <DemoBadge mode={data.mode} />
+            <DemoBadge mode={data.mode} loading={loading} />
           </div>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-            {stats.map((s) => {
+            {loading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-[72px] animate-pulse rounded-[1.25rem] border border-gray-200/80 bg-slate-100"
+                  />
+                ))
+              : stats.map((s) => {
               const Icon = s.icon;
               return (
                 <div
@@ -414,7 +407,7 @@ export function EmployersServicesStyleBody() {
                 </span>
               </h2>
             </div>
-            <DemoBadge mode={data.mode} />
+            <DemoBadge mode={data.mode} loading={loading} />
           </div>
 
           <div className="mb-10 overflow-x-auto pb-2">
@@ -560,7 +553,9 @@ export function EmployersServicesStyleBody() {
               </div>
             )}
             {searchPhase === 'results' && (
-              <p className="mt-4 text-sm font-semibold text-emerald-600">24 matching profiles found</p>
+              <p className="mt-4 text-sm font-semibold text-emerald-600">
+                {formatCompact(m.totalCandidates)} candidates on platform
+              </p>
             )}
           </div>
 
@@ -576,7 +571,7 @@ export function EmployersServicesStyleBody() {
                   text: `You have ${Math.min(12, m.openTasks || 12)} follow-ups, 4 interviews, and 2 client reviews. Highest priority: Java Developer.`,
                 },
                 { role: 'user', text: 'Show me the candidates.' },
-                { role: 'aria', text: '24 anonymized profiles match — ranked by AI fit.' },
+                { role: 'aria', text: `${formatCompact(m.totalCandidates)} anonymized profiles match — ranked by AI fit.` },
               ]
                 .slice(0, ariaShown)
                 .map((line, i) => (
@@ -642,12 +637,17 @@ export function EmployersServicesStyleBody() {
                 Activity stream
               </p>
               <ul className="space-y-3">
-                {data.activityFeed.map((row) => (
+                {(loading ? [] : data.activityFeed).map((row) => (
                   <li key={`${row.time}-${row.text}`} className="flex gap-3 border-b border-slate-100 pb-3 text-sm last:border-0">
                     <span className="w-12 shrink-0 font-mono text-[#176F96]">{row.time}</span>
                     <span className="text-slate-600">{row.text}</span>
                   </li>
                 ))}
+                {loading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <li key={i} className="h-10 animate-pulse rounded-lg bg-slate-100" />
+                  ))
+                ) : null}
               </ul>
             </div>
           </div>
@@ -684,10 +684,18 @@ export function EmployersServicesStyleBody() {
             <div className="rounded-[1.75rem] border border-white bg-white p-6 md:p-8">
               <div className="mb-4 flex items-center gap-2">
                 <Coins className="h-5 w-5 text-[#28A8E1]" />
-                <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">AI Coins</p>
+                <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
+                  {data.mode === 'live' ? 'Platform AI' : 'AI Coins'}
+                </p>
               </div>
-              <p className="text-4xl font-black tabular-nums text-slate-900">12,450</p>
-              <p className="mt-1 text-xs text-slate-400">Demonstration wallet — no private balances</p>
+              <p className="text-4xl font-black tabular-nums text-slate-900">
+                {data.mode === 'live' ? formatCompact(m.aiMatches) : '12,450'}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                {data.mode === 'live'
+                  ? 'Total AI matches across live tenant workspaces'
+                  : 'Demonstration wallet — no private balances'}
+              </p>
               <div className="mt-6 grid grid-cols-2 gap-3">
                 {[
                   ['CV parsing', '████████░░'],
