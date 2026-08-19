@@ -107,18 +107,23 @@ function getInterviewerQueueBadge(item: {
   status?: string;
   candidateFeedback?: string | null;
   candidateProposedSlot?: string | null;
+  paymentHeldAt?: string | null;
 }) {
   const status = String(item.status || '');
   if (status === 'ACCEPTED') {
     return {
-      text: 'Awaiting Candidate Confirmation',
+      text: item.paymentHeldAt
+        ? 'Awaiting candidate confirmation — no extra tokens'
+        : 'Awaiting Candidate Confirmation',
       className: 'border border-amber-200 bg-amber-50 text-amber-800',
     };
   }
   if (status === 'WAITING_FOR_ACCEPTANCE') {
     return {
       text: item.candidateProposedSlot || String(item.candidateFeedback || '').includes('SLOT_PROPOSAL')
-        ? 'Candidate Requested New Slot'
+        ? item.paymentHeldAt
+          ? 'Candidate requested new slot — confirm free'
+          : 'Candidate Requested New Slot'
         : 'Waiting for your acceptance',
       className: 'border border-orange-200 bg-orange-50 text-orange-800',
     };
@@ -429,9 +434,15 @@ export default function BecomeInterviewerPage() {
             : item
         );
       });
+      const row = queue.find((item) => item.id === requestId);
+      const alreadyPaid = Boolean(row?.paymentHeldAt);
       setQueueActionMessage(
         decision === 'ACCEPT'
-          ? `Accepted ${updated.requestId || 'request'} successfully. Waiting for candidate confirmation.`
+          ? alreadyPaid && String(row?.status) === 'WAITING_FOR_ACCEPTANCE'
+            ? `New slot confirmed for ${updated.requestId || 'request'}. No extra tokens were charged.`
+            : alreadyPaid
+              ? `New time sent for ${updated.requestId || 'request'}. Candidate can confirm at no extra cost.`
+              : `Accepted ${updated.requestId || 'request'} successfully. Waiting for candidate confirmation.`
           : `Rejected ${updated.requestId || 'request'} successfully.`
       );
       await Promise.all([queueQuery.refetch(), profileQuery.refetch()]);
@@ -855,7 +866,13 @@ export default function BecomeInterviewerPage() {
                         disabled={actionLoadingId === item.id}
                         className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
                       >
-                        {actionLoadingId === item.id ? 'Updating...' : item.status === 'ACCEPTED' ? 'Re-propose Slot' : 'Accept'}
+                        {actionLoadingId === item.id
+                          ? 'Updating...'
+                          : item.status === 'ACCEPTED'
+                            ? 'Re-propose Slot'
+                            : item.status === 'WAITING_FOR_ACCEPTANCE' && item.paymentHeldAt
+                              ? 'Confirm new slot'
+                              : 'Accept'}
                       </button>
                       {item.interviewerId ? (
                         <button
@@ -885,6 +902,7 @@ export default function BecomeInterviewerPage() {
                       </p>
                       <p className="mt-0.5 text-sm font-bold text-slate-900">
                         {formatInterviewWhen({
+                          status: item.status,
                           preferredDate: item.preferredDate,
                           preferredTime: item.preferredTime,
                           proposedSlot: item.candidateProposedSlot || item.proposedSlot,

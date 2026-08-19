@@ -18,6 +18,7 @@ import { InterviewRoomChat } from '@/modules/interview-prep/components/Interview
 import { InterviewSimpleTabs } from '@/modules/interview-prep/components/InterviewSimpleTabs';
 import { InterviewReviewModal } from '@/modules/interview-prep/components/InterviewReviewModal';
 import {
+  formatInterviewWhen,
   getInterviewSessionWindow,
   hasCandidateReviewed,
 } from '@/lib/interview-session-window';
@@ -74,7 +75,15 @@ export default function CandidateRoomPage() {
     window.open(liveUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const effectiveSlot = selectedSlot || record?.preferredTime?.[0] || '';
+  const slotOptions = Array.from(
+    new Set(
+      [record?.proposedSlot, ...(record?.preferredTime || [])].filter(
+        (slot): slot is string => Boolean(slot && String(slot).trim())
+      )
+    )
+  );
+  const effectiveSlot = selectedSlot || record?.proposedSlot || slotOptions[0] || '';
+  const alreadyPaid = Boolean(record?.paymentHeldAt);
   const joinWindowState = useMemo(
     () => getInterviewSessionWindow(record || {}, nowTs),
     [nowTs, record]
@@ -162,6 +171,17 @@ export default function CandidateRoomPage() {
               <p className="mt-1 text-sm text-slate-600">
                 {record.interviewType} • {record.duration} mins • {record.language}
               </p>
+              {(() => {
+                const when = formatInterviewWhen(record);
+                return (
+                  <p className="mt-1 text-sm font-semibold text-slate-800">
+                    {when.dateLabel} · {when.timeLabel}
+                    {['ACCEPTED', 'WAITING_FOR_ACCEPTANCE'].includes(String(record.status || ''))
+                      ? ' · pending confirmation'
+                      : ''}
+                  </p>
+                );
+              })()}
             </div>
 
             <InterviewSimpleTabs
@@ -260,7 +280,9 @@ export default function CandidateRoomPage() {
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Final Slot Decision</p>
               {record.status === 'ACCEPTED' ? (
                 <p className="mt-1 text-xs text-slate-600">
-                  Interviewer proposed a final slot. Accept or reject this slot.
+                  {alreadyPaid
+                    ? 'Interviewer proposed a new time. Confirm it at no extra cost.'
+                    : 'Interviewer proposed a final slot. Confirm and pay once, then later reschedules are free.'}
                 </p>
               ) : (
                 <p className="mt-1 text-xs text-slate-600">
@@ -273,7 +295,7 @@ export default function CandidateRoomPage() {
                   onChange={(event) => setSelectedSlot(event.target.value)}
                   className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-cyan-400"
                 >
-                  {(record.preferredTime || []).map((slot) => (
+                  {slotOptions.map((slot) => (
                     <option key={`${record.id}-${slot}`} value={slot}>
                       {slot}
                     </option>
@@ -291,8 +313,18 @@ export default function CandidateRoomPage() {
                         setError('Please select a slot.');
                         return;
                       }
-                      const updated = await candidateScheduleDecision(record.id, 'CONFIRM', '', effectiveSlot);
-                      setMessage(`Final slot accepted for ${updated.requestId}.`);
+                      const updated = await candidateScheduleDecision(
+                        record.id,
+                        'CONFIRM',
+                        '',
+                        effectiveSlot,
+                        record.proposedDate || undefined
+                      );
+                      setMessage(
+                        alreadyPaid
+                          ? `New slot confirmed for ${updated.requestId}. Join will use this time.`
+                          : `Final slot accepted for ${updated.requestId}.`
+                      );
                       await requestQuery.refetch();
                     } catch (err) {
                       setError(err instanceof Error ? err.message : 'Unable to accept slot');
@@ -302,7 +334,11 @@ export default function CandidateRoomPage() {
                   }}
                   className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
                 >
-                  {saving ? 'Saving...' : 'Accept Slot'}
+                  {saving
+                    ? 'Saving...'
+                    : alreadyPaid
+                      ? 'Confirm new slot'
+                      : 'Confirm & Pay'}
                 </button>
                 <button
                   type="button"

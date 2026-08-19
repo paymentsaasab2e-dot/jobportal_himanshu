@@ -42,17 +42,25 @@ const INBOX_STATUSES = [
 ];
 const SCHEDULED_STATUSES = ['SCHEDULED', 'IN_PROGRESS'];
 
-function getScheduleBadge(request: { status: string; candidateFeedback?: string | null }) {
+function getScheduleBadge(request: {
+  status: string;
+  candidateFeedback?: string | null;
+  paymentHeldAt?: string | null;
+}) {
   const status = String(request.status || '');
   if (status === 'ACCEPTED') {
     return {
-      text: 'Awaiting Candidate Confirmation',
+      text: request.paymentHeldAt
+        ? 'Confirm new slot — already paid'
+        : 'Awaiting Candidate Confirmation',
       className: 'border border-amber-200 bg-amber-50 text-amber-800',
     };
   }
   if (status === 'WAITING_FOR_ACCEPTANCE') {
     return {
-      text: 'Waiting for interviewer to confirm the new slot',
+      text: request.paymentHeldAt
+        ? 'Waiting for interviewer to confirm the new slot — already paid'
+        : 'Waiting for interviewer to confirm the new slot',
       className: 'border border-orange-200 bg-orange-50 text-orange-800',
     };
   }
@@ -234,10 +242,16 @@ export function InterviewRequestsList({
               {request.status === 'ACCEPTED' ? (
                 <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2">
                   {(() => {
+                    const alreadyPaid = Boolean(request.paymentHeldAt);
                     const cost = Number(request.interviewPrice || request.interviewerProfile?.interviewPrice || 50);
                     const balance = Number(balanceQuery.data?.tokenBalance ?? 0);
                     const remaining = balance - cost;
                     const short = remaining < 0;
+                    const confirmSlot =
+                      request.proposedSlot ||
+                      selectedSlotByRequest[request.id] ||
+                      request.preferredTime?.[0] ||
+                      '';
                     return (
                       <>
                         <p className="text-xs font-semibold text-amber-800">
@@ -247,90 +261,90 @@ export function InterviewRequestsList({
                           Interviewer: {request.interviewerProfile?.fullName || 'Assigned interviewer'}
                           {request.interviewerProfile?.currentRole ? ` · ${request.interviewerProfile.currentRole}` : ''}
                         </p>
-                        <div className="mt-2 space-y-0.5 text-xs text-slate-700">
-                          <p>Interview Cost: <span className="font-semibold">{cost} Tokens</span></p>
-                          <p>Your Balance: <span className="font-semibold">{balance} Tokens</span></p>
-                          <p>
-                            Remaining After Booking:{' '}
-                            <span className={`font-semibold ${short ? 'text-rose-700' : 'text-emerald-700'}`}>
-                              {short ? `${Math.abs(remaining)} short` : remaining} Tokens
-                            </span>
+                        {alreadyPaid ? (
+                          <p className="mt-2 text-xs text-emerald-800">
+                            Tokens already paid. Confirm this new time at no extra cost.
                           </p>
-                        </div>
-                        {short ? (
-                          <a
-                            href="/candidate-dashboard"
-                            className="mt-2 inline-flex rounded-md bg-[#28A8E1] px-2.5 py-1 text-xs font-semibold text-white"
+                        ) : (
+                          <>
+                            <div className="mt-2 space-y-0.5 text-xs text-slate-700">
+                              <p>Interview Cost: <span className="font-semibold">{cost} Tokens</span></p>
+                              <p>Your Balance: <span className="font-semibold">{balance} Tokens</span></p>
+                              <p>
+                                Remaining After Booking:{' '}
+                                <span className={`font-semibold ${short ? 'text-rose-700' : 'text-emerald-700'}`}>
+                                  {short ? `${Math.abs(remaining)} short` : remaining} Tokens
+                                </span>
+                              </p>
+                            </div>
+                            {short ? (
+                              <a
+                                href="/candidate-dashboard"
+                                className="mt-2 inline-flex rounded-md bg-[#28A8E1] px-2.5 py-1 text-xs font-semibold text-white"
+                              >
+                                Buy Tokens
+                              </a>
+                            ) : null}
+                          </>
+                        )}
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            disabled={scheduleActionId === request.id || (!alreadyPaid && short)}
+                            onClick={async () => {
+                              try {
+                                setScheduleActionId(request.id);
+                                setScheduleError('');
+                                setScheduleMessage('');
+                                const paid = await candidateScheduleDecision(
+                                  request.id,
+                                  'CONFIRM',
+                                  '',
+                                  confirmSlot,
+                                  request.proposedDate || undefined
+                                );
+                                const nextCost = Number(paid.interviewPrice || request.interviewPrice || 50);
+                                setScheduleMessage(
+                                  alreadyPaid
+                                    ? `New slot confirmed for ${request.requestId}. Join will use this time.`
+                                    : `Confirmed and paid ${nextCost} tokens for ${request.requestId}. Interview is scheduled.`
+                                );
+                                await Promise.all([query.refetch(), balanceQuery.refetch()]);
+                              } catch (error) {
+                                const code = (error as Error & { code?: string }).code;
+                                if (code === 'INSUFFICIENT_TOKENS') {
+                                  setScheduleError(error instanceof Error ? error.message : 'Insufficient tokens');
+                                } else {
+                                  setScheduleError(error instanceof Error ? error.message : 'Unable to confirm schedule');
+                                }
+                              } finally {
+                                setScheduleActionId(null);
+                              }
+                            }}
+                            className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-60"
                           >
-                            Buy Tokens
-                          </a>
-                        ) : null}
+                            {scheduleActionId === request.id
+                              ? 'Updating...'
+                              : alreadyPaid
+                                ? 'Confirm new slot'
+                                : `Confirm & Pay ${cost} Tokens`}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={scheduleActionId === request.id}
+                            onClick={() => {
+                              setScheduleError('');
+                              setScheduleMessage('');
+                              setRescheduleRequestId(request.id);
+                            }}
+                            className="rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 disabled:opacity-60"
+                          >
+                            Request New Slot
+                          </button>
+                        </div>
                       </>
                     );
                   })()}
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={scheduleActionId === request.id}
-                      onClick={async () => {
-                        try {
-                          setScheduleActionId(request.id);
-                          setScheduleError('');
-                          setScheduleMessage('');
-                          const slot = selectedSlotByRequest[request.id] || request.preferredTime?.[0] || '';
-                          const paid = await candidateScheduleDecision(request.id, 'CONFIRM', '', slot);
-                          const cost = Number(paid.interviewPrice || request.interviewPrice || 50);
-                          setScheduleMessage(`Confirmed and paid ${cost} tokens for ${request.requestId}. Interview is scheduled.`);
-                          await Promise.all([query.refetch(), balanceQuery.refetch()]);
-                        } catch (error) {
-                          const code = (error as Error & { code?: string }).code;
-                          if (code === 'INSUFFICIENT_TOKENS') {
-                            setScheduleError(error instanceof Error ? error.message : 'Insufficient tokens');
-                          } else {
-                            setScheduleError(error instanceof Error ? error.message : 'Unable to confirm schedule');
-                          }
-                        } finally {
-                          setScheduleActionId(null);
-                        }
-                      }}
-                      className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-60"
-                    >
-                      {scheduleActionId === request.id
-                        ? 'Updating...'
-                        : `Confirm & Pay ${request.interviewPrice || request.interviewerProfile?.interviewPrice || 50} Tokens`}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={scheduleActionId === request.id}
-                      onClick={() => {
-                        setScheduleError('');
-                        setScheduleMessage('');
-                        setRescheduleRequestId(request.id);
-                      }}
-                      className="rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 disabled:opacity-60"
-                    >
-                      Request New Slot
-                    </button>
-                  </div>
-                  <select
-                    value={selectedSlotByRequest[request.id] ?? request.preferredTime?.[0] ?? ''}
-                    onChange={(event) =>
-                      setSelectedSlotByRequest((prev) => ({ ...prev, [request.id]: event.target.value }))
-                    }
-                    className="mt-2 w-full rounded-md border border-amber-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-amber-400"
-                  >
-                    {(Array.from(
-                      new Set(
-                        [...(request.preferredTime || []), request.proposedSlot].filter(
-                          (slot): slot is string => Boolean(slot)
-                        )
-                      )
-                    ) as string[]).map((slot) => (
-                      <option key={`${request.id}-${slot}`} value={slot}>
-                        {slot}
-                      </option>
-                    ))}
-                  </select>
                 </div>
               ) : null}
               {request.interviewerId ? (
