@@ -39,8 +39,15 @@ const ROOM_EVENT = {
 } as const;
 
 const rtcConfig: RTCConfiguration = {
-  iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }],
+  iceServers: [
+    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+    { urls: ['stun:stun2.l.google.com:19302', 'stun:stun3.l.google.com:19302'] },
+  ],
 };
+
+function shouldOfferFirst(selfSocketId: string, peerSocketId: string) {
+  return String(selfSocketId || '') > String(peerSocketId || '');
+}
 
 function sanitizeRoomId(value: string) {
   return String(value || '')
@@ -96,6 +103,7 @@ export default function LiveInterviewRoomPage() {
   const [reviewError, setReviewError] = useState('');
   const notesApplyingRef = useRef(false);
   const notesTimerRef = useRef<number | null>(null);
+  const pendingIceRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
   const socketOrigin = String(process.env.NEXT_PUBLIC_INTERVIEW_SIGNAL_ORIGIN || API_ORIGIN || '').replace(/\/$/, '');
 
   useEffect(() => {
@@ -115,15 +123,23 @@ export default function LiveInterviewRoomPage() {
       peer.close();
     });
     peerConnectionsRef.current.clear();
+    pendingIceRef.current.clear();
     if (localVideoRef.current) localVideoRef.current.srcObject = null;
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
   }, [callEnded]);
 
   const attachRemoteStream = (stream: MediaStream) => {
     remoteStreamRef.current = stream;
-    if (remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = stream;
+    const video = remoteVideoRef.current;
+    if (!video) return;
+    if (video.srcObject !== stream) {
+      video.srcObject = stream;
     }
+    const play = () => {
+      void video.play().catch(() => {});
+    };
+    if (video.paused) play();
+    video.onloadedmetadata = play;
   };
 
   const closePeer = (peerSocketId: string) => {
@@ -131,9 +147,23 @@ export default function LiveInterviewRoomPage() {
     if (peer) {
       peer.ontrack = null;
       peer.onicecandidate = null;
+      peer.onconnectionstatechange = null;
       peer.close();
     }
     peerConnectionsRef.current.delete(peerSocketId);
+    pendingIceRef.current.delete(peerSocketId);
+  };
+
+  const flushPendingIce = async (peer: RTCPeerConnection, peerSocketId: string) => {
+    const queued = pendingIceRef.current.get(peerSocketId) || [];
+    pendingIceRef.current.delete(peerSocketId);
+    for (const candidate of queued) {
+      try {
+        await peer.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch {
+        // Candidate may be obsolete after a renegotiation.
+      }
+    }
   };
 
   useEffect(() => {
@@ -157,8 +187,9 @@ export default function LiveInterviewRoomPage() {
       });
 
       connection.ontrack = (event) => {
-        const [stream] = event.streams;
-        if (stream) attachRemoteStream(stream);
+        const stream = event.streams[0] || new MediaStream([event.track]);
+        attachRemoteStream(stream);
+        setStatusText('Live interview connected.');
       };
 
       connection.onicecandidate = (event) => {
@@ -170,17 +201,40 @@ export default function LiveInterviewRoomPage() {
         });
       };
 
+      connection.onconnectionstatechange = () => {
+        if (connection.connectionState === 'connected') {
+          setStatusText('Live interview connected.');
+        }
+        if (connection.connectionState === 'failed') {
+          setStatusText('Connection failed. Retrying...');
+          try {
+            connection.restartIce();
+          } catch {
+            closePeer(peerSocketId);
+            ensurePeerConnection(peerSocketId, shouldOfferFirst(socket.id || '', peerSocketId));
+          }
+        }
+      };
+
       peerConnectionsRef.current.set(peerSocketId, connection);
 
       if (initiator) {
         void (async () => {
-          const offer = await connection.createOffer();
-          await connection.setLocalDescription(offer);
-          socket.emit(ROOM_EVENT.SIGNAL, {
-            roomId,
-            to: peerSocketId,
-            description: offer,
-          });
+          try {
+            const offer = await connection.createOffer({
+              offerToReceiveAudio: true,
+              offerToReceiveVideo: true,
+            });
+            if (connection.signalingState !== 'stable') return;
+            await connection.setLocalDescription(offer);
+            socket.emit(ROOM_EVENT.SIGNAL, {
+              roomId,
+              to: peerSocketId,
+              description: connection.localDescription || offer,
+            });
+          } catch (error) {
+            console.warn('Unable to create interview offer', error);
+          }
         })();
       }
 
@@ -245,13 +299,21 @@ export default function LiveInterviewRoomPage() {
           });
 
         const socket = io(socketOrigin, {
-          transports: ['websocket', 'polling'],
+          transports: ['polling', 'websocket'],
           withCredentials: true,
+          reconnection: true,
+          reconnectionAttempts: 12,
+          reconnectionDelay: 800,
         });
         socketRef.current = socket;
 
         socket.on('connect', () => {
+          setStatusText('Connected. Joining room...');
           socket.emit(ROOM_EVENT.JOIN, { roomId, displayName, role });
+        });
+
+        socket.on('connect_error', (error) => {
+          setStatusText(error?.message || 'Unable to reach the interview server.');
         });
 
         socket.on(
@@ -287,7 +349,10 @@ export default function LiveInterviewRoomPage() {
                 : 'Waiting for second participant...'
             );
             joinedParticipants.forEach((participant) => {
-              ensurePeerConnection(participant.socketId, true);
+              ensurePeerConnection(
+                participant.socketId,
+                shouldOfferFirst(socket.id || '', participant.socketId)
+              );
             });
           }
         );
@@ -302,7 +367,10 @@ export default function LiveInterviewRoomPage() {
             return [...deduped, participant];
           });
           setStatusText('Participant joined. Establishing connection...');
-          ensurePeerConnection(participant.socketId, true);
+          ensurePeerConnection(
+            participant.socketId,
+            shouldOfferFirst(socket.id || '', participant.socketId)
+          );
         });
 
         socket.on(ROOM_EVENT.PARTICIPANT_LEFT, (payload: { socketId: string }) => {
@@ -315,29 +383,62 @@ export default function LiveInterviewRoomPage() {
 
         socket.on(
           ROOM_EVENT.SIGNAL,
-          async (payload: { from: string; description?: RTCSessionDescriptionInit; candidate?: RTCIceCandidateInit }) => {
+          async (payload: { from: string; description?: RTCSessionDescriptionInit | null; candidate?: RTCIceCandidateInit | null }) => {
             const peerSocketId = String(payload?.from || '').trim();
             if (!peerSocketId) return;
 
             const peer = ensurePeerConnection(peerSocketId, false);
             if (!peer) return;
 
-            if (payload.description) {
-              await peer.setRemoteDescription(new RTCSessionDescription(payload.description));
-              if (payload.description.type === 'offer') {
-                const answer = await peer.createAnswer();
-                await peer.setLocalDescription(answer);
-                socket.emit(ROOM_EVENT.SIGNAL, {
-                  roomId,
-                  to: peerSocketId,
-                  description: answer,
-                });
-              }
-              setStatusText('Live interview connected.');
-            }
+            try {
+              if (payload.description) {
+                const description = payload.description;
+                if (description.type === 'offer' && peer.signalingState !== 'stable') {
+                  try {
+                    await peer.setLocalDescription({ type: 'rollback' } as RTCSessionDescriptionInit);
+                  } catch {
+                    closePeer(peerSocketId);
+                    const nextPeer = ensurePeerConnection(peerSocketId, false);
+                    if (!nextPeer) return;
+                    await nextPeer.setRemoteDescription(new RTCSessionDescription(description));
+                    const answer = await nextPeer.createAnswer();
+                    await nextPeer.setLocalDescription(answer);
+                    socket.emit(ROOM_EVENT.SIGNAL, {
+                      roomId,
+                      to: peerSocketId,
+                      description: nextPeer.localDescription || answer,
+                    });
+                    await flushPendingIce(nextPeer, peerSocketId);
+                    setStatusText('Live interview connected.');
+                    return;
+                  }
+                }
 
-            if (payload.candidate) {
-              await peer.addIceCandidate(new RTCIceCandidate(payload.candidate));
+                await peer.setRemoteDescription(new RTCSessionDescription(description));
+                if (description.type === 'offer') {
+                  const answer = await peer.createAnswer();
+                  await peer.setLocalDescription(answer);
+                  socket.emit(ROOM_EVENT.SIGNAL, {
+                    roomId,
+                    to: peerSocketId,
+                    description: peer.localDescription || answer,
+                  });
+                }
+                await flushPendingIce(peer, peerSocketId);
+                setStatusText('Live interview connected.');
+              }
+
+              if (payload.candidate) {
+                if (!peer.remoteDescription) {
+                  const queued = pendingIceRef.current.get(peerSocketId) || [];
+                  queued.push(payload.candidate);
+                  pendingIceRef.current.set(peerSocketId, queued);
+                } else {
+                  await peer.addIceCandidate(new RTCIceCandidate(payload.candidate));
+                }
+              }
+            } catch (error) {
+              console.warn('Interview signal failed', error);
             }
           }
         );
@@ -574,6 +675,9 @@ export default function LiveInterviewRoomPage() {
               playsInline
               className="h-full w-full bg-black object-cover"
             />
+            {remotePresent && counterpartName ? (
+              <p className="absolute bottom-4 left-4 rounded bg-black/60 px-2 py-1 text-xs">{counterpartName}</p>
+            ) : null}
             {!remotePresent && !callEnded ? (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#202124]">
                 <p className="max-w-sm px-4 text-center text-sm text-white/75">
