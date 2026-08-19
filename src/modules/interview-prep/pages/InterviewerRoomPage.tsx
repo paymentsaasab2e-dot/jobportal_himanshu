@@ -5,17 +5,18 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { getInterviewerQueue, scheduleInterviewSlot } from '@/lib/interviewer-api';
-import { getInterviewRequestChat, postInterviewRequestChat } from '@/lib/interview-request-api';
+import { getInterviewRequestChat, postInterviewRequestChat, submitInterviewReview } from '@/lib/interview-request-api';
 import { buildInterviewLiveMeetingUrl } from '@/lib/interview-live-meeting';
 import { useAuth } from '@/components/auth/AuthContext';
 import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
-import {
-  clampInterviewFee,
-  getInterviewEscrow,
-  setInterviewFee,
-} from '@/lib/interview-token-escrow';
 import { InterviewRoomChat } from '@/modules/interview-prep/components/InterviewRoomChat';
 import { InterviewSimpleTabs } from '@/modules/interview-prep/components/InterviewSimpleTabs';
+import { InterviewReviewModal } from '@/modules/interview-prep/components/InterviewReviewModal';
+import { InterviewRescheduleModal } from '@/modules/interview-prep/components/InterviewRescheduleModal';
+import {
+  getInterviewSessionWindow,
+  hasInterviewerReviewed,
+} from '@/lib/interview-session-window';
 
 export default function InterviewerRoomPage() {
   const { user } = useAuth();
@@ -23,15 +24,16 @@ export default function InterviewerRoomPage() {
   const params = useParams<{ requestId: string }>();
   const requestId = String(params?.requestId || '').trim();
   const [selectedSlot, setSelectedSlot] = useState('');
+  const [customTime, setCustomTime] = useState('');
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [saving, setSaving] = useState(false);
   const [chatDraft, setChatDraft] = useState('');
   const [chatSending, setChatSending] = useState(false);
   const [nowTs, setNowTs] = useState(() => Date.now());
-  const [feeTokens, setFeeTokens] = useState(15);
-  const [escrowTick, setEscrowTick] = useState(0);
   const [roomTab, setRoomTab] = useState<'overview' | 'chat' | 'slot'>('chat');
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
 
   const queueQuery = useQuery({
     queryKey: ['interviewer-room', requestId],
@@ -54,36 +56,11 @@ export default function InterviewerRoomPage() {
     return list.find((item) => String(item.id) === requestId || String(item.requestId) === requestId) || null;
   }, [queueQuery.data, requestId]);
 
-  const escrow = useMemo(() => {
-    void escrowTick;
-    return requestId ? getInterviewEscrow(requestId) : null;
-  }, [requestId, escrowTick]);
-
-  useEffect(() => {
-    if (escrow?.feeTokens) setFeeTokens(escrow.feeTokens);
-  }, [escrow?.feeTokens]);
-
   const effectiveSlot = selectedSlot || record?.preferredTime?.[0] || '';
-  const joinWindowState = useMemo(() => {
-    const scheduledAtMs = record?.scheduledAt ? new Date(record.scheduledAt).getTime() : Number.NaN;
-    if (!Number.isFinite(scheduledAtMs)) {
-      return { canJoinNow: false, joinOpensAtLabel: null as string | null };
-    }
-    const durationMin = Math.max(15, Number(record?.duration || 45));
-    const joinOpensAt = scheduledAtMs - 15 * 60 * 1000;
-    const joinClosesAt = scheduledAtMs + (durationMin + 30) * 60 * 1000;
-    const canJoinNow = nowTs >= joinOpensAt && nowTs <= joinClosesAt;
-    const joinOpensAtLabel =
-      nowTs < joinOpensAt
-        ? new Date(joinOpensAt).toLocaleString('en-IN', {
-            day: '2-digit',
-            month: 'short',
-            hour: 'numeric',
-            minute: '2-digit',
-          })
-        : null;
-    return { canJoinNow, joinOpensAtLabel };
-  }, [nowTs, record?.duration, record?.scheduledAt]);
+  const joinWindowState = useMemo(
+    () => getInterviewSessionWindow(record || {}, nowTs),
+    [nowTs, record]
+  );
   const timelineSteps = useMemo(() => {
     if (!record) return [];
     const status = String(record.status || '').toUpperCase();
@@ -113,7 +90,9 @@ export default function InterviewerRoomPage() {
     ];
   }, [record]);
   const canProposeFinalSlot =
-    record?.status === 'ACCEPTED' || record?.status === 'WAITING_FOR_ACCEPTANCE';
+    record?.status === 'ACCEPTED' ||
+    record?.status === 'WAITING_FOR_ACCEPTANCE' ||
+    record?.status === 'SCHEDULED';
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -154,47 +133,18 @@ export default function InterviewerRoomPage() {
           </div>
           {record ? (
             <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <span className="text-xs font-semibold text-slate-600">Token fee</span>
-              <label className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+              <span className="text-xs font-semibold text-slate-600">Agreed price</span>
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-slate-800">
                 <TokenCoinIcon className="h-4 w-4" />
-                <input
-                  type="number"
-                  min={5}
-                  max={100}
-                  disabled={Boolean(escrow?.escrowHeld || escrow?.settledAt)}
-                  value={feeTokens}
-                  onChange={(e) => setFeeTokens(clampInterviewFee(Number(e.target.value)))}
-                  className="w-16 rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm outline-none focus:border-emerald-400 disabled:bg-slate-100"
-                />
-              </label>
-              <button
-                type="button"
-                disabled={Boolean(escrow?.escrowHeld || escrow?.settledAt) || !user?.id}
-                onClick={() => {
-                  if (!user?.id || !record) return;
-                  const result = setInterviewFee({
-                    requestId: record.id || requestId,
-                    interviewerId: user.id,
-                    candidateId: String(record.candidateId || ''),
-                    feeTokens,
-                  });
-                  if (!result.ok) {
-                    setActionError(result.error);
-                    return;
-                  }
-                  setActionError('');
-                  setActionMessage(`Fee saved · ${result.escrow.feeTokens} tokens`);
-                  setEscrowTick((n) => n + 1);
-                }}
-                className="rounded-full bg-[#0A66C2] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
-              >
-                {escrow?.escrowHeld || escrow?.settledAt ? 'Locked' : 'Save'}
-              </button>
-              {escrow?.settledAt ? (
-                <span className="text-[11px] text-slate-500">Paid {escrow.payoutTokens ?? 0}</span>
-              ) : escrow?.escrowHeld ? (
-                <span className="text-[11px] text-slate-500">Held</span>
-              ) : null}
+                {record.interviewPrice || 50}
+              </span>
+              <span className="text-[11px] text-slate-500">
+                {record.payoutReleasedAt
+                  ? 'Paid to you'
+                  : record.paymentHeldAt
+                    ? 'Held until you complete'
+                    : 'Candidate pays on confirm'}
+              </span>
             </div>
           ) : null}
         </div>
@@ -253,7 +203,7 @@ export default function InterviewerRoomPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      const liveUrl = buildInterviewLiveMeetingUrl(record.requestId || record.id, {
+                      const liveUrl = buildInterviewLiveMeetingUrl(record.id, {
                         role: 'interviewer',
                         displayName: user?.name || 'Interviewer',
                       });
@@ -268,6 +218,18 @@ export default function InterviewerRoomPage() {
                   <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-medium text-emerald-700">
                     Join opens at {joinWindowState.joinOpensAtLabel}
                   </span>
+                ) : null}
+                {joinWindowState.canComplete &&
+                record &&
+                String(record.status || '') !== 'COMPLETED' &&
+                !hasInterviewerReviewed(record) ? (
+                  <button
+                    type="button"
+                    onClick={() => setReviewOpen(true)}
+                    className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
+                  >
+                    Completed
+                  </button>
                 ) : null}
               </div>
             </div>
@@ -306,6 +268,9 @@ export default function InterviewerRoomPage() {
                       {slot}
                     </option>
                   ))}
+                  {selectedSlot && !(record.preferredTime || []).includes(selectedSlot) ? (
+                    <option value={selectedSlot}>Custom · {selectedSlot}</option>
+                  ) : null}
                 </select>
                 <button
                   type="button"
@@ -333,6 +298,31 @@ export default function InterviewerRoomPage() {
                   {saving ? 'Saving...' : canProposeFinalSlot ? 'Propose Final Slot' : 'Already Finalized'}
                 </button>
               </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <input
+                  type="time"
+                  value={customTime}
+                  onChange={(event) => setCustomTime(event.target.value)}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-emerald-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!customTime) return;
+                    setSelectedSlot(customTime);
+                  }}
+                  className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800"
+                >
+                  Use this time
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRescheduleOpen(true)}
+                  className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800"
+                >
+                  Pick date & time
+                </button>
+              </div>
               {actionMessage ? (
                 <p className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
                   {actionMessage}
@@ -348,6 +338,56 @@ export default function InterviewerRoomPage() {
           </div>
         )}
       </section>
+      <InterviewReviewModal
+        open={reviewOpen}
+        counterpartName={record?.candidateProfile?.fullName || 'the candidate'}
+        viewerRole="interviewer"
+        submitting={saving}
+        error={actionError}
+        onClose={() => setReviewOpen(false)}
+        onSubmit={async ({ rating, feedback }) => {
+          if (!record) return;
+          try {
+            setSaving(true);
+            setActionError('');
+            await submitInterviewReview(record.id, { rating, feedback });
+            setReviewOpen(false);
+            setActionMessage('Review submitted. The interview is marked completed.');
+            await queueQuery.refetch();
+          } catch (error) {
+            setActionError(error instanceof Error ? error.message : 'Unable to submit review');
+          } finally {
+            setSaving(false);
+          }
+        }}
+      />
+      <InterviewRescheduleModal
+        open={rescheduleOpen && Boolean(record)}
+        title="Propose a new interview slot"
+        subtitle="Pick a date and time. The candidate will confirm to continue."
+        initialDate={record?.proposedDate || record?.preferredDate || record?.scheduledAt}
+        initialTime={record?.proposedSlot || record?.scheduledAt || selectedSlot || record?.preferredTime?.[0]}
+        submitting={saving}
+        error={actionError}
+        onClose={() => {
+          if (!saving) setRescheduleOpen(false);
+        }}
+        onSubmit={async ({ date, time }) => {
+          if (!record) return;
+          try {
+            setSaving(true);
+            setActionError('');
+            await scheduleInterviewSlot(record.id, time, '', date);
+            setActionMessage(`Slot proposed for ${record.requestId}. Waiting for candidate confirmation.`);
+            setRescheduleOpen(false);
+            await queueQuery.refetch();
+          } catch (error) {
+            setActionError(error instanceof Error ? error.message : 'Unable to propose slot');
+          } finally {
+            setSaving(false);
+          }
+        }}
+      />
     </div>
   );
 }

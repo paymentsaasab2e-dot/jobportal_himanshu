@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 
 import { getApiBaseUrl } from '@/lib/api-base';
@@ -17,6 +18,8 @@ import {
   TECH_STACK_BY_CATEGORY,
   type InterviewRequestInput,
 } from '@/lib/interview-request-api';
+import { listMarketplaceInterviewers, type MarketplaceInterviewer } from '@/lib/interviewer-api';
+import { resolveProfilePhotoUrl } from '@/lib/profile-photo';
 import { WritingAssistField } from '@/components/common/WritingSuggestions';
 
 type Props = {
@@ -33,11 +36,14 @@ type Props = {
   initialExperience?: string;
   initialLanguage?: string;
   initialInterviewType?: string;
+  initialInterviewerId?: string;
   renderMode?: 'modal' | 'page';
   showCloseButton?: boolean;
 };
 
-type FormState = InterviewRequestInput;
+type FormState = Omit<InterviewRequestInput, 'preferredDate'> & {
+  preferredDates: string[];
+};
 
 const TOTAL_STEPS = 11;
 const QUICK_TIME_SLOTS = [
@@ -142,6 +148,15 @@ function getWeekdayShortLabel(value: string) {
   return labels[parsed.getDay()];
 }
 
+function getWeekdayLabels(values: string[]) {
+  return [...values]
+    .map(normalizeDateForCompare)
+    .filter(Boolean)
+    .sort()
+    .map(getWeekdayShortLabel)
+    .join(', ');
+}
+
 function getWeekdayDateOptions() {
   const labels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
   const today = new Date();
@@ -174,7 +189,7 @@ const INITIAL_FORM: FormState = {
   interviewType: '',
   weakAreas: '',
   mustCoverTopics: '',
-  preferredDate: '',
+  preferredDates: [],
   preferredTime: [],
   duration: 45,
   notes: '',
@@ -194,6 +209,7 @@ export function RequestInterviewModal({
   initialExperience,
   initialLanguage,
   initialInterviewType,
+  initialInterviewerId,
   renderMode = 'modal',
   showCloseButton = true,
 }: Props) {
@@ -224,6 +240,10 @@ export function RequestInterviewModal({
   const [mustCoverTopicLoading, setMustCoverTopicLoading] = useState(false);
   const [mustCoverTopicSuggestOpen, setMustCoverTopicSuggestOpen] = useState(false);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [matchingInterviewers, setMatchingInterviewers] = useState<MarketplaceInterviewer[]>([]);
+  const [matchingLoading, setMatchingLoading] = useState(false);
+  const [selectedInterviewerId, setSelectedInterviewerId] = useState('');
+  const [viewProfileId, setViewProfileId] = useState('');
 
   const allInterviewCategories = useMemo(
     () => Array.from(new Set([...INTERVIEW_CATEGORIES, ...EXTRA_INTERVIEW_CATEGORIES])),
@@ -317,7 +337,7 @@ export function RequestInterviewModal({
     setMustCoverTopicSuggestOpen(false);
     setForm((prev) => ({
       ...INITIAL_FORM,
-      preferredDate: todayAsInputValue(),
+      preferredDates: [todayAsInputValue()],
       experience: String(initialExperience || prev.experience || '0-1 Year'),
       category: String(initialCategory || ''),
       language: String(initialLanguage || 'English'),
@@ -328,6 +348,9 @@ export function RequestInterviewModal({
       mustCoverTopics: String(initialMustCoverTopics || '').slice(0, 500),
       notes: String(initialNotes || '').slice(0, 1000),
     }));
+    setMatchingInterviewers([]);
+    setSelectedInterviewerId(String(initialInterviewerId || '').trim());
+    setViewProfileId('');
   }, [
     initialCategory,
     initialCompanyDomain,
@@ -338,17 +361,53 @@ export function RequestInterviewModal({
     initialMustCoverTopics,
     initialTargetRole,
     initialWeakAreas,
+    initialInterviewerId,
     open,
   ]);
+
+  useEffect(() => {
+    if (!open || step !== 11) return;
+    let cancelled = false;
+    setMatchingLoading(true);
+    listMarketplaceInterviewers({
+      category: form.category,
+      interviewType: form.interviewType,
+      language: form.language,
+      techStack: form.techStack,
+    })
+      .then((rows) => {
+        if (!cancelled) {
+          setMatchingInterviewers(rows);
+          setError('');
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setMatchingInterviewers([]);
+        const msg = err instanceof Error ? err.message : 'Unable to load interviewers';
+        if (msg && msg !== 'Route not found') setError(msg);
+      })
+      .finally(() => {
+        if (!cancelled) setMatchingLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [form.category, form.interviewType, form.language, form.techStack, open, step]);
 
   useEffect(() => {
     if (!open || renderMode === 'page') return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onOpenChange(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
     };
-  }, [open, renderMode]);
+  }, [open, renderMode, onOpenChange]);
 
   useEffect(() => {
     if (!open) return;
@@ -551,11 +610,18 @@ export function RequestInterviewModal({
     if (step === 5 && !form.language) return 'Please select preferred language.';
     if (step === 6 && !form.interviewType) return 'Please select interview type.';
     if (step === 7) {
-      if (!form.preferredDate) return 'Please select preferred date.';
-      const selectedDate = normalizeDateForCompare(form.preferredDate);
+      if (!form.preferredDates.length) return 'Please select at least one preferred date.';
       const todayDate = todayAsInputValue();
-      if (!selectedDate) return 'Please select a valid date.';
-      if (selectedDate < todayDate) return 'Preferred date must be today or future.';
+      const currentYear = new Date().getFullYear();
+      for (const raw of form.preferredDates) {
+        const selectedDate = normalizeDateForCompare(raw);
+        if (!selectedDate) return 'Please select a valid date.';
+        if (selectedDate < todayDate) return 'Preferred date must be today or a future date.';
+        const year = Number(selectedDate.slice(0, 4));
+        if (year < currentYear || year > currentYear + 1) {
+          return 'Preferred date must be this year or next year. Past years like 2001 or 2021 are not allowed.';
+        }
+      }
     }
     if (step === 8 && form.preferredTime.length === 0) return 'Please add at least one preferred time slot.';
     if (step === 9 && !form.duration) return 'Please select interview duration.';
@@ -590,18 +656,40 @@ export function RequestInterviewModal({
     setError('');
     setSubmitting(true);
     try {
+      const dates = [...form.preferredDates]
+        .map(normalizeDateForCompare)
+        .filter(Boolean)
+        .sort();
+      const dateLabels = dates.map((value) => {
+        const match = weekdayDateOptions.find((opt) => opt.value === value);
+        return match?.label || getWeekdayShortLabel(value);
+      });
       const composedNotes = [
         (form.notes || '').trim(),
         form.mustCoverTopics?.trim()
           ? `Must-cover topics: ${form.mustCoverTopics.trim()}`
           : '',
+        dateLabels.length > 1 ? `Preferred dates: ${dateLabels.join(', ')}` : '',
       ]
         .filter(Boolean)
         .join('\n');
 
       const result = await createInterviewRequest({
-        ...form,
+        targetRole: form.targetRole,
+        companyDomain: form.companyDomain,
+        category: form.category,
+        techStack: form.techStack,
+        difficulty: form.difficulty,
+        experience: form.experience,
+        language: form.language,
+        interviewType: form.interviewType,
+        weakAreas: form.weakAreas,
+        mustCoverTopics: form.mustCoverTopics,
+        preferredDate: dates[0] || todayAsInputValue(),
+        preferredTime: form.preferredTime,
+        duration: form.duration,
         notes: composedNotes,
+        ...(selectedInterviewerId ? { interviewerId: selectedInterviewerId } : {}),
       });
       setSuccessRequestId(result.requestId);
       setStep(TOTAL_STEPS + 1);
@@ -616,25 +704,36 @@ export function RequestInterviewModal({
   if (!open) return null;
   const isPageMode = renderMode === 'page';
 
-  return (
+  const dialog = (
     <div
       className={
         isPageMode
           ? 'mx-auto w-full max-w-5xl px-3 pb-4 pt-2 sm:px-4'
-          : 'fixed inset-0 z-1200 flex items-center justify-center bg-black/35 p-4'
+          : 'fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6'
       }
     >
+      {!isPageMode ? (
+        <button
+          type="button"
+          aria-label="Close interview request"
+          className="absolute inset-0 bg-slate-900/55 backdrop-blur-[2px]"
+          onClick={() => onOpenChange(false)}
+        />
+      ) : null}
       <div
+        role="dialog"
+        aria-modal={!isPageMode}
+        aria-labelledby="candidate-interview-request-title"
         className={
           isPageMode
             ? 'w-full rounded-2xl border border-slate-200 bg-white shadow-sm'
-            : 'flex w-full max-w-4xl max-h-[90vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.18)]'
+            : 'relative z-10 flex w-full max-w-4xl max-h-[min(88vh,840px)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_64px_rgba(15,23,42,0.28)]'
         }
       >
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#28A8E1]">Request Interview</p>
-            <h2 className="text-lg font-bold text-slate-900">Candidate Interview Request</h2>
+            <h2 id="candidate-interview-request-title" className="text-lg font-bold text-slate-900">Candidate Interview Request</h2>
           </div>
           {showCloseButton ? (
             <button
@@ -910,14 +1009,32 @@ export function RequestInterviewModal({
               {step === 7 ? (
                 <div className="space-y-3">
                   <h3 className="text-base font-semibold text-slate-900">Preferred Date</h3>
+                  <p className="text-sm text-slate-500">Select one or more days.</p>
                   <div className="flex flex-wrap gap-2">
                     {weekdayDateOptions.map((opt) => {
-                      const active = normalizeDateForCompare(form.preferredDate) === opt.value;
+                      const active = form.preferredDates.some(
+                        (value) => normalizeDateForCompare(value) === opt.value,
+                      );
                       return (
                         <button
                           key={opt.value}
                           type="button"
-                          onClick={() => setForm((prev) => ({ ...prev, preferredDate: opt.value }))}
+                          aria-pressed={active}
+                          onClick={() =>
+                            setForm((prev) => {
+                              const selected = prev.preferredDates.some(
+                                (value) => normalizeDateForCompare(value) === opt.value,
+                              );
+                              return {
+                                ...prev,
+                                preferredDates: selected
+                                  ? prev.preferredDates.filter(
+                                      (value) => normalizeDateForCompare(value) !== opt.value,
+                                    )
+                                  : [...prev.preferredDates, opt.value].sort(),
+                              };
+                            })
+                          }
                           className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                             active
                               ? 'border-[#28A8E1] bg-[#EAF7FD] text-[#1F8FC2]'
@@ -980,7 +1097,7 @@ export function RequestInterviewModal({
                   {form.preferredTime.length > 0 ? (
                     <div className="space-y-1">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Selected Slots ({getWeekdayShortLabel(form.preferredDate)})
+                        Selected Slots ({getWeekdayLabels(form.preferredDates) || 'Day'})
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {form.preferredTime.map((slot) => (
@@ -991,7 +1108,7 @@ export function RequestInterviewModal({
                             className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700"
                             title="Remove slot"
                           >
-                            {getWeekdayShortLabel(form.preferredDate)} - {formatTimeLabel(slot)} x
+                            {getWeekdayLabels(form.preferredDates) || 'Day'} - {formatTimeLabel(slot)} x
                           </button>
                         ))}
                       </div>
@@ -1154,22 +1271,96 @@ export function RequestInterviewModal({
 
               {step === 11 ? (
                 <div className="space-y-3">
-                  <h3 className="text-base font-semibold text-slate-900">Review Request</h3>
+                  <h3 className="text-base font-semibold text-slate-900">Matching Interviewers</h3>
+                  <p className="text-sm text-slate-600">
+                    Choosing an interviewer is optional. You can send the request now, then pick someone later from the Interviewers tab.
+                  </p>
+                  {matchingLoading ? (
+                    <p className="text-sm text-slate-500">Finding matching interviewers...</p>
+                  ) : matchingInterviewers.length === 0 ? (
+                    <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                      No matching interviewers yet. You can still submit this request, or choose an interviewer from the Interviewers tab.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {matchingInterviewers.map((person) => {
+                        const selected = selectedInterviewerId === person.candidateId;
+                        const expanded = viewProfileId === person.candidateId;
+                        return (
+                          <div
+                            key={person.candidateId}
+                            className={`rounded-xl border p-3 ${
+                              selected ? 'border-[#28A8E1] bg-[#F4FBFF]' : 'border-slate-200 bg-white'
+                            }`}
+                          >
+                            <div className="flex gap-3">
+                              {resolveProfilePhotoUrl(person.profilePhotoUrl) ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={resolveProfilePhotoUrl(person.profilePhotoUrl) || ''}
+                                  alt=""
+                                  className="h-12 w-12 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-600">
+                                  {String(person.fullName || 'I').slice(0, 1)}
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-slate-900">{person.fullName}</p>
+                                <p className="text-xs text-slate-600">
+                                  {person.currentRole || 'Interviewer'} · {person.yearsOfExperience} Years Experience
+                                </p>
+                                <p className="mt-1 text-xs text-slate-600">
+                                  {(person.expertiseAreas || []).slice(0, 4).join(' • ') || 'General'}
+                                </p>
+                                <p className="mt-1 text-xs font-semibold text-slate-800">
+                                  ⭐ {Number(person.ratingAverage || 0).toFixed(1)} · {person.interviewPrice} Tokens / Interview
+                                </p>
+                              </div>
+                            </div>
+                            {expanded ? (
+                              <div className="mt-2 space-y-1 rounded-lg bg-white/80 px-2 py-2 text-xs text-slate-600">
+                                <p>Languages: {(person.languages || []).join(', ') || 'N/A'}</p>
+                                <p>Types: {(person.interviewTypes || []).join(', ') || 'N/A'}</p>
+                                <p>Availability: {person.weeklyAvailability || 'N/A'}</p>
+                                <p>About: {person.aboutYourself || 'N/A'}</p>
+                                <p>Feedback: {person.feedbackStyle || 'N/A'}</p>
+                              </div>
+                            ) : null}
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedInterviewerId(person.candidateId)}
+                                className="rounded-md bg-[#28A8E1] px-2.5 py-1 text-xs font-semibold text-white"
+                              >
+                                {selected ? 'Selected' : 'Select'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setViewProfileId((prev) => (prev === person.candidateId ? '' : person.candidateId))
+                                }
+                                className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700"
+                              >
+                                {expanded ? 'Hide Profile' : 'View Profile'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                   <div className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
                     <p><span className="font-semibold text-slate-900">Target Role:</span> {form.targetRole}</p>
-                    <p><span className="font-semibold text-slate-900">Company / Domain:</span> {form.companyDomain}</p>
-                    <p><span className="font-semibold text-slate-900">Category:</span> {form.category}</p>
-                    <p><span className="font-semibold text-slate-900">Tech Stack:</span> {form.techStack.join(', ')}</p>
-                    <p><span className="font-semibold text-slate-900">Difficulty:</span> {form.difficulty}</p>
-                    <p><span className="font-semibold text-slate-900">Experience:</span> {form.experience}</p>
-                    <p><span className="font-semibold text-slate-900">Interview Type:</span> {form.interviewType}</p>
-                    <p><span className="font-semibold text-slate-900">Language:</span> {form.language}</p>
-                    <p><span className="font-semibold text-slate-900">Preferred Date:</span> {form.preferredDate}</p>
-                    <p><span className="font-semibold text-slate-900">Preferred Time:</span> {form.preferredTime.join(', ')}</p>
                     <p><span className="font-semibold text-slate-900">Duration:</span> {form.duration} Minutes</p>
-                    <p><span className="font-semibold text-slate-900">Weak Areas:</span> {form.weakAreas}</p>
-                    <p><span className="font-semibold text-slate-900">Must-cover Topics:</span> {form.mustCoverTopics?.trim() || 'N/A'}</p>
-                    <p><span className="font-semibold text-slate-900">Notes:</span> {form.notes?.trim() || 'N/A'}</p>
+                    <p><span className="font-semibold text-slate-900">Date / Time:</span> {getWeekdayLabels(form.preferredDates) || '—'} · {form.preferredTime.join(', ')}</p>
+                    <p>
+                      <span className="font-semibold text-slate-900">Interview Cost:</span>{' '}
+                      {matchingInterviewers.find((row) => row.candidateId === selectedInterviewerId)?.interviewPrice
+                        ? `${matchingInterviewers.find((row) => row.candidateId === selectedInterviewerId)?.interviewPrice} Tokens`
+                        : 'Shown after an interviewer is selected'}
+                    </p>
                   </div>
                 </div>
               ) : null}
@@ -1207,7 +1398,7 @@ export function RequestInterviewModal({
                   disabled={submitting}
                   className="rounded-xl bg-[#28A8E1] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F8FC2] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {submitting ? 'Submitting...' : 'Submit Request'}
+                  {submitting ? 'Sending...' : 'Send Interview Request'}
                 </button>
               )}
             </div>
@@ -1215,7 +1406,11 @@ export function RequestInterviewModal({
         ) : (
           <div className="px-5 py-10 text-center">
             <h3 className="text-xl font-bold text-emerald-700">Request Submitted</h3>
-            <p className="mt-2 text-slate-600">Your interview request has been submitted successfully.</p>
+            <p className="mt-2 text-slate-600">
+              {selectedInterviewerId
+                ? 'Request sent. No tokens were charged yet. Waiting for interviewer acceptance.'
+                : 'Request submitted. No tokens were charged yet. An interviewer can pick this up, or you can send a request from the Interviewers tab.'}
+            </p>
             <p className="mt-1 text-sm font-semibold text-slate-800">Request ID: {successRequestId}</p>
             <button
               type="button"
@@ -1229,4 +1424,7 @@ export function RequestInterviewModal({
       </div>
     </div>
   );
+
+  if (isPageMode || typeof document === 'undefined') return dialog;
+  return createPortal(dialog, document.body);
 }

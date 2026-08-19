@@ -33,3 +33,8 @@ export function buildInterviewLiveMeetingUrl(
     ? `/lms/interview-prep/live-room/${encodeURIComponent(room)}?${query}`
     : `/lms/interview-prep/live-room/${encodeURIComponent(room)}`;
 }
+
+export function isLiveInterviewRoomPath(pathname: string | null | undefined) {
+  const path = String(pathname || '').split('?')[0];
+  return path.includes('/lms/interview-prep/live-room');
+}

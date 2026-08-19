@@ -12,16 +12,15 @@ import {
   getInterviewRequestChat,
   getMyInterviewRequests,
   postInterviewRequestChat,
+  submitInterviewReview,
 } from '@/lib/interview-request-api';
-import {
-  getInterviewEscrow,
-  holdInterviewEscrowOnStart,
-  REFERENCE_RATING_OPTIONS,
-  settleInterviewEscrowWithRating,
-  type InterviewRating,
-} from '@/lib/interview-token-escrow';
 import { InterviewRoomChat } from '@/modules/interview-prep/components/InterviewRoomChat';
 import { InterviewSimpleTabs } from '@/modules/interview-prep/components/InterviewSimpleTabs';
+import { InterviewReviewModal } from '@/modules/interview-prep/components/InterviewReviewModal';
+import {
+  getInterviewSessionWindow,
+  hasCandidateReviewed,
+} from '@/lib/interview-session-window';
 
 export default function CandidateRoomPage() {
   const { user } = useAuth();
@@ -35,9 +34,9 @@ export default function CandidateRoomPage() {
   const [chatDraft, setChatDraft] = useState('');
   const [chatSending, setChatSending] = useState(false);
   const [nowTs, setNowTs] = useState(() => Date.now());
-  const [escrowTick, setEscrowTick] = useState(0);
-  const [ratingBusy, setRatingBusy] = useState(false);
   const [roomTab, setRoomTab] = useState<'overview' | 'chat' | 'slot'>('chat');
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewBusy, setReviewBusy] = useState(false);
 
   const requestQuery = useQuery({
     queryKey: ['candidate-room', requestId],
@@ -60,77 +59,26 @@ export default function CandidateRoomPage() {
     return list.find((item) => String(item.id) === requestId || String(item.requestId) === requestId) || null;
   }, [requestQuery.data, requestId]);
 
-  const escrowKey = String(record?.id || requestId);
-  const escrow = useMemo(() => {
-    void escrowTick;
-    return escrowKey ? getInterviewEscrow(escrowKey) : null;
-  }, [escrowKey, escrowTick]);
-
   const joinInterview = async () => {
     if (!record || !user?.id) return;
-    setError('');
-    setMessage('');
-    const held = await holdInterviewEscrowOnStart({
-      requestId: record.id || requestId,
-      candidateId: user.id,
-    });
-    if (!held.ok) {
-      setError(held.error);
+    if (!record.paymentHeldAt && String(record.status) !== 'SCHEDULED' && String(record.status) !== 'IN_PROGRESS') {
+      setError('Confirm and pay tokens before joining. Opening the room does not charge tokens.');
       return;
     }
-    setEscrowTick((n) => n + 1);
-    setMessage(`Escrow held · ${held.escrow.feeTokens} tokens. Opening interview room…`);
-    const liveUrl = buildInterviewLiveMeetingUrl(record.requestId || record.id, {
+    setError('');
+    setMessage('Opening interview room. Tokens were already charged at confirmation.');
+    const liveUrl = buildInterviewLiveMeetingUrl(record.id, {
       role: 'candidate',
       displayName: user?.name || 'Candidate',
     });
     window.open(liveUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const submitRating = async (rating: InterviewRating) => {
-    if (!user?.id || !record) return;
-    setRatingBusy(true);
-    setError('');
-    try {
-      const result = await settleInterviewEscrowWithRating({
-        requestId: record.id || requestId,
-        candidateId: user.id,
-        rating,
-      });
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      setEscrowTick((n) => n + 1);
-      setMessage(
-        `Thanks for your feedback. ${result.escrow.payoutTokens ?? 0} tokens paid to the interviewer.`,
-      );
-    } finally {
-      setRatingBusy(false);
-    }
-  };
-
   const effectiveSlot = selectedSlot || record?.preferredTime?.[0] || '';
-  const joinWindowState = useMemo(() => {
-    const scheduledAtMs = record?.scheduledAt ? new Date(record.scheduledAt).getTime() : Number.NaN;
-    if (!Number.isFinite(scheduledAtMs)) {
-      return { canJoinNow: false, joinOpensAtLabel: null as string | null };
-    }
-    const durationMin = Math.max(15, Number(record?.duration || 45));
-    const joinOpensAt = scheduledAtMs - 15 * 60 * 1000;
-    const joinClosesAt = scheduledAtMs + (durationMin + 30) * 60 * 1000;
-    const canJoinNow = nowTs >= joinOpensAt && nowTs <= joinClosesAt;
-    const joinOpensAtLabel =
-      nowTs < joinOpensAt
-        ? new Date(joinOpensAt).toLocaleString('en-IN', {
-            day: '2-digit',
-            month: 'short',
-            hour: 'numeric',
-            minute: '2-digit',
-          })
-        : null;
-    return { canJoinNow, joinOpensAtLabel };
-  }, [nowTs, record?.duration, record?.scheduledAt]);
+  const joinWindowState = useMemo(
+    () => getInterviewSessionWindow(record || {}, nowTs),
+    [nowTs, record]
+  );
   const timelineSteps = useMemo(() => {
     if (!record) return [];
     const status = String(record.status || '').toUpperCase();
@@ -252,11 +200,6 @@ export default function CandidateRoomPage() {
                     className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white"
                   >
                     Join Interview
-                    {escrow?.feeTokens ? (
-                      <span className="inline-flex items-center gap-0.5 opacity-90">
-                        · <TokenCoinIcon className="h-3 w-3" /> {escrow.feeTokens}
-                      </span>
-                    ) : null}
                   </button>
                 ) : null}
                 {joinWindowState.joinOpensAtLabel ? (
@@ -264,52 +207,33 @@ export default function CandidateRoomPage() {
                     Join opens at {joinWindowState.joinOpensAtLabel}
                   </span>
                 ) : null}
+                {joinWindowState.canComplete &&
+                record &&
+                String(record.status || '') !== 'COMPLETED' &&
+                !hasCandidateReviewed(record) ? (
+                  <button
+                    type="button"
+                    onClick={() => setReviewOpen(true)}
+                    className="rounded-full bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-white"
+                  >
+                    Completed
+                  </button>
+                ) : null}
               </div>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-white p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Token fee
+                Interview cost
               </p>
-              {escrow ? (
-                <p className="mt-2 inline-flex flex-wrap items-center gap-1 text-sm font-semibold text-slate-800">
-                  Fee <TokenCoinIcon className="h-4 w-4" /> {escrow.feeTokens}
-                  <span className="font-normal text-slate-500">
-                    ·{' '}
-                    {escrow.settledAt
-                      ? `settled (paid ${escrow.payoutTokens ?? 0})`
-                      : escrow.escrowHeld
-                        ? 'held — rate below to release payout'
-                        : 'due when you join'}
-                  </span>
-                </p>
-              ) : (
-                <p className="mt-2 text-xs text-amber-700">
-                  Waiting for interviewer to set the token fee.
-                </p>
-              )}
+              <p className="mt-2 inline-flex flex-wrap items-center gap-1 text-sm font-semibold text-slate-800">
+                <TokenCoinIcon className="h-4 w-4" /> {record.interviewPrice || record.interviewerProfile?.interviewPrice || 50} tokens
+                <span className="font-normal text-slate-500">
+                  · {record.paymentHeldAt ? 'paid at confirmation' : 'due when you confirm'}
+                  {record.payoutReleasedAt ? ' · released to interviewer' : ''}
+                </span>
+              </p>
             </div>
-
-            {escrow?.escrowHeld && !escrow.settledAt ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
-                  Rate interviewer feedback
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {REFERENCE_RATING_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      disabled={ratingBusy}
-                      onClick={() => void submitRating(opt.id)}
-                      className="rounded-full border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-100 disabled:opacity-50"
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
               </>
             ) : null}
 
@@ -417,6 +341,29 @@ export default function CandidateRoomPage() {
           </div>
         )}
       </section>
+      <InterviewReviewModal
+        open={reviewOpen}
+        counterpartName={record?.interviewerProfile?.fullName || 'the interviewer'}
+        viewerRole="candidate"
+        submitting={reviewBusy}
+        error={error}
+        onClose={() => setReviewOpen(false)}
+        onSubmit={async ({ rating, feedback }) => {
+          if (!record) return;
+          try {
+            setReviewBusy(true);
+            setError('');
+            await submitInterviewReview(record.id, { rating, feedback });
+            setReviewOpen(false);
+            setMessage('Review submitted. The interview is marked completed.');
+            await requestQuery.refetch();
+          } catch (err) {
+            setError(err instanceof Error ? err.message : 'Unable to submit review');
+          } finally {
+            setReviewBusy(false);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -5,30 +5,42 @@ import {
   candidateScheduleDecision,
   getMyInterviewRequests,
   rematchInterviewRequest,
+  submitInterviewReview,
 } from '@/lib/interview-request-api';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { buildInterviewLiveMeetingUrl } from '@/lib/interview-live-meeting';
 import { useAuth } from '@/components/auth/AuthContext';
-import { getInterviewEscrow } from '@/lib/interview-token-escrow';
+import { fetchTokenBalance } from '@/lib/tokens-api';
 import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
 import { ArrowRight } from 'lucide-react';
+import { InterviewLiveHistory } from '../InterviewLiveHistory';
+import { InterviewReviewModal } from '../InterviewReviewModal';
+import {
+  displayReviewText,
+  formatInterviewWhen,
+  getInterviewSessionWindow,
+  hasCandidateReviewed,
+  hasInterviewerReviewed,
+} from '@/lib/interview-session-window';
+import { InterviewRescheduleModal } from '../InterviewRescheduleModal';
 
 type Props = {
   title?: string;
   subtitle?: string;
   refreshKey?: number;
+  mode?: 'inbox' | 'scheduled' | 'completed' | 'active';
 };
 
-function formatDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
+const INBOX_STATUSES = [
+  'PENDING_MATCHING',
+  'MATCHING',
+  'MATCHED',
+  'FINDING_INTERVIEWER',
+  'WAITING_FOR_ACCEPTANCE',
+  'ACCEPTED',
+];
+const SCHEDULED_STATUSES = ['SCHEDULED', 'IN_PROGRESS'];
 
 function getScheduleBadge(request: { status: string; candidateFeedback?: string | null }) {
   const status = String(request.status || '');
@@ -38,108 +50,79 @@ function getScheduleBadge(request: { status: string; candidateFeedback?: string 
       className: 'border border-amber-200 bg-amber-50 text-amber-800',
     };
   }
-  if (
-    status === 'WAITING_FOR_ACCEPTANCE' &&
-    String(request.candidateFeedback || '')
-      .toLowerCase()
-      .includes('new slot')
-  ) {
+  if (status === 'WAITING_FOR_ACCEPTANCE') {
     return {
-      text: 'Candidate Requested New Slot',
+      text: 'Waiting for interviewer to confirm the new slot',
       className: 'border border-orange-200 bg-orange-50 text-orange-800',
     };
   }
   return null;
 }
 
-function getJoinWindowState(request: { scheduledAt?: string | null; duration?: number }, nowTs: number) {
-  const scheduledAtMs = request?.scheduledAt ? new Date(request.scheduledAt).getTime() : Number.NaN;
-  if (!Number.isFinite(scheduledAtMs)) {
-    return { canJoinNow: false, joinOpensAtLabel: null as string | null };
-  }
-  const durationMin = Math.max(15, Number(request?.duration || 45));
-  const joinOpensAt = scheduledAtMs - 15 * 60 * 1000;
-  const joinClosesAt = scheduledAtMs + (durationMin + 30) * 60 * 1000;
-  const canJoinNow = nowTs >= joinOpensAt && nowTs <= joinClosesAt;
-  const joinOpensAtLabel =
-    nowTs < joinOpensAt
-      ? new Date(joinOpensAt).toLocaleString('en-IN', {
-          day: '2-digit',
-          month: 'short',
-          hour: 'numeric',
-          minute: '2-digit',
-        })
-      : null;
-  return { canJoinNow, joinOpensAtLabel };
+function getJoinWindowState(request: { scheduledAt?: string | null; duration?: number; status?: string }, nowTs: number) {
+  return getInterviewSessionWindow(request, nowTs);
 }
 
 export function InterviewRequestsList({
   title = 'Your Interview Requests',
   subtitle = 'Track all submitted requests and current status.',
   refreshKey = 0,
+  mode,
 }: Props) {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [rematchId, setRematchId] = useState<string | null>(null);
   const [scheduleActionId, setScheduleActionId] = useState<string | null>(null);
   const [selectedSlotByRequest, setSelectedSlotByRequest] = useState<Record<string, string>>({});
   const [scheduleMessage, setScheduleMessage] = useState('');
   const [scheduleError, setScheduleError] = useState('');
   const [nowTs, setNowTs] = useState(() => Date.now());
+  const [reviewRequestId, setReviewRequestId] = useState<string | null>(null);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [rescheduleRequestId, setRescheduleRequestId] = useState<string | null>(null);
+  const [rescheduleBusy, setRescheduleBusy] = useState(false);
   const query = useQuery({
     queryKey: ['my-interview-requests', refreshKey],
     queryFn: () => getMyInterviewRequests(),
     staleTime: 20_000,
     retry: 0,
   });
+  const balanceQuery = useQuery({
+    queryKey: ['token-balance-interview-confirm'],
+    queryFn: () => fetchTokenBalance(),
+    staleTime: 15_000,
+    retry: 0,
+  });
 
   const requests = query.data ?? [];
+  const visibleRequests = requests.filter((row) => {
+    if (mode === 'completed') return row.status === 'COMPLETED';
+    if (mode === 'scheduled') return SCHEDULED_STATUSES.includes(row.status);
+    if (mode === 'inbox') return INBOX_STATUSES.includes(row.status);
+    if (mode === 'active') return row.status !== 'COMPLETED';
+    return true;
+  });
+  const reviewTarget = requests.find((row) => row.id === reviewRequestId) || null;
+  const rescheduleTarget = visibleRequests.find((row) => row.id === rescheduleRequestId) || null;
+  useEffect(() => {
+    const reviewId = String(searchParams.get('reviewId') || '').trim();
+    if (reviewId) setReviewRequestId(reviewId);
+  }, [searchParams]);
+
   useEffect(() => {
     const timer = window.setInterval(() => {
       setNowTs(Date.now());
     }, 60_000);
     return () => window.clearInterval(timer);
   }, []);
-  const grouped = {
-    pending: requests.filter((row) =>
-      [
-        'PENDING_MATCHING',
-        'MATCHING',
-        'MATCHED',
-        'FINDING_INTERVIEWER',
-        'WAITING_FOR_ACCEPTANCE',
-        'ACCEPTED',
-      ].includes(row.status)
-    ),
-    scheduled: requests.filter((row) => row.status === 'SCHEDULED'),
-    completed: requests.filter((row) => row.status === 'COMPLETED'),
-    cancelled: requests.filter((row) => ['CANCELLED', 'REJECTED', 'EXPIRED'].includes(row.status)),
-  };
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-4">
         <h3 className="text-lg font-bold text-slate-900">{title}</h3>
         <p className="text-sm text-slate-600">{subtitle}</p>
-      </div>
-
-      <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending</p>
-          <p className="mt-1 text-xl font-bold text-[#1F8FC2]">{grouped.pending.length}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Scheduled</p>
-          <p className="mt-1 text-xl font-bold text-[#1F8FC2]">{grouped.scheduled.length}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Completed</p>
-          <p className="mt-1 text-xl font-bold text-[#1F8FC2]">{grouped.completed.length}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cancelled</p>
-          <p className="mt-1 text-xl font-bold text-[#1F8FC2]">{grouped.cancelled.length}</p>
-        </div>
       </div>
 
       {query.isLoading ? (
@@ -155,9 +138,13 @@ export function InterviewRequestsList({
             Retry
           </button>
         </div>
-      ) : requests.length === 0 ? (
+      ) : visibleRequests.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-600">
-          No interview requests yet. Create your first request to start matching.
+          {mode === 'completed'
+            ? 'No completed interviews yet. After the meeting ends, both of you can leave a review.'
+            : mode === 'scheduled'
+              ? 'No scheduled interviews yet.'
+              : 'No interview requests in this tab yet.'}
         </p>
       ) : (
         <div className="space-y-2">
@@ -171,10 +158,11 @@ export function InterviewRequestsList({
               {scheduleError}
             </p>
           ) : null}
-          {requests.slice(0, 10).map((request) => (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleRequests.slice(0, 20).map((request) => (
             <div
               key={request.id}
-              className={`w-full max-w-2xl rounded-xl border px-2.5 py-2.5 shadow-sm ${
+              className={`flex h-full min-w-0 flex-col rounded-xl border px-2.5 py-2.5 shadow-sm ${
                 request.status === 'SCHEDULED'
                   ? 'border-cyan-200 bg-linear-to-br from-cyan-50 via-white to-blue-50'
                   : 'border-slate-200 bg-white'
@@ -219,12 +207,19 @@ export function InterviewRequestsList({
                 {request.interviewerProfile?.fullName || request.interviewerId || 'Matching in progress'}
               </p>
               <div className="mt-1.5 flex flex-wrap gap-1">
-                <span className="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
-                  {formatDate(request.preferredDate)}
-                </span>
-                <span className="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
-                  {request.preferredTime.join(', ') || 'No slots'}
-                </span>
+                {(() => {
+                  const when = formatInterviewWhen(request);
+                  return (
+                    <>
+                      <span className="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
+                        {when.dateLabel}
+                      </span>
+                      <span className="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
+                        {when.timeLabel}
+                      </span>
+                    </>
+                  );
+                })()}
                 <span className="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
                   {request.duration} mins
                 </span>
@@ -238,9 +233,41 @@ export function InterviewRequestsList({
               ) : null}
               {request.status === 'ACCEPTED' ? (
                 <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2">
-                  <p className="text-xs font-semibold text-amber-800">
-                    Interviewer proposed slot: {request.proposedSlot || request.preferredTime?.[0] || 'N/A'}
-                  </p>
+                  {(() => {
+                    const cost = Number(request.interviewPrice || request.interviewerProfile?.interviewPrice || 50);
+                    const balance = Number(balanceQuery.data?.tokenBalance ?? 0);
+                    const remaining = balance - cost;
+                    const short = remaining < 0;
+                    return (
+                      <>
+                        <p className="text-xs font-semibold text-amber-800">
+                          Interviewer proposed slot: {request.proposedSlot || formatInterviewWhen(request).timeLabel}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-700">
+                          Interviewer: {request.interviewerProfile?.fullName || 'Assigned interviewer'}
+                          {request.interviewerProfile?.currentRole ? ` · ${request.interviewerProfile.currentRole}` : ''}
+                        </p>
+                        <div className="mt-2 space-y-0.5 text-xs text-slate-700">
+                          <p>Interview Cost: <span className="font-semibold">{cost} Tokens</span></p>
+                          <p>Your Balance: <span className="font-semibold">{balance} Tokens</span></p>
+                          <p>
+                            Remaining After Booking:{' '}
+                            <span className={`font-semibold ${short ? 'text-rose-700' : 'text-emerald-700'}`}>
+                              {short ? `${Math.abs(remaining)} short` : remaining} Tokens
+                            </span>
+                          </p>
+                        </div>
+                        {short ? (
+                          <a
+                            href="/candidate-dashboard"
+                            className="mt-2 inline-flex rounded-md bg-[#28A8E1] px-2.5 py-1 text-xs font-semibold text-white"
+                          >
+                            Buy Tokens
+                          </a>
+                        ) : null}
+                      </>
+                    );
+                  })()}
                   <div className="mt-2 flex flex-wrap gap-2">
                     <button
                       type="button"
@@ -251,39 +278,38 @@ export function InterviewRequestsList({
                           setScheduleError('');
                           setScheduleMessage('');
                           const slot = selectedSlotByRequest[request.id] || request.preferredTime?.[0] || '';
-                          await candidateScheduleDecision(request.id, 'CONFIRM', '', slot);
-                          setScheduleMessage(`Confirmed schedule for ${request.requestId}.`);
-                          await query.refetch();
+                          const paid = await candidateScheduleDecision(request.id, 'CONFIRM', '', slot);
+                          const cost = Number(paid.interviewPrice || request.interviewPrice || 50);
+                          setScheduleMessage(`Confirmed and paid ${cost} tokens for ${request.requestId}. Interview is scheduled.`);
+                          await Promise.all([query.refetch(), balanceQuery.refetch()]);
                         } catch (error) {
-                          setScheduleError(error instanceof Error ? error.message : 'Unable to confirm schedule');
+                          const code = (error as Error & { code?: string }).code;
+                          if (code === 'INSUFFICIENT_TOKENS') {
+                            setScheduleError(error instanceof Error ? error.message : 'Insufficient tokens');
+                          } else {
+                            setScheduleError(error instanceof Error ? error.message : 'Unable to confirm schedule');
+                          }
                         } finally {
                           setScheduleActionId(null);
                         }
                       }}
                       className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-60"
                     >
-                      {scheduleActionId === request.id ? 'Updating...' : 'Confirm Slot'}
+                      {scheduleActionId === request.id
+                        ? 'Updating...'
+                        : `Confirm & Pay ${request.interviewPrice || request.interviewerProfile?.interviewPrice || 50} Tokens`}
                     </button>
                     <button
                       type="button"
                       disabled={scheduleActionId === request.id}
-                      onClick={async () => {
-                        try {
-                          setScheduleActionId(request.id);
-                          setScheduleError('');
-                          setScheduleMessage('');
-                          await candidateScheduleDecision(request.id, 'REQUEST_NEW_SLOT');
-                          setScheduleMessage(`Requested new slot for ${request.requestId}.`);
-                          await query.refetch();
-                        } catch (error) {
-                          setScheduleError(error instanceof Error ? error.message : 'Unable to request new slot');
-                        } finally {
-                          setScheduleActionId(null);
-                        }
+                      onClick={() => {
+                        setScheduleError('');
+                        setScheduleMessage('');
+                        setRescheduleRequestId(request.id);
                       }}
                       className="rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-semibold text-amber-800 disabled:opacity-60"
                     >
-                      {scheduleActionId === request.id ? 'Updating...' : 'Request New Slot'}
+                      Request New Slot
                     </button>
                   </div>
                   <select
@@ -293,7 +319,13 @@ export function InterviewRequestsList({
                     }
                     className="mt-2 w-full rounded-md border border-amber-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-amber-400"
                   >
-                    {(request.preferredTime || []).map((slot) => (
+                    {(Array.from(
+                      new Set(
+                        [...(request.preferredTime || []), request.proposedSlot].filter(
+                          (slot): slot is string => Boolean(slot)
+                        )
+                      )
+                    ) as string[]).map((slot) => (
                       <option key={`${request.id}-${slot}`} value={slot}>
                         {slot}
                       </option>
@@ -304,16 +336,13 @@ export function InterviewRequestsList({
               {request.interviewerId ? (
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {(() => {
-                    const fee = getInterviewEscrow(request.id)?.feeTokens;
+                    const fee = Number(request.interviewPrice || request.interviewerProfile?.interviewPrice || 0);
                     return fee ? (
                       <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-800">
-                        Fee <TokenCoinIcon className="h-3.5 w-3.5" /> {fee}
+                        Cost <TokenCoinIcon className="h-3.5 w-3.5" /> {fee}
+                        {request.paymentHeldAt ? ' · paid' : ''}
                       </span>
-                    ) : (
-                      <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
-                        Fee pending
-                      </span>
-                    );
+                    ) : null;
                   })()}
                   <button
                     type="button"
@@ -322,7 +351,19 @@ export function InterviewRequestsList({
                   >
                     Chat
                   </button>
-                  {request.status === 'SCHEDULED'
+                  {['ACCEPTED', 'SCHEDULED', 'IN_PROGRESS', 'WAITING_FOR_ACCEPTANCE'].includes(request.status) ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setScheduleError('');
+                        setRescheduleRequestId(request.id);
+                      }}
+                      className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-800"
+                    >
+                      Reschedule
+                    </button>
+                  ) : null}
+                  {request.status === 'SCHEDULED' || request.status === 'IN_PROGRESS'
                     ? (() => {
                         const joinState = getJoinWindowState(request, nowTs);
                         if (joinState.canJoinNow) {
@@ -330,9 +371,7 @@ export function InterviewRequestsList({
                             <button
                               type="button"
                               onClick={() => {
-                                const liveUrl = buildInterviewLiveMeetingUrl(
-                                  request.requestId || request.id,
-                                  {
+                                const liveUrl = buildInterviewLiveMeetingUrl(request.id, {
                                     role: 'candidate',
                                     displayName: user?.name || 'Candidate',
                                   },
@@ -341,7 +380,7 @@ export function InterviewRequestsList({
                               }}
                               className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1 text-[11px] font-semibold text-white"
                             >
-                              Start
+                              Join
                               <ArrowRight className="h-3 w-3" />
                             </button>
                           );
@@ -349,18 +388,114 @@ export function InterviewRequestsList({
                         return (
                           <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-800">
                             {joinState.joinOpensAtLabel
-                              ? `Starts at ${joinState.joinOpensAtLabel}`
+                              ? `Join opens at ${joinState.joinOpensAtLabel}`
                               : 'Starts when slot opens'}
                           </span>
                         );
                       })()
                     : null}
+                  {request.status !== 'COMPLETED' &&
+                  getJoinWindowState(request, nowTs).canComplete &&
+                  !hasCandidateReviewed(request) ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReviewError('');
+                        setReviewRequestId(request.id);
+                      }}
+                      className="rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold text-white"
+                    >
+                      Completed
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
+              {request.status === 'COMPLETED' || hasCandidateReviewed(request) || hasInterviewerReviewed(request) ? (
+                <div className="mt-2 space-y-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs text-slate-700">
+                  <p>
+                    <span className="font-semibold text-slate-900">Your review:</span>{' '}
+                    {hasCandidateReviewed(request)
+                      ? `${request.candidateRating || '—'}★ · ${displayReviewText(request.candidateFeedback) || 'Submitted'}`
+                      : 'Not submitted yet'}
+                  </p>
+                  <p>
+                    <span className="font-semibold text-slate-900">Interviewer review:</span>{' '}
+                    {hasInterviewerReviewed(request)
+                      ? `${request.interviewerRating || '—'}★ · ${displayReviewText(request.interviewerFeedback) || 'Submitted'}`
+                      : 'Waiting for interviewer'}
+                  </p>
+                </div>
+              ) : null}
+              {mode === 'completed' && !hasCandidateReviewed(request) ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReviewError('');
+                    setReviewRequestId(request.id);
+                  }}
+                  className="mt-2 rounded-lg bg-[#28A8E1] px-3 py-1.5 text-xs font-semibold text-white"
+                >
+                  Add review
+                </button>
+              ) : null}
+              {mode === 'completed' ? <InterviewLiveHistory requestId={request.id} /> : null}
             </div>
           ))}
+          </div>
         </div>
       )}
+      <InterviewReviewModal
+        open={Boolean(reviewTarget)}
+        counterpartName={reviewTarget?.interviewerProfile?.fullName || 'the interviewer'}
+        viewerRole="candidate"
+        submitting={reviewBusy}
+        error={reviewError}
+        onClose={() => {
+          setReviewRequestId(null);
+          setReviewError('');
+        }}
+        onSubmit={async ({ rating, feedback }) => {
+          if (!reviewTarget) return;
+          try {
+            setReviewBusy(true);
+            setReviewError('');
+            await submitInterviewReview(reviewTarget.id, { rating, feedback });
+            setReviewRequestId(null);
+            await query.refetch();
+          } catch (error) {
+            setReviewError(error instanceof Error ? error.message : 'Unable to submit review');
+          } finally {
+            setReviewBusy(false);
+          }
+        }}
+      />
+      <InterviewRescheduleModal
+        open={Boolean(rescheduleTarget)}
+        title="Propose a new interview slot"
+        subtitle="Pick a date and time. The interviewer will confirm to continue."
+        initialDate={rescheduleTarget?.proposedDate || rescheduleTarget?.preferredDate || rescheduleTarget?.scheduledAt}
+        initialTime={rescheduleTarget?.proposedSlot || rescheduleTarget?.scheduledAt || rescheduleTarget?.preferredTime?.[0]}
+        submitting={rescheduleBusy}
+        error={scheduleError}
+        onClose={() => {
+          if (!rescheduleBusy) setRescheduleRequestId(null);
+        }}
+        onSubmit={async ({ date, time }) => {
+          if (!rescheduleTarget) return;
+          try {
+            setRescheduleBusy(true);
+            setScheduleError('');
+            await candidateScheduleDecision(rescheduleTarget.id, 'PROPOSE_SLOT', '', time, date);
+            setScheduleMessage(`New slot sent for ${rescheduleTarget.requestId}. Waiting for interviewer confirmation.`);
+            setRescheduleRequestId(null);
+            await query.refetch();
+          } catch (error) {
+            setScheduleError(error instanceof Error ? error.message : 'Unable to propose a new slot');
+          } finally {
+            setRescheduleBusy(false);
+          }
+        }}
+      />
     </section>
   );
 }

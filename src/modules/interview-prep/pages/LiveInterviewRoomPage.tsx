@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { io, type Socket } from 'socket.io-client';
-import { Camera, CameraOff, Mic, MicOff, MonitorUp, PhoneOff, Users } from 'lucide-react';
+import { Camera, CameraOff, Check, MessageSquare, Mic, MicOff, MonitorUp, PhoneOff, Users, X } from 'lucide-react';
 import { API_ORIGIN } from '@/lib/api-base';
+import { completeLiveInterview, getInterviewLiveByRoom, submitInterviewReview } from '@/lib/interview-request-api';
+import { InterviewReviewModal } from '@/modules/interview-prep/components/InterviewReviewModal';
 
 type RoomRole = 'candidate' | 'interviewer' | 'guest';
 
@@ -30,6 +32,10 @@ const ROOM_EVENT = {
   PARTICIPANT_LEFT: 'interview-room:participant-left',
   SIGNAL: 'interview-room:signal',
   CHAT_MESSAGE: 'interview-room:chat-message',
+  NOTES_UPDATED: 'interview-room:notes-updated',
+  NOTES_UPDATE: 'interview-room:notes-update',
+  COMPLETE: 'interview-room:complete',
+  MEETING_COMPLETED: 'interview-room:meeting-completed',
 } as const;
 
 const rtcConfig: RTCConfiguration = {
@@ -55,9 +61,11 @@ function normalizeRole(value: string): RoomRole {
 export default function LiveInterviewRoomPage() {
   const params = useParams<{ roomId: string }>();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const roomId = sanitizeRoomId(String(params?.roomId || ''));
   const displayName = String(searchParams.get('name') || 'Participant').trim().slice(0, 80) || 'Participant';
   const role = normalizeRole(String(searchParams.get('role') || 'guest'));
+  const roomRequestId = roomId.replace(/^hryantra-interview-/, '');
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -75,8 +83,41 @@ export default function LiveInterviewRoomPage() {
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [isSharingScreen, setIsSharingScreen] = useState(false);
   const [mediaError, setMediaError] = useState('');
-
+  const [notes, setNotes] = useState('');
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [requestDbId, setRequestDbId] = useState('');
+  const [meetingStatus, setMeetingStatus] = useState('');
+  const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false);
+  const [completing, setCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState('');
+  const [callEnded, setCallEnded] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const notesApplyingRef = useRef(false);
+  const notesTimerRef = useRef<number | null>(null);
   const socketOrigin = String(process.env.NEXT_PUBLIC_INTERVIEW_SIGNAL_ORIGIN || API_ORIGIN || '').replace(/\/$/, '');
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!callEnded) return;
+    localStreamRef.current?.getTracks().forEach((track) => track.stop());
+    peerConnectionsRef.current.forEach((peer) => {
+      peer.ontrack = null;
+      peer.onicecandidate = null;
+      peer.close();
+    });
+    peerConnectionsRef.current.clear();
+    if (localVideoRef.current) localVideoRef.current.srcObject = null;
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+  }, [callEnded]);
 
   const attachRemoteStream = (stream: MediaStream) => {
     remoteStreamRef.current = stream;
@@ -176,6 +217,33 @@ export default function LiveInterviewRoomPage() {
         }
         setStatusText('Connecting to room...');
 
+        void getInterviewLiveByRoom(roomId)
+          .then((bundle) => {
+            if (!mounted) return;
+            notesApplyingRef.current = true;
+            setNotes(String(bundle.notes || ''));
+            setChatMessages((prev) =>
+              prev.length > 0
+                ? prev
+                : (bundle.messages || []).map((item) => ({
+                    socketId: 'history',
+                    displayName: item.displayName,
+                    role: item.role || 'guest',
+                    message: item.message,
+                    createdAt: item.createdAt,
+                  }))
+            );
+            if (bundle.request?.id) {
+              setRequestDbId(bundle.request.id);
+              setMeetingStatus(String(bundle.request.status || ''));
+            } else if (roomRequestId) {
+              setRequestDbId(roomRequestId);
+            }
+          })
+          .catch(() => {
+            if (roomRequestId) setRequestDbId(roomRequestId);
+          });
+
         const socket = io(socketOrigin, {
           transports: ['websocket', 'polling'],
           withCredentials: true,
@@ -186,14 +254,43 @@ export default function LiveInterviewRoomPage() {
           socket.emit(ROOM_EVENT.JOIN, { roomId, displayName, role });
         });
 
-        socket.on(ROOM_EVENT.JOINED, (payload: { participants: RoomParticipant[] }) => {
-          const joinedParticipants = Array.isArray(payload?.participants) ? payload.participants : [];
-          setParticipants(joinedParticipants);
-          setStatusText(joinedParticipants.length > 0 ? 'Connected. Starting secure peer call...' : 'Waiting for second participant...');
-          joinedParticipants.forEach((participant) => {
-            ensurePeerConnection(participant.socketId, true);
-          });
-        });
+        socket.on(
+          ROOM_EVENT.JOINED,
+          (payload: {
+            participants: RoomParticipant[];
+            notes?: string;
+            messages?: Array<{
+              displayName?: string;
+              role?: string;
+              message?: string;
+              createdAt?: string;
+              socketId?: string;
+            }>;
+          }) => {
+            const joinedParticipants = Array.isArray(payload?.participants) ? payload.participants : [];
+            setParticipants(joinedParticipants);
+            notesApplyingRef.current = true;
+            setNotes(String(payload?.notes || ''));
+            const history = Array.isArray(payload?.messages) ? payload.messages : [];
+            setChatMessages(
+              history.map((item) => ({
+                socketId: String(item.socketId || 'history'),
+                displayName: String(item.displayName || 'Participant'),
+                role: String(item.role || 'guest'),
+                message: String(item.message || ''),
+                createdAt: String(item.createdAt || new Date().toISOString()),
+              }))
+            );
+            setStatusText(
+              joinedParticipants.length > 0
+                ? 'Connected. Starting secure peer call...'
+                : 'Waiting for second participant...'
+            );
+            joinedParticipants.forEach((participant) => {
+              ensurePeerConnection(participant.socketId, true);
+            });
+          }
+        );
 
         socket.on(ROOM_EVENT.JOIN_ERROR, (payload: { message?: string }) => {
           setStatusText(payload?.message || 'Unable to join room.');
@@ -249,6 +346,23 @@ export default function LiveInterviewRoomPage() {
           setChatMessages((prev) => [...prev, message]);
         });
 
+        socket.on(ROOM_EVENT.NOTES_UPDATED, (payload: { notes?: string }) => {
+          notesApplyingRef.current = true;
+          setNotes(String(payload?.notes || ''));
+        });
+
+        socket.on(ROOM_EVENT.MEETING_COMPLETED, (payload: { completedBy?: string }) => {
+          setCallEnded(true);
+          setMeetingStatus('COMPLETED');
+          setCompleteConfirmOpen(false);
+          setStatusText(
+            payload?.completedBy
+              ? `${payload.completedBy} ended this meeting.`
+              : 'This interview is completed.'
+          );
+          if (role !== 'guest') setReviewOpen(true);
+        });
+
         socket.on('disconnect', () => {
           setStatusText('Disconnected from room. Reconnecting...');
         });
@@ -264,6 +378,7 @@ export default function LiveInterviewRoomPage() {
 
     return () => {
       mounted = false;
+      if (notesTimerRef.current) window.clearTimeout(notesTimerRef.current);
       cleanupSocket();
       cleanupMedia();
     };
@@ -336,101 +451,248 @@ export default function LiveInterviewRoomPage() {
     setChatDraft('');
   };
 
+  const handleNotesChange = (value: string) => {
+    setNotes(value);
+    if (notesApplyingRef.current) {
+      notesApplyingRef.current = false;
+      return;
+    }
+    if (notesTimerRef.current) window.clearTimeout(notesTimerRef.current);
+    notesTimerRef.current = window.setTimeout(() => {
+      socketRef.current?.emit(ROOM_EVENT.NOTES_UPDATE, { notes: value, displayName });
+    }, 600);
+  };
+
+  const completedHubPath =
+    role === 'interviewer'
+      ? '/lms/interview-prep/become-interviewer?tab=completed'
+      : '/lms/interview-prep/request-interview?tab=completed';
+
+  const leaveToHub = (extraQuery?: string) => {
+    socketRef.current?.disconnect();
+    const path = extraQuery ? `${completedHubPath}&${extraQuery}` : completedHubPath;
+    router.push(path);
+  };
+
+  const leaveMeeting = () => {
+    localStreamRef.current?.getTracks().forEach((track) => track.stop());
+    socketRef.current?.disconnect();
+    if (meetingStatus === 'COMPLETED' || callEnded) {
+      leaveToHub();
+      return;
+    }
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+    leaveToHub();
+  };
+
+  const completeMeeting = async () => {
+    const id = requestDbId || roomRequestId;
+    if (!id || completing || meetingStatus === 'COMPLETED') return;
+    try {
+      setCompleting(true);
+      setCompleteError('');
+      await completeLiveInterview(id);
+      socketRef.current?.emit(ROOM_EVENT.COMPLETE, { displayName });
+      setCallEnded(true);
+      setMeetingStatus('COMPLETED');
+      setCompleteConfirmOpen(false);
+      setStatusText('This interview is completed.');
+      if (role !== 'guest') setReviewOpen(true);
+    } catch (error) {
+      setCompleteError(error instanceof Error ? error.message : 'Unable to complete this interview');
+    } finally {
+      setCompleting(false);
+    }
+  };
+
+  const submitLiveReview = async (input: { rating: number; feedback: string }) => {
+    const id = requestDbId || roomRequestId;
+    if (!id) {
+      leaveToHub();
+      return;
+    }
+    try {
+      setReviewBusy(true);
+      setReviewError('');
+      await submitInterviewReview(id, input);
+      setReviewOpen(false);
+      leaveToHub();
+    } catch (error) {
+      setReviewError(error instanceof Error ? error.message : 'Unable to submit review');
+    } finally {
+      setReviewBusy(false);
+    }
+  };
+
+  const remotePresent = participants.length > 0;
+  const canComplete =
+    Boolean(requestDbId || roomRequestId) && meetingStatus !== 'COMPLETED' && !callEnded && role !== 'guest';
+  const counterpartName =
+    participants.find((item) => item.displayName && item.displayName !== displayName)?.displayName ||
+    (role === 'interviewer' ? 'the candidate' : 'the interviewer');
+
   return (
-    <div className="min-h-screen bg-slate-950 p-4 text-white">
-      <div className="mx-auto grid w-full max-w-7xl gap-4 lg:grid-cols-[1fr_330px]">
-        <section className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="text-sm font-semibold text-cyan-300">Live Interview Room</p>
-              <p className="text-xs text-slate-300">Room: {roomId}</p>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs">
-              <Users className="h-3.5 w-3.5 text-cyan-300" />
-              <span>{participants.length + 1}/2 participants</span>
-            </div>
+    <div className="fixed inset-0 z-[5000] flex h-dvh w-screen overflow-hidden bg-[#202124] text-white">
+      <div className="relative flex min-w-0 flex-1 flex-col">
+        <header className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-white">Live interview</p>
+            <p className="truncate text-xs text-white/60">{statusText}</p>
           </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
-              <p className="border-b border-slate-800 px-3 py-2 text-xs text-slate-300">You ({displayName})</p>
-              <video ref={localVideoRef} autoPlay muted playsInline className="h-64 w-full bg-black object-cover" />
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs">
+              <Users className="h-3.5 w-3.5" />
+              <span>{participants.length + 1}</span>
             </div>
-            <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
-              <p className="border-b border-slate-800 px-3 py-2 text-xs text-slate-300">Other Participant</p>
-              <video ref={remoteVideoRef} autoPlay playsInline className="h-64 w-full bg-black object-cover" />
-            </div>
+            {meetingStatus === 'COMPLETED' ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600/90 px-3 py-1.5 text-xs font-semibold">
+                <Check className="h-3.5 w-3.5" />
+                Completed
+              </span>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setPanelOpen((open) => !open)}
+              className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${
+                panelOpen ? 'bg-white/20' : 'bg-white/10 hover:bg-white/15'
+              }`}
+              aria-label="Toggle chat and notes"
+            >
+              <MessageSquare className="h-5 w-5" />
+            </button>
           </div>
+        </header>
 
-          <div className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100">
-            {statusText}
-          </div>
-          {mediaError ? (
-            <div className="rounded-xl border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-sm text-rose-200">
-              {mediaError}
+        <div className="relative min-h-0 flex-1 px-3 pb-28 sm:px-5">
+          <div className="relative h-full overflow-hidden rounded-2xl bg-black">
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className="h-full w-full bg-black object-cover"
+            />
+            {!remotePresent && !callEnded ? (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#202124]">
+                <p className="max-w-sm px-4 text-center text-sm text-white/75">
+                  Waiting for the other participant to join
+                </p>
+              </div>
+            ) : null}
+            {callEnded ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                <p className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium">Call ended</p>
+              </div>
+            ) : null}
+            <div className="absolute bottom-4 right-4 h-36 w-52 overflow-hidden rounded-xl border border-white/20 bg-black shadow-2xl sm:h-44 sm:w-64">
+              <video ref={localVideoRef} autoPlay muted playsInline className="h-full w-full object-cover" />
+              <p className="absolute bottom-1.5 left-2 rounded bg-black/60 px-1.5 py-0.5 text-[10px]">You · {displayName}</p>
             </div>
-          ) : null}
+            {mediaError ? (
+              <div className="absolute left-4 right-4 top-4 rounded-xl border border-rose-400/40 bg-rose-950/80 px-3 py-2 text-sm text-rose-100">
+                {mediaError}
+              </div>
+            ) : null}
+          </div>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center pb-5">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-[#3c4043] px-4 py-3 shadow-2xl">
             <button
               type="button"
               onClick={toggleAudio}
-              className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold ${
-                audioEnabled ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-rose-600 hover:bg-rose-500'
+              className={`inline-flex h-12 w-12 items-center justify-center rounded-full ${
+                audioEnabled ? 'bg-white/10 hover:bg-white/20' : 'bg-rose-600 hover:bg-rose-500'
               }`}
+              aria-label={audioEnabled ? 'Mute microphone' : 'Unmute microphone'}
             >
-              {audioEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-              {audioEnabled ? 'Mute' : 'Unmute'}
+              {audioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
             </button>
             <button
               type="button"
               onClick={toggleVideo}
-              className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold ${
-                videoEnabled ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-rose-600 hover:bg-rose-500'
+              className={`inline-flex h-12 w-12 items-center justify-center rounded-full ${
+                videoEnabled ? 'bg-white/10 hover:bg-white/20' : 'bg-rose-600 hover:bg-rose-500'
               }`}
+              aria-label={videoEnabled ? 'Stop camera' : 'Start camera'}
             >
-              {videoEnabled ? <Camera className="h-4 w-4" /> : <CameraOff className="h-4 w-4" />}
-              {videoEnabled ? 'Stop Camera' : 'Start Camera'}
+              {videoEnabled ? <Camera className="h-5 w-5" /> : <CameraOff className="h-5 w-5" />}
             </button>
             <button
               type="button"
               onClick={() => void toggleScreenShare()}
-              className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold ${
-                isSharingScreen ? 'bg-amber-600 hover:bg-amber-500' : 'bg-cyan-600 hover:bg-cyan-500'
+              className={`inline-flex h-12 w-12 items-center justify-center rounded-full ${
+                isSharingScreen ? 'bg-blue-600 hover:bg-blue-500' : 'bg-white/10 hover:bg-white/20'
               }`}
+              aria-label={isSharingScreen ? 'Stop sharing screen' : 'Share screen'}
             >
-              <MonitorUp className="h-4 w-4" />
-              {isSharingScreen ? 'Stop Share' : 'Share Screen'}
+              <MonitorUp className="h-5 w-5" />
             </button>
+            {canComplete ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setCompleteError('');
+                  setCompleteConfirmOpen(true);
+                }}
+                className="inline-flex h-12 items-center gap-2 rounded-full bg-emerald-600 px-4 text-sm font-semibold hover:bg-emerald-500"
+              >
+                <Check className="h-5 w-5" />
+                Complete meeting
+              </button>
+            ) : null}
             <button
               type="button"
-              onClick={() => window.close()}
-              className="inline-flex items-center gap-1 rounded-lg bg-slate-700 px-3 py-2 text-sm font-semibold hover:bg-slate-600"
+              onClick={leaveMeeting}
+              className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-rose-600 hover:bg-rose-500"
+              aria-label="Leave call"
             >
-              <PhoneOff className="h-4 w-4" />
-              Leave
+              <PhoneOff className="h-5 w-5" />
             </button>
           </div>
-        </section>
+        </div>
+      </div>
 
-        <aside className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
-          <p className="text-sm font-semibold text-cyan-300">Room Chat</p>
-          <div className="mt-3 h-80 space-y-2 overflow-y-auto rounded-xl border border-slate-700 bg-slate-950 p-2">
+      {panelOpen ? (
+        <aside className="flex h-full w-full max-w-[360px] shrink-0 flex-col border-l border-white/10 bg-[#1a1c1e] max-lg:absolute max-lg:inset-y-0 max-lg:right-0 max-lg:z-30">
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+            <p className="text-sm font-medium">In-call messages</p>
+            <button
+              type="button"
+              onClick={() => setPanelOpen(false)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/10"
+              aria-label="Close panel"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="border-b border-white/10 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-white/50">Shared notes</p>
+            <textarea
+              value={notes}
+              onChange={(event) => handleNotesChange(event.target.value)}
+              placeholder="Write notes during the interview. Both people see this after the call."
+              className="mt-2 h-28 w-full resize-none rounded-xl border border-white/10 bg-black/30 p-2 text-xs text-white outline-none focus:border-blue-400"
+            />
+          </div>
+          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3">
             {chatMessages.length === 0 ? (
-              <p className="text-xs text-slate-400">No messages yet.</p>
+              <p className="text-xs text-white/50">No messages yet. Messages are visible to everyone in this room.</p>
             ) : (
               chatMessages.map((item, idx) => (
-                <div key={`${item.socketId}-${item.createdAt}-${idx}`} className="rounded-md bg-slate-800 px-2 py-1.5 text-xs">
-                  <p className="font-semibold text-cyan-200">{item.displayName}</p>
-                  <p className="mt-0.5 text-slate-100">{item.message}</p>
-                  <p className="mt-1 text-[10px] text-slate-400">
+                <div key={`${item.socketId}-${item.createdAt}-${idx}`} className="rounded-lg bg-white/5 px-2.5 py-2 text-xs">
+                  <p className="font-semibold text-blue-200">{item.displayName}</p>
+                  <p className="mt-0.5 text-white/90">{item.message}</p>
+                  <p className="mt-1 text-[10px] text-white/40">
                     {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
               ))
             )}
           </div>
-          <div className="mt-3 flex gap-2">
+          <div className="flex gap-2 border-t border-white/10 p-3">
             <input
               value={chatDraft}
               onChange={(event) => setChatDraft(event.target.value)}
@@ -440,19 +702,70 @@ export default function LiveInterviewRoomPage() {
                   sendChatMessage();
                 }
               }}
-              placeholder="Type message..."
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
+              placeholder="Send a message"
+              className="w-full rounded-full border border-white/10 bg-black/30 px-4 py-2 text-sm text-white outline-none focus:border-blue-400"
             />
             <button
               type="button"
               onClick={sendChatMessage}
-              className="rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-500"
+              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-500"
             >
               Send
             </button>
           </div>
         </aside>
-      </div>
+      ) : null}
+
+      {completeConfirmOpen ? (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-[#2d2f31] p-5 shadow-2xl">
+            <h3 className="text-lg font-semibold">Complete this meeting?</h3>
+            <p className="mt-2 text-sm text-white/70">
+              This marks the interview as completed for both of you. You can leave a review from Completed after you
+              exit.
+            </p>
+            {completeError ? (
+              <p className="mt-3 rounded-lg bg-rose-500/20 px-3 py-2 text-sm text-rose-200">{completeError}</p>
+            ) : null}
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={completing}
+                onClick={() => setCompleteConfirmOpen(false)}
+                className="rounded-full px-4 py-2 text-sm font-semibold text-white/80 hover:bg-white/10"
+              >
+                Keep meeting
+              </button>
+              <button
+                type="button"
+                disabled={completing}
+                onClick={() => void completeMeeting()}
+                className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold hover:bg-emerald-500 disabled:opacity-60"
+              >
+                {completing ? 'Completing...' : 'Complete meeting'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {role !== 'guest' ? (
+        <InterviewReviewModal
+          open={reviewOpen}
+          counterpartName={counterpartName}
+          viewerRole={role === 'interviewer' ? 'interviewer' : 'candidate'}
+          submitting={reviewBusy}
+          error={reviewError}
+          onClose={() => {
+            setReviewOpen(false);
+            const id = requestDbId || roomRequestId;
+            leaveToHub(id ? `reviewId=${encodeURIComponent(id)}` : undefined);
+          }}
+          onSubmit={(input) => {
+            void submitLiveReview(input);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

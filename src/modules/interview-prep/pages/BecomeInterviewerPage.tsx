@@ -3,19 +3,33 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CheckCircle2, Loader2, Sparkles, Users } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthContext';
 import { getApiBaseUrl } from '@/lib/api-base';
 import { getAuthHeaders } from '@/lib/auth-storage';
+import { resolveProfilePhotoUrl } from '@/lib/profile-photo';
 import { buildInterviewLiveMeetingUrl } from '@/lib/interview-live-meeting';
 import {
   getInterviewerQueue,
   getMyInterviewerApplication,
   respondToInterviewRequest,
+  scheduleInterviewSlot,
   submitInterviewerApplication,
+  updateMyInterviewerApplication,
 } from '@/lib/interviewer-api';
+import { submitInterviewReview } from '@/lib/interview-request-api';
+import { InterviewLiveHistory } from '@/modules/interview-prep/components/InterviewLiveHistory';
 import { WritingAssistField } from '@/components/common/WritingSuggestions';
 import { InterviewSimpleTabs } from '../components/InterviewSimpleTabs';
+import { InterviewReviewModal } from '../components/InterviewReviewModal';
+import { InterviewRescheduleModal } from '../components/InterviewRescheduleModal';
+import {
+  displayReviewText,
+  formatInterviewWhen,
+  getInterviewSessionWindow,
+  hasCandidateReviewed,
+  hasInterviewerReviewed,
+} from '@/lib/interview-session-window';
 
 const SKILLS = [
   'Frontend Development',
@@ -62,7 +76,38 @@ function yearsFromBucket(value: string) {
   return 9;
 }
 
-function getInterviewerQueueBadge(item: { status?: string; candidateFeedback?: string | null }) {
+function bucketFromYears(years: number) {
+  if (years >= 8) return '8+ Years';
+  if (years >= 5) return '5-8 Years';
+  if (years >= 3) return '3-5 Years';
+  if (years >= 1) return '1-3 Years';
+  return '0-1 Years';
+}
+
+function parseWeeklyAvailability(summary: string) {
+  const text = String(summary || '');
+  const daysPart = /Days:\s*([^|]*)/i.exec(text)?.[1] || '';
+  const slotsPart = /Slots:\s*(.*)$/i.exec(text)?.[1] || '';
+  const days = daysPart
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item): item is (typeof AVAILABILITY_DAYS)[number] =>
+      (AVAILABILITY_DAYS as readonly string[]).includes(item)
+    );
+  const slots = slotsPart
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item): item is (typeof AVAILABILITY_SLOT_OPTIONS)[number] =>
+      (AVAILABILITY_SLOT_OPTIONS as readonly string[]).includes(item)
+    );
+  return { days, slots };
+}
+
+function getInterviewerQueueBadge(item: {
+  status?: string;
+  candidateFeedback?: string | null;
+  candidateProposedSlot?: string | null;
+}) {
   const status = String(item.status || '');
   if (status === 'ACCEPTED') {
     return {
@@ -70,43 +115,24 @@ function getInterviewerQueueBadge(item: { status?: string; candidateFeedback?: s
       className: 'border border-amber-200 bg-amber-50 text-amber-800',
     };
   }
-  if (
-    status === 'WAITING_FOR_ACCEPTANCE' &&
-    String(item.candidateFeedback || '')
-      .toLowerCase()
-      .includes('new slot')
-  ) {
+  if (status === 'WAITING_FOR_ACCEPTANCE') {
     return {
-      text: 'Candidate Requested New Slot',
+      text: item.candidateProposedSlot || String(item.candidateFeedback || '').includes('SLOT_PROPOSAL')
+        ? 'Candidate Requested New Slot'
+        : 'Waiting for your acceptance',
       className: 'border border-orange-200 bg-orange-50 text-orange-800',
     };
   }
   return null;
 }
 
-function getJoinWindowState(item: { scheduledAt?: string | null; duration?: number }, nowTs: number) {
-  const scheduledAtMs = item?.scheduledAt ? new Date(item.scheduledAt).getTime() : Number.NaN;
-  if (!Number.isFinite(scheduledAtMs)) {
-    return { canJoinNow: false, joinOpensAtLabel: null as string | null };
-  }
-  const durationMin = Math.max(15, Number(item?.duration || 45));
-  const joinOpensAt = scheduledAtMs - 15 * 60 * 1000; // allow join 15 minutes before
-  const joinClosesAt = scheduledAtMs + (durationMin + 30) * 60 * 1000; // grace window after interview
-  const canJoinNow = nowTs >= joinOpensAt && nowTs <= joinClosesAt;
-  const joinOpensAtLabel =
-    nowTs < joinOpensAt
-      ? new Date(joinOpensAt).toLocaleString('en-IN', {
-          day: '2-digit',
-          month: 'short',
-          hour: 'numeric',
-          minute: '2-digit',
-        })
-      : null;
-  return { canJoinNow, joinOpensAtLabel };
+function getJoinWindowState(item: { scheduledAt?: string | null; duration?: number; status?: string }, nowTs: number) {
+  return getInterviewSessionWindow(item, nowTs);
 }
 
 export default function BecomeInterviewerPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [name, setName] = useState('');
@@ -126,17 +152,31 @@ export default function BecomeInterviewerPage() {
   const [selectedAvailabilitySlots, setSelectedAvailabilitySlots] = useState<string[]>(['6:00 PM - 8:00 PM']);
   const [motivation, setMotivation] = useState('');
   const [feedbackStyle, setFeedbackStyle] = useState('');
-  const [linkedinUrl, setLinkedinUrl] = useState('');
-  const [resumeUrl, setResumeUrl] = useState('');
+  const [interviewPrice, setInterviewPrice] = useState(50);
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [queueActionMessage, setQueueActionMessage] = useState('');
   const [proposedSlotByRequest, setProposedSlotByRequest] = useState<Record<string, string>>({});
-  const [prefilledFromRejected, setPrefilledFromRejected] = useState(false);
+  const [prefilledFromSaved, setPrefilledFromSaved] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [reviewRequestId, setReviewRequestId] = useState<string | null>(null);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [rescheduleRequestId, setRescheduleRequestId] = useState<string | null>(null);
+  const [rescheduleBusy, setRescheduleBusy] = useState(false);
   const [hasManualCompanyRoleEdit, setHasManualCompanyRoleEdit] = useState(false);
   const [nowTs, setNowTs] = useState(() => Date.now());
-  const [hubTab, setHubTab] = useState<'candidates' | 'active' | 'application'>('candidates');
+  const [hubTab, setHubTab] = useState<'candidates' | 'active' | 'completed' | 'application'>('candidates');
+
+  useEffect(() => {
+    const tab = String(searchParams.get('tab') || '');
+    if (tab === 'completed' || tab === 'active' || tab === 'candidates' || tab === 'application') {
+      setHubTab(tab);
+    }
+    const reviewId = String(searchParams.get('reviewId') || '').trim();
+    if (reviewId) setReviewRequestId(reviewId);
+  }, [searchParams]);
 
   const profileQuery = useQuery({
     queryKey: ['interviewer-application-me'],
@@ -200,6 +240,20 @@ export default function BecomeInterviewerPage() {
 
   const existingApplication = profileQuery.data?.application || null;
   const interviewerProfile = profileQuery.data?.profile || null;
+  const accountPhotoUrl = useMemo(() => {
+    const profile = phase1ProfileQuery.data as
+      | {
+          profilePhotoUrl?: string;
+          personalInfo?: { profilePhotoUrl?: string };
+        }
+      | null
+      | undefined;
+    const fromProfile =
+      profile?.personalInfo?.profilePhotoUrl ||
+      profile?.profilePhotoUrl ||
+      '';
+    return resolveProfilePhotoUrl(fromProfile || user?.profilePhotoUrl || null);
+  }, [phase1ProfileQuery.data, user?.profilePhotoUrl]);
   const queue = useMemo(() => queueQuery.data ?? [], [queueQuery.data]);
   const openQueueItems = useMemo(
     () =>
@@ -220,6 +274,16 @@ export default function BecomeInterviewerPage() {
       }),
     [queue, user?.id],
   );
+  const completedQueueItems = useMemo(
+    () =>
+      queue.filter((item) => {
+        if (user?.id && String(item.candidateId) === String(user.id)) return false;
+        return String(item.status || '') === 'COMPLETED';
+      }),
+    [queue, user?.id],
+  );
+  const reviewTarget = queue.find((item) => item.id === reviewRequestId) || null;
+  const rescheduleTarget = queue.find((item) => item.id === rescheduleRequestId) || null;
 
   useEffect(() => {
     if (!interviewerProfile && (!existingApplication || existingApplication.status === 'REJECTED')) {
@@ -228,33 +292,26 @@ export default function BecomeInterviewerPage() {
   }, [existingApplication, interviewerProfile]);
 
   useEffect(() => {
-    if (prefilledFromRejected) return;
-    if (!existingApplication || existingApplication.status !== 'REJECTED') return;
-    setName(String(existingApplication.fullName || ''));
+    if (prefilledFromSaved) return;
+    const source = interviewerProfile || existingApplication;
+    if (!source) return;
+    setName(String(source.fullName || ''));
     if (!hasManualCompanyRoleEdit) {
-      setCurrentCompany(String(existingApplication.currentCompany || ''));
-      setCurrentRole(String(existingApplication.currentRole || ''));
+      setCurrentCompany(String(source.currentCompany || ''));
+      setCurrentRole(String(source.currentRole || ''));
     }
-    setExperience(
-      existingApplication.yearsOfExperience >= 8
-        ? '8+ Years'
-        : existingApplication.yearsOfExperience >= 5
-          ? '5-8 Years'
-          : existingApplication.yearsOfExperience >= 3
-            ? '3-5 Years'
-            : existingApplication.yearsOfExperience >= 1
-              ? '1-3 Years'
-              : '0-1 Years'
-    );
-    setSelectedSkills(Array.isArray(existingApplication.expertiseAreas) ? existingApplication.expertiseAreas : []);
-    setSelectedTypes(Array.isArray(existingApplication.interviewTypes) ? existingApplication.interviewTypes : []);
-    setSelectedLanguages(Array.isArray(existingApplication.languages) ? existingApplication.languages : []);
-    setMotivation(String(existingApplication.aboutYourself || ''));
-    setFeedbackStyle(String(existingApplication.feedbackStyle || ''));
-    setLinkedinUrl(String(existingApplication.linkedinUrl || ''));
-    setResumeUrl(String(existingApplication.resumeUrl || ''));
-    setPrefilledFromRejected(true);
-  }, [existingApplication, hasManualCompanyRoleEdit, prefilledFromRejected]);
+    setExperience(bucketFromYears(Number(source.yearsOfExperience || 0)));
+    setSelectedSkills(Array.isArray(source.expertiseAreas) ? source.expertiseAreas : []);
+    setSelectedTypes(Array.isArray(source.interviewTypes) ? source.interviewTypes : []);
+    setSelectedLanguages(Array.isArray(source.languages) ? source.languages : []);
+    const parsedAvailability = parseWeeklyAvailability(String(source.weeklyAvailability || ''));
+    if (parsedAvailability.days.length) setSelectedAvailabilityDays(parsedAvailability.days);
+    if (parsedAvailability.slots.length) setSelectedAvailabilitySlots(parsedAvailability.slots);
+    setMotivation(String(source.aboutYourself || ''));
+    setFeedbackStyle(String(source.feedbackStyle || ''));
+    setInterviewPrice(Number(source.interviewPrice || 50));
+    setPrefilledFromSaved(true);
+  }, [existingApplication, hasManualCompanyRoleEdit, interviewerProfile, prefilledFromSaved]);
   const weeklyAvailabilitySummary = useMemo(() => {
     const dayPart = selectedAvailabilityDays.join(', ');
     const slotPart = selectedAvailabilitySlots.join(', ');
@@ -276,6 +333,9 @@ export default function BecomeInterviewerPage() {
       if (motivation.trim().length < 20) return 'About yourself must be at least 20 characters.';
       if (feedbackStyle.trim().length < 10) return 'Feedback style must be at least 10 characters.';
       if (weeklyAvailabilitySummary.trim().length < 5) return 'Please provide weekly availability.';
+      if (!Number.isFinite(interviewPrice) || interviewPrice < 5 || interviewPrice > 500) {
+        return 'Interview price must be between 5 and 500 tokens.';
+      }
       return '';
     },
     [
@@ -289,6 +349,7 @@ export default function BecomeInterviewerPage() {
       selectedSkills,
       selectedTypes,
       weeklyAvailabilitySummary,
+      interviewPrice,
     ]
   );
 
@@ -307,24 +368,35 @@ export default function BecomeInterviewerPage() {
     }
     setSubmitting(true);
     setFormError('');
+    setSaveMessage('');
+    const payload = {
+      fullName: name.trim(),
+      currentCompany: currentCompany.trim(),
+      currentRole: currentRole.trim(),
+      yearsOfExperience: yearsFromBucket(experience),
+      expertiseAreas: selectedSkills,
+      interviewTypes: selectedTypes,
+      languages: selectedLanguages,
+      weeklyAvailability: weeklyAvailabilitySummary.trim(),
+      aboutYourself: motivation.trim(),
+      feedbackStyle: feedbackStyle.trim(),
+      interviewPrice: Math.round(interviewPrice),
+    };
     try {
-      await submitInterviewerApplication({
-        fullName: name.trim(),
-        currentCompany: currentCompany.trim(),
-        currentRole: currentRole.trim(),
-        yearsOfExperience: yearsFromBucket(experience),
-        expertiseAreas: selectedSkills,
-        interviewTypes: selectedTypes,
-        languages: selectedLanguages,
-        weeklyAvailability: weeklyAvailabilitySummary.trim(),
-        aboutYourself: motivation.trim(),
-        feedbackStyle: feedbackStyle.trim(),
-        linkedinUrl: linkedinUrl.trim(),
-        resumeUrl: resumeUrl.trim(),
-      });
+      if (interviewerProfile || existingApplication) {
+        await updateMyInterviewerApplication(payload);
+        setSaveMessage(
+          existingApplication?.status === 'REJECTED'
+            ? 'Application resubmitted. You can keep editing these details anytime.'
+            : 'Profile changes saved.'
+        );
+      } else {
+        await submitInterviewerApplication(payload);
+        setSaveMessage('Interviewer application submitted. You can edit it from Profile anytime.');
+      }
       await profileQuery.refetch();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'Unable to submit application');
+      setFormError(error instanceof Error ? error.message : 'Unable to save interviewer application');
     } finally {
       setSubmitting(false);
     }
@@ -338,7 +410,16 @@ export default function BecomeInterviewerPage() {
       const updated = await respondToInterviewRequest(
         requestId,
         decision,
-        decision === 'ACCEPT' ? proposedSlotByRequest[requestId] : undefined
+        decision === 'ACCEPT'
+          ? proposedSlotByRequest[requestId] ||
+            queue.find((row) => row.id === requestId)?.candidateProposedSlot ||
+            queue.find((row) => row.id === requestId)?.proposedSlot
+          : undefined,
+        decision === 'ACCEPT'
+          ? queue.find((row) => row.id === requestId)?.candidateProposedDate ||
+            queue.find((row) => row.id === requestId)?.proposedDate ||
+            undefined
+          : undefined
       );
       queryClient.setQueryData(['interviewer-queue'], (previous: unknown) => {
         if (!Array.isArray(previous)) return previous;
@@ -421,21 +502,22 @@ export default function BecomeInterviewerPage() {
         tabs={[
           { id: 'candidates', label: 'Inbox', count: openQueueItems.length },
           { id: 'active', label: 'Scheduled', count: acceptedQueueItems.length },
+          { id: 'completed', label: 'Completed', count: completedQueueItems.length },
           { id: 'application', label: 'Profile' },
         ]}
       />
 
       {hubTab === 'application' ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          {interviewerProfile ? (
-            <p className="text-sm text-slate-600">Your interviewer profile is already active. Open Inbox to take requests.</p>
-          ) : existingApplication && existingApplication.status !== 'REJECTED' ? (
-            <p className="text-sm text-slate-600">
-              Application status: <span className="font-semibold">{existingApplication.statusLabel}</span>
-            </p>
-          ) : (
           <div className="space-y-4">
-            {existingApplication?.status === 'REJECTED' ? (
+            {interviewerProfile ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                <p className="text-sm font-semibold text-emerald-800">Active interviewer profile</p>
+                <p className="mt-0.5 text-xs text-emerald-700">
+                  Edit your submitted details below and save. Status: {interviewerProfile.status}.
+                </p>
+              </div>
+            ) : existingApplication?.status === 'REJECTED' ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
                 <p className="text-sm font-semibold text-amber-800">
                   Previous application was rejected. Update details and resubmit.
@@ -444,7 +526,38 @@ export default function BecomeInterviewerPage() {
                   <p className="mt-1 text-sm text-amber-700">{existingApplication.reviewNotes}</p>
                 ) : null}
               </div>
+            ) : existingApplication ? (
+              <div className="rounded-xl border border-sky-200 bg-sky-50 p-3">
+                <p className="text-sm font-semibold text-sky-800">
+                  Application status: {existingApplication.statusLabel}
+                </p>
+                <p className="mt-0.5 text-xs text-sky-700">
+                  You can edit this submitted form and save the updates.
+                </p>
+              </div>
             ) : null}
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              {accountPhotoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={accountPhotoUrl}
+                  alt=""
+                  className="h-14 w-14 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 text-lg font-bold text-slate-600">
+                  {String(name || user?.name || 'U').slice(0, 1).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Profile photo</p>
+                <p className="text-xs text-slate-500">
+                  {accountPhotoUrl
+                    ? 'Using the photo from your Phase 1 account.'
+                    : 'No account photo yet. Add one from your profile and it will appear here.'}
+                </p>
+              </div>
+            </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-semibold text-slate-700">Personal Information - Full Name</label>
@@ -620,23 +733,21 @@ export default function BecomeInterviewerPage() {
                   </p>
                 </div>
               </div>
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700">Resume / LinkedIn</label>
-                <div className="grid gap-2">
-                  <input
-                    value={resumeUrl}
-                    onChange={(e) => setResumeUrl(e.target.value)}
-                    placeholder="Resume URL (optional)"
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
-                  />
-                  <input
-                    value={linkedinUrl}
-                    onChange={(e) => setLinkedinUrl(e.target.value)}
-                    placeholder="LinkedIn URL (optional)"
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
-                  />
-                </div>
-              </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-slate-700">Interview Price (tokens per interview)</label>
+              <input
+                type="number"
+                min={5}
+                max={500}
+                value={interviewPrice}
+                onChange={(e) => setInterviewPrice(Number(e.target.value))}
+                className="w-full max-w-xs rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Candidates see this price on your card. They pay only after you accept and they confirm.
+              </p>
             </div>
 
             <div>
@@ -670,6 +781,11 @@ export default function BecomeInterviewerPage() {
             {formError ? (
               <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{formError}</p>
             ) : null}
+            {saveMessage ? (
+              <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                {saveMessage}
+              </p>
+            ) : null}
 
             <button
               type="button"
@@ -678,7 +794,11 @@ export default function BecomeInterviewerPage() {
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Submit Interviewer Application
+              {existingApplication?.status === 'REJECTED'
+                ? 'Resubmit Interviewer Application'
+                : interviewerProfile || existingApplication
+                  ? 'Save Profile Changes'
+                  : 'Submit Interviewer Application'}
             </button>
             {submitValidationMessage ? (
               <p className="text-xs text-slate-500">
@@ -686,7 +806,6 @@ export default function BecomeInterviewerPage() {
               </p>
             ) : null}
           </div>
-          )}
         </section>
       ) : null}
 
@@ -717,9 +836,9 @@ export default function BecomeInterviewerPage() {
               No interview candidates available right now.
             </p>
           ) : (
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {openQueueItems.map((item) => (
-                <div key={item.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div key={item.id} className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200 bg-slate-50 p-3">
                   {getInterviewerQueueBadge(item) ? (
                     <span
                       className={`mb-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${getInterviewerQueueBadge(item)?.className}`}
@@ -750,34 +869,49 @@ export default function BecomeInterviewerPage() {
                       ) : null}
                     </div>
                   </div>
-                  <p className="mt-1 text-sm text-slate-700">
+                  <p className="mt-1 text-xs text-slate-700">
                     Candidate: {item.candidateProfile?.fullName || item.candidateId} · Role: {item.targetRole || 'N/A'}
                   </p>
-                  <p className="mt-1 text-sm text-slate-600">
+                  <p className="mt-1 text-xs text-slate-600">
                     Skills: {item.techStack.join(', ')} · Experience: {item.experience} · Language: {item.language}
                   </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Requested: {item.interviewType} · {item.preferredTime.join(', ')} · {item.duration} mins
+                  <p className="mt-1 text-xs text-slate-600">
+                    Requested: {item.interviewType} · {item.duration} mins · {item.interviewPrice || 50} tokens
                   </p>
+                  {item.candidateProposedSlot || item.proposedSlot ? (
+                    <div className="mt-2 rounded-lg border border-orange-200 bg-orange-50 px-2.5 py-2 text-xs text-orange-900">
+                      <p className="font-semibold">
+                        {item.candidateProposedSlot ? 'Candidate requested slot' : 'Proposed slot'}
+                      </p>
+                      <p className="mt-0.5 text-sm font-bold text-slate-900">
+                        {formatInterviewWhen({
+                          preferredDate: item.preferredDate,
+                          preferredTime: item.preferredTime,
+                          proposedSlot: item.candidateProposedSlot || item.proposedSlot,
+                          proposedDate: item.candidateProposedDate || item.proposedDate,
+                          scheduledAt: item.scheduledAt,
+                        }).dateLabel}{' '}
+                        · {item.candidateProposedSlot || item.proposedSlot}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-xs text-slate-600">
+                      Original windows: {(item.preferredTime || []).join(', ') || 'N/A'}
+                    </p>
+                  )}
                   <div className="mt-2">
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
                       Proposed slot to candidate
-                    </label>
-                    <select
-                      value={proposedSlotByRequest[item.id] ?? item.preferredTime?.[0] ?? ''}
-                      onChange={(event) =>
-                        setProposedSlotByRequest((prev) => ({ ...prev, [item.id]: event.target.value }))
-                      }
-                      className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-700 outline-none focus:border-emerald-400"
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setRescheduleRequestId(item.id)}
+                      className="rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-600"
                     >
-                      {(item.preferredTime || []).map((slot) => (
-                        <option key={`${item.id}-${slot}`} value={slot}>
-                          {slot}
-                        </option>
-                      ))}
-                    </select>
+                      Propose date & time
+                    </button>
                   </div>
-                  <p className="mt-1 text-sm text-slate-600">Notes: {item.notes || 'N/A'}</p>
+                  <p className="mt-1 text-xs text-slate-600">Notes: {item.notes || 'N/A'}</p>
                   {item.candidateResume?.fileUrl ? (
                     <a
                       href={item.candidateResume.fileUrl}
@@ -809,11 +943,11 @@ export default function BecomeInterviewerPage() {
               No scheduled interviews yet.
             </p>
           ) : (
-            <div className="mt-3 space-y-3">
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {acceptedQueueItems.map((item) => {
                 const joinState = getJoinWindowState(item, nowTs);
                 return (
-                  <div key={item.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <div key={item.id} className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200 bg-slate-50 p-3">
                     <p className="text-sm font-bold text-slate-900">{item.requestId} · {item.statusLabel}</p>
                     <div className="mt-2 space-y-1 text-xs">
                       <p>
@@ -821,13 +955,16 @@ export default function BecomeInterviewerPage() {
                         {item.candidateProfile?.fullName || item.candidateId}
                       </p>
                       <p className="text-slate-600">
-                        {item.interviewType} · {item.duration} mins · {item.language}
+                        {item.interviewType} · {item.duration} mins · {item.language} · {item.interviewPrice || 50} tokens
                       </p>
-                      {item.scheduledAt ? (
-                        <p className="text-slate-600">
-                          Scheduled: {new Date(item.scheduledAt).toLocaleString()}
-                        </p>
-                      ) : null}
+                      {(() => {
+                        const when = formatInterviewWhen(item);
+                        return (
+                          <p className="text-slate-600">
+                            Slot: {when.dateLabel} · {when.timeLabel}
+                          </p>
+                        );
+                      })()}
                       <div className="mt-2 flex flex-wrap gap-2">
                         <button
                           type="button"
@@ -838,11 +975,18 @@ export default function BecomeInterviewerPage() {
                         >
                           Open room
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => setRescheduleRequestId(item.id)}
+                          className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800"
+                        >
+                          Reschedule
+                        </button>
                         {joinState.canJoinNow ? (
                           <button
                             type="button"
                             onClick={() => {
-                              const liveUrl = buildInterviewLiveMeetingUrl(item.requestId || item.id, {
+                              const liveUrl = buildInterviewLiveMeetingUrl(item.id, {
                                 role: 'interviewer',
                                 displayName: user?.name || 'Interviewer',
                               });
@@ -858,6 +1002,20 @@ export default function BecomeInterviewerPage() {
                             Join opens at {joinState.joinOpensAtLabel}
                           </span>
                         ) : null}
+                        {String(item.status || '') !== 'COMPLETED' &&
+                        joinState.canComplete &&
+                        !hasInterviewerReviewed(item) ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReviewError('');
+                              setReviewRequestId(item.id);
+                            }}
+                            className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
+                          >
+                            Completed
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -867,6 +1025,129 @@ export default function BecomeInterviewerPage() {
           )}
         </section>
       ) : null}
+
+      {hubTab === 'completed' && (interviewerProfile || existingApplication) ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-base font-bold text-slate-900">Completed interviews</h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Reviews from you and the candidate appear here after the meeting ends.
+          </p>
+          {completedQueueItems.length === 0 ? (
+            <p className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+              No completed interviews yet.
+            </p>
+          ) : (
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {completedQueueItems.map((item) => (
+                <div key={item.id} className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-sm font-bold text-slate-900">{item.requestId} · Completed</p>
+                  <p className="mt-1 text-xs text-slate-700">
+                    Candidate: {item.candidateProfile?.fullName || item.candidateId}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    {item.interviewType} · {item.duration} mins · {item.interviewPrice || 50} tokens
+                  </p>
+                  <div className="mt-2 space-y-1 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700">
+                    <p>
+                      <span className="font-semibold text-slate-900">Your review:</span>{' '}
+                      {hasInterviewerReviewed(item)
+                        ? `${item.interviewerRating || '—'}★ · ${displayReviewText(item.interviewerFeedback) || 'Submitted'}`
+                        : 'Not submitted yet'}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-slate-900">Candidate review:</span>{' '}
+                      {hasCandidateReviewed(item)
+                        ? `${item.candidateRating || '—'}★ · ${displayReviewText(item.candidateFeedback) || 'Submitted'}`
+                        : 'Waiting for candidate'}
+                    </p>
+                  </div>
+                  <InterviewLiveHistory requestId={item.id} />
+                  {!hasInterviewerReviewed(item) ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReviewError('');
+                        setReviewRequestId(item.id);
+                      }}
+                      className="mt-2 rounded-lg bg-[#28A8E1] px-3 py-1.5 text-xs font-semibold text-white"
+                    >
+                      Add review
+                    </button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      <InterviewReviewModal
+        open={Boolean(reviewTarget)}
+        counterpartName={reviewTarget?.candidateProfile?.fullName || 'the candidate'}
+        viewerRole="interviewer"
+        submitting={reviewBusy}
+        error={reviewError}
+        onClose={() => {
+          setReviewRequestId(null);
+          setReviewError('');
+        }}
+        onSubmit={async ({ rating, feedback }) => {
+          if (!reviewTarget) return;
+          try {
+            setReviewBusy(true);
+            setReviewError('');
+            await submitInterviewReview(reviewTarget.id, { rating, feedback });
+            setReviewRequestId(null);
+            await queueQuery.refetch();
+          } catch (error) {
+            setReviewError(error instanceof Error ? error.message : 'Unable to submit review');
+          } finally {
+            setReviewBusy(false);
+          }
+        }}
+      />
+      <InterviewRescheduleModal
+        open={Boolean(rescheduleTarget)}
+        title="Propose a new interview slot"
+        subtitle="Pick a date and time. The candidate will confirm to continue."
+        initialDate={
+          rescheduleTarget?.candidateProposedDate ||
+          rescheduleTarget?.proposedDate ||
+          rescheduleTarget?.preferredDate ||
+          rescheduleTarget?.scheduledAt
+        }
+        initialTime={
+          rescheduleTarget?.candidateProposedSlot ||
+          rescheduleTarget?.proposedSlot ||
+          rescheduleTarget?.scheduledAt ||
+          rescheduleTarget?.preferredTime?.[0]
+        }
+        submitting={rescheduleBusy}
+        error={formError}
+        onClose={() => {
+          if (!rescheduleBusy) setRescheduleRequestId(null);
+        }}
+        onSubmit={async ({ date, time }) => {
+          if (!rescheduleTarget) return;
+          try {
+            setRescheduleBusy(true);
+            setFormError('');
+            const status = String(rescheduleTarget.status || '');
+            if (status === 'FINDING_INTERVIEWER' || status === 'MATCHING' || !rescheduleTarget.interviewerId) {
+              await respondToInterviewRequest(rescheduleTarget.id, 'ACCEPT', time, date);
+            } else {
+              await scheduleInterviewSlot(rescheduleTarget.id, time, '', date);
+            }
+            setQueueActionMessage(`New slot sent for ${rescheduleTarget.requestId}. Waiting for candidate confirmation.`);
+            setRescheduleRequestId(null);
+            await queueQuery.refetch();
+          } catch (error) {
+            setFormError(error instanceof Error ? error.message : 'Unable to propose a new slot');
+          } finally {
+            setRescheduleBusy(false);
+          }
+        }}
+      />
     </div>
   );
 }
