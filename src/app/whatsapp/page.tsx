@@ -105,7 +105,6 @@ function WhatsAppLoginInner() {
   const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [captchaError, setCaptchaError] = useState("");
   const [captchaChallenge, setCaptchaChallenge] = useState<MathCaptchaChallenge | null>(null);
-  const [otpDisplay, setOtpDisplay] = useState("");
   const [otpValue, setOtpValue] = useState("");
   const [signInOtpSent, setSignInOtpSent] = useState(false);
   const [otpResendTimer, setOtpResendTimer] = useState(0);
@@ -137,7 +136,6 @@ function WhatsAppLoginInner() {
     setSignInOtpSent(false);
     setOtpResendTimer(0);
     setSignInOtpContext(null);
-    setOtpDisplay("");
   };
 
   useEffect(() => {
@@ -153,7 +151,6 @@ function WhatsAppLoginInner() {
     setAuthMode(mode);
     setError("");
     setCaptchaError("");
-    setOtpDisplay("");
     resetSignInOtpFlow();
     setShowAccountNotFound(false);
     setPasswordValue("");
@@ -359,7 +356,6 @@ function WhatsAppLoginInner() {
     e.preventDefault();
     setError("");
     setCaptchaError("");
-    setOtpDisplay("");
     setShowAccountNotFound(false);
 
     const intent = isOtpSignIn ? "login" : "signup";
@@ -487,16 +483,14 @@ function WhatsAppLoginInner() {
       sessionStorage.setItem("fullWhatsAppNumber", resolvedFull.startsWith("+") ? resolvedFull : `${resolvedCountry}${resolvedLocal}`);
       sessionStorage.setItem("otpEmail", resolvedEmail);
       sessionStorage.setItem("authFlow", intent);
+      if (intent === "signup") {
+        sessionStorage.setItem("signupOnboarding", "true");
+      }
       if (data.data?.candidateId) {
         sessionStorage.setItem("candidateId", data.data.candidateId);
       }
 
-      if (data.data.otp) {
-        setOtpDisplay(data.data.otp);
-        sessionStorage.setItem("otpPreview", data.data.otp);
-      } else {
-        sessionStorage.removeItem("otpPreview");
-      }
+      sessionStorage.removeItem("otpPreview");
 
       if (isOtpSignIn) {
         setSignInOtpContext({
@@ -549,9 +543,6 @@ function WhatsAppLoginInner() {
       const data = await response.json();
       if (!response.ok || !data.success) {
         throw new Error(data.message || t("whatsapp.verify.failedToResendOtp"));
-      }
-      if (data.data?.otp) {
-        setOtpDisplay(data.data.otp);
       }
       setOtpResendTimer(29);
       showSuccessToast(t("whatsapp.verify.otpResentTitle"), t("whatsapp.verify.otpResentDescription"));
@@ -1304,21 +1295,6 @@ function WhatsAppLoginInner() {
                   >
                     {t("whatsapp.accountNotFoundCta")}
                   </button>
-                </div>
-              )}
-
-              {/* Dev Mode OTP */}
-              {otpDisplay && (isOtpSignIn || !isSignIn) && (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 mt-4">
-                  <p className="text-[11px] font-black text-emerald-700 uppercase tracking-widest mb-3">{t("whatsapp.developmentMode")}</p>
-                  <div className="flex items-center gap-4">
-                    <span className="bg-white border border-emerald-200 text-emerald-800 font-mono font-black text-xl px-4 py-2 rounded-xl shadow-sm tracking-[0.2em]">
-                      {otpDisplay}
-                    </span>
-                    <p className="text-[13px] font-semibold text-emerald-700 leading-snug flex-1">
-                      {t("whatsapp.otpDeliveryBypassed")}
-                    </p>
-                  </div>
                 </div>
               )}
 
