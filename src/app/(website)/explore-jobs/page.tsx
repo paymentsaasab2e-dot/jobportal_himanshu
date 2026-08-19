@@ -590,25 +590,9 @@ const ExploreJobsPageContent = () => {
 
   const usesCvMatchScore = resumeSectionsHaveContent(cvResumeSections)
 
-  const scoredJobListings = useMemo(() => {
-    if (!usesCvMatchScore || !cvResumeSections) return jobListings
-    return jobListings.map((job) => {
-      const cvMatch = computeExploreJobCvMatch(job, cvResumeSections)
-      return {
-        ...job,
-        matchScore: cvMatch.matchScore,
-        match: te('cvFitPercent', { score: cvMatch.matchScore }),
-        confidenceTag: cvMatch.confidenceTag,
-        matchedSkills: cvMatch.matchedSkills,
-        missingSkills: cvMatch.missingSkills,
-        reasoning: cvMatch.reasoning,
-        scoreColorHint: cvMatch.scoreColorHint,
-        topMatchedSkills: cvMatch.matchedSkills.slice(0, 3),
-        topMissingSkills: cvMatch.missingSkills.slice(0, 3),
-        matchSource: 'cv' as const,
-      }
-    })
-  }, [jobListings, cvResumeSections, usesCvMatchScore, te])
+  // Job cards and detail use the same AI/profile matchScore as the dashboard.
+  // CV fit is only used when optimizing a resume for a role.
+  const scoredJobListings = jobListings
 
   const [viewMode, setViewMode] = useState<'grid' | 'detail'>('grid')
   const [displayMode, setDisplayMode] = useState<'grid' | 'list'>('grid')
@@ -2210,7 +2194,7 @@ const ExploreJobsPageContent = () => {
   const selectedJobConfidenceTag =
     detailJob?.confidenceTag || (selectedJobMatchValue >= 85 ? 'Excellent Match' : 'Partial Match')
 
-  const insightUsesCvScore = detailJob?.matchSource === 'cv' || usesCvMatchScore
+  const insightUsesCvScore = false
 
   const Pill = ({
     label,
@@ -2334,13 +2318,7 @@ const ExploreJobsPageContent = () => {
     const metaMode = job.workMode ? String(job.workMode).replace(/_/g, ' ') : ''
     const hasMetaLine = Boolean(metaLocation || metaSalary)
     const hasTypeLine = Boolean(metaType || metaMode)
-    const matchBadge = formatExploreMatchLabel(
-      te,
-      job.match,
-      job.matchScore,
-      isPersonalized,
-      job.matchSource === 'cv',
-    )
+    const matchBadge = formatExploreMatchLabel(te, job.match, job.matchScore)
     const cardFitLabel = translateFitLabel(resolveCardFitLabel(job), te)
     const matchPct = parseExploreMatchScore(job.match, job.matchScore)
     const hasScore = job.matchScore != null || Boolean(job.match)
@@ -2494,7 +2472,7 @@ const ExploreJobsPageContent = () => {
         <div className={`mt-3 border-t border-slate-100 pt-3 ${isCompact ? '' : 'mt-auto'}`}>
           <div className="flex items-center justify-between gap-2">
             <p className="min-w-0 truncate text-[11px] font-semibold text-slate-700">
-              {hasScore ? matchBadge.replace(/\s+Match$/i, '') : te('notScoredYet')}
+              {hasScore ? matchBadge : te('notScoredYet')}
             </p>
             <div className="flex shrink-0 items-center gap-1.5">
               {cardFitLabel ? (
@@ -2588,7 +2566,7 @@ const ExploreJobsPageContent = () => {
             </div>
 
             <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-black text-emerald-700 shadow-sm">
-              {formatExploreMatchLabel(te, job.match, job.matchScore, isPersonalized, job.matchSource === 'cv')}
+              {formatExploreMatchLabel(te, job.match, job.matchScore)}
             </span>
           </div>
         </div>
