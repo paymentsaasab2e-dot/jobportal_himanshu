@@ -19,6 +19,7 @@ export default function GlobalFooter() {
     '/sa',
     '/candmain',
     '/apply',
+    '/lms/interview-prep/live-room',
     '/community',
     '/reference-check',
     '/subscriptions',

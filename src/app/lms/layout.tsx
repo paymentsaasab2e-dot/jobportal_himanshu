@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Header from '@/components/common/Header';
 import { LMS_PAGE_BG, LMS_CONTENT_CLASS } from './constants';
+import { isLiveInterviewRoomPath } from '@/lib/interview-live-meeting';
 import { LmsCareerEngineStrip } from './components/LmsCareerEngineStrip';
 import { LmsDailyMomentum } from './components/LmsDailyMomentum';
 import { LmsOverlayProvider } from './components/overlays/LmsOverlayProvider';
@@ -58,7 +59,8 @@ export default function LmsLayout({ children }: { children: ReactNode }) {
 
 function LmsLayoutInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const hideLmsSidebar = isResumeBuilderEditorRoute(pathname);
+  const isLiveRoom = isLiveInterviewRoomPath(pathname);
+  const hideLmsSidebar = isResumeBuilderEditorRoute(pathname) || isLiveRoom;
   const { state } = useLmsState();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -103,6 +105,14 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
       setShowOnboarding(false);
     }
   }, [state.isHydrated, state.careerPath.role]);
+
+  if (isLiveRoom) {
+    return (
+      <LmsOverlayProvider>
+        <div className="h-dvh w-full overflow-hidden bg-[#202124]">{children}</div>
+      </LmsOverlayProvider>
+    );
+  }
 
   return (
     <LmsOverlayProvider>

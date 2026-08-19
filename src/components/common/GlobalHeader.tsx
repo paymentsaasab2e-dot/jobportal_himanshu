@@ -32,6 +32,7 @@ export default function GlobalHeader() {
         '/sa',
         '/candmain',
         '/apply',
+        '/lms/interview-prep/live-room',
     ];
     const shouldHide = hideHeaderPaths.some(path => normalizedPath === path || normalizedPath.startsWith(path + '/'));
 

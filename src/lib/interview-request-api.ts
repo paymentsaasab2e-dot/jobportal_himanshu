@@ -70,6 +70,7 @@ export interface InterviewRequestInput {
   preferredTime: string[];
   duration: number;
   notes?: string;
+  interviewerId?: string;
 }
 
 export interface InterviewRequestRecord extends InterviewRequestInput {
@@ -92,8 +93,25 @@ export interface InterviewRequestRecord extends InterviewRequestInput {
     fullName?: string | null;
     email?: string | null;
     phoneNumber?: string | null;
+    profilePhotoUrl?: string | null;
+    currentRole?: string | null;
+    yearsOfExperience?: number | null;
+    expertiseAreas?: string[];
+    interviewTypes?: string[];
+    languages?: string[];
+    weeklyAvailability?: string | null;
+    aboutYourself?: string | null;
+    feedbackStyle?: string | null;
+    ratingAverage?: number;
+    interviewPrice?: number;
   } | null;
   proposedSlot?: string | null;
+  proposedDate?: string | null;
+  candidateProposedSlot?: string | null;
+  candidateProposedDate?: string | null;
+  interviewPrice?: number | null;
+  paymentHeldAt?: string | null;
+  payoutReleasedAt?: string | null;
   status: InterviewRequestStatus;
   statusLabel: string;
   createdAt: string;
@@ -124,16 +142,29 @@ export type InterviewSuggestionField =
   | 'companyDomain'
   | 'mustCoverTopics';
 
-export async function createInterviewRequest(input: InterviewRequestInput) {
-  const response = await fetch(`${getApiBaseUrl()}/interview-requests`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(input),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload?.success) {
-    throw new Error(String(payload?.message || 'Unable to submit interview request'));
+async function postInterviewJson(paths: string[], body: unknown) {
+  let lastMessage = 'Unable to submit interview request';
+  for (const path of paths) {
+    const response = await fetch(`${getApiBaseUrl()}${path}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(body),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok && payload?.success) return payload;
+    lastMessage = String(payload?.message || payload?.error || lastMessage);
+    if (response.status !== 404) {
+      throw new Error(lastMessage);
+    }
   }
+  throw new Error(lastMessage);
+}
+
+export async function createInterviewRequest(input: InterviewRequestInput) {
+  const payload = await postInterviewJson(
+    ['/interview-requests', '/lms/interview/requests', '/interview-request'],
+    input
+  );
   return payload.data as {
     id: string;
     requestId: string;
@@ -182,23 +213,87 @@ export async function rematchInterviewRequest(requestId: string) {
 
 export async function candidateScheduleDecision(
   requestId: string,
-  decision: 'CONFIRM' | 'REQUEST_NEW_SLOT',
+  decision: 'CONFIRM' | 'REQUEST_NEW_SLOT' | 'PROPOSE_SLOT',
   note?: string,
-  slot?: string
+  slot?: string,
+  preferredDate?: string
 ) {
   const response = await fetch(
     `${getApiBaseUrl()}/interview-requests/${encodeURIComponent(requestId)}/schedule-decision`,
     {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ decision, note, slot }),
+      body: JSON.stringify({ decision, note, slot, preferredDate }),
     }
   );
   const payload = await response.json().catch(() => ({}));
+  if (response.status === 402 || payload?.code === 'INSUFFICIENT_TOKENS') {
+    const required = Number(payload?.required || payload?.interviewPrice || 0);
+    const balance = Number(payload?.balance || 0);
+    const err = new Error(
+      String(payload?.message || `Need ${required} tokens to confirm (you have ${balance}).`)
+    ) as Error & { code?: string; required?: number; balance?: number };
+    err.code = 'INSUFFICIENT_TOKENS';
+    err.required = required;
+    err.balance = balance;
+    throw err;
+  }
   if (!response.ok || !payload?.success) {
     throw new Error(String(payload?.message || 'Unable to update schedule decision'));
   }
   return payload.data as InterviewRequestRecord;
+}
+
+export interface InterviewLiveHistoryBundle {
+  notes: string;
+  messages: Array<{
+    id?: string;
+    displayName: string;
+    role?: string;
+    message: string;
+    createdAt: string;
+  }>;
+  request?: {
+    id: string;
+    requestId: string;
+    status: InterviewRequestStatus | string;
+    candidateId?: string;
+    interviewerId?: string | null;
+  };
+}
+
+export async function getInterviewLiveHistory(requestId: string) {
+  const response = await fetch(`${getApiBaseUrl()}/interview-requests/${encodeURIComponent(requestId)}/live`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.success) {
+    throw new Error(String(payload?.message || 'Unable to load meeting notes'));
+  }
+  return {
+    notes: String(payload?.data?.notes || ''),
+    messages: Array.isArray(payload?.data?.messages) ? payload.data.messages : [],
+  } as InterviewLiveHistoryBundle;
+}
+
+export async function getInterviewLiveByRoom(roomId: string) {
+  const response = await fetch(
+    `${getApiBaseUrl()}/interview-requests/live-room/${encodeURIComponent(roomId)}`,
+    {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    }
+  );
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.success) {
+    throw new Error(String(payload?.message || 'Unable to load live room history'));
+  }
+  return {
+    notes: String(payload?.data?.notes || ''),
+    messages: Array.isArray(payload?.data?.messages) ? payload.data.messages : [],
+    request: payload?.data?.request || undefined,
+  } as InterviewLiveHistoryBundle;
 }
 
 export async function getInterviewRequestChat(requestId: string) {
@@ -231,6 +326,51 @@ export async function postInterviewRequestChat(
     throw new Error(String(payload?.message || 'Unable to send message'));
   }
   return payload.data as InterviewRequestChatMessage;
+}
+
+export async function completeLiveInterview(requestId: string) {
+  const urls = [
+    `${getApiBaseUrl()}/interview-requests/${encodeURIComponent(requestId)}/complete`,
+    `${getApiBaseUrl()}/interview-request/${encodeURIComponent(requestId)}/complete`,
+    `${getApiBaseUrl()}/lms/interview-requests/${encodeURIComponent(requestId)}/complete`,
+    `${getApiBaseUrl()}/interviewer/requests/${encodeURIComponent(requestId)}/complete`,
+  ];
+  let lastMessage = 'Unable to complete interview';
+  for (const url of urls) {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({}),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok && payload?.success) {
+      return payload.data as InterviewRequestRecord & { payoutTokens?: number };
+    }
+    lastMessage = String(payload?.message || lastMessage);
+    if (response.status !== 404) {
+      throw new Error(lastMessage);
+    }
+  }
+  throw new Error(lastMessage);
+}
+
+export async function submitInterviewReview(
+  requestId: string,
+  input: { rating: number; feedback: string }
+) {
+  const response = await fetch(
+    `${getApiBaseUrl()}/interview-requests/${encodeURIComponent(requestId)}/review`,
+    {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(input),
+    }
+  );
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.success) {
+    throw new Error(String(payload?.message || 'Unable to submit interview review'));
+  }
+  return payload.data as InterviewRequestRecord;
 }
 
 export async function fetchInterviewSuggestions(params: {

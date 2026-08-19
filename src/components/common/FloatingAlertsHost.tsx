@@ -170,7 +170,8 @@ function shouldHideOnPath(pathname: string | null): boolean {
     path.startsWith('/employers/') ||
     path.startsWith('/events/') ||
     path.startsWith('/services/') ||
-    path.startsWith('/explore-jobs/')
+    path.startsWith('/explore-jobs/') ||
+    path.startsWith('/lms/interview-prep/live-room')
   );
 }
 
