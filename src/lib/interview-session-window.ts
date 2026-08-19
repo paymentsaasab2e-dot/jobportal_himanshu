@@ -1,10 +1,26 @@
 export function formatInterviewWhen(request: {
+  status?: string;
   scheduledAt?: string | null;
   preferredDate?: string;
   preferredTime?: string[];
   proposedSlot?: string | null;
   proposedDate?: string | null;
 }) {
+  const status = String(request?.status || '').toUpperCase();
+  const pending = status === 'ACCEPTED' || status === 'WAITING_FOR_ACCEPTANCE';
+  const proposedTime = String(request?.proposedSlot || '').trim();
+  if (pending && proposedTime) {
+    const dateValue = request?.proposedDate || request?.preferredDate || '';
+    const dateObj = dateValue ? new Date(dateValue) : null;
+    return {
+      dateLabel:
+        dateObj && !Number.isNaN(dateObj.getTime())
+          ? dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+          : String(dateValue || 'Date TBD'),
+      timeLabel: proposedTime,
+    };
+  }
+
   const scheduled = request?.scheduledAt ? new Date(request.scheduledAt) : null;
   const hasClock =
     scheduled &&

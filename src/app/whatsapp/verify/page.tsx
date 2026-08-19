@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { ShieldCheck, ArrowRight, AlertCircle, Phone, Mail } from "lucide-react";
+import { ArrowRight, AlertCircle, Phone, Mail } from "lucide-react";
 
 import { API_BASE_URL } from '@/lib/api-base';
 import { showSuccessToast } from '@/components/common/toast/toast';
@@ -25,7 +25,6 @@ export default function VerifyOTP() {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [countryCode, setCountryCode] = useState("");
   const [otpEmail, setOtpEmail] = useState("");
-  const [otpPreview, setOtpPreview] = useState("");
   const [candidateId, setCandidateId] = useState("");
 
   useEffect(() => {
@@ -33,14 +32,13 @@ export default function VerifyOTP() {
     const storedNumber = sessionStorage.getItem("whatsappNumber");
     const storedCountryCode = sessionStorage.getItem("countryCode");
     const storedEmail = sessionStorage.getItem("otpEmail");
-    const storedOtpPreview = sessionStorage.getItem("otpPreview");
     const storedCandidateId = sessionStorage.getItem("candidateId");
+    sessionStorage.removeItem("otpPreview");
 
     if (storedNumber && storedCountryCode && storedEmail) {
       setWhatsappNumber(storedNumber);
       setCountryCode(storedCountryCode);
       setOtpEmail(storedEmail);
-      setOtpPreview(storedOtpPreview || "");
       setCandidateId(storedCandidateId || "");
     } else {
       // If no stored data, redirect back to WhatsApp page
@@ -95,12 +93,7 @@ export default function VerifyOTP() {
         throw new Error(data.message || t("failedToResendOtp"));
       }
 
-      // Show OTP on screen when backend sends fallback/testing OTP
-      if (data.data.otp) {
-        setOtpPreview(data.data.otp);
-        sessionStorage.setItem("otpPreview", data.data.otp);
-      }
-
+      sessionStorage.removeItem("otpPreview");
       showSuccessToast(t("otpResentTitle"), t("otpResentDescription"));
     } catch (err: any) {
       setError(err.message || t("failedToResendOtp"));

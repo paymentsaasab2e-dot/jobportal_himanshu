@@ -14,6 +14,7 @@ import { InterviewSimpleTabs } from '@/modules/interview-prep/components/Intervi
 import { InterviewReviewModal } from '@/modules/interview-prep/components/InterviewReviewModal';
 import { InterviewRescheduleModal } from '@/modules/interview-prep/components/InterviewRescheduleModal';
 import {
+  formatInterviewWhen,
   getInterviewSessionWindow,
   hasInterviewerReviewed,
 } from '@/lib/interview-session-window';
@@ -56,7 +57,16 @@ export default function InterviewerRoomPage() {
     return list.find((item) => String(item.id) === requestId || String(item.requestId) === requestId) || null;
   }, [queueQuery.data, requestId]);
 
-  const effectiveSlot = selectedSlot || record?.preferredTime?.[0] || '';
+  const slotOptions = Array.from(
+    new Set(
+      [
+        record?.candidateProposedSlot,
+        record?.proposedSlot,
+        ...(record?.preferredTime || []),
+      ].filter((slot): slot is string => Boolean(slot && String(slot).trim()))
+    )
+  );
+  const effectiveSlot = selectedSlot || record?.proposedSlot || slotOptions[0] || '';
   const joinWindowState = useMemo(
     () => getInterviewSessionWindow(record || {}, nowTs),
     [nowTs, record]
@@ -169,6 +179,17 @@ export default function InterviewerRoomPage() {
               <p className="mt-1 text-sm text-slate-600">
                 {record.interviewType} • {record.language} • {record.duration} mins
               </p>
+              {(() => {
+                const when = formatInterviewWhen(record);
+                return (
+                  <p className="mt-1 text-sm font-semibold text-slate-800">
+                    {when.dateLabel} · {when.timeLabel}
+                    {['ACCEPTED', 'WAITING_FOR_ACCEPTANCE'].includes(String(record.status || ''))
+                      ? ' · pending confirmation'
+                      : ''}
+                  </p>
+                );
+              })()}
             </div>
 
             <InterviewSimpleTabs
@@ -263,12 +284,12 @@ export default function InterviewerRoomPage() {
                   onChange={(event) => setSelectedSlot(event.target.value)}
                   className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-emerald-400"
                 >
-                  {(record.preferredTime || []).map((slot) => (
+                  {slotOptions.map((slot) => (
                     <option key={`${record.id}-${slot}`} value={slot}>
                       {slot}
                     </option>
                   ))}
-                  {selectedSlot && !(record.preferredTime || []).includes(selectedSlot) ? (
+                  {selectedSlot && !slotOptions.includes(selectedSlot) ? (
                     <option value={selectedSlot}>Custom · {selectedSlot}</option>
                   ) : null}
                 </select>
