@@ -62,12 +62,24 @@ export default function SetPasswordPage() {
 
       showSuccessToast(t("successTitle"), t("successDescription"));
 
-      const skipCv =
-        data.data?.skipCvUpload === true ||
-        sessionStorage.getItem("skipCvUpload") === "true";
+      const signupOnboarding = sessionStorage.getItem("signupOnboarding") === "true";
+      const pendingSetPassword = sessionStorage.getItem("pendingSetPassword") === "true";
       sessionStorage.removeItem("skipCvUpload");
 
       const postLoginRedirect = sessionStorage.getItem("postLoginRedirect");
+
+      if (signupOnboarding) {
+        router.push(localizePath("/uploadcv", locale));
+        return;
+      }
+
+      if (pendingSetPassword) {
+        sessionStorage.removeItem("pendingSetPassword");
+        router.push(localizePath("/candidate-dashboard", locale));
+        return;
+      }
+
+      const skipCv = data.data?.skipCvUpload === true;
 
       if (!skipCv) {
         router.push(localizePath("/uploadcv", locale));

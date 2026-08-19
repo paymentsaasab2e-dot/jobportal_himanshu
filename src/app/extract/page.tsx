@@ -31,14 +31,22 @@ export default function ExtractPage() {
 
   const redirectToDashboard = useCallback(() => {
     if (!isPageActiveRef.current) return;
-    // Never redirect after the user has left /extract (e.g. opened /profile).
-    // Browser URL is locale-prefixed (/en/extract); strip locale before comparing.
     if (typeof window !== "undefined") {
       const internalPath = stripLocaleFromPathname(window.location.pathname);
       if (!internalPath.startsWith("/extract")) {
         return;
       }
       const locale = getLocaleFromPathname(window.location.pathname);
+      const signupOnboarding = sessionStorage.getItem("signupOnboarding") === "true";
+      const pendingSetPassword = sessionStorage.getItem("pendingSetPassword") === "true";
+      if (signupOnboarding) {
+        sessionStorage.removeItem("signupOnboarding");
+        sessionStorage.removeItem("uploadStatus");
+        if (pendingSetPassword) {
+          router.push(localizePath("/whatsapp/set-password", locale));
+          return;
+        }
+      }
       router.push(localizePath("/candidate-dashboard", locale));
       return;
     }

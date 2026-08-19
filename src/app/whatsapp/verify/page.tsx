@@ -158,7 +158,8 @@ export default function VerifyOTP() {
       }
 
       const needsPassword = data.data.needsPassword === true;
-      const skipCv = data.data.skipCvUpload === true;
+      const authFlow = sessionStorage.getItem("authFlow");
+      const isSignupFlow = authFlow === "signup" || sessionStorage.getItem("signupOnboarding") === "true";
 
       // Clear OTP-related session data
       sessionStorage.removeItem("whatsappNumber");
@@ -167,6 +168,17 @@ export default function VerifyOTP() {
       sessionStorage.removeItem("otpEmail");
       sessionStorage.removeItem("otpPreview");
       sessionStorage.removeItem("authFlow");
+
+      if (isSignupFlow) {
+        sessionStorage.setItem("signupOnboarding", "true");
+        sessionStorage.setItem("pendingSetPassword", needsPassword ? "true" : "false");
+        sessionStorage.removeItem("skipCvUpload");
+        showSuccessToast(t("loginSuccessfulTitle"), t("loginSuccessfulDescription"));
+        router.push(localizePath("/uploadcv", locale));
+        return;
+      }
+
+      const skipCv = data.data.skipCvUpload === true;
 
       if (needsPassword) {
         sessionStorage.setItem("skipCvUpload", skipCv ? "true" : "false");

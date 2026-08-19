@@ -26,25 +26,46 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-17T14:33:52.429Z",
+      "capturedAt": "2026-08-19T12:58:17.724Z",
       "kind": "realtime_session",
       "session": {
-        "logins": 4,
-        "visits": 52,
+        "logins": 2,
+        "visits": 117,
         "applies": 0,
-        "activeMs": 585000,
-        "sessionCount": 4,
+        "activeMs": 1200000,
+        "sessionCount": 2,
         "topInsightIds": [
           "balanced"
         ],
         "triggerFlags": [],
-        "alertWindow": "Mon · 1:00 PM–3:00 PM",
-        "alertConfidence": "medium",
-        "topLocation": null,
+        "alertWindow": "Wed · 1:00 PM",
+        "alertConfidence": "low",
+        "topLocation": "Thane, Maharashtra, India",
         "preferredAlertHours": [
-          13,
-          15,
-          20
+          13
+        ]
+      },
+      "hasFullLatest": true
+    },
+    "403d39d711c0e70c1433f379": {
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T12:54:17.086Z",
+      "kind": "realtime_session",
+      "session": {
+        "logins": 2,
+        "visits": 48,
+        "applies": 0,
+        "activeMs": 270000,
+        "sessionCount": 2,
+        "topInsightIds": [
+          "balanced"
+        ],
+        "triggerFlags": [],
+        "alertWindow": "Wed · 4:00 PM–3:00 PM",
+        "alertConfidence": "medium",
+        "topLocation": "Thane, Maharashtra, India",
+        "preferredAlertHours": [
+          17
         ]
       },
       "hasFullLatest": true
@@ -572,31 +593,33 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-17T14:33:52.429Z",
-      "activityStateUpdatedAt": "2026-08-17T14:33:42.592Z",
+      "capturedAt": "2026-08-19T12:58:17.724Z",
+      "activityStateUpdatedAt": "2026-08-19T12:58:07.073Z",
       "rollup7d": {
         "userId": "b1c869d84e75048c5c61c5e3",
         "range": "week",
-        "fromDate": "2026-08-11",
-        "toDate": "2026-08-17",
-        "logins": 4,
-        "visits": 52,
+        "fromDate": "2026-08-13",
+        "toDate": "2026-08-19",
+        "logins": 2,
+        "visits": 117,
         "jobCardClicks": 0,
         "applies": 0,
-        "activeMs": 585000,
-        "sessionCount": 4,
+        "activeMs": 1200000,
+        "sessionCount": 2,
         "pageVisitsByCategory": {
-          "other": 50,
-          "dashboard": 2
+          "other": 1,
+          "dashboard": 1,
+          "courses": 1,
+          "interview_prep": 113,
+          "premium": 1
         },
         "activeMsByCategory": {
-          "dashboard": 30000,
-          "other": 555000
+          "interview_prep": 1200000
         },
         "firstOpenBreakdown": {
           "dashboard": 1
         },
-        "avgActiveMsPerDay": 585000,
+        "avgActiveMsPerDay": 1200000,
         "daysActive": 1,
         "topFirstOpen": "dashboard",
         "insights": [
@@ -608,970 +631,1131 @@
             "evidence": [
               "0 job clicks",
               "0 applies",
-              "10 min active"
+              "20 min active"
             ]
           }
         ],
         "recentSessions": [
           {
-            "id": "sess_msxc2zlz_wgldmt",
-            "startedAt": "2026-08-17T14:33:14.179Z",
-            "lastActiveAt": "2026-08-17T14:33:42.592Z",
-            "durationMs": 0,
-            "pageCount": 3,
-            "firstPath": "/",
-            "lastPath": "/candidate-dashboard",
-            "lastCategory": "dashboard",
-            "paths": [
-              "/",
-              "/whatsapp",
-              "/candidate-dashboard"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows"
-          },
-          {
-            "id": "sess_msx2xy6w_netsa6",
-            "startedAt": "2026-08-17T10:17:22.516Z",
-            "lastActiveAt": "2026-08-17T10:43:18.041Z",
-            "durationMs": 90000,
-            "pageCount": 5,
-            "paths": [
-              "/help",
-              "/employers"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "lastCategory": "other",
-            "lastPath": "/help",
-            "firstPath": "/help",
-            "endedAt": "2026-08-17T10:42:03.424Z"
-          },
-          {
-            "id": "sess_mswy5f2y_qae3jv",
-            "startedAt": "2026-08-17T08:03:12.922Z",
-            "lastActiveAt": "2026-08-17T09:22:09.193Z",
-            "durationMs": 495000,
-            "pageCount": 43,
+            "id": "sess_msztu5tp_b5hxw9",
+            "startedAt": "2026-08-19T08:25:47.773Z",
+            "lastActiveAt": "2026-08-19T12:49:17.979Z",
+            "durationMs": 1200000,
+            "pageCount": 116,
             "paths": [
               "/candidate-dashboard",
-              "/help",
-              "/",
-              "/employers"
+              "/lms/courses",
+              "/lms/interview-prep",
+              "/lms/interview-prep/request-interview",
+              "/lms/interview-prep/become-interviewer",
+              "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+              "/subscriptions"
             ],
             "deviceType": "desktop",
             "browser": "Chrome",
             "operatingSystem": "Windows",
-            "lastPath": "/employers",
-            "lastCategory": "other",
+            "country": "India",
+            "state": "Maharashtra",
+            "city": "Thane",
+            "timezone": "Asia/Calcutta",
+            "ipAddress": "49.36.111.184",
+            "lastPath": "/subscriptions",
+            "lastCategory": "premium",
             "firstPath": "/candidate-dashboard",
-            "endedAt": "2026-08-17T08:11:25.568Z"
+            "endedAt": "2026-08-19T08:29:39.143Z"
           },
           {
-            "id": "sess_mswy5ek7_ad8sfk",
-            "startedAt": "2026-08-17T08:03:12.246Z",
-            "lastActiveAt": "2026-08-17T08:03:12.248Z",
-            "durationMs": 676,
+            "id": "sess_msztu5lp_2zc0zk",
+            "startedAt": "2026-08-19T08:25:47.485Z",
+            "lastActiveAt": "2026-08-19T08:25:47.487Z",
+            "durationMs": 288,
             "pageCount": 1,
-            "firstPath": "/whatsapp/forgot-password",
-            "lastPath": "/whatsapp/forgot-password",
+            "firstPath": "/whatsapp",
+            "lastPath": "/whatsapp",
             "lastCategory": "other",
             "paths": [
-              "/whatsapp/forgot-password"
+              "/whatsapp"
             ],
             "deviceType": "desktop",
             "browser": "Chrome",
             "operatingSystem": "Windows",
-            "endedAt": "2026-08-17T08:03:12.922Z"
+            "country": "India",
+            "state": "Maharashtra",
+            "city": "Thane",
+            "timezone": "Asia/Calcutta",
+            "ipAddress": "49.36.111.184",
+            "endedAt": "2026-08-19T08:25:47.773Z"
           }
         ],
         "recentEvents": [
           {
-            "id": "ev_msxc3k2w_s32i5w",
-            "at": "2026-08-17T14:33:40.712Z",
+            "id": "ev_mt037dlq_j083ec",
+            "at": "2026-08-19T12:48:00.926Z",
             "type": "page_visit",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_msxc2zlz_wgldmt"
+            "category": "premium",
+            "path": "/subscriptions",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_msxc37n3_ohfe80",
-            "at": "2026-08-17T14:33:24.591Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/whatsapp",
-            "sessionId": "sess_msxc2zlz_wgldmt"
-          },
-          {
-            "id": "ev_msxc2zm3_fz5qc1",
-            "at": "2026-08-17T14:33:14.187Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_msxc2zlz_wgldmt"
-          },
-          {
-            "id": "ev_msxc2zlz_k1hqdt",
-            "at": "2026-08-17T14:33:14.183Z",
-            "type": "login",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_msxc2zlz_wgldmt",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_msx3vaft_erm9qk",
-            "at": "2026-08-17T10:43:18.041Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_msx2xy6w_netsa6"
-          },
-          {
-            "id": "ev_msx3ui5h_3kzcun",
-            "at": "2026-08-17T10:42:41.381Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_msx2xy6w_netsa6"
-          },
-          {
-            "id": "ev_msx3trfb_rbri71",
-            "at": "2026-08-17T10:42:06.743Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_msx2xy6w_netsa6"
-          },
-          {
-            "id": "ev_msx3tov4_c728nv",
-            "at": "2026-08-17T10:42:03.424Z",
-            "type": "session_end",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_msx2xy6w_netsa6",
-            "meta": {
-              "durationMs": 90000
-            }
-          },
-          {
-            "id": "ev_msx3m4lc_6rnri7",
-            "at": "2026-08-17T10:36:10.560Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_msx2xy6w_netsa6"
-          },
-          {
-            "id": "ev_msx3lrey_2uirws",
-            "at": "2026-08-17T10:35:53.482Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_msx2xy6w_netsa6"
-          },
-          {
-            "id": "ev_msx2z9sj_s0uc4m",
-            "at": "2026-08-17T10:18:24.211Z",
+            "id": "ev_mt036ifv_afgsef",
+            "at": "2026-08-19T12:47:20.539Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_msx2xy6w_netsa6",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_msx2xzhr_ualtz7",
-            "at": "2026-08-17T10:17:24.207Z",
+            "id": "ev_mt034wiw_gw56sq",
+            "at": "2026-08-19T12:46:05.480Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt034qqs_gaa5nw",
+            "at": "2026-08-19T12:45:57.988Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt034fyp_qf7jht",
+            "at": "2026-08-19T12:45:44.017Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt0346l7_10nz4z",
+            "at": "2026-08-19T12:45:31.867Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt033i26_d5kcll",
+            "at": "2026-08-19T12:45:00.078Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt033gru_piiyqw",
+            "at": "2026-08-19T12:44:58.410Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt0335t5_6hv1ts",
+            "at": "2026-08-19T12:44:44.201Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt032mto_tkpwcp",
+            "at": "2026-08-19T12:44:19.596Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt032mfs_1v17fb",
+            "at": "2026-08-19T12:44:19.096Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt0307tt_ld5ciw",
+            "at": "2026-08-19T12:42:26.849Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_msx2xy6w_netsa6",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_msx2xy6x_0cru2y",
-            "at": "2026-08-17T10:17:22.521Z",
-            "type": "login",
-            "category": "other",
-            "sessionId": "sess_msx2xy6w_netsa6",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_msx0yxm1_vs3ulk",
-            "at": "2026-08-17T09:22:09.193Z",
+            "id": "ev_mt02yxhh_rwafre",
+            "at": "2026-08-19T12:41:26.789Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_msx0ycg8_azp72u",
-            "at": "2026-08-17T09:21:41.768Z",
+            "id": "ev_mt02tkuf_kesd5d",
+            "at": "2026-08-19T12:37:17.127Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_msx0xx7x_4szyok",
-            "at": "2026-08-17T09:21:22.029Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_msx0xoqq_k7g00w",
-            "at": "2026-08-17T09:21:11.042Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_msx0xd0j_iup4i3",
-            "at": "2026-08-17T09:20:55.843Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_msx0x5uk_8sed28",
-            "at": "2026-08-17T09:20:46.556Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_msx0wz75_huz3lm",
-            "at": "2026-08-17T09:20:37.937Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_msx0v1bi_2om8i5",
-            "at": "2026-08-17T09:19:07.374Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_msx0umsm_nqgy1i",
-            "at": "2026-08-17T09:18:48.550Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_msx0qvdi_pn03vm",
-            "at": "2026-08-17T09:15:53.046Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_msx0qpup_tmi3hp",
-            "at": "2026-08-17T09:15:45.889Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_msx0pyvh_f9sb5k",
-            "at": "2026-08-17T09:15:10.925Z",
+            "id": "ev_mt02p3ea_vrhb4p",
+            "at": "2026-08-19T12:33:47.890Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_msx0mggv_ypqki9",
-            "at": "2026-08-17T09:12:27.103Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_msx0m0lw_p8bufd",
-            "at": "2026-08-17T09:12:06.548Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_msx0hr0t_q42i18",
-            "at": "2026-08-17T09:08:47.501Z",
+            "id": "ev_mt02lvp5_dixosw",
+            "at": "2026-08-19T12:31:17.945Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_msx0hfg0_77phvw",
-            "at": "2026-08-17T09:08:32.496Z",
+            "id": "ev_mt02jysa_wo3x3e",
+            "at": "2026-08-19T12:29:48.634Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_msx0gek7_q4bgd5",
-            "at": "2026-08-17T09:07:44.695Z",
+            "id": "ev_mt02jy3b_1sq9r8",
+            "at": "2026-08-19T12:29:47.735Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt02hmrd_tcflzk",
+            "at": "2026-08-19T12:27:59.737Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_msx0aj8q_4bb3z8",
-            "at": "2026-08-17T09:03:10.826Z",
+            "id": "ev_mt02gucb_reksti",
+            "at": "2026-08-19T12:27:22.907Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_msx0acpi_kpmf40",
-            "at": "2026-08-17T09:03:02.358Z",
+            "id": "ev_mt02g0o1_6csfk3",
+            "at": "2026-08-19T12:26:44.449Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_msx01lsn_jzwaui",
-            "at": "2026-08-17T08:56:14.231Z",
+            "id": "ev_mt02fq3d_vn2h24",
+            "at": "2026-08-19T12:26:30.745Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswzye1y_0w2j41",
-            "at": "2026-08-17T08:53:44.230Z",
+            "id": "ev_mt02fefs_4y3mpi",
+            "at": "2026-08-19T12:26:15.640Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt02fb5i_u1lmwm",
+            "at": "2026-08-19T12:26:11.382Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt0287f1_up1i9m",
+            "at": "2026-08-19T12:20:39.949Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt0284qq_cqnzps",
+            "at": "2026-08-19T12:20:36.482Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt026ma0_9d3u02",
+            "at": "2026-08-19T12:19:25.896Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt024fur_o775dn",
+            "at": "2026-08-19T12:17:44.259Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt0209y8_jukeeo",
+            "at": "2026-08-19T12:14:29.984Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt01zwaf_tx1as7",
+            "at": "2026-08-19T12:14:12.279Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswzws65_nihoo1",
-            "at": "2026-08-17T08:52:29.213Z",
+            "id": "ev_mt01ufi9_k0he97",
+            "at": "2026-08-19T12:09:57.249Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswzmvs3_f8b9j4",
-            "at": "2026-08-17T08:44:47.331Z",
+            "id": "ev_mt01ucpf_e6jhhd",
+            "at": "2026-08-19T12:09:53.619Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswzm8mf_qwafw7",
-            "at": "2026-08-17T08:44:17.319Z",
+            "id": "ev_mt01pj1o_r8rump",
+            "at": "2026-08-19T12:06:08.556Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswzlrhk_gxc9gg",
-            "at": "2026-08-17T08:43:55.112Z",
+            "id": "ev_mt01lp2j_j2cmhw",
+            "at": "2026-08-19T12:03:09.739Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswzl6a0_gc51na",
-            "at": "2026-08-17T08:43:27.624Z",
+            "id": "ev_mt01lfjp_j43l8z",
+            "at": "2026-08-19T12:02:57.397Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswzjf4h_iw2rnk",
-            "at": "2026-08-17T08:42:05.777Z",
+            "id": "ev_mt01l8k1_0t34m8",
+            "at": "2026-08-19T12:02:48.337Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswzj198_3guwxy",
-            "at": "2026-08-17T08:41:47.804Z",
+            "id": "ev_mt01ktj3_jmjtvr",
+            "at": "2026-08-19T12:02:28.863Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswziwcz_khsfgh",
-            "at": "2026-08-17T08:41:41.459Z",
+            "id": "ev_mt01klmm_0ff9c2",
+            "at": "2026-08-19T12:02:18.622Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswzikv8_jlt3uz",
-            "at": "2026-08-17T08:41:26.564Z",
+            "id": "ev_mt01k67m_ihavpn",
+            "at": "2026-08-19T12:01:58.642Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswzfitj_2m0v4d",
-            "at": "2026-08-17T08:39:03.943Z",
+            "id": "ev_mt01iwu6_ztrqw4",
+            "at": "2026-08-19T12:00:59.838Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt01hs2k_jdtdl5",
+            "at": "2026-08-19T12:00:07.004Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt01h0ew_sul5w2",
+            "at": "2026-08-19T11:59:31.160Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt01gemy_afioi8",
+            "at": "2026-08-19T11:59:02.938Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt01fxf2_t22dr7",
+            "at": "2026-08-19T11:58:40.622Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt01f8zg_kfrx1s",
+            "at": "2026-08-19T11:58:08.956Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt01ak67_gdf0h0",
+            "at": "2026-08-19T11:54:30.175Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswz7qna_unqvt6",
-            "at": "2026-08-17T08:33:00.838Z",
+            "id": "ev_mt018mpb_ynctjq",
+            "at": "2026-08-19T11:53:00.143Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt0187e4_rg1bvx",
+            "at": "2026-08-19T11:52:40.300Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt016kzq_29i9jn",
+            "at": "2026-08-19T11:51:24.614Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt014v3j_v9giwr",
+            "at": "2026-08-19T11:50:04.399Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt014b9r_zbpshn",
+            "at": "2026-08-19T11:49:38.703Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt0149nf_7t7l7n",
+            "at": "2026-08-19T11:49:36.603Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt0132y5_7no48t",
+            "at": "2026-08-19T11:48:41.261Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt01325w_6cfbq2",
+            "at": "2026-08-19T11:48:40.244Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt011x63_cmh2qo",
+            "at": "2026-08-19T11:47:47.115Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt011tf6_wqw0gt",
+            "at": "2026-08-19T11:47:42.258Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt00ypjq_am79is",
+            "at": "2026-08-19T11:45:17.270Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswz55om_dueybj",
-            "at": "2026-08-17T08:31:00.358Z",
+            "id": "ev_mt00w4y9_t77qep",
+            "at": "2026-08-19T11:43:17.265Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswz2o9f_bsr64e",
-            "at": "2026-08-17T08:29:04.467Z",
+            "id": "ev_mt00vtbs_pqwu59",
+            "at": "2026-08-19T11:43:02.201Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt00v7o7_wwbpke",
+            "at": "2026-08-19T11:42:34.135Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt00u90d_htuh7k",
+            "at": "2026-08-19T11:41:49.213Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswz0yi1_jv6y04",
-            "at": "2026-08-17T08:27:44.425Z",
+            "id": "ev_mt00sbhz_xei626",
+            "at": "2026-08-19T11:40:19.127Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswyzwbz_3p4p49",
-            "at": "2026-08-17T08:26:54.959Z",
+            "id": "ev_mt00r4a3_4csszr",
+            "at": "2026-08-19T11:39:23.116Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt00r0fj_bfhbsp",
+            "at": "2026-08-19T11:39:18.127Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt00plf6_0ssgxl",
+            "at": "2026-08-19T11:38:12.018Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt00pfm6_dy6x7u",
+            "at": "2026-08-19T11:38:04.494Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt00p5qe_5k249j",
+            "at": "2026-08-19T11:37:51.686Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt00kw9d_24guw3",
+            "at": "2026-08-19T11:34:32.785Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt00gka9_efxtqt",
+            "at": "2026-08-19T11:31:10.641Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswyz9qm_l73jk6",
-            "at": "2026-08-17T08:26:25.678Z",
+            "id": "ev_mt00fx47_ve275r",
+            "at": "2026-08-19T11:30:40.615Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswyx7s2_6d47rs",
-            "at": "2026-08-17T08:24:49.826Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_mswywted_w5gt24",
-            "at": "2026-08-17T08:24:31.189Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_mswywg0j_cg6ff0",
-            "at": "2026-08-17T08:24:13.843Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_mswyw9h6_g5c3lk",
-            "at": "2026-08-17T08:24:05.370Z",
+            "id": "ev_mt0069n8_8m1qao",
+            "at": "2026-08-19T11:23:10.292Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswyvaon_vq4z7o",
-            "at": "2026-08-17T08:23:20.279Z",
+            "id": "ev_mt005mgt_8q9rxl",
+            "at": "2026-08-19T11:22:40.253Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswytuuy_5co3ge",
-            "at": "2026-08-17T08:22:13.114Z",
+            "id": "ev_mt0054c2_in9mxh",
+            "at": "2026-08-19T11:22:16.754Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswyt0lb_4yy43w",
-            "at": "2026-08-17T08:21:33.887Z",
+            "id": "ev_mt002q6u_12ot6f",
+            "at": "2026-08-19T11:20:25.110Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt002mvv_pl14vz",
+            "at": "2026-08-19T11:20:20.827Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswyr2lu_6vhcp9",
-            "at": "2026-08-17T08:20:03.186Z",
+            "id": "ev_mt001o3x_akdzkc",
+            "at": "2026-08-19T11:19:35.757Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswyqw8z_obnure",
-            "at": "2026-08-17T08:19:54.947Z",
+            "id": "ev_mt000lpp_st3r8u",
+            "at": "2026-08-19T11:18:45.997Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mt000arq_3dwe9g",
+            "at": "2026-08-19T11:18:31.814Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mszzni4l_aorz1m",
+            "at": "2026-08-19T11:08:34.821Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mszznep2_aihwaa",
+            "at": "2026-08-19T11:08:30.374Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswyqknz_vqjjqe",
-            "at": "2026-08-17T08:19:39.935Z",
+            "id": "ev_mszzmrie_x3dhoj",
+            "at": "2026-08-19T11:08:00.326Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswyqevh_2w1qj6",
-            "at": "2026-08-17T08:19:32.429Z",
+            "id": "ev_mszzm3ei_l1fip6",
+            "at": "2026-08-19T11:07:29.082Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswyq7re_ef3rbi",
-            "at": "2026-08-17T08:19:23.210Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_mswypz4o_4fwuxl",
-            "at": "2026-08-17T08:19:12.024Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_mswyp7v6_3gtat6",
-            "at": "2026-08-17T08:18:36.690Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_mswyok15_b1h4ql",
-            "at": "2026-08-17T08:18:05.801Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_mswyjl5f_42oxcb",
-            "at": "2026-08-17T08:14:13.971Z",
+            "id": "ev_mszzm03e_atiqfw",
+            "at": "2026-08-19T11:07:24.794Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswygl20_i9k0tq",
-            "at": "2026-08-17T08:11:53.880Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_mswygbuc_f3ucbh",
-            "at": "2026-08-17T08:11:41.940Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_mswyg0wa_i5oiiv",
-            "at": "2026-08-17T08:11:27.754Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
-          },
-          {
-            "id": "ev_mswyfz7k_v9j44i",
-            "at": "2026-08-17T08:11:25.568Z",
-            "type": "session_end",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
-            "meta": {
-              "durationMs": 120000
-            }
-          },
-          {
-            "id": "ev_mswyd3wb_ynasp2",
-            "at": "2026-08-17T08:09:11.675Z",
+            "id": "ev_mszzgfso_vrmgrh",
+            "at": "2026-08-19T11:03:05.208Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswyauvf_j77tx2",
-            "at": "2026-08-17T08:07:26.667Z",
+            "id": "ev_mszzf5h0_gmwp0f",
+            "at": "2026-08-19T11:02:05.172Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/help",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswyat7v_kv4xr8",
-            "at": "2026-08-17T08:07:24.523Z",
+            "id": "ev_mszzf03t_xwb1g5",
+            "at": "2026-08-19T11:01:58.217Z",
             "type": "time_slice",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswy5zlw_bkvrpy",
-            "at": "2026-08-17T08:03:39.524Z",
+            "id": "ev_mszza4yo_0zdmnu",
+            "at": "2026-08-19T10:58:11.232Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mszyxrev_7wvenr",
+            "at": "2026-08-19T10:48:33.799Z",
             "type": "time_slice",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mswy5f2y_qae3jv",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mswy5o0x_n5v1s0",
-            "at": "2026-08-17T08:03:24.513Z",
+            "id": "ev_mszyw5jl_32fn0b",
+            "at": "2026-08-19T10:47:18.801Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mszyuv8w_vz4357",
+            "at": "2026-08-19T10:46:18.800Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mszytky7_e8s015",
+            "at": "2026-08-19T10:45:18.799Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mszyt9ce_ofx5rj",
+            "at": "2026-08-19T10:45:03.758Z",
             "type": "page_visit",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mswy5f2y_qae3jv"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswy5f2y_p847j4",
-            "at": "2026-08-17T08:03:12.922Z",
-            "type": "login",
-            "category": "other",
-            "sessionId": "sess_mswy5f2y_qae3jv",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_mswy5f2y_wwzxd8",
-            "at": "2026-08-17T08:03:12.922Z",
-            "type": "session_end",
-            "category": "other",
-            "path": "/whatsapp/forgot-password",
-            "sessionId": "sess_mswy5ek7_ad8sfk",
-            "meta": {
-              "durationMs": 676
-            }
-          },
-          {
-            "id": "ev_mswy5ek8_k1d6f0",
-            "at": "2026-08-17T08:03:12.248Z",
+            "id": "ev_mszxzi27_temr9l",
+            "at": "2026-08-19T10:21:55.375Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/whatsapp/forgot-password",
-            "sessionId": "sess_mswy5ek7_ad8sfk"
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           },
           {
-            "id": "ev_mswy5ek7_3idgu1",
-            "at": "2026-08-17T08:03:12.247Z",
-            "type": "login",
-            "category": "other",
-            "path": "/whatsapp/forgot-password",
-            "sessionId": "sess_mswy5ek7_ad8sfk",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
+            "id": "ev_mszxza8i_k88asf",
+            "at": "2026-08-19T10:21:45.234Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mszxyy4k_4cbmdh",
+            "at": "2026-08-19T10:21:29.540Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mszxye3i_j1u71g",
+            "at": "2026-08-19T10:21:03.582Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mszxy9jt_2wn2ca",
+            "at": "2026-08-19T10:20:57.689Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mszxy11y_6o0r6j",
+            "at": "2026-08-19T10:20:46.678Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mszxx114_3nrysd",
+            "at": "2026-08-19T10:19:59.992Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
+          },
+          {
+            "id": "ev_mszxww31_ny4ej4",
+            "at": "2026-08-19T10:19:53.581Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/request-interview",
+            "sessionId": "sess_msztu5tp_b5hxw9"
           }
         ],
         "topCompanies": [],
         "topRoles": [],
         "hqTriggers": [],
         "profileSnapshot": {
-          "skillsCount": 0,
-          "profileCompleteness": null,
-          "cvScore": null,
-          "marketFit": null,
+          "skillsCount": 8,
+          "profileCompleteness": 73,
+          "cvScore": 83,
+          "marketFit": 0,
           "applicationsTotal": 1,
           "rejectionsTotal": 0,
           "postInterviewRejections": 0,
-          "missingSectionsCount": 0,
-          "missingSectionKeys": [],
-          "updatedAt": "2026-08-17T14:33:26.455Z"
+          "missingSectionsCount": 11,
+          "missingSectionKeys": [
+            "work-experience",
+            "internships",
+            "gap-explanation",
+            "education",
+            "academic-achievements",
+            "competitive-exams",
+            "projects",
+            "certifications",
+            "accomplishments",
+            "visa-work-authorization",
+            "vaccination"
+          ],
+          "updatedAt": "2026-08-19T12:58:07.072Z"
         },
         "behaviourSignals": {
           "userId": "b1c869d84e75048c5c61c5e3",
           "topCategories": [
-            "jobs",
+            "interview_prep",
             "courses",
-            "lms"
+            "premium"
           ],
           "weakCategories": [
-            "premium",
             "events",
-            "community"
+            "community",
+            "profile"
           ],
           "insightIds": [],
           "jobCardClicks7d": 0,
           "applies7d": 0,
-          "activeMs7d": 585000,
+          "activeMs7d": 1200000,
           "activeMsByCategory7d": {
-            "dashboard": 30000,
-            "other": 555000
+            "interview_prep": 1200000
           },
           "pageVisitsByCategory7d": {
-            "other": 50,
-            "dashboard": 2
+            "other": 1,
+            "dashboard": 1,
+            "courses": 1,
+            "interview_prep": 113,
+            "premium": 1
           },
-          "skillsCount": 0,
+          "skillsCount": 8,
           "rejectionsTotal": 0,
-          "cvScore": null,
-          "marketFit": null,
-          "missingSectionsCount": 0,
+          "cvScore": 83,
+          "marketFit": 0,
+          "missingSectionsCount": 11,
           "topCompanies": [],
           "topRoles": [],
           "hqTriggers": [],
           "preferSlotIds": [
-            "course",
             "events",
-            "community"
+            "community",
+            "profile"
           ],
           "deprioritizeSlotIds": [
-            "jobs",
+            "interview_prep",
+            "course",
             "career_path",
             "quizzes"
           ],
           "userSuggestionHints": [],
           "preferredAlertHours": [
-            13,
-            15,
-            20
+            13
           ],
-          "preferredAlertWindowLabel": "Mon · 1:00 PM–3:00 PM",
-          "alertTimingConfidence": "medium"
+          "preferredAlertWindowLabel": "Wed · 1:00 PM",
+          "alertTimingConfidence": "low"
         }
       },
       "suggestionMetrics": {
         "userId": "b1c869d84e75048c5c61c5e3",
-        "updatedAt": "2026-08-17T14:33:21.790Z",
+        "updatedAt": "2026-08-19T12:58:16.456Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
-        "suggestionsPushed": 7,
+        "suggestionsPushed": 9,
         "suggestionsClicked": 0,
         "suggestionsPurchased": 0,
         "salesFollowUpScore": 10,
         "salesFollowUpReady": false,
         "byScenario": {
-          "profile_match": 7
+          "profile_match": 9
         },
         "recentSuggestions": [
           {
-            "id": "sug_mswy5oqs_ej0h7f",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Career Narrative Lab",
-            "actionUrl": "/lms/courses/c6",
-            "pushedAt": "2026-08-17T08:03:25.444Z"
-          },
-          {
-            "id": "sug_mswz8q2w_j6g2sm",
+            "id": "sug_msztu9ae_d0vs07",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Frontend Interview Readiness",
             "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-17T08:33:46.760Z"
+            "pushedAt": "2026-08-19T08:25:52.262Z"
           },
           {
-            "id": "sug_msx0co25_rlax2t",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Career Narrative Lab",
-            "actionUrl": "/lms/courses/c6",
-            "pushedAt": "2026-08-17T09:04:50.382Z"
-          },
-          {
-            "id": "sug_msx1h2fq_rxn7nr",
+            "id": "sug_mszuxo03_o42vj8",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Frontend Interview Readiness",
             "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-17T09:36:15.254Z"
+            "pushedAt": "2026-08-19T08:56:30.915Z"
           },
           {
-            "id": "sug_msx2kxhy_5q01r9",
+            "id": "sug_mszwdazn_4ec2u0",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Frontend Interview Readiness",
             "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-17T10:07:15.094Z"
+            "pushedAt": "2026-08-19T09:36:40.163Z"
           },
           {
-            "id": "sug_msx3nq69_hxubhq",
+            "id": "sug_mszxg1p2_yrdxjr",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Frontend Interview Readiness",
             "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-17T10:37:25.185Z"
+            "pushedAt": "2026-08-19T10:06:47.702Z"
           },
           {
-            "id": "sug_msxc35h2_phi9cu",
+            "id": "sug_mszytt9x_ijb16q",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
-            "title": "Career Narrative Lab",
-            "actionUrl": "/lms/courses/c6",
-            "pushedAt": "2026-08-17T14:33:21.782Z"
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-19T10:45:29.589Z"
+          },
+          {
+            "id": "sug_mszzx6yi_iaamlq",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-19T11:16:06.906Z"
+          },
+          {
+            "id": "sug_mt01119e_6k1um9",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-19T11:47:05.762Z"
+          },
+          {
+            "id": "sug_mt0245g9_zllf0q",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-19T12:17:30.777Z"
+          },
+          {
+            "id": "sug_mt036uuj_cp52t5",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-19T12:47:36.619Z"
           }
         ]
       },
@@ -1581,13 +1765,940 @@
           "key": "learning",
           "label": "Learning & courses",
           "score": 18,
-          "updatedAt": "2026-08-17T08:03:17.392Z"
+          "updatedAt": "2026-08-19T08:25:48.938Z"
         },
         {
           "key": "watercooler",
           "label": "Workplace chat",
           "score": 18,
-          "updatedAt": "2026-08-17T08:03:17.392Z"
+          "updatedAt": "2026-08-19T08:25:48.938Z"
+        }
+      ],
+      "personalizedRecs": [
+        {
+          "id": "rec_learning",
+          "interestKey": "learning",
+          "interestScore": 18,
+          "title": "One course module",
+          "text": "Your Learning & courses interest is 18. Finish one LMS module this week.",
+          "actionUrl": "/lms/courses",
+          "priority": 77
+        },
+        {
+          "id": "rec_watercooler",
+          "interestKey": "watercooler",
+          "interestScore": 18,
+          "title": "Join the conversation",
+          "text": "You engage with Workplace chat — check one new circle post today.",
+          "actionUrl": "/community",
+          "priority": 61
+        }
+      ],
+      "sessionEngagement": {
+        "sessionCount": 2,
+        "activeCount": 0,
+        "totalDurationMs": 1200288,
+        "avgDurationMs": 600144,
+        "medianDurationMs": 600144,
+        "uniqueIps": 1,
+        "uniqueDevices": 1,
+        "locations": [
+          {
+            "key": "Thane, Maharashtra, India",
+            "city": "Thane",
+            "state": "Maharashtra",
+            "country": "India",
+            "sessions": 2,
+            "totalDurationMs": 1200288
+          }
+        ],
+        "byHour": [
+          {
+            "hour": 13,
+            "label": "1:00 PM",
+            "sessions": 2,
+            "totalDurationMs": 1200288
+          }
+        ],
+        "byWeekday": [
+          {
+            "weekday": 3,
+            "label": "Wed",
+            "sessions": 2,
+            "totalDurationMs": 1200288
+          }
+        ],
+        "alertTiming": {
+          "bestHours": [
+            13
+          ],
+          "bestHourLabels": [
+            "1:00 PM"
+          ],
+          "bestWeekdays": [
+            "Wed"
+          ],
+          "bestWindowLabel": "Wed · 1:00 PM",
+          "avoidHours": [
+            13
+          ],
+          "timezone": "Asia/Calcutta",
+          "confidence": "low",
+          "reason": "Most active around 1:00 PM local time · avg session 10 min · often from Thane, Maharashtra, India",
+          "sampleSessions": 2,
+          "avgDurationMs": 600144,
+          "medianDurationMs": 600144
+        }
+      },
+      "alertTiming": {
+        "bestHours": [
+          13
+        ],
+        "bestHourLabels": [
+          "1:00 PM"
+        ],
+        "bestWeekdays": [
+          "Wed"
+        ],
+        "bestWindowLabel": "Wed · 1:00 PM",
+        "avoidHours": [
+          13
+        ],
+        "timezone": "Asia/Calcutta",
+        "confidence": "low",
+        "reason": "Most active around 1:00 PM local time · avg session 10 min · often from Thane, Maharashtra, India",
+        "sampleSessions": 2,
+        "avgDurationMs": 600144,
+        "medianDurationMs": 600144
+      },
+      "locations": [
+        {
+          "key": "Thane, Maharashtra, India",
+          "city": "Thane",
+          "state": "Maharashtra",
+          "country": "India",
+          "sessions": 2,
+          "totalDurationMs": 1200288
+        }
+      ]
+    },
+    "403d39d711c0e70c1433f379": {
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T12:54:17.086Z",
+      "activityStateUpdatedAt": "2026-08-19T12:54:14.368Z",
+      "rollup7d": {
+        "userId": "403d39d711c0e70c1433f379",
+        "range": "week",
+        "fromDate": "2026-08-13",
+        "toDate": "2026-08-19",
+        "logins": 2,
+        "visits": 48,
+        "jobCardClicks": 0,
+        "applies": 0,
+        "activeMs": 270000,
+        "sessionCount": 2,
+        "pageVisitsByCategory": {
+          "other": 1,
+          "dashboard": 1,
+          "courses": 1,
+          "interview_prep": 45
+        },
+        "activeMsByCategory": {
+          "interview_prep": 270000
+        },
+        "firstOpenBreakdown": {
+          "dashboard": 1
+        },
+        "avgActiveMsPerDay": 270000,
+        "daysActive": 1,
+        "topFirstOpen": "dashboard",
+        "insights": [
+          {
+            "id": "balanced",
+            "label": "Balanced activity",
+            "severity": "info",
+            "summary": "No strong imbalance detected yet — keep collecting signals.",
+            "evidence": [
+              "0 job clicks",
+              "0 applies",
+              "5 min active"
+            ]
+          }
+        ],
+        "recentSessions": [
+          {
+            "id": "sess_mt00tggs_4gnx99",
+            "startedAt": "2026-08-19T11:41:12.220Z",
+            "lastActiveAt": "2026-08-19T12:43:17.363Z",
+            "durationMs": 270000,
+            "pageCount": 47,
+            "paths": [
+              "/candidate-dashboard",
+              "/lms/courses",
+              "/lms/interview-prep",
+              "/lms/interview-prep/become-interviewer",
+              "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "country": "India",
+            "state": "Maharashtra",
+            "city": "Thane",
+            "timezone": "Asia/Calcutta",
+            "ipAddress": "49.36.111.184",
+            "lastPath": "/lms/interview-prep/become-interviewer",
+            "lastCategory": "interview_prep",
+            "firstPath": "/candidate-dashboard",
+            "endedAt": "2026-08-19T11:42:12.661Z"
+          },
+          {
+            "id": "sess_mt00tgg1_pt6rof",
+            "startedAt": "2026-08-19T11:41:12.192Z",
+            "lastActiveAt": "2026-08-19T11:41:12.193Z",
+            "durationMs": 28,
+            "pageCount": 1,
+            "firstPath": "/whatsapp",
+            "lastPath": "/whatsapp",
+            "lastCategory": "other",
+            "paths": [
+              "/whatsapp"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "country": "India",
+            "state": "Maharashtra",
+            "city": "Thane",
+            "timezone": "Asia/Calcutta",
+            "ipAddress": "49.36.111.184",
+            "endedAt": "2026-08-19T11:41:12.220Z"
+          }
+        ],
+        "recentEvents": [
+          {
+            "id": "ev_mt02zb0y_fgt5kh",
+            "at": "2026-08-19T12:41:44.338Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt02wu2u_gb8k5y",
+            "at": "2026-08-19T12:39:49.062Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt02tinc_6rlmv4",
+            "at": "2026-08-19T12:37:14.280Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt02th5h_fhm20i",
+            "at": "2026-08-19T12:37:12.341Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt02r87a_fzxsya",
+            "at": "2026-08-19T12:35:27.430Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt02r5ap_a2l4he",
+            "at": "2026-08-19T12:35:23.665Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt02ooch_yuyqsg",
+            "at": "2026-08-19T12:33:28.385Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt02mqwd_z14pk6",
+            "at": "2026-08-19T12:31:58.381Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt02mg4j_0gudrq",
+            "at": "2026-08-19T12:31:44.419Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt02mf9u_kbtw8i",
+            "at": "2026-08-19T12:31:43.314Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt02jy5o_v1c2dz",
+            "at": "2026-08-19T12:29:47.820Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt029cnd_zudrvh",
+            "at": "2026-08-19T12:21:33.386Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt026166_p0qw93",
+            "at": "2026-08-19T12:18:58.542Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt025sb9_g1ks4n",
+            "at": "2026-08-19T12:18:47.061Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt02572v_2gu1vp",
+            "at": "2026-08-19T12:18:19.543Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt023mww_6qylqu",
+            "at": "2026-08-19T12:17:06.752Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt021e1x_sdflyf",
+            "at": "2026-08-19T12:15:21.957Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt021dcp_7x9tvx",
+            "at": "2026-08-19T12:15:21.049Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt02098n_8wbbmh",
+            "at": "2026-08-19T12:14:29.063Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01z6th_xqwfft",
+            "at": "2026-08-19T12:13:39.269Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt01vqa5_ztt68i",
+            "at": "2026-08-19T12:10:57.869Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt01u4el_i9zgpg",
+            "at": "2026-08-19T12:09:42.861Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01qrqj_6xnwpd",
+            "at": "2026-08-19T12:07:06.475Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01pgwc_l18xoi",
+            "at": "2026-08-19T12:06:05.772Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01lopp_0gurat",
+            "at": "2026-08-19T12:03:09.277Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01lfh6_gtio05",
+            "at": "2026-08-19T12:02:57.306Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01l6ri_nljyhe",
+            "at": "2026-08-19T12:02:46.014Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01ktan_b7fb58",
+            "at": "2026-08-19T12:02:28.559Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01klfs_njkep2",
+            "at": "2026-08-19T12:02:18.376Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01k5pt_71k5sa",
+            "at": "2026-08-19T12:01:58.001Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01iv3o_ugs6yf",
+            "at": "2026-08-19T12:00:57.588Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01hq5p_kfu2rb",
+            "at": "2026-08-19T12:00:04.525Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01h03k_ednytz",
+            "at": "2026-08-19T11:59:30.753Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01gzpo_4o987w",
+            "at": "2026-08-19T11:59:30.252Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01gf8o_97ity4",
+            "at": "2026-08-19T11:59:03.720Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01fwyk_520609",
+            "at": "2026-08-19T11:58:40.028Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01f5f5_4p8g1q",
+            "at": "2026-08-19T11:58:04.337Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01ag24_p46fme",
+            "at": "2026-08-19T11:54:24.844Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01ackt_vr1794",
+            "at": "2026-08-19T11:54:20.333Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt01a7r8_fw55c6",
+            "at": "2026-08-19T11:54:14.084Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt018lsm_7tjarz",
+            "at": "2026-08-19T11:52:58.966Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt018753_9nrzrk",
+            "at": "2026-08-19T11:52:39.975Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt016hai_j5820s",
+            "at": "2026-08-19T11:51:19.818Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt0165bm_4gdsmh",
+            "at": "2026-08-19T11:51:04.306Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt014v08_nyov1n",
+            "at": "2026-08-19T11:50:04.280Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt014cb7_e5d81r",
+            "at": "2026-08-19T11:49:40.051Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt0149yw_jvyooo",
+            "at": "2026-08-19T11:49:37.016Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt0131pu_yqumdq",
+            "at": "2026-08-19T11:48:39.666Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt011w02_42s5zx",
+            "at": "2026-08-19T11:47:45.602Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt011tlo_tuvvka",
+            "at": "2026-08-19T11:47:42.492Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt00ye1o_iqwor7",
+            "at": "2026-08-19T11:45:02.364Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt00ws6p_fld2nw",
+            "at": "2026-08-19T11:43:47.377Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt00vtdn_eajgm4",
+            "at": "2026-08-19T11:43:02.267Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt00v423_2ocpps",
+            "at": "2026-08-19T11:42:29.451Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt00usg1_2vjuyj",
+            "at": "2026-08-19T11:42:14.401Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt00ur3p_ihmktk",
+            "at": "2026-08-19T11:42:12.661Z",
+            "type": "session_end",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "durationMs": 0
+            }
+          },
+          {
+            "id": "ev_mt00tv8j_el5s85",
+            "at": "2026-08-19T11:41:31.363Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep/become-interviewer",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt00tsmj_snrp8x",
+            "at": "2026-08-19T11:41:27.979Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt00tq0y_lqlxun",
+            "at": "2026-08-19T11:41:24.610Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt00tgsw_hy1hh7",
+            "at": "2026-08-19T11:41:12.656Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mt00tggs_4gnx99"
+          },
+          {
+            "id": "ev_mt00tggs_boc3c3",
+            "at": "2026-08-19T11:41:12.220Z",
+            "type": "login",
+            "category": "other",
+            "sessionId": "sess_mt00tggs_4gnx99",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows",
+              "country": "India",
+              "state": "Maharashtra",
+              "city": "Thane",
+              "timezone": "Asia/Calcutta",
+              "ipAddress": "49.36.111.184"
+            }
+          },
+          {
+            "id": "ev_mt00tggs_3liwgx",
+            "at": "2026-08-19T11:41:12.220Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/whatsapp",
+            "sessionId": "sess_mt00tgg1_pt6rof",
+            "meta": {
+              "durationMs": 28
+            }
+          },
+          {
+            "id": "ev_mt00tgg2_pp4r04",
+            "at": "2026-08-19T11:41:12.194Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/whatsapp",
+            "sessionId": "sess_mt00tgg1_pt6rof"
+          },
+          {
+            "id": "ev_mt00tgg1_nozj1x",
+            "at": "2026-08-19T11:41:12.193Z",
+            "type": "login",
+            "category": "other",
+            "path": "/whatsapp",
+            "sessionId": "sess_mt00tgg1_pt6rof",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows",
+              "country": "India",
+              "state": "Maharashtra",
+              "city": "Thane",
+              "timezone": "Asia/Calcutta",
+              "ipAddress": "49.36.111.184"
+            }
+          }
+        ],
+        "topCompanies": [],
+        "topRoles": [],
+        "hqTriggers": [],
+        "profileSnapshot": {
+          "skillsCount": 10,
+          "profileCompleteness": 64,
+          "cvScore": 90,
+          "marketFit": 0,
+          "applicationsTotal": 0,
+          "rejectionsTotal": 0,
+          "postInterviewRejections": 0,
+          "missingSectionsCount": 12,
+          "missingSectionKeys": [
+            "basic-information",
+            "work-experience",
+            "internships",
+            "gap-explanation",
+            "education",
+            "academic-achievements",
+            "competitive-exams",
+            "projects",
+            "certifications",
+            "accomplishments",
+            "visa-work-authorization",
+            "vaccination"
+          ],
+          "updatedAt": "2026-08-19T12:54:14.368Z"
+        },
+        "behaviourSignals": {
+          "userId": "403d39d711c0e70c1433f379",
+          "topCategories": [
+            "interview_prep",
+            "courses",
+            "jobs"
+          ],
+          "weakCategories": [
+            "premium",
+            "events",
+            "community"
+          ],
+          "insightIds": [],
+          "jobCardClicks7d": 0,
+          "applies7d": 0,
+          "activeMs7d": 270000,
+          "activeMsByCategory7d": {
+            "interview_prep": 270000
+          },
+          "pageVisitsByCategory7d": {
+            "other": 1,
+            "dashboard": 1,
+            "courses": 1,
+            "interview_prep": 45
+          },
+          "skillsCount": 10,
+          "rejectionsTotal": 0,
+          "cvScore": 90,
+          "marketFit": 0,
+          "missingSectionsCount": 12,
+          "topCompanies": [],
+          "topRoles": [],
+          "hqTriggers": [],
+          "preferSlotIds": [
+            "course",
+            "events",
+            "community"
+          ],
+          "deprioritizeSlotIds": [
+            "interview_prep",
+            "career_path",
+            "quizzes",
+            "jobs"
+          ],
+          "userSuggestionHints": [],
+          "preferredAlertHours": [
+            17
+          ],
+          "preferredAlertWindowLabel": "Wed · 5:00 PM",
+          "alertTimingConfidence": "low"
+        }
+      },
+      "suggestionMetrics": {
+        "userId": "403d39d711c0e70c1433f379",
+        "updatedAt": "2026-08-19T12:54:15.374Z",
+        "totalRejections": 0,
+        "postInterviewRejections": 0,
+        "repeatRejectionCount": 0,
+        "suggestionsPushed": 3,
+        "suggestionsClicked": 0,
+        "suggestionsPurchased": 0,
+        "salesFollowUpScore": 10,
+        "salesFollowUpReady": false,
+        "byScenario": {
+          "profile_match": 3
+        },
+        "recentSuggestions": [
+          {
+            "id": "sug_mt00tjp2_kxjzfb",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-19T11:41:16.406Z"
+          },
+          {
+            "id": "sug_mt01wkyw_m3a2k2",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-19T12:11:37.640Z"
+          },
+          {
+            "id": "sug_mt02zb8b_34lvl7",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-19T12:41:44.603Z"
+          }
+        ]
+      },
+      "triggers": [],
+      "interests": [
+        {
+          "key": "learning",
+          "label": "Learning & courses",
+          "score": 18,
+          "updatedAt": "2026-08-19T11:41:14.352Z"
+        },
+        {
+          "key": "watercooler",
+          "label": "Workplace chat",
+          "score": 18,
+          "updatedAt": "2026-08-19T11:41:14.352Z"
         }
       ],
       "personalizedRecs": [
@@ -1612,100 +2723,1684 @@
       ],
       "sessionEngagement": {
         "sessionCount": 4,
-        "activeCount": 1,
-        "totalDurationMs": 585676,
-        "avgDurationMs": 146419,
-        "medianDurationMs": 45338,
-        "uniqueIps": 0,
+        "activeCount": 4,
+        "totalDurationMs": 26053650,
+        "avgDurationMs": 6513413,
+        "medianDurationMs": 5785748,
+        "uniqueIps": 1,
         "uniqueDevices": 1,
-        "locations": [],
+        "locations": [
+          {
+            "key": "Thane, Maharashtra, India",
+            "city": "Thane",
+            "state": "Maharashtra",
+            "country": "India",
+            "sessions": 4,
+            "totalDurationMs": 26053650
+          }
+        ],
         "byHour": [
           {
-            "hour": 13,
-            "label": "1:00 PM",
+            "hour": 16,
+            "label": "4:00 PM",
             "sessions": 2,
-            "totalDurationMs": 495676
+            "totalDurationMs": 11571496
           },
           {
             "hour": 15,
             "label": "3:00 PM",
             "sessions": 1,
-            "totalDurationMs": 90000
+            "totalDurationMs": 10096963
           },
           {
-            "hour": 20,
-            "label": "8:00 PM",
+            "hour": 17,
+            "label": "5:00 PM",
             "sessions": 1,
-            "totalDurationMs": 0
+            "totalDurationMs": 4385191
           }
         ],
         "byWeekday": [
           {
-            "weekday": 1,
-            "label": "Mon",
+            "weekday": 3,
+            "label": "Wed",
             "sessions": 4,
-            "totalDurationMs": 585676
+            "totalDurationMs": 26053650
           }
         ],
         "alertTiming": {
           "bestHours": [
-            13,
+            16,
             15,
-            20
+            17
           ],
           "bestHourLabels": [
-            "1:00 PM",
+            "4:00 PM",
             "3:00 PM",
-            "8:00 PM"
+            "5:00 PM"
           ],
           "bestWeekdays": [
-            "Mon"
+            "Wed"
           ],
-          "bestWindowLabel": "Mon · 1:00 PM–3:00 PM",
+          "bestWindowLabel": "Wed · 4:00 PM–3:00 PM",
           "avoidHours": [
-            20,
+            17,
             15,
-            13
+            16
           ],
-          "timezone": null,
+          "timezone": "Asia/Calcutta",
           "confidence": "medium",
-          "reason": "Most active around 1:00 PM and 3:00 PM local time · avg session 2 min",
+          "reason": "Most active around 4:00 PM and 3:00 PM local time · avg session 109 min · often from Thane, Maharashtra, India",
           "sampleSessions": 4,
-          "avgDurationMs": 146419,
-          "medianDurationMs": 45338
+          "avgDurationMs": 6513413,
+          "medianDurationMs": 5785748
         }
       },
       "alertTiming": {
         "bestHours": [
-          13,
+          16,
           15,
-          20
+          17
         ],
         "bestHourLabels": [
-          "1:00 PM",
+          "4:00 PM",
           "3:00 PM",
-          "8:00 PM"
+          "5:00 PM"
         ],
         "bestWeekdays": [
-          "Mon"
+          "Wed"
         ],
-        "bestWindowLabel": "Mon · 1:00 PM–3:00 PM",
+        "bestWindowLabel": "Wed · 4:00 PM–3:00 PM",
         "avoidHours": [
-          20,
+          17,
           15,
-          13
+          16
         ],
-        "timezone": null,
+        "timezone": "Asia/Calcutta",
         "confidence": "medium",
-        "reason": "Most active around 1:00 PM and 3:00 PM local time · avg session 2 min",
+        "reason": "Most active around 4:00 PM and 3:00 PM local time · avg session 109 min · often from Thane, Maharashtra, India",
         "sampleSessions": 4,
-        "avgDurationMs": 146419,
-        "medianDurationMs": 45338
+        "avgDurationMs": 6513413,
+        "medianDurationMs": 5785748
       },
-      "locations": []
+      "locations": [
+        {
+          "key": "Thane, Maharashtra, India",
+          "city": "Thane",
+          "state": "Maharashtra",
+          "country": "India",
+          "sessions": 4,
+          "totalDurationMs": 26053650
+        }
+      ]
     }
   },
   "history": [
+    {
+      "id": "hist_mt03emby_cfi4",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T12:53:38.758Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 117,
+        "applies": 0,
+        "activeMs": 1200000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt03e5fo_9oat",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T12:53:16.852Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 48,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 4:00 PM–3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt036uvb_prdu",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T12:47:36.588Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 116,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt036isg_eh4c",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T12:47:20.821Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 48,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 4:00 PM–3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt0308l1_j4zo",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T12:42:27.795Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 107,
+        "applies": 0,
+        "activeMs": 1155000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt02zzam_jgqb",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T12:42:15.742Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 48,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 4:00 PM–3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt02tntd_9bh5",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T12:37:20.867Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 106,
+        "applies": 0,
+        "activeMs": 1140000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt02tiqw_p5c8",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T12:37:14.072Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 47,
+        "applies": 0,
+        "activeMs": 225000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 4:00 PM–3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt02mhcp_f4is",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T12:31:45.955Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 44,
+        "applies": 0,
+        "activeMs": 165000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 4:00 PM–3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt02lx3z_icwc",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T12:31:19.376Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 105,
+        "applies": 0,
+        "activeMs": 1110000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt02ftlj_sf4b",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T12:26:34.833Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 41,
+        "applies": 0,
+        "activeMs": 165000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt02fd77_1ktx",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T12:26:13.885Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 100,
+        "applies": 0,
+        "activeMs": 1050000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt023dus_21ra",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T12:16:54.870Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 37,
+        "applies": 0,
+        "activeMs": 150000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt022xt8_xuhq",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T12:16:33.871Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 95,
+        "applies": 0,
+        "activeMs": 1050000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt01weiv_lcny",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T12:11:29.257Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 94,
+        "applies": 0,
+        "activeMs": 1035000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt01w0cd_61ap",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T12:11:10.875Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 34,
+        "applies": 0,
+        "activeMs": 105000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt01plvw_ig2k",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T12:06:12.193Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 93,
+        "applies": 0,
+        "activeMs": 1020000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt01pk5v_kxgz",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T12:06:09.660Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 32,
+        "applies": 0,
+        "activeMs": 90000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt01izoq_k956",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T12:01:03.442Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 86,
+        "applies": 0,
+        "activeMs": 1020000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt01iwl2_yrn2",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T12:00:59.312Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 90000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt01civ0_0h21",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T11:56:01.751Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 80,
+        "applies": 0,
+        "activeMs": 1020000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt01cbwu_mfqf",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T11:55:52.736Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 18,
+        "applies": 0,
+        "activeMs": 90000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt01563p_3qkm",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T11:50:18.623Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 77,
+        "applies": 0,
+        "activeMs": 1005000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt014cnn_j3np",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T11:49:40.272Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 12,
+        "applies": 0,
+        "activeMs": 60000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt00yqk7_zfdb",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T11:45:18.475Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 1005000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt00xt5u_n3vo",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T11:44:35.239Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 7,
+        "applies": 0,
+        "activeMs": 30000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt00s73b_fvrh",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T11:40:13.151Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 67,
+        "applies": 0,
+        "activeMs": 945000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt00r3g9_kcd7",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T11:39:21.996Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 10,
+        "applies": 0,
+        "activeMs": 30000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt00l75a_ldmx",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T11:34:46.861Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 62,
+        "applies": 0,
+        "activeMs": 945000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt00k58b_0r9n",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T11:33:57.728Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 5,
+        "applies": 0,
+        "activeMs": 30000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt00dog3_i2oj",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T11:28:55.988Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 60,
+        "applies": 0,
+        "activeMs": 885000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt00dn54_e1ol",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T11:28:54.320Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 15,
+        "applies": 0,
+        "activeMs": 75000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt0071aq_nrtk",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T11:23:46.104Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 60000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt006xkd_0qcq",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T11:23:41.269Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 60,
+        "applies": 0,
+        "activeMs": 885000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt000dp9_vy40",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T11:18:35.577Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 55,
+        "applies": 0,
+        "activeMs": 810000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt000ct8_93h1",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T11:18:34.433Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 6,
+        "applies": 0,
+        "activeMs": 60000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszzss06_uuhi",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T11:12:40.786Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 54,
+        "applies": 0,
+        "activeMs": 810000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszzrwb9_9mn8",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T11:11:59.753Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 5,
+        "applies": 0,
+        "activeMs": 60000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszzm1cz_njai",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T11:07:26.407Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 51,
+        "applies": 0,
+        "activeMs": 735000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszzk4r5_7ccn",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T11:05:57.490Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 0,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM–4:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszzfc41_e2xi",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T11:02:13.727Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 51,
+        "applies": 0,
+        "activeMs": 645000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszz8vk6_3i47",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T10:57:12.271Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 49,
+        "applies": 0,
+        "activeMs": 630000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszz6flr_87bl",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T10:55:18.354Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 26,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszz1iif_n62m",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T10:51:28.857Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 49,
+        "applies": 0,
+        "activeMs": 630000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszyzxmt_oref",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T10:50:15.141Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 26,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszytepm_a8rg",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T10:45:10.505Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 49,
+        "applies": 0,
+        "activeMs": 495000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszys9pb_zl6q",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T10:44:15.299Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 26,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszyl091_29l6",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T10:38:38.596Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 23,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszydmus_oz3v",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T10:32:54.733Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 22,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszychb5_iiqv",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T10:32:00.892Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 48,
+        "applies": 0,
+        "activeMs": 495000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszy756c_mgk1",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T10:27:51.889Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 22,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszy5eqv_njg1",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T10:26:30.965Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 48,
+        "applies": 0,
+        "activeMs": 495000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszxzoii_b8z5",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T10:22:03.672Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 17,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszxyc2z_v1c1",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T10:21:00.887Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 44,
+        "applies": 0,
+        "activeMs": 495000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszxsuqd_qb9o",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T10:16:45.150Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 16,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszxrtwl_3zfi",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T10:15:57.410Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 37,
+        "applies": 0,
+        "activeMs": 495000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszxm8ry_kb1u",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T10:11:36.768Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 14,
+        "applies": 0,
+        "activeMs": 165000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszxksxi_r11i",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T10:10:29.597Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 35,
+        "applies": 0,
+        "activeMs": 360000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszxf27d_cr57",
+      "userId": "403d39d711c0e70c1433f379",
+      "capturedAt": "2026-08-19T10:06:01.565Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 1,
+        "applies": 0,
+        "activeMs": 0,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 3:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszxe52o_csej",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T10:05:18.731Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 34,
+        "applies": 0,
+        "activeMs": 330000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszx6qbb_3o3o",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T09:59:33.020Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 300000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszx05zc_9gf5",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T09:54:26.738Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 23,
+        "applies": 0,
+        "activeMs": 165000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszwt444_t563",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T09:48:57.725Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 23,
+        "applies": 0,
+        "activeMs": 165000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszwmmq8_i6rl",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T09:43:55.232Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 20,
+        "applies": 0,
+        "activeMs": 165000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszwd25b_x270",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T09:36:28.647Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 16,
+        "applies": 0,
+        "activeMs": 135000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszvpodr_y65i",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T09:18:17.735Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 15,
+        "applies": 0,
+        "activeMs": 135000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszvhylv_7ip6",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T09:12:17.745Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 15,
+        "applies": 0,
+        "activeMs": 120000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszv99ef_t5gv",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T09:05:31.812Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 14,
+        "applies": 0,
+        "activeMs": 75000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszv1lw2_9ash",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T08:59:34.765Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 14,
+        "applies": 0,
+        "activeMs": 75000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszutudm_zdjy",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T08:53:32.452Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 13,
+        "applies": 0,
+        "activeMs": 60000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszulta7_kkw3",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T08:47:17.862Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 12,
+        "applies": 0,
+        "activeMs": 60000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszuevyy_144c",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T08:41:54.746Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 12,
+        "applies": 0,
+        "activeMs": 60000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszu8fso_c32h",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T08:36:53.835Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 12,
+        "applies": 0,
+        "activeMs": 60000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mszu1s0d_xwlc",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T08:31:42.923Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 10,
+        "applies": 0,
+        "activeMs": 60000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_msztu9db_uyar",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-19T08:25:48.938Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 1,
+        "applies": 0,
+        "activeMs": 0,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_msyiak1v_976j",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-18T10:14:48.003Z",
+      "snapshot": {
+        "logins": 24,
+        "visits": 169,
+        "applies": 0,
+        "activeMs": 3390000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Tue · 10:00 PM–2:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msyi3eqk_ktj1",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-18T10:07:34.023Z",
+      "snapshot": {
+        "logins": 24,
+        "visits": 168,
+        "applies": 0,
+        "activeMs": 3360000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Tue · 10:00 PM–2:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msyhthqf_gfbm",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-18T10:01:34.438Z",
+      "snapshot": {
+        "logins": 24,
+        "visits": 168,
+        "applies": 0,
+        "activeMs": 3360000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Tue · 10:00 PM–2:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msyhm0xf_urky",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-18T09:55:45.574Z",
+      "snapshot": {
+        "logins": 24,
+        "visits": 168,
+        "applies": 0,
+        "activeMs": 3345000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Tue · 10:00 PM–2:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msyghg0r_zgph",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-18T09:24:12.236Z",
+      "snapshot": {
+        "logins": 23,
+        "visits": 167,
+        "applies": 0,
+        "activeMs": 3345000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Thu · 10:00 PM–11:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msyg9vsx_mspd",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-18T09:18:19.609Z",
+      "snapshot": {
+        "logins": 23,
+        "visits": 167,
+        "applies": 0,
+        "activeMs": 3345000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Thu · 10:00 PM–11:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msyg249f_q0an",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-18T09:12:17.819Z",
+      "snapshot": {
+        "logins": 23,
+        "visits": 166,
+        "applies": 0,
+        "activeMs": 3345000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Thu · 10:00 PM–11:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msyfvoqu_gek4",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-18T09:07:17.696Z",
+      "snapshot": {
+        "logins": 23,
+        "visits": 166,
+        "applies": 0,
+        "activeMs": 3345000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Thu · 10:00 PM–11:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msyfny6k_ls24",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-18T09:01:16.580Z",
+      "snapshot": {
+        "logins": 23,
+        "visits": 166,
+        "applies": 0,
+        "activeMs": 3300000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Thu · 10:00 PM–11:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msyffyb4_v5a7",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-18T08:55:03.541Z",
+      "snapshot": {
+        "logins": 23,
+        "visits": 166,
+        "applies": 0,
+        "activeMs": 3285000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Thu · 10:00 PM–11:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msyf8dln_jdkh",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-18T08:49:10.579Z",
+      "snapshot": {
+        "logins": 23,
+        "visits": 166,
+        "applies": 0,
+        "activeMs": 3255000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Thu · 10:00 PM–11:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_msyf0pc3_07nr",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-18T08:43:09.782Z",
+      "snapshot": {
+        "logins": 23,
+        "visits": 165,
+        "applies": 0,
+        "activeMs": 3240000,
+        "jobCardClicks": 0,
+        "triggerCount": 5,
+        "insightIds": [
+          "premium_curious"
+        ],
+        "alertWindow": "Fri / Thu · 10:00 PM–11:00 PM",
+        "topLocation": null
+      }
+    },
     {
       "id": "hist_msxc32k8_8rqb",
       "userId": "b1c869d84e75048c5c61c5e3",
@@ -10545,5 +13240,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-08-17T14:33:52.539Z"
+  "updatedAt": "2026-08-19T12:58:17.775Z"
 }

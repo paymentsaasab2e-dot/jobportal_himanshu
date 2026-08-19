@@ -7,6 +7,7 @@ import { ArrowRight, Sparkles, FileText, UploadCloud, Phone } from "lucide-react
 import { useAuth } from '@/components/auth/AuthContext';
 
 import { API_BASE_URL } from '@/lib/api-base';
+import { getLocaleFromPathname, localizePath } from "@/lib/i18n";
 
 export default function UploadCV() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -22,7 +23,7 @@ export default function UploadCV() {
   useEffect(() => {
     if (!authLoading) {
       if (!isAuthenticated) {
-        router.push("/whatsapp");
+        router.push(localizePath("/whatsapp", getLocaleFromPathname(window.location.pathname)));
         return;
       }
       setCandidateId(user?.id || null);
@@ -130,8 +131,9 @@ export default function UploadCV() {
       // Redirect to extract page immediately after starting upload
       // The extract page will poll for completion status
       setTimeout(() => {
-        router.push("/extract");
-      }, 100); // Small delay to ensure request is sent
+        const locale = getLocaleFromPathname(window.location.pathname);
+        router.push(localizePath("/extract", locale));
+      }, 100);
     } catch (err: any) {
       sessionStorage.setItem("uploadError", err.message || "Upload failed. Please try again.");
       router.push("/extract");
