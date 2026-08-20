@@ -34,13 +34,11 @@ export function formatExploreMatchLabel(
   t: ExploreTranslator,
   match?: string,
   matchScore?: number,
-  personalized = false,
-  cvBased = false,
+  _personalized = false,
+  _cvBased = false,
 ): string {
   const score = parseExploreMatchScore(match, matchScore)
   if (!score && matchScore == null && !match) return t('notScoredYet')
-  if (cvBased) return t('cvFitPercent', { score })
-  if (personalized) return t('aiFitPercent', { score })
   return t('percentMatch', { score })
 }
 
