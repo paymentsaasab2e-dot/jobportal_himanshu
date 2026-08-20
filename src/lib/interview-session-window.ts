@@ -1,3 +1,89 @@
+const DISPLAY_TZ = 'Asia/Kolkata';
+
+function formatIstTime(date: Date) {
+  return date.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: DISPLAY_TZ,
+  });
+}
+
+function formatIstDate(date: Date) {
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: DISPLAY_TZ,
+  });
+}
+
+function formatIstDateTime(date: Date) {
+  return date.toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: DISPLAY_TZ,
+  });
+}
+
+function firstPreferredSlot(preferredTime?: string[]) {
+  if (!Array.isArray(preferredTime)) return '';
+  return String(preferredTime[0] || '').trim();
+}
+
+function parseSlotClock(slotValue?: string | null) {
+  const raw = String(slotValue || '').trim();
+  const range = /^(\d{1,2}):(\d{2})\s*-\s*\d{1,2}:\d{2}/.exec(raw);
+  const single = /^(\d{1,2}):(\d{2})/.exec(raw);
+  const match = range || single;
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute) || hour > 23 || minute > 59) return null;
+  return { hour, minute };
+}
+
+function toDateKey(value?: string | null) {
+  const raw = String(value || '').trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+  const parsed = raw ? new Date(raw) : null;
+  if (!parsed || Number.isNaN(parsed.getTime())) return '';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: DISPLAY_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(parsed);
+}
+
+/** Prefer Asia/Kolkata wall-clock from preferredDate + preferredTime when available. */
+function resolveScheduledAtMs(request: {
+  scheduledAt?: string | null;
+  preferredDate?: string | null;
+  preferredTime?: string[];
+  proposedSlot?: string | null;
+  proposedDate?: string | null;
+}) {
+  const slot =
+    firstPreferredSlot(request?.preferredTime) ||
+    String(request?.proposedSlot || '').trim();
+  const clock = parseSlotClock(slot);
+  const dateKey =
+    toDateKey(request?.preferredDate) ||
+    toDateKey(request?.proposedDate) ||
+    toDateKey(request?.scheduledAt);
+  if (clock && dateKey) {
+    const hour = String(clock.hour).padStart(2, '0');
+    const minute = String(clock.minute).padStart(2, '0');
+    const istMs = new Date(`${dateKey}T${hour}:${minute}:00+05:30`).getTime();
+    if (Number.isFinite(istMs)) return istMs;
+  }
+  const fallback = request?.scheduledAt ? new Date(request.scheduledAt).getTime() : Number.NaN;
+  return fallback;
+}
+
 export function formatInterviewWhen(request: {
   status?: string;
   scheduledAt?: string | null;
@@ -15,29 +101,36 @@ export function formatInterviewWhen(request: {
     return {
       dateLabel:
         dateObj && !Number.isNaN(dateObj.getTime())
-          ? dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+          ? formatIstDate(dateObj)
           : String(dateValue || 'Date TBD'),
       timeLabel: proposedTime,
     };
   }
 
+  // Confirmed interviews: prefer the agreed slot string so cards match what both sides picked.
+  const confirmedSlot = firstPreferredSlot(request?.preferredTime);
   const scheduled = request?.scheduledAt ? new Date(request.scheduledAt) : null;
   const hasClock =
     scheduled &&
     !Number.isNaN(scheduled.getTime()) &&
-    (scheduled.getHours() !== 0 || scheduled.getMinutes() !== 0);
+    (scheduled.getUTCHours() !== 0 ||
+      scheduled.getUTCMinutes() !== 0 ||
+      scheduled.getHours() !== 0 ||
+      scheduled.getMinutes() !== 0);
+
+  if (status === 'SCHEDULED' || status === 'IN_PROGRESS' || status === 'COMPLETED') {
+    if (hasClock && scheduled) {
+      return {
+        dateLabel: formatIstDate(scheduled),
+        timeLabel: confirmedSlot || formatIstTime(scheduled),
+      };
+    }
+  }
+
   if (hasClock && scheduled) {
     return {
-      dateLabel: scheduled.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }),
-      timeLabel: scheduled.toLocaleTimeString('en-IN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      }),
+      dateLabel: formatIstDate(scheduled),
+      timeLabel: confirmedSlot || formatIstTime(scheduled),
     };
   }
 
@@ -45,20 +138,28 @@ export function formatInterviewWhen(request: {
   const dateObj = dateValue ? new Date(dateValue) : null;
   const dateLabel =
     dateObj && !Number.isNaN(dateObj.getTime())
-      ? dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+      ? formatIstDate(dateObj)
       : String(dateValue || 'Date TBD');
   const timeLabel =
     String(request?.proposedSlot || '').trim() ||
-    (Array.isArray(request?.preferredTime) ? request.preferredTime[0] : '') ||
+    confirmedSlot ||
     'Time TBD';
   return { dateLabel, timeLabel };
 }
 
 export function getInterviewSessionWindow(
-  request: { scheduledAt?: string | null; duration?: number; status?: string },
+  request: {
+    scheduledAt?: string | null;
+    duration?: number;
+    status?: string;
+    preferredDate?: string | null;
+    preferredTime?: string[];
+    proposedSlot?: string | null;
+    proposedDate?: string | null;
+  },
   nowTs: number
 ) {
-  const scheduledAtMs = request?.scheduledAt ? new Date(request.scheduledAt).getTime() : Number.NaN;
+  const scheduledAtMs = resolveScheduledAtMs(request);
   const status = String(request?.status || '').toUpperCase();
   if (!Number.isFinite(scheduledAtMs)) {
     return {
@@ -75,14 +176,7 @@ export function getInterviewSessionWindow(
   const joinableStatus = status === 'SCHEDULED' || status === 'IN_PROGRESS';
 
   const joinOpensAtLabel =
-    nowTs < joinOpensAt
-      ? new Date(joinOpensAt).toLocaleString('en-IN', {
-          day: '2-digit',
-          month: 'short',
-          hour: 'numeric',
-          minute: '2-digit',
-        })
-      : null;
+    nowTs < joinOpensAt ? formatIstDateTime(new Date(joinOpensAt)) : null;
 
   return {
     canJoinNow: joinableStatus && nowTs >= joinOpensAt && nowTs <= joinClosesAt,
