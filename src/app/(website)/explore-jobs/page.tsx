@@ -2318,6 +2318,7 @@ const ExploreJobsPageContent = () => {
     const metaMode = job.workMode ? String(job.workMode).replace(/_/g, ' ') : ''
     const hasMetaLine = Boolean(metaLocation || metaSalary)
     const hasTypeLine = Boolean(metaType || metaMode)
+    // Always label the AI/profile match percentage (never CV Fit).
     const matchBadge = formatExploreMatchLabel(te, job.match, job.matchScore)
     const cardFitLabel = translateFitLabel(resolveCardFitLabel(job), te)
     const matchPct = parseExploreMatchScore(job.match, job.matchScore)
