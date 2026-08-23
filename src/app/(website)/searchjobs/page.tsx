@@ -33,6 +33,7 @@ type SearchJob = {
   location: string;
   country: string;
   industry: string;
+  department: string;
   salary: string;
   type: string;
   workMode: string;
@@ -223,6 +224,14 @@ function mapJob(job: any, index: number): SearchJob {
   const industry = [
     asText(redacted.industry),
     asText(redacted.jobCategory),
+    asText(redacted.industryType),
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const department = [
+    asText(redacted.department),
+    asText(redacted.departmentName),
+    asText(redacted.jobDepartment),
   ]
     .filter(Boolean)
     .join(' ');
@@ -244,6 +253,7 @@ function mapJob(job: any, index: number): SearchJob {
     location,
     country,
     industry,
+    department,
     salary,
     type,
     workMode,
@@ -346,6 +356,8 @@ function SearchJobsContent() {
 
   const searchQuery = searchParams.get('q')?.trim().toLowerCase() || '';
   const locationQuery = searchParams.get('location')?.trim().toLowerCase() || '';
+  const industryQuery = searchParams.get('industry')?.trim().toLowerCase() || '';
+  const departmentQuery = searchParams.get('department')?.trim().toLowerCase() || '';
 
   useEffect(() => {
     let cancelled = false;
@@ -382,15 +394,19 @@ function SearchJobsContent() {
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
-      const hay = `${job.title} ${job.company} ${job.location} ${job.country} ${job.industry} ${job.type} ${job.workMode} ${job.description}`.toLowerCase();
+      const hay = `${job.title} ${job.company} ${job.location} ${job.country} ${job.industry} ${job.department} ${job.type} ${job.workMode} ${job.description}`.toLowerCase();
       const matchesQuery = !searchQuery || hay.includes(searchQuery);
       const matchesLocation =
         !locationQuery ||
         job.location.toLowerCase().includes(locationQuery) ||
         job.country.toLowerCase().includes(locationQuery);
-      return matchesQuery && matchesLocation;
+      const matchesIndustry =
+        !industryQuery || job.industry.toLowerCase().includes(industryQuery);
+      const matchesDepartment =
+        !departmentQuery || job.department.toLowerCase().includes(departmentQuery);
+      return matchesQuery && matchesLocation && matchesIndustry && matchesDepartment;
     });
-  }, [jobs, searchQuery, locationQuery]);
+  }, [jobs, searchQuery, locationQuery, industryQuery, departmentQuery]);
 
   return (
     <div className="min-h-screen pt-28" style={{ background: THEME.pageBg }}>

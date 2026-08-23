@@ -12,17 +12,18 @@ import {
 } from 'lucide-react';
 import {
   buildSearchJobsUrl,
+  buildTrendingSearchUrl,
   computeShineRingMetrics,
   getSuggestionLabel,
   HighlightMatch,
   portalSearchHeroStyles,
-  recentTrendingLabels,
+  buildTrendingLabels,
+  buildCountryTrendingLabels,
   scoreMatch,
   sortJobsNewestFirst,
   splitCategoryLabels,
   TRENDING_CHIP_STYLES,
 } from './portalSearchHero.helpers';
-import { extractJobCountry, uniqueCountryNames } from '@/lib/job-location-filters';
 
 export function PortalSearchHero() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export function PortalSearchHero() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetchFromApi('/jobs?page=1&limit=80');
+        const res = await fetchFromApi('/jobs?page=1&limit=300');
         if (!res.ok) return;
         const result = await res.json();
         const jobs = Array.isArray(result?.data?.jobs)
@@ -74,7 +75,6 @@ export function PortalSearchHero() {
         const titles: string[] = [];
         const locationSeen = new Set<string>();
         const locations: string[] = [];
-        const countryRaw: string[] = [];
         const industryRaw: string[] = [];
         const departmentRaw: string[] = [];
         const catalog: any[] = [];
@@ -83,7 +83,6 @@ export function PortalSearchHero() {
         for (const job of newestFirst) {
           const title = String(job?.title || '').trim();
           if (title) {
-            departmentRaw.push(title);
             const key = title.toLowerCase();
             if (!titleSeen.has(key)) {
               titleSeen.add(key);
@@ -100,13 +99,16 @@ export function PortalSearchHero() {
             }
           }
 
-          // Country tab: detect country names in country / city / location (e.g. India, Uganda, Tanzania).
-          const country = extractJobCountry(job);
-          if (country) countryRaw.push(country);
-
           industryRaw.push(
             ...splitCategoryLabels(job?.industry),
             ...splitCategoryLabels(job?.jobCategory),
+            ...splitCategoryLabels(job?.industryType),
+          );
+
+          departmentRaw.push(
+            ...splitCategoryLabels(job?.department),
+            ...splitCategoryLabels(job?.departmentName),
+            ...splitCategoryLabels(job?.jobDepartment),
           );
 
           const locCandidates = [
@@ -127,10 +129,9 @@ export function PortalSearchHero() {
 
         setDbTitles(titles);
         setDbLocations(locations);
-        // Sliding window of 12 per tab: newest unique → #1; overflow drops the oldest.
-        setDbCountries(uniqueCountryNames(countryRaw, TRENDING_LIMIT));
-        setDbIndustries(recentTrendingLabels(industryRaw, TRENDING_LIMIT));
-        setDbDepartments(recentTrendingLabels(departmentRaw, TRENDING_LIMIT));
+        setDbCountries(buildCountryTrendingLabels(newestFirst, TRENDING_LIMIT));
+        setDbIndustries(buildTrendingLabels(industryRaw, TRENDING_LIMIT));
+        setDbDepartments(buildTrendingLabels(departmentRaw, TRENDING_LIMIT));
         setCatalogJobs(catalog);
       } catch (err) {
         console.error('Failed to load search catalog from database', err);
@@ -178,6 +179,16 @@ export function PortalSearchHero() {
     }, 6000);
     return () => window.clearInterval(timer);
   }, []);
+
+  const activeTrendingLabels = useMemo(() => {
+    const source =
+      exploreTab === 'country'
+        ? dbCountries
+        : exploreTab === 'industries'
+          ? dbIndustries
+          : dbDepartments;
+    return source.slice(0, 12);
+  }, [exploreTab, dbCountries, dbIndustries, dbDepartments]);
 
   // Debounced Search Suggestions (database jobs only)
   useEffect(() => {
@@ -850,24 +861,16 @@ export function PortalSearchHero() {
                   <div className="category-glass-orb category-glass-orb-3" aria-hidden />
 
                   {(() => {
-                    const toChips = (
-                      labels: string[],
-                      Icon: typeof Globe2,
-                    ) =>
+                    const toChips = (labels: string[], Icon: typeof Globe2) =>
                       labels.map((label, index) => {
                         const style = TRENDING_CHIP_STYLES[index % TRENDING_CHIP_STYLES.length];
                         return {
                           label,
-                          q: label,
                           Icon,
                           color: style.color,
                           tint: style.tint,
                         };
                       });
-
-                    const countryItems = toChips(dbCountries, Globe2);
-                    const industryItems = toChips(dbIndustries, Building2);
-                    const departmentItems = toChips(dbDepartments, Briefcase);
 
                     const chunk = <T,>(items: readonly T[], size: number) => {
                       const rows: T[][] = [];
@@ -875,19 +878,16 @@ export function PortalSearchHero() {
                       return rows;
                     };
 
-                    // Hard cap: Trendings shows at most 12 chips per tab
-                    const activeItems = (
+                    const Icon =
                       exploreTab === 'country'
-                        ? countryItems
+                        ? Globe2
                         : exploreTab === 'industries'
-                          ? industryItems
-                          : departmentItems
-                    ).slice(0, 12);
-                    const isLocation = exploreTab === 'country';
+                          ? Building2
+                          : Briefcase;
+                    const activeItems = toChips(activeTrendingLabels, Icon);
                     const rows = chunk(activeItems, 4).map((items) => ({
                       label: '',
                       items,
-                      isLocation,
                     }));
 
                     if (activeItems.length === 0) {
@@ -895,10 +895,10 @@ export function PortalSearchHero() {
                         <div className="category-glass-panel">
                           <p className="py-8 text-center text-sm font-medium text-slate-500">
                             {exploreTab === 'country'
-                              ? 'No countries available from open jobs yet.'
+                              ? t('landing.trendingEmptyCountry')
                               : exploreTab === 'industries'
-                                ? 'No industries available from open jobs yet.'
-                                : 'No departments available from open jobs yet.'}
+                                ? t('landing.trendingEmptyIndustries')
+                                : t('landing.trendingEmptyDepartments')}
                           </p>
                         </div>
                       );
@@ -915,13 +915,7 @@ export function PortalSearchHero() {
                                   key={cat.label}
                                   type="button"
                                   onClick={() =>
-                                    router.push(
-                                      buildSearchJobsUrl(
-                                        locale,
-                                        row.isLocation ? '' : cat.q,
-                                        row.isLocation ? cat.q : '',
-                                      )
-                                    )
+                                    router.push(buildTrendingSearchUrl(locale, exploreTab, cat.label))
                                   }
                                   className="category-glass-card h-full"
                                   style={{ ['--glass-tint' as string]: cat.tint }}
