@@ -18,7 +18,7 @@ import { LmsEmptyState } from '../../components/states/LmsEmptyState';
 import { LmsSkeleton } from '../../components/states/LmsSkeleton';
 import { LmsVideoPlayer } from '../../components/LmsVideoPlayer';
 import { LmsProgressBar } from '../../components/LmsProgressBar';
-import { enrollCourse, fetchCourseDetail } from '../../api/client';
+import { enrollCourse, fetchCourseDetail, completeCourseCheckpoint, fetchCourseCertificatePdf, viewCertificatePdf, downloadCertificatePdf } from '../../api/client';
 import { CourseAccessBadge, TokenSpendButton } from '../../components/ux/TokenSpendButton';
 import { useLmsState } from '../../state/LmsStateProvider';
 import { flattenCourseLessons } from '../course-utils';
@@ -44,6 +44,8 @@ export default function LmsCourseDetailPage({
 
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [certBusy, setCertBusy] = useState(false);
+  const [certError, setCertError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -329,6 +331,66 @@ export default function LmsCourseDetailPage({
               </div>
             )}
           </section>
+
+          {Array.isArray(course.checkpoints) && course.checkpoints.length ? (
+            <section className={LMS_CARD_CLASS}>
+              <h2 className={LMS_SECTION_TITLE}>Journey checkpoints</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Finish these gates in order with the lessons. Required ones must pass before the certificate is issued.
+              </p>
+              <ul className="mt-4 space-y-2">
+                {course.checkpoints.map((cp: any) => (
+                  <li
+                    key={cp.id}
+                    className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{cp.title || 'Checkpoint'}</p>
+                      <p className="text-xs text-slate-500">
+                        {cp.type === 'quiz'
+                          ? `Quiz pass · ${cp.passPercent || 70}%`
+                          : cp.type === 'assignment'
+                            ? 'Upload assignment'
+                            : 'HQ sign-off'}
+                        {cp.required === false ? ' · optional' : ' · required'}
+                      </p>
+                    </div>
+                    {cp.passed ? (
+                      <span className="text-xs font-bold uppercase tracking-wide text-emerald-700">Done</span>
+                    ) : cp.type === 'assignment' && !isLocked ? (
+                      <label className="inline-flex cursor-pointer items-center rounded-xl border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800">
+                        Upload file
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              await completeCourseCheckpoint(id, cp.id, { file });
+                              const data = await fetchCourseDetail(id);
+                              setCourse(data);
+                            } catch (err) {
+                              console.error(err);
+                            }
+                          }}
+                        />
+                      </label>
+                    ) : cp.type === 'quiz' && cp.quizId ? (
+                      <Link
+                        href={`/lms/quizzes/${cp.quizId}/attempt`}
+                        className="text-xs font-semibold text-[#28A8E1] hover:underline"
+                      >
+                        Open quiz
+                      </Link>
+                    ) : (
+                      <span className="text-xs font-medium text-slate-400">Waiting</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
         </div>
 
         <aside className="lg:sticky lg:top-[calc(var(--app-header-height,92px)+16px)] lg:z-20 lg:self-start">
@@ -366,6 +428,54 @@ export default function LmsCourseDetailPage({
                   <PlayCircle className="h-4 w-4" strokeWidth={2} />
                   {startLabel}
                 </button>
+                {course.isCertified ? (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setCertBusy(true);
+                        setCertError(null);
+                        try {
+                          const result = await fetchCourseCertificatePdf(id);
+                          viewCertificatePdf(result.blob);
+                        } catch (err) {
+                          setCertError(err instanceof Error ? err.message : 'Could not open certificate');
+                        } finally {
+                          setCertBusy(false);
+                        }
+                      }}
+                      className="inline-flex w-full items-center justify-center rounded-xl border border-violet-200 bg-violet-50 px-5 py-2.5 text-sm font-semibold text-violet-900 hover:bg-violet-100"
+                    >
+                      {certBusy ? 'Opening…' : 'View certificate'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setCertBusy(true);
+                        setCertError(null);
+                        try {
+                          const result = await fetchCourseCertificatePdf(id, true);
+                          downloadCertificatePdf(result.blob, result.filename);
+                        } catch (err) {
+                          setCertError(err instanceof Error ? err.message : 'Could not download PDF');
+                        } finally {
+                          setCertBusy(false);
+                        }
+                      }}
+                      className="inline-flex w-full items-center justify-center rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-800"
+                    >
+                      {certBusy ? 'Preparing PDF…' : 'Save as PDF'}
+                    </button>
+                    {!course.canDownloadCertificate ? (
+                      <p className="text-[11px] leading-snug text-slate-500">
+                        Available after you finish every lesson and required checkpoint.
+                      </p>
+                    ) : null}
+                    {certError ? (
+                      <p className="text-[11px] leading-snug text-rose-600">{certError}</p>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="space-y-3">

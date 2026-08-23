@@ -140,6 +140,83 @@ export async function enrollCourse(courseId: string) {
   return data.data;
 }
 
+export async function completeCourseLesson(courseId: string, lessonId: string) {
+  const res = await lmsFetch(
+    `${LMS_API_BASE}/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/complete`,
+    { method: 'POST' },
+  );
+  if (!res) throw new Error('No authentication token found. Please log in again.');
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || data?.error || 'Failed to complete lesson');
+  return data.data;
+}
+
+export async function completeCourseCheckpoint(
+  courseId: string,
+  checkpointId: string,
+  payload?: { file?: File | null; note?: string },
+) {
+  const form = new FormData();
+  if (payload?.note) form.append('note', payload.note);
+  if (payload?.file) form.append('file', payload.file);
+  const headers = getAuthHeaders();
+  if (!headers) throw new Error('No authentication token found. Please log in again.');
+  const auth = (headers as Record<string, string>).Authorization;
+  const res = await fetch(
+    `${LMS_API_BASE}/courses/${encodeURIComponent(courseId)}/checkpoints/${encodeURIComponent(checkpointId)}/complete`,
+    {
+      method: 'POST',
+      headers: auth ? { Authorization: auth } : {},
+      body: form,
+    },
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || data?.error || 'Failed to complete checkpoint');
+  return data.data;
+}
+
+export async function fetchCourseCertificate(courseId: string) {
+  const res = await lmsFetch(`${LMS_API_BASE}/courses/${encodeURIComponent(courseId)}/certificate`, {
+    method: 'GET',
+  });
+  if (!res) throw new Error('No authentication token found. Please log in again.');
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || data?.error || 'Certificate is not ready yet');
+  return data.data as { html: string; certificateId: string };
+}
+
+export async function fetchCourseCertificatePdf(courseId, download = false) {
+  const res = await lmsFetch(
+    `${LMS_API_BASE}/courses/${encodeURIComponent(courseId)}/certificate.pdf${download ? '?download=1' : ''}`,
+    { method: 'GET' },
+  );
+  if (!res) throw new Error('No authentication token found. Please log in again.');
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.message || data?.error || 'Certificate PDF is not ready yet');
+  }
+  const blob = await res.blob();
+  const certificateId = res.headers.get('x-certificate-id') || 'certificate';
+  const filename = `certificate-${certificateId.replace(/[^\w.-]+/g, '_')}.pdf`;
+  return { blob, filename, certificateId };
+}
+
+export function viewCertificatePdf(blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+export function downloadCertificatePdf(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename || 'certificate.pdf';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
+
 export async function fetchEvents(filters?: Record<string, string>) {
   const query = new URLSearchParams(filters).toString();
   const res = await lmsFetch(`${LMS_API_BASE}/events${query ? `?${query}` : ''}`, { method: 'GET' });
