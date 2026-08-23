@@ -1,6 +1,7 @@
 'use client';
 
 import { AppLocale, localizePath } from '@/lib/i18n';
+import { extractJobCountry } from '@/lib/job-location-filters';
 
 export const getSuggestionLabel = (suggestion: any) =>
   suggestion?.title ||
@@ -65,6 +66,69 @@ export const buildSearchJobsUrl = (locale: AppLocale, title: string, location: s
 
   const basePath = localizePath('/searchjobs', locale);
   return params.toString() ? `${basePath}?${params.toString()}` : basePath;
+};
+
+/** Build ranked Trendings labels (newest-first priority, max `limit`). */
+export function buildTrendingLabels(
+  valuesNewestFirst: Array<string | null | undefined>,
+  limit = 12,
+): string[] {
+  const rank = new Map<string, { label: string; firstIndex: number }>();
+  valuesNewestFirst.forEach((raw, index) => {
+    const label = String(raw || '').trim();
+    if (!label) return;
+    const key = label.toLowerCase();
+    if (rank.has(key)) return;
+    rank.set(key, { label, firstIndex: index });
+  });
+  return [...rank.values()]
+    .sort((a, b) => a.firstIndex - b.firstIndex)
+    .slice(0, limit)
+    .map(({ label }) => label);
+}
+
+/** Country tab: canonical country names from live job rows. */
+export function buildCountryTrendingLabels(
+  jobsNewestFirst: Array<Record<string, unknown>>,
+  limit = 12,
+): string[] {
+  const rank = new Map<string, { label: string; firstIndex: number }>();
+  jobsNewestFirst.forEach((job, index) => {
+    const label = extractJobCountry(job as Parameters<typeof extractJobCountry>[0]);
+    if (!label) return;
+    const key = label.toLowerCase();
+    if (rank.has(key)) return;
+    rank.set(key, { label, firstIndex: index });
+  });
+  return [...rank.values()]
+    .sort((a, b) => a.firstIndex - b.firstIndex)
+    .slice(0, limit)
+    .map(({ label }) => label);
+}
+
+export function filterTrendingLabels(labels: string[], query: string): string[] {
+  const q = query.trim();
+  if (!q) return labels;
+  return labels.filter((label) => scoreMatch(label, q) > 0);
+}
+
+export function buildTrendingSearchUrl(
+  locale: AppLocale,
+  tab: 'country' | 'industries' | 'departments',
+  label: string,
+) {
+  const normalized = label.trim();
+  const basePath = localizePath('/searchjobs', locale);
+  if (!normalized) return basePath;
+  const params = new URLSearchParams();
+  if (tab === 'country') {
+    params.set('location', normalized);
+  } else if (tab === 'industries') {
+    params.set('industry', normalized);
+  } else {
+    params.set('department', normalized);
+  }
+  return `${basePath}?${params.toString()}`;
 };
 
 /** Unique trimmed labels from a list (case-insensitive). Caps to recent/first N (default 12). */
