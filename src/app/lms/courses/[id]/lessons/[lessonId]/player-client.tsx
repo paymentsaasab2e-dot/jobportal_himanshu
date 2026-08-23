@@ -11,6 +11,7 @@ import { useLmsState } from '../../../../state/LmsStateProvider';
 import { useLmsToast } from '../../../../components/ux/LmsToastProvider';
 import { LmsStatusBadge } from '../../../../components/ux/LmsStatusBadge';
 import { LmsVideoPlayer } from '../../../../components/LmsVideoPlayer';
+import { completeCourseLesson } from '../../../../api/client';
 import type { FlatCourseLesson } from '../../../course-utils';
 
 type Mode = 'learn' | 'review';
@@ -93,17 +94,38 @@ export function LessonPlayerClient({ course, courseMeta, flatLessons, initialInd
     router.push(`/lms/courses/${course.id}/lessons/${lesson.lessonId}${mode === 'review' ? '?mode=review' : ''}`);
   };
 
-  const markComplete = () => {
+  const [completing, setCompleting] = useState(false);
+
+  const markComplete = async () => {
     if (mode === 'review') return;
-    const next = Math.min(total, Math.max(persistedIndex, activeIndex + 1));
-    setCourseLessonIndex(course.id, next);
-    const nextPct = Math.round((next / Math.max(1, total)) * 100);
-    setCourseProgress(course.id, nextPct);
-    toast.push({
-      title: nextPct >= 100 ? 'Course completed' : 'Lesson completed',
-      message: nextPct >= 100 ? 'Review mode is now available.' : `${nextPct}% complete`,
-      tone: nextPct >= 100 ? 'success' : 'info',
-    });
+    try {
+      setCompleting(true);
+      const result = await completeCourseLesson(course.id, current.lessonId);
+      const next = Math.min(total, Math.max(persistedIndex, activeIndex + 1));
+      setCourseLessonIndex(course.id, next);
+      const nextPct = Math.round(
+        Number(result?.progressPercent) || (next / Math.max(1, total)) * 100,
+      );
+      setCourseProgress(course.id, nextPct);
+      const issued = Boolean(result?.certificateId);
+      toast.push({
+        title: nextPct >= 100 || issued ? 'Course completed' : 'Lesson completed',
+        message: issued
+          ? 'Your certificate is ready. Open the course page to view or download the PDF.'
+          : nextPct >= 100
+            ? 'Review mode is now available.'
+            : `${nextPct}% complete`,
+        tone: nextPct >= 100 || issued ? 'success' : 'info',
+      });
+    } catch (error) {
+      toast.push({
+        title: 'Could not complete lesson',
+        message: error instanceof Error ? error.message : 'Try again',
+        tone: 'warning',
+      });
+    } finally {
+      setCompleting(false);
+    }
   };
 
   const saveNotes = () => {
@@ -167,15 +189,15 @@ export function LessonPlayerClient({ course, courseMeta, flatLessons, initialInd
               </button>
               <button
                 type="button"
-                onClick={markComplete}
-                disabled={completed || mode === 'review'}
+                onClick={() => void markComplete()}
+                disabled={completed || mode === 'review' || completing}
                 className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${
-                  completed || mode === 'review'
+                  completed || mode === 'review' || completing
                     ? 'bg-[#28A8E1]/40 text-white cursor-not-allowed'
                     : 'bg-[#28A8E1] text-white hover:opacity-95'
                 }`}
               >
-                {mode === 'review' ? 'Read-only in review mode' : completed ? 'Completed' : 'Mark lesson complete'}
+                {mode === 'review' ? 'Read-only in review mode' : completed ? 'Completed' : completing ? 'Saving…' : 'Mark lesson complete'}
               </button>
             </div>
             {nextLessonLocked ? (
