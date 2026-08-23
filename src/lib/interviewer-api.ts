@@ -99,6 +99,10 @@ export async function getMyInterviewerApplication() {
   return payload.data as {
     application: InterviewerApplicationRecord | null;
     profile: InterviewerProfileRecord | null;
+    kyc?: {
+      kycVerified: boolean;
+      missing: string[];
+    };
   };
 }
 
@@ -167,6 +171,7 @@ export type MarketplaceInterviewer = {
   interviewPrice: number;
   profilePhotoUrl?: string | null;
   matchingScore?: number;
+  kycVerified?: boolean;
 };
 
 export async function listMarketplaceInterviewers(filters: {

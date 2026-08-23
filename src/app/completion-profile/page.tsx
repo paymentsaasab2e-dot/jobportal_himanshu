@@ -123,6 +123,7 @@ export default function CompletionProfilePage() {
                   <div className="grid grid-cols-2 gap-x-4 gap-y-0">
                     {[
                       "WhatsApp Verification",
+                      "KYC / ID verification",
                       "Personal Details",
                       "Education History",
                       "Work Experience",

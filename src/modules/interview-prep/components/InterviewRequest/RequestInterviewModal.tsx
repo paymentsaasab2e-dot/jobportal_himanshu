@@ -21,6 +21,7 @@ import {
 import { listMarketplaceInterviewers, type MarketplaceInterviewer } from '@/lib/interviewer-api';
 import { resolveProfilePhotoUrl } from '@/lib/profile-photo';
 import { WritingAssistField } from '@/components/common/WritingSuggestions';
+import { KycVerifiedTag } from '@/components/interview/KycVerifiedTag';
 
 type Props = {
   open: boolean;
@@ -1307,7 +1308,10 @@ export function RequestInterviewModal({
                                 </div>
                               )}
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-bold text-slate-900">{person.fullName}</p>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <p className="text-sm font-bold text-slate-900">{person.fullName}</p>
+                                  <KycVerifiedTag verified={person.kycVerified} />
+                                </div>
                                 <p className="text-xs text-slate-600">
                                   {person.currentRole || 'Interviewer'} · {person.yearsOfExperience} Years Experience
                                 </p>

@@ -23,6 +23,7 @@ import { WritingAssistField } from '@/components/common/WritingSuggestions';
 import { InterviewSimpleTabs } from '../components/InterviewSimpleTabs';
 import { InterviewReviewModal } from '../components/InterviewReviewModal';
 import { InterviewRescheduleModal } from '../components/InterviewRescheduleModal';
+import { KycVerifiedTag } from '@/components/interview/KycVerifiedTag';
 import {
   displayReviewText,
   formatInterviewWhen,
@@ -245,6 +246,9 @@ export default function BecomeInterviewerPage() {
 
   const existingApplication = profileQuery.data?.application || null;
   const interviewerProfile = profileQuery.data?.profile || null;
+  const kyc = profileQuery.data?.kyc || null;
+  const kycVerified = Boolean(kyc?.kycVerified);
+  const kycMissing = Array.isArray(kyc?.missing) ? kyc.missing : [];
   const accountPhotoUrl = useMemo(() => {
     const profile = phase1ProfileQuery.data as
       | {
@@ -367,6 +371,14 @@ export default function BecomeInterviewerPage() {
   };
 
   const handleSubmit = async () => {
+    if (!kycVerified) {
+      setFormError(
+        `Complete KYC / ID verification on your profile before applying as an interviewer.${
+          kycMissing.length ? ` Missing: ${kycMissing.join(', ')}.` : ''
+        }`,
+      );
+      return;
+    }
     if (submitValidationMessage) {
       setFormError(submitValidationMessage);
       return;
@@ -392,7 +404,7 @@ export default function BecomeInterviewerPage() {
         await updateMyInterviewerApplication(payload);
         setSaveMessage(
           existingApplication?.status === 'REJECTED'
-            ? 'Application resubmitted. You can keep editing these details anytime.'
+            ? 'Sent for re-verification. HQ will review your interviewer form again.'
             : 'Profile changes saved.'
         );
       } else {
@@ -471,7 +483,10 @@ export default function BecomeInterviewerPage() {
           </span>
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Interviewer application</p>
-            <h1 className="mt-0.5 text-lg font-bold text-slate-900">Become an Interviewer</h1>
+            <div className="mt-0.5 flex flex-wrap items-center gap-2">
+              <h1 className="text-lg font-bold text-slate-900">Become an Interviewer</h1>
+              <KycVerifiedTag verified={kycVerified} />
+            </div>
             <p className="mt-0.5 text-xs text-slate-600">
               Complete application details, get approved, then start receiving interview requests.
             </p>
@@ -482,6 +497,38 @@ export default function BecomeInterviewerPage() {
           <div className="mt-5 flex items-center gap-2 text-sm text-slate-600">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading interviewer profile...
+          </div>
+        ) : !kycVerified ? (
+          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <p className="text-sm font-semibold text-amber-900">KYC required to apply</p>
+            <p className="mt-1 text-xs text-amber-800">
+              Complete identity verification on your profile first
+              {kycMissing.length ? ` (${kycMissing.join(', ')})` : ''}. Then reload this page.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => router.push('/profile')}
+                className="rounded-lg bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white"
+              >
+                Open Profile
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/completion-profile')}
+                className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900"
+              >
+                Profile completion
+              </button>
+            </div>
+          </div>
+        ) : existingApplication?.status === 'REJECTED' ? (
+          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3">
+            <p className="text-sm font-semibold text-rose-900">HQ rejected this interviewer form</p>
+            <p className="mt-1 text-xs text-rose-800">
+              {existingApplication.reviewNotes ||
+                'Update the form and send it for re-verification.'}
+            </p>
           </div>
         ) : interviewerProfile ? (
           <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
@@ -521,21 +568,21 @@ export default function BecomeInterviewerPage() {
       {hubTab === 'application' ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="space-y-4">
-            {interviewerProfile ? (
+            {existingApplication?.status === 'REJECTED' ? (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-3">
+                <p className="text-sm font-semibold text-rose-800">
+                  This form was rejected. Update the details and send it for re-verification.
+                </p>
+                {existingApplication.reviewNotes ? (
+                  <p className="mt-1 text-sm text-rose-700">{existingApplication.reviewNotes}</p>
+                ) : null}
+              </div>
+            ) : interviewerProfile ? (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
                 <p className="text-sm font-semibold text-emerald-800">Active interviewer profile</p>
                 <p className="mt-0.5 text-xs text-emerald-700">
                   Edit your submitted details below and save. Status: {interviewerProfile.status}.
                 </p>
-              </div>
-            ) : existingApplication?.status === 'REJECTED' ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-                <p className="text-sm font-semibold text-amber-800">
-                  Previous application was rejected. Update details and resubmit.
-                </p>
-                {existingApplication.reviewNotes ? (
-                  <p className="mt-1 text-sm text-amber-700">{existingApplication.reviewNotes}</p>
-                ) : null}
               </div>
             ) : existingApplication ? (
               <div className="rounded-xl border border-sky-200 bg-sky-50 p-3">
@@ -801,12 +848,12 @@ export default function BecomeInterviewerPage() {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitting || !kycVerified}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {existingApplication?.status === 'REJECTED'
-                ? 'Resubmit Interviewer Application'
+                ? 'Send for re-verification'
                 : interviewerProfile || existingApplication
                   ? 'Save Profile Changes'
                   : 'Submit Interviewer Application'}

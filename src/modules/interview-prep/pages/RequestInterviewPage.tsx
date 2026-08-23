@@ -11,6 +11,7 @@ import { RequestInterviewModal } from '../components/InterviewRequest/RequestInt
 import { InterviewRequestsList } from '../components/InterviewRequest/InterviewRequestsList';
 import { InterviewSimpleTabs } from '../components/InterviewSimpleTabs';
 import { ArrowLeft } from 'lucide-react';
+import { KycVerifiedTag } from '@/components/interview/KycVerifiedTag';
 
 export default function RequestInterviewPage() {
   const router = useRouter();
@@ -201,7 +202,10 @@ export default function RequestInterviewPage() {
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-slate-900">{person.fullName}</p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <p className="text-sm font-bold text-slate-900">{person.fullName}</p>
+                          <KycVerifiedTag verified={person.kycVerified} />
+                        </div>
                         <p className="text-xs text-slate-600">
                           {person.currentRole || 'Interviewer'} · {person.yearsOfExperience} Years Experience
                         </p>

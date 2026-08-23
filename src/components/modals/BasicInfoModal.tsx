@@ -991,6 +991,9 @@ export default function BasicInfoModal({
                       className={profileFieldClass()}
                       placeholder={t('placeholderPassport')}
                     />
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Required for interviewer KYC. Save this with date of birth, phone, and photo to get the KYC verified tag.
+                    </p>
                   </div>
                 </div>
               </section>
