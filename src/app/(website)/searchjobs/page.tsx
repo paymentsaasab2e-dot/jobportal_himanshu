@@ -10,6 +10,11 @@ import { withJobApiLocale } from '@/lib/jobApiLocale';
 import { resolvePortalCompanyLogo } from '@/lib/map-portal-job';
 import { redactPortalJobListing } from '@/lib/job-public-field-visibility';
 import { toPlainJobText } from '@/lib/job-description';
+import {
+  extractJobCountry,
+  isCongoRegionLabel,
+  jobMatchesCountry,
+} from '@/lib/job-location-filters';
 
 /** HRYANTRA Phase 1 brand palette for this page */
 const THEME = {
@@ -399,7 +404,13 @@ function SearchJobsContent() {
       const matchesLocation =
         !locationQuery ||
         job.location.toLowerCase().includes(locationQuery) ||
-        job.country.toLowerCase().includes(locationQuery);
+        job.country.toLowerCase().includes(locationQuery) ||
+        jobMatchesCountry(
+          { location: job.location, country: job.country },
+          locationQuery,
+        ) ||
+        (isCongoRegionLabel(locationQuery) &&
+          isCongoRegionLabel(extractJobCountry(job)));
       const matchesIndustry =
         !industryQuery || job.industry.toLowerCase().includes(industryQuery);
       const matchesDepartment =
