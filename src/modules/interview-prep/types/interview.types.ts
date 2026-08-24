@@ -1,9 +1,9 @@
 export type InterviewScore = {
-  overall: number;
-  technical: number;
-  behavioral: number;
-  systemDesign: number;
-  communication: number;
+  overall: number | null;
+  technical: number | null;
+  behavioral: number | null;
+  systemDesign: number | null;
+  communication: number | null;
 };
 
 export type Feedback = {
@@ -27,12 +27,12 @@ export type QuestionGeneratorKind = 'hr' | 'technical' | 'system' | 'company';
 
 export type InterviewPrepData = {
   goal: string;
-  readiness: number;
+  readiness: number | null;
   nextAction: string;
   todayFocus: string[];
   feedback: Feedback;
   revisionTopics: RevisionTopic[];
-  confidenceScore: number;
+  confidenceScore: number | null;
   scores: InterviewScore;
   aiInsight: string;
   questionGenerator: Array<{
@@ -42,6 +42,8 @@ export type InterviewPrepData = {
   }>;
   questionBank: QuestionCategory[];
   suggestedCompanies: string[];
+  /** True when scores come from completed mock sessions (not placeholders). */
+  hasRealScores?: boolean;
 };
 
 /** Future: AI session transcript chunk */
