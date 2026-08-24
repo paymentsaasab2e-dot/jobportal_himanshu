@@ -594,13 +594,29 @@ function mapInterviewTopicToCategory(topic?: string): string {
 
 export async function fetchInterviewPrep() {
   const res = await lmsFetch(`${LMS_API_BASE}/interview`, { method: 'GET' });
-  if (!res) return [];
+  if (!res) {
+    return {
+      recentSessions: [],
+      readinessSummary: null,
+      savedSets: [],
+    };
+  }
   if (!res.ok) {
-    if (res.status === 404) return [];
+    if (res.status === 404) {
+      return {
+        recentSessions: [],
+        readinessSummary: null,
+        savedSets: [],
+      };
+    }
     throw new Error('Unable to connect right now');
   }
   const data = await res.json();
-  return data.data?.recentSessions ?? [];
+  return {
+    recentSessions: data.data?.recentSessions ?? [],
+    readinessSummary: data.data?.readinessSummary ?? null,
+    savedSets: data.data?.savedSets ?? [],
+  };
 }
 
 export async function startInterviewSession(payload: { type: string; topic?: string; category?: string; questionCount?: number }) {

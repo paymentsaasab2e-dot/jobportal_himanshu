@@ -1,15 +1,15 @@
 import type { InterviewPrepData } from '../types/interview.types';
 
 export const interviewData: InterviewPrepData = {
-  goal: 'Frontend Developer',
-  readiness: 73,
-  nextAction: 'Practice React Performance Interview',
+  goal: '',
+  readiness: null,
+  nextAction: 'Start your first mock interview',
 
   todayFocus: ['Complete 1 quiz', 'Review 1 weak topic', 'Attend 1 session'],
 
   feedback: {
-    strengths: ['Clear structure in answers', 'Good use of examples', 'Calm pacing'],
-    improvements: ['Deep dives on trade-offs', 'Estimation under time pressure'],
+    strengths: [],
+    improvements: [],
   },
 
   revisionTopics: [
@@ -19,18 +19,20 @@ export const interviewData: InterviewPrepData = {
     { id: 'rev-4', title: 'System boundary design', type: 'system' },
   ],
 
-  confidenceScore: 72,
+  confidenceScore: null,
 
   scores: {
-    overall: 73,
-    technical: 76,
-    behavioral: 81,
-    systemDesign: 58,
-    communication: 74,
+    overall: null,
+    technical: null,
+    behavioral: null,
+    systemDesign: null,
+    communication: null,
   },
 
+  hasRealScores: false,
+
   aiInsight:
-    'Connected (mock): System design + async patterns detected from notes — prioritize scalability drills before your next UI screen.',
+    'Complete a scored mock interview to unlock personalized readiness insights.',
 
   questionGenerator: [
     {

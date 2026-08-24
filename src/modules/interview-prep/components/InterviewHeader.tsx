@@ -31,18 +31,29 @@ export function InterviewHeader({ data, onNextAction, nextActionTokenCost }: Int
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">AI interview OS</p>
               <h2 className="mt-1 text-[0.875rem] font-semibold text-white tracking-tight">Your goal</h2>
-              <p className="mt-1 text-[0.8125rem] font-medium leading-snug text-white/95">{data.goal}</p>
+              <p className="mt-1 text-[0.8125rem] font-medium leading-snug text-white/95">
+                {data.goal?.trim() ? data.goal : 'Set your career goal in LMS profile'}
+              </p>
             </div>
           </div>
           <div className="w-full lg:max-w-md lg:shrink-0">
             <div className="flex items-center justify-between gap-2 text-[0.8125rem] font-medium text-white">
               <span>Readiness</span>
-              <span className="tabular-nums">{data.readiness}%</span>
+              <span className="tabular-nums">
+                {data.readiness != null && Number.isFinite(Number(data.readiness))
+                  ? `${data.readiness}%`
+                  : '—'}
+              </span>
             </div>
             <div className="mt-2 h-2.5 rounded-full bg-white/15 overflow-hidden ring-1 ring-white/10">
               <div
                 className="h-full rounded-full bg-white transition-[width] duration-700 ease-out shadow-sm"
-                style={{ width: `${data.readiness}%` }}
+                style={{
+                  width:
+                    data.readiness != null && Number.isFinite(Number(data.readiness))
+                      ? `${Math.max(0, Math.min(100, Number(data.readiness)))}%`
+                      : '0%',
+                }}
               />
             </div>
           </div>
