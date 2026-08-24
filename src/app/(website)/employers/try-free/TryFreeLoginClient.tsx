@@ -8,6 +8,7 @@ import { AppLocale, localizePath } from '@/lib/i18n';
 import {
   EMPLOYERS_DEMO_PATH,
   getEmployerPortalLoginUrl,
+  getEmployerPortalOrigin,
   getTryFreeLoginApiUrl,
 } from '@/lib/employers/constants';
 import { Button } from '@/components/ui/button';
@@ -116,8 +117,8 @@ export function TryFreeLoginClient() {
       if (refreshToken) hash.set('refreshToken', refreshToken);
       if (tenantDbName) hash.set('tenantDbName', tenantDbName);
 
-      const portal = getEmployerPortalLoginUrl().replace(/\/login\/?$/, '');
-      window.location.href = `${portal}/login#tryFreeHandoff=${encodeURIComponent(hash.toString())}`;
+      // Always hand off to absolute /login (never append onto ?redirect=…/leads).
+      window.location.href = `${getEmployerPortalOrigin()}/login#tryFreeHandoff=${encodeURIComponent(hash.toString())}`;
     } catch (err) {
       const detail = err instanceof Error ? err.message : '';
       setError(

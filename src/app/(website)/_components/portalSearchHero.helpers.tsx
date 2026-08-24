@@ -1,7 +1,12 @@
 'use client';
 
 import { AppLocale, localizePath } from '@/lib/i18n';
-import { extractJobCountry } from '@/lib/job-location-filters';
+import {
+  extractJobCountry,
+  normalizeTrendingCountryLabel,
+  trendingCountryDedupeKey,
+  isCongoRegionLabel,
+} from '@/lib/job-location-filters';
 
 export const getSuggestionLabel = (suggestion: any) =>
   suggestion?.title ||
@@ -68,6 +73,80 @@ export const buildSearchJobsUrl = (locale: AppLocale, title: string, location: s
   return params.toString() ? `${basePath}?${params.toString()}` : basePath;
 };
 
+/** Split industry / category strings like "Financial Services; Manufacturing". */
+export function splitCategoryLabels(raw: string | null | undefined): string[] {
+  return String(raw || '')
+    .split(/[;,|/]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+const CATEGORY_JUNK =
+  /^(n\/?a|na|none|null|undefined|other|general|all|tbd|not\s*specified|unknown|-|–|—|\.|_+)$/i;
+
+/** Title-case multi-word category labels for Trendings chips. */
+export function normalizeCategoryLabel(raw: string): string {
+  return String(raw || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .split(' ')
+    .map((word) => {
+      if (!word) return word;
+      if (/^[A-Z0-9]{2,6}$/.test(word)) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+}
+
+export function isValidCategoryLabel(label: string, opts?: { maxWords?: number }): boolean {
+  const t = String(label || '').trim();
+  if (!t || t.length < 2 || t.length > 64) return false;
+  if (CATEGORY_JUNK.test(t)) return false;
+  if (/^\d+$/.test(t)) return false;
+  const words = t.split(/\s+/);
+  const maxWords = opts?.maxWords ?? 6;
+  if (words.length > maxWords) return false;
+  return true;
+}
+
+/** Prefer real department fields; skip job-title-like noise. */
+export function extractJobDepartment(job: Record<string, unknown>): string {
+  const candidates = [
+    ...splitCategoryLabels(job?.department as string),
+    ...splitCategoryLabels(job?.departmentName as string),
+    ...splitCategoryLabels(job?.jobDepartment as string),
+    ...splitCategoryLabels(job?.functionalArea as string),
+    ...splitCategoryLabels(job?.team as string),
+    ...splitCategoryLabels(job?.orgUnit as string),
+  ];
+  for (const raw of candidates) {
+    if (!isValidCategoryLabel(raw, { maxWords: 5 })) continue;
+    // Skip values that look like a full job title rather than a department.
+    if (
+      /\b(senior|junior|sr\.?|jr\.?|lead|principal|staff)\b/i.test(raw) &&
+      raw.split(/\s+/).length >= 3
+    ) {
+      continue;
+    }
+    return normalizeCategoryLabel(raw);
+  }
+  return '';
+}
+
+export function extractJobIndustry(job: Record<string, unknown>): string {
+  const candidates = [
+    ...splitCategoryLabels(job?.industry as string),
+    ...splitCategoryLabels(job?.industryType as string),
+    ...splitCategoryLabels(job?.jobCategory as string),
+    ...splitCategoryLabels(job?.sector as string),
+  ];
+  for (const raw of candidates) {
+    if (!isValidCategoryLabel(raw, { maxWords: 6 })) continue;
+    return normalizeCategoryLabel(raw);
+  }
+  return '';
+}
+
 /** Build ranked Trendings labels (newest-first priority, max `limit`). */
 export function buildTrendingLabels(
   valuesNewestFirst: Array<string | null | undefined>,
@@ -75,8 +154,8 @@ export function buildTrendingLabels(
 ): string[] {
   const rank = new Map<string, { label: string; firstIndex: number }>();
   valuesNewestFirst.forEach((raw, index) => {
-    const label = String(raw || '').trim();
-    if (!label) return;
+    const label = normalizeCategoryLabel(String(raw || '').trim());
+    if (!isValidCategoryLabel(label)) return;
     const key = label.toLowerCase();
     if (rank.has(key)) return;
     rank.set(key, { label, firstIndex: index });
@@ -87,23 +166,47 @@ export function buildTrendingLabels(
     .map(({ label }) => label);
 }
 
-/** Country tab: canonical country names from live job rows. */
+/** Country tab: canonical country names from live job rows (Congo/DRC collapsed). */
 export function buildCountryTrendingLabels(
   jobsNewestFirst: Array<Record<string, unknown>>,
   limit = 12,
 ): string[] {
   const rank = new Map<string, { label: string; firstIndex: number }>();
   jobsNewestFirst.forEach((job, index) => {
-    const label = extractJobCountry(job as Parameters<typeof extractJobCountry>[0]);
+    const extracted = extractJobCountry(job as Parameters<typeof extractJobCountry>[0]);
+    if (!extracted) return;
+    const label = normalizeTrendingCountryLabel(extracted);
     if (!label) return;
-    const key = label.toLowerCase();
-    if (rank.has(key)) return;
+    const key = trendingCountryDedupeKey(label);
+    if (!key || rank.has(key)) return;
     rank.set(key, { label, firstIndex: index });
   });
   return [...rank.values()]
     .sort((a, b) => a.firstIndex - b.firstIndex)
     .slice(0, limit)
     .map(({ label }) => label);
+}
+
+/** Department tab: detect + normalize department chips from job rows. */
+export function buildDepartmentTrendingLabels(
+  jobsNewestFirst: Array<Record<string, unknown>>,
+  limit = 12,
+): string[] {
+  return buildTrendingLabels(
+    jobsNewestFirst.map((job) => extractJobDepartment(job)),
+    limit,
+  );
+}
+
+/** Industry tab: detect + normalize industry chips from job rows. */
+export function buildIndustryTrendingLabels(
+  jobsNewestFirst: Array<Record<string, unknown>>,
+  limit = 12,
+): string[] {
+  return buildTrendingLabels(
+    jobsNewestFirst.map((job) => extractJobIndustry(job)),
+    limit,
+  );
 }
 
 export function filterTrendingLabels(labels: string[], query: string): string[] {
@@ -129,7 +232,7 @@ export function buildTrendingSearchUrl(
     params.set('department', normalized);
   }
   return `${basePath}?${params.toString()}`;
-};
+}
 
 /** Unique trimmed labels from a list (case-insensitive). Caps to recent/first N (default 12). */
 export function uniqueLabels(values: Array<string | null | undefined>, limit = 12): string[] {
@@ -150,8 +253,8 @@ export function recentTrendingLabels(
   const seen = new Set<string>();
   const out: string[] = [];
   for (const raw of valuesNewestFirst) {
-    const label = String(raw || '').trim();
-    if (!label) continue;
+    const label = normalizeCategoryLabel(String(raw || '').trim());
+    if (!isValidCategoryLabel(label)) continue;
     const key = label.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
@@ -172,13 +275,7 @@ export function sortJobsNewestFirst<T extends Record<string, unknown>>(jobs: T[]
   return [...jobs].sort((a, b) => ts(b) - ts(a));
 }
 
-/** Split industry / category strings like "Financial Services; Manufacturing". */
-export function splitCategoryLabels(raw: string | null | undefined): string[] {
-  return String(raw || '')
-    .split(/[;,|/]+/)
-    .map((part) => part.trim())
-    .filter(Boolean);
-}
+export { isCongoRegionLabel };
 
 export const TRENDING_CHIP_STYLES = [
   { color: 'text-sky-600', tint: 'rgba(56, 189, 248, 0.22)' },

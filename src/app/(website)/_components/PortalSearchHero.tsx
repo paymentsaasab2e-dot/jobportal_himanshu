@@ -17,11 +17,11 @@ import {
   getSuggestionLabel,
   HighlightMatch,
   portalSearchHeroStyles,
-  buildTrendingLabels,
   buildCountryTrendingLabels,
+  buildDepartmentTrendingLabels,
+  buildIndustryTrendingLabels,
   scoreMatch,
   sortJobsNewestFirst,
-  splitCategoryLabels,
   TRENDING_CHIP_STYLES,
 } from './portalSearchHero.helpers';
 
@@ -75,8 +75,6 @@ export function PortalSearchHero() {
         const titles: string[] = [];
         const locationSeen = new Set<string>();
         const locations: string[] = [];
-        const industryRaw: string[] = [];
-        const departmentRaw: string[] = [];
         const catalog: any[] = [];
 
         // Walk newest → oldest so first-seen labels rank highest in Trendings.
@@ -99,18 +97,6 @@ export function PortalSearchHero() {
             }
           }
 
-          industryRaw.push(
-            ...splitCategoryLabels(job?.industry),
-            ...splitCategoryLabels(job?.jobCategory),
-            ...splitCategoryLabels(job?.industryType),
-          );
-
-          departmentRaw.push(
-            ...splitCategoryLabels(job?.department),
-            ...splitCategoryLabels(job?.departmentName),
-            ...splitCategoryLabels(job?.jobDepartment),
-          );
-
           const locCandidates = [
             job?.location,
             [job?.city, job?.state, job?.country].filter(Boolean).join(', '),
@@ -130,8 +116,8 @@ export function PortalSearchHero() {
         setDbTitles(titles);
         setDbLocations(locations);
         setDbCountries(buildCountryTrendingLabels(newestFirst, TRENDING_LIMIT));
-        setDbIndustries(buildTrendingLabels(industryRaw, TRENDING_LIMIT));
-        setDbDepartments(buildTrendingLabels(departmentRaw, TRENDING_LIMIT));
+        setDbIndustries(buildIndustryTrendingLabels(newestFirst, TRENDING_LIMIT));
+        setDbDepartments(buildDepartmentTrendingLabels(newestFirst, TRENDING_LIMIT));
         setCatalogJobs(catalog);
       } catch (err) {
         console.error('Failed to load search catalog from database', err);

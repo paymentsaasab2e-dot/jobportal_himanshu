@@ -41,8 +41,11 @@ function buildCityNameToCountryIndex(): Map<string, string> {
 
 function inferCountryFromCityName(city: string): string {
   if (!city.trim()) return '';
+  const key = city.trim().toLowerCase();
+  const hinted = CITY_COUNTRY_HINTS[key];
+  if (hinted) return hinted;
   if (!cityNameToCountry) cityNameToCountry = buildCityNameToCountryIndex();
-  return cityNameToCountry.get(city.trim().toLowerCase()) || '';
+  return cityNameToCountry.get(key) || '';
 }
 
 const COUNTRY_ALIASES: Record<string, string> = {
@@ -85,6 +88,19 @@ const COUNTRY_DISPLAY_NAMES: Record<string, string> = {
   'congo, the democratic republic of the': 'Democratic Republic of the Congo',
 };
 
+/** City → country when job rows store city but a vague/missing country (e.g. "Congo"). */
+const CITY_COUNTRY_HINTS: Record<string, string> = {
+  kinshasa: 'Democratic Republic of the Congo',
+  lubumbashi: 'Democratic Republic of the Congo',
+  goma: 'Democratic Republic of the Congo',
+  bukavu: 'Democratic Republic of the Congo',
+  mbuji: 'Democratic Republic of the Congo',
+  'mbuji-mayi': 'Democratic Republic of the Congo',
+  brazzaville: 'Congo',
+  'pointe-noire': 'Congo',
+  'pointe noire': 'Congo',
+};
+
 const ALIAS_KEYS_BY_LENGTH = Object.keys(COUNTRY_ALIASES)
   .filter((key) => key.length >= 3)
   .sort((a, b) => b.length - a.length);
@@ -94,6 +110,35 @@ function canonicalCountryDisplayName(name: string): string {
   if (!trimmed) return '';
   const mapped = COUNTRY_DISPLAY_NAMES[trimmed.toLowerCase()];
   return mapped || trimmed;
+}
+
+/**
+ * Trendings / facets: collapse Congo + DRC into one chip so both labels
+ * do not appear side-by-side (common duplicate on the landing page).
+ */
+export function normalizeTrendingCountryLabel(label: string): string {
+  const canonical = canonicalCountryDisplayName(String(label || '').trim());
+  if (!canonical) return '';
+  const k = canonical.toLowerCase();
+  if (k.includes('congo')) return 'Congo';
+  return canonical;
+}
+
+/** Case-insensitive dedupe key for Trendings country chips. */
+export function trendingCountryDedupeKey(label: string): string {
+  const normalized = normalizeTrendingCountryLabel(label);
+  if (!normalized) return '';
+  const k = normalized.toLowerCase();
+  if (k.includes('congo')) return 'congo-region';
+  return k;
+}
+
+/** True when filter location "Congo" should also match DRC jobs (and vice versa). */
+export function isCongoRegionLabel(label: string | null | undefined): boolean {
+  return String(label || '')
+    .trim()
+    .toLowerCase()
+    .includes('congo');
 }
 
 function escapeRegExp(value: string): string {
@@ -190,6 +235,12 @@ export function parseJobLocation(
     country = detectCountryInText([raw, cityFromDb, countryFromDb].filter(Boolean).join(', '));
   }
 
+  // Prefer city hint when country is a vague Congo label (avoids DRC rows showing as Congo).
+  if (city && isCongoRegionLabel(country) && !country.toLowerCase().includes('democratic')) {
+    const hinted = CITY_COUNTRY_HINTS[city.trim().toLowerCase()];
+    if (hinted) country = hinted;
+  }
+
   return { city: city.trim(), country: isKnownCountryName(country) ? canonicalCountryDisplayName(country.trim()) : '', raw };
 }
 
@@ -213,15 +264,17 @@ export function isKnownCountryName(value: string | null | undefined): boolean {
   return KNOWN_COUNTRY_LABELS.has(label.toLowerCase());
 }
 
-/** Unique canonical country names only (no cities, no duplicate chips). */
+/** Unique canonical country names only (no cities, no Congo/DRC duplicate chips). */
 export function uniqueCountryNames(values: Array<string | null | undefined>, limit = 12): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const raw of values) {
-    const label = canonicalCountryDisplayName(String(raw || '').trim());
-    if (!isKnownCountryName(label)) continue;
-    const key = label.toLowerCase();
-    if (seen.has(key)) continue;
+    const extracted = canonicalCountryDisplayName(String(raw || '').trim());
+    if (!isKnownCountryName(extracted) && !isCongoRegionLabel(extracted)) continue;
+    const label = normalizeTrendingCountryLabel(extracted);
+    if (!label) continue;
+    const key = trendingCountryDedupeKey(label);
+    if (!key || seen.has(key)) continue;
     seen.add(key);
     out.push(label);
     if (out.length >= limit) break;
@@ -251,7 +304,10 @@ export function jobMatchesCountry(
   if (!country.trim()) return true;
   const target = country.trim().toLowerCase();
   const parsed = jobParsedCountry(job).toLowerCase();
-  return parsed === target;
+  if (parsed === target) return true;
+  // Trendings chip "Congo" should match both Congo and DRC job rows.
+  if (isCongoRegionLabel(target) && isCongoRegionLabel(parsed)) return true;
+  return false;
 }
 
 export function jobMatchesCity(
