@@ -575,7 +575,7 @@ function HeroSection() {
     e.preventDefault();
 
     if (searchMode === "ai") {
-      router.push("/login?redirect=%2Fleads");
+      router.push("/login?redirect=%2Fdashboard");
       return;
     }
 

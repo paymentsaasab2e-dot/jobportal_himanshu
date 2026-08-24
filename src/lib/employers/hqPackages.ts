@@ -2,7 +2,7 @@ import type { PricingPlan } from "@/components/ui/pricing";
 import { localizePath, type AppLocale } from "@/lib/i18n";
 
 const EMPLOYERS_LOGIN_HREF =
-  "https://employers.hryantra.com/login?redirect=%2Fleads";
+  "https://employers.hryantra.com/login?redirect=%2Fdashboard";
 
 function packageSlugFromName(name: string): string {
   const key = String(name || "").toUpperCase();

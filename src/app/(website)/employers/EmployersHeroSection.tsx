@@ -9,7 +9,8 @@ import { EmployersDashboardPreview } from "./EmployersDashboardPreview";
 import { EMPLOYERS_DEMO_PATH, EMPLOYERS_TRIAL_PATH } from "@/lib/employers/constants";
 import { AppLocale, localizePath } from "@/lib/i18n";
 
-const EMPLOYERS_LOGIN_HREF = "https://employers.hryantra.com/login?redirect=%2Fleads";
+const EMPLOYERS_LOGIN_HREF =
+  "https://employers.hryantra.com/login?redirect=%2Fdashboard";
 
 const heroGradientCharStyle: React.CSSProperties = {
   background: "linear-gradient(to bottom, #ffffff, #ffffff, rgba(255, 255, 255, 0.6))",
