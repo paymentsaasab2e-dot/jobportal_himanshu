@@ -50,24 +50,25 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-23T07:56:27.636Z",
+      "capturedAt": "2026-08-25T09:44:43.193Z",
       "kind": "realtime_session",
       "session": {
-        "logins": 4,
-        "visits": 143,
+        "logins": 10,
+        "visits": 179,
         "applies": 0,
-        "activeMs": 1515000,
-        "sessionCount": 4,
+        "activeMs": 2115000,
+        "sessionCount": 10,
         "topInsightIds": [
           "balanced"
         ],
         "triggerFlags": [],
-        "alertWindow": "Thu / Wed · 3:00 PM–1:00 PM",
-        "alertConfidence": "medium",
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "alertConfidence": "high",
         "topLocation": "Thane, Maharashtra, India",
         "preferredAlertHours": [
           15,
-          13
+          13,
+          11
         ]
       },
       "hasFullLatest": true
@@ -1588,37 +1589,39 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-23T07:56:27.636Z",
-      "activityStateUpdatedAt": "2026-08-23T07:56:26.317Z",
+      "capturedAt": "2026-08-25T09:44:43.193Z",
+      "activityStateUpdatedAt": "2026-08-25T09:44:42.158Z",
       "rollup7d": {
         "userId": "b1c869d84e75048c5c61c5e3",
         "range": "week",
-        "fromDate": "2026-08-17",
-        "toDate": "2026-08-23",
-        "logins": 4,
-        "visits": 143,
+        "fromDate": "2026-08-19",
+        "toDate": "2026-08-25",
+        "logins": 10,
+        "visits": 179,
         "jobCardClicks": 0,
         "applies": 0,
-        "activeMs": 1515000,
-        "sessionCount": 4,
+        "activeMs": 2115000,
+        "sessionCount": 10,
         "pageVisitsByCategory": {
-          "other": 24,
-          "dashboard": 2,
-          "courses": 1,
-          "interview_prep": 113,
+          "other": 50,
+          "dashboard": 5,
+          "courses": 2,
+          "interview_prep": 119,
           "premium": 1,
           "profile": 2
         },
         "activeMsByCategory": {
-          "interview_prep": 1200000,
-          "other": 75000,
-          "profile": 240000
+          "interview_prep": 1320000,
+          "other": 540000,
+          "profile": 240000,
+          "dashboard": 15000
         },
         "firstOpenBreakdown": {
-          "dashboard": 2
+          "dashboard": 3,
+          "other": 1
         },
-        "avgActiveMsPerDay": 505000,
-        "daysActive": 3,
+        "avgActiveMsPerDay": 423000,
+        "daysActive": 5,
         "topFirstOpen": "dashboard",
         "insights": [
           {
@@ -1629,16 +1632,122 @@
             "evidence": [
               "0 job clicks",
               "0 applies",
-              "25 min active"
+              "35 min active"
             ]
           }
         ],
         "recentSessions": [
           {
+            "id": "sess_mt8h857w_4zw0j9",
+            "startedAt": "2026-08-25T09:42:40.747Z",
+            "lastActiveAt": "2026-08-25T09:43:25.769Z",
+            "durationMs": 45000,
+            "pageCount": 1,
+            "firstPath": "/employers",
+            "lastPath": "/employers",
+            "lastCategory": "other",
+            "paths": [
+              "/employers"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows"
+          },
+          {
+            "id": "sess_mt89va5b_c233yz",
+            "startedAt": "2026-08-25T06:16:43.294Z",
+            "lastActiveAt": "2026-08-25T06:53:45.130Z",
+            "durationMs": 360000,
+            "pageCount": 16,
+            "firstPath": "/",
+            "lastPath": "/employers",
+            "lastCategory": "other",
+            "paths": [
+              "/",
+              "/employers"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-25T06:20:02.955Z"
+          },
+          {
+            "id": "sess_mt76fqmf_z2gyz3",
+            "startedAt": "2026-08-24T11:52:53.126Z",
+            "lastActiveAt": "2026-08-24T12:45:43.786Z",
+            "durationMs": 165000,
+            "pageCount": 14,
+            "firstPath": "/",
+            "lastPath": "/lms/interview-prep",
+            "lastCategory": "interview_prep",
+            "paths": [
+              "/",
+              "/whatsapp",
+              "/candidate-dashboard",
+              "/lms/courses",
+              "/lms/interview-prep"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-24T12:25:38.153Z"
+          },
+          {
+            "id": "sess_mt73gq6l_bdvlmv",
+            "startedAt": "2026-08-24T10:29:40.364Z",
+            "lastActiveAt": "2026-08-24T10:29:40.369Z",
+            "durationMs": 4992762,
+            "pageCount": 1,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-24T11:52:53.126Z"
+          },
+          {
+            "id": "sess_mt713h24_e2kort",
+            "startedAt": "2026-08-24T09:23:22.779Z",
+            "lastActiveAt": "2026-08-24T09:40:27.442Z",
+            "durationMs": 0,
+            "pageCount": 3,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-24T09:31:23.960Z"
+          },
+          {
+            "id": "sess_mt6ywyim_qwv8yq",
+            "startedAt": "2026-08-24T08:22:19.581Z",
+            "lastActiveAt": "2026-08-24T08:25:57.016Z",
+            "durationMs": 3663198,
+            "pageCount": 1,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-24T09:23:22.779Z"
+          },
+          {
             "id": "sess_mt5hnp5f_i4w3q9",
             "startedAt": "2026-08-23T07:31:27.890Z",
-            "lastActiveAt": "2026-08-23T07:51:38.311Z",
-            "durationMs": 60000,
+            "lastActiveAt": "2026-08-23T08:06:36.018Z",
+            "durationMs": 75000,
             "pageCount": 20,
             "firstPath": "/",
             "lastPath": "/",
@@ -1724,6 +1833,667 @@
           }
         ],
         "recentEvents": [
+          {
+            "id": "ev_mt8h8gt9_a4ycm4",
+            "at": "2026-08-25T09:42:55.773Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt8h857w_4zw0j9",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt8h8580_phhnj3",
+            "at": "2026-08-25T09:42:40.752Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt8h857w_4zw0j9"
+          },
+          {
+            "id": "ev_mt8h857x_nyxu9p",
+            "at": "2026-08-25T09:42:40.749Z",
+            "type": "login",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt8h857w_4zw0j9",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_mt8b63vs_dmlp1w",
+            "at": "2026-08-25T06:53:08.008Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt8b4tl4_1fadlv",
+            "at": "2026-08-25T06:52:08.008Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt8b4i0a_26lyn5",
+            "at": "2026-08-25T06:51:53.002Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8b1l3m_38i1oa",
+            "at": "2026-08-25T06:49:37.042Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt8b0mdc_o7h7u4",
+            "at": "2026-08-25T06:48:52.032Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8azo42_3v7yfz",
+            "at": "2026-08-25T06:48:07.641Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8az9oa_wbhvp9",
+            "at": "2026-08-25T06:47:48.922Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8ayw04_cgtiw4",
+            "at": "2026-08-25T06:47:31.204Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8auv8g_4bg9ef",
+            "at": "2026-08-25T06:44:23.584Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt8asgjl_7siac0",
+            "at": "2026-08-25T06:42:31.233Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8arqel_ho9bt7",
+            "at": "2026-08-25T06:41:57.357Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8ardvc_lfjojg",
+            "at": "2026-08-25T06:41:41.112Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8aqkdp_v8b5wu",
+            "at": "2026-08-25T06:41:02.893Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8aq7c5_yhd019",
+            "at": "2026-08-25T06:40:45.989Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8alqf6_0se2e0",
+            "at": "2026-08-25T06:37:17.442Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt8ah7sw_eoxk8e",
+            "at": "2026-08-25T06:33:46.688Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8aed5e_w6mbs8",
+            "at": "2026-08-25T06:31:33.650Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt8a8ybr_poh898",
+            "at": "2026-08-25T06:27:21.159Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt8a5om6_n6f3no",
+            "at": "2026-08-25T06:24:48.606Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8a5cfj_z9eqed",
+            "at": "2026-08-25T06:24:32.815Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt8a23gc_6hgadu",
+            "at": "2026-08-25T06:22:01.212Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt89zu5n_72pdn6",
+            "at": "2026-08-25T06:20:15.851Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt89zk7f_qw7h9l",
+            "at": "2026-08-25T06:20:02.955Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz",
+            "meta": {
+              "durationMs": 30000
+            }
+          },
+          {
+            "id": "ev_mt89w28t_se1osa",
+            "at": "2026-08-25T06:17:19.709Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt89vlqj_tihrll",
+            "at": "2026-08-25T06:16:58.315Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt89va5b_c233yz",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt89va5h_tfec2j",
+            "at": "2026-08-25T06:16:43.301Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt89va5b_c233yz"
+          },
+          {
+            "id": "ev_mt89va5b_dikv8p",
+            "at": "2026-08-25T06:16:43.295Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt89va5b_c233yz",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_mt78am1v_ra530o",
+            "at": "2026-08-24T12:44:53.155Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep",
+            "sessionId": "sess_mt76fqmf_z2gyz3",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt787t63_khcndf",
+            "at": "2026-08-24T12:42:42.411Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep",
+            "sessionId": "sess_mt76fqmf_z2gyz3",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt7863k6_3q7p12",
+            "at": "2026-08-24T12:41:22.566Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep",
+            "sessionId": "sess_mt76fqmf_z2gyz3",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt782k6n_km28av",
+            "at": "2026-08-24T12:38:37.487Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt78273v_tqan9v",
+            "at": "2026-08-24T12:38:20.539Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt781vq6_1e4wg4",
+            "at": "2026-08-24T12:38:05.791Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt781kew_t7wp5f",
+            "at": "2026-08-24T12:37:51.128Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt7811sw_meufng",
+            "at": "2026-08-24T12:37:27.008Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt77xgm9_urz1h2",
+            "at": "2026-08-24T12:34:39.585Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep",
+            "sessionId": "sess_mt76fqmf_z2gyz3",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt77sbfm_53v2nw",
+            "at": "2026-08-24T12:30:39.586Z",
+            "type": "time_slice",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep",
+            "sessionId": "sess_mt76fqmf_z2gyz3",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt77rzus_rz35zr",
+            "at": "2026-08-24T12:30:24.580Z",
+            "type": "page_visit",
+            "category": "interview_prep",
+            "path": "/lms/interview-prep",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt77rp91_gschja",
+            "at": "2026-08-24T12:30:10.837Z",
+            "type": "page_visit",
+            "category": "courses",
+            "path": "/lms/courses",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt77rfjw_2ypn46",
+            "at": "2026-08-24T12:29:58.268Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt77rb8n_tmva7x",
+            "at": "2026-08-24T12:29:52.680Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/whatsapp",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt77r57a_fquniw",
+            "at": "2026-08-24T12:29:44.854Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt77luuh_49iojr",
+            "at": "2026-08-24T12:25:38.153Z",
+            "type": "session_end",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mt76fqmf_z2gyz3",
+            "meta": {
+              "durationMs": 45000
+            }
+          },
+          {
+            "id": "ev_mt779bdx_p2p21v",
+            "at": "2026-08-24T12:15:53.061Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mt76fqmf_z2gyz3",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt76yp71_t9t69q",
+            "at": "2026-08-24T12:07:37.741Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt76i1zj_blkooq",
+            "at": "2026-08-24T11:54:41.167Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt76hrws_he7klh",
+            "at": "2026-08-24T11:54:28.108Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/whatsapp",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt76hcir_ugm2dx",
+            "at": "2026-08-24T11:54:08.163Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt76fqmf_z2gyz3",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt76g27p_qzlia8",
+            "at": "2026-08-24T11:53:08.149Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt76fqmf_z2gyz3",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt76fqml_dra2x8",
+            "at": "2026-08-24T11:52:53.133Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt76fqmf_z2gyz3"
+          },
+          {
+            "id": "ev_mt76fqmf_elj3hx",
+            "at": "2026-08-24T11:52:53.127Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt76fqmf_z2gyz3",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_mt76fqmf_oi3xke",
+            "at": "2026-08-24T11:52:53.127Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt73gq6l_bdvlmv",
+            "meta": {
+              "durationMs": 4992762
+            }
+          },
+          {
+            "id": "ev_mt73gq6p_a9l9lz",
+            "at": "2026-08-24T10:29:40.369Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt73gq6l_bdvlmv"
+          },
+          {
+            "id": "ev_mt73gq6l_72nxua",
+            "at": "2026-08-24T10:29:40.365Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt73gq6l_bdvlmv",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_mt71pfoy_pth3cv",
+            "at": "2026-08-24T09:40:27.442Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt713h24_e2kort"
+          },
+          {
+            "id": "ev_mt71dv1e_iabo06",
+            "at": "2026-08-24T09:31:27.458Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt713h24_e2kort"
+          },
+          {
+            "id": "ev_mt71dsc8_wax1h4",
+            "at": "2026-08-24T09:31:23.960Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt713h24_e2kort",
+            "meta": {
+              "durationMs": 0
+            }
+          },
+          {
+            "id": "ev_mt713h2o_srd03h",
+            "at": "2026-08-24T09:23:22.801Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt713h24_e2kort"
+          },
+          {
+            "id": "ev_mt713h24_vtzr39",
+            "at": "2026-08-24T09:23:22.780Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt713h24_e2kort",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_mt713h23_cw7t57",
+            "at": "2026-08-24T09:23:22.779Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt6ywyim_qwv8yq",
+            "meta": {
+              "durationMs": 3663198
+            }
+          },
+          {
+            "id": "ev_mt6z1mah_kezy10",
+            "at": "2026-08-24T08:25:57.017Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt6ywyim_qwv8yq",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt6ywyiq_a3t0nv",
+            "at": "2026-08-24T08:22:19.586Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt6ywyim_qwv8yq"
+          },
+          {
+            "id": "ev_mt6ywyim_93g6g7",
+            "at": "2026-08-24T08:22:19.582Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt6ywyim_qwv8yq",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_mt5iwvsj_8ly0ey",
+            "at": "2026-08-23T08:06:36.019Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt5hnp5f_i4w3q9",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
           {
             "id": "ev_mt5ibxs6_cjg4p9",
             "at": "2026-08-23T07:50:18.822Z",
@@ -2030,599 +2800,6 @@
               "durationMs": 15000,
               "rolling": true
             }
-          },
-          {
-            "id": "ev_mt1crs3q_ecaw0f",
-            "at": "2026-08-20T10:03:35.558Z",
-            "type": "page_visit",
-            "category": "profile",
-            "path": "/profile",
-            "sessionId": "sess_mt1cqw5n_2scrge"
-          },
-          {
-            "id": "ev_mt1crksb_wf6hs4",
-            "at": "2026-08-20T10:03:26.075Z",
-            "type": "page_visit",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mt1cqw5n_2scrge"
-          },
-          {
-            "id": "ev_mt1crf6c_8ux8xv",
-            "at": "2026-08-20T10:03:18.804Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/whatsapp",
-            "sessionId": "sess_mt1cqw5n_2scrge"
-          },
-          {
-            "id": "ev_mt1cr7qf_xrnfug",
-            "at": "2026-08-20T10:03:09.159Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt1cqw5n_2scrge",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt1cqw5p_gsh0b1",
-            "at": "2026-08-20T10:02:54.157Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt1cqw5n_2scrge"
-          },
-          {
-            "id": "ev_mt1cqw5o_m8n85b",
-            "at": "2026-08-20T10:02:54.156Z",
-            "type": "login",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt1cqw5n_2scrge",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_mt037dlq_j083ec",
-            "at": "2026-08-19T12:48:00.926Z",
-            "type": "page_visit",
-            "category": "premium",
-            "path": "/subscriptions",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt036ifv_afgsef",
-            "at": "2026-08-19T12:47:20.539Z",
-            "type": "time_slice",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt034wiw_gw56sq",
-            "at": "2026-08-19T12:46:05.480Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt034qqs_gaa5nw",
-            "at": "2026-08-19T12:45:57.988Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt034fyp_qf7jht",
-            "at": "2026-08-19T12:45:44.017Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt0346l7_10nz4z",
-            "at": "2026-08-19T12:45:31.867Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt033i26_d5kcll",
-            "at": "2026-08-19T12:45:00.078Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt033gru_piiyqw",
-            "at": "2026-08-19T12:44:58.410Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt0335t5_6hv1ts",
-            "at": "2026-08-19T12:44:44.201Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt032mto_tkpwcp",
-            "at": "2026-08-19T12:44:19.596Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt032mfs_1v17fb",
-            "at": "2026-08-19T12:44:19.096Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt0307tt_ld5ciw",
-            "at": "2026-08-19T12:42:26.849Z",
-            "type": "time_slice",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt02yxhh_rwafre",
-            "at": "2026-08-19T12:41:26.789Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt02tkuf_kesd5d",
-            "at": "2026-08-19T12:37:17.127Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt02p3ea_vrhb4p",
-            "at": "2026-08-19T12:33:47.890Z",
-            "type": "time_slice",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt02lvp5_dixosw",
-            "at": "2026-08-19T12:31:17.945Z",
-            "type": "time_slice",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt02jysa_wo3x3e",
-            "at": "2026-08-19T12:29:48.634Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt02jy3b_1sq9r8",
-            "at": "2026-08-19T12:29:47.735Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt02hmrd_tcflzk",
-            "at": "2026-08-19T12:27:59.737Z",
-            "type": "time_slice",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt02gucb_reksti",
-            "at": "2026-08-19T12:27:22.907Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt02g0o1_6csfk3",
-            "at": "2026-08-19T12:26:44.449Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt02fq3d_vn2h24",
-            "at": "2026-08-19T12:26:30.745Z",
-            "type": "time_slice",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt02fefs_4y3mpi",
-            "at": "2026-08-19T12:26:15.640Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt02fb5i_u1lmwm",
-            "at": "2026-08-19T12:26:11.382Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt0287f1_up1i9m",
-            "at": "2026-08-19T12:20:39.949Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt0284qq_cqnzps",
-            "at": "2026-08-19T12:20:36.482Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt026ma0_9d3u02",
-            "at": "2026-08-19T12:19:25.896Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt024fur_o775dn",
-            "at": "2026-08-19T12:17:44.259Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt0209y8_jukeeo",
-            "at": "2026-08-19T12:14:29.984Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01zwaf_tx1as7",
-            "at": "2026-08-19T12:14:12.279Z",
-            "type": "time_slice",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt01ufi9_k0he97",
-            "at": "2026-08-19T12:09:57.249Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01ucpf_e6jhhd",
-            "at": "2026-08-19T12:09:53.619Z",
-            "type": "time_slice",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt01pj1o_r8rump",
-            "at": "2026-08-19T12:06:08.556Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01lp2j_j2cmhw",
-            "at": "2026-08-19T12:03:09.739Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01lfjp_j43l8z",
-            "at": "2026-08-19T12:02:57.397Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01l8k1_0t34m8",
-            "at": "2026-08-19T12:02:48.337Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01ktj3_jmjtvr",
-            "at": "2026-08-19T12:02:28.863Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01klmm_0ff9c2",
-            "at": "2026-08-19T12:02:18.622Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01k67m_ihavpn",
-            "at": "2026-08-19T12:01:58.642Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01iwu6_ztrqw4",
-            "at": "2026-08-19T12:00:59.838Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01hs2k_jdtdl5",
-            "at": "2026-08-19T12:00:07.004Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01h0ew_sul5w2",
-            "at": "2026-08-19T11:59:31.160Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01gemy_afioi8",
-            "at": "2026-08-19T11:59:02.938Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01fxf2_t22dr7",
-            "at": "2026-08-19T11:58:40.622Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01f8zg_kfrx1s",
-            "at": "2026-08-19T11:58:08.956Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01ak67_gdf0h0",
-            "at": "2026-08-19T11:54:30.175Z",
-            "type": "time_slice",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt018mpb_ynctjq",
-            "at": "2026-08-19T11:53:00.143Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt0187e4_rg1bvx",
-            "at": "2026-08-19T11:52:40.300Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt016kzq_29i9jn",
-            "at": "2026-08-19T11:51:24.614Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt014v3j_v9giwr",
-            "at": "2026-08-19T11:50:04.399Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt014b9r_zbpshn",
-            "at": "2026-08-19T11:49:38.703Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt0149nf_7t7l7n",
-            "at": "2026-08-19T11:49:36.603Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt0132y5_7no48t",
-            "at": "2026-08-19T11:48:41.261Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt01325w_6cfbq2",
-            "at": "2026-08-19T11:48:40.244Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt011x63_cmh2qo",
-            "at": "2026-08-19T11:47:47.115Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt011tf6_wqw0gt",
-            "at": "2026-08-19T11:47:42.258Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt00ypjq_am79is",
-            "at": "2026-08-19T11:45:17.270Z",
-            "type": "time_slice",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt00w4y9_t77qep",
-            "at": "2026-08-19T11:43:17.265Z",
-            "type": "time_slice",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt00vtbs_pqwu59",
-            "at": "2026-08-19T11:43:02.201Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/live-room/hryantra-interview-6a858d9b139b6d36584783a2",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt00v7o7_wwbpke",
-            "at": "2026-08-19T11:42:34.135Z",
-            "type": "page_visit",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9"
-          },
-          {
-            "id": "ev_mt00u90d_htuh7k",
-            "at": "2026-08-19T11:41:49.213Z",
-            "type": "time_slice",
-            "category": "interview_prep",
-            "path": "/lms/interview-prep/request-interview",
-            "sessionId": "sess_msztu5tp_b5hxw9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
           }
         ],
         "topCompanies": [],
@@ -2650,7 +2827,7 @@
             "visa-work-authorization",
             "vaccination"
           ],
-          "updatedAt": "2026-08-23T07:56:26.317Z"
+          "updatedAt": "2026-08-25T09:44:42.158Z"
         },
         "behaviourSignals": {
           "userId": "b1c869d84e75048c5c61c5e3",
@@ -2667,17 +2844,18 @@
           "insightIds": [],
           "jobCardClicks7d": 0,
           "applies7d": 0,
-          "activeMs7d": 1515000,
+          "activeMs7d": 2115000,
           "activeMsByCategory7d": {
-            "interview_prep": 1200000,
-            "other": 75000,
-            "profile": 240000
+            "interview_prep": 1320000,
+            "other": 540000,
+            "profile": 240000,
+            "dashboard": 15000
           },
           "pageVisitsByCategory7d": {
-            "other": 24,
-            "dashboard": 2,
-            "courses": 1,
-            "interview_prep": 113,
+            "other": 50,
+            "dashboard": 5,
+            "courses": 2,
+            "interview_prep": 119,
             "premium": 1,
             "profile": 2
           },
@@ -2704,73 +2882,29 @@
           "userSuggestionHints": [],
           "preferredAlertHours": [
             15,
-            13
+            13,
+            11
           ],
-          "preferredAlertWindowLabel": "Thu / Wed · 3:00 PM–1:00 PM",
-          "alertTimingConfidence": "medium"
+          "preferredAlertWindowLabel": "Thu / Mon · 3:00 PM–1:00 PM",
+          "alertTimingConfidence": "high"
         }
       },
       "suggestionMetrics": {
         "userId": "b1c869d84e75048c5c61c5e3",
-        "updatedAt": "2026-08-23T07:56:22.598Z",
+        "updatedAt": "2026-08-25T09:44:12.104Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
-        "suggestionsPushed": 12,
+        "suggestionsPushed": 21,
         "suggestionsClicked": 0,
         "suggestionsPurchased": 0,
         "salesFollowUpScore": 10,
         "salesFollowUpReady": false,
         "byScenario": {
-          "profile_match": 11,
+          "profile_match": 20,
           "engagement": 1
         },
         "recentSuggestions": [
-          {
-            "id": "sug_msztu9ae_d0vs07",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Frontend Interview Readiness",
-            "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-19T08:25:52.262Z"
-          },
-          {
-            "id": "sug_mszuxo03_o42vj8",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Frontend Interview Readiness",
-            "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-19T08:56:30.915Z"
-          },
-          {
-            "id": "sug_mszwdazn_4ec2u0",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Frontend Interview Readiness",
-            "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-19T09:36:40.163Z"
-          },
-          {
-            "id": "sug_mszxg1p2_yrdxjr",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Frontend Interview Readiness",
-            "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-19T10:06:47.702Z"
-          },
-          {
-            "id": "sug_mszytt9x_ijb16q",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Frontend Interview Readiness",
-            "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-19T10:45:29.589Z"
-          },
           {
             "id": "sug_mszzx6yi_iaamlq",
             "dedupeKey": "engage:course",
@@ -2833,6 +2967,87 @@
             "title": "Update your CV in AI editor",
             "actionUrl": "/lms/resume-builder/editor",
             "pushedAt": "2026-08-23T07:31:41.738Z"
+          },
+          {
+            "id": "sug_mt5ist67_l9uavz",
+            "dedupeKey": "engage:ai_cv",
+            "scenario": "profile_match",
+            "kind": "ai_cv",
+            "title": "Update your CV in AI editor",
+            "actionUrl": "/lms/resume-builder/editor",
+            "pushedAt": "2026-08-23T08:03:25.999Z"
+          },
+          {
+            "id": "sug_mt6yxd6l_zkvsy5",
+            "dedupeKey": "engage:ai_cv",
+            "scenario": "profile_match",
+            "kind": "ai_cv",
+            "title": "Update your CV in AI editor",
+            "actionUrl": "/lms/resume-builder/editor",
+            "pushedAt": "2026-08-24T08:22:38.589Z"
+          },
+          {
+            "id": "sug_mt714m8j_peb1uh",
+            "dedupeKey": "engage:ai_cv",
+            "scenario": "profile_match",
+            "kind": "ai_cv",
+            "title": "Update your CV in AI editor",
+            "actionUrl": "/lms/resume-builder/editor",
+            "pushedAt": "2026-08-24T09:24:16.147Z"
+          },
+          {
+            "id": "sug_mt73gy18_0fd6ik",
+            "dedupeKey": "engage:ai_cv",
+            "scenario": "profile_match",
+            "kind": "ai_cv",
+            "title": "Update your CV in AI editor",
+            "actionUrl": "/lms/resume-builder/editor",
+            "pushedAt": "2026-08-24T10:29:50.540Z"
+          },
+          {
+            "id": "sug_mt76g1gl_5fhs6u",
+            "dedupeKey": "engage:ai_cv",
+            "scenario": "profile_match",
+            "kind": "ai_cv",
+            "title": "Update your CV in AI editor",
+            "actionUrl": "/lms/resume-builder/editor",
+            "pushedAt": "2026-08-24T11:53:07.173Z"
+          },
+          {
+            "id": "sug_mt77j0yi_29mfs5",
+            "dedupeKey": "engage:ai_cv",
+            "scenario": "profile_match",
+            "kind": "ai_cv",
+            "title": "Update your CV in AI editor",
+            "actionUrl": "/lms/resume-builder/editor",
+            "pushedAt": "2026-08-24T12:23:26.106Z"
+          },
+          {
+            "id": "sug_mt89vl04_ez9re8",
+            "dedupeKey": "engage:ai_cv",
+            "scenario": "profile_match",
+            "kind": "ai_cv",
+            "title": "Update your CV in AI editor",
+            "actionUrl": "/lms/resume-builder/editor",
+            "pushedAt": "2026-08-25T06:16:57.364Z"
+          },
+          {
+            "id": "sug_mt8ayhnc_d90wbj",
+            "dedupeKey": "engage:ai_cv",
+            "scenario": "profile_match",
+            "kind": "ai_cv",
+            "title": "Update your CV in AI editor",
+            "actionUrl": "/lms/resume-builder/editor",
+            "pushedAt": "2026-08-25T06:47:12.600Z"
+          },
+          {
+            "id": "sug_mt8h8837_m46v84",
+            "dedupeKey": "engage:ai_cv",
+            "scenario": "profile_match",
+            "kind": "ai_cv",
+            "title": "Update your CV in AI editor",
+            "actionUrl": "/lms/resume-builder/editor",
+            "pushedAt": "2026-08-25T09:42:44.467Z"
           }
         ]
       },
@@ -2902,11 +3117,11 @@
         }
       ],
       "sessionEngagement": {
-        "sessionCount": 4,
-        "activeCount": 0,
-        "totalDurationMs": 251374023,
-        "avgDurationMs": 62843506,
-        "medianDurationMs": 630000,
+        "sessionCount": 10,
+        "activeCount": 1,
+        "totalDurationMs": 260614983,
+        "avgDurationMs": 26061498,
+        "medianDurationMs": 262500,
         "uniqueIps": 1,
         "uniqueDevices": 1,
         "locations": [
@@ -2923,14 +3138,32 @@
           {
             "hour": 15,
             "label": "3:00 PM",
-            "sessions": 1,
-            "totalDurationMs": 250113735
+            "sessions": 3,
+            "totalDurationMs": 255151497
           },
           {
             "hour": 13,
             "label": "1:00 PM",
-            "sessions": 3,
-            "totalDurationMs": 1260288
+            "sessions": 4,
+            "totalDurationMs": 4938486
+          },
+          {
+            "hour": 11,
+            "label": "11:00 AM",
+            "sessions": 1,
+            "totalDurationMs": 360000
+          },
+          {
+            "hour": 17,
+            "label": "5:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 165000
+          },
+          {
+            "hour": 14,
+            "label": "2:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 0
           }
         ],
         "byWeekday": [
@@ -2941,68 +3174,86 @@
             "totalDurationMs": 250113735
           },
           {
+            "weekday": 1,
+            "label": "Mon",
+            "sessions": 4,
+            "totalDurationMs": 8820960
+          },
+          {
             "weekday": 3,
             "label": "Wed",
             "sessions": 2,
             "totalDurationMs": 1200288
           },
           {
+            "weekday": 2,
+            "label": "Tue",
+            "sessions": 2,
+            "totalDurationMs": 405000
+          },
+          {
             "weekday": 0,
             "label": "Sun",
             "sessions": 1,
-            "totalDurationMs": 60000
+            "totalDurationMs": 75000
           }
         ],
         "alertTiming": {
           "bestHours": [
             15,
-            13
+            13,
+            11
           ],
           "bestHourLabels": [
             "3:00 PM",
-            "1:00 PM"
+            "1:00 PM",
+            "11:00 AM"
           ],
           "bestWeekdays": [
             "Thu",
-            "Wed"
+            "Mon"
           ],
-          "bestWindowLabel": "Thu / Wed · 3:00 PM–1:00 PM",
+          "bestWindowLabel": "Thu / Mon · 3:00 PM–1:00 PM",
           "avoidHours": [
-            13,
-            15
+            14,
+            17,
+            11
           ],
           "timezone": "Asia/Calcutta",
-          "confidence": "medium",
-          "reason": "Most active around 3:00 PM and 1:00 PM local time · avg session 1047 min · often from Thane, Maharashtra, India",
-          "sampleSessions": 4,
-          "avgDurationMs": 62843506,
-          "medianDurationMs": 630000
+          "confidence": "high",
+          "reason": "Most active around 3:00 PM and 1:00 PM local time · avg session 434 min · often from Thane, Maharashtra, India",
+          "sampleSessions": 10,
+          "avgDurationMs": 26061498,
+          "medianDurationMs": 262500
         }
       },
       "alertTiming": {
         "bestHours": [
           15,
-          13
+          13,
+          11
         ],
         "bestHourLabels": [
           "3:00 PM",
-          "1:00 PM"
+          "1:00 PM",
+          "11:00 AM"
         ],
         "bestWeekdays": [
           "Thu",
-          "Wed"
+          "Mon"
         ],
-        "bestWindowLabel": "Thu / Wed · 3:00 PM–1:00 PM",
+        "bestWindowLabel": "Thu / Mon · 3:00 PM–1:00 PM",
         "avoidHours": [
-          13,
-          15
+          14,
+          17,
+          11
         ],
         "timezone": "Asia/Calcutta",
-        "confidence": "medium",
-        "reason": "Most active around 3:00 PM and 1:00 PM local time · avg session 1047 min · often from Thane, Maharashtra, India",
-        "sampleSessions": 4,
-        "avgDurationMs": 62843506,
-        "medianDurationMs": 630000
+        "confidence": "high",
+        "reason": "Most active around 3:00 PM and 1:00 PM local time · avg session 434 min · often from Thane, Maharashtra, India",
+        "sampleSessions": 10,
+        "avgDurationMs": 26061498,
+        "medianDurationMs": 262500
       },
       "locations": [
         {
@@ -3017,6 +3268,240 @@
     }
   },
   "history": [
+    {
+      "id": "hist_mt8h89s4_4yik",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T09:42:45.455Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 179,
+        "applies": 0,
+        "activeMs": 2070000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8bg4fb_f96d",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T07:00:55.220Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 178,
+        "applies": 0,
+        "activeMs": 2070000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8b8fl9_l2tf",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T06:54:56.401Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 178,
+        "applies": 0,
+        "activeMs": 2070000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8b1gi2_1tyq",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T06:49:31.009Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 177,
+        "applies": 0,
+        "activeMs": 1935000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8auh3h_9ri2",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T06:44:05.214Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 173,
+        "applies": 0,
+        "activeMs": 1905000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8an28a_5z8l",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T06:38:19.301Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 168,
+        "applies": 0,
+        "activeMs": 1905000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8ag1u1_1ff0",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T06:32:52.245Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 167,
+        "applies": 0,
+        "activeMs": 1890000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8a8zc7_eh9u",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T06:27:22.372Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 167,
+        "applies": 0,
+        "activeMs": 1800000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8a24b7_z8vw",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T06:22:02.269Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 165,
+        "applies": 0,
+        "activeMs": 1755000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt89vhjj_uj5k",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T06:16:49.828Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 163,
+        "applies": 0,
+        "activeMs": 1710000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt784jrr_oipt",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-24T12:40:10.225Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 162,
+        "applies": 0,
+        "activeMs": 1650000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt77xsyn_lsfa",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-24T12:34:55.555Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 157,
+        "applies": 0,
+        "activeMs": 1650000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt77r71t_oefs",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-24T12:29:45.920Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 153,
+        "applies": 0,
+        "activeMs": 1590000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
     {
       "id": "hist_mt5j2gy8_9zli",
       "userId": "9d5194355ec270f0b4a474a8",
@@ -13782,5 +14267,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-08-23T08:10:56.720Z"
+  "updatedAt": "2026-08-25T09:44:43.511Z"
 }

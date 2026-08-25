@@ -57,13 +57,13 @@ export default function WebsiteNavbar() {
   const isTopOfPage = !isScrolled;
   const isEmployersTransparent = isEmployersLandingPage && isTopOfPage;
   const isHomeTransparent = isHomePage && isTopOfPage;
-  const isLightMarketingNav = isHomeTransparent || (isEmployersPage && !isEmployersLandingPage);
+  const isLightMarketingNav =
+    isHomeTransparent || isEmployersTransparent || (isEmployersPage && !isEmployersLandingPage);
   const isNavbarShellTransparent = isEmployersTransparent || isHomeTransparent;
   const hasMountedPath = useRef(false);
 
   const navLinkTextClass = (isActive: boolean) => {
     if (isActive) return "text-white";
-    if (isEmployersTransparent) return "text-white/80! hover:text-white!";
     return "text-slate-700 hover:text-slate-900";
   };
 
@@ -146,11 +146,9 @@ export default function WebsiteNavbar() {
 
         <div
           className={`hidden md:inline-flex items-center relative rounded-full transition-all duration-500 justify-self-center ${
-            isEmployersTransparent
-              ? "border border-white/15 bg-white/5 backdrop-blur-sm p-1.5"
-              : isLightMarketingNav
-                ? "border border-slate-200/80 bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl p-1.5"
-                : `border border-white/65 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-xl ${isScrolled ? "p-1" : "p-1.5"}`
+            isLightMarketingNav
+              ? "border border-slate-200/80 bg-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl p-1.5"
+              : `border border-white/65 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-xl ${isScrolled ? "p-1" : "p-1.5"}`
           }`}
         >
           {navLinks.map((link, i) => {
@@ -196,12 +194,8 @@ export default function WebsiteNavbar() {
           {!isServicesPage && (
             <Link
               href={loginSignupHref}
-              className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full font-bold transition-all duration-500 ${
+              className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full font-bold transition-all duration-500 bg-linear-to-r from-[#08428c] to-[#28a8e1] text-white! shadow-[0_8px_22px_rgba(8,66,140,0.35)] hover:brightness-105 ${
                 isScrolled ? "min-h-[34px] px-4 text-[14px]" : "min-h-[38px] px-5 text-[15px]"
-              } ${
-                isEmployersTransparent
-                  ? "border border-white/40 bg-white/15 text-white! shadow-none backdrop-blur-xl hover:bg-white/25 hover:text-white!"
-                  : "bg-linear-to-r from-[#08428c] to-[#28a8e1] text-white! shadow-[0_8px_22px_rgba(8,66,140,0.35)] hover:brightness-105"
               }`}
             >
               {t("common.login")}
@@ -210,7 +204,7 @@ export default function WebsiteNavbar() {
           <LanguageSwitcher
             className={
               isEmployersTransparent
-                ? "inline-flex min-w-17 items-center justify-center gap-1 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:border-white/50 hover:bg-white/15"
+                ? "inline-flex min-w-17 items-center justify-center gap-1 rounded-full border border-slate-200/90 bg-white/80 px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:border-[#28A8E1]/50 hover:bg-white hover:text-[#08428c]"
                 : undefined
             }
           />
@@ -218,11 +212,7 @@ export default function WebsiteNavbar() {
 
         <button
           type="button"
-          className={`md:hidden justify-self-end col-start-3 p-2 transition-colors ${
-            isEmployersTransparent
-              ? "text-white hover:text-white/80"
-              : "text-slate-700 hover:text-[#08428c]"
-          }`}
+          className="md:hidden justify-self-end col-start-3 p-2 transition-colors text-slate-700 hover:text-[#08428c]"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
