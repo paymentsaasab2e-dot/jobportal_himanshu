@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useMemo } from "react";
 import { LogoIcon } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,11 +14,50 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { NavGroup } from "@/components/nav-group";
-import { footerNavLinks, navGroups } from "@/components/app-shared";
+import {
+	footerNavLinks,
+	navGroups,
+	type SidebarNavGroup,
+	type SidebarNavItem,
+} from "@/components/app-shared";
 import { LatestChange } from "@/components/latest-change";
 import { PlusIcon, SearchIcon } from "lucide-react";
 
-export function AppSidebar() {
+function withActivePath(
+	groups: SidebarNavGroup[],
+	activePath?: string,
+): SidebarNavGroup[] {
+	if (!activePath) return groups;
+
+	const markItem = (item: SidebarNavItem): SidebarNavItem => ({
+		...item,
+		isActive: item.path === activePath || item.subItems?.some((sub) => sub.path === activePath),
+		subItems: item.subItems?.map((sub) => ({
+			...sub,
+			isActive: sub.path === activePath,
+		})),
+	});
+
+	return groups.map((group) => ({
+		...group,
+		items: group.items.map(markItem),
+	}));
+}
+
+export function AppSidebar({ activePath }: { activePath?: string }) {
+	const groups = useMemo(() => withActivePath(navGroups, activePath), [activePath]);
+
+	useEffect(() => {
+		if (!activePath) return;
+		const frame = window.requestAnimationFrame(() => {
+			const active = document.querySelector(
+				'.employers-dashboard-preview [data-slot="sidebar-menu-button"][data-active="true"]',
+			);
+			active?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+		});
+		return () => window.cancelAnimationFrame(frame);
+	}, [activePath]);
+
 	return (
 		<Sidebar collapsible="icon" variant="inset">
 			<SidebarHeader className="h-14 justify-center">
@@ -45,7 +87,7 @@ export function AppSidebar() {
 						</Button>
 					</SidebarMenuItem>
 				</SidebarGroup>
-				{navGroups.map((group, index) => (
+				{groups.map((group, index) => (
 					<NavGroup key={`sidebar-group-${index}`} {...group} />
 				))}
 			</SidebarContent>

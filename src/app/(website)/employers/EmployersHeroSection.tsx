@@ -13,7 +13,7 @@ const EMPLOYERS_LOGIN_HREF =
   "https://employers.hryantra.com/login?redirect=%2Fdashboard";
 
 const heroGradientCharStyle: React.CSSProperties = {
-  background: "linear-gradient(to bottom, #ffffff, #ffffff, rgba(255, 255, 255, 0.6))",
+  background: "linear-gradient(135deg, #08428c 0%, #0F5A7A 42%, #28A8E1 100%)",
   WebkitBackgroundClip: "text",
   WebkitTextFillColor: "transparent",
   backgroundClip: "text",
@@ -25,15 +25,23 @@ export function EmployersHeroSection() {
   const trialHref = localizePath(EMPLOYERS_TRIAL_PATH, locale);
 
   return (
-    <section className="relative flex min-h-[calc(100vh-5rem)] flex-col items-center justify-start overflow-x-hidden bg-black px-4 pb-20 pt-24 text-white sm:px-6 md:pb-24 md:pt-28">
+    <section className="relative flex min-h-[calc(100vh-5rem)] flex-col items-center justify-start overflow-x-hidden bg-[linear-gradient(180deg,#E8F7FD_0%,#F7FBFE_42%,#FFFFFF_78%,#FFF8EF_100%)] px-4 pb-20 pt-24 text-[#111827] sm:px-6 md:pb-24 md:pt-28">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-80"
+        aria-hidden="true"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 45% at 50% -10%, rgba(40,168,225,0.28), transparent 60%), radial-gradient(ellipse 40% 35% at 85% 20%, rgba(252,150,32,0.16), transparent 55%), radial-gradient(ellipse 35% 30% at 10% 30%, rgba(8,66,140,0.10), transparent 50%)",
+        }}
+      />
 
-      <aside className="mb-8 inline-flex max-w-full flex-wrap items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 backdrop-blur-sm">
-        <span className="whitespace-nowrap text-center text-xs text-slate-300">
+      <aside className="relative z-10 mb-8 inline-flex max-w-full flex-wrap items-center justify-center gap-2 rounded-full border border-[#28A8E1]/25 bg-white/70 px-4 py-2 shadow-sm backdrop-blur-sm">
+        <span className="whitespace-nowrap text-center text-xs text-slate-600">
           HRYantra CRM — leads, jobs, AI matching, placements and live command center
         </span>
         <a
           href="#overview"
-          className="flex items-center gap-1 whitespace-nowrap text-xs text-sky-300/90 transition-all hover:text-white active:scale-95"
+          className="flex items-center gap-1 whitespace-nowrap text-xs font-medium text-[#0F5A7A] transition-all hover:text-[#28A8E1] active:scale-95"
           aria-label="Explore the employer platform overview"
         >
           Explore platform
@@ -44,7 +52,7 @@ export function EmployersHeroSection() {
       <BlurRevealHeading
         as="h1"
         triggerOnView={false}
-        className="mb-6 flex w-full max-w-7xl flex-col items-center gap-0 px-4 text-center text-[clamp(2.125rem,5.8vw,4.75rem)] font-semibold leading-none tracking-[-0.04em]"
+        className="relative z-10 mb-6 flex w-full max-w-7xl flex-col items-center gap-0 px-4 text-center text-[clamp(2.125rem,5.8vw,4.75rem)] font-semibold leading-none tracking-[-0.04em]"
         lines={[
           {
             text: "Your entire recruitment CRM",
@@ -59,7 +67,7 @@ export function EmployersHeroSection() {
         ]}
       />
 
-      <p className="mb-10 max-w-2xl px-4 text-center text-sm text-slate-300 md:text-base">
+      <p className="relative z-10 mb-10 max-w-2xl px-4 text-center text-sm text-slate-600 md:text-base">
         From lead capture to placement billing — run leads, jobs, candidates, AI matching, interviews,
         and reports in one multi-tenant employer workspace.
       </p>
@@ -85,7 +93,7 @@ export function EmployersHeroSection() {
           href={EMPLOYERS_LOGIN_HREF}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-white/35 bg-white/5 px-6 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:border-[#28a8e1] hover:bg-[#08428c]/25 hover:text-white active:scale-95"
+          className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-[#28A8E1]/40 bg-white/80 px-6 text-sm font-semibold text-[#08428c] shadow-sm backdrop-blur-sm transition-all hover:border-[#28A8E1] hover:bg-[#E8F7FD] hover:text-[#0F5A7A] active:scale-95"
         >
           Sign in to employer portal
         </a>
@@ -93,7 +101,7 @@ export function EmployersHeroSection() {
 
       <div className="relative mx-auto w-full max-w-[min(100%,1280px)] px-3 pb-12 sm:px-5">
         <div
-          className="pointer-events-none absolute left-1/2 z-0 w-full max-w-6xl"
+          className="pointer-events-none absolute left-1/2 z-0 w-full max-w-6xl opacity-55"
           style={{
             top: "-18%",
             transform: "translateX(-50%)",

@@ -1538,9 +1538,131 @@ input[type="range"]::-moz-range-thumb {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+.employers-dashboard-preview {
+  --background: #ffffff;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #08428c;
+  --primary-foreground: #ffffff;
+  --secondary: #E8F7FD;
+  --secondary-foreground: #0F5A7A;
+  --muted: #F3F8FC;
+  --muted-foreground: #64748b;
+  --accent: #E8F7FD;
+  --accent-foreground: #08428c;
+  --border: rgba(40, 168, 225, 0.18);
+  --input: rgba(40, 168, 225, 0.22);
+  --ring: #28A8E1;
+  --sidebar: #F7FBFE;
+  --sidebar-foreground: #111827;
+  --sidebar-primary: #28A8E1;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #E8F7FD;
+  --sidebar-accent-foreground: #08428c;
+  --sidebar-border: rgba(40, 168, 225, 0.16);
+  --sidebar-ring: #28A8E1;
+  --preview-accent: #28A8E1;
+  --preview-accent-soft: #E8F7FD;
+  --preview-accent-strong: #08428c;
+  --preview-accent-glow: rgba(40, 168, 225, 0.22);
+}
+
 .employers-dashboard-preview__frame {
   zoom: 0.92;
   pointer-events: auto;
+  height: 640px;
+}
+
+.employers-dashboard-preview [data-slot="sidebar"],
+.employers-dashboard-preview [data-slot="sidebar-inner"],
+.employers-dashboard-preview [data-slot="sidebar-container"] {
+  transition:
+    background-color 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.employers-dashboard-preview [data-slot="sidebar-menu-button"] {
+  transition:
+    background-color 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.employers-dashboard-preview [data-slot="sidebar-menu-button"][data-active] {
+  background: color-mix(in srgb, var(--preview-accent) 16%, white) !important;
+  color: var(--preview-accent-strong) !important;
+  box-shadow: inset 3px 0 0 var(--preview-accent);
+}
+
+.employers-dashboard-preview [data-slot="sidebar-menu-button"].bg-primary {
+  background: linear-gradient(
+    135deg,
+    var(--preview-accent-strong),
+    var(--preview-accent)
+  ) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 20px var(--preview-accent-glow);
+}
+
+@supports not (zoom: 1) {
+  .employers-dashboard-preview__frame {
+    transform: scale(0.92);
+    transform-origin: top center;
+  }
+}
+
+.employers-dashboard-preview [data-slot="sidebar-wrapper"] {
+  min-height: 100% !important;
+  height: 100% !important;
+}
+
+.employers-dashboard-preview [data-slot="sidebar-container"] {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  height: auto !important;
+  min-height: 100% !important;
+}
+
+.employers-dashboard-preview [data-slot="sidebar-inset"] {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  flex: 1 1 auto;
+}
+
+.employers-dashboard-preview [data-slot="sidebar-inset"] > div {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.employers-dashboard-preview [data-slot="sidebar-inset"] > div::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.employers-dashboard-preview [data-slot="sidebar-inner"] {
+  min-height: 100%;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--preview-accent-soft) 88%, white) 0%,
+    #ffffff 100%
+  );
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.employers-dashboard-preview [data-slot="sidebar-inner"]::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Employers — neumorphic bento core modules */
@@ -1624,36 +1746,6 @@ input[type="range"]::-moz-range-thumb {
 
 .employers-dashboard-preview__frame a {
   cursor: pointer;
-}
-
-@supports not (zoom: 1) {
-  .employers-dashboard-preview__frame {
-    transform: scale(0.92);
-    transform-origin: top center;
-  }
-}
-
-.employers-dashboard-preview [data-slot="sidebar-wrapper"] {
-  min-height: auto !important;
-  height: auto !important;
-}
-
-.employers-dashboard-preview [data-slot="sidebar-container"] {
-  position: absolute !important;
-  top: 0 !important;
-  bottom: 0 !important;
-  height: auto !important;
-  min-height: 100% !important;
-}
-
-.employers-dashboard-preview [data-slot="sidebar-inset"] {
-  min-height: 0;
-  overflow: visible;
-  flex: 1 1 auto;
-}
-
-.employers-dashboard-preview [data-slot="sidebar-inner"] {
-  min-height: 100%;
 }
 
 @property --hero-shine-angle {

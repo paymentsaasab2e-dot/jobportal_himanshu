@@ -39,7 +39,6 @@ export const navGroups: SidebarNavGroup[] = [
 				title: "Dashboard",
 				path: "#/dashboard",
 				icon: <LayoutGridIcon />,
-				isActive: true,
 			},
 		],
 	},
