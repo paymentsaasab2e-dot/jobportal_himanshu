@@ -50,25 +50,25 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-25T09:44:43.193Z",
+      "capturedAt": "2026-08-26T07:42:33.251Z",
       "kind": "realtime_session",
       "session": {
         "logins": 10,
-        "visits": 179,
+        "visits": 67,
         "applies": 0,
-        "activeMs": 2115000,
+        "activeMs": 960000,
         "sessionCount": 10,
         "topInsightIds": [
-          "balanced"
+          "incomplete_profile_active"
         ],
         "triggerFlags": [],
-        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "alertWindow": "Thu / Mon · 3:00 PM–11:00 AM",
         "alertConfidence": "high",
         "topLocation": "Thane, Maharashtra, India",
         "preferredAlertHours": [
           15,
-          13,
-          11
+          11,
+          13
         ]
       },
       "hasFullLatest": true
@@ -1589,60 +1589,92 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-25T09:44:43.193Z",
-      "activityStateUpdatedAt": "2026-08-25T09:44:42.158Z",
+      "capturedAt": "2026-08-26T07:42:33.251Z",
+      "activityStateUpdatedAt": "2026-08-26T07:42:31.392Z",
       "rollup7d": {
         "userId": "b1c869d84e75048c5c61c5e3",
         "range": "week",
-        "fromDate": "2026-08-19",
-        "toDate": "2026-08-25",
+        "fromDate": "2026-08-20",
+        "toDate": "2026-08-26",
         "logins": 10,
-        "visits": 179,
+        "visits": 67,
         "jobCardClicks": 0,
         "applies": 0,
-        "activeMs": 2115000,
+        "activeMs": 960000,
         "sessionCount": 10,
         "pageVisitsByCategory": {
-          "other": 50,
-          "dashboard": 5,
-          "courses": 2,
-          "interview_prep": 119,
-          "premium": 1,
-          "profile": 2
+          "other": 54,
+          "dashboard": 4,
+          "profile": 2,
+          "courses": 1,
+          "interview_prep": 6
         },
         "activeMsByCategory": {
-          "interview_prep": 1320000,
-          "other": 540000,
+          "other": 585000,
           "profile": 240000,
-          "dashboard": 15000
+          "dashboard": 15000,
+          "interview_prep": 120000
         },
         "firstOpenBreakdown": {
-          "dashboard": 3,
+          "dashboard": 2,
           "other": 1
         },
-        "avgActiveMsPerDay": 423000,
+        "avgActiveMsPerDay": 192000,
         "daysActive": 5,
         "topFirstOpen": "dashboard",
         "insights": [
           {
-            "id": "balanced",
-            "label": "Balanced activity",
-            "severity": "info",
-            "summary": "No strong imbalance detected yet — keep collecting signals.",
+            "id": "incomplete_profile_active",
+            "label": "Active on jobs with incomplete profile",
+            "severity": "watch",
+            "summary": "Profile gaps will hurt match scores and ATS — finish sections before more applies.",
             "evidence": [
-              "0 job clicks",
-              "0 applies",
-              "35 min active"
+              "11 missing sections",
+              "Completeness 73%",
+              "0 job views"
             ]
           }
         ],
         "recentSessions": [
           {
+            "id": "sess_mt9ry0qj_cndmdj",
+            "startedAt": "2026-08-26T07:30:30.330Z",
+            "lastActiveAt": "2026-08-26T07:30:30.333Z",
+            "durationMs": 0,
+            "pageCount": 1,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows"
+          },
+          {
+            "id": "sess_mt9olevl_8u7k6c",
+            "startedAt": "2026-08-26T05:56:43.281Z",
+            "lastActiveAt": "2026-08-26T05:56:43.285Z",
+            "durationMs": 5627049,
+            "pageCount": 1,
+            "firstPath": "/",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-26T07:30:30.330Z"
+          },
+          {
             "id": "sess_mt8h857w_4zw0j9",
             "startedAt": "2026-08-25T09:42:40.747Z",
-            "lastActiveAt": "2026-08-25T09:43:25.769Z",
-            "durationMs": 45000,
-            "pageCount": 1,
+            "lastActiveAt": "2026-08-25T10:11:59.791Z",
+            "durationMs": 90000,
+            "pageCount": 4,
             "firstPath": "/employers",
             "lastPath": "/employers",
             "lastCategory": "other",
@@ -1651,7 +1683,8 @@
             ],
             "deviceType": "desktop",
             "browser": "Chrome",
-            "operatingSystem": "Windows"
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-25T09:47:19.480Z"
           },
           {
             "id": "sess_mt89va5b_c233yz",
@@ -1833,6 +1866,118 @@
           }
         ],
         "recentEvents": [
+          {
+            "id": "ev_mt9ry0ql_g122b1",
+            "at": "2026-08-26T07:30:30.333Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt9ry0qj_cndmdj"
+          },
+          {
+            "id": "ev_mt9ry0qj_d2zdbw",
+            "at": "2026-08-26T07:30:30.331Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt9ry0qj_cndmdj",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_mt9ry0qi_wackgw",
+            "at": "2026-08-26T07:30:30.330Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt9olevl_8u7k6c",
+            "meta": {
+              "durationMs": 5627049
+            }
+          },
+          {
+            "id": "ev_mt9olevq_brddwj",
+            "at": "2026-08-26T05:56:43.286Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt9olevl_8u7k6c"
+          },
+          {
+            "id": "ev_mt9olevl_chkn1n",
+            "at": "2026-08-26T05:56:43.281Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mt9olevl_8u7k6c",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_mt8i9ui7_ejejjk",
+            "at": "2026-08-25T10:11:59.791Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt8h857w_4zw0j9"
+          },
+          {
+            "id": "ev_mt8hh8p3_j82se2",
+            "at": "2026-08-25T09:49:45.159Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt8h857w_4zw0j9"
+          },
+          {
+            "id": "ev_mt8hfgza_fymcn4",
+            "at": "2026-08-25T09:48:22.582Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt8h857w_4zw0j9",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mt8he6o8_hr28st",
+            "at": "2026-08-25T09:47:22.568Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt8h857w_4zw0j9"
+          },
+          {
+            "id": "ev_mt8he4ag_tul7qq",
+            "at": "2026-08-25T09:47:19.480Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt8h857w_4zw0j9",
+            "meta": {
+              "durationMs": 60000
+            }
+          },
+          {
+            "id": "ev_mt8he04o_cku81i",
+            "at": "2026-08-25T09:47:14.088Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mt8h857w_4zw0j9",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
           {
             "id": "ev_mt8h8gt9_a4ycm4",
             "at": "2026-08-25T09:42:55.773Z",
@@ -2680,126 +2825,6 @@
             "meta": {
               "durationMs": 15000
             }
-          },
-          {
-            "id": "ev_mt5honwf_9cssbs",
-            "at": "2026-08-23T07:32:12.927Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt5hnp5f_i4w3q9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt5hnp5l_7w5lc6",
-            "at": "2026-08-23T07:31:27.897Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt5hnp5f_i4w3q9"
-          },
-          {
-            "id": "ev_mt5hnp5f_kk98d2",
-            "at": "2026-08-23T07:31:27.891Z",
-            "type": "login",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt5hnp5f_i4w3q9",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_mt5hnp5e_czlumk",
-            "at": "2026-08-23T07:31:27.890Z",
-            "type": "session_end",
-            "category": "profile",
-            "path": "/profile",
-            "sessionId": "sess_mt1cqw5n_2scrge",
-            "meta": {
-              "durationMs": 250113735
-            }
-          },
-          {
-            "id": "ev_mt1egx7d_ynuc9n",
-            "at": "2026-08-20T10:51:08.185Z",
-            "type": "page_visit",
-            "category": "profile",
-            "path": "/profile",
-            "sessionId": "sess_mt1cqw5n_2scrge"
-          },
-          {
-            "id": "ev_mt1dhln5_bth68w",
-            "at": "2026-08-20T10:23:40.241Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/dashboard",
-            "sessionId": "sess_mt1cqw5n_2scrge"
-          },
-          {
-            "id": "ev_mt1dgtcf_7ixr2m",
-            "at": "2026-08-20T10:23:03.567Z",
-            "type": "time_slice",
-            "category": "profile",
-            "path": "/profile",
-            "sessionId": "sess_mt1cqw5n_2scrge",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt1d7j8i_55r5af",
-            "at": "2026-08-20T10:15:50.563Z",
-            "type": "time_slice",
-            "category": "profile",
-            "path": "/profile",
-            "sessionId": "sess_mt1cqw5n_2scrge",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt1d64fi_cxx1ex",
-            "at": "2026-08-20T10:14:44.718Z",
-            "type": "time_slice",
-            "category": "profile",
-            "path": "/profile",
-            "sessionId": "sess_mt1cqw5n_2scrge",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt1cy6wa_7g44hb",
-            "at": "2026-08-20T10:08:34.666Z",
-            "type": "time_slice",
-            "category": "profile",
-            "path": "/profile",
-            "sessionId": "sess_mt1cqw5n_2scrge",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt1csqu3_w5k6gm",
-            "at": "2026-08-20T10:04:20.571Z",
-            "type": "time_slice",
-            "category": "profile",
-            "path": "/profile",
-            "sessionId": "sess_mt1cqw5n_2scrge",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
           }
         ],
         "topCompanies": [],
@@ -2810,8 +2835,8 @@
           "profileCompleteness": 73,
           "cvScore": 83,
           "marketFit": 0,
-          "applicationsTotal": 1,
-          "rejectionsTotal": 0,
+          "applicationsTotal": 2,
+          "rejectionsTotal": 1,
           "postInterviewRejections": 0,
           "missingSectionsCount": 11,
           "missingSectionKeys": [
@@ -2827,40 +2852,41 @@
             "visa-work-authorization",
             "vaccination"
           ],
-          "updatedAt": "2026-08-25T09:44:42.158Z"
+          "updatedAt": "2026-08-26T07:42:31.392Z"
         },
         "behaviourSignals": {
           "userId": "b1c869d84e75048c5c61c5e3",
           "topCategories": [
-            "interview_prep",
             "profile",
+            "interview_prep",
             "courses"
           ],
           "weakCategories": [
+            "premium",
             "events",
-            "community",
-            "ai_cv"
+            "community"
           ],
-          "insightIds": [],
+          "insightIds": [
+            "incomplete_profile_active"
+          ],
           "jobCardClicks7d": 0,
           "applies7d": 0,
-          "activeMs7d": 2115000,
+          "activeMs7d": 960000,
           "activeMsByCategory7d": {
-            "interview_prep": 1320000,
-            "other": 540000,
+            "other": 585000,
             "profile": 240000,
-            "dashboard": 15000
+            "dashboard": 15000,
+            "interview_prep": 120000
           },
           "pageVisitsByCategory7d": {
-            "other": 50,
-            "dashboard": 5,
-            "courses": 2,
-            "interview_prep": 119,
-            "premium": 1,
-            "profile": 2
+            "other": 54,
+            "dashboard": 4,
+            "profile": 2,
+            "courses": 1,
+            "interview_prep": 6
           },
           "skillsCount": 8,
-          "rejectionsTotal": 0,
+          "rejectionsTotal": 1,
           "cvScore": 83,
           "marketFit": 0,
           "missingSectionsCount": 11,
@@ -2868,70 +2894,43 @@
           "topRoles": [],
           "hqTriggers": [],
           "preferSlotIds": [
+            "profile",
+            "ai_cv",
+            "course",
             "events",
-            "community",
-            "ai_cv"
+            "community"
           ],
           "deprioritizeSlotIds": [
             "interview_prep",
-            "profile",
-            "course",
             "career_path",
             "quizzes"
           ],
           "userSuggestionHints": [],
           "preferredAlertHours": [
             15,
-            13,
-            11
+            11,
+            13
           ],
-          "preferredAlertWindowLabel": "Thu / Mon · 3:00 PM–1:00 PM",
+          "preferredAlertWindowLabel": "Thu / Mon · 3:00 PM–11:00 AM",
           "alertTimingConfidence": "high"
         }
       },
       "suggestionMetrics": {
         "userId": "b1c869d84e75048c5c61c5e3",
-        "updatedAt": "2026-08-25T09:44:12.104Z",
+        "updatedAt": "2026-08-26T07:41:24.410Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
-        "suggestionsPushed": 21,
+        "suggestionsPushed": 24,
         "suggestionsClicked": 0,
         "suggestionsPurchased": 0,
         "salesFollowUpScore": 10,
         "salesFollowUpReady": false,
         "byScenario": {
-          "profile_match": 20,
+          "profile_match": 23,
           "engagement": 1
         },
         "recentSuggestions": [
-          {
-            "id": "sug_mszzx6yi_iaamlq",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Frontend Interview Readiness",
-            "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-19T11:16:06.906Z"
-          },
-          {
-            "id": "sug_mt01119e_6k1um9",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Frontend Interview Readiness",
-            "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-19T11:47:05.762Z"
-          },
-          {
-            "id": "sug_mt0245g9_zllf0q",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Frontend Interview Readiness",
-            "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-19T12:17:30.777Z"
-          },
           {
             "id": "sug_mt036uuj_cp52t5",
             "dedupeKey": "engage:course",
@@ -3048,6 +3047,33 @@
             "title": "Update your CV in AI editor",
             "actionUrl": "/lms/resume-builder/editor",
             "pushedAt": "2026-08-25T09:42:44.467Z"
+          },
+          {
+            "id": "sug_mt8ibt58_w4jr41",
+            "dedupeKey": "engage:ai_cv",
+            "scenario": "profile_match",
+            "kind": "ai_cv",
+            "title": "Update your CV in AI editor",
+            "actionUrl": "/lms/resume-builder/editor",
+            "pushedAt": "2026-08-25T10:13:31.340Z"
+          },
+          {
+            "id": "sug_mt9olpw4_hqaqu0",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-08-26T05:56:57.556Z"
+          },
+          {
+            "id": "sug_mt9rycxw_14slj1",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-08-26T07:30:46.148Z"
           }
         ]
       },
@@ -3117,10 +3143,10 @@
         }
       ],
       "sessionEngagement": {
-        "sessionCount": 10,
+        "sessionCount": 12,
         "activeCount": 1,
-        "totalDurationMs": 260614983,
-        "avgDurationMs": 26061498,
+        "totalDurationMs": 266287032,
+        "avgDurationMs": 22190586,
         "medianDurationMs": 262500,
         "uniqueIps": 1,
         "uniqueDevices": 1,
@@ -3139,19 +3165,19 @@
             "hour": 15,
             "label": "3:00 PM",
             "sessions": 3,
-            "totalDurationMs": 255151497
-          },
-          {
-            "hour": 13,
-            "label": "1:00 PM",
-            "sessions": 4,
-            "totalDurationMs": 4938486
+            "totalDurationMs": 255196497
           },
           {
             "hour": 11,
             "label": "11:00 AM",
-            "sessions": 1,
-            "totalDurationMs": 360000
+            "sessions": 2,
+            "totalDurationMs": 5987049
+          },
+          {
+            "hour": 13,
+            "label": "1:00 PM",
+            "sessions": 5,
+            "totalDurationMs": 4938486
           },
           {
             "hour": 17,
@@ -3182,14 +3208,14 @@
           {
             "weekday": 3,
             "label": "Wed",
-            "sessions": 2,
-            "totalDurationMs": 1200288
+            "sessions": 4,
+            "totalDurationMs": 6827337
           },
           {
             "weekday": 2,
             "label": "Tue",
             "sessions": 2,
-            "totalDurationMs": 405000
+            "totalDurationMs": 450000
           },
           {
             "weekday": 0,
@@ -3201,58 +3227,58 @@
         "alertTiming": {
           "bestHours": [
             15,
-            13,
-            11
+            11,
+            13
           ],
           "bestHourLabels": [
             "3:00 PM",
-            "1:00 PM",
-            "11:00 AM"
+            "11:00 AM",
+            "1:00 PM"
           ],
           "bestWeekdays": [
             "Thu",
             "Mon"
           ],
-          "bestWindowLabel": "Thu / Mon · 3:00 PM–1:00 PM",
+          "bestWindowLabel": "Thu / Mon · 3:00 PM–11:00 AM",
           "avoidHours": [
             14,
             17,
-            11
+            13
           ],
           "timezone": "Asia/Calcutta",
           "confidence": "high",
-          "reason": "Most active around 3:00 PM and 1:00 PM local time · avg session 434 min · often from Thane, Maharashtra, India",
-          "sampleSessions": 10,
-          "avgDurationMs": 26061498,
+          "reason": "Most active around 3:00 PM and 11:00 AM local time · avg session 370 min · often from Thane, Maharashtra, India",
+          "sampleSessions": 12,
+          "avgDurationMs": 22190586,
           "medianDurationMs": 262500
         }
       },
       "alertTiming": {
         "bestHours": [
           15,
-          13,
-          11
+          11,
+          13
         ],
         "bestHourLabels": [
           "3:00 PM",
-          "1:00 PM",
-          "11:00 AM"
+          "11:00 AM",
+          "1:00 PM"
         ],
         "bestWeekdays": [
           "Thu",
           "Mon"
         ],
-        "bestWindowLabel": "Thu / Mon · 3:00 PM–1:00 PM",
+        "bestWindowLabel": "Thu / Mon · 3:00 PM–11:00 AM",
         "avoidHours": [
           14,
           17,
-          11
+          13
         ],
         "timezone": "Asia/Calcutta",
         "confidence": "high",
-        "reason": "Most active around 3:00 PM and 1:00 PM local time · avg session 434 min · often from Thane, Maharashtra, India",
-        "sampleSessions": 10,
-        "avgDurationMs": 26061498,
+        "reason": "Most active around 3:00 PM and 11:00 AM local time · avg session 370 min · often from Thane, Maharashtra, India",
+        "sampleSessions": 12,
+        "avgDurationMs": 22190586,
         "medianDurationMs": 262500
       },
       "locations": [
@@ -3268,6 +3294,204 @@
     }
   },
   "history": [
+    {
+      "id": "hist_mt9sdit5_f11s",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-26T07:42:33.251Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 67,
+        "applies": 0,
+        "activeMs": 960000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–11:00 AM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt9s5tlh_gh54",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-26T07:36:34.253Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 67,
+        "applies": 0,
+        "activeMs": 960000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–11:00 AM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt9ry2bb_5hq0",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-26T07:30:32.283Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 67,
+        "applies": 0,
+        "activeMs": 960000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–11:00 AM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt9ot9mj_7d2j",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-26T06:02:49.665Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 66,
+        "applies": 0,
+        "activeMs": 960000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt9olheo_9rkp",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-26T05:56:45.266Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 66,
+        "applies": 0,
+        "activeMs": 960000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8iokxq_68hq",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T10:23:27.203Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 182,
+        "applies": 0,
+        "activeMs": 2160000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8ihmx0_qktm",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T10:18:03.181Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 182,
+        "applies": 0,
+        "activeMs": 2160000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8i9wme_8ymw",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T10:12:02.492Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 182,
+        "applies": 0,
+        "activeMs": 2160000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8hrlg7_ly9z",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T09:57:48.173Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 181,
+        "applies": 0,
+        "activeMs": 2160000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8hkom3_v1xz",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T09:52:25.734Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 181,
+        "applies": 0,
+        "activeMs": 2160000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mt8he211_gj7f",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-25T09:47:15.220Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 179,
+        "applies": 0,
+        "activeMs": 2130000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Thu / Mon · 3:00 PM–1:00 PM",
+        "topLocation": "Thane, Maharashtra, India"
+      }
+    },
     {
       "id": "hist_mt8h89s4_4yik",
       "userId": "b1c869d84e75048c5c61c5e3",
@@ -14267,5 +14491,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-08-25T09:44:43.511Z"
+  "updatedAt": "2026-08-26T07:42:33.595Z"
 }
