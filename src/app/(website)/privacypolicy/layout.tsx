@@ -1,8 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy",
-  description: "Your privacy matters to us. Read how HR Yantra protects your data.",
+  title: "Privacy Policy | Hryantra",
+  description:
+    "How Hryantra accesses, uses, stores, shares, retains, and deletes personal information and Google user data for Gmail and Calendar integrations.",
 };
 
 export default function PrivacyLayout({
