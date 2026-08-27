@@ -25,15 +25,12 @@ export default function WebsiteSiteLayout({
     "/ats-check",
     "/courses",
     "/searchjobs",
-  ]);
-
-  // Guest marketing chrome — signed-in users get the app Header instead
-  const guestMarketingNavbarPaths = new Set<string>([
-    "/aboutus",
-    "/contact",
+    // Legal / public pages must never show the logged-in app header
     "/privacypolicy",
     "/terms",
     "/trust-safety",
+    "/aboutus",
+    "/contact",
     "/help",
     "/faq",
   ]);
@@ -43,8 +40,7 @@ export default function WebsiteSiteLayout({
     normalizedPath.startsWith("/employers/") ||
     normalizedPath.startsWith("/events/") ||
     normalizedPath.startsWith("/services/") ||
-    normalizedPath.startsWith("/searchjobs/") ||
-    (!isAuthenticated && guestMarketingNavbarPaths.has(normalizedPath));
+    normalizedPath.startsWith("/searchjobs/");
 
   if (isCandMainHome) {
     return <>{children}</>;
