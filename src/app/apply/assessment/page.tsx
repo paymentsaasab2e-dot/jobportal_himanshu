@@ -15,6 +15,15 @@ type McqQuestion = {
   options: Array<{ id: string; text: string }>;
 };
 
+type QuestionnaireQuestion = {
+  id: string;
+  kind?: string;
+  prompt: string;
+  required?: boolean;
+  maxLength?: number;
+  options?: Array<{ id: string; text: string }>;
+};
+
 type CodingQuestion = {
   id: string;
   title?: string;
@@ -49,6 +58,9 @@ function AssessmentAttemptContent() {
   const type = String(assessment.type || 'MCQ').toUpperCase();
   const config = (assessment.config || {}) as Record<string, unknown>;
   const mcqQuestions = (Array.isArray(config.questions) ? config.questions : []) as McqQuestion[];
+  const questionnaireQuestions = (Array.isArray(config.questions)
+    ? config.questions
+    : []) as QuestionnaireQuestion[];
   const codingQuestions = (Array.isArray(config.questions) ? config.questions : []) as CodingQuestion[];
   const hasMultiCoding = type === 'CODING' && codingQuestions.length > 0;
   const accessToken = String(session?.accessToken || '');
@@ -227,6 +239,51 @@ function AssessmentAttemptContent() {
                   </div>
                 </div>
               ))
+            : null}
+
+          {type === 'QUESTIONNAIRE'
+            ? questionnaireQuestions.map((q, qi) => {
+                const kind = String(q.kind || '').toUpperCase() === 'MCQ' ? 'MCQ' : 'TEXT';
+                return (
+                  <div key={q.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                    <p className="text-sm font-medium text-gray-900">
+                      {qi + 1}. {q.prompt}
+                      {kind === 'TEXT' && q.required !== false ? (
+                        <span className="text-rose-500"> *</span>
+                      ) : null}
+                    </p>
+                    {kind === 'MCQ' ? (
+                      <div className="mt-2 space-y-2">
+                        {(q.options || []).map((opt) => (
+                          <label
+                            key={opt.id}
+                            className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-gray-900 hover:bg-slate-50"
+                          >
+                            <input
+                              type="radio"
+                              name={q.id}
+                              className="shrink-0 text-[#28A8E1]"
+                              checked={answers[q.id] === opt.id}
+                              onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.id }))}
+                            />
+                            <span className="text-gray-900">{opt.text}</span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <textarea
+                        className="mt-2 min-h-[100px] w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-gray-900 placeholder:text-gray-400"
+                        value={answers[q.id] || ''}
+                        maxLength={q.maxLength || 1000}
+                        onChange={(e) =>
+                          setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
+                        }
+                        placeholder="Type your answer…"
+                      />
+                    )}
+                  </div>
+                );
+              })
             : null}
 
           {type === 'ESSAY' ? (

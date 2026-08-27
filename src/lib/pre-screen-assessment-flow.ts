@@ -4,10 +4,9 @@ import { API_BASE_URL } from '@/lib/api-base';
 
 export type JobAssessmentLink = PortalJobAssessment;
 
-export function normalizeAssessmentTiming(timing: unknown): 'BEFORE_SUBMIT' | 'AFTER_APPLY' {
-  const t = String(timing || 'AFTER_APPLY').toUpperCase().replace(/\s+/g, '_');
-  if (t.includes('BEFORE')) return 'BEFORE_SUBMIT';
-  return 'AFTER_APPLY';
+/** Pre-screen assessments always run before the candidate applies. */
+export function normalizeAssessmentTiming(_timing?: unknown): 'BEFORE_SUBMIT' {
+  return 'BEFORE_SUBMIT';
 }
 
 export function parseJobAssessmentList(raw: unknown): JobAssessmentLink[] {
@@ -33,16 +32,16 @@ export function parseJobAssessmentList(raw: unknown): JobAssessmentLink[] {
 }
 
 export function assessmentsBeforeSubmit(links: JobAssessmentLink[]): JobAssessmentLink[] {
-  return links.filter((a) => normalizeAssessmentTiming(a.timing) === 'BEFORE_SUBMIT');
+  return links.map((a) => ({ ...a, timing: 'BEFORE_SUBMIT' as const }));
 }
 
-export function assessmentsAfterApply(links: JobAssessmentLink[]): JobAssessmentLink[] {
-  return links.filter((a) => normalizeAssessmentTiming(a.timing) === 'AFTER_APPLY');
+export function assessmentsAfterApply(_links: JobAssessmentLink[]): JobAssessmentLink[] {
+  return [];
 }
 
-/** After apply: only tests configured for AFTER_APPLY (BEFORE_SUBMIT runs on Apply click). */
-export function assessmentsForPostApplyRedirect(links: JobAssessmentLink[]): JobAssessmentLink[] {
-  return assessmentsAfterApply(links);
+/** Post-apply redirects are disabled — all pre-screen tests run before apply. */
+export function assessmentsForPostApplyRedirect(_links: JobAssessmentLink[]): JobAssessmentLink[] {
+  return [];
 }
 
 export function buildAssessmentAttemptPath(params: {
@@ -119,7 +118,7 @@ export function buildPostAssessmentSuccessPath(params: {
   return `/explore-jobs?${q.toString()}`;
 }
 
-/** Redirect after application submitted (timing = AFTER_APPLY, or fallback all). */
+/** Redirect after application submitted — disabled; all tests run before apply. */
 export function buildFirstAssessmentRedirect(params: {
   jobId: string;
   candidateId: string;
@@ -177,14 +176,6 @@ export async function resolveJobAssessmentsForApply(
 
 export function assessmentBannerMessage(assessments: JobAssessmentLink[]): string {
   if (!assessments.length) return '';
-  const before = assessmentsBeforeSubmit(assessments);
-  const after = assessmentsAfterApply(assessments);
   const titles = assessments.map((a) => a.title).filter(Boolean).join(' → ');
-  if (before.length && !after.length) {
-    return `When you click Apply, you will complete ${before.length} timed assessment${before.length > 1 ? 's' : ''} first: ${titles}`;
-  }
-  if (after.length && !before.length) {
-    return `After you apply, you will complete ${after.length} timed assessment${after.length > 1 ? 's' : ''}: ${titles}`;
-  }
-  return `This role includes ${assessments.length} timed assessment${assessments.length > 1 ? 's' : ''}: ${titles}`;
+  return `When you click Apply, you will complete ${assessments.length} timed assessment${assessments.length > 1 ? 's' : ''} first: ${titles}`;
 }
