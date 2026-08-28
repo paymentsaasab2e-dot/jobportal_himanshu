@@ -92,7 +92,7 @@ function CompanyLogoBadge({
           />
         </span>
       ) : (
-        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#28A8E1]">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#2563EB]">
           {getCompanyInitials(company)}
         </span>
       )}
@@ -158,7 +158,7 @@ export default function JobMatchesPanel({
           <button
             type="button"
             onClick={onViewAll}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#28A8E1] px-3 py-1.5 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-[#28A8DF]"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#2563EB] px-3 py-1.5 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(37,99,235,0.22)] transition-all duration-200 hover:bg-[#1D4ED8]"
           >
             {t("browseAllJobs")}
             <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.2} />
@@ -175,7 +175,7 @@ export default function JobMatchesPanel({
                 onClick={() => onToggleFilter(pill.key)}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all duration-200 ${
                   active
-                    ? "bg-[#28A8E1] text-white shadow-[0_10px_18px_rgba(40,168,225,0.16)] hover:bg-[#28A8DF]"
+                    ? "bg-[#2563EB] text-white shadow-[0_10px_18px_rgba(37,99,235,0.16)] hover:bg-[#1D4ED8]"
                     : "bg-slate-100/85 text-slate-600 hover:bg-slate-200/75"
                 }`}
               >
@@ -271,7 +271,7 @@ export default function JobMatchesPanel({
                           <button
                             type="button"
                             onClick={() => onApply(job.id)}
-                            className="inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-[#28A8DF]"
+                            className="inline-flex items-center justify-center rounded-xl bg-[#2563EB] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(37,99,235,0.22)] transition-all duration-200 hover:bg-[#1D4ED8]"
                           >
                             {t("applyNow")}
                           </button>

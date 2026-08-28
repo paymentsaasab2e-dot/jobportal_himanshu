@@ -1675,10 +1675,10 @@ export default function OfficeGossipsPage() {
                     type="button"
                     onClick={switchToPersonalAccount}
                     className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm hover:bg-sky-50 ${
-                      !isCompanyAccount ? 'bg-sky-50/80 font-semibold text-[#0A66C2]' : 'text-slate-800'
+                      !isCompanyAccount ? 'bg-sky-50/80 font-semibold text-[#08428c]' : 'text-slate-800'
                     }`}
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-[#1B3A5F]">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-[#08428c]">
                       {authorName.slice(0, 1).toUpperCase()}
                     </span>
                     <span className="min-w-0 flex-1">
@@ -1693,11 +1693,11 @@ export default function OfficeGossipsPage() {
                       onClick={() => switchToCompanyAccount(co.id)}
                       className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm hover:bg-sky-50 ${
                         actingCompanyId === co.id
-                          ? 'bg-sky-50/80 font-semibold text-[#0A66C2]'
+                          ? 'bg-sky-50/80 font-semibold text-[#08428c]'
                           : 'text-slate-800'
                       }`}
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#1B3A5F] text-xs font-bold text-white">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#08428c] text-xs font-bold text-white">
                         {co.logoLetter}
                       </span>
                       <span className="min-w-0 flex-1">
@@ -1919,7 +1919,7 @@ export default function OfficeGossipsPage() {
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </button>
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#1B3A5F]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#08428c]">
                   {activeCommunity.name.slice(0, 1).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -2018,11 +2018,11 @@ export default function OfficeGossipsPage() {
                         <span
                           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
                             hit.kind === 'company'
-                              ? 'bg-[#1B3A5F] text-white'
+                              ? 'bg-[#08428c] text-white'
                               : hit.kind === 'circle'
                                 ? 'bg-amber-100 text-amber-800'
                                 : hit.kind === 'person'
-                                  ? 'bg-sky-100 text-[#1B3A5F]'
+                                  ? 'bg-sky-100 text-[#08428c]'
                                   : 'bg-slate-100 text-slate-600'
                           }`}
                         >
@@ -3011,7 +3011,7 @@ export default function OfficeGossipsPage() {
                     )}
                   </div>
 
-                  <div className="relative shrink-0 rounded-[18px] border border-[#D5E0DC] bg-[#EEF5F2] px-2.5 py-2 shadow-[0_4px_14px_rgba(7,94,84,0.06)]">
+                  <div className="relative shrink-0 rounded-[18px] border border-[rgba(40,168,225,0.2)] bg-[var(--brand-primary-soft)] px-2.5 py-2 shadow-[0_4px_14px_rgba(40,168,225,0.1)]">
                     {!(
                       userId &&
                       activeCommunityId &&
@@ -3022,7 +3022,7 @@ export default function OfficeGossipsPage() {
                         <button
                           type="button"
                           onClick={() => activeCommunityId && handleJoin(activeCommunityId)}
-                          className="mt-2 rounded-full bg-[#00A884] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#029978]"
+                          className="mt-2 rounded-full bg-[#28A8E1] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#1F8FC2]"
                         >
                           Join circle
                         </button>
@@ -3043,7 +3043,7 @@ export default function OfficeGossipsPage() {
                             </button>
                           </div>
                         ) : null}
-                        <div className="flex items-end gap-1.5 rounded-[16px] border border-[#D0DDD8] bg-white px-1.5 py-1.5 shadow-sm">
+                        <div className="flex items-end gap-1.5 rounded-[16px] border border-[rgba(40,168,225,0.22)] bg-white px-1.5 py-1.5 shadow-sm">
                           <input
                             ref={fileInputRef}
                             type="file"
@@ -3061,7 +3061,7 @@ export default function OfficeGossipsPage() {
                               type="button"
                               onClick={insertAtMention}
                               title="Tag someone"
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#54656F] transition hover:bg-[#F0F2F5]"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-[var(--brand-primary-soft)]"
                             >
                               <ComposeAssetIcon src="/icons/email.png" alt="Tag" size={16} />
                             </button>
@@ -3069,7 +3069,7 @@ export default function OfficeGossipsPage() {
                               type="button"
                               onClick={() => fileInputRef.current?.click()}
                               title="Add image"
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#54656F] transition hover:bg-[#F0F2F5]"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-[var(--brand-primary-soft)]"
                             >
                               <ComposeAssetIcon src="/icons/image-.png" alt="Image" size={16} />
                             </button>
@@ -3079,7 +3079,7 @@ export default function OfficeGossipsPage() {
                                 recording ? mediaRecorderRef.current?.stop() : void startVoice()
                               }
                               title={recording ? 'Stop recording' : 'Voice note'}
-                              className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#F0F2F5] ${
+                              className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[var(--brand-primary-soft)] ${
                                 recording ? 'bg-rose-50 ring-1 ring-rose-300' : ''
                               }`}
                             >
@@ -3106,7 +3106,7 @@ export default function OfficeGossipsPage() {
                             disabled={posting}
                             onClick={() => void handlePost()}
                             title="Send (Enter) · New line (Shift+Enter)"
-                            className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00A884] shadow-[0_4px_12px_rgba(0,168,132,0.28)] transition hover:bg-[#029978] disabled:opacity-50"
+                            className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#28A8E1] shadow-[0_4px_12px_rgba(40,168,225,0.28)] transition hover:bg-[#1F8FC2] disabled:opacity-50"
                           >
                             {posting ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
@@ -3195,7 +3195,7 @@ export default function OfficeGossipsPage() {
                     panel — same look as Communities.
                   </p>
                   {dmPendingCount > 0 || followPendingCount > 0 ? (
-                    <p className="relative mt-4 inline-flex items-center gap-1.5 rounded-full border border-[rgba(40,168,225,0.2)] bg-white/85 px-3 py-1.5 text-[11px] font-semibold text-[#0A66C2] shadow-sm">
+                    <p className="relative mt-4 inline-flex items-center gap-1.5 rounded-full border border-[rgba(40,168,225,0.2)] bg-white/85 px-3 py-1.5 text-[11px] font-semibold text-[#08428c] shadow-sm">
                       {dmPendingCount > 0 ? (
                         <span>
                           {dmPendingCount} message{dmPendingCount === 1 ? '' : 's'} waiting
@@ -3340,7 +3340,7 @@ export default function OfficeGossipsPage() {
                       onClick={() => setEventFilter(id)}
                       className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
                         eventFilter === id
-                          ? 'bg-[#1B3A5F] text-white'
+                          ? 'bg-[#08428c] text-white'
                           : 'bg-white/90 text-slate-600 ring-1 ring-slate-200/80 hover:bg-slate-50'
                       }`}
                     >
@@ -3583,7 +3583,7 @@ export default function OfficeGossipsPage() {
                   >
                     <div className={`${feedPostInner} border border-slate-200/70 !px-0 !py-0`}>
                     <div className="flex items-center gap-2.5 px-4 pt-3.5 sm:px-5">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200/80 bg-[#1B3A5F] text-sm font-bold text-white">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200/80 bg-[#08428c] text-sm font-bold text-white">
                         {isJob ? <Briefcase className="h-4 w-4 text-white" /> : ev.hostInitial}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -3596,7 +3596,7 @@ export default function OfficeGossipsPage() {
                         className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
                           isJob
                             ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                            : 'border-sky-200 bg-sky-50 text-[#0A66C2]'
+                            : 'border-sky-200 bg-sky-50 text-[#08428c]'
                         }`}
                       >
                         {eventTypeLabel(ev.type)}
@@ -3685,21 +3685,21 @@ export default function OfficeGossipsPage() {
                             <button
                               type="button"
                               onClick={() => openEventCard(ev)}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#004182]"
+                              className="inline-flex items-center gap-1.5 rounded-full bg-[#08428c] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#004182]"
                             >
                               <Briefcase className="h-3.5 w-3.5" />
                               Apply
                             </button>
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-[#28A8E1] hover:text-[#0A66C2]"
+                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-[#28A8E1] hover:text-[#08428c]"
                             >
                               <Bookmark className="h-3.5 w-3.5" />
                               Save
                             </button>
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-[#28A8E1] hover:text-[#0A66C2]"
+                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-[#28A8E1] hover:text-[#08428c]"
                             >
                               <Share2 className="h-3.5 w-3.5" />
                               Share
@@ -3711,7 +3711,7 @@ export default function OfficeGossipsPage() {
                               <button
                                 type="button"
                                 onClick={() => openEventCard(ev)}
-                                className="inline-flex items-center gap-1.5 rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#004182]"
+                                className="inline-flex items-center gap-1.5 rounded-full bg-[#08428c] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#004182]"
                               >
                                 <Calendar className="h-3.5 w-3.5" />
                                 {Number(ev.tokenCost) > 0
@@ -3729,7 +3729,7 @@ export default function OfficeGossipsPage() {
                               }
                               className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold ${
                                 interested
-                                  ? 'text-[#0A66C2] hover:bg-sky-50'
+                                  ? 'text-[#08428c] hover:bg-sky-50'
                                   : 'text-slate-600 hover:bg-slate-50'
                               }`}
                             >
@@ -3773,7 +3773,7 @@ export default function OfficeGossipsPage() {
                     <button
                       type="button"
                       onClick={() => setEventSearch('')}
-                      className="mt-3 text-xs font-semibold text-[#0A66C2] hover:underline"
+                      className="mt-3 text-xs font-semibold text-[#08428c] hover:underline"
                     >
                       Clear search
                     </button>
@@ -3806,7 +3806,7 @@ export default function OfficeGossipsPage() {
                           onClick={() => openEventCard(ev)}
                           className="flex w-full items-start gap-2 rounded-xl border border-slate-200/80 bg-white/90 px-2.5 py-2 text-left shadow-sm transition hover:border-[rgba(40,168,225,0.28)]"
                         >
-                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1B3A5F] text-[11px] font-bold text-white">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#08428c] text-[11px] font-bold text-white">
                             {ev.type === 'job' ? (
                               <Briefcase className="h-3.5 w-3.5" />
                             ) : (
@@ -3831,8 +3831,8 @@ export default function OfficeGossipsPage() {
           </div>
         ) : null}
 
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 backdrop-blur-md">
-          <div className="mx-auto flex h-[3.75rem] max-w-[1520px] items-stretch justify-around px-2">
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[rgba(40,168,225,0.22)] bg-white/95 shadow-[0_-8px_24px_rgba(40,168,225,0.08)] backdrop-blur-md">
+          <div className="mx-auto flex h-[3.75rem] max-w-[1520px] items-stretch justify-around gap-1 px-2 py-1.5">
             {(
               isCompanyAccount
                 ? ([
@@ -3864,11 +3864,18 @@ export default function OfficeGossipsPage() {
                       }
                     }
                   }}
-                  className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition ${
-                    active ? 'text-[#0A66C2]' : 'text-slate-400 hover:text-slate-600'
+                  className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl text-[10px] font-semibold transition ${
+                    active
+                      ? 'bg-[var(--brand-primary-soft)] text-[#08428c] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]'
+                      : 'text-slate-400 hover:bg-[rgba(232,247,253,0.6)] hover:text-[#08428c]'
                   }`}
                 >
-                  <Icon className={`h-5 w-5 ${active ? 'stroke-[2.25]' : ''}`} />
+                  {active ? (
+                    <span className="absolute inset-x-5 top-0 h-[2.5px] rounded-full bg-linear-to-r from-[#28A8E1] to-[#FC9620]" />
+                  ) : null}
+                  <Icon
+                    className={`h-5 w-5 ${active ? 'stroke-[2.25] text-[#28A8E1]' : ''}`}
+                  />
                   <span className="truncate">{label}</span>
                 </button>
               );
@@ -4018,7 +4025,7 @@ function CreateCommunityModal({
             onClick={() => setVisibility('public')}
             className={`inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold ${
               visibility === 'public'
-                ? 'border-[#28A8E1] bg-sky-50 text-[#1B3A5F]'
+                ? 'border-[#28A8E1] bg-sky-50 text-[#08428c]'
                 : 'border-slate-300 text-slate-600'
             }`}
           >
@@ -4029,7 +4036,7 @@ function CreateCommunityModal({
             onClick={() => setVisibility('private')}
             className={`inline-flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold ${
               visibility === 'private'
-                ? 'border-[#28A8E1] bg-sky-50 text-[#1B3A5F]'
+                ? 'border-[#28A8E1] bg-sky-50 text-[#08428c]'
                 : 'border-slate-300 text-slate-600'
             }`}
           >

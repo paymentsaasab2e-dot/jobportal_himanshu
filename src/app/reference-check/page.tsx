@@ -232,7 +232,7 @@ function ReferenceCheckInner() {
                             onClick={() => openCompany(co.id)}
                             className="flex w-full items-start gap-3 rounded-[16px] border border-slate-200/90 bg-slate-50/60 px-3 py-3 text-left transition hover:border-[rgba(40,168,225,0.35)] hover:bg-sky-50/80"
                           >
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#1B3A5F] text-sm font-bold text-white">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#08428c] text-sm font-bold text-white">
                               {co.logoLetter || co.name.slice(0, 1).toUpperCase()}
                             </span>
                             <span className="min-w-0 flex-1">

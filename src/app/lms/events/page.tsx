@@ -494,7 +494,7 @@ export default function LmsEventsPage() {
               onClick={() => setKindFilter(id)}
               className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                 kindFilter === id
-                  ? 'bg-[#1B3A5F] text-white'
+                  ? 'bg-[#08428c] text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -631,7 +631,7 @@ function EventCard({
               registered
                 ? 'text-emerald-700'
                 : isJob
-                  ? 'text-[#0A66C2]'
+                  ? 'text-[#08428c]'
                   : ev.status === 'past'
                     ? 'text-gray-500'
                     : 'text-amber-800'
@@ -709,7 +709,7 @@ function EventCard({
               <button
                 type="button"
                 onClick={onApply}
-                className="flex-1 cursor-pointer rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:bg-[#004182] hover:shadow-sm active:scale-[0.98]"
+                className="flex-1 cursor-pointer rounded-xl border border-[#08428c] bg-[#08428c] px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:bg-[#004182] hover:shadow-sm active:scale-[0.98]"
               >
                 Apply now
               </button>

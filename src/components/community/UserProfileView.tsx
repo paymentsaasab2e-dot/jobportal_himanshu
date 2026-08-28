@@ -188,7 +188,7 @@ export function UserProfileView({
       <button
         type="button"
         onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-[#0A66C2]"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-[#08428c]"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Back to feed
@@ -199,7 +199,7 @@ export function UserProfileView({
 
         <div className="px-4 sm:px-5">
           <div className="-mt-8 flex items-end justify-between gap-3 sm:-mt-9">
-            <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[3px] border-white bg-[#1B3A5F] text-2xl font-bold text-white shadow-md sm:h-[72px] sm:w-[72px] sm:text-[28px]">
+            <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[3px] border-white bg-[#08428c] text-2xl font-bold text-white shadow-md sm:h-[72px] sm:w-[72px] sm:text-[28px]">
               {name.slice(0, 1).toUpperCase()}
               <span
                 className={`absolute bottom-1 right-1 h-3 w-3 rounded-full ring-2 ring-white ${
@@ -215,7 +215,7 @@ export function UserProfileView({
                     type="button"
                     disabled={busy || follow?.status === 'pending' || follow?.status === 'accepted'}
                     onClick={handleFollow}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#0A66C2] px-3.5 text-xs font-semibold text-[#0A66C2] hover:bg-sky-50 disabled:opacity-50"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#08428c] px-3.5 text-xs font-semibold text-[#08428c] hover:bg-sky-50 disabled:opacity-50"
                   >
                     <UserPlus className="h-3.5 w-3.5" />
                     {follow?.status === 'accepted'
@@ -228,7 +228,7 @@ export function UserProfileView({
                     type="button"
                     disabled={busy}
                     onClick={handleMessage}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#0A66C2] px-3.5 text-xs font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#08428c] px-3.5 text-xs font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
                   >
                     <MessageSquare className="h-3.5 w-3.5" />
                     Message
@@ -255,7 +255,7 @@ export function UserProfileView({
                     checked={msgAnon || profileForcedAnon}
                     disabled={profileForcedAnon}
                     onChange={(e) => setMsgAnon(e.target.checked)}
-                    className="rounded border-slate-300 text-[#0A66C2]"
+                    className="rounded border-slate-300 text-[#08428c]"
                   />
                   Message anonymously
                   {profileForcedAnon ? ' (locked)' : ''}
@@ -297,7 +297,7 @@ export function UserProfileView({
                     key={c.id}
                     type="button"
                     onClick={() => onOpenCompany?.(c.id)}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:border-[#0A66C2] hover:text-[#0A66C2]"
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:border-[#08428c] hover:text-[#08428c]"
                   >
                     <Briefcase className="h-3 w-3" />
                     {c.name}

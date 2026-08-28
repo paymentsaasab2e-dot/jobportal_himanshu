@@ -232,7 +232,7 @@ export function ReferenceCheckWizard({
               <div
                 key={id}
                 className={`h-1 flex-1 rounded-full transition ${
-                  i <= stepIndex ? 'bg-[#0A66C2]' : 'bg-slate-100'
+                  i <= stepIndex ? 'bg-[#08428c]' : 'bg-slate-100'
                 }`}
               />
             ))}
@@ -246,9 +246,9 @@ export function ReferenceCheckWizard({
               <button
                 type="button"
                 onClick={() => pickRole('employee')}
-                className="group flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-sky-50 to-white p-4 text-left transition hover:border-[#0A66C2] hover:shadow-md"
+                className="group flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-sky-50 to-white p-4 text-left transition hover:border-[#08428c] hover:shadow-md"
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0A66C2] text-white shadow-sm">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#08428c] text-white shadow-sm">
                   <Briefcase className="h-5 w-5" />
                 </span>
                 <span>
@@ -284,7 +284,7 @@ export function ReferenceCheckWizard({
                   value={personQuery}
                   onChange={(e) => setPersonQuery(e.target.value)}
                   placeholder="Search people…"
-                  className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none focus:border-[#0A66C2] focus:bg-white"
+                  className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none focus:border-[#08428c] focus:bg-white"
                 />
               </div>
               <ul className="grid gap-2 sm:grid-cols-2">
@@ -297,13 +297,13 @@ export function ReferenceCheckWizard({
                         onClick={() => pickPerson(p.userId, p.displayName)}
                         className={`flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition ${
                           selected
-                            ? 'border-[#0A66C2] bg-sky-50 shadow-sm'
+                            ? 'border-[#08428c] bg-sky-50 shadow-sm'
                             : 'border-slate-200 bg-white hover:bg-slate-50'
                         }`}
                       >
                         <span
                           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                            selected ? 'bg-[#0A66C2] text-white' : 'bg-slate-100 text-slate-600'
+                            selected ? 'bg-[#08428c] text-white' : 'bg-slate-100 text-slate-600'
                           }`}
                         >
                           {p.displayName.slice(0, 1).toUpperCase()}
@@ -318,7 +318,7 @@ export function ReferenceCheckWizard({
                           </span>
                         </span>
                         {selected ? (
-                          <Check className="h-5 w-5 shrink-0 text-[#0A66C2]" />
+                          <Check className="h-5 w-5 shrink-0 text-[#08428c]" />
                         ) : (
                           <User className="h-4 w-4 shrink-0 text-slate-300" />
                         )}
@@ -354,7 +354,7 @@ export function ReferenceCheckWizard({
                     {questions.map((q, i) => (
                       <div
                         key={q}
-                        className="flex items-start gap-2 rounded-2xl bg-[#0A66C2] px-3.5 py-2.5 text-[12px] font-medium text-white"
+                        className="flex items-start gap-2 rounded-2xl bg-[#08428c] px-3.5 py-2.5 text-[12px] font-medium text-white"
                       >
                         <span className="mt-0.5 shrink-0 text-white/70">{i + 1}.</span>
                         <span className="min-w-0 flex-1">{q}</span>
@@ -385,7 +385,7 @@ export function ReferenceCheckWizard({
                       }
                     }}
                     placeholder="Or type your own…"
-                    className="h-11 min-w-0 flex-1 rounded-2xl border border-slate-200 px-3.5 text-sm outline-none focus:border-[#0A66C2]"
+                    className="h-11 min-w-0 flex-1 rounded-2xl border border-slate-200 px-3.5 text-sm outline-none focus:border-[#08428c]"
                   />
                   <button
                     type="button"
@@ -410,9 +410,9 @@ export function ReferenceCheckWizard({
                         key={q}
                         type="button"
                         onClick={() => toggleQuestion(q)}
-                        className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left text-[12px] text-slate-700 transition hover:border-[#0A66C2] hover:bg-sky-50"
+                        className="flex items-start gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left text-[12px] text-slate-700 transition hover:border-[#08428c] hover:bg-sky-50"
                       >
-                        <Plus className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0A66C2]" />
+                        <Plus className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#08428c]" />
                         <span>{q}</span>
                       </button>
                     ))}
@@ -513,7 +513,7 @@ export function ReferenceCheckWizard({
               type="button"
               onClick={goNext}
               disabled={step === 'person' ? !refereeId : questions.length === 0}
-              className="inline-flex h-11 items-center gap-1.5 rounded-2xl bg-[#0A66C2] px-5 text-sm font-semibold text-white hover:bg-[#004182] disabled:opacity-40"
+              className="inline-flex h-11 items-center gap-1.5 rounded-2xl bg-[#08428c] px-5 text-sm font-semibold text-white hover:bg-[#004182] disabled:opacity-40"
             >
               Continue
               <ArrowRight className="h-4 w-4" />

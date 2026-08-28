@@ -204,7 +204,7 @@ export default function AdministrationPage() {
                 type="button"
                 disabled={releaseBusy}
                 onClick={() => void createHqRelease(true)}
-                className="rounded-lg bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
+                className="rounded-lg bg-[#08428c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
               >
                 Persist HQ release
               </button>

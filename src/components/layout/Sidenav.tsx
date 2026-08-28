@@ -276,7 +276,7 @@ export function Sidenav({ avatarUrl = '', userProfile, children }: SidenavProps)
       {/* ── Top Navigation Bar ─────────────────────────────────────────── */}
       <nav
         className="fixed top-0 left-0 right-0 h-14 flex items-center justify-between px-5 z-50"
-        style={{ backgroundColor: '#0F2A44', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ backgroundColor: '#062E5F', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
       >
         {/* Logo area — same width as sidebar so search starts after */}
         <div
@@ -355,7 +355,7 @@ export function Sidenav({ avatarUrl = '', userProfile, children }: SidenavProps)
         style={{
           width: SIDEBAR_W,
           height: 'calc(100vh - 56px)',
-          backgroundColor: '#0F2A44',
+          backgroundColor: '#062E5F',
           borderRight: '1px solid rgba(255,255,255,0.05)',
         }}
       >

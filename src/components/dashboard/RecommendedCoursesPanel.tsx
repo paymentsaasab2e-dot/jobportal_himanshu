@@ -14,21 +14,21 @@ interface RecommendedCoursesPanelProps {
 
 const THUMBNAIL_THEMES = [
   {
-    start: "#28A8E1",
-    end: "#28A8DF",
-    accent: "#FC9620",
+    start: "#2563EB",
+    end: "#1D4ED8",
+    accent: "#0D9488",
     overlay: "rgba(255,255,255,0.18)",
   },
   {
-    start: "#28A8DF",
-    end: "#28A8E1",
-    accent: "#FC9620",
+    start: "#1D4ED8",
+    end: "#2563EB",
+    accent: "#0D9488",
     overlay: "rgba(255,255,255,0.16)",
   },
   {
-    start: "#FC9620",
-    end: "#28A8E1",
-    accent: "#28A8DF",
+    start: "#0D9488",
+    end: "#2563EB",
+    accent: "#1D4ED8",
     overlay: "rgba(255,255,255,0.18)",
   },
 ] as const;
@@ -201,7 +201,7 @@ export default function RecommendedCoursesPanel({
           <button
             type="button"
             onClick={onBrowseAll}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(40,168,225,0.24)] hover:bg-[var(--brand-primary-soft)]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(37,99,235,0.24)] hover:bg-[var(--brand-primary-soft)]"
           >
             {t("browseLibrary")}
             <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -271,7 +271,7 @@ export default function RecommendedCoursesPanel({
                     <button
                       type="button"
                       onClick={() => onOpenCourse(course.id)}
-                      className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.2)] transition-all duration-200 hover:bg-[#28A8DF]"
+                      className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#2563EB] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(37,99,235,0.2)] transition-all duration-200 hover:bg-[#1D4ED8]"
                     >
                       {t("openCourse")}
                       <ArrowUpRight

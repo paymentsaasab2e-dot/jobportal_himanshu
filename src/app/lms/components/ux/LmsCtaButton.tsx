@@ -17,7 +17,7 @@ function variantClass(variant: LmsCtaVariant) {
   if (variant === 'ghost') {
     return 'bg-transparent text-gray-900 hover:bg-gray-50';
   }
-  return 'bg-[#28A8E1] text-white hover:opacity-95 hover:shadow-md';
+  return 'btn-brand';
 }
 
 export function LmsCtaButton({
