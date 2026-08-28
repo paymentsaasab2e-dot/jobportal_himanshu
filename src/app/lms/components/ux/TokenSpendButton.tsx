@@ -110,9 +110,7 @@ export function TokenSpendButton({
         disabled={busy || disabled}
         onClick={() => void handleClick()}
         className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-60 ${
-          canAfford || tokenCost === 0
-            ? 'bg-[#28A8E1] hover:opacity-95'
-            : 'bg-amber-500 hover:opacity-95'
+          canAfford || tokenCost === 0 ? 'btn-brand' : 'bg-amber-500 hover:opacity-95'
         }`}
       >
         {buttonBody}

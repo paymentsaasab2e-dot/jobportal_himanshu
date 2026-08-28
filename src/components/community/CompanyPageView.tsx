@@ -694,7 +694,7 @@ export function CompanyPageView({
       <button
         type="button"
         onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-[#0A66C2]"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-[#08428c]"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
           {backLabel}
@@ -704,7 +704,7 @@ export function CompanyPageView({
       <div className="overflow-hidden rounded-[24px] bg-linear-to-br from-[#28A8E1] via-[#5BB8E8] to-[#FC9620] p-[1.5px] shadow-[0_14px_36px_rgba(40,168,225,0.14),0_6px_18px_rgba(252,150,32,0.1)]">
         <div className="overflow-hidden rounded-[22.5px] bg-white">
           <div className="relative h-28 overflow-hidden sm:h-32">
-            <div className="absolute inset-0 bg-linear-to-br from-[#0F2A44] via-[#1B3A5F] to-[#28A8E1]" />
+            <div className="absolute inset-0 bg-linear-to-br from-[#062E5F] via-[#08428c] to-[#28A8E1]" />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.35),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.12),transparent_40%)]" />
             <div className="pointer-events-none absolute -right-6 top-2 h-24 w-24 rounded-full bg-[#FC9620]/25 blur-2xl" />
             {isSelfOwner ? (
@@ -717,7 +717,7 @@ export function CompanyPageView({
           <div className="relative px-4 sm:px-5">
             <div className="-mt-10 flex flex-wrap items-end justify-between gap-3 sm:-mt-12">
               <div className="relative">
-                <div className="flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center overflow-hidden rounded-[20px] border-[3px] border-white bg-linear-to-br from-[#1B3A5F] to-[#28A8E1] text-2xl font-bold text-white shadow-[0_12px_28px_rgba(15,23,42,0.25)] sm:h-20 sm:w-20 sm:text-[30px]">
+                <div className="flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center overflow-hidden rounded-[20px] border-[3px] border-white bg-linear-to-br from-[#08428c] to-[#28A8E1] text-2xl font-bold text-white shadow-[0_12px_28px_rgba(15,23,42,0.25)] sm:h-20 sm:w-20 sm:text-[30px]">
                   {company.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -744,7 +744,7 @@ export function CompanyPageView({
                     <button
                       type="button"
                       onClick={() => logoInputRef.current?.click()}
-                      className="absolute -bottom-1 -right-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#1B3A5F] shadow ring-1 ring-slate-200"
+                      className="absolute -bottom-1 -right-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#08428c] shadow ring-1 ring-slate-200"
                       title="Change profile picture"
                     >
                       <ImagePlus className="h-3.5 w-3.5" />
@@ -815,7 +815,7 @@ export function CompanyPageView({
                   <button
                     type="button"
                     onClick={goToReferenceCheck}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#1B3A5F] px-3.5 text-xs font-semibold text-white shadow-[0_8px_16px_rgba(27,58,95,0.28)]"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#08428c] px-3.5 text-xs font-semibold text-white shadow-[0_8px_16px_rgba(8,66,140,0.28)]"
                   >
                     <ShieldCheck className="h-3.5 w-3.5" />
                     Reference check
@@ -902,7 +902,7 @@ export function CompanyPageView({
                 }}
               className={`relative flex-1 px-2 py-2.5 text-center text-sm font-semibold transition sm:flex-none sm:px-4 ${
                 tab === t.id
-                  ? 'text-[#0A66C2] after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:rounded-full after:bg-[#0A66C2]'
+                  ? 'text-[#08428c] after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:rounded-full after:bg-[#08428c]'
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
               }`}
             >
@@ -955,7 +955,7 @@ export function CompanyPageView({
         <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-[#0A66C2]" />
+            <Users className="h-4 w-4 text-[#08428c]" />
             <h2 className="text-sm font-bold text-slate-900">People at {company.name}</h2>
             </div>
             <label
@@ -968,7 +968,7 @@ export function CompanyPageView({
                 checked={msgAnon || profileForcedAnon}
                 disabled={profileForcedAnon}
                 onChange={(e) => setMsgAnon(e.target.checked)}
-                className="rounded border-slate-300 text-[#0A66C2]"
+                className="rounded border-slate-300 text-[#08428c]"
               />
               Message anonymously
               {profileForcedAnon ? ' (locked)' : ''}
@@ -992,7 +992,7 @@ export function CompanyPageView({
                     key={id}
                     className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5"
                   >
-                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1B3A5F] text-sm font-bold text-white">
+                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#08428c] text-sm font-bold text-white">
                       {name.slice(0, 1).toUpperCase()}
                       <span
                         className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-slate-50 ${
@@ -1007,7 +1007,7 @@ export function CompanyPageView({
                           <button
                             type="button"
                             onClick={() => onOpenProfile(id)}
-                            className="hover:text-[#0A66C2] hover:underline"
+                            className="hover:text-[#08428c] hover:underline"
                           >
                             {name}
                           </button>
@@ -1043,7 +1043,7 @@ export function CompanyPageView({
                           type="button"
                           disabled={busy}
                           onClick={() => handleMessage(id)}
-                          className="inline-flex items-center gap-1 rounded-full border border-[#0A66C2] px-2.5 py-1 text-[11px] font-semibold text-[#0A66C2] hover:bg-sky-50 disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-full border border-[#08428c] px-2.5 py-1 text-[11px] font-semibold text-[#08428c] hover:bg-sky-50 disabled:opacity-50"
                         >
                           <MessageSquare className="h-3 w-3" />
                           Message
@@ -1060,7 +1060,7 @@ export function CompanyPageView({
                               if (onStartReferenceCheck) onStartReferenceCheck();
                               else void handleReference(id);
                             }}
-                            className="rounded-full bg-[#0A66C2] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
+                            className="rounded-full bg-[#08428c] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
                           >
                             Reference
                           </button>
@@ -1077,7 +1077,7 @@ export function CompanyPageView({
 
       {tab === 'references' && isFeedVariant ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center">
-          <ShieldCheck className="mx-auto h-8 w-8 text-[#1B3A5F]" />
+          <ShieldCheck className="mx-auto h-8 w-8 text-[#08428c]" />
           <p className="mt-3 text-sm font-semibold text-slate-900">
             Reference Check is a separate module
           </p>
@@ -1087,7 +1087,7 @@ export function CompanyPageView({
           <button
             type="button"
             onClick={goToReferenceCheck}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#1B3A5F] px-4 py-2 text-xs font-semibold text-white"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#08428c] px-4 py-2 text-xs font-semibold text-white"
           >
             <ShieldCheck className="h-3.5 w-3.5" />
             Go to Reference Check
@@ -1107,7 +1107,7 @@ export function CompanyPageView({
                 <button
                   type="button"
                   onClick={onStartReferenceCheck}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#1B3A5F] px-3 py-1.5 text-[11px] font-semibold text-white"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#08428c] px-3 py-1.5 text-[11px] font-semibold text-white"
                 >
                   <ShieldCheck className="h-3.5 w-3.5" />
                   Start reference check
@@ -1129,7 +1129,7 @@ export function CompanyPageView({
                       key={person.userId}
                       className="flex items-center gap-3 rounded-xl border border-slate-100 px-3 py-3"
                     >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#1B3A5F]">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#08428c]">
                         {person.displayName.slice(0, 1).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -1152,7 +1152,7 @@ export function CompanyPageView({
                               ? onStartReferenceCheck()
                               : void handleReference(person.userId)
                           }
-                          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#0A66C2] px-4 py-2 text-xs font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#08428c] px-4 py-2 text-xs font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
                         >
                           {onStartReferenceCheck ? (
                             'Reference check'
@@ -1194,7 +1194,7 @@ export function CompanyPageView({
                       <button
                         type="button"
                         onClick={() => onOpenChat?.('reference', r.id)}
-                        className="shrink-0 rounded-full bg-[#0A66C2] px-2.5 py-1 text-[10px] font-semibold text-white"
+                        className="shrink-0 rounded-full bg-[#08428c] px-2.5 py-1 text-[10px] font-semibold text-white"
                       >
                         Open
                       </button>
@@ -1219,7 +1219,7 @@ export function CompanyPageView({
 
           <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm">
             <div className="mb-2 flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-[#0A66C2]" />
+              <MessageSquare className="h-4 w-4 text-[#08428c]" />
               <h2 className="text-sm font-bold text-slate-900">Message requests</h2>
             </div>
             {pendingDmIncoming.length === 0 ? (
@@ -1279,7 +1279,7 @@ export function CompanyPageView({
                           <span className="font-medium text-slate-800">
                             {getDmPeerLabel(d, userId)}
                           </span>
-                          <span className="text-[10px] font-semibold text-[#0A66C2]">Open</span>
+                          <span className="text-[10px] font-semibold text-[#08428c]">Open</span>
                         </button>
                       </li>
                     ))}
@@ -1356,7 +1356,7 @@ export function CompanyPageView({
                               <button
                                 type="button"
                                 onClick={() => onOpenChat?.('reference', r.id)}
-                                className="rounded-full bg-[#0A66C2] px-3 py-1.5 text-[11px] font-semibold text-white"
+                                className="rounded-full bg-[#08428c] px-3 py-1.5 text-[11px] font-semibold text-white"
                               >
                                 Chat
                               </button>
@@ -1375,7 +1375,7 @@ export function CompanyPageView({
 
       {showCreatePost ? (
         <div
-          className="fixed inset-0 z-80 flex items-end justify-center bg-[#0F2A44]/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+          className="fixed inset-0 z-80 flex items-end justify-center bg-[#062E5F]/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Create post"
@@ -1385,7 +1385,7 @@ export function CompanyPageView({
         >
           <div className="w-full max-w-md overflow-hidden rounded-t-[26px] bg-linear-to-br from-[#28A8E1] via-[#5BB8E8] to-[#FC9620] p-[1.5px] shadow-[0_24px_60px_rgba(15,42,68,0.35)] sm:rounded-[26px]">
             <div className="flex max-h-[92vh] flex-col overflow-hidden rounded-t-[24.5px] bg-white sm:rounded-[24.5px]">
-              <div className="relative overflow-hidden bg-linear-to-r from-[#0F2A44] via-[#1B3A5F] to-[#28A8E1] px-3 py-3">
+              <div className="relative overflow-hidden bg-linear-to-r from-[#062E5F] via-[#08428c] to-[#28A8E1] px-3 py-3">
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.35),transparent_45%)]" />
                 <div className="relative flex items-center justify-between gap-2">
                   <button
@@ -1415,7 +1415,7 @@ export function CompanyPageView({
                     <button
                       type="button"
                       onClick={() => setComposeStep('caption')}
-                      className="rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-[#1B3A5F] shadow-sm"
+                      className="rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-[#08428c] shadow-sm"
                     >
                       Next
                     </button>
@@ -1477,7 +1477,7 @@ export function CompanyPageView({
                 {composeStep === 'media' ? (
                   <div className="flex flex-col">
                     {composeImages.length > 0 ? (
-                      <div className="relative bg-[#0F2A44]">
+                      <div className="relative bg-[#062E5F]">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={composeImages[carouselIndex] || composeImages[0]}
@@ -1518,7 +1518,7 @@ export function CompanyPageView({
                             </div>
                           </>
                         ) : null}
-                        <div className="flex flex-wrap items-center gap-1.5 border-t border-white/10 bg-[#0F2A44] px-3 py-2.5">
+                        <div className="flex flex-wrap items-center gap-1.5 border-t border-white/10 bg-[#062E5F] px-3 py-2.5">
                           {composeImages.map((src, i) => (
                             <button
                               key={`${src.slice(0, 24)}-${i}`}
@@ -1554,7 +1554,7 @@ export function CompanyPageView({
                         </div>
                       </div>
                     ) : composeVideo ? (
-                      <div className="bg-[#0F2A44]">
+                      <div className="bg-[#062E5F]">
                         <video
                           src={composeVideo.url}
                           controls
@@ -1594,7 +1594,7 @@ export function CompanyPageView({
                           <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="inline-flex h-11 items-center gap-1.5 rounded-full bg-linear-to-r from-[#28A8E1] to-[#1B3A5F] px-5 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(40,168,225,0.28)]"
+                            className="inline-flex h-11 items-center gap-1.5 rounded-full bg-linear-to-r from-[#28A8E1] to-[#08428c] px-5 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(40,168,225,0.28)]"
                           >
                             <ImagePlus className="h-4 w-4" />
                             Photos
@@ -1641,7 +1641,7 @@ export function CompanyPageView({
                     )}
                     <div className="rounded-[20px] border border-slate-200/80 bg-white p-3.5 shadow-sm">
                       <div className="flex gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-linear-to-br from-[#1B3A5F] to-[#28A8E1] text-sm font-bold text-white shadow-sm">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-linear-to-br from-[#08428c] to-[#28A8E1] text-sm font-bold text-white shadow-sm">
                           {isSelfOwner
                             ? company.logoLetter
                             : authorName.slice(0, 1).toUpperCase()}
@@ -1693,7 +1693,7 @@ export function CompanyPageView({
 
       {showEditPage ? (
         <div
-          className="fixed inset-0 z-80 flex items-end justify-center bg-[#0F2A44]/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+          className="fixed inset-0 z-80 flex items-end justify-center bg-[#062E5F]/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Edit company page"
@@ -1703,7 +1703,7 @@ export function CompanyPageView({
         >
           <div className="w-full max-w-md overflow-hidden rounded-t-[26px] bg-linear-to-br from-[#28A8E1] via-[#5BB8E8] to-[#FC9620] p-[1.5px] shadow-[0_24px_60px_rgba(15,42,68,0.35)] sm:rounded-[26px]">
             <div className="overflow-hidden rounded-t-[24.5px] bg-white sm:rounded-[24.5px]">
-              <div className="relative overflow-hidden bg-linear-to-r from-[#0F2A44] via-[#1B3A5F] to-[#28A8E1] px-4 py-3.5">
+              <div className="relative overflow-hidden bg-linear-to-r from-[#062E5F] via-[#08428c] to-[#28A8E1] px-4 py-3.5">
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.35),transparent_45%)]" />
                 <div className="relative flex items-center justify-between gap-2">
                   <div>
@@ -1725,7 +1725,7 @@ export function CompanyPageView({
               <div className="space-y-4 bg-[#F4F8FB] p-4">
                 <div className="rounded-[20px] border border-slate-200/80 bg-white p-4 shadow-sm">
                   <div className="flex items-center gap-3.5">
-                    <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center overflow-hidden rounded-[18px] bg-linear-to-br from-[#1B3A5F] to-[#28A8E1] text-2xl font-bold text-white shadow-sm">
+                    <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center overflow-hidden rounded-[18px] bg-linear-to-br from-[#08428c] to-[#28A8E1] text-2xl font-bold text-white shadow-sm">
                       {editLogoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={editLogoUrl} alt="" className="h-full w-full object-cover" />

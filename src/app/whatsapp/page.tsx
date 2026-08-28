@@ -1291,7 +1291,7 @@ function WhatsAppLoginInner() {
                   <button
                     type="button"
                     onClick={() => switchMode("signup")}
-                    className="w-full h-11 rounded-full bg-linear-to-r from-[#E8770E] to-[#FC9620] hover:brightness-105 text-white text-[13px] font-bold transition-all shadow-[0_8px_18px_rgba(252,150,32,0.28)]"
+                    className="btn-brand-accent w-full h-11 rounded-full text-[13px] font-bold"
                   >
                     {t("whatsapp.accountNotFoundCta")}
                   </button>
@@ -1304,7 +1304,7 @@ function WhatsAppLoginInner() {
                   isLoading ||
                   (isOtpSignIn && signInOtpSent && otpValue.length !== 6)
                 }
-                className={`w-full flex justify-center items-center gap-2 rounded-full bg-linear-to-r from-[#08428c] to-[#28a8e1] hover:brightness-105 active:brightness-95 text-white font-bold text-[14px] shadow-[0_10px_24px_rgba(8,66,140,0.32)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 transform ${isSignIn ? "h-[48px] mt-5" : "h-[46px] mt-3.5"}`}
+                className={`btn-brand w-full flex justify-center items-center gap-2 rounded-full font-bold text-[14px] ${isSignIn ? "h-[48px] mt-5" : "h-[46px] mt-3.5"}`}
               >
                 {isLoading ? (
                   <>

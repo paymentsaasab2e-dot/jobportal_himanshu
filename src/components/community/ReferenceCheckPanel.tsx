@@ -176,7 +176,7 @@ export function ReferenceCheckPanel({
   const statusTone = (r: ReferenceCheckRequest) => {
     if (r.status === 'rejected') return 'bg-rose-50 text-rose-700 ring-rose-100';
     if (r.status === 'completed') return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
-    if (r.status === 'answered') return 'bg-sky-50 text-[#0A66C2] ring-sky-100';
+    if (r.status === 'answered') return 'bg-sky-50 text-[#08428c] ring-sky-100';
     if (r.status === 'awaiting_answers') return 'bg-amber-50 text-amber-800 ring-amber-100';
     return 'bg-slate-100 text-slate-600 ring-slate-200';
   };
@@ -347,7 +347,7 @@ export function ReferenceCheckPanel({
       <div className="relative flex shrink-0 items-center justify-between border-b border-slate-100/80 px-3.5 py-2.5">
         <h2 className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
           {variant === 'chat' ? (
-            <MessageSquare className="h-4 w-4 text-[#0A66C2]" />
+            <MessageSquare className="h-4 w-4 text-[#08428c]" />
           ) : (
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
           )}
@@ -369,7 +369,7 @@ export function ReferenceCheckPanel({
               onClick={() => setTab(id)}
               className={`flex-1 px-2 py-2 text-[11px] font-semibold ${
                 tab === id
-                  ? 'border-b-2 border-[#0A66C2] text-[#0A66C2]'
+                  ? 'border-b-2 border-[#08428c] text-[#08428c]'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -423,12 +423,12 @@ export function ReferenceCheckPanel({
                     onClick={() => setDetailRequestId(r.id)}
                     className={`group w-full rounded-2xl border p-3 text-left transition ${
                       selected
-                        ? 'border-[#0A66C2] bg-gradient-to-br from-sky-50 to-white shadow-sm ring-1 ring-[#0A66C2]/20'
+                        ? 'border-[#08428c] bg-gradient-to-br from-sky-50 to-white shadow-sm ring-1 ring-[#08428c]/20'
                         : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
                     }`}
                   >
                     <div className="flex items-start gap-2.5">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1B3A5F] text-[11px] font-bold uppercase text-white">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#08428c] text-[11px] font-bold uppercase text-white">
                         {(getReferencePeerLabel(r, userId) || '?').slice(0, 1)}
                       </span>
                       <div className="min-w-0 flex-1">
@@ -454,7 +454,7 @@ export function ReferenceCheckPanel({
                             </span>
                           ) : null}
                         </div>
-                        <span className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#0A66C2] group-hover:underline">
+                        <span className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#08428c] group-hover:underline">
                           {detailCta}
                           <span aria-hidden>→</span>
                         </span>
@@ -468,7 +468,7 @@ export function ReferenceCheckPanel({
                 <div
                   key={r.id}
                   className={`space-y-2 rounded-xl border px-3 py-2.5 ${
-                    selected ? 'border-[#0A66C2] bg-sky-50/40' : 'border-slate-200 bg-white'
+                    selected ? 'border-[#08428c] bg-sky-50/40' : 'border-slate-200 bg-white'
                   }`}
                 >
                   <button
@@ -507,7 +507,7 @@ export function ReferenceCheckPanel({
                               onChange={(e) =>
                                 setRefAcceptAnon((m) => ({ ...m, [r.id]: e.target.checked }))
                               }
-                              className="rounded border-slate-300 text-[#0A66C2]"
+                              className="rounded border-slate-300 text-[#08428c]"
                             />
                             <EyeOff className="h-3.5 w-3.5" />
                             Stay anonymous
@@ -558,7 +558,7 @@ export function ReferenceCheckPanel({
                                 }
                                 rows={2}
                                 placeholder="Your answer…"
-                                className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-[12px] outline-none focus:border-[#0A66C2]"
+                                className="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-[12px] outline-none focus:border-[#08428c]"
                               />
                             </div>
                           ))}
@@ -566,7 +566,7 @@ export function ReferenceCheckPanel({
                             type="button"
                             disabled={busy}
                             onClick={() => void handleSubmitAnswers(r)}
-                            className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-full bg-[#0A66C2] text-xs font-semibold text-white disabled:opacity-50"
+                            className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-full bg-[#08428c] text-xs font-semibold text-white disabled:opacity-50"
                           >
                             <Check className="h-3.5 w-3.5" />
                             Send response
@@ -740,7 +740,7 @@ function RequestRow({
   const initial = displayName.slice(0, 1).toUpperCase();
   return (
     <div className="flex items-center gap-2 rounded-[14px] border border-amber-200/70 bg-amber-50/50 px-2.5 py-1.5">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1B3A5F] text-[11px] font-bold text-white">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#08428c] text-[11px] font-bold text-white">
         {initial}
       </span>
       <p className="min-w-0 flex-1 truncate text-[12px] font-semibold text-slate-800">
@@ -815,7 +815,7 @@ function ChatListRow({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={avatarSrc} alt="" className="h-7 w-7 object-contain" />
           ) : (
-            <span className="flex h-full w-full items-center justify-center bg-[#1B3A5F] text-[11px] font-bold text-white">
+            <span className="flex h-full w-full items-center justify-center bg-[#08428c] text-[11px] font-bold text-white">
               {initial}
             </span>
           )}

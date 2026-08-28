@@ -280,7 +280,7 @@ export function ReferenceMessagingPanel({
         }
       >
         Conversation not found.
-        <button type="button" onClick={onClose} className="ml-2 font-semibold text-[#0A66C2]">
+        <button type="button" onClick={onClose} className="ml-2 font-semibold text-[#08428c]">
           Close
         </button>
       </div>
@@ -459,7 +459,7 @@ export function ReferenceMessagingPanel({
       <button
         type="button"
         onClick={() => setMinimized(false)}
-        className="fixed bottom-4 right-4 z-[80] flex w-[min(280px,calc(100vw-1.5rem))] items-center gap-2 rounded-t-xl border border-slate-700 bg-[#1B3A5F] px-3 py-3 text-left text-white shadow-2xl"
+        className="fixed bottom-4 right-4 z-[80] flex w-[min(280px,calc(100vw-1.5rem))] items-center gap-2 rounded-t-xl border border-slate-700 bg-[#08428c] px-3 py-3 text-left text-white shadow-2xl"
       >
         {kind === 'hryantra' ? (
           <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
@@ -470,7 +470,7 @@ export function ReferenceMessagingPanel({
           <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-bold">
             {otherInitial}
             <span
-              className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-[#1B3A5F] ${
+              className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-[#08428c] ${
                 online ? 'bg-emerald-400' : 'bg-rose-400'
               }`}
               title={online ? 'Online' : 'Offline'}
@@ -505,7 +505,7 @@ export function ReferenceMessagingPanel({
             : 'contents'
         }
       >
-      <div className="relative flex shrink-0 items-center gap-2.5 overflow-hidden border-b border-slate-100/80 bg-linear-to-r from-[#0F2A44] via-[#1B3A5F] to-[#28A8E1] px-3 py-3 text-white">
+      <div className="relative flex shrink-0 items-center gap-2.5 overflow-hidden border-b border-slate-100/80 bg-linear-to-r from-[#062E5F] via-[#08428c] to-[#28A8E1] px-3 py-3 text-white">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.22),transparent_42%)]" />
         {kind === 'hryantra' ? (
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/90 bg-white shadow-sm">
@@ -516,7 +516,7 @@ export function ReferenceMessagingPanel({
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white">
             {otherInitial}
             <span
-              className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-[#1B3A5F] ${
+              className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-[#08428c] ${
                 online ? 'bg-emerald-400' : 'bg-rose-400'
               }`}
               title={online ? 'Online' : 'Offline'}
@@ -617,7 +617,7 @@ export function ReferenceMessagingPanel({
               <div key={m.id}>
                 {showDay ? (
                   <div className="mb-2.5 flex justify-center pt-1">
-                    <span className="rounded-full bg-[#1B3A5F]/85 px-3 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur-sm">
+                    <span className="rounded-full bg-[#08428c]/85 px-3 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur-sm">
                       {dayLabel || 'Earlier'}
                     </span>
                   </div>
@@ -640,7 +640,7 @@ export function ReferenceMessagingPanel({
                   <div
                     className={`max-w-[78%] min-w-[140px] whitespace-pre-wrap px-3 py-2 text-[13px] leading-relaxed shadow-[0_4px_14px_rgba(15,23,42,0.08)] ${
                       mine
-                        ? 'rounded-2xl rounded-br-md bg-linear-to-br from-[#5FE0C0] to-[#00A884] text-white'
+                        ? 'rounded-2xl rounded-br-md bg-linear-to-br from-[#5BB8E8] to-[#28A8E1] text-white'
                         : isSystem
                           ? 'rounded-2xl rounded-tl-md border border-[#B8E0F4] bg-linear-to-br from-[#FFFFFF] via-[#F2FAFE] to-[#DFF2FB] text-slate-800'
                           : 'rounded-2xl rounded-tl-md border border-white/90 bg-white text-slate-800'
@@ -772,9 +772,9 @@ export function ReferenceMessagingPanel({
       ) : null}
 
       {canChat && !iAmRefAnswerer ? (
-        <div className="shrink-0 border-t border-[#D5E0DC] bg-[#EEF5F2] px-2.5 py-2">
+        <div className="shrink-0 border-t border-[rgba(40,168,225,0.2)] bg-[var(--brand-primary-soft)] px-2.5 py-2">
           {mediaPreview ? (
-            <div className="mb-1.5 flex items-center gap-2 rounded-[14px] border border-[#D0DDD8] bg-white px-2.5 py-1.5">
+            <div className="mb-1.5 flex items-center gap-2 rounded-[14px] border border-[rgba(40,168,225,0.22)] bg-white px-2.5 py-1.5">
               {mediaKind === 'image' ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={mediaPreview} alt="" className="h-10 w-10 rounded-lg object-cover" />
@@ -793,7 +793,7 @@ export function ReferenceMessagingPanel({
               </button>
             </div>
           ) : null}
-          <div className="flex items-end gap-1.5 rounded-[16px] border border-[#D0DDD8] bg-white px-1.5 py-1.5 shadow-sm">
+          <div className="flex items-end gap-1.5 rounded-[16px] border border-[rgba(40,168,225,0.22)] bg-white px-1.5 py-1.5 shadow-sm">
             <input
               ref={fileInputRef}
               type="file"
@@ -810,7 +810,7 @@ export function ReferenceMessagingPanel({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 title="Add image"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#54656F] transition hover:bg-[#F0F2F5]"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-[var(--brand-primary-soft)]"
               >
                 <ComposeAssetIcon src="/icons/image-.png" alt="Image" size={16} />
               </button>
@@ -818,7 +818,7 @@ export function ReferenceMessagingPanel({
                 type="button"
                 onClick={() => void startVoice()}
                 title={recording ? 'Stop recording' : 'Voice note'}
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#F0F2F5] ${
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[var(--brand-primary-soft)] ${
                   recording ? 'bg-rose-50 ring-1 ring-rose-300' : ''
                 }`}
               >
@@ -844,7 +844,7 @@ export function ReferenceMessagingPanel({
               type="button"
               onClick={handleSend}
               disabled={!draft.trim() && !mediaPreview}
-              className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00A884] shadow-[0_4px_12px_rgba(0,168,132,0.28)] transition hover:bg-[#029978] disabled:opacity-40"
+              className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#28A8E1] shadow-[0_4px_12px_rgba(40,168,225,0.28)] transition hover:bg-[#1F8FC2] disabled:opacity-40"
               title="Send (Enter) · New line (Shift+Enter)"
             >
               <span className="brightness-0 invert">
@@ -873,7 +873,7 @@ export function ReferenceMessagingPanel({
               checked={acceptAnon || forcedAnon}
               disabled={forcedAnon || busy}
               onChange={(e) => setAcceptAnon(e.target.checked)}
-              className="rounded border-slate-300 text-[#0A66C2]"
+              className="rounded border-slate-300 text-[#08428c]"
             />
             Stay anonymous
             {forcedAnon ? ' (locked)' : ''}
@@ -914,7 +914,7 @@ export function ReferenceMessagingPanel({
               checked={acceptAnon || forcedAnon}
               disabled={forcedAnon || busy}
               onChange={(e) => setAcceptAnon(e.target.checked)}
-              className="rounded border-slate-300 text-[#0A66C2]"
+              className="rounded border-slate-300 text-[#08428c]"
             />
             Stay anonymous in this chat
             {forcedAnon ? ' (locked)' : ''}

@@ -46,7 +46,7 @@ function statusTone(r: ReferenceCheckRequest) {
     return 'bg-rose-50 text-rose-700 ring-rose-100';
   }
   if (r.status === 'completed') return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
-  if (r.status === 'answered') return 'bg-sky-50 text-[#0A66C2] ring-sky-100';
+  if (r.status === 'answered') return 'bg-sky-50 text-[#08428c] ring-sky-100';
   if (r.status === 'awaiting_answers') return 'bg-amber-50 text-amber-800 ring-amber-100';
   if (r.status === 'pending') return 'bg-orange-50 text-orange-800 ring-orange-100';
   return 'bg-slate-100 text-slate-600 ring-slate-200';
@@ -252,7 +252,7 @@ export function ReferenceCheckInbox({
               onClick={() => onFilterChange(f.id)}
               className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
                 filter === f.id
-                  ? 'bg-[#1B3A5F] text-white'
+                  ? 'bg-[#08428c] text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -310,7 +310,7 @@ export function ReferenceCheckInbox({
               type="button"
               disabled={savingFee}
               onClick={saveFee}
-              className="w-full rounded-full bg-[#1B3A5F] py-2 text-[11px] font-semibold text-white transition hover:bg-[#152e4c] disabled:opacity-50"
+              className="w-full rounded-full bg-[#08428c] py-2 text-[11px] font-semibold text-white transition hover:bg-[#004182] disabled:opacity-50"
             >
               {identity.availableForReferenceCheck ? 'Save fee' : 'Open for reference & save fee'}
             </button>
@@ -361,7 +361,7 @@ export function ReferenceCheckInbox({
                               : 'border-slate-200/90 bg-white hover:border-[rgba(40,168,225,0.25)]'
                           }`}
                         >
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#1B3A5F] text-[11px] font-bold uppercase text-white">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#08428c] text-[11px] font-bold uppercase text-white">
                             {(peer || '?').slice(0, 1)}
                           </span>
                           <span className="min-w-0 flex-1">

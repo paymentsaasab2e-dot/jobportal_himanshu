@@ -1036,7 +1036,7 @@ export default function BecomeInterviewerPage() {
                           onClick={() =>
                             router.push(`/lms/interview-prep/interviewer-room/${item.id}`)
                           }
-                          className="rounded-lg bg-[#0A66C2] px-3 py-1.5 text-xs font-semibold text-white"
+                          className="rounded-lg bg-[#08428c] px-3 py-1.5 text-xs font-semibold text-white"
                         >
                           Open room
                         </button>

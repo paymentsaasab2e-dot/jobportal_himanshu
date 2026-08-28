@@ -72,7 +72,7 @@ export function ContainedPostMedia({
   if (post.type === 'video') {
     return (
       <div
-        className={`overflow-hidden rounded-[18px] bg-[#0F2A44] ${className}`}
+        className={`overflow-hidden rounded-[18px] bg-[#062E5F] ${className}`}
       >
         <video
           src={urls[0]}

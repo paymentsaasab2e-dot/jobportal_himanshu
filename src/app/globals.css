@@ -123,6 +123,90 @@ body {
   font-family: var(--font-body);
 }
 
+/* Candidate dashboard opts into the Phase 2 page surface (see .dashboard-ph2-theme) */
+body:has(.dashboard-ph2-theme) {
+  background: linear-gradient(165deg, #f8fafc 0%, #f1f5f9 45%, #eef2ff 100%);
+}
+
+/* ── Phase 1 buttons & highlights ─────────────────────────────────────────
+   Single source of truth, lifted from the sign-in page (/whatsapp) so every
+   Phase 1 CTA and highlight matches it. Edit these values only here.
+   Use: .btn-brand (primary), .btn-brand-accent (secondary/upsell),
+        .link-brand (highlight text), .focus-brand (input focus rim).
+──────────────────────────────────────────────────────────────────────────── */
+:root {
+  --brand-btn-from: #08428c;
+  --brand-btn-to: #28a8e1;
+  --brand-btn-shadow: 0 10px 24px rgba(8, 66, 140, 0.32);
+  --brand-btn-accent-from: #e8770e;
+  --brand-btn-accent-to: #fc9620;
+  --brand-btn-accent-shadow: 0 8px 18px rgba(252, 150, 32, 0.28);
+  --brand-highlight: #08428c;
+  --brand-highlight-hover: #28a8e1;
+  --brand-focus-ring: rgba(40, 168, 225, 0.15);
+}
+
+.btn-brand {
+  background-image: linear-gradient(to right, var(--brand-btn-from), var(--brand-btn-to));
+  color: #ffffff;
+  box-shadow: var(--brand-btn-shadow);
+  transition:
+    filter 200ms ease,
+    transform 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.btn-brand:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.btn-brand:active:not(:disabled) {
+  filter: brightness(0.95);
+  transform: translateY(0);
+}
+
+.btn-brand:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-brand-accent {
+  background-image: linear-gradient(
+    to right,
+    var(--brand-btn-accent-from),
+    var(--brand-btn-accent-to)
+  );
+  color: #ffffff;
+  box-shadow: var(--brand-btn-accent-shadow);
+  transition:
+    filter 200ms ease,
+    transform 200ms ease;
+}
+
+.btn-brand-accent:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.btn-brand-accent:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.link-brand {
+  color: var(--brand-highlight);
+  transition: color 200ms ease;
+}
+
+.link-brand:hover {
+  color: var(--brand-highlight-hover);
+}
+
+.focus-brand:focus-within {
+  border-color: var(--brand-btn-to);
+  box-shadow: 0 0 0 4px var(--brand-focus-ring);
+}
+
 /* Headings use Inter */
 h1, h2, h3, h4, h5, h6,
 .font-heading {
@@ -1273,6 +1357,40 @@ input[type="range"]::-moz-range-thumb {
     transform: translateY(-1px);
     box-shadow: var(--dashboard-shadow-hover);
     border-color: rgba(40, 168, 225, 0.18);
+  }
+
+  /* ── Candidate dashboard: Phase 2 (CRM) light theme ──────────────────────
+     Scoped token override so only this page swaps the Phase 1 sky/orange
+     palette for the Phase 2 blue-600 / teal-600 one. Values mirror
+     frontphase2 globals.css (--ph2-accent-primary / --ph2-accent-teal and
+     the .ph2-main-surface + .ph2-card surfaces).
+  ───────────────────────────────────────────────────────────────────────── */
+  .dashboard-ph2-theme {
+    --brand-primary: #2563eb;
+    --brand-primary-strong: #1d4ed8;
+    --brand-primary-soft: #eff6ff;
+    --brand-secondary: #0d9488;
+    --brand-secondary-soft: #f0fdfa;
+    --brand-accent: #0d9488;
+    --brand-accent-soft: #ccfbf1;
+    --brand-primary-glow: rgba(37, 99, 235, 0.18);
+    --brand-accent-glow: rgba(13, 148, 136, 0.14);
+    --dashboard-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.05),
+      0 0 0 1px rgba(59, 130, 246, 0.05);
+    --dashboard-shadow-hover: 0 8px 24px -8px rgba(37, 99, 235, 0.14);
+  }
+
+  /* Phase 2 cards are flat white with a slate rim, not frosted glass */
+  .dashboard-ph2-theme .dashboard-surface {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    box-shadow: var(--dashboard-shadow);
+    backdrop-filter: none;
+  }
+
+  .dashboard-ph2-theme .dashboard-surface-hover:hover {
+    border-color: rgba(191, 219, 254, 0.9);
   }
 
   /* Header nav — same scale as candidate dashboard / profile workspace */

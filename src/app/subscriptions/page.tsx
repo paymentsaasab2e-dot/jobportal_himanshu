@@ -187,7 +187,7 @@ export default function SubscriptionsPage() {
           onClick={() => setTab('premium')}
           className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition ${
             tab === 'premium'
-              ? 'border border-transparent bg-[#1B3A5F] text-white shadow-md shadow-slate-900/15'
+              ? 'border border-transparent bg-[#08428c] text-white shadow-md shadow-slate-900/15'
               : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
           }`}
         >
@@ -227,7 +227,7 @@ export default function SubscriptionsPage() {
                     }`}
                   >
                     {pack.popular ? (
-                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#1B3A5F] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#08428c] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
                         <Sparkles className="h-3 w-3" />
                         Popular
                       </span>
@@ -244,7 +244,7 @@ export default function SubscriptionsPage() {
                       onClick={() => void handlePurchase(pack.id)}
                       className={`mt-5 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60 ${
                         pack.popular
-                          ? 'bg-[#1B3A5F] hover:opacity-95'
+                          ? 'bg-[#08428c] hover:opacity-95'
                           : 'bg-(--brand-primary) hover:opacity-90'
                       }`}
                     >
@@ -268,7 +268,7 @@ export default function SubscriptionsPage() {
             <div className="space-y-7">
               {servicesByCategory.map(([category, items]) => (
                 <div key={category}>
-                  <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#1B3A5F]/70">
+                  <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#08428c]/70">
                     <span className="h-px w-4 bg-[#28A8E1]/50" />
                     {category}
                   </h3>
@@ -284,7 +284,7 @@ export default function SubscriptionsPage() {
                             onClick={() => go(href)}
                             className="group flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-4 text-left shadow-[0_6px_24px_-10px_rgba(15,23,42,0.16)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_28px_-10px_rgba(40,168,225,0.25)] active:scale-[0.99]"
                           >
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1B3A5F] text-amber-300">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#08428c] text-amber-300">
                               <Crown className="h-[18px] w-[18px]" />
                             </div>
                             <div className="min-w-0 flex-1">

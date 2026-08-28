@@ -495,8 +495,9 @@ export default function ApplyLandingPage() {
                 </h1>
 
                 <p className="relative mt-3 max-w-md text-xs leading-5 text-[var(--apply-muted)] sm:text-[13px] sm:leading-5">
-                  Review the role, then continue to WhatsApp login. Your application submits
-                  automatically after login.
+                  Review the role, then continue to WhatsApp login. If this job has a pre-screen
+                  assessment, you will complete those questions after login — then your application
+                  is submitted.
                 </p>
 
                 {job.location ? (

@@ -49,7 +49,7 @@ function statusTone(r: ReferenceCheckRequest) {
     return 'bg-rose-50 text-rose-700 ring-rose-100';
   }
   if (r.status === 'completed') return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
-  if (r.status === 'answered') return 'bg-sky-50 text-[#0A66C2] ring-sky-100';
+  if (r.status === 'answered') return 'bg-sky-50 text-[#08428c] ring-sky-100';
   if (r.status === 'awaiting_answers') return 'bg-amber-50 text-amber-800 ring-amber-100';
   return 'bg-orange-50 text-orange-800 ring-orange-100';
 }
@@ -197,7 +197,7 @@ export function ReferenceCheckReviewPanel({
                         onClick={() => onSelect(r.id)}
                         className="flex w-full items-start gap-2.5 rounded-[14px] border border-amber-100 bg-amber-50/70 px-2.5 py-2.5 text-left transition hover:border-amber-200 hover:bg-amber-50"
                       >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#1B3A5F] text-[11px] font-bold uppercase text-white">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#08428c] text-[11px] font-bold uppercase text-white">
                           {(peer || '?').slice(0, 1)}
                         </span>
                         <span className="min-w-0 flex-1">
@@ -243,7 +243,7 @@ export function ReferenceCheckReviewPanel({
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[22px] border border-slate-200/80 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.05)]">
       <div className="shrink-0 border-b border-slate-100 px-3.5 py-3">
         <div className="flex items-start gap-2.5">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#1B3A5F] text-sm font-bold uppercase text-white shadow-sm">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#08428c] text-sm font-bold uppercase text-white shadow-sm">
             {(peer || '?').slice(0, 1)}
           </span>
           <div className="min-w-0 flex-1">
@@ -300,7 +300,7 @@ export function ReferenceCheckReviewPanel({
                 checked={stayAnon}
                 disabled={forcedAnon || busy}
                 onChange={(e) => setStayAnon(e.target.checked)}
-                className="rounded border-slate-300 text-[#0A66C2]"
+                className="rounded border-slate-300 text-[#08428c]"
               />
               <EyeOff className="h-3.5 w-3.5" />
               Stay anonymous
@@ -357,7 +357,7 @@ export function ReferenceCheckReviewPanel({
                   onChange={(next) => setDrafts((prev) => ({ ...prev, [i]: next }))}
                   rows={3}
                   placeholder="Your answer…"
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-2.5 py-2 text-[12px] outline-none focus:border-[#0A66C2]"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-2.5 py-2 text-[12px] outline-none focus:border-[#08428c]"
                 />
               </div>
             ))}
@@ -365,7 +365,7 @@ export function ReferenceCheckReviewPanel({
               type="button"
               disabled={busy}
               onClick={() => void handleSubmitAnswers()}
-              className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-[#0A66C2] text-[12px] font-semibold text-white disabled:opacity-50"
+              className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-[#08428c] text-[12px] font-semibold text-white disabled:opacity-50"
             >
               <Check className="h-3.5 w-3.5" />
               Send response
@@ -424,7 +424,7 @@ export function ReferenceCheckReviewPanel({
                       type="button"
                       disabled={busy}
                       onClick={() => void handleRate(opt.id)}
-                      className="rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:border-[#0A66C2] hover:text-[#0A66C2] disabled:opacity-50"
+                      className="rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:border-[#08428c] hover:text-[#08428c] disabled:opacity-50"
                     >
                       {opt.label} · {opt.payoutPct}%
                     </button>

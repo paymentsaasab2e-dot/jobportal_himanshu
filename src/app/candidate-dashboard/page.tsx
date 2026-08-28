@@ -43,6 +43,10 @@ import { getAuthHeaders, getStoredCandidateId, syncAuthStorage } from "@/lib/aut
 import { useCvDashboard, useInvalidateCvDashboard } from "@/hooks/portal/useCvDashboard";
 import { usePortalJobsList, usePortalPersonalizedJobs } from "@/hooks/portal/usePortalJobs";
 import { clearPendingJobApply, readPendingJobApply } from "@/lib/job-apply-flow";
+import {
+  buildBeforeSubmitAssessmentRedirect,
+  resolveJobAssessmentsForApply,
+} from "@/lib/pre-screen-assessment-flow";
 import { useTabVisibilityRefresh } from "@/hooks/useTabVisibilityRefresh";
 import { dispatchProfilePhotoUpdated } from "@/lib/profile-photo";
 import { AppLocale, localizePath } from "@/lib/i18n";
@@ -444,8 +448,50 @@ export default function CandidateDashboardPage() {
     let cancelled = false;
     pendingApplyInFlightRef.current = pendingApply.jobId;
 
+    const search =
+      typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const resumeAfterAssessment = search?.get("resumePendingApply") === "1";
+
     const submitPendingApplication = async () => {
       try {
+        // Token apply links must complete pre-screen assessments BEFORE application create
+        // (same gate as Explore Jobs). After the assessment chain, we land with
+        // ?resumePendingApply=1 and then submit.
+        if (!resumeAfterAssessment) {
+          try {
+            const { assessments, tenantDbName: resolvedTenant } =
+              await resolveJobAssessmentsForApply(
+                pendingApply.jobId,
+                null,
+                pendingApply.tenantDbName || undefined,
+              );
+            if (assessments.length > 0) {
+              const beforeSubmitPath = buildBeforeSubmitAssessmentRedirect({
+                jobId: pendingApply.jobId,
+                candidateId,
+                tenantDbName: resolvedTenant || pendingApply.tenantDbName || undefined,
+                assessments,
+                finalPath: localizePath("/candidate-dashboard?resumePendingApply=1", locale as AppLocale),
+              });
+              if (beforeSubmitPath) {
+                if (!cancelled) {
+                  setPendingApplyBanner({
+                    tone: "info",
+                    title: "Pre-screen assessment required",
+                    description: `Complete the assessment for ${pendingApply.jobTitle} before your application is submitted.`,
+                  });
+                  showSuccessToast("Complete the assessment to finish applying");
+                  router.push(beforeSubmitPath);
+                }
+                return;
+              }
+            }
+          } catch (assessmentErr) {
+            console.warn("[candidate-dashboard] Pre-screen preflight failed:", assessmentErr);
+            // Fall through to apply if assessment lookup fails — do not block forever.
+          }
+        }
+
         const response = await fetch(`${API_BASE_URL}/applications`, {
           method: "POST",
           headers: getAuthHeaders(),
@@ -456,6 +502,7 @@ export default function CandidateDashboardPage() {
               submittedVia: "phase2_job_link_redirect",
               applyLinkToken: pendingApply.token,
               tenantDbName: pendingApply.tenantDbName || null,
+              assessmentsJustCompleted: resumeAfterAssessment || undefined,
             },
           }),
         });
@@ -470,6 +517,9 @@ export default function CandidateDashboardPage() {
           if (message.toLowerCase().includes("already applied")) {
             clearPendingJobApply();
             if (!cancelled) {
+              if (resumeAfterAssessment) {
+                router.replace(localizePath("/candidate-dashboard", locale as AppLocale));
+              }
               setPendingApplyBanner({
                 tone: "info",
                 title: t("candidateDashboard.applicationAlreadySubmittedTitle"),
@@ -488,6 +538,9 @@ export default function CandidateDashboardPage() {
 
         clearPendingJobApply();
         if (!cancelled) {
+          if (resumeAfterAssessment) {
+            router.replace(localizePath("/candidate-dashboard", locale as AppLocale));
+          }
           const appliedDate = formatAppliedDate(locale, result?.data?.appliedAt);
           const resolvedJobTitle = String(result?.data?.job?.title || pendingApply.jobTitle || "Job");
           const resolvedCompany = String(result?.data?.job?.company || pendingApply.company || "Company");
@@ -529,7 +582,7 @@ export default function CandidateDashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [candidateId, fetchDashboardData, isAuthenticated, locale, t]);
+  }, [candidateId, fetchDashboardData, isAuthenticated, locale, router, t]);
 
   useTabVisibilityRefresh(() => {
     if (!isAuthenticated) return;
@@ -1104,7 +1157,7 @@ export default function CandidateDashboardPage() {
   if (!candidateId) {
     return (
       <ProfilePageShell>
-        <main className="profile-page-typography candidate-dashboard-page mx-auto max-w-5xl px-6 py-16 sm:px-8">
+        <main className="profile-page-typography candidate-dashboard-page dashboard-ph2-theme mx-auto max-w-5xl px-6 py-16 sm:px-8">
           <div className="dashboard-surface rounded-[32px] px-8 py-12 text-center shadow-[0_28px_60px_rgba(15,23,42,0.08)]">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[24px] bg-(--brand-primary-soft) text-(--brand-primary)">
               <BriefcaseBusiness className="h-7 w-7" strokeWidth={2.2} />
@@ -1118,7 +1171,7 @@ export default function CandidateDashboardPage() {
             <button
               type="button"
               onClick={() => router.push(localizePath("/whatsapp/verify", locale))}
-              className="mt-8 inline-flex items-center justify-center rounded-full bg-(--brand-primary) px-6 py-3 text-[0.8125rem] font-medium text-white shadow-[0_18px_36px_rgba(40,168,225,0.22)] transition-all duration-200 hover:bg-(--brand-primary-strong)"
+              className="mt-8 inline-flex items-center justify-center rounded-full bg-(--brand-primary) px-6 py-3 text-[0.8125rem] font-medium text-white shadow-[0_18px_36px_rgba(37,99,235,0.22)] transition-all duration-200 hover:bg-(--brand-primary-strong)"
             >
               {t("candidateDashboard.continueWithWhatsapp")}
             </button>
@@ -1130,7 +1183,7 @@ export default function CandidateDashboardPage() {
 
   return (
     <ProfilePageShell>
-      <main className="profile-page-typography candidate-dashboard-page mx-auto max-w-[1180px] px-4 py-3 sm:px-5 lg:px-6 lg:py-5">
+      <main className="profile-page-typography candidate-dashboard-page dashboard-ph2-theme mx-auto max-w-[1180px] px-4 py-3 sm:px-5 lg:px-6 lg:py-5">
         <div className="space-y-3">
           <DashboardHero
             eyebrow={greeting.eyebrow}
@@ -1147,9 +1200,9 @@ export default function CandidateDashboardPage() {
             <div
               className={`rounded-[24px] border px-5 py-4 shadow-sm ${
                 pendingApplyBanner.tone === "success"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                  ? "border-teal-200 bg-teal-50 text-teal-900"
                   : pendingApplyBanner.tone === "info"
-                    ? "border-sky-200 bg-sky-50 text-sky-900"
+                    ? "border-blue-200 bg-blue-50 text-blue-900"
                     : "border-amber-200 bg-amber-50 text-amber-900"
               }`}
             >
