@@ -26,6 +26,7 @@ import {
 import { fetchProfileCompleteness } from '@/lib/profile-completion';
 import { useTokensOptional } from '@/components/tokens/TokensContext';
 import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
+import { formatInUserTimeZone } from '@/lib/user-timezone';
 
 const ALERT_FILTERS = ['All', 'Jobs', 'Interviews', 'System'] as const;
 const ACTIVITY_FILTERS = ['All', 'Applications', 'Interviews', 'Courses'] as const;
@@ -75,7 +76,7 @@ function formatTimestamp(timestamp: string): string {
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return formatInUserTimeZone(date, { month: 'short', day: 'numeric' });
 }
 
 function NotificationIcon({ type }: { type: string }) {

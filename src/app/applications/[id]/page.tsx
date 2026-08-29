@@ -18,7 +18,11 @@ import { getQueryClient } from '@/lib/query/query-client';
 import { API_BASE_URL, resolvePhase2UploadUrl } from '@/lib/api-base';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
 import { ProfilePageShell } from '@/components/profile/layout';
+import { formatJobTitleDisplay } from '@/lib/format-job-title';
 import { ApplicationDetailSectionCard } from '@/components/applications/ApplicationDetailSectionCard';
+import { getLocaleFromPathname, localizePath } from '@/lib/i18n';
+import { removePortalApplicationLocally } from '@/lib/portal-page-caches';
+import { formatInUserTimeZone } from '@/lib/user-timezone';
 
 interface CommunicationUpdate {
   id: string;
@@ -690,14 +694,18 @@ function recommendationBadgeClass(label: string): string {
 function formatFeedbackSubmittedAt(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  return formatInUserTimeZone(
+    date,
+    {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    },
+    'en-GB',
+  );
 }
 
 function FeedbackScoreStars({ score }: { score: number | null | undefined }) {
@@ -885,8 +893,8 @@ function statusCodeAuthoritativeForDisplay(code: string | undefined | null) {
 function formatDateTime(value: string | Date) {
   const date = new Date(value);
   return {
-    date: date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-    time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+    date: formatInUserTimeZone(date, { year: 'numeric', month: 'long', day: 'numeric' }),
+    time: formatInUserTimeZone(date, { hour: '2-digit', minute: '2-digit' }),
   };
 }
 
@@ -1964,8 +1972,16 @@ export default function ApplicationStatusPage() {
         throw new Error(typeof result?.message === 'string' ? result.message : 'Could not withdraw application');
       }
       setWithdrawConfirmOpen(false);
-      showSuccessToast('Application withdrawn', 'You can apply again from Jobseeker.');
-      router.push('/explore-jobs');
+      const withdrawnJobId =
+        String(
+          (result as { data?: { jobId?: string } })?.data?.jobId ||
+            application.jobId ||
+            '',
+        ).trim() || null;
+      removePortalApplicationLocally(candidateId, applicationId, withdrawnJobId);
+      showSuccessToast('Application withdrawn', 'This role was removed from My Applications.');
+      const locale = getLocaleFromPathname(window.location.pathname);
+      router.push(localizePath('/applications', locale));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Could not withdraw application';
       showErrorToast('Could not withdraw', msg);
@@ -2004,7 +2020,7 @@ export default function ApplicationStatusPage() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-4">
             <div className="space-y-4 lg:col-span-2">
               <ApplicationDetailSectionCard bare>
-                <h1 className="application-detail-title mb-1.5">{application.job.title}</h1>
+                <h1 className="application-detail-title mb-1.5">{formatJobTitleDisplay(application.job.title)}</h1>
                 <div className="application-detail-meta mb-3 flex flex-wrap items-center gap-2">
                   <span>{application.job.company}</span>
                   <span aria-hidden>•</span>
@@ -2528,7 +2544,7 @@ export default function ApplicationStatusPage() {
                 <div className="profile-basic-info-display space-y-3">
                   <div>
                     <p className="profile-page-label">Job Title</p>
-                    <p className="profile-page-value">{application.job.title}</p>
+                    <p className="profile-page-value">{formatJobTitleDisplay(application.job.title)}</p>
                   </div>
                   <div>
                     <p className="profile-page-label">Work Mode</p>
@@ -2596,7 +2612,7 @@ export default function ApplicationStatusPage() {
       {interviewModalOpen && interviewModalPayload ? (
         <InterviewDetailsModal
           payload={interviewModalPayload}
-          jobTitle={application?.job.title || 'Role'}
+          jobTitle={formatJobTitleDisplay(application?.job.title || 'Role')}
           company={application?.job.company || 'Company'}
           onClose={closeInterviewModal}
         />
@@ -2833,7 +2849,7 @@ export default function ApplicationStatusPage() {
                   {rejectionModalPayload.title}
                 </h2>
                 <p className="mt-0.5 text-xs text-gray-500">
-                  {application?.job.title} · {application?.job.company}
+                  {formatJobTitleDisplay(application?.job.title)} · {application?.job.company}
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
                   {(() => {

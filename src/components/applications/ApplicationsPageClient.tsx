@@ -23,6 +23,7 @@ import {
 
 import DashboardPanel from '@/components/dashboard/DashboardPanel';
 import { resolvePortalCompanyLogo, resolvePortalCompanyName } from '@/lib/map-portal-job';
+import { formatJobTitleDisplay } from '@/lib/format-job-title';
 import { showSuccessToast } from '@/components/common/toast/toast';
 import type { DashboardJob } from '@/components/dashboard/dashboard-types';
 import { API_BASE_URL } from '@/lib/profile-completion';
@@ -32,6 +33,9 @@ import { usePortalJobsList } from '@/hooks/portal/usePortalJobs';
 import type { AppLocale } from '@/lib/i18n';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 import { runSuggestionsEngine } from '@/lib/suggestions-engine';
+import { isWithdrawnApplicationRow } from '@/lib/portal-page-caches';
+import { useUserTimezone } from '@/hooks/useUserTimezone';
+import { formatInUserTimeZone } from '@/lib/user-timezone';
 
 type ApplicationStatus =
   | 'Applied'
@@ -46,6 +50,7 @@ type ApplicationStatus =
 
 interface Application {
   id: string;
+  jobId?: string;
   jobTitle: string;
   company: string;
   status: ApplicationStatus | string;
@@ -655,6 +660,7 @@ export default function ApplicationsPageClient() {
   const router = useRouter();
   const t = useTranslations('applicationsPage');
   const locale = useLocale() as AppLocale;
+  const timeZone = useUserTimezone();
   const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-US';
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<ActiveSection>('applications');
@@ -664,7 +670,10 @@ export default function ApplicationsPageClient() {
   const [displayedApplicationsCount, setDisplayedApplicationsCount] = useState(6);
 
   const applicationsQuery = usePortalApplications(candidateId);
-  const applications = (applicationsQuery.data as Application[] | undefined) ?? [];
+  const applications = useMemo(() => {
+    const raw = (applicationsQuery.data as Application[] | undefined) ?? [];
+    return raw.filter((app) => !isWithdrawnApplicationRow(app));
+  }, [applicationsQuery.data]);
   const loading = applicationsQuery.isLoading && applications.length === 0;
   const fetchError =
     applicationsQuery.error instanceof Error
@@ -1026,23 +1035,27 @@ export default function ApplicationsPageClient() {
   }, [filteredSavedJobs]);
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(dateLocale, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    return formatInUserTimeZone(
+      dateString,
+      { year: 'numeric', month: 'short', day: 'numeric' },
+      dateLocale,
+      timeZone,
+    );
   };
 
   const formatInterviewDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString(dateLocale, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
+    return formatInUserTimeZone(
+      dateString,
+      {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      },
+      dateLocale,
+      timeZone,
+    );
   };
 
   const hasActiveFilters =
@@ -1094,7 +1107,7 @@ export default function ApplicationsPageClient() {
               <CompanyMark company={application.company} />
               <div className="min-w-0">
                 <p className="profile-page-value truncate font-semibold tracking-tight">
-                  {application.jobTitle}
+                  {formatJobTitleDisplay(application.jobTitle)}
                 </p>
                 <p className="application-detail-meta mt-1 truncate">
                   {application.company}
@@ -1226,7 +1239,7 @@ export default function ApplicationsPageClient() {
               <CompanyMark company={job.company} />
               <div className="min-w-0">
                 <p className="profile-page-value truncate font-semibold tracking-tight">
-                  {job.title}
+                  {formatJobTitleDisplay(job.title)}
                 </p>
                 <p className="application-detail-meta mt-1 truncate">{job.company}</p>
                 <p className="mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
@@ -1634,7 +1647,7 @@ export default function ApplicationsPageClient() {
                           <CompanyMark company={interview.company} />
                           <div className="min-w-0">
                             <p className="profile-page-value truncate font-semibold tracking-tight">
-                              {interview.jobTitle}
+                              {formatJobTitleDisplay(interview.jobTitle)}
                             </p>
                             <p className="application-detail-meta mt-1 truncate">
                               {interview.company}

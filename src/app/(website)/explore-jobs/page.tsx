@@ -77,6 +77,7 @@ import {
   resolveJobAssessmentsForApply,
 } from '@/lib/pre-screen-assessment-flow';
 import { AppLocale, localizePath } from '@/lib/i18n';
+import { formatJobTitleDisplay } from '@/lib/format-job-title';
 import { withJobApiLocale } from '@/lib/jobApiLocale';
 import {
   EXPLORE_JOBS_BATCH_SIZE,
@@ -2373,7 +2374,7 @@ const ExploreJobsPageContent = () => {
               ) : null}
               {job.title ? (
                 <h3 className="profile-page-value mt-0.5 line-clamp-2 font-semibold leading-snug tracking-tight">
-                  {job.title}
+                  {formatJobTitleDisplay(job.title)}
                 </h3>
               ) : null}
             </div>
@@ -2530,7 +2531,7 @@ const ExploreJobsPageContent = () => {
 
           {/* Left content */}
           <div className="flex-1 min-w-0">
-            <p className="profile-page-value truncate font-semibold">{job.title}</p>
+            <p className="profile-page-value truncate font-semibold">{formatJobTitleDisplay(job.title)}</p>
             <div className="application-detail-helper mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
               {metaParts
                 .map((part) => String(part || '').trim())
@@ -3138,7 +3139,7 @@ const ExploreJobsPageContent = () => {
                               </div>
 
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">{job.title}</p>
+                                <p className="text-sm font-semibold text-gray-900 truncate">{formatJobTitleDisplay(job.title)}</p>
                                 <p className="text-sm text-gray-500 truncate">{job.company}</p>
 
                                 <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
@@ -3241,7 +3242,7 @@ const ExploreJobsPageContent = () => {
                             <div className="min-w-0 flex-1">
                               {selectedJob.title ? (
                                 <h1 className="text-xl font-bold leading-tight text-slate-900 wrap-break-word sm:text-2xl">
-                                  {selectedJob.title}
+                                  {formatJobTitleDisplay(selectedJob.title)}
                                 </h1>
                               ) : null}
                               <JobDetailHeaderMeta job={selectedJob} />
@@ -3455,7 +3456,7 @@ const ExploreJobsPageContent = () => {
         <ScreeningQuestionsDrawer
           isOpen={isScreeningModalOpen}
           onClose={handleCloseModal}
-          jobTitle={selectedJob.title}
+          jobTitle={formatJobTitleDisplay(selectedJob.title)}
           company={selectedJob.company}
           questions={activeScreeningQuestions}
           answers={screeningAnswers}
@@ -3469,7 +3470,7 @@ const ExploreJobsPageContent = () => {
         <ApplicationSuccessModal
           isOpen={isSuccessModalOpen}
           onClose={handleCloseSuccessModal}
-          jobTitle={appliedJobSummary?.jobTitle || selectedJob?.title || 'Job'}
+          jobTitle={formatJobTitleDisplay(appliedJobSummary?.jobTitle || selectedJob?.title || 'Job')}
           company={appliedJobSummary?.company || selectedJob?.company || 'Company'}
           appliedDate={appliedJobSummary?.appliedDate || formatDate(new Date())}
           jobId={appliedJobSummary?.jobId || selectedJob?.id}

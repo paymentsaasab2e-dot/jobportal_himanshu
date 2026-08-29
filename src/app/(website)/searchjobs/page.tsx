@@ -6,6 +6,7 @@ import { ArrowRight, Briefcase, Clock3, MapPin, Search, Sparkles, Wifi } from 'l
 import { useLocale } from 'next-intl';
 import { API_BASE_URL } from '@/lib/api-base';
 import { AppLocale } from '@/lib/i18n';
+import { formatJobTitleDisplay } from '@/lib/format-job-title';
 import { withJobApiLocale } from '@/lib/jobApiLocale';
 import { resolvePortalCompanyLogo } from '@/lib/map-portal-job';
 import { redactPortalJobListing } from '@/lib/job-public-field-visibility';
@@ -501,7 +502,7 @@ function SearchJobsContent() {
                         {job.logo ? (
                           <img
                             src={job.logo}
-                            alt={job.title}
+                            alt={formatJobTitleDisplay(job.title)}
                             className="h-full w-full object-contain bg-white"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
@@ -512,7 +513,7 @@ function SearchJobsContent() {
                         )}
                       </div>
                       <h2 className="min-w-0 flex-1 line-clamp-2 text-base font-black leading-snug text-slate-900 transition-colors group-hover:text-[#1A8FC4]">
-                        {job.title}
+                        {formatJobTitleDisplay(job.title)}
                       </h2>
                       <span
                         className="shrink-0 self-start rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em]"

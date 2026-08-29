@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import Image from 'next/image';
 import { BadgeCheck, Check, Mic, Minus, X, ArrowLeft } from 'lucide-react';
+import { formatInUserTimeZone } from '@/lib/user-timezone';
 import { showErrorToast, showSuccessToast } from '@/components/common/toast/toast';
 import {
   getReferenceCheck,
@@ -58,12 +59,12 @@ export type ChatKind = 'reference' | 'dm' | 'hryantra';
 
 type ChatMediaKind = 'image' | 'voice';
 
+function calendarDayKey(date: Date) {
+  return formatInUserTimeZone(date, { year: 'numeric', month: '2-digit', day: '2-digit' }, 'en-CA');
+}
+
 function sameCalendarDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+  return calendarDayKey(a) === calendarDayKey(b);
 }
 
 /** WhatsApp-style day chip: Today / Yesterday / full past date */
@@ -71,12 +72,10 @@ function formatChatDayLabel(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
   const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
+  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
   if (sameCalendarDay(d, today)) return 'Today';
   if (sameCalendarDay(d, yesterday)) return 'Yesterday';
-  // Every past day gets a full readable date (WhatsApp-style history)
-  return d.toLocaleDateString(undefined, {
+  return formatInUserTimeZone(d, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -87,7 +86,7 @@ function formatChatDayLabel(iso: string): string {
 function formatChatTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  return formatInUserTimeZone(d, { hour: 'numeric', minute: '2-digit' });
 }
 
 /** Time only for today; for older days include short date + time under the bubble */
@@ -97,10 +96,12 @@ function formatChatBubbleStamp(iso: string): string {
   const time = formatChatTime(iso);
   const today = new Date();
   if (sameCalendarDay(d, today)) return time;
-  const datePart = d.toLocaleDateString(undefined, {
+  const thisYear = formatInUserTimeZone(today, { year: 'numeric' }, 'en-CA');
+  const msgYear = formatInUserTimeZone(d, { year: 'numeric' }, 'en-CA');
+  const datePart = formatInUserTimeZone(d, {
     day: 'numeric',
     month: 'short',
-    ...(d.getFullYear() !== today.getFullYear() ? { year: 'numeric' as const } : {}),
+    ...(msgYear !== thisYear ? { year: 'numeric' as const } : {}),
   });
   return `${datePart}, ${time}`;
 }
@@ -108,7 +109,7 @@ function formatChatBubbleStamp(iso: string): string {
 function dayKey(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return `unknown-${iso}`;
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return calendarDayKey(d) || `unknown-${iso}`;
 }
 
 type Props = {

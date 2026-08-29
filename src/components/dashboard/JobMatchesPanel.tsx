@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import type { AppLocale } from "@/lib/i18n";
+import { formatJobTitleDisplay } from "@/lib/format-job-title";
 
 import {
   Bookmark,
@@ -236,7 +237,7 @@ export default function JobMatchesPanel({
                       <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0">
                           <p className="profile-page-value truncate font-semibold">
-                            {job.title}
+                            {formatJobTitleDisplay(job.title)}
                           </p>
                           <p className="profile-page-value mt-0.5 font-medium">
                             {job.company}

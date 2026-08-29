@@ -65,3 +65,18 @@ export function invalidateApplicationsCache(candidateId?: string) {
   }
   dataCache.delete(String(candidateId).trim());
 }
+
+export function removeApplicationFromCache(candidateId: string, applicationId: string) {
+  const key = String(candidateId || '').trim();
+  const id = String(applicationId || '').trim();
+  if (!key || !id) return;
+  const cached = dataCache.get(key);
+  if (!cached?.data || !Array.isArray(cached.data)) {
+    dataCache.delete(key);
+    return;
+  }
+  dataCache.set(key, {
+    ...cached,
+    data: cached.data.filter((row) => String((row as { id?: string } | null)?.id || '') !== id),
+  });
+}
