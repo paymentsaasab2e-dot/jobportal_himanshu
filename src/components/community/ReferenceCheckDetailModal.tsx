@@ -55,7 +55,7 @@ function statusLabel(r: ReferenceCheckRequest, viewerId: string) {
 function statusTone(r: ReferenceCheckRequest) {
   if (r.status === 'rejected') return 'bg-rose-50 text-rose-700 ring-rose-100';
   if (r.status === 'completed') return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
-  if (r.status === 'answered') return 'bg-sky-50 text-[#08428c] ring-sky-100';
+  if (r.status === 'answered') return 'bg-sky-50 text-[#176F96] ring-sky-100';
   if (r.status === 'awaiting_answers') return 'bg-amber-50 text-amber-800 ring-amber-100';
   return 'bg-slate-100 text-slate-600 ring-slate-200';
 }
@@ -259,7 +259,7 @@ export function ReferenceCheckDetailModal({
                   checked={stayAnon}
                   disabled={forcedAnon || busy}
                   onChange={(e) => setStayAnon(e.target.checked)}
-                  className="rounded border-slate-300 text-[#08428c]"
+                  className="rounded border-slate-300 text-[#176F96]"
                 />
                 <EyeOff className="h-3.5 w-3.5" />
                 Stay anonymous
@@ -316,7 +316,7 @@ export function ReferenceCheckDetailModal({
                     onChange={(next) => setDrafts((prev) => ({ ...prev, [i]: next }))}
                     rows={3}
                     placeholder="Your answer…"
-                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#08428c]"
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#176F96]"
                   />
                 </div>
               ))}
@@ -324,7 +324,7 @@ export function ReferenceCheckDetailModal({
                 type="button"
                 disabled={busy}
                 onClick={() => void handleSubmitAnswers()}
-                className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-[#08428c] text-sm font-semibold text-white disabled:opacity-50"
+                className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-[#176F96] text-sm font-semibold text-white disabled:opacity-50"
               >
                 <Check className="h-4 w-4" />
                 Send response

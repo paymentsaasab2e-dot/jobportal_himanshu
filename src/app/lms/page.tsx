@@ -311,7 +311,7 @@ export default function LmsDashboardPage() {
       <section className="space-y-3">
         <h2 className={LMS_SECTION_TITLE}>Continue learning</h2>
         <div className={`${LMS_CARD_INTERACTIVE} flex flex-col gap-5 sm:flex-row sm:items-start`}>
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-[#28A8E1]">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-[#2098C8]">
             <PlayCircle className="h-6 w-6" strokeWidth={2} />
           </div>
           <div className="min-w-0 flex-1 space-y-4">
@@ -338,7 +338,7 @@ export default function LmsDashboardPage() {
             <div className="flex flex-wrap gap-3 pt-1">
               <button
                 type="button"
-                className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
+                className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-[#2098C8] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
                 onClick={() => {
                   const id = state.lastActiveCourseId ?? 'c1';
                   setLastActiveCourseId(id);
@@ -375,7 +375,7 @@ export default function LmsDashboardPage() {
                     <h3 className="text-base font-bold leading-snug text-gray-900">{item.title || item.label}</h3>
                     <p className="text-sm font-normal leading-relaxed text-gray-500">{item.description || item.text}</p>
                     <div className="flex flex-wrap items-center gap-2 pt-1">{levelBadge(item.tag || 'Intermediate')}</div>
-                    <div className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-[#28A8E1] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98] sm:w-auto">
+                    <div className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-[#2098C8] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98] sm:w-auto">
                       Open Module
                     </div>
                   </div>

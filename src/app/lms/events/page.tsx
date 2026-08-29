@@ -466,7 +466,7 @@ export default function LmsEventsPage() {
               >
                 {tab}
                 {tab === 'Registered' && registeredCount > 0 ? (
-                  <span className="ml-2 inline-flex items-center justify-center rounded-full bg-[#28A8E1]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#28A8E1]">
+                  <span className="ml-2 inline-flex items-center justify-center rounded-full bg-[#2098C8]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#2098C8]">
                     {registeredCount}
                   </span>
                 ) : null}
@@ -494,7 +494,7 @@ export default function LmsEventsPage() {
               onClick={() => setKindFilter(id)}
               className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                 kindFilter === id
-                  ? 'bg-[#08428c] text-white'
+                  ? 'bg-[#176F96] text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -526,7 +526,7 @@ export default function LmsEventsPage() {
                   setActiveTab('All');
                   setKindFilter('all');
                 }}
-                className="mt-4 text-sm font-semibold text-[#28A8E1] hover:underline"
+                className="mt-4 text-sm font-semibold text-[#2098C8] hover:underline"
               >
                 Clear filters
               </button>
@@ -631,7 +631,7 @@ function EventCard({
               registered
                 ? 'text-emerald-700'
                 : isJob
-                  ? 'text-[#08428c]'
+                  ? 'text-[#176F96]'
                   : ev.status === 'past'
                     ? 'text-gray-500'
                     : 'text-amber-800'
@@ -709,7 +709,7 @@ function EventCard({
               <button
                 type="button"
                 onClick={onApply}
-                className="flex-1 cursor-pointer rounded-xl border border-[#08428c] bg-[#08428c] px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:bg-[#004182] hover:shadow-sm active:scale-[0.98]"
+                className="flex-1 cursor-pointer rounded-xl border border-[#176F96] bg-[#176F96] px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:bg-[#0F5A7A] hover:shadow-sm active:scale-[0.98]"
               >
                 Apply now
               </button>

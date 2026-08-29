@@ -72,7 +72,7 @@ export default function ApplicationPipelineCard({
           <button
             type="button"
             onClick={onViewApplications}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(37,99,235,0.24)] hover:bg-[var(--brand-primary-soft)]"
+            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(32,152,200,0.24)] hover:bg-[var(--brand-primary-soft)]"
           >
             {t("openTracker")}
           </button>
@@ -92,7 +92,7 @@ export default function ApplicationPipelineCard({
                   <span
                     className={`flex h-8 w-8 items-center justify-center rounded-xl ${
                       active
-                        ? "bg-[var(--brand-primary)] text-white shadow-[0_10px_18px_rgba(37,99,235,0.18)]"
+                        ? "bg-[var(--brand-primary)] text-white shadow-[0_10px_18px_rgba(32,152,200,0.18)]"
                         : "bg-white text-slate-400"
                     }`}
                   >
@@ -113,7 +113,7 @@ export default function ApplicationPipelineCard({
           })}
         </div>
 
-        <div className="rounded-[18px] bg-[linear-gradient(135deg,rgba(13,148,136,0.98),rgba(20,184,166,0.94),rgba(45,212,191,0.92))] px-3 py-2.5 text-white shadow-[0_14px_28px_rgba(13,148,136,0.22)]">
+        <div className="rounded-[18px] bg-[linear-gradient(135deg,rgba(23,111,150,0.98),rgba(32,152,200,0.94),rgba(75,179,212,0.92))] px-3 py-2.5 text-white shadow-[0_14px_28px_rgba(23,111,150,0.22)]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-2.5">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/16 text-white">

@@ -80,7 +80,7 @@ export function QuizPreviewSection({
           action={
             <Link
               href={previewBackHref}
-              className="inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
+              className="inline-flex items-center justify-center rounded-xl bg-[#2098C8] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
             >
               Back to quizzes
             </Link>
@@ -151,7 +151,7 @@ export function QuizPreviewSection({
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Link
               href={buildQuizAttemptHref(quiz.id, previewSkill)}
-              className="inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
+              className="inline-flex items-center justify-center rounded-xl bg-[#2098C8] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
             >
               Start now
             </Link>
@@ -244,7 +244,7 @@ export function RetryQuizCard({ quiz, onOpen }: RetryQuizCardProps) {
             <Link
               href={previewHref}
               onClick={(event) => event.stopPropagation()}
-              className="inline-flex flex-1 items-center justify-center rounded-xl bg-[#28A8E1] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
+              className="inline-flex flex-1 items-center justify-center rounded-xl bg-[#2098C8] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
             >
               Start targeted retry
             </Link>
@@ -317,7 +317,7 @@ export function QuizCatalogCard({ quiz, bestScore, skill, onOpen }: QuizCatalogC
                 event.stopPropagation();
                 onOpen(quiz.id, 'catalog', skill);
               }}
-              className="inline-flex flex-1 items-center justify-center rounded-xl bg-[#28A8E1] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
+              className="inline-flex flex-1 items-center justify-center rounded-xl bg-[#2098C8] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
             >
               Start practice
             </button>

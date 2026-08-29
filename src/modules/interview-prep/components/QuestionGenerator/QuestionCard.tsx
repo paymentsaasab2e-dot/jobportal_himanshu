@@ -22,7 +22,7 @@ export function QuestionCard({ title, description, icon: Icon, onGenerate }: Que
       <button
         type="button"
         onClick={onGenerate}
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#28A8E1] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-200 ease-in-out hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#2098C8] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-200 ease-in-out hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
       >
         <Wand2 className="h-4 w-4" strokeWidth={2} aria-hidden />
         Generate set · <TokenCoinIcon className="h-4 w-4" /> 20

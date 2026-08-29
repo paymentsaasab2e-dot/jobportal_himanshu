@@ -69,7 +69,7 @@ export function TodayFocusCard({ items, onStartNow }: TodayFocusCardProps) {
         <button
           type="button"
           onClick={onStartNow}
-          className="inline-flex w-full sm:w-auto shrink-0 items-center justify-center rounded-2xl bg-[#28A8E1] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all duration-200 ease-in-out hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
+          className="inline-flex w-full sm:w-auto shrink-0 items-center justify-center rounded-2xl bg-[#2098C8] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all duration-200 ease-in-out hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
         >
           Start now
         </button>

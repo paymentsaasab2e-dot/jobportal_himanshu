@@ -189,7 +189,7 @@ export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
                         highlight === index ? 'bg-sky-50' : ''
                       }`}
                     >
-                      <Sparkles className="h-4 w-4 shrink-0 text-[#28A8E1]" />
+                      <Sparkles className="h-4 w-4 shrink-0 text-[#2098C8]" />
                       <span className="min-w-0 break-words">{suggestion}</span>
                     </button>
                   </li>
@@ -257,7 +257,7 @@ export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
                   }
                 }}
                 placeholder="e.g. JavaScript, React Hooks, System Design"
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none ring-[#28A8E1] transition focus:border-[#28A8E1] focus:ring-2"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none ring-[#2098C8] transition focus:border-[#2098C8] focus:ring-2"
                 autoComplete="off"
                 aria-autocomplete="list"
                 aria-expanded={showSuggestions}
@@ -267,7 +267,7 @@ export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
                 type="button"
                 onClick={() => void handleGenerate()}
                 disabled={topic.trim().length < 2 || generating}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#28A8E1] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#2098C8] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                 {generating ? (
@@ -318,7 +318,7 @@ export function QuizTopicGenerator({ onGenerated }: QuizTopicGeneratorProps) {
                   </div>
                   <Link
                     href={buildQuizAttemptHref(quiz.id, quiz.skill ?? null)}
-                    className="inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+                    className="inline-flex items-center justify-center rounded-xl bg-[#2098C8] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
                   >
                     Start practice
                   </Link>

@@ -33,7 +33,7 @@ import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
 import ProfilePanel from '@/components/common/ProfilePanel';
 import GlobalAIAssistant from '@/components/common/GlobalAIAssistant';
 import { AppLocale, localizePath, stripLocaleFromPathname } from '@/lib/i18n';
-const PRIMARY = '#28A8E1';
+const PRIMARY = '#2098C8';
 const HOME_PATH = '/candidate-home';
 const JOBS_PATH = '/explore-jobs';
 const SERVICES_PATH = '/services';
@@ -450,7 +450,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                             <motion.div
                                                 className="relative rounded-full"
                                                 initial={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
-                                                animate={{ boxShadow: '0 0 0 3px rgba(40,168,225,0.18), 0 14px 36px rgba(0,0,0,0.13)' }}
+                                                animate={{ boxShadow: '0 0 0 3px rgba(32,152,200,0.18), 0 14px 36px rgba(0,0,0,0.13)' }}
                                                 transition={{ duration: 0.3, ease: 'easeOut' }}
                                             >
                                                 {/* Icon inside input — fades in with slight delay */}
@@ -481,7 +481,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                                     style={{
                                                         borderColor: 'var(--border-color)',
                                                         fontFamily: 'var(--font-plus-jakarta), "Plus Jakarta Sans", sans-serif',
-                                                        ['--tw-ring-color' as string]: 'rgba(40,168,225,0.28)',
+                                                        ['--tw-ring-color' as string]: 'rgba(32,152,200,0.28)',
                                                     }}
                                                 />
 
@@ -554,7 +554,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                                 onMouseEnter={() => handleNavItemPrefetch(item)}
                                                 onFocus={() => handleNavItemPrefetch(item)}
                                                 className={`app-header-nav-link flex items-center rounded-full px-4 py-2.5 transition-all duration-200 ${active
-                                                    ? 'bg-[#28A8E1] font-semibold text-white shadow-[0_10px_18px_rgba(40,168,225,0.18)]'
+                                                    ? 'bg-[#2098C8] font-semibold text-white shadow-[0_10px_18px_rgba(32,152,200,0.18)]'
                                                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                                                     }`}
                                             >
@@ -670,7 +670,7 @@ export default function Header({ showNav = true }: { showNav?: boolean }) {
                                 <button
                                     type="button"
                                     onClick={() => router.push(localizePath('/whatsapp', locale) + '?mode=signin')}
-                                    className="rounded-full border border-[rgba(40,168,225,0.22)] bg-[var(--brand-primary-soft)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary)] shadow-sm transition-opacity hover:opacity-90"
+                                    className="rounded-full border border-[rgba(32,152,200,0.22)] bg-[var(--brand-primary-soft)] px-4 py-2 text-sm font-semibold text-[var(--brand-primary)] shadow-sm transition-opacity hover:opacity-90"
                                 >
                                     {t("common.login")}
                                 </button>

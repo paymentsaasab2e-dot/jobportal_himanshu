@@ -694,19 +694,19 @@ export function CompanyPageView({
       <button
         type="button"
         onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-[#08428c]"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-[#176F96]"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
           {backLabel}
       </button>
       ) : null}
 
-      <div className="overflow-hidden rounded-[24px] bg-linear-to-br from-[#28A8E1] via-[#5BB8E8] to-[#FC9620] p-[1.5px] shadow-[0_14px_36px_rgba(40,168,225,0.14),0_6px_18px_rgba(252,150,32,0.1)]">
+      <div className="overflow-hidden rounded-[24px] bg-linear-to-br from-[#2098C8] via-[#4BB3D4] to-[#2098C8] p-[1.5px] shadow-[0_14px_36px_rgba(32,152,200,0.14),0_6px_18px_rgba(32,152,200,0.1)]">
         <div className="overflow-hidden rounded-[22.5px] bg-white">
           <div className="relative h-28 overflow-hidden sm:h-32">
-            <div className="absolute inset-0 bg-linear-to-br from-[#062E5F] via-[#08428c] to-[#28A8E1]" />
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.35),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.12),transparent_40%)]" />
-            <div className="pointer-events-none absolute -right-6 top-2 h-24 w-24 rounded-full bg-[#FC9620]/25 blur-2xl" />
+            <div className="absolute inset-0 bg-linear-to-br from-[#0F5A7A] via-[#176F96] to-[#2098C8]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(32,152,200,0.35),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.12),transparent_40%)]" />
+            <div className="pointer-events-none absolute -right-6 top-2 h-24 w-24 rounded-full bg-[#2098C8]/25 blur-2xl" />
             {isSelfOwner ? (
               <span className="absolute right-3 top-3 inline-flex items-center rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white ring-1 ring-white/30 backdrop-blur-sm">
                 Your page
@@ -717,7 +717,7 @@ export function CompanyPageView({
           <div className="relative px-4 sm:px-5">
             <div className="-mt-10 flex flex-wrap items-end justify-between gap-3 sm:-mt-12">
               <div className="relative">
-                <div className="flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center overflow-hidden rounded-[20px] border-[3px] border-white bg-linear-to-br from-[#08428c] to-[#28A8E1] text-2xl font-bold text-white shadow-[0_12px_28px_rgba(15,23,42,0.25)] sm:h-20 sm:w-20 sm:text-[30px]">
+                <div className="flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center overflow-hidden rounded-[20px] border-[3px] border-white bg-linear-to-br from-[#176F96] to-[#2098C8] text-2xl font-bold text-white shadow-[0_12px_28px_rgba(15,23,42,0.25)] sm:h-20 sm:w-20 sm:text-[30px]">
                   {company.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -744,7 +744,7 @@ export function CompanyPageView({
                     <button
                       type="button"
                       onClick={() => logoInputRef.current?.click()}
-                      className="absolute -bottom-1 -right-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#08428c] shadow ring-1 ring-slate-200"
+                      className="absolute -bottom-1 -right-1 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#176F96] shadow ring-1 ring-slate-200"
                       title="Change profile picture"
                     >
                       <ImagePlus className="h-3.5 w-3.5" />
@@ -761,7 +761,7 @@ export function CompanyPageView({
                 <button
                   type="button"
                   onClick={onConnect}
-                    className="h-8 rounded-full bg-[#28A8E1] px-4 text-xs font-semibold text-white shadow-[0_8px_16px_rgba(40,168,225,0.28)] hover:bg-[#28A8DF]"
+                    className="h-8 rounded-full bg-[#2098C8] px-4 text-xs font-semibold text-white shadow-[0_8px_16px_rgba(32,152,200,0.28)] hover:bg-[#2098C8]"
                 >
                   Connect
                 </button>
@@ -773,7 +773,7 @@ export function CompanyPageView({
                   className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold ${
                     followingCompany
                       ? 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                        : 'bg-[#FC9620] text-white shadow-[0_8px_16px_rgba(252,150,32,0.28)] hover:brightness-105'
+                        : 'bg-[#2098C8] text-white shadow-[0_8px_16px_rgba(32,152,200,0.28)] hover:brightness-105'
                   }`}
                   title={
                     followingCompany
@@ -803,7 +803,7 @@ export function CompanyPageView({
                   <button
                     type="button"
                     onClick={openCreatePost}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#28A8E1] px-3.5 text-xs font-semibold text-white shadow-[0_8px_16px_rgba(40,168,225,0.28)]"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#2098C8] px-3.5 text-xs font-semibold text-white shadow-[0_8px_16px_rgba(32,152,200,0.28)]"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     New post
@@ -815,7 +815,7 @@ export function CompanyPageView({
                   <button
                     type="button"
                     onClick={goToReferenceCheck}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#08428c] px-3.5 text-xs font-semibold text-white shadow-[0_8px_16px_rgba(8,66,140,0.28)]"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#176F96] px-3.5 text-xs font-semibold text-white shadow-[0_8px_16px_rgba(23,111,150,0.28)]"
                   >
                     <ShieldCheck className="h-3.5 w-3.5" />
                     Reference check
@@ -830,13 +830,13 @@ export function CompanyPageView({
                   {company.name}
                 </h1>
                 {company.source === 'phase2' ? (
-                  <span className="inline-flex items-center rounded-full bg-[#E8F6FC] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#176F96] ring-1 ring-[#28A8E1]/25">
+                  <span className="inline-flex items-center rounded-full bg-[#E8F6FC] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#176F96] ring-1 ring-[#2098C8]/25">
                     Employer page
                   </span>
                 ) : null}
               </div>
             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-slate-500">
-                <span className="inline-flex items-center gap-1 font-semibold text-[#28A8E1]">
+                <span className="inline-flex items-center gap-1 font-semibold text-[#2098C8]">
                   <Globe2 className="h-3.5 w-3.5" />
                 {company.domainKey}
               </span>
@@ -879,7 +879,7 @@ export function CompanyPageView({
                 <button
                   type="button"
                   onClick={() => setTab('inbox')}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[rgba(252,150,32,0.35)] bg-[#FFF8F1] px-3 py-1.5 text-[11px] font-semibold text-[#C2410C]"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[rgba(32,152,200,0.35)] bg-[#FFF8F1] px-3 py-1.5 text-[11px] font-semibold text-[#C2410C]"
                 >
                   <MessageSquare className="h-3.5 w-3.5" />
                   {inboxCount} request{inboxCount === 1 ? '' : 's'} need attention
@@ -902,7 +902,7 @@ export function CompanyPageView({
                 }}
               className={`relative flex-1 px-2 py-2.5 text-center text-sm font-semibold transition sm:flex-none sm:px-4 ${
                 tab === t.id
-                  ? 'text-[#08428c] after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:rounded-full after:bg-[#08428c]'
+                  ? 'text-[#176F96] after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:rounded-full after:bg-[#176F96]'
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
               }`}
             >
@@ -955,7 +955,7 @@ export function CompanyPageView({
         <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-[#08428c]" />
+            <Users className="h-4 w-4 text-[#176F96]" />
             <h2 className="text-sm font-bold text-slate-900">People at {company.name}</h2>
             </div>
             <label
@@ -968,7 +968,7 @@ export function CompanyPageView({
                 checked={msgAnon || profileForcedAnon}
                 disabled={profileForcedAnon}
                 onChange={(e) => setMsgAnon(e.target.checked)}
-                className="rounded border-slate-300 text-[#08428c]"
+                className="rounded border-slate-300 text-[#176F96]"
               />
               Message anonymously
               {profileForcedAnon ? ' (locked)' : ''}
@@ -992,7 +992,7 @@ export function CompanyPageView({
                     key={id}
                     className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5"
                   >
-                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#08428c] text-sm font-bold text-white">
+                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#176F96] text-sm font-bold text-white">
                       {name.slice(0, 1).toUpperCase()}
                       <span
                         className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-slate-50 ${
@@ -1007,7 +1007,7 @@ export function CompanyPageView({
                           <button
                             type="button"
                             onClick={() => onOpenProfile(id)}
-                            className="hover:text-[#08428c] hover:underline"
+                            className="hover:text-[#176F96] hover:underline"
                           >
                             {name}
                           </button>
@@ -1043,7 +1043,7 @@ export function CompanyPageView({
                           type="button"
                           disabled={busy}
                           onClick={() => handleMessage(id)}
-                          className="inline-flex items-center gap-1 rounded-full border border-[#08428c] px-2.5 py-1 text-[11px] font-semibold text-[#08428c] hover:bg-sky-50 disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-full border border-[#176F96] px-2.5 py-1 text-[11px] font-semibold text-[#176F96] hover:bg-sky-50 disabled:opacity-50"
                         >
                           <MessageSquare className="h-3 w-3" />
                           Message
@@ -1060,7 +1060,7 @@ export function CompanyPageView({
                               if (onStartReferenceCheck) onStartReferenceCheck();
                               else void handleReference(id);
                             }}
-                            className="rounded-full bg-[#08428c] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
+                            className="rounded-full bg-[#176F96] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#0F5A7A] disabled:opacity-50"
                           >
                             Reference
                           </button>
@@ -1077,7 +1077,7 @@ export function CompanyPageView({
 
       {tab === 'references' && isFeedVariant ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center">
-          <ShieldCheck className="mx-auto h-8 w-8 text-[#08428c]" />
+          <ShieldCheck className="mx-auto h-8 w-8 text-[#176F96]" />
           <p className="mt-3 text-sm font-semibold text-slate-900">
             Reference Check is a separate module
           </p>
@@ -1087,7 +1087,7 @@ export function CompanyPageView({
           <button
             type="button"
             onClick={goToReferenceCheck}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#08428c] px-4 py-2 text-xs font-semibold text-white"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#176F96] px-4 py-2 text-xs font-semibold text-white"
           >
             <ShieldCheck className="h-3.5 w-3.5" />
             Go to Reference Check
@@ -1107,7 +1107,7 @@ export function CompanyPageView({
                 <button
                   type="button"
                   onClick={onStartReferenceCheck}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#08428c] px-3 py-1.5 text-[11px] font-semibold text-white"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#176F96] px-3 py-1.5 text-[11px] font-semibold text-white"
                 >
                   <ShieldCheck className="h-3.5 w-3.5" />
                   Start reference check
@@ -1129,7 +1129,7 @@ export function CompanyPageView({
                       key={person.userId}
                       className="flex items-center gap-3 rounded-xl border border-slate-100 px-3 py-3"
                     >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#08428c]">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-[#176F96]">
                         {person.displayName.slice(0, 1).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -1152,7 +1152,7 @@ export function CompanyPageView({
                               ? onStartReferenceCheck()
                               : void handleReference(person.userId)
                           }
-                          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#08428c] px-4 py-2 text-xs font-semibold text-white hover:bg-[#004182] disabled:opacity-50"
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#176F96] px-4 py-2 text-xs font-semibold text-white hover:bg-[#0F5A7A] disabled:opacity-50"
                         >
                           {onStartReferenceCheck ? (
                             'Reference check'
@@ -1194,7 +1194,7 @@ export function CompanyPageView({
                       <button
                         type="button"
                         onClick={() => onOpenChat?.('reference', r.id)}
-                        className="shrink-0 rounded-full bg-[#08428c] px-2.5 py-1 text-[10px] font-semibold text-white"
+                        className="shrink-0 rounded-full bg-[#176F96] px-2.5 py-1 text-[10px] font-semibold text-white"
                       >
                         Open
                       </button>
@@ -1219,7 +1219,7 @@ export function CompanyPageView({
 
           <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm">
             <div className="mb-2 flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-[#08428c]" />
+              <MessageSquare className="h-4 w-4 text-[#176F96]" />
               <h2 className="text-sm font-bold text-slate-900">Message requests</h2>
             </div>
             {pendingDmIncoming.length === 0 ? (
@@ -1279,7 +1279,7 @@ export function CompanyPageView({
                           <span className="font-medium text-slate-800">
                             {getDmPeerLabel(d, userId)}
                           </span>
-                          <span className="text-[10px] font-semibold text-[#08428c]">Open</span>
+                          <span className="text-[10px] font-semibold text-[#176F96]">Open</span>
                         </button>
                       </li>
                     ))}
@@ -1356,7 +1356,7 @@ export function CompanyPageView({
                               <button
                                 type="button"
                                 onClick={() => onOpenChat?.('reference', r.id)}
-                                className="rounded-full bg-[#08428c] px-3 py-1.5 text-[11px] font-semibold text-white"
+                                className="rounded-full bg-[#176F96] px-3 py-1.5 text-[11px] font-semibold text-white"
                               >
                                 Chat
                               </button>
@@ -1375,7 +1375,7 @@ export function CompanyPageView({
 
       {showCreatePost ? (
         <div
-          className="fixed inset-0 z-80 flex items-end justify-center bg-[#062E5F]/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+          className="fixed inset-0 z-80 flex items-end justify-center bg-[#0F5A7A]/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Create post"
@@ -1383,10 +1383,10 @@ export function CompanyPageView({
             if (e.target === e.currentTarget) closeCreatePost();
           }}
         >
-          <div className="w-full max-w-md overflow-hidden rounded-t-[26px] bg-linear-to-br from-[#28A8E1] via-[#5BB8E8] to-[#FC9620] p-[1.5px] shadow-[0_24px_60px_rgba(15,42,68,0.35)] sm:rounded-[26px]">
+          <div className="w-full max-w-md overflow-hidden rounded-t-[26px] bg-linear-to-br from-[#2098C8] via-[#4BB3D4] to-[#2098C8] p-[1.5px] shadow-[0_24px_60px_rgba(15,42,68,0.35)] sm:rounded-[26px]">
             <div className="flex max-h-[92vh] flex-col overflow-hidden rounded-t-[24.5px] bg-white sm:rounded-[24.5px]">
-              <div className="relative overflow-hidden bg-linear-to-r from-[#062E5F] via-[#08428c] to-[#28A8E1] px-3 py-3">
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.35),transparent_45%)]" />
+              <div className="relative overflow-hidden bg-linear-to-r from-[#0F5A7A] via-[#176F96] to-[#2098C8] px-3 py-3">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(32,152,200,0.35),transparent_45%)]" />
                 <div className="relative flex items-center justify-between gap-2">
                   <button
                     type="button"
@@ -1415,7 +1415,7 @@ export function CompanyPageView({
                     <button
                       type="button"
                       onClick={() => setComposeStep('caption')}
-                      className="rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-[#08428c] shadow-sm"
+                      className="rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-[#176F96] shadow-sm"
                     >
                       Next
                     </button>
@@ -1429,7 +1429,7 @@ export function CompanyPageView({
                           !composeVideo)
                       }
                       onClick={() => void handleCreatePost()}
-                      className="rounded-full bg-[#FC9620] px-3 py-1.5 text-[12px] font-bold text-white shadow-sm disabled:opacity-40"
+                      className="rounded-full bg-[#2098C8] px-3 py-1.5 text-[12px] font-bold text-white shadow-sm disabled:opacity-40"
                     >
                       {posting ? 'Sharing…' : 'Share'}
                     </button>
@@ -1445,7 +1445,7 @@ export function CompanyPageView({
                   />
                   <span
                     className={`h-1 flex-1 rounded-full ${
-                      composeStep === 'caption' ? 'bg-[#FC9620]' : 'bg-white/30'
+                      composeStep === 'caption' ? 'bg-[#2098C8]' : 'bg-white/30'
                     }`}
                   />
                 </div>
@@ -1477,7 +1477,7 @@ export function CompanyPageView({
                 {composeStep === 'media' ? (
                   <div className="flex flex-col">
                     {composeImages.length > 0 ? (
-                      <div className="relative bg-[#062E5F]">
+                      <div className="relative bg-[#0F5A7A]">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={composeImages[carouselIndex] || composeImages[0]}
@@ -1518,14 +1518,14 @@ export function CompanyPageView({
                             </div>
                           </>
                         ) : null}
-                        <div className="flex flex-wrap items-center gap-1.5 border-t border-white/10 bg-[#062E5F] px-3 py-2.5">
+                        <div className="flex flex-wrap items-center gap-1.5 border-t border-white/10 bg-[#0F5A7A] px-3 py-2.5">
                           {composeImages.map((src, i) => (
                             <button
                               key={`${src.slice(0, 24)}-${i}`}
                               type="button"
                               onClick={() => setCarouselIndex(i)}
                               className={`h-11 w-11 overflow-hidden rounded-lg ring-2 ${
-                                i === carouselIndex ? 'ring-[#28A8E1]' : 'ring-transparent'
+                                i === carouselIndex ? 'ring-[#2098C8]' : 'ring-transparent'
                               }`}
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1554,7 +1554,7 @@ export function CompanyPageView({
                         </div>
                       </div>
                     ) : composeVideo ? (
-                      <div className="bg-[#062E5F]">
+                      <div className="bg-[#0F5A7A]">
                         <video
                           src={composeVideo.url}
                           controls
@@ -1576,9 +1576,9 @@ export function CompanyPageView({
                     ) : (
                       <div className="flex min-h-70 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
                         <div className="relative">
-                          <div className="absolute -inset-3 rounded-full bg-linear-to-br from-[#28A8E1]/25 to-[#FC9620]/25 blur-md" />
-                          <div className="relative flex h-20 w-20 items-center justify-center rounded-[22px] border border-white bg-white shadow-[0_12px_28px_rgba(40,168,225,0.18)]">
-                            <ImagePlus className="h-8 w-8 text-[#28A8E1]" />
+                          <div className="absolute -inset-3 rounded-full bg-linear-to-br from-[#2098C8]/25 to-[#2098C8]/25 blur-md" />
+                          <div className="relative flex h-20 w-20 items-center justify-center rounded-[22px] border border-white bg-white shadow-[0_12px_28px_rgba(32,152,200,0.18)]">
+                            <ImagePlus className="h-8 w-8 text-[#2098C8]" />
                           </div>
                         </div>
                         <div>
@@ -1594,7 +1594,7 @@ export function CompanyPageView({
                           <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="inline-flex h-11 items-center gap-1.5 rounded-full bg-linear-to-r from-[#28A8E1] to-[#08428c] px-5 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(40,168,225,0.28)]"
+                            className="inline-flex h-11 items-center gap-1.5 rounded-full bg-linear-to-r from-[#2098C8] to-[#176F96] px-5 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(32,152,200,0.28)]"
                           >
                             <ImagePlus className="h-4 w-4" />
                             Photos
@@ -1611,7 +1611,7 @@ export function CompanyPageView({
                         <button
                           type="button"
                           onClick={() => setComposeStep('caption')}
-                          className="text-[13px] font-semibold text-[#28A8E1] hover:underline"
+                          className="text-[13px] font-semibold text-[#2098C8] hover:underline"
                         >
                           Skip — text only
                         </button>
@@ -1641,7 +1641,7 @@ export function CompanyPageView({
                     )}
                     <div className="rounded-[20px] border border-slate-200/80 bg-white p-3.5 shadow-sm">
                       <div className="flex gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-linear-to-br from-[#08428c] to-[#28A8E1] text-sm font-bold text-white shadow-sm">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-linear-to-br from-[#176F96] to-[#2098C8] text-sm font-bold text-white shadow-sm">
                           {isSelfOwner
                             ? company.logoLetter
                             : authorName.slice(0, 1).toUpperCase()}
@@ -1693,7 +1693,7 @@ export function CompanyPageView({
 
       {showEditPage ? (
         <div
-          className="fixed inset-0 z-80 flex items-end justify-center bg-[#062E5F]/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+          className="fixed inset-0 z-80 flex items-end justify-center bg-[#0F5A7A]/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Edit company page"
@@ -1701,10 +1701,10 @@ export function CompanyPageView({
             if (e.target === e.currentTarget) setShowEditPage(false);
           }}
         >
-          <div className="w-full max-w-md overflow-hidden rounded-t-[26px] bg-linear-to-br from-[#28A8E1] via-[#5BB8E8] to-[#FC9620] p-[1.5px] shadow-[0_24px_60px_rgba(15,42,68,0.35)] sm:rounded-[26px]">
+          <div className="w-full max-w-md overflow-hidden rounded-t-[26px] bg-linear-to-br from-[#2098C8] via-[#4BB3D4] to-[#2098C8] p-[1.5px] shadow-[0_24px_60px_rgba(15,42,68,0.35)] sm:rounded-[26px]">
             <div className="overflow-hidden rounded-t-[24.5px] bg-white sm:rounded-[24.5px]">
-              <div className="relative overflow-hidden bg-linear-to-r from-[#062E5F] via-[#08428c] to-[#28A8E1] px-4 py-3.5">
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.35),transparent_45%)]" />
+              <div className="relative overflow-hidden bg-linear-to-r from-[#0F5A7A] via-[#176F96] to-[#2098C8] px-4 py-3.5">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(32,152,200,0.35),transparent_45%)]" />
                 <div className="relative flex items-center justify-between gap-2">
                   <div>
                     <p className="text-[15px] font-bold text-white">Edit page</p>
@@ -1725,7 +1725,7 @@ export function CompanyPageView({
               <div className="space-y-4 bg-[#F4F8FB] p-4">
                 <div className="rounded-[20px] border border-slate-200/80 bg-white p-4 shadow-sm">
                   <div className="flex items-center gap-3.5">
-                    <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center overflow-hidden rounded-[18px] bg-linear-to-br from-[#08428c] to-[#28A8E1] text-2xl font-bold text-white shadow-sm">
+                    <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center overflow-hidden rounded-[18px] bg-linear-to-br from-[#176F96] to-[#2098C8] text-2xl font-bold text-white shadow-sm">
                       {editLogoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={editLogoUrl} alt="" className="h-full w-full object-cover" />
@@ -1742,7 +1742,7 @@ export function CompanyPageView({
                         <button
                           type="button"
                           onClick={() => logoInputRef.current?.click()}
-                          className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#28A8E1] px-3 text-[12px] font-semibold text-white"
+                          className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#2098C8] px-3 text-[12px] font-semibold text-white"
                         >
                           <ImagePlus className="h-3.5 w-3.5" />
                           Change photo
@@ -1767,7 +1767,7 @@ export function CompanyPageView({
                     <input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-[#F8FBFD] px-3 text-sm outline-none focus:border-[#28A8E1] focus:bg-white"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-[#F8FBFD] px-3 text-sm outline-none focus:border-[#2098C8] focus:bg-white"
                     />
                   </label>
                   <label className="block text-[12px] font-semibold text-slate-700">
@@ -1776,7 +1776,7 @@ export function CompanyPageView({
                       value={editDescription}
                       onChange={setEditDescription}
                       rows={4}
-                      className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F8FBFD] px-3 py-2.5 text-sm outline-none focus:border-[#28A8E1] focus:bg-white"
+                      className="mt-1.5 w-full rounded-xl border border-slate-200 bg-[#F8FBFD] px-3 py-2.5 text-sm outline-none focus:border-[#2098C8] focus:bg-white"
                     />
                   </label>
                 </div>
@@ -1793,7 +1793,7 @@ export function CompanyPageView({
                     type="button"
                     disabled={savingEdit || editName.trim().length < 2}
                     onClick={saveCompanyDetails}
-                    className="rounded-full bg-[#FC9620] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_16px_rgba(252,150,32,0.28)] disabled:opacity-40"
+                    className="rounded-full bg-[#2098C8] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_16px_rgba(32,152,200,0.28)] disabled:opacity-40"
                   >
                     {savingEdit ? 'Saving…' : 'Save changes'}
                   </button>

@@ -733,7 +733,7 @@ export function RequestInterviewModal({
       >
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#28A8E1]">Request Interview</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2098C8]">Request Interview</p>
             <h2 id="candidate-interview-request-title" className="text-lg font-bold text-slate-900">Candidate Interview Request</h2>
           </div>
           {showCloseButton ? (
@@ -752,7 +752,7 @@ export function RequestInterviewModal({
             <div className="px-5 pt-4">
               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-full rounded-full bg-linear-to-r from-[#28A8E1] to-[#1F8FC2] transition-all duration-300"
+                  className="h-full rounded-full bg-linear-to-r from-[#2098C8] to-[#1F8FC2] transition-all duration-300"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -790,7 +790,7 @@ export function RequestInterviewModal({
                           value={categorySearch}
                           onChange={(e) => setCategorySearch(e.target.value.slice(0, 80))}
                           placeholder="Type to search categories (AI suggestions enabled)"
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                         />
                         {categoryAiLoading ? (
                           <p className="text-xs text-slate-500">Loading AI suggestions...</p>
@@ -809,7 +809,7 @@ export function RequestInterviewModal({
                                 }}
                                 className={`rounded-xl border px-4 py-3 text-left text-sm font-semibold transition ${
                                   active
-                                    ? 'border-[#28A8E1] bg-[#EAF7FD] text-[#1F8FC2]'
+                                    ? 'border-[#2098C8] bg-[#EAF7FD] text-[#1F8FC2]'
                                     : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                                 }`}
                               >
@@ -834,7 +834,7 @@ export function RequestInterviewModal({
                                   }));
                                   setIsCategoryPanelOpen(false);
                                 }}
-                                className="rounded-xl border border-[#28A8E1]/40 bg-[#EAF7FD] px-3 py-2 text-sm font-semibold text-[#1F8FC2] transition hover:border-[#28A8E1]"
+                                className="rounded-xl border border-[#2098C8]/40 bg-[#EAF7FD] px-3 py-2 text-sm font-semibold text-[#1F8FC2] transition hover:border-[#2098C8]"
                               >
                                 Use custom category: {categorySearch.trim()}
                               </button>
@@ -855,7 +855,7 @@ export function RequestInterviewModal({
                     value={techSearch}
                     onChange={(e) => setTechSearch(e.target.value.slice(0, 80))}
                     placeholder="Type to search technologies"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                   />
                   <div className="flex flex-wrap gap-2">
                     {filteredTechStack.length ? (
@@ -868,7 +868,7 @@ export function RequestInterviewModal({
                             onClick={() => toggleTech(tech)}
                             className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                               active
-                                ? 'border-[#28A8E1] bg-[#EAF7FD] text-[#1F8FC2]'
+                                ? 'border-[#2098C8] bg-[#EAF7FD] text-[#1F8FC2]'
                                 : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                             }`}
                           >
@@ -892,7 +892,7 @@ export function RequestInterviewModal({
                     value={difficultySearch}
                     onChange={(e) => setDifficultySearch(e.target.value.slice(0, 50))}
                     placeholder="Type to filter difficulty"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                   />
                   <div className="space-y-2">
                     {filteredDifficulties.map((difficulty) => (
@@ -921,7 +921,7 @@ export function RequestInterviewModal({
                     value={experienceSearch}
                     onChange={(e) => setExperienceSearch(e.target.value.slice(0, 50))}
                     placeholder="Type to filter experience options"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                   />
                   <div className="flex flex-wrap gap-2">
                     {filteredExperiences.map((opt) => {
@@ -933,7 +933,7 @@ export function RequestInterviewModal({
                           onClick={() => setForm((prev) => ({ ...prev, experience: opt }))}
                           className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                             active
-                              ? 'border-[#28A8E1] bg-[#EAF7FD] text-[#1F8FC2]'
+                              ? 'border-[#2098C8] bg-[#EAF7FD] text-[#1F8FC2]'
                               : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                           }`}
                         >
@@ -952,7 +952,7 @@ export function RequestInterviewModal({
                     value={languageSearch}
                     onChange={(e) => setLanguageSearch(e.target.value.slice(0, 50))}
                     placeholder="Type to search language"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                   />
                   <div className="flex flex-wrap gap-2">
                     {filteredLanguages.map((lang) => {
@@ -964,7 +964,7 @@ export function RequestInterviewModal({
                           onClick={() => setForm((prev) => ({ ...prev, language: lang }))}
                           className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                             active
-                              ? 'border-[#28A8E1] bg-[#EAF7FD] text-[#1F8FC2]'
+                              ? 'border-[#2098C8] bg-[#EAF7FD] text-[#1F8FC2]'
                               : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                           }`}
                         >
@@ -983,7 +983,7 @@ export function RequestInterviewModal({
                     value={interviewTypeSearch}
                     onChange={(e) => setInterviewTypeSearch(e.target.value.slice(0, 60))}
                     placeholder="Type to filter interview type"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                   />
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {filteredInterviewTypes.map((type) => {
@@ -995,7 +995,7 @@ export function RequestInterviewModal({
                           onClick={() => setForm((prev) => ({ ...prev, interviewType: type }))}
                           className={`rounded-xl border px-4 py-3 text-left text-sm font-semibold transition ${
                             active
-                              ? 'border-[#28A8E1] bg-[#EAF7FD] text-[#1F8FC2]'
+                              ? 'border-[#2098C8] bg-[#EAF7FD] text-[#1F8FC2]'
                               : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                           }`}
                         >
@@ -1038,7 +1038,7 @@ export function RequestInterviewModal({
                           }
                           className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                             active
-                              ? 'border-[#28A8E1] bg-[#EAF7FD] text-[#1F8FC2]'
+                              ? 'border-[#2098C8] bg-[#EAF7FD] text-[#1F8FC2]'
                               : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                           }`}
                         >
@@ -1059,12 +1059,12 @@ export function RequestInterviewModal({
                       type="time"
                       value={newTimeSlot}
                       onChange={(e) => setNewTimeSlot(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                     />
                     <button
                       type="button"
                       onClick={addTimeSlot}
-                      className="rounded-xl bg-[#28A8E1] px-4 py-2 text-sm font-semibold text-white"
+                      className="rounded-xl bg-[#2098C8] px-4 py-2 text-sm font-semibold text-white"
                     >
                       Add
                     </button>
@@ -1086,7 +1086,7 @@ export function RequestInterviewModal({
                           }}
                           className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                             active
-                              ? 'border-[#28A8E1] bg-[#EAF7FD] text-[#1F8FC2]'
+                              ? 'border-[#2098C8] bg-[#EAF7FD] text-[#1F8FC2]'
                               : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                           }`}
                         >
@@ -1125,7 +1125,7 @@ export function RequestInterviewModal({
                     value={durationSearch}
                     onChange={(e) => setDurationSearch(e.target.value.slice(0, 20))}
                     placeholder="Type duration (e.g. 60)"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                   />
                   <div className="flex flex-wrap gap-2">
                     {filteredDurations.map((minutes) => {
@@ -1137,7 +1137,7 @@ export function RequestInterviewModal({
                           onClick={() => setForm((prev) => ({ ...prev, duration: minutes }))}
                           className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                             active
-                              ? 'border-[#28A8E1] bg-[#EAF7FD] text-[#1F8FC2]'
+                              ? 'border-[#2098C8] bg-[#EAF7FD] text-[#1F8FC2]'
                               : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                           }`}
                         >
@@ -1162,7 +1162,7 @@ export function RequestInterviewModal({
                         window.setTimeout(() => setTargetRoleSuggestOpen(false), 120);
                       }}
                       placeholder="Target role (e.g. Frontend Developer)"
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                     />
                     {targetRoleSuggestOpen && form.targetRole.trim().length >= 2 ? (
                       <div className="absolute z-20 mt-1 max-h-44 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
@@ -1196,7 +1196,7 @@ export function RequestInterviewModal({
                         window.setTimeout(() => setCompanyDomainSuggestOpen(false), 120);
                       }}
                       placeholder="Company or domain (e.g. fintech product company)"
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                     />
                     {companyDomainSuggestOpen && form.companyDomain.trim().length >= 2 ? (
                       <div className="absolute z-20 mt-1 max-h-44 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
@@ -1224,7 +1224,7 @@ export function RequestInterviewModal({
                     value={form.weakAreas}
                     onChange={(next) => setForm((prev) => ({ ...prev, weakAreas: next.slice(0, 500) }))}
                     placeholder="Weak areas to cover (communication, coding speed, system design, etc.)"
-                    className="h-24 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                    className="h-24 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                   />
                   <div className="relative">
                     <input
@@ -1235,7 +1235,7 @@ export function RequestInterviewModal({
                         window.setTimeout(() => setMustCoverTopicSuggestOpen(false), 120);
                       }}
                       placeholder="Must-cover topics (comma separated)"
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                     />
                     {mustCoverTopicSuggestOpen && (form.mustCoverTopics || '').trim().length >= 2 ? (
                       <div className="absolute z-20 mt-1 max-h-44 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
@@ -1264,7 +1264,7 @@ export function RequestInterviewModal({
                     value={form.notes || ''}
                     onChange={(next) => setForm((prev) => ({ ...prev, notes: next.slice(0, 1000) }))}
                     placeholder="Topics to cover, weak areas, company prep, special requests..."
-                    className="h-36 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#28A8E1]"
+                    className="h-36 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2098C8]"
                   />
                   <p className="text-xs text-slate-500">{(form.notes || '').length}/1000</p>
                 </div>
@@ -1291,7 +1291,7 @@ export function RequestInterviewModal({
                           <div
                             key={person.candidateId}
                             className={`rounded-xl border p-3 ${
-                              selected ? 'border-[#28A8E1] bg-[#F4FBFF]' : 'border-slate-200 bg-white'
+                              selected ? 'border-[#2098C8] bg-[#F4FBFF]' : 'border-slate-200 bg-white'
                             }`}
                           >
                             <div className="flex gap-3">
@@ -1336,7 +1336,7 @@ export function RequestInterviewModal({
                               <button
                                 type="button"
                                 onClick={() => setSelectedInterviewerId(person.candidateId)}
-                                className="rounded-md bg-[#28A8E1] px-2.5 py-1 text-xs font-semibold text-white"
+                                className="rounded-md bg-[#2098C8] px-2.5 py-1 text-xs font-semibold text-white"
                               >
                                 {selected ? 'Selected' : 'Select'}
                               </button>
@@ -1391,7 +1391,7 @@ export function RequestInterviewModal({
                 <button
                   type="button"
                   onClick={goNext}
-                  className="rounded-xl bg-[#28A8E1] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F8FC2]"
+                  className="rounded-xl bg-[#2098C8] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F8FC2]"
                 >
                   Next
                 </button>
@@ -1400,7 +1400,7 @@ export function RequestInterviewModal({
                   type="button"
                   onClick={submit}
                   disabled={submitting}
-                  className="rounded-xl bg-[#28A8E1] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F8FC2] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-xl bg-[#2098C8] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F8FC2] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? 'Sending...' : 'Send Interview Request'}
                 </button>
@@ -1419,7 +1419,7 @@ export function RequestInterviewModal({
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="mt-6 rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1F8FC2]"
+              className="mt-6 rounded-xl bg-[#2098C8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1F8FC2]"
             >
               Close
             </button>

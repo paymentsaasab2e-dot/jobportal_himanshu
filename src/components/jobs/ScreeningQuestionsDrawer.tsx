@@ -38,7 +38,7 @@ function choiceButtonClass(selected: boolean) {
   return [
     'profile-modal-btn inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-[0.8125rem] font-medium capitalize transition-colors',
     selected
-      ? 'border-[#28A8E1] bg-[#28A8E1] text-white shadow-sm'
+      ? 'border-[#2098C8] bg-[#2098C8] text-white shadow-sm'
       : 'border-slate-200 bg-white text-[#111827] hover:border-slate-300 hover:bg-slate-50',
   ].join(' ');
 }
@@ -198,9 +198,9 @@ export default function ScreeningQuestionsDrawer({
                       step={step}
                       value={numericValue}
                       onChange={(e) => onAnswerChange(question.id, Number(e.target.value))}
-                      className="h-2 w-full cursor-pointer appearance-none rounded-lg accent-[#28A8E1]"
+                      className="h-2 w-full cursor-pointer appearance-none rounded-lg accent-[#2098C8]"
                       style={{
-                        background: `linear-gradient(to right, #28A8E1 0%, #28A8E1 ${fillPercent}%, #e2e8f0 ${fillPercent}%, #e2e8f0 100%)`,
+                        background: `linear-gradient(to right, #2098C8 0%, #2098C8 ${fillPercent}%, #e2e8f0 ${fillPercent}%, #e2e8f0 100%)`,
                       }}
                     />
                     <p className="text-[0.8125rem] font-medium text-[#111827]">

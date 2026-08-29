@@ -280,7 +280,7 @@ export function InterviewRequestsList({
                             {short ? (
                               <a
                                 href="/candidate-dashboard"
-                                className="mt-2 inline-flex rounded-md bg-[#28A8E1] px-2.5 py-1 text-xs font-semibold text-white"
+                                className="mt-2 inline-flex rounded-md bg-[#2098C8] px-2.5 py-1 text-xs font-semibold text-white"
                               >
                                 Buy Tokens
                               </a>
@@ -447,7 +447,7 @@ export function InterviewRequestsList({
                     setReviewError('');
                     setReviewRequestId(request.id);
                   }}
-                  className="mt-2 rounded-lg bg-[#28A8E1] px-3 py-1.5 text-xs font-semibold text-white"
+                  className="mt-2 rounded-lg bg-[#2098C8] px-3 py-1.5 text-xs font-semibold text-white"
                 >
                   Add review
                 </button>

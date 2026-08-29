@@ -47,7 +47,7 @@ export function ProfileWorkspaceRail({
                 cy="50"
                 r="40"
                 fill="none"
-                stroke="#28A8E1"
+                stroke="#2098C8"
                 strokeWidth="10"
                 strokeLinecap="round"
                 strokeDasharray={circumference}

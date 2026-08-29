@@ -179,7 +179,7 @@ export default function CandidateHomePage() {
             <button
               type="button"
               onClick={() => router.push(localizePath('/whatsapp', locale))}
-              className="mt-8 rounded-full bg-[#28A8E1] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(40,168,225,0.35)] transition hover:-translate-y-0.5 hover:opacity-95"
+              className="mt-8 rounded-full bg-[#2098C8] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(32,152,200,0.35)] transition hover:-translate-y-0.5 hover:opacity-95"
             >
               Continue with WhatsApp
             </button>
@@ -206,7 +206,7 @@ export default function CandidateHomePage() {
                 <div
                   className="group relative flex h-[96px] w-[96px] cursor-pointer items-center justify-center rounded-full transition duration-300 hover:scale-[1.02]"
                   style={{
-                    background: `conic-gradient(#f59e0b ${Math.max(
+                    background: `conic-gradient(#2098C8 ${Math.max(
                       6,
                       Math.min(100, profileCompletion),
                     ) * 3.6}deg, #e2e8f0 0deg)`,
@@ -214,9 +214,9 @@ export default function CandidateHomePage() {
                   onClick={triggerPhotoUpload}
                   title="Click to upload profile photo"
                 >
-                  <div className="pointer-events-none absolute inset-0 rounded-full bg-linear-to-tr from-[#f59e0b]/25 via-transparent to-transparent opacity-80 transition duration-700 group-hover:rotate-45" />
+                  <div className="pointer-events-none absolute inset-0 rounded-full bg-linear-to-tr from-[#2098C8]/25 via-transparent to-transparent opacity-80 transition duration-700 group-hover:rotate-45" />
                   <div className="absolute inset-[6px] rounded-full bg-white" />
-                  <div className="relative h-[72px] w-[72px] overflow-hidden rounded-full border border-[#D8E2F2] shadow-[0_0_0_0_rgba(245,158,11,0.35)] transition group-hover:shadow-[0_0_0_8px_rgba(245,158,11,0.08)]">
+                  <div className="relative h-[72px] w-[72px] overflow-hidden rounded-full border border-[#D8E2F2] shadow-[0_0_0_0_rgba(32,152,200,0.35)] transition group-hover:shadow-[0_0_0_8px_rgba(32,152,200,0.08)]">
                     {profilePhotoUrl ? (
                       <Image
                         src={profilePhotoUrl}
@@ -249,7 +249,7 @@ export default function CandidateHomePage() {
               <button
                 type="button"
                 onClick={() => router.push(localizePath('/profile', locale))}
-                className="mt-5 w-full rounded-full bg-linear-to-r from-[#2F62D8] to-[#365EEB] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_24px_rgba(47,98,216,0.28)] transition hover:-translate-y-0.5 hover:opacity-95"
+                className="mt-5 w-full rounded-full bg-linear-to-r from-[#2098C8] to-[#1A86B3] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_24px_rgba(47,98,216,0.28)] transition hover:-translate-y-0.5 hover:opacity-95"
               >
                 Complete profile
               </button>
@@ -283,7 +283,7 @@ export default function CandidateHomePage() {
           </article>
 
           <div className="space-y-5">
-            <article className="rounded-[24px] border border-[rgba(40,168,225,0.22)] bg-linear-to-r from-[#EAF7FD] via-[#E6F4FC] to-[#F2F9FF] p-5 shadow-[0_14px_32px_rgba(40,168,225,0.18)]">
+            <article className="rounded-[24px] border border-[rgba(32,152,200,0.22)] bg-linear-to-r from-[#EAF7FD] via-[#E6F4FC] to-[#F2F9FF] p-5 shadow-[0_14px_32px_rgba(32,152,200,0.18)]">
               <p className="text-[33px] leading-none text-[#B9DFF2]">N</p>
               <p
                 key={`quote-title-${quoteIndex}`}
@@ -299,7 +299,7 @@ export default function CandidateHomePage() {
               </p>
               <button
                 type="button"
-                className="mt-4 rounded-full bg-linear-to-r from-[#28A8E1] to-[#1F8FC2] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(40,168,225,0.32)] transition hover:-translate-y-0.5 hover:opacity-95"
+                className="mt-4 rounded-full bg-linear-to-r from-[#2098C8] to-[#1A86B3] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(32,152,200,0.32)] transition hover:-translate-y-0.5 hover:opacity-95"
               >
                 {activeQuote.cta}
               </button>
@@ -308,7 +308,7 @@ export default function CandidateHomePage() {
                   <span
                     key={`quote-dot-${idx}`}
                     className={`h-1.5 rounded-full transition-all duration-300 ${
-                      idx === quoteIndex ? 'w-5 bg-[#28A8E1]' : 'w-1.5 bg-[#9FD3EA]'
+                      idx === quoteIndex ? 'w-5 bg-[#2098C8]' : 'w-1.5 bg-[#9FD3EA]'
                     }`}
                   />
                 ))}
@@ -321,7 +321,7 @@ export default function CandidateHomePage() {
                 <button
                   type="button"
                   onClick={() => router.push(localizePath('/explore-jobs', locale))}
-                  className="text-sm font-semibold text-[#2F62D8] transition hover:text-[#1e47b7]"
+                  className="text-sm font-semibold text-[#2098C8] transition hover:text-[#1e47b7]"
                 >
                   View all
                 </button>
@@ -347,7 +347,7 @@ export default function CandidateHomePage() {
                           `${localizePath('/explore-jobs', locale)}?job=${encodeURIComponent(job.id)}`,
                         )
                       }
-                      className="flex w-full items-start justify-between rounded-2xl border border-slate-200/90 bg-white p-3.5 text-left transition hover:-translate-y-0.5 hover:border-[#28A8E1]/45 hover:bg-[#F8FCFF] hover:shadow-[0_10px_24px_rgba(40,168,225,0.14)]"
+                      className="flex w-full items-start justify-between rounded-2xl border border-slate-200/90 bg-white p-3.5 text-left transition hover:-translate-y-0.5 hover:border-[#2098C8]/45 hover:bg-[#F8FCFF] hover:shadow-[0_10px_24px_rgba(32,152,200,0.14)]"
                     >
                       <div>
                         <p className="text-sm font-semibold text-slate-900">{job.title}</p>
@@ -355,7 +355,7 @@ export default function CandidateHomePage() {
                           {job.company} - {job.location}
                         </p>
                       </div>
-                      <span className="rounded-full bg-[#EAF2FF] px-3 py-1 text-xs font-semibold text-[#2F62D8]">
+                      <span className="rounded-full bg-[#EAF2FF] px-3 py-1 text-xs font-semibold text-[#2098C8]">
                         Apply
                       </span>
                     </button>
@@ -381,7 +381,7 @@ export default function CandidateHomePage() {
                 <button
                   type="button"
                   onClick={() => router.push(localizePath('/explore-jobs', locale))}
-                  className="mt-3 text-sm font-semibold text-[#2F62D8] transition hover:text-[#1e47b7]"
+                  className="mt-3 text-sm font-semibold text-[#2098C8] transition hover:text-[#1e47b7]"
                 >
                   Read more
                 </button>

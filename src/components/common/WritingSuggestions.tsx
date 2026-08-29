@@ -130,7 +130,7 @@ export function WritingAssistTooltip({ inputRef, value, onApply }: TooltipProps)
     >
       <button
         type="button"
-        className="block w-full text-left text-[13px] font-medium leading-snug text-slate-900 hover:text-[#08428c]"
+        className="block w-full text-left text-[13px] font-medium leading-snug text-slate-900 hover:text-[#176F96]"
         onClick={() => {
           const next = applyWritingSpan(value, active);
           onApply(next);

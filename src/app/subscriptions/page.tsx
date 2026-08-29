@@ -134,7 +134,7 @@ export default function SubscriptionsPage() {
     <main className="relative mx-auto max-w-5xl px-4 pb-20 pt-4 sm:px-6 lg:px-8">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top,rgba(40,168,225,0.12),transparent_55%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top,rgba(32,152,200,0.12),transparent_55%)]"
       />
 
       {/* Floating balance — below navbar, no border */}
@@ -187,7 +187,7 @@ export default function SubscriptionsPage() {
           onClick={() => setTab('premium')}
           className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition ${
             tab === 'premium'
-              ? 'border border-transparent bg-[#08428c] text-white shadow-md shadow-slate-900/15'
+              ? 'border border-transparent bg-[#176F96] text-white shadow-md shadow-slate-900/15'
               : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
           }`}
         >
@@ -223,11 +223,11 @@ export default function SubscriptionsPage() {
                   <div
                     key={pack.id}
                     className={`relative flex flex-col overflow-hidden rounded-2xl bg-white p-5 shadow-[0_8px_28px_-12px_rgba(15,23,42,0.18)] transition hover:shadow-[0_12px_32px_-10px_rgba(15,23,42,0.22)] ${
-                      pack.popular ? 'ring-2 ring-[#28A8E1]/35' : ''
+                      pack.popular ? 'ring-2 ring-[#2098C8]/35' : ''
                     }`}
                   >
                     {pack.popular ? (
-                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#08428c] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                      <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#176F96] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
                         <Sparkles className="h-3 w-3" />
                         Popular
                       </span>
@@ -244,7 +244,7 @@ export default function SubscriptionsPage() {
                       onClick={() => void handlePurchase(pack.id)}
                       className={`mt-5 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60 ${
                         pack.popular
-                          ? 'bg-[#08428c] hover:opacity-95'
+                          ? 'bg-[#176F96] hover:opacity-95'
                           : 'bg-(--brand-primary) hover:opacity-90'
                       }`}
                     >
@@ -268,8 +268,8 @@ export default function SubscriptionsPage() {
             <div className="space-y-7">
               {servicesByCategory.map(([category, items]) => (
                 <div key={category}>
-                  <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#08428c]/70">
-                    <span className="h-px w-4 bg-[#28A8E1]/50" />
+                  <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#176F96]/70">
+                    <span className="h-px w-4 bg-[#2098C8]/50" />
                     {category}
                   </h3>
                   <ul className="grid gap-3 sm:grid-cols-2">
@@ -282,9 +282,9 @@ export default function SubscriptionsPage() {
                           <button
                             type="button"
                             onClick={() => go(href)}
-                            className="group flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-4 text-left shadow-[0_6px_24px_-10px_rgba(15,23,42,0.16)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_28px_-10px_rgba(40,168,225,0.25)] active:scale-[0.99]"
+                            className="group flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-4 text-left shadow-[0_6px_24px_-10px_rgba(15,23,42,0.16)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_28px_-10px_rgba(32,152,200,0.25)] active:scale-[0.99]"
                           >
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#08428c] text-amber-300">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#176F96] text-amber-300">
                               <Crown className="h-[18px] w-[18px]" />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -294,7 +294,7 @@ export default function SubscriptionsPage() {
                               </p>
                               <p
                                 className={`mt-1.5 text-[11px] font-semibold ${
-                                  canAfford ? 'text-emerald-600' : 'text-[#28A8E1]'
+                                  canAfford ? 'text-emerald-600' : 'text-[#2098C8]'
                                 }`}
                               >
                                 {canAfford ? 'Ready to use' : `Need ${shortfall} more`}
@@ -304,7 +304,7 @@ export default function SubscriptionsPage() {
                               <TokenCoinIcon className="h-3.5 w-3.5" />
                               {service.cost}
                             </span>
-                            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#28A8E1]" />
+                            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#2098C8]" />
                           </button>
                         </li>
                       );

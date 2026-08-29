@@ -101,7 +101,7 @@ export default function QuestionBankCategoryPage() {
                   });
                   toast.push({ title: 'Question Saved', message: 'Added to your study plan.', tone: 'success' });
                 }}
-                className="text-sm font-bold text-[#28A8E1] hover:text-[#208bc0] hover:underline"
+                className="text-sm font-bold text-[#2098C8] hover:text-[#208bc0] hover:underline"
               >
                 + Add to study plan
               </button>

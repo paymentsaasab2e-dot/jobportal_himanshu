@@ -34,7 +34,7 @@ export function CvJdMatchScoreRing({
   const offset = circumference - (circumference * breakdown.score) / 100;
 
   return (
-    <div className="flex shrink-0 flex-col items-center gap-2 rounded-[20px] border border-[rgba(40,168,225,0.16)] bg-white/90 px-4 py-3 shadow-[0_12px_28px_rgba(40,168,225,0.08)] sm:min-w-[148px]">
+    <div className="flex shrink-0 flex-col items-center gap-2 rounded-[20px] border border-[rgba(32,152,200,0.16)] bg-white/90 px-4 py-3 shadow-[0_12px_28px_rgba(32,152,200,0.08)] sm:min-w-[148px]">
       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{te('cvJdMatchTitle')}</p>
 
       <div className="relative h-20 w-20">

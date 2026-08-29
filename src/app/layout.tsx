@@ -11,6 +11,7 @@ import { ToastProvider } from "@/components/common/toast/ToastProvider";
 import { AuthProvider } from "@/components/auth/AuthContext";
 import { InactivityGuard } from "@/components/auth/InactivityGuard";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { P1JobThemeSync } from "@/components/theme/P1JobThemeSync";
 import GlobalHeader from "@/components/common/GlobalHeader";
 import ApiHealthChecker from "@/components/common/ApiHealthChecker";
 import GlobalFooter from "@/components/common/GlobalFooter";
@@ -59,6 +60,7 @@ export default function RootLayout({
                 <QueryProvider>
                 <TokensProvider>
                 <AuthGuard>
+                  <P1JobThemeSync />
                   <NavigationLoader />
                   <PortalNavigationWarmup />
                   <GlobalHeader />

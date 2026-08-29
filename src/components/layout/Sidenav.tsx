@@ -51,7 +51,7 @@ const ImageWithFallback = ({
   const [error, setError] = useState(false);
   if (error || !src) {
     return (
-      <div className={`${className} bg-gradient-to-br from-teal-400 to-blue-600 flex items-center justify-center`}>
+      <div className={`${className} bg-gradient-to-br from-[#4BB3D4] to-[#2098C8] flex items-center justify-center`}>
         <User className="w-4 h-4 text-white" />
       </div>
     );
@@ -276,7 +276,7 @@ export function Sidenav({ avatarUrl = '', userProfile, children }: SidenavProps)
       {/* ── Top Navigation Bar ─────────────────────────────────────────── */}
       <nav
         className="fixed top-0 left-0 right-0 h-14 flex items-center justify-between px-5 z-50"
-        style={{ backgroundColor: '#062E5F', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ backgroundColor: '#0F5A7A', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
       >
         {/* Logo area — same width as sidebar so search starts after */}
         <div
@@ -355,7 +355,7 @@ export function Sidenav({ avatarUrl = '', userProfile, children }: SidenavProps)
         style={{
           width: SIDEBAR_W,
           height: 'calc(100vh - 56px)',
-          backgroundColor: '#062E5F',
+          backgroundColor: '#0F5A7A',
           borderRight: '1px solid rgba(255,255,255,0.05)',
         }}
       >

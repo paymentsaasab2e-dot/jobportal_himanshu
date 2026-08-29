@@ -32,7 +32,7 @@ function BulletItem({ children }: { children: ReactNode }) {
   return (
     <div className="flex items-start gap-2.5">
       <span
-        className="mt-2 inline-block h-2 w-2 shrink-0 rounded-[2px] bg-[#28A8E1]"
+        className="mt-2 inline-block h-2 w-2 shrink-0 rounded-[2px] bg-[#2098C8]"
         aria-hidden
       />
       <p className="text-sm leading-7 text-slate-600">{children}</p>

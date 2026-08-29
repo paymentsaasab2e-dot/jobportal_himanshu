@@ -151,7 +151,7 @@ export function ProfileResumeFilled({
               cx="50"
               cy="50"
               r="45"
-              stroke="#28A8E1"
+              stroke="#2098C8"
               strokeWidth="8"
               fill="none"
               strokeDasharray={`${Math.min(100, Math.max(0, scorePercent)) * 2.83} 283`}

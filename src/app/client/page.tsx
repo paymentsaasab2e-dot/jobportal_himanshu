@@ -102,7 +102,7 @@ export default function ClientPage() {
 
   return (
     <Sidenav>
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(40,168,225,0.14),_transparent_24%),radial-gradient(circle_at_85%_12%,_rgba(252,150,32,0.08),_transparent_18%),linear-gradient(180deg,_#f7fbff_0%,_#fefefe_56%,_#f8fbff_100%)] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(32,152,200,0.14),_transparent_24%),radial-gradient(circle_at_85%_12%,_rgba(32,152,200,0.08),_transparent_18%),linear-gradient(180deg,_#f7fbff_0%,_#fefefe_56%,_#f8fbff_100%)] px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="rounded-3xl border border-white/70 bg-white/80 p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] backdrop-blur">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

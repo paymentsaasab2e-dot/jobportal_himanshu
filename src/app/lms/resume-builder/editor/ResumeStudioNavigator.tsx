@@ -53,7 +53,7 @@ export function ResumeStudioNavigator({
             <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">ATS</p>
             <p className="text-xs font-bold text-slate-900">{atsReadiness}%</p>
           </div>
-          <div className="flex items-center gap-1.5 rounded-lg border border-sky-100 bg-sky-50 px-2 py-1 shadow-[0_4px_12px_-8px_rgba(40,168,225,0.4)]">
+          <div className="flex items-center gap-1.5 rounded-lg border border-sky-100 bg-sky-50 px-2 py-1 shadow-[0_4px_12px_-8px_rgba(32,152,200,0.4)]">
             <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-sky-600">AI Score</p>
             <p className="text-xs font-bold text-sky-900">{analysis?.readinessScore ?? '??'}%</p>
           </div>
@@ -74,7 +74,7 @@ export function ResumeStudioNavigator({
               onClick={() => onSelect(section.id)}
               className={`flex w-full min-w-0 flex-col items-start gap-1 rounded-lg border px-2 py-1.5 text-left transition-all duration-200 ${
                 active
-                  ? 'border-sky-200 bg-sky-50 shadow-[0_6px_12px_-10px_rgba(40,168,225,0.6)]'
+                  ? 'border-sky-200 bg-sky-50 shadow-[0_6px_12px_-10px_rgba(32,152,200,0.6)]'
                   : 'border-slate-200/80 bg-slate-50/70 hover:border-slate-300 hover:bg-white'
               }`}
             >

@@ -54,7 +54,7 @@ export default function ProfileDatePicker({
         }`}
       >
         <span className={showPlaceholder ? 'text-slate-400' : 'text-gray-900'}>{labelText}</span>
-        <CalendarDays className="h-5 w-5 shrink-0 text-[#28A8E1]" strokeWidth={2} aria-hidden />
+        <CalendarDays className="h-5 w-5 shrink-0 text-[#2098C8]" strokeWidth={2} aria-hidden />
       </button>
       <input
         ref={inputRef}

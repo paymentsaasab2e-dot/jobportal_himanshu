@@ -36,11 +36,11 @@ export function CareerAnalysisView({ journey, onConfirm, onBack }: Props) {
           </div>
         </div>
 
-        <div className={`${LMS_CARD_CLASS} bg-gradient-to-br from-[#28A8E1]/10 to-white`}>
+        <div className={`${LMS_CARD_CLASS} bg-gradient-to-br from-[#2098C8]/10 to-white`}>
           <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Expected completion</p>
           <p className="mt-1 text-3xl font-bold text-gray-900">{journey.expectedCompletionMonths} mo</p>
           <p className="mt-2 text-sm text-gray-600">At {journey.assessment.hoursPerDay} hour(s)/day learning pace</p>
-          <p className="mt-3 text-sm font-semibold text-[#28A8E1]">Job readiness preview: {journey.jobReadinessScore}%</p>
+          <p className="mt-3 text-sm font-semibold text-[#2098C8]">Job readiness preview: {journey.jobReadinessScore}%</p>
         </div>
       </div>
 
@@ -63,7 +63,7 @@ export function CareerAnalysisView({ journey, onConfirm, onBack }: Props) {
           {journey.milestones.map((m, index) => (
             <div key={m.id} className="flex gap-3">
               <div className="flex flex-col items-center">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#28A8E1] text-xs font-bold text-white">{index + 1}</div>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2098C8] text-xs font-bold text-white">{index + 1}</div>
                 {index < journey.milestones.length - 1 ? <div className="mt-1 w-px flex-1 bg-gray-200" /> : null}
               </div>
               <div className="pb-4">

@@ -48,22 +48,24 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-28T14:24:55.984Z",
+      "capturedAt": "2026-08-29T09:07:29.845Z",
       "kind": "realtime_session",
       "session": {
-        "logins": 2,
-        "visits": 6,
+        "logins": 5,
+        "visits": 19,
         "applies": 0,
-        "activeMs": 135000,
-        "sessionCount": 2,
+        "activeMs": 360000,
+        "sessionCount": 5,
         "topInsightIds": [
           "incomplete_profile_active"
         ],
         "triggerFlags": [],
-        "alertWindow": "Fri · 7:00 PM",
-        "alertConfidence": "low",
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "alertConfidence": "medium",
         "topLocation": "Pune, Maharashtra, India",
         "preferredAlertHours": [
+          0,
+          22,
           19
         ]
       },
@@ -790,33 +792,34 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-28T14:24:55.984Z",
-      "activityStateUpdatedAt": "2026-08-28T14:24:51.981Z",
+      "capturedAt": "2026-08-29T09:07:29.845Z",
+      "activityStateUpdatedAt": "2026-08-29T09:07:23.791Z",
       "rollup7d": {
         "userId": "b1c869d84e75048c5c61c5e3",
         "range": "week",
-        "fromDate": "2026-08-22",
-        "toDate": "2026-08-28",
-        "logins": 2,
-        "visits": 6,
+        "fromDate": "2026-08-23",
+        "toDate": "2026-08-29",
+        "logins": 5,
+        "visits": 19,
         "jobCardClicks": 0,
         "applies": 0,
-        "activeMs": 135000,
-        "sessionCount": 2,
+        "activeMs": 360000,
+        "sessionCount": 5,
         "pageVisitsByCategory": {
-          "other": 1,
-          "dashboard": 3,
-          "jobs": 1,
-          "applications": 1
+          "other": 7,
+          "dashboard": 8,
+          "jobs": 2,
+          "applications": 2
         },
         "activeMsByCategory": {
-          "dashboard": 135000
+          "dashboard": 315000,
+          "other": 45000
         },
         "firstOpenBreakdown": {
-          "dashboard": 1
+          "dashboard": 2
         },
-        "avgActiveMsPerDay": 135000,
-        "daysActive": 1,
+        "avgActiveMsPerDay": 180000,
+        "daysActive": 2,
         "topFirstOpen": "dashboard",
         "insights": [
           {
@@ -827,11 +830,77 @@
             "evidence": [
               "11 missing sections",
               "Completeness 73%",
-              "1 job views"
+              "2 job views"
             ]
           }
         ],
         "recentSessions": [
+          {
+            "id": "sess_mte3n9gj_9x20ii",
+            "startedAt": "2026-08-29T08:09:08.487Z",
+            "lastActiveAt": "2026-08-29T08:54:45.138Z",
+            "durationMs": 75000,
+            "pageCount": 10,
+            "paths": [
+              "/",
+              "/whatsapp",
+              "/candidate-dashboard",
+              "/explore-jobs",
+              "/applications"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "country": "India",
+            "state": "Maharashtra",
+            "city": "Pune",
+            "timezone": "Asia/Calcutta",
+            "ipAddress": "47.11.46.16",
+            "lastCategory": "applications",
+            "lastPath": "/applications",
+            "firstPath": "/",
+            "endedAt": "2026-08-29T08:40:15.038Z"
+          },
+          {
+            "id": "sess_mtdbc4gq_x8tlvg",
+            "startedAt": "2026-08-28T18:56:39.573Z",
+            "lastActiveAt": "2026-08-28T18:56:39.719Z",
+            "durationMs": 47548914,
+            "pageCount": 0,
+            "paths": [],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "country": "India",
+            "state": "Maharashtra",
+            "city": "Pune",
+            "timezone": "Asia/Calcutta",
+            "ipAddress": "47.11.46.16",
+            "lastCategory": "dashboard",
+            "endedAt": "2026-08-29T08:09:08.487Z"
+          },
+          {
+            "id": "sess_mtd852j1_gsrmlf",
+            "startedAt": "2026-08-28T17:27:11.624Z",
+            "lastActiveAt": "2026-08-28T18:25:15.235Z",
+            "durationMs": 5367949,
+            "pageCount": 3,
+            "firstPath": "/candidate-dashboard",
+            "lastPath": "/candidate-dashboard",
+            "lastCategory": "dashboard",
+            "paths": [
+              "/candidate-dashboard"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "country": "India",
+            "state": "Maharashtra",
+            "city": "Pune",
+            "timezone": "Asia/Calcutta",
+            "ipAddress": "47.11.46.16",
+            "endedAt": "2026-08-28T18:56:39.573Z"
+          },
           {
             "id": "sess_mtd0rwbt_2bu479",
             "startedAt": "2026-08-28T14:00:59.751Z",
@@ -880,6 +949,314 @@
           }
         ],
         "recentEvents": [
+          {
+            "id": "ev_mte59v7c_mxn7rs",
+            "at": "2026-08-29T08:54:42.744Z",
+            "type": "page_visit",
+            "category": "applications",
+            "path": "/applications",
+            "sessionId": "sess_mte3n9gj_9x20ii"
+          },
+          {
+            "id": "ev_mte59i1b_vn5mew",
+            "at": "2026-08-29T08:54:25.679Z",
+            "type": "page_visit",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mte3n9gj_9x20ii"
+          },
+          {
+            "id": "ev_mte59dg2_2ackj0",
+            "at": "2026-08-29T08:54:19.730Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mte3n9gj_9x20ii",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mte57fyu_lltfum",
+            "at": "2026-08-29T08:52:49.686Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mte3n9gj_9x20ii"
+          },
+          {
+            "id": "ev_mte5793r_rk4a3l",
+            "at": "2026-08-29T08:52:40.791Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mte3n9gj_9x20ii"
+          },
+          {
+            "id": "ev_mte578t9_qam1wi",
+            "at": "2026-08-29T08:52:40.413Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/whatsapp",
+            "sessionId": "sess_mte3n9gj_9x20ii"
+          },
+          {
+            "id": "ev_mte578ap_7ymspm",
+            "at": "2026-08-29T08:52:39.745Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mte3n9gj_9x20ii",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mte56l59_jcik7g",
+            "at": "2026-08-29T08:52:09.741Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mte3n9gj_9x20ii"
+          },
+          {
+            "id": "ev_mte4wj30_7c871f",
+            "at": "2026-08-29T08:44:20.508Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mte3n9gj_9x20ii"
+          },
+          {
+            "id": "ev_mte4u5vj_568lnq",
+            "at": "2026-08-29T08:42:30.079Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mte3n9gj_9x20ii"
+          },
+          {
+            "id": "ev_mte4s9vu_zzgdv8",
+            "at": "2026-08-29T08:41:01.962Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mte3n9gj_9x20ii"
+          },
+          {
+            "id": "ev_mte4r9oe_v69xvt",
+            "at": "2026-08-29T08:40:15.038Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mte3n9gj_9x20ii",
+            "meta": {
+              "durationMs": 45000
+            }
+          },
+          {
+            "id": "ev_mte4leku_ae2avj",
+            "at": "2026-08-29T08:35:41.455Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mte3n9gj_9x20ii",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mte4ej6f_m2u0o3",
+            "at": "2026-08-29T08:30:20.823Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mte3n9gj_9x20ii",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mte48f8e_ugmpzn",
+            "at": "2026-08-29T08:25:35.774Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mte3n9gj_9x20ii"
+          },
+          {
+            "id": "ev_mte3nafp_epbx03",
+            "at": "2026-08-29T08:09:09.781Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mte3n9gj_9x20ii",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mte3n9gk_pk530o",
+            "at": "2026-08-29T08:09:08.516Z",
+            "type": "login",
+            "category": "other",
+            "sessionId": "sess_mte3n9gj_9x20ii",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows",
+              "country": "India",
+              "state": "Maharashtra",
+              "city": "Pune",
+              "timezone": "Asia/Calcutta",
+              "ipAddress": "47.11.46.16"
+            }
+          },
+          {
+            "id": "ev_mte3n9fz_7dsk8u",
+            "at": "2026-08-29T08:09:08.495Z",
+            "type": "session_end",
+            "category": "dashboard",
+            "sessionId": "sess_mtdbc4gq_x8tlvg",
+            "meta": {
+              "durationMs": 47548914
+            }
+          },
+          {
+            "id": "ev_mtdbc4kn_poblzq",
+            "at": "2026-08-28T18:56:39.719Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtdbc4gq_x8tlvg",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtdbc4gr_w233vv",
+            "at": "2026-08-28T18:56:39.579Z",
+            "type": "login",
+            "category": "other",
+            "sessionId": "sess_mtdbc4gq_x8tlvg",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows",
+              "country": "India",
+              "state": "Maharashtra",
+              "city": "Pune",
+              "timezone": "Asia/Calcutta",
+              "ipAddress": "47.11.46.16"
+            }
+          },
+          {
+            "id": "ev_mtdbc4gn_cy1k5m",
+            "at": "2026-08-28T18:56:39.575Z",
+            "type": "session_end",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtd852j1_gsrmlf",
+            "meta": {
+              "durationMs": 5367949
+            }
+          },
+          {
+            "id": "ev_mtda7ex6_7eimrn",
+            "at": "2026-08-28T18:25:00.234Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtd852j1_gsrmlf",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtda5t1v_qvcezr",
+            "at": "2026-08-28T18:23:45.235Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtd852j1_gsrmlf",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtda5hf7_p7xwmt",
+            "at": "2026-08-28T18:23:30.163Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtd852j1_gsrmlf"
+          },
+          {
+            "id": "ev_mtd99fl5_pq0rxe",
+            "at": "2026-08-28T17:58:34.793Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtd852j1_gsrmlf",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtd9031n_5kyagt",
+            "at": "2026-08-28T17:51:18.635Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtd852j1_gsrmlf"
+          },
+          {
+            "id": "ev_mtd8dklh_twmq8h",
+            "at": "2026-08-28T17:33:48.293Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtd852j1_gsrmlf",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtd852j3_oq1jrm",
+            "at": "2026-08-28T17:27:11.631Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtd852j1_gsrmlf"
+          },
+          {
+            "id": "ev_mtd852j1_4s9uir",
+            "at": "2026-08-28T17:27:11.629Z",
+            "type": "login",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtd852j1_gsrmlf",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows",
+              "country": "India",
+              "state": "Maharashtra",
+              "city": "Pune",
+              "timezone": "Asia/Calcutta",
+              "ipAddress": "47.11.46.16"
+            }
+          },
           {
             "id": "ev_mtd1hqbt_a9kx1r",
             "at": "2026-08-28T14:21:05.033Z",
@@ -1059,7 +1436,7 @@
             "visa-work-authorization",
             "vaccination"
           ],
-          "updatedAt": "2026-08-28T14:24:51.981Z"
+          "updatedAt": "2026-08-29T09:07:23.791Z"
         },
         "behaviourSignals": {
           "userId": "b1c869d84e75048c5c61c5e3",
@@ -1078,15 +1455,16 @@
           ],
           "jobCardClicks7d": 0,
           "applies7d": 0,
-          "activeMs7d": 135000,
+          "activeMs7d": 360000,
           "activeMsByCategory7d": {
-            "dashboard": 135000
+            "dashboard": 315000,
+            "other": 45000
           },
           "pageVisitsByCategory7d": {
-            "other": 1,
-            "dashboard": 3,
-            "jobs": 1,
-            "applications": 1
+            "other": 7,
+            "dashboard": 8,
+            "jobs": 2,
+            "applications": 2
           },
           "skillsCount": 8,
           "rejectionsTotal": 1,
@@ -1110,25 +1488,28 @@
           ],
           "userSuggestionHints": [],
           "preferredAlertHours": [
+            0,
+            22,
             19
           ],
-          "preferredAlertWindowLabel": "Fri · 7:00 PM",
-          "alertTimingConfidence": "low"
+          "preferredAlertWindowLabel": "Sat / Fri · 12:00 AM–10:00 PM",
+          "alertTimingConfidence": "medium"
         }
       },
       "suggestionMetrics": {
         "userId": "b1c869d84e75048c5c61c5e3",
-        "updatedAt": "2026-08-28T14:23:54.302Z",
+        "updatedAt": "2026-08-29T09:07:25.511Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
-        "suggestionsPushed": 1,
+        "suggestionsPushed": 7,
         "suggestionsClicked": 0,
         "suggestionsPurchased": 0,
-        "salesFollowUpScore": 0,
+        "salesFollowUpScore": 10,
         "salesFollowUpReady": false,
         "byScenario": {
-          "profile_match": 1
+          "profile_match": 6,
+          "engagement": 1
         },
         "recentSuggestions": [
           {
@@ -1139,6 +1520,60 @@
             "title": "Frontend Interview Readiness",
             "actionUrl": "/lms/courses/c1",
             "pushedAt": "2026-08-28T14:01:03.803Z"
+          },
+          {
+            "id": "sug_mtd85hz5_12rap4",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-08-28T17:27:31.649Z"
+          },
+          {
+            "id": "sug_mtd99v2s_fbo1vl",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-28T17:58:54.868Z"
+          },
+          {
+            "id": "sug_mtdadb4f_fmzzw0",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-08-28T18:29:35.247Z"
+          },
+          {
+            "id": "sug_mte2zjeq_p293qb",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-08-29T07:50:41.666Z"
+          },
+          {
+            "id": "sug_mte48qup_9vlxyy",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-08-29T08:25:50.833Z"
+          },
+          {
+            "id": "sug_mte5d93e_5d8h3u",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-08-29T08:57:20.714Z"
           }
         ]
       },
@@ -1155,6 +1590,18 @@
           "label": "Workplace chat",
           "score": 18,
           "updatedAt": "2026-08-28T14:01:03.478Z"
+        },
+        {
+          "key": "profile",
+          "label": "profile",
+          "score": 12,
+          "updatedAt": "2026-08-28T17:27:25.479Z"
+        },
+        {
+          "key": "ai_cv",
+          "label": "ai cv",
+          "score": 12,
+          "updatedAt": "2026-08-28T17:27:25.479Z"
         }
       ],
       "personalizedRecs": [
@@ -1175,14 +1622,32 @@
           "text": "You engage with Workplace chat — check one new circle post today.",
           "actionUrl": "/community",
           "priority": 61
+        },
+        {
+          "id": "rec_profile",
+          "interestKey": "profile",
+          "interestScore": 12,
+          "title": "Stay on profile",
+          "text": "You’re 12 into profile — pick one job, course, or post on that theme.",
+          "actionUrl": "/explore-jobs",
+          "priority": 44
+        },
+        {
+          "id": "rec_ai_cv",
+          "interestKey": "ai_cv",
+          "interestScore": 12,
+          "title": "Stay on ai cv",
+          "text": "You’re 12 into ai cv — pick one job, course, or post on that theme.",
+          "actionUrl": "/explore-jobs",
+          "priority": 44
         }
       ],
       "sessionEngagement": {
-        "sessionCount": 2,
+        "sessionCount": 5,
         "activeCount": 0,
-        "totalDurationMs": 135049,
-        "avgDurationMs": 67525,
-        "medianDurationMs": 67525,
+        "totalDurationMs": 53126912,
+        "avgDurationMs": 10625382,
+        "medianDurationMs": 135000,
         "uniqueIps": 1,
         "uniqueDevices": 1,
         "locations": [
@@ -1191,68 +1656,106 @@
             "city": "Pune",
             "state": "Maharashtra",
             "country": "India",
-            "sessions": 2,
-            "totalDurationMs": 135049
+            "sessions": 5,
+            "totalDurationMs": 53126912
           }
         ],
         "byHour": [
+          {
+            "hour": 0,
+            "label": "12:00 AM",
+            "sessions": 1,
+            "totalDurationMs": 47548914
+          },
+          {
+            "hour": 22,
+            "label": "10:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 5367949
+          },
           {
             "hour": 19,
             "label": "7:00 PM",
             "sessions": 2,
             "totalDurationMs": 135049
+          },
+          {
+            "hour": 13,
+            "label": "1:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 75000
           }
         ],
         "byWeekday": [
           {
+            "weekday": 6,
+            "label": "Sat",
+            "sessions": 2,
+            "totalDurationMs": 47623914
+          },
+          {
             "weekday": 5,
             "label": "Fri",
-            "sessions": 2,
-            "totalDurationMs": 135049
+            "sessions": 3,
+            "totalDurationMs": 5502998
           }
         ],
         "alertTiming": {
           "bestHours": [
+            0,
+            22,
             19
           ],
           "bestHourLabels": [
+            "12:00 AM",
+            "10:00 PM",
             "7:00 PM"
           ],
           "bestWeekdays": [
+            "Sat",
             "Fri"
           ],
-          "bestWindowLabel": "Fri · 7:00 PM",
+          "bestWindowLabel": "Sat / Fri · 12:00 AM–10:00 PM",
           "avoidHours": [
-            19
+            13,
+            19,
+            22
           ],
           "timezone": "Asia/Calcutta",
-          "confidence": "low",
-          "reason": "Most active around 7:00 PM local time · avg session 1 min · often from Pune, Maharashtra, India",
-          "sampleSessions": 2,
-          "avgDurationMs": 67525,
-          "medianDurationMs": 67525
+          "confidence": "medium",
+          "reason": "Most active around 12:00 AM and 10:00 PM local time · avg session 177 min · often from Pune, Maharashtra, India",
+          "sampleSessions": 5,
+          "avgDurationMs": 10625382,
+          "medianDurationMs": 135000
         }
       },
       "alertTiming": {
         "bestHours": [
+          0,
+          22,
           19
         ],
         "bestHourLabels": [
+          "12:00 AM",
+          "10:00 PM",
           "7:00 PM"
         ],
         "bestWeekdays": [
+          "Sat",
           "Fri"
         ],
-        "bestWindowLabel": "Fri · 7:00 PM",
+        "bestWindowLabel": "Sat / Fri · 12:00 AM–10:00 PM",
         "avoidHours": [
-          19
+          13,
+          19,
+          22
         ],
         "timezone": "Asia/Calcutta",
-        "confidence": "low",
-        "reason": "Most active around 7:00 PM local time · avg session 1 min · often from Pune, Maharashtra, India",
-        "sampleSessions": 2,
-        "avgDurationMs": 67525,
-        "medianDurationMs": 67525
+        "confidence": "medium",
+        "reason": "Most active around 12:00 AM and 10:00 PM local time · avg session 177 min · often from Pune, Maharashtra, India",
+        "sampleSessions": 5,
+        "avgDurationMs": 10625382,
+        "medianDurationMs": 135000
       },
       "locations": [
         {
@@ -1260,13 +1763,481 @@
           "city": "Pune",
           "state": "Maharashtra",
           "country": "India",
-          "sessions": 2,
-          "totalDurationMs": 135049
+          "sessions": 5,
+          "totalDurationMs": 53126912
         }
       ]
     }
   },
   "history": [
+    {
+      "id": "hist_mte5mb6p_ppk2",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T09:04:23.255Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 360000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte5fbdf_jd2v",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T08:58:55.806Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 360000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte56zbb_ora0",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T08:52:28.064Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 14,
+        "applies": 0,
+        "activeMs": 330000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte4ultt_od3p",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T08:42:50.588Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 12,
+        "applies": 0,
+        "activeMs": 330000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte4nykq_880o",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T08:37:40.646Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 10,
+        "applies": 0,
+        "activeMs": 330000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte4h0bp_0q0f",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T08:32:16.276Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 10,
+        "applies": 0,
+        "activeMs": 315000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte48q8j_3882",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T08:25:48.094Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 10,
+        "applies": 0,
+        "activeMs": 300000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte3mfqa_m651",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T08:08:29.601Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 285000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri / Sat · 10:00 PM–7:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte3djr9_favk",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T08:01:35.030Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 285000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri / Sat · 10:00 PM–7:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte368tn_yo9x",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T07:55:54.502Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 285000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri / Sat · 10:00 PM–7:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte2zn01_po4a",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T07:50:44.918Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 285000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri / Sat · 10:00 PM–7:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtdb9fdw_jgtm",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T18:54:33.723Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtdb1id3_ye1j",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T18:48:24.345Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtdau0hl_6vjz",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T18:42:34.554Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtdalbba_2fr4",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T18:35:48.189Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtdadc0o_b07z",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T18:29:36.363Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtda5l6b_2r6a",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T18:23:34.989Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 180000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtd9tt9s_18f0",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T18:14:25.566Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 8,
+        "applies": 0,
+        "activeMs": 180000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtd9ndoz_z2wx",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T18:09:25.485Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 8,
+        "applies": 0,
+        "activeMs": 180000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtd9fpkx_89pc",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T18:03:27.644Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 8,
+        "applies": 0,
+        "activeMs": 180000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtd97wi4_jrij",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T17:57:23.363Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 8,
+        "applies": 0,
+        "activeMs": 165000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtd906jh_9tyi",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T17:51:22.873Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 8,
+        "applies": 0,
+        "activeMs": 165000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtd8r67a_f5lv",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T17:44:22.751Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 7,
+        "applies": 0,
+        "activeMs": 165000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtd8jgj6_2at3",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T17:38:22.925Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 7,
+        "applies": 0,
+        "activeMs": 165000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtd8cvjj_d54t",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T17:33:15.760Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 7,
+        "applies": 0,
+        "activeMs": 135000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtd85e0g_2g6p",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-28T17:27:25.480Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 7,
+        "applies": 0,
+        "activeMs": 135000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Fri · 7:00 PM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
     {
       "id": "hist_mtd1lf0l_091f",
       "userId": "b1c869d84e75048c5c61c5e3",
@@ -12824,5 +13795,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-08-28T14:24:56.018Z"
+  "updatedAt": "2026-08-29T09:07:29.866Z"
 }

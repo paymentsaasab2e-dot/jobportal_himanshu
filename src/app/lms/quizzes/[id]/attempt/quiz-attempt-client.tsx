@@ -166,7 +166,7 @@ export function QuizAttemptClient({ quizId }: { quizId: string }) {
           </p>
           <Link
             href="/lms/quizzes"
-            className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#208bc0]"
+            className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#2098C8] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#208bc0]"
           >
             Return to quizzes
           </Link>
@@ -292,7 +292,7 @@ export function QuizAttemptClient({ quizId }: { quizId: string }) {
 
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
         <div
-          className="h-full bg-[#28A8E1] transition-[width] duration-300"
+          className="h-full bg-[#2098C8] transition-[width] duration-300"
           style={{ width: `${(answeredCount / questions.length) * 100}%` }}
         />
       </div>
@@ -311,14 +311,14 @@ export function QuizAttemptClient({ quizId }: { quizId: string }) {
                   onClick={() => select(i)}
                   className={`w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 ${
                     selected
-                      ? "border-[#28A8E1]/40 bg-[#28A8E1]/10 shadow-sm"
+                      ? "border-[#2098C8]/40 bg-[#2098C8]/10 shadow-sm"
                       : "border-gray-200 bg-white hover:bg-gray-50 hover:shadow-sm"
                   } focus:outline-none focus:ring-4 focus:ring-blue-100`}
                 >
                   <span className="flex items-start gap-3">
                     <span className="mt-0.5">
                       {selected ? (
-                        <CheckCircle2 className="h-5 w-5 text-[#28A8E1]" strokeWidth={2} aria-hidden />
+                        <CheckCircle2 className="h-5 w-5 text-[#2098C8]" strokeWidth={2} aria-hidden />
                       ) : (
                         <Circle className="h-5 w-5 text-gray-300" strokeWidth={2} aria-hidden />
                       )}

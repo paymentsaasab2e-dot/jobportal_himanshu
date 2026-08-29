@@ -43,7 +43,7 @@ export function AIScoreCard({
                 cy="44"
                 r={r}
                 fill="none"
-                stroke="#28A8E1"
+                stroke="#2098C8"
                 strokeWidth="8"
                 strokeLinecap="round"
                 strokeDasharray={c}
@@ -61,11 +61,11 @@ export function AIScoreCard({
         <div className="mt-4">
           <div className="h-2.5 w-full rounded-full bg-gray-100 overflow-hidden border border-gray-100">
             <div
-              className="h-full rounded-full bg-[#28A8E1] transition-all duration-300"
+              className="h-full rounded-full bg-[#2098C8] transition-all duration-300"
               style={{ width: `${pct}%` }}
             />
           </div>
-          <p className="mt-2 text-sm font-bold text-[#28A8E1]">{pct}%</p>
+          <p className="mt-2 text-sm font-bold text-[#2098C8]">{pct}%</p>
         </div>
       )}
     </div>

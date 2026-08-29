@@ -1483,15 +1483,15 @@ function InterviewDetailsModal({
           ) : null}
 
           {payload.meetingLink ? (
-            <div className="rounded-lg border border-[rgba(40,168,225,0.18)] bg-[rgba(40,168,225,0.06)] p-3">
-              <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-[#28A8E1]">
+            <div className="rounded-lg border border-[rgba(32,152,200,0.18)] bg-[rgba(32,152,200,0.06)] p-3">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-[#2098C8]">
                 Meeting link
               </p>
               <a
                 href={payload.meetingLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-1.5 inline-flex items-center gap-1 break-all text-[13px] font-semibold text-[#28A8E1] underline decoration-[#28A8E1]/35 underline-offset-2 hover:opacity-90"
+                className="mt-1.5 inline-flex items-center gap-1 break-all text-[13px] font-semibold text-[#2098C8] underline decoration-[#2098C8]/35 underline-offset-2 hover:opacity-90"
               >
                 Join interview
                 <ExternalLink className="h-3 w-3 shrink-0" strokeWidth={2.1} />
@@ -1560,7 +1560,7 @@ function InterviewDetailsModal({
               href={payload.meetingLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-lg bg-[#28A8E1] px-3 py-1.5 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(40,168,225,0.2)] transition-opacity hover:opacity-95"
+              className="inline-flex items-center gap-1 rounded-lg bg-[#2098C8] px-3 py-1.5 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(32,152,200,0.2)] transition-opacity hover:opacity-95"
             >
               Join interview
               <ExternalLink className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -2029,7 +2029,7 @@ export default function ApplicationStatusPage() {
                     <button
                       type="button"
                       onClick={() => router.push(`/interviews/${encodeURIComponent(applicationId)}`)}
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-[#28A8E1] bg-[#28A8E1] px-3.5 py-2 text-[0.8125rem] font-medium text-white shadow-sm transition hover:opacity-95"
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-[#2098C8] bg-[#2098C8] px-3.5 py-2 text-[0.8125rem] font-medium text-white shadow-sm transition hover:opacity-95"
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                         <rect width="18" height="18" x="3" y="4" rx="2" />
@@ -2116,9 +2116,9 @@ export default function ApplicationStatusPage() {
                                 isCurrent
                                   ? 'application-pipeline-pill--current border-[#fdba74] bg-[#ffedd5] text-[#c2410c]'
                                   : isPast
-                                    ? 'application-pipeline-pill--past border-[#93c5fd] bg-[#dbeafe] text-[#1d4ed8]'
+                                    ? 'application-pipeline-pill--past border-[#93c5fd] bg-[#dbeafe] text-[#1A86B3]'
                                     : 'application-pipeline-pill--future border-gray-200 bg-white text-gray-500'
-                              } ${isInterviewPill ? 'cursor-pointer transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#28A8E1]/40' : ''}`}
+                              } ${isInterviewPill ? 'cursor-pointer transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2098C8]/40' : ''}`}
                               title={
                                 isInterviewPill
                                   ? pillHasFeedback

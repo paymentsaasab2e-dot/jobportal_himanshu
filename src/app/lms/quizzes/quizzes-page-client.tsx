@@ -252,7 +252,7 @@ export function LmsQuizzesPageContent() {
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Link
                       href={buildResultHref(quiz)}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#28A8E1] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2098C8] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
                     >
                       <Award className="h-4 w-4" />
                       View result

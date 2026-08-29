@@ -89,7 +89,7 @@ export default function RequestInterviewPage() {
           <button
             type="button"
             onClick={() => openRequestForm()}
-            className="rounded-lg bg-[#28A8E1] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F8FC2]"
+            className="rounded-lg bg-[#2098C8] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1F8FC2]"
           >
             Request Interview
           </button>
@@ -230,7 +230,7 @@ export default function RequestInterviewPage() {
                       <button
                         type="button"
                         onClick={() => openRequestForm(person.candidateId)}
-                        className="rounded-md bg-[#28A8E1] px-2.5 py-1 text-xs font-semibold text-white"
+                        className="rounded-md bg-[#2098C8] px-2.5 py-1 text-xs font-semibold text-white"
                       >
                         Send Request
                       </button>

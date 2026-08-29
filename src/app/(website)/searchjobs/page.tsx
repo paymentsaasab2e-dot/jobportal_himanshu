@@ -18,16 +18,16 @@ import {
 
 /** HRYANTRA Phase 1 brand palette for this page */
 const THEME = {
-  cyan: '#28A8E1',
+  cyan: '#2098C8',
   cyanDeep: '#1A8FC4',
-  cyanSoft: 'rgba(40,168,225,0.12)',
-  cyanBorder: 'rgba(40,168,225,0.28)',
-  orange: '#FC9620',
+  cyanSoft: 'rgba(32,152,200,0.12)',
+  cyanBorder: 'rgba(32,152,200,0.28)',
+  orange: '#2098C8',
   orangeSoft: 'rgba(252,150,32,0.14)',
   ink: '#0F172A',
   muted: '#64748B',
   pageBg:
-    'radial-gradient(ellipse 90% 60% at 10% -10%, rgba(40,168,225,0.18), transparent 55%), radial-gradient(ellipse 70% 50% at 95% 5%, rgba(252,150,32,0.12), transparent 50%), linear-gradient(180deg, #F0F9FC 0%, #F8FAFC 42%, #FFFFFF 100%)',
+    'radial-gradient(ellipse 90% 60% at 10% -10%, rgba(32,152,200,0.18), transparent 55%), radial-gradient(ellipse 70% 50% at 95% 5%, rgba(252,150,32,0.12), transparent 50%), linear-gradient(180deg, #F0F9FC 0%, #F8FAFC 42%, #FFFFFF 100%)',
 };
 
 type SearchJob = {
@@ -491,7 +491,7 @@ function SearchJobsContent() {
                     key={job.id}
                     type="button"
                     onClick={() => setSelectedJob(job)}
-                    className="group grid h-full grid-rows-[auto_auto_1fr_auto] gap-4 rounded-[24px] border border-slate-200/90 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#28A8E1] hover:shadow-[0_20px_40px_-20px_rgba(40,168,225,0.35)]"
+                    className="group grid h-full grid-rows-[auto_auto_1fr_auto] gap-4 rounded-[24px] border border-slate-200/90 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#2098C8] hover:shadow-[0_20px_40px_-20px_rgba(32,152,200,0.35)]"
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -565,7 +565,7 @@ function SearchJobsContent() {
                           {job.salary || 'Not specified'}
                         </p>
                       </div>
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#28A8E1] text-white shadow-[0_8px_18px_-8px_rgba(40,168,225,0.75)] transition-all group-hover:scale-105 group-hover:bg-[#1A8FC4]">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2098C8] text-white shadow-[0_8px_18px_-8px_rgba(32,152,200,0.75)] transition-all group-hover:scale-105 group-hover:bg-[#1A8FC4]">
                         <ArrowRight className="h-4 w-4" />
                       </div>
                     </div>

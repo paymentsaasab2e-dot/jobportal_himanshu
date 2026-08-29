@@ -9,7 +9,7 @@ import { TokenCoinIcon } from '@/components/tokens/TokenCoinIcon';
 import { TOKEN_EARN_EVENT, type TokenEarnDetail } from '@/lib/token-earn-events';
 
 const DISPLAY_MS = 5600;
-const COIN_COLORS = ['#F59E0B', '#FBBF24', '#FCD34D', '#28A8E1', '#34D399', '#FB7185'];
+const COIN_COLORS = ['#F59E0B', '#FBBF24', '#FCD34D', '#2098C8', '#34D399', '#FB7185'];
 
 function fireCheerBurst() {
   confetti({

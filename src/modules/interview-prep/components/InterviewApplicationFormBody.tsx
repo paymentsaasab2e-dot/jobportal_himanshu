@@ -127,7 +127,7 @@ export function InterviewApplicationFormBody({
   };
 
   const inputClass =
-    'mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-[#28A8E1] focus:outline-none focus:ring-4 focus:ring-[#28A8E1]/15';
+    'mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-[#2098C8] focus:outline-none focus:ring-4 focus:ring-[#2098C8]/15';
 
   if (submitted) {
     return (
@@ -140,14 +140,14 @@ export function InterviewApplicationFormBody({
         <p className="mt-1 text-xs text-gray-500">
           ID: <span className="font-mono">{submitted.applicationId}</span>
         </p>
-        <p className="mt-3 text-sm font-medium text-[#28A8E1]">
+        <p className="mt-3 text-sm font-medium text-[#2098C8]">
           Waiting for interview review
         </p>
         {onCloseAfterSubmit ? (
           <button
             type="button"
             onClick={onCloseAfterSubmit}
-            className="mt-6 rounded-xl bg-[#28A8E1] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+            className="mt-6 rounded-xl bg-[#2098C8] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
           >
             Done
           </button>
@@ -159,7 +159,7 @@ export function InterviewApplicationFormBody({
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-14 text-gray-500">
-        <Loader2 className="h-8 w-8 animate-spin text-[#28A8E1]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#2098C8]" />
         <p className="text-sm font-medium">Loading application form…</p>
       </div>
     );
@@ -219,7 +219,7 @@ export function InterviewApplicationFormBody({
                 {field.options.map((opt) => (
                   <label
                     key={opt}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/60 px-3 py-2.5 text-sm transition hover:border-[#28A8E1]/40 hover:bg-sky-50/50"
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/60 px-3 py-2.5 text-sm transition hover:border-[#2098C8]/40 hover:bg-sky-50/50"
                   >
                     <input
                       type="radio"
@@ -229,7 +229,7 @@ export function InterviewApplicationFormBody({
                       onChange={(e) =>
                         setAnswers((prev) => ({ ...prev, [field.id]: e.target.value }))
                       }
-                      className="h-4 w-4 border-gray-300 text-[#28A8E1] focus:ring-[#28A8E1]"
+                      className="h-4 w-4 border-gray-300 text-[#2098C8] focus:ring-[#2098C8]"
                     />
                     <span className="text-gray-800">{opt}</span>
                   </label>
@@ -243,7 +243,7 @@ export function InterviewApplicationFormBody({
           return (
             <div key={field.id}>
               {commonLabel}
-              <label className="mt-1.5 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/80 px-4 py-6 text-center transition hover:border-[#28A8E1]/40 hover:bg-sky-50/40">
+              <label className="mt-1.5 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/80 px-4 py-6 text-center transition hover:border-[#2098C8]/40 hover:bg-sky-50/40">
                 <span className="text-sm font-medium text-gray-700">
                   {files[field.id]?.name || 'Click to upload'}
                 </span>
@@ -286,7 +286,7 @@ export function InterviewApplicationFormBody({
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-xl bg-gradient-to-r from-[#28A8E1] to-[#1e8fc4] px-5 py-3 text-sm font-semibold text-white shadow-md shadow-sky-200/60 transition hover:opacity-95 disabled:opacity-60"
+        className="w-full rounded-xl bg-gradient-to-r from-[#2098C8] to-[#1e8fc4] px-5 py-3 text-sm font-semibold text-white shadow-md shadow-sky-200/60 transition hover:opacity-95 disabled:opacity-60"
       >
         {submitting ? 'Submitting…' : 'Submit application'}
       </button>

@@ -215,7 +215,7 @@ export default function LmsEventDetailPage({ params }: { params: Promise<{ id: s
           <p className="max-w-sm text-center text-sm font-medium text-gray-500">
             This event isn’t available. It may have been removed.
           </p>
-          <Link href="/lms/events" className="mt-6 rounded-xl bg-[#28A8E1] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#208bc0]">
+          <Link href="/lms/events" className="mt-6 rounded-xl bg-[#2098C8] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#208bc0]">
             Browse Events
           </Link>
         </div>

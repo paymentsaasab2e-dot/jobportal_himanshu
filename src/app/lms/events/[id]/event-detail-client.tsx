@@ -47,7 +47,7 @@ export function EventDetailClient({
         <div className="flex flex-col sm:flex-row gap-2">
           <button
             type="button"
-            className="flex-1 rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[#208bc0] active:scale-[0.98]"
+            className="flex-1 rounded-xl bg-[#2098C8] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[#208bc0] active:scale-[0.98]"
             onClick={async () => {
               try {
                 if (isRegistered) {
@@ -104,7 +104,7 @@ export function EventDetailClient({
         type="button"
         disabled={status === 'past'}
         onClick={handleRegisterClick}
-        className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 hover:shadow-sm active:scale-[0.98] ${status === 'past' ? 'bg-gray-100 text-gray-500 cursor-not-allowed border border-gray-200' : isRegistered ? 'bg-emerald-50 text-emerald-800 border-emerald-200 border hover:bg-emerald-100' : 'bg-[#28A8E1] text-white hover:bg-[#208bc0]'}`}
+        className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 hover:shadow-sm active:scale-[0.98] ${status === 'past' ? 'bg-gray-100 text-gray-500 cursor-not-allowed border border-gray-200' : isRegistered ? 'bg-emerald-50 text-emerald-800 border-emerald-200 border hover:bg-emerald-100' : 'bg-[#2098C8] text-white hover:bg-[#208bc0]'}`}
       >
         {status === 'past'
           ? 'Event Ended'

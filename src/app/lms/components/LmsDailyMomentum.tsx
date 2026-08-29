@@ -39,7 +39,7 @@ export function LmsDailyMomentum() {
         <div className="pt-1">
           <Link
             href="/lms/quizzes"
-            className="inline-flex w-full items-center justify-center rounded-xl bg-[#28A8E1] px-4 py-2 text-[0.8125rem] font-medium text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
+            className="inline-flex w-full items-center justify-center rounded-xl bg-[#2098C8] px-4 py-2 text-[0.8125rem] font-medium text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
           >
             Start now
           </Link>

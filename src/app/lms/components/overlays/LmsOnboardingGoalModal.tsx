@@ -70,7 +70,7 @@ export function LmsOnboardingGoalModal({ onClose }: { onClose: () => void }) {
           {/* Decorative background glow */}
           <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-64 h-64 bg-blue-400/20 blur-[80px] pointer-events-none" />
           
-          <div className="relative mb-6 mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#28A8E1] to-blue-600 text-white shadow-lg shadow-blue-200 ring-4 ring-blue-50">
+          <div className="relative mb-6 mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2098C8] to-blue-600 text-white shadow-lg shadow-blue-200 ring-4 ring-blue-50">
             <Target className="h-8 w-8" strokeWidth={2.5} />
           </div>
 
@@ -88,11 +88,11 @@ export function LmsOnboardingGoalModal({ onClose }: { onClose: () => void }) {
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
                 placeholder="I want to become a..."
-                className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-6 py-4 text-slate-900 placeholder:text-slate-400 focus:border-[#28A8E1] focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all duration-300 font-bold text-lg"
+                className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-6 py-4 text-slate-900 placeholder:text-slate-400 focus:border-[#2098C8] focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all duration-300 font-bold text-lg"
                 onKeyDown={(e) => e.key === 'Enter' && handleSetup()}
               />
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <Search className="h-5 w-5 text-slate-400 group-focus-within:text-[#28A8E1] transition-colors" />
+                <Search className="h-5 w-5 text-slate-400 group-focus-within:text-[#2098C8] transition-colors" />
               </div>
 
               {/* AI Recommendations Dropdown */}
@@ -105,7 +105,7 @@ export function LmsOnboardingGoalModal({ onClose }: { onClose: () => void }) {
                     <button
                       key={rec}
                       onClick={() => selectRecommendation(rec)}
-                      className="flex w-full items-center gap-3 px-6 py-4 text-left text-sm font-bold text-slate-700 hover:bg-sky-50 hover:text-[#28A8E1] transition-all group/item border-b border-slate-50 last:border-0"
+                      className="flex w-full items-center gap-3 px-6 py-4 text-left text-sm font-bold text-slate-700 hover:bg-sky-50 hover:text-[#2098C8] transition-all group/item border-b border-slate-50 last:border-0"
                     >
                       <Sparkles className="h-4 w-4 text-sky-400 opacity-0 group-hover/item:opacity-100 transition-opacity" />
                       {rec}

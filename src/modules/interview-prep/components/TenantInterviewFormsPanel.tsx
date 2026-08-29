@@ -92,15 +92,15 @@ function FormCard({
 
   return (
     <article
-      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:border-[#28A8E1]/35 hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:border-[#2098C8]/35 hover:shadow-md"
     >
       <div className="border-b border-sky-50 bg-linear-to-r from-sky-50/90 to-white px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#28A8E1]/10 text-[#28A8E1] ring-1 ring-[#28A8E1]/15">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#2098C8]/10 text-[#2098C8] ring-1 ring-[#2098C8]/15">
             <Building2 size={16} />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-[#28A8E1]">Hiring agency</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[#2098C8]">Hiring agency</p>
             <p className="truncate text-sm font-bold text-gray-900">{agencyName}</p>
           </div>
         </div>
@@ -127,7 +127,7 @@ function FormCard({
           <button
             type="button"
             onClick={() => onApply(form)}
-            className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+            className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#2098C8] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
           >
             Apply now
             <ArrowRight size={14} />
@@ -171,7 +171,7 @@ function FormsTabBar({
             onClick={() => onChange(tab.id)}
             className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition sm:flex-initial sm:px-5 ${
               active
-                ? 'bg-[#28A8E1] text-white shadow-sm'
+                ? 'bg-[#2098C8] text-white shadow-sm'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
@@ -326,11 +326,11 @@ export function TenantInterviewFormsPanel({ tenantDbName }: Props) {
     <>
       <section
         id="tenant-interview-forms"
-        className="rounded-2xl border border-[#28A8E1]/20 bg-linear-to-br from-white to-sky-50/40 p-5 shadow-sm"
+        className="rounded-2xl border border-[#2098C8]/20 bg-linear-to-br from-white to-sky-50/40 p-5 shadow-sm"
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wide text-[#28A8E1]">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[#2098C8]">
               Tenant interview applications
             </p>
             <h2 className="mt-1 text-lg font-bold text-gray-900">Apply to employer interview forms</h2>
@@ -340,7 +340,7 @@ export function TenantInterviewFormsPanel({ tenantDbName }: Props) {
             </p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-gray-100">
-            <Building2 size={14} className="text-[#28A8E1]" />
+            <Building2 size={14} className="text-[#2098C8]" />
             Phase 1 → Phase 2 flow
           </div>
         </div>
@@ -381,7 +381,7 @@ export function TenantInterviewFormsPanel({ tenantDbName }: Props) {
                   <button
                     type="button"
                     onClick={() => setActiveTab('all')}
-                    className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-[#28A8E1] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+                    className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-[#2098C8] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
                   >
                     Browse all forms
                     <ArrowRight size={14} />
@@ -399,7 +399,7 @@ export function TenantInterviewFormsPanel({ tenantDbName }: Props) {
                     <button
                       type="button"
                       onClick={() => setActiveTab('applied')}
-                      className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-[#28A8E1] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+                      className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-[#2098C8] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
                     >
                       View my applications
                       <ArrowRight size={14} />

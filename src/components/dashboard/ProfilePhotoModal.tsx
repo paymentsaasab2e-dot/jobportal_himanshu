@@ -45,7 +45,7 @@ function ModalAction({
         className={`flex h-11 w-11 items-center justify-center rounded-full border transition-colors ${
           danger
             ? 'border-rose-100 bg-rose-50 group-hover:border-rose-200'
-            : 'border-slate-200 bg-slate-50 group-hover:border-[rgba(37,99,235,0.35)] group-hover:bg-[var(--brand-primary-soft)]'
+            : 'border-slate-200 bg-slate-50 group-hover:border-[rgba(32,152,200,0.35)] group-hover:bg-[var(--brand-primary-soft)]'
         }`}
       >
         <Icon className="h-5 w-5" strokeWidth={2} />
@@ -133,7 +133,7 @@ export default function ProfilePhotoModal({
         </div>
 
         <div className="flex flex-col items-center bg-[linear-gradient(180deg,#f8fcff_0%,#ffffff_100%)] px-6 pb-6 pt-8">
-          <div className="relative h-[220px] w-[220px] shrink-0 overflow-hidden rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.95),transparent_40%),linear-gradient(145deg,rgba(37,99,235,0.12),rgba(29,78,216,0.18))] shadow-[0_20px_40px_rgba(37,99,235,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] ring-4 ring-white">
+          <div className="relative h-[220px] w-[220px] shrink-0 overflow-hidden rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.95),transparent_40%),linear-gradient(145deg,rgba(32,152,200,0.12),rgba(26,134,179,0.18))] shadow-[0_20px_40px_rgba(32,152,200,0.14),inset_0_1px_0_rgba(255,255,255,0.9)] ring-4 ring-white">
             {imageUrl ? (
               <Image
                 src={imageUrl}

@@ -243,7 +243,7 @@ function ScoreBar({ label, value }: { label: string; value: number | null | unde
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-gray-100">
         <div
-          className="h-full rounded-full bg-[#28A8E1] transition-all"
+          className="h-full rounded-full bg-[#2098C8] transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -378,7 +378,7 @@ function RoundCard({
                 href={joinUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 block break-all text-sm font-medium text-[#28A8E1] hover:underline"
+                className="mt-2 block break-all text-sm font-medium text-[#2098C8] hover:underline"
               >
                 {joinUrl}
               </a>
@@ -551,7 +551,7 @@ export default function InterviewDetailsPage() {
             <button
               type="button"
               onClick={() => router.push('/applications')}
-              className="mt-6 rounded-xl bg-[#28A8E1] px-6 py-3 text-sm font-semibold text-white hover:opacity-95 transition"
+              className="mt-6 rounded-xl bg-[#2098C8] px-6 py-3 text-sm font-semibold text-white hover:opacity-95 transition"
             >
               Back to Applications
             </button>
@@ -586,10 +586,10 @@ export default function InterviewDetailsPage() {
           </button>
 
           <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-            <div className="bg-gradient-to-r from-[#28A8E1]/10 via-white to-orange-50 px-6 py-6 sm:px-8">
+            <div className="bg-gradient-to-r from-[#2098C8]/10 via-white to-orange-50 px-6 py-6 sm:px-8">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-[#28A8E1]">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#2098C8]">
                     Interview journey
                   </p>
                   <h1 className="mt-1 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
@@ -625,7 +625,7 @@ export default function InterviewDetailsPage() {
               <button
                 type="button"
                 onClick={() => router.push(`/applications/${applicationId}`)}
-                className="mt-4 rounded-xl bg-[#28A8E1] px-6 py-3 text-sm font-semibold text-white hover:opacity-95 transition"
+                className="mt-4 rounded-xl bg-[#2098C8] px-6 py-3 text-sm font-semibold text-white hover:opacity-95 transition"
               >
                 View application
               </button>
@@ -699,7 +699,7 @@ export default function InterviewDetailsPage() {
                         href={joinUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-4 block w-full rounded-xl bg-[#28A8E1] px-4 py-3 text-center text-sm font-semibold text-white hover:opacity-95 transition"
+                        className="mt-4 block w-full rounded-xl bg-[#2098C8] px-4 py-3 text-center text-sm font-semibold text-white hover:opacity-95 transition"
                       >
                         Join interview
                       </a>

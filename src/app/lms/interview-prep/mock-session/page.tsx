@@ -117,7 +117,7 @@ function MockInterviewSessionContent() {
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={() => router.push('/lms/interview-prep')}
-            className="flex-1 rounded-2xl bg-[#28A8E1] px-5 py-3 text-sm font-bold text-white hover:bg-[#208bc0] hover:shadow-md transition-all active:scale-[0.98]"
+            className="flex-1 rounded-2xl bg-[#2098C8] px-5 py-3 text-sm font-bold text-white hover:bg-[#208bc0] hover:shadow-md transition-all active:scale-[0.98]"
           >
             Return to prep dashboard
           </button>
@@ -199,7 +199,7 @@ function MockInterviewSessionContent() {
           
           <button
             type="button"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#28A8E1] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#208bc0] hover:shadow-md active:scale-[0.98]"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#2098C8] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#208bc0] hover:shadow-md active:scale-[0.98]"
             onClick={handleNext}
           >
             {index >= questions.length - 1 ? (

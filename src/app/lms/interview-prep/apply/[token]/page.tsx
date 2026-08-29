@@ -31,7 +31,7 @@ export default function InterviewFormApplyPage() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <Link
         href="/lms/interview-prep"
-        className="inline-flex items-center gap-1 text-sm font-semibold text-[#28A8E1] hover:underline"
+        className="inline-flex items-center gap-1 text-sm font-semibold text-[#2098C8] hover:underline"
       >
         <ArrowLeft size={14} />
         Interview prep

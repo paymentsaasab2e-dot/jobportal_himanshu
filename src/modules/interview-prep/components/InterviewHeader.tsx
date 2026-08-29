@@ -15,7 +15,7 @@ export function InterviewHeader({ data, onNextAction, nextActionTokenCost }: Int
   return (
     <div className="relative overflow-hidden rounded-2xl p-5 sm:p-6 shadow-sm transition-all duration-200 ease-in-out hover:shadow-md">
       <div
-        className="absolute inset-0 bg-gradient-to-br from-[#1e3a5f] via-[#2563ab] to-[#28A8E1] opacity-95"
+        className="absolute inset-0 bg-gradient-to-br from-[#1e3a5f] via-[#2563ab] to-[#2098C8] opacity-95"
         aria-hidden
       />
       <div

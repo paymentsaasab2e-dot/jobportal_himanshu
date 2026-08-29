@@ -103,9 +103,9 @@ function formatSessionDuration(ms?: number | null) {
 }
 
 const INTEREST_BAR_COLORS = [
-  '#28A8E1',
-  '#08428C',
-  '#FC9620',
+  '#2098C8',
+  '#176F96',
+  '#2098C8',
   '#0D9488',
   '#6366F1',
   '#DB2777',
