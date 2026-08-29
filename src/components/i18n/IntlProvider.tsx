@@ -13,6 +13,9 @@ import {
   getLocaleFromPathname,
   isSupportedLocale,
 } from "@/lib/i18n";
+import { getApiBaseUrl } from "@/lib/api-base";
+import { normalizeTimeZone, setUserTimeZone } from "@/lib/user-timezone";
+import { useUserTimezone } from "@/hooks/useUserTimezone";
 
 type Props = {
   children: ReactNode;
@@ -33,10 +36,31 @@ export function IntlProvider({ children }: Props) {
   const pathLocale = getLocaleFromPathname(pathname);
   const pathHasLocale = isSupportedLocale(pathname.split("/").filter(Boolean)[0]);
   const [cookieLocale, setCookieLocale] = useState<AppLocale | null>(null);
+  const timeZone = useUserTimezone();
 
   useEffect(() => {
     setCookieLocale(readLocaleCookie());
   }, [pathname]);
+
+  useEffect(() => {
+    const candidateId =
+      window.localStorage.getItem("candidateId") || window.sessionStorage.getItem("candidateId");
+    if (!candidateId) return;
+    let cancelled = false;
+    void fetch(`${getApiBaseUrl()}/settings/${candidateId}`)
+      .then((response) => response.json())
+      .then((result) => {
+        if (cancelled) return;
+        const tz = result?.data?.preferences?.timezone;
+        if (tz) setUserTimeZone(tz);
+      })
+      .catch(() => {
+        /* keep local / browser timezone */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const locale: AppLocale = pathHasLocale ? pathLocale : cookieLocale ?? pathLocale ?? DEFAULT_LOCALE;
 
@@ -46,7 +70,11 @@ export function IntlProvider({ children }: Props) {
   );
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages} timeZone={APP_TIME_ZONE}>
+    <NextIntlClientProvider
+      locale={locale}
+      messages={messages}
+      timeZone={normalizeTimeZone(timeZone, APP_TIME_ZONE)}
+    >
       {children}
     </NextIntlClientProvider>
   );

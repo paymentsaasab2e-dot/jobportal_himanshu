@@ -17,6 +17,7 @@ import { PendingEarnCard } from "@/components/dashboard/PendingEarnCard";
 import { dispatchTokenEarn } from "@/lib/token-earn-events";
 import { recordCandidateNotification, notifyBellRefresh } from "@/lib/notifications";
 import RecommendedCoursesPanel from "@/components/dashboard/RecommendedCoursesPanel";
+import { formatInUserTimeZone } from "@/lib/user-timezone";
 import {
   collectProfileSkillNames,
   getDashboardName,
@@ -94,8 +95,10 @@ function getDateLocale(locale: AppLocale) {
 
 function formatAppliedDate(locale: AppLocale, value?: string | null) {
   const date = value ? new Date(value) : new Date();
-  if (Number.isNaN(date.getTime())) return new Date().toLocaleDateString(getDateLocale(locale));
-  return date.toLocaleDateString(getDateLocale(locale));
+  if (Number.isNaN(date.getTime())) {
+    return formatInUserTimeZone(new Date(), { day: 'numeric', month: 'short', year: 'numeric' }, getDateLocale(locale));
+  }
+  return formatInUserTimeZone(date, { day: 'numeric', month: 'short', year: 'numeric' }, getDateLocale(locale));
 }
 
 function asUploadedCourses(value: unknown): UploadedLmsCourse[] {

@@ -13,6 +13,7 @@ export function usePortalApplications(candidateId: string | null | undefined) {
     queryFn: ({ signal }) => fetchPortalApplications(id, signal),
     enabled: Boolean(id),
     staleTime: STALE_TIMES.list,
+    refetchOnMount: true,
     placeholderData: (previous) => previous,
   });
 }

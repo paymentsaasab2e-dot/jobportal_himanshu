@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api-base';
+import { formatInUserTimeZone } from '@/lib/user-timezone';
 
 const PAGE_BG =
   'linear-gradient(135deg, #e0f2fe 0%, #ecf7fd 12%, #fafbfb 30%, #fdf6f0 55%, #fef5ed 85%, #fef5ed 100%)';
@@ -63,9 +64,9 @@ function formatDateTime(value: string | Date) {
     return { date: '—', time: '—', weekday: '' };
   }
   return {
-    date: date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-    time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-    weekday: date.toLocaleDateString('en-US', { weekday: 'long' }),
+    date: formatInUserTimeZone(date, { year: 'numeric', month: 'long', day: 'numeric' }),
+    time: formatInUserTimeZone(date, { hour: '2-digit', minute: '2-digit' }),
+    weekday: formatInUserTimeZone(date, { weekday: 'long' }),
   };
 }
 

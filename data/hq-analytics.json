@@ -48,18 +48,22 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-29T09:07:29.845Z",
+      "capturedAt": "2026-08-29T10:31:34.139Z",
       "kind": "realtime_session",
       "session": {
-        "logins": 5,
-        "visits": 19,
-        "applies": 0,
-        "activeMs": 360000,
-        "sessionCount": 5,
+        "logins": 6,
+        "visits": 35,
+        "applies": 2,
+        "activeMs": 495000,
+        "sessionCount": 6,
         "topInsightIds": [
-          "incomplete_profile_active"
+          "skills_no_apply",
+          "incomplete_profile_active",
+          "low_market_fit_active"
         ],
-        "triggerFlags": [],
+        "triggerFlags": [
+          "career_assist"
+        ],
         "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
         "alertConfidence": "medium",
         "topLocation": "Pune, Maharashtra, India",
@@ -792,36 +796,49 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-29T09:07:29.845Z",
-      "activityStateUpdatedAt": "2026-08-29T09:07:23.791Z",
+      "capturedAt": "2026-08-29T10:31:34.139Z",
+      "activityStateUpdatedAt": "2026-08-29T10:31:32.985Z",
       "rollup7d": {
         "userId": "b1c869d84e75048c5c61c5e3",
         "range": "week",
         "fromDate": "2026-08-23",
         "toDate": "2026-08-29",
-        "logins": 5,
-        "visits": 19,
-        "jobCardClicks": 0,
-        "applies": 0,
-        "activeMs": 360000,
-        "sessionCount": 5,
+        "logins": 6,
+        "visits": 35,
+        "jobCardClicks": 2,
+        "applies": 2,
+        "activeMs": 495000,
+        "sessionCount": 6,
         "pageVisitsByCategory": {
-          "other": 7,
+          "other": 10,
           "dashboard": 8,
-          "jobs": 2,
-          "applications": 2
+          "jobs": 7,
+          "applications": 14
         },
         "activeMsByCategory": {
           "dashboard": 315000,
-          "other": 45000
+          "other": 75000,
+          "applications": 30000,
+          "jobs": 75000
         },
         "firstOpenBreakdown": {
           "dashboard": 2
         },
-        "avgActiveMsPerDay": 180000,
+        "avgActiveMsPerDay": 247500,
         "daysActive": 2,
         "topFirstOpen": "dashboard",
         "insights": [
+          {
+            "id": "skills_no_apply",
+            "label": "Skills but low applications",
+            "severity": "action",
+            "summary": "Profile has solid skills and job browsing, but few applications. Nudge to apply.",
+            "evidence": [
+              "8 skills on profile",
+              "9 job views/clicks · 1m on jobs",
+              "1 applications tracked"
+            ]
+          },
           {
             "id": "incomplete_profile_active",
             "label": "Active on jobs with incomplete profile",
@@ -830,11 +847,43 @@
             "evidence": [
               "11 missing sections",
               "Completeness 73%",
-              "2 job views"
+              "9 job views"
+            ]
+          },
+          {
+            "id": "low_market_fit_active",
+            "label": "Low market fit while job hunting",
+            "severity": "watch",
+            "summary": "Market-fit score is weak relative to activity — retarget skills/keywords to the role.",
+            "evidence": [
+              "Market fit 0%",
+              "9 job views",
+              "1 apps"
             ]
           }
         ],
         "recentSessions": [
+          {
+            "id": "sess_mte7r7y5_k8pxxj",
+            "startedAt": "2026-08-29T10:04:11.641Z",
+            "lastActiveAt": "2026-08-29T10:30:55.279Z",
+            "durationMs": 135000,
+            "pageCount": 16,
+            "firstPath": "/applications",
+            "lastPath": "/settings",
+            "lastCategory": "other",
+            "paths": [
+              "/applications",
+              "/explore-jobs",
+              "/applications/6a92aeee91cd43a904183af5",
+              "/applications/6a92af4a91cd43a904183afa",
+              "/settings"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-08-29T10:06:00.666Z"
+          },
           {
             "id": "sess_mte3n9gj_9x20ii",
             "startedAt": "2026-08-29T08:09:08.487Z",
@@ -949,6 +998,276 @@
           }
         ],
         "recentEvents": [
+          {
+            "id": "ev_mte8opdd_ofoqri",
+            "at": "2026-08-29T10:30:13.873Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/settings",
+            "sessionId": "sess_mte7r7y5_k8pxxj",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mte8avnc_5z3nxv",
+            "at": "2026-08-29T10:19:28.824Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/settings",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte89dc3_bfo75h",
+            "at": "2026-08-29T10:18:18.435Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/settings",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte827jt_huh825",
+            "at": "2026-08-29T10:12:44.345Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/settings",
+            "sessionId": "sess_mte7r7y5_k8pxxj",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mte81vyt_unff7k",
+            "at": "2026-08-29T10:12:29.333Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/settings",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte81lj1_46vb1c",
+            "at": "2026-08-29T10:12:15.805Z",
+            "type": "page_visit",
+            "category": "applications",
+            "path": "/applications",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte80rqd_pyz1ek",
+            "at": "2026-08-29T10:11:37.189Z",
+            "type": "page_visit",
+            "category": "applications",
+            "path": "/applications",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7y1ha_mpgylf",
+            "at": "2026-08-29T10:09:29.854Z",
+            "type": "time_slice",
+            "category": "applications",
+            "path": "/applications",
+            "sessionId": "sess_mte7r7y5_k8pxxj",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mte7vdgz_hhbumb",
+            "at": "2026-08-29T10:07:25.427Z",
+            "type": "page_visit",
+            "category": "applications",
+            "path": "/applications",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7v9vy_pf4zdw",
+            "at": "2026-08-29T10:07:20.782Z",
+            "type": "page_visit",
+            "category": "applications",
+            "path": "/applications/6a92af4a91cd43a904183afa",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7v7hl_hx88gc",
+            "at": "2026-08-29T10:07:17.673Z",
+            "type": "page_visit",
+            "category": "applications",
+            "path": "/applications",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7v4st_fmse44",
+            "at": "2026-08-29T10:07:14.189Z",
+            "type": "page_visit",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7v2jh_643sk8",
+            "at": "2026-08-29T10:07:11.261Z",
+            "type": "page_visit",
+            "category": "applications",
+            "path": "/applications/6a92af4a91cd43a904183afa",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7uztt_tqcfu7",
+            "at": "2026-08-29T10:07:07.745Z",
+            "type": "apply",
+            "category": "applications",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7uw3y_zvdcnb",
+            "at": "2026-08-29T10:07:02.926Z",
+            "type": "job_card_click",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mte7r7y5_k8pxxj",
+            "meta": {
+              "jobId": "6a2d382d99df941c7eea5069",
+              "companyId": "Rushacorporate Workspace",
+              "companyName": "Rushacorporate Workspace",
+              "jobTitle": "SDE",
+              "roleKey": "sde"
+            }
+          },
+          {
+            "id": "ev_mte7uhrk_5v8w46",
+            "at": "2026-08-29T10:06:44.336Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mte7r7y5_k8pxxj",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mte7tum5_o7p0t3",
+            "at": "2026-08-29T10:06:14.333Z",
+            "type": "page_visit",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7tljc_5gd6aq",
+            "at": "2026-08-29T10:06:02.568Z",
+            "type": "page_visit",
+            "category": "applications",
+            "path": "/applications",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7tk2i_2jeqmj",
+            "at": "2026-08-29T10:06:00.666Z",
+            "type": "session_end",
+            "category": "applications",
+            "path": "/applications",
+            "sessionId": "sess_mte7r7y5_k8pxxj",
+            "meta": {
+              "durationMs": 45000
+            }
+          },
+          {
+            "id": "ev_mte7tdtx_epravz",
+            "at": "2026-08-29T10:05:52.581Z",
+            "type": "page_visit",
+            "category": "applications",
+            "path": "/applications",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7t7wr_rrrlhl",
+            "at": "2026-08-29T10:05:44.907Z",
+            "type": "page_visit",
+            "category": "applications",
+            "path": "/applications/6a92aeee91cd43a904183af5",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7t1px_pc3re9",
+            "at": "2026-08-29T10:05:36.885Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mte7r7y5_k8pxxj",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mte7t0p2_bmsm7f",
+            "at": "2026-08-29T10:05:35.558Z",
+            "type": "apply",
+            "category": "applications",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7sslf_qtp9ca",
+            "at": "2026-08-29T10:05:25.059Z",
+            "type": "job_card_click",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mte7r7y5_k8pxxj",
+            "meta": {
+              "jobId": "6a2d382d99df941c7eea5069",
+              "companyId": "Rushacorporate Workspace",
+              "companyName": "Rushacorporate Workspace",
+              "jobTitle": "SDE",
+              "roleKey": "sde"
+            }
+          },
+          {
+            "id": "ev_mte7rrep_0hore2",
+            "at": "2026-08-29T10:04:36.865Z",
+            "type": "page_visit",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7rjke_uhdsk7",
+            "at": "2026-08-29T10:04:26.702Z",
+            "type": "time_slice",
+            "category": "applications",
+            "path": "/applications",
+            "sessionId": "sess_mte7r7y5_k8pxxj",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mte7r7y8_jdmqoa",
+            "at": "2026-08-29T10:04:11.648Z",
+            "type": "page_visit",
+            "category": "applications",
+            "path": "/applications",
+            "sessionId": "sess_mte7r7y5_k8pxxj"
+          },
+          {
+            "id": "ev_mte7r7y6_y4xon7",
+            "at": "2026-08-29T10:04:11.646Z",
+            "type": "login",
+            "category": "applications",
+            "path": "/applications",
+            "sessionId": "sess_mte7r7y5_k8pxxj",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
           {
             "id": "ev_mte59v7c_mxn7rs",
             "at": "2026-08-29T08:54:42.744Z",
@@ -1411,16 +1730,50 @@
             }
           }
         ],
-        "topCompanies": [],
-        "topRoles": [],
-        "hqTriggers": [],
+        "topCompanies": [
+          {
+            "key": "Rushacorporate Workspace",
+            "label": "Rushacorporate Workspace",
+            "count": 2,
+            "activeMs": 0
+          }
+        ],
+        "topRoles": [
+          {
+            "key": "sde",
+            "label": "SDE",
+            "count": 2,
+            "activeMs": 0
+          }
+        ],
+        "hqTriggers": [
+          {
+            "id": "hq_ready_but_not_applying",
+            "flag": "career_assist",
+            "title": "Profile looks ready but user is not applying",
+            "reason": "Skills and browsing exist; friction is likely confidence, fit, or process — not empty profile.",
+            "evidence": [
+              "8 skills",
+              "2 job clicks",
+              "2 applies"
+            ],
+            "recommendedAction": "Nudge one-click apply + interview prep; sales can offer application coaching.",
+            "priority": 76,
+            "audience": "both",
+            "comboSignals": [
+              "skills",
+              "browse_heavy",
+              "low_apply"
+            ]
+          }
+        ],
         "profileSnapshot": {
           "skillsCount": 8,
           "profileCompleteness": 73,
           "cvScore": 83,
           "marketFit": 0,
-          "applicationsTotal": 2,
-          "rejectionsTotal": 1,
+          "applicationsTotal": 1,
+          "rejectionsTotal": 0,
           "postInterviewRejections": 0,
           "missingSectionsCount": 11,
           "missingSectionKeys": [
@@ -1436,7 +1789,7 @@
             "visa-work-authorization",
             "vaccination"
           ],
-          "updatedAt": "2026-08-29T09:07:23.791Z"
+          "updatedAt": "2026-08-29T10:31:32.984Z"
         },
         "behaviourSignals": {
           "userId": "b1c869d84e75048c5c61c5e3",
@@ -1451,42 +1804,82 @@
             "community"
           ],
           "insightIds": [
-            "incomplete_profile_active"
+            "skills_no_apply",
+            "incomplete_profile_active",
+            "low_market_fit_active"
           ],
-          "jobCardClicks7d": 0,
-          "applies7d": 0,
-          "activeMs7d": 360000,
+          "jobCardClicks7d": 2,
+          "applies7d": 2,
+          "activeMs7d": 495000,
           "activeMsByCategory7d": {
             "dashboard": 315000,
-            "other": 45000
+            "other": 75000,
+            "applications": 30000,
+            "jobs": 75000
           },
           "pageVisitsByCategory7d": {
-            "other": 7,
+            "other": 10,
             "dashboard": 8,
-            "jobs": 2,
-            "applications": 2
+            "jobs": 7,
+            "applications": 14
           },
           "skillsCount": 8,
-          "rejectionsTotal": 1,
+          "rejectionsTotal": 0,
           "cvScore": 83,
           "marketFit": 0,
           "missingSectionsCount": 11,
-          "topCompanies": [],
-          "topRoles": [],
-          "hqTriggers": [],
+          "topCompanies": [
+            {
+              "key": "Rushacorporate Workspace",
+              "label": "Rushacorporate Workspace",
+              "count": 2,
+              "activeMs": 0
+            }
+          ],
+          "topRoles": [
+            {
+              "key": "sde",
+              "label": "SDE",
+              "count": 2,
+              "activeMs": 0
+            }
+          ],
+          "hqTriggers": [
+            {
+              "id": "hq_ready_but_not_applying",
+              "flag": "career_assist",
+              "title": "Profile looks ready but user is not applying",
+              "reason": "Skills and browsing exist; friction is likely confidence, fit, or process — not empty profile.",
+              "evidence": [
+                "8 skills",
+                "2 job clicks",
+                "2 applies"
+              ],
+              "recommendedAction": "Nudge one-click apply + interview prep; sales can offer application coaching.",
+              "priority": 76,
+              "audience": "both",
+              "comboSignals": [
+                "skills",
+                "browse_heavy",
+                "low_apply"
+              ]
+            }
+          ],
           "preferSlotIds": [
+            "jobs",
             "profile",
             "ai_cv",
             "course",
+            "quizzes",
             "events",
             "community"
           ],
           "deprioritizeSlotIds": [
-            "jobs",
-            "career_path",
-            "quizzes"
+            "career_path"
           ],
-          "userSuggestionHints": [],
+          "userSuggestionHints": [
+            "Prepare for “SDE” before you apply — You’ve been looking at Rushacorporate Workspace roles, but your scores look low (market fit ~0%, CV ~83%). Start “Frontend Interview Readiness” or open a guided premium service to close the gap, then apply when you’re stronger. Target role to aim for: “SDE”."
+          ],
           "preferredAlertHours": [
             0,
             22,
@@ -1498,17 +1891,17 @@
       },
       "suggestionMetrics": {
         "userId": "b1c869d84e75048c5c61c5e3",
-        "updatedAt": "2026-08-29T09:07:25.511Z",
+        "updatedAt": "2026-08-29T10:31:31.017Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
-        "suggestionsPushed": 7,
+        "suggestionsPushed": 8,
         "suggestionsClicked": 0,
         "suggestionsPurchased": 0,
         "salesFollowUpScore": 10,
         "salesFollowUpReady": false,
         "byScenario": {
-          "profile_match": 6,
+          "profile_match": 7,
           "engagement": 1
         },
         "recentSuggestions": [
@@ -1574,10 +1967,39 @@
             "title": "Finish your profile",
             "actionUrl": "/profile?open=work-experience&tab=work-experience",
             "pushedAt": "2026-08-29T08:57:20.714Z"
+          },
+          {
+            "id": "sug_mte7rg0e_yatndn",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-08-29T10:04:22.094Z"
           }
         ]
       },
-      "triggers": [],
+      "triggers": [
+        {
+          "id": "hq_ready_but_not_applying",
+          "flag": "career_assist",
+          "title": "Profile looks ready but user is not applying",
+          "reason": "Skills and browsing exist; friction is likely confidence, fit, or process — not empty profile.",
+          "evidence": [
+            "8 skills",
+            "2 job clicks",
+            "2 applies"
+          ],
+          "recommendedAction": "Nudge one-click apply + interview prep; sales can offer application coaching.",
+          "priority": 76,
+          "audience": "both",
+          "comboSignals": [
+            "skills",
+            "browse_heavy",
+            "low_apply"
+          ]
+        }
+      ],
       "interests": [
         {
           "key": "learning",
@@ -1643,10 +2065,10 @@
         }
       ],
       "sessionEngagement": {
-        "sessionCount": 5,
+        "sessionCount": 6,
         "activeCount": 0,
-        "totalDurationMs": 53126912,
-        "avgDurationMs": 10625382,
+        "totalDurationMs": 53261912,
+        "avgDurationMs": 8876985,
         "medianDurationMs": 135000,
         "uniqueIps": 1,
         "uniqueDevices": 1,
@@ -1680,6 +2102,12 @@
             "totalDurationMs": 135049
           },
           {
+            "hour": 15,
+            "label": "3:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 135000
+          },
+          {
             "hour": 13,
             "label": "1:00 PM",
             "sessions": 1,
@@ -1690,8 +2118,8 @@
           {
             "weekday": 6,
             "label": "Sat",
-            "sessions": 2,
-            "totalDurationMs": 47623914
+            "sessions": 3,
+            "totalDurationMs": 47758914
           },
           {
             "weekday": 5,
@@ -1718,14 +2146,14 @@
           "bestWindowLabel": "Sat / Fri · 12:00 AM–10:00 PM",
           "avoidHours": [
             13,
-            19,
-            22
+            15,
+            19
           ],
           "timezone": "Asia/Calcutta",
           "confidence": "medium",
-          "reason": "Most active around 12:00 AM and 10:00 PM local time · avg session 177 min · often from Pune, Maharashtra, India",
-          "sampleSessions": 5,
-          "avgDurationMs": 10625382,
+          "reason": "Most active around 12:00 AM and 10:00 PM local time · avg session 148 min · often from Pune, Maharashtra, India",
+          "sampleSessions": 6,
+          "avgDurationMs": 8876985,
           "medianDurationMs": 135000
         }
       },
@@ -1747,14 +2175,14 @@
         "bestWindowLabel": "Sat / Fri · 12:00 AM–10:00 PM",
         "avoidHours": [
           13,
-          19,
-          22
+          15,
+          19
         ],
         "timezone": "Asia/Calcutta",
         "confidence": "medium",
-        "reason": "Most active around 12:00 AM and 10:00 PM local time · avg session 177 min · often from Pune, Maharashtra, India",
-        "sampleSessions": 5,
-        "avgDurationMs": 10625382,
+        "reason": "Most active around 12:00 AM and 10:00 PM local time · avg session 148 min · often from Pune, Maharashtra, India",
+        "sampleSessions": 6,
+        "avgDurationMs": 8876985,
         "medianDurationMs": 135000
       },
       "locations": [
@@ -1770,6 +2198,102 @@
     }
   },
   "history": [
+    {
+      "id": "hist_mte8ooas_gsc2",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T10:30:09.167Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 35,
+        "applies": 2,
+        "activeMs": 480000,
+        "jobCardClicks": 2,
+        "triggerCount": 1,
+        "insightIds": [
+          "skills_no_apply",
+          "incomplete_profile_active",
+          "low_market_fit_active"
+        ],
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte8b561_8vl1",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T10:19:41.121Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 35,
+        "applies": 2,
+        "activeMs": 480000,
+        "jobCardClicks": 2,
+        "triggerCount": 1,
+        "insightIds": [
+          "skills_no_apply",
+          "incomplete_profile_active",
+          "low_market_fit_active"
+        ],
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte84hwx_ruak",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T10:14:31.021Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 33,
+        "applies": 2,
+        "activeMs": 480000,
+        "jobCardClicks": 2,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte7y2br_5hp1",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T10:09:30.892Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 30,
+        "applies": 2,
+        "activeMs": 465000,
+        "jobCardClicks": 2,
+        "triggerCount": 1,
+        "insightIds": [
+          "skills_no_apply",
+          "incomplete_profile_active",
+          "low_market_fit_active"
+        ],
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mte7r9qi_bh13",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-08-29T10:04:12.829Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 20,
+        "applies": 0,
+        "activeMs": 360000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Sat / Fri · 12:00 AM–10:00 PM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
     {
       "id": "hist_mte5mb6p_ppk2",
       "userId": "b1c869d84e75048c5c61c5e3",
@@ -13795,5 +14319,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-08-29T09:07:29.866Z"
+  "updatedAt": "2026-08-29T10:31:34.209Z"
 }

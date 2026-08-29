@@ -1,11 +1,15 @@
-const DISPLAY_TZ = 'Asia/Kolkata';
+import { getUserTimeZone, wallTimeInZoneToUtcMs } from '@/lib/user-timezone';
+
+function displayTimeZone() {
+  return getUserTimeZone();
+}
 
 function formatIstTime(date: Date) {
   return date.toLocaleTimeString('en-IN', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-    timeZone: DISPLAY_TZ,
+    timeZone: displayTimeZone(),
   });
 }
 
@@ -14,7 +18,7 @@ function formatIstDate(date: Date) {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-    timeZone: DISPLAY_TZ,
+    timeZone: displayTimeZone(),
   });
 }
 
@@ -24,7 +28,7 @@ function formatIstDateTime(date: Date) {
     month: 'short',
     hour: 'numeric',
     minute: '2-digit',
-    timeZone: DISPLAY_TZ,
+    timeZone: displayTimeZone(),
   });
 }
 
@@ -51,14 +55,14 @@ function toDateKey(value?: string | null) {
   const parsed = raw ? new Date(raw) : null;
   if (!parsed || Number.isNaN(parsed.getTime())) return '';
   return new Intl.DateTimeFormat('en-CA', {
-    timeZone: DISPLAY_TZ,
+    timeZone: displayTimeZone(),
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   }).format(parsed);
 }
 
-/** Prefer Asia/Kolkata wall-clock from preferredDate + preferredTime when available. */
+/** Prefer the user's timezone wall-clock from preferredDate + preferredTime when available. */
 function resolveScheduledAtMs(request: {
   scheduledAt?: string | null;
   preferredDate?: string | null;
@@ -75,10 +79,8 @@ function resolveScheduledAtMs(request: {
     toDateKey(request?.proposedDate) ||
     toDateKey(request?.scheduledAt);
   if (clock && dateKey) {
-    const hour = String(clock.hour).padStart(2, '0');
-    const minute = String(clock.minute).padStart(2, '0');
-    const istMs = new Date(`${dateKey}T${hour}:${minute}:00+05:30`).getTime();
-    if (Number.isFinite(istMs)) return istMs;
+    const zoneMs = wallTimeInZoneToUtcMs(dateKey, clock.hour, clock.minute, displayTimeZone());
+    if (Number.isFinite(zoneMs)) return zoneMs;
   }
   const fallback = request?.scheduledAt ? new Date(request.scheduledAt).getTime() : Number.NaN;
   return fallback;

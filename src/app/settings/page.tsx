@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import ProfileDrawer from '@/components/ui/ProfileDrawer';
 import SettingsCard from '@/components/settings/SettingsCard';
 import { User, Bell, Shield, SlidersHorizontal, Briefcase, AlertTriangle, MessagesSquare } from 'lucide-react';
@@ -10,6 +10,13 @@ import { API_BASE_URL } from '@/lib/api-base';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
 import { WritingAssistField } from '@/components/common/WritingSuggestions';
+import {
+  formatTimeZoneOption,
+  formatTimeZoneSummary,
+  listTimeZones,
+  normalizeTimeZone,
+  setUserTimeZone,
+} from '@/lib/user-timezone';
 import {
   getGossipIdentity,
   getMaxReferenceFee,
@@ -87,8 +94,9 @@ export default function SettingsPage() {
 
   // Preferences state
   const [language, setLanguage] = useState('English');
-  const [timezone, setTimezone] = useState('Asia/Kolkata (UTC+05:30)');
+  const [timezone, setTimezone] = useState('Asia/Kolkata');
   const [theme, setTheme] = useState('System');
+  const timezoneOptions = useMemo(() => listTimeZones(), []);
 
   // Application state
   const [defaultResume, setDefaultResume] = useState('No resume uploaded');
@@ -173,9 +181,11 @@ export default function SettingsPage() {
         setLoginSessions(`${settingsData.privacy?.activeSessions || 0} active session${(settingsData.privacy?.activeSessions || 0) !== 1 ? 's' : ''}`);
         
         // Preferences
-        setLanguage(settingsData.preferences?.language || '');
-        setTimezone(settingsData.preferences?.timezone || '');
-        setTheme(settingsData.preferences?.theme || '');
+        setLanguage(settingsData.preferences?.language || 'English');
+        const nextTimezone = normalizeTimeZone(settingsData.preferences?.timezone);
+        setTimezone(nextTimezone);
+        setUserTimeZone(nextTimezone);
+        setTheme(settingsData.preferences?.theme || 'System');
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -405,11 +415,13 @@ export default function SettingsPage() {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${localStorage.getItem('token')}`
     },
-        body: JSON.stringify({ language, timezone, theme }),
+        body: JSON.stringify({ language, timezone: normalizeTimeZone(timezone), theme }),
       });
       const result = await response.json();
 
       if (result.success) {
+        const savedTimezone = setUserTimeZone(timezone);
+        setTimezone(savedTimezone);
         showSuccessToast('Preferences updated');
         setIsPreferencesOpen(false);
       } else {
@@ -777,7 +789,7 @@ export default function SettingsPage() {
                 onEdit={() => { setActiveSection('preferences'); setIsPreferencesOpen(true); }}
               >
                 <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Language:</span> {language}</p>
-                <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Timezone:</span> {timezone}</p>
+                <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Timezone:</span> {formatTimeZoneSummary(normalizeTimeZone(timezone))}</p>
                 <p className="text-sm text-gray-700"><span className="font-medium text-gray-900">Theme:</span> {theme}</p>
               </SettingsCard>
             </div>
@@ -860,9 +872,44 @@ export default function SettingsPage() {
         )}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label className="mb-1 block text-sm font-medium text-gray-600">Language</label><input value={language} onChange={(e) => setLanguage(e.target.value)} className="h-11 w-full rounded-lg border border-gray-300 px-3 focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div><label className="mb-1 block text-sm font-medium text-gray-600">Timezone</label><input value={timezone} onChange={(e) => setTimezone(e.target.value)} className="h-11 w-full rounded-lg border border-gray-300 px-3 focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div className="md:col-span-2"><label className="mb-1 block text-sm font-medium text-gray-600">Theme</label><input value={theme} onChange={(e) => setTheme(e.target.value)} className="h-11 w-full rounded-lg border border-gray-300 px-3 focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-600">Language</label>
+            <input
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="h-11 w-full rounded-lg border border-gray-300 px-3 focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-600">Timezone</label>
+            <select
+              value={normalizeTimeZone(timezone)}
+              onChange={(e) => setTimezone(e.target.value)}
+              className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              {!timezoneOptions.includes(normalizeTimeZone(timezone)) ? (
+                <option value={normalizeTimeZone(timezone)}>
+                  {formatTimeZoneOption(normalizeTimeZone(timezone))}
+                </option>
+              ) : null}
+              {timezoneOptions.map((zone) => (
+                <option key={zone} value={zone}>
+                  {formatTimeZoneOption(zone)}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-xs text-gray-500">
+              Dates and times across jobs, applications, and interviews use this timezone.
+            </p>
+          </div>
+          <div className="md:col-span-2">
+            <label className="mb-1 block text-sm font-medium text-gray-600">Theme</label>
+            <input
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+              className="h-11 w-full rounded-lg border border-gray-300 px-3 focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
         </div>
       </ProfileDrawer>
 

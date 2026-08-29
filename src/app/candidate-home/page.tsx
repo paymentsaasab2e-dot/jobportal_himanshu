@@ -15,6 +15,7 @@ import { usePortalJobsList, usePortalPersonalizedJobs } from '@/hooks/portal/use
 import { getApiBaseUrl } from '@/lib/api-base';
 import { getStoredCandidateId } from '@/lib/auth-storage';
 import { AppLocale, localizePath } from '@/lib/i18n';
+import { formatJobTitleDisplay } from '@/lib/format-job-title';
 import { dispatchProfilePhotoUpdated } from '@/lib/profile-photo';
 import type { DashboardData } from '@/components/dashboard/dashboard-types';
 
@@ -350,7 +351,7 @@ export default function CandidateHomePage() {
                       className="flex w-full items-start justify-between rounded-2xl border border-slate-200/90 bg-white p-3.5 text-left transition hover:-translate-y-0.5 hover:border-[#2098C8]/45 hover:bg-[#F8FCFF] hover:shadow-[0_10px_24px_rgba(32,152,200,0.14)]"
                     >
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">{job.title}</p>
+                        <p className="text-sm font-semibold text-slate-900">{formatJobTitleDisplay(job.title)}</p>
                         <p className="mt-1 text-xs text-slate-600">
                           {job.company} - {job.location}
                         </p>
