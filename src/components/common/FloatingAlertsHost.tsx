@@ -646,7 +646,7 @@ export function FloatingAlertsHost() {
                         <button
                           type="button"
                           onClick={() => navigateFloat(item)}
-                          className="mt-2.5 inline-flex rounded-full bg-[#08428c] px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#004182]"
+                          className="mt-2.5 inline-flex rounded-full bg-[#176F96] px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#0F5A7A]"
                         >
                           {item.actionLabel}
                         </button>

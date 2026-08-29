@@ -119,7 +119,7 @@ export function TokenSpendButton({
         <p className="text-center text-[11px] text-slate-500">
           <Link
             href={subscriptionsHref}
-            className="inline-flex items-center gap-1 font-semibold text-[#28A8E1] hover:underline"
+            className="inline-flex items-center gap-1 font-semibold text-[#2098C8] hover:underline"
           >
             Get more <TokenCoinIcon className="h-3.5 w-3.5" />
           </Link>

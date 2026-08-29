@@ -81,7 +81,7 @@ function LanguageSwitcherSelect({ className }: { className?: string }) {
               <li key={option.value} role="option" aria-selected={active}>
                 <button
                   type="button"
-                  className={`${menuItemClassName} ${active ? "bg-[#28A8E1]/10 text-[#1d7eb0]" : ""}`}
+                  className={`${menuItemClassName} ${active ? "bg-[#2098C8]/10 text-[#1d7eb0]" : ""}`}
                   onClick={() => onLocaleChange(option.value)}
                 >
                   {option.label}

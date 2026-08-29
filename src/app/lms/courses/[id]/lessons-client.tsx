@@ -98,7 +98,7 @@ export function CourseLessonsClient({ courseId, modules, mode }: { courseId: str
                 className={`shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
                   mode === 'review' || pct >= 100
                     ? 'border border-gray-200 bg-white text-gray-400 cursor-not-allowed opacity-70'
-                    : 'bg-[#28A8E1] text-white hover:opacity-95 hover:shadow-sm active:scale-[0.98]'
+                    : 'bg-[#2098C8] text-white hover:opacity-95 hover:shadow-sm active:scale-[0.98]'
                 }`}
               >
                 Mark current done
@@ -118,7 +118,7 @@ export function CourseLessonsClient({ courseId, modules, mode }: { courseId: str
                       onClick={() => openLesson(idx)}
                       className={`w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-100 ${
                         current
-                          ? 'border-[#28A8E1]/40 bg-[#28A8E1]/10 shadow-sm'
+                          ? 'border-[#2098C8]/40 bg-[#2098C8]/10 shadow-sm'
                           : completed
                             ? 'border-emerald-100 bg-emerald-50/30 hover:shadow-sm'
                             : locked
@@ -136,7 +136,7 @@ export function CourseLessonsClient({ courseId, modules, mode }: { courseId: str
                         ) : completed ? (
                           <CheckCircle2 className="h-4 w-4 text-emerald-700" strokeWidth={2} aria-hidden />
                         ) : (
-                          <PlayCircle className="h-4 w-4 text-[#28A8E1]" strokeWidth={2} aria-hidden />
+                          <PlayCircle className="h-4 w-4 text-[#2098C8]" strokeWidth={2} aria-hidden />
                         )}
                         {locked ? 'Locked' : completed ? 'Completed' : current ? 'Current' : 'Open'}
                       </span>

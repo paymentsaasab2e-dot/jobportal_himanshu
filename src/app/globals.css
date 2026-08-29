@@ -128,6 +128,16 @@ body:has(.dashboard-ph2-theme) {
   background: linear-gradient(165deg, #f8fafc 0%, #f1f5f9 45%, #eef2ff 100%);
 }
 
+/* Logged-in Phase 1 — Create Job popup cyan/white surface */
+html.p1-job-theme body,
+body.p1-job-theme,
+body.p1-job-theme:has(.dashboard-ph2-theme) {
+  background:
+    radial-gradient(ellipse at top right, rgba(32, 152, 200, 0.16), transparent 52%),
+    radial-gradient(ellipse at top left, rgba(32, 152, 200, 0.1), transparent 48%),
+    linear-gradient(180deg, #f7fbff 0%, #f4fafc 42%, #ffffff 100%);
+}
+
 /* ── Phase 1 buttons & highlights ─────────────────────────────────────────
    Single source of truth, lifted from the sign-in page (/whatsapp) so every
    Phase 1 CTA and highlight matches it. Edit these values only here.
@@ -144,6 +154,36 @@ body:has(.dashboard-ph2-theme) {
   --brand-highlight: #08428c;
   --brand-highlight-hover: #28a8e1;
   --brand-focus-ring: rgba(40, 168, 225, 0.15);
+}
+
+/* Logged-in Phase 1 — palette lifted from Phase 2 Create Job popup (#2098C8 cyan) */
+html.p1-job-theme,
+body.p1-job-theme,
+.p1-job-theme {
+  --brand-primary: #2098C8;
+  --brand-primary-strong: #1A86B3;
+  --brand-primary-soft: #E8F6FC;
+  --brand-secondary: #2098C8;
+  --brand-secondary-soft: #E8F6FC;
+  --brand-accent: #176F96;
+  --brand-accent-soft: #D6EEF8;
+  --brand-primary-glow: rgba(32, 152, 200, 0.22);
+  --brand-accent-glow: rgba(23, 111, 150, 0.16);
+  --brand-btn-from: #2098C8;
+  --brand-btn-to: #1A86B3;
+  --brand-btn-shadow: 0 10px 24px rgba(32, 152, 200, 0.32);
+  --brand-btn-accent-from: #176F96;
+  --brand-btn-accent-to: #2098C8;
+  --brand-btn-accent-shadow: 0 8px 18px rgba(32, 152, 200, 0.28);
+  --brand-highlight: #176F96;
+  --brand-highlight-hover: #2098C8;
+  --brand-focus-ring: rgba(32, 152, 200, 0.15);
+  --dashboard-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.05),
+    0 1px 0 rgba(255, 255, 255, 0.82) inset;
+  --dashboard-shadow-hover:
+    0 14px 34px rgba(32, 152, 200, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.84) inset;
 }
 
 .btn-brand {
@@ -1356,41 +1396,39 @@ input[type="range"]::-moz-range-thumb {
   .dashboard-surface-hover:hover {
     transform: translateY(-1px);
     box-shadow: var(--dashboard-shadow-hover);
-    border-color: rgba(40, 168, 225, 0.18);
+    border-color: rgba(32, 152, 200, 0.22);
   }
 
-  /* ── Candidate dashboard: Phase 2 (CRM) light theme ──────────────────────
-     Scoped token override so only this page swaps the Phase 1 sky/orange
-     palette for the Phase 2 blue-600 / teal-600 one. Values mirror
-     frontphase2 globals.css (--ph2-accent-primary / --ph2-accent-teal and
-     the .ph2-main-surface + .ph2-card surfaces).
+  /* ── Candidate dashboard: Create Job cyan theme ─────────────────────────
+     Aligns the dashboard surface with the rest of logged-in Phase 1
+     (JobAiCreateWizard #2098C8 cyan / #E8F6FC wash).
   ───────────────────────────────────────────────────────────────────────── */
   .dashboard-ph2-theme {
-    --brand-primary: #2563eb;
-    --brand-primary-strong: #1d4ed8;
-    --brand-primary-soft: #eff6ff;
-    --brand-secondary: #0d9488;
-    --brand-secondary-soft: #f0fdfa;
-    --brand-accent: #0d9488;
-    --brand-accent-soft: #ccfbf1;
-    --brand-primary-glow: rgba(37, 99, 235, 0.18);
-    --brand-accent-glow: rgba(13, 148, 136, 0.14);
+    --brand-primary: #2098C8;
+    --brand-primary-strong: #1A86B3;
+    --brand-primary-soft: #E8F6FC;
+    --brand-secondary: #176F96;
+    --brand-secondary-soft: #E8F6FC;
+    --brand-accent: #176F96;
+    --brand-accent-soft: #D6EEF8;
+    --brand-primary-glow: rgba(32, 152, 200, 0.18);
+    --brand-accent-glow: rgba(23, 111, 150, 0.14);
     --dashboard-shadow:
-      0 1px 2px rgba(15, 23, 42, 0.05),
-      0 0 0 1px rgba(59, 130, 246, 0.05);
-    --dashboard-shadow-hover: 0 8px 24px -8px rgba(37, 99, 235, 0.14);
+      0 8px 30px -12px rgba(15, 23, 42, 0.12),
+      0 0 0 1px rgba(32, 152, 200, 0.08);
+    --dashboard-shadow-hover: 0 8px 24px -8px rgba(32, 152, 200, 0.18);
   }
 
-  /* Phase 2 cards are flat white with a slate rim, not frosted glass */
+  /* Soft white cards with a light cyan rim, matching the Create Job popup */
   .dashboard-ph2-theme .dashboard-surface {
     background: #ffffff;
-    border: 1px solid rgba(226, 232, 240, 0.95);
+    border: 1px solid rgba(32, 152, 200, 0.16);
     box-shadow: var(--dashboard-shadow);
     backdrop-filter: none;
   }
 
   .dashboard-ph2-theme .dashboard-surface-hover:hover {
-    border-color: rgba(191, 219, 254, 0.9);
+    border-color: rgba(32, 152, 200, 0.35);
   }
 
   /* Header nav — same scale as candidate dashboard / profile workspace */
@@ -1499,6 +1537,31 @@ input[type="range"]::-moz-range-thumb {
   .dashboard-status-pill-active::after {
     opacity: 0.95;
     transform: translateX(150%);
+  }
+
+  .p1-job-theme .dashboard-status-pill::before {
+    background:
+      linear-gradient(
+        120deg,
+        rgba(32, 152, 200, 0.22),
+        rgba(23, 111, 150, 0.14),
+        rgba(32, 152, 200, 0.2),
+        rgba(26, 134, 179, 0.16)
+      );
+    background-size: 240% 240%;
+  }
+
+  .p1-job-theme .dashboard-status-pill:hover,
+  .p1-job-theme .dashboard-status-pill-active {
+    border-color: rgba(32, 152, 200, 0.32);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.78),
+      0 12px 28px rgba(32, 152, 200, 0.16),
+      0 0 0 1px rgba(32, 152, 200, 0.1);
+  }
+
+  .p1-job-theme .dashboard-surface-hover:hover {
+    border-color: rgba(32, 152, 200, 0.22);
   }
 
   /* All form inputs, textareas, and selects in modals */

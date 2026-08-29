@@ -475,7 +475,7 @@ function getConfidenceBadgeClasses(confidenceTag?: string) {
   const normalized = (confidenceTag || '').toLowerCase()
 
   if (normalized.includes('excellent')) {
-    return 'border-[rgba(40,168,225,0.22)] bg-[rgba(40,168,225,0.10)] text-[#0f5f83]'
+    return 'border-[rgba(32,152,200,0.22)] bg-[rgba(32,152,200,0.10)] text-[#0f5f83]'
   }
 
   if (normalized.includes('partial') || normalized.includes('gap')) {
@@ -2235,7 +2235,7 @@ const ExploreJobsPageContent = () => {
     >
       <div className="min-w-0">
         <p className="profile-page-section-title">{title}</p>
-        {subtitle ? <p className="profile-page-empty mt-0.5 text-[#28A8E1]">{subtitle}</p> : null}
+        {subtitle ? <p className="profile-page-empty mt-0.5 text-[#2098C8]">{subtitle}</p> : null}
       </div>
       <svg
         width="18"
@@ -2274,7 +2274,7 @@ const ExploreJobsPageContent = () => {
             unoptimized
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(40,168,225,0.16),transparent_65%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(240,247,255,0.92))]">
+          <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(32,152,200,0.16),transparent_65%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(240,247,255,0.92))]">
             {monogram ? (
               <span className={`font-semibold tracking-[0.12em] text-slate-600 ${compact ? 'text-[12px]' : 'text-[13px]'}`}>
                 {monogram}
@@ -2356,12 +2356,12 @@ const ExploreJobsPageContent = () => {
         }}
         className={`group relative flex w-full max-w-full cursor-pointer flex-col overflow-hidden rounded-[24px] border transition-all duration-300 ${
           isSelected
-            ? 'border-[rgba(40,168,225,0.30)] bg-[linear-gradient(180deg,rgba(40,168,225,0.10),rgba(255,255,255,0.96))] shadow-[0_18px_40px_rgba(40,168,225,0.12)]'
+            ? 'border-[rgba(32,152,200,0.30)] bg-[linear-gradient(180deg,rgba(32,152,200,0.10),rgba(255,255,255,0.96))] shadow-[0_18px_40px_rgba(32,152,200,0.12)]'
             : 'border-white/80 bg-white/88 shadow-[0_14px_34px_rgba(15,23,42,0.06)] hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)]'
         } ${isCompact ? 'p-3.5' : 'h-full p-4'}`}
       >
         {isSelected ? (
-          <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-[#28A8E1] via-[#28A8DF] to-[#FC9620]" />
+          <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-[#2098C8] via-[#2098C8] to-[#2098C8]" />
         ) : null}
 
         <div className="flex items-start justify-between gap-3">
@@ -2389,7 +2389,7 @@ const ExploreJobsPageContent = () => {
               aria-label={isSaved ? te('removeSavedJob') : te('saveJob')}
               className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition-all duration-200 ${
                 isSaved
-                  ? 'border-[rgba(40,168,225,0.24)] bg-[rgba(40,168,225,0.12)] text-[#28A8E1]'
+                  ? 'border-[rgba(32,152,200,0.24)] bg-[rgba(32,152,200,0.12)] text-[#2098C8]'
                   : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-700'
               }`}
             >
@@ -2416,7 +2416,7 @@ const ExploreJobsPageContent = () => {
                   <span className="text-slate-300" aria-hidden="true">&middot;</span>
                 ) : null}
                 {metaSalary ? (
-                  <span className="wrap-break-word font-semibold text-[#28A8E1]">{metaSalary}</span>
+                  <span className="wrap-break-word font-semibold text-[#2098C8]">{metaSalary}</span>
                 ) : null}
               </div>
             ) : null}
@@ -2589,11 +2589,11 @@ const ExploreJobsPageContent = () => {
               <>
                 {/* Top Header Area */}
                 <DashboardPanel className="relative mb-6 overflow-hidden px-5 py-5 sm:px-6 sm:py-6">
-                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(40,168,225,0.16),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(252,150,32,0.10),transparent_20%),radial-gradient(circle_at_bottom_right,rgba(40,168,223,0.12),transparent_30%)]" />
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(32,152,200,0.16),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(252,150,32,0.10),transparent_20%),radial-gradient(circle_at_bottom_right,rgba(40,168,223,0.12),transparent_30%)]" />
 
                   <div className="relative flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                     <div className="max-w-3xl min-w-0 space-y-4">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(40,168,225,0.18)] bg-white/78 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#28A8E1]">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(32,152,200,0.18)] bg-white/78 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#2098C8]">
                         <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
                         {isPersonalized ? te('profileMatchedRoles') : te('jobsDiscovery')}
                       </div>
@@ -2622,7 +2622,7 @@ const ExploreJobsPageContent = () => {
                             {t("exploreJobs.title")}
                           </h1>
                           {isPersonalized ? (
-                            <span className="inline-flex items-center rounded-full bg-[rgba(40,168,225,0.10)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#28A8E1]">
+                            <span className="inline-flex items-center rounded-full bg-[rgba(32,152,200,0.10)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#2098C8]">
                               {te('profileMatchedBadge')}
                             </span>
                           ) : null}
@@ -2647,7 +2647,7 @@ const ExploreJobsPageContent = () => {
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder={t("exploreJobs.searchPlaceholder")}
-                          className="w-full rounded-[20px] border border-white/80 bg-white/90 py-3 pl-11 pr-4 text-sm font-medium text-slate-900 shadow-[0_14px_32px_rgba(15,23,42,0.06)] outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.24)] focus:ring-4 focus:ring-[rgba(40,168,225,0.10)]"
+                          className="w-full rounded-[20px] border border-white/80 bg-white/90 py-3 pl-11 pr-4 text-sm font-medium text-slate-900 shadow-[0_14px_32px_rgba(15,23,42,0.06)] outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-[rgba(32,152,200,0.24)] focus:ring-4 focus:ring-[rgba(32,152,200,0.10)]"
                         />
                       </label>
                     </div>
@@ -2689,7 +2689,7 @@ const ExploreJobsPageContent = () => {
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <p className="profile-page-section-title">{te('filters')}</p>
-                      <span className="inline-flex rounded-full bg-[rgba(40,168,225,0.10)] px-2.5 py-1 text-[11px] font-semibold text-[#28A8E1]">
+                      <span className="inline-flex rounded-full bg-[rgba(32,152,200,0.10)] px-2.5 py-1 text-[11px] font-semibold text-[#2098C8]">
                         {activeFilterCount}
                       </span>
                     </div>
@@ -2907,7 +2907,7 @@ const ExploreJobsPageContent = () => {
                                 setCountryPickerOpen(true)
                               }}
                               onFocus={() => setCountryPickerOpen(true)}
-                              className="profile-modal-field w-full rounded-lg border border-gray-200 bg-white py-2 pr-8 text-[0.8125rem] text-gray-800 outline-none focus:border-[#28A8E1] focus:ring-1 focus:ring-[#28A8E1]"
+                              className="profile-modal-field w-full rounded-lg border border-gray-200 bg-white py-2 pr-8 text-[0.8125rem] text-gray-800 outline-none focus:border-[#2098C8] focus:ring-1 focus:ring-[#2098C8]"
                               style={{ paddingLeft: '2.8rem' }}
                             />
                             {(selectedCountry || countrySearch) ? (
@@ -2965,7 +2965,7 @@ const ExploreJobsPageContent = () => {
                                     }}
                                     className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-50 ${
                                       selectedCountry === facet.name
-                                        ? 'bg-gray-50 font-medium text-[#28A8E1]'
+                                        ? 'bg-gray-50 font-medium text-[#2098C8]'
                                         : 'text-gray-700'
                                     }`}
                                   >
@@ -3044,7 +3044,7 @@ const ExploreJobsPageContent = () => {
                 <div className="dashboard-surface rounded-[24px] border border-white/80 p-5 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="profile-page-label flex items-center gap-2 text-[#28A8DF]">
+                      <p className="profile-page-label flex items-center gap-2 text-[#2098C8]">
                         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM11 16h2v2h-2v-2zm0-10h2v8h-2V6z"/></svg>
                         {isPersonalized ? te('eliteAiMatches') : te('recommendedForYou')}
                       </p>
@@ -3059,7 +3059,7 @@ const ExploreJobsPageContent = () => {
                             })}
                         {loadingMore ? (
                           <span
-                            className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-[#28A8DF]/border-t-transparent"
+                            className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-[#2098C8]/border-t-transparent"
                             aria-label="Loading"
                           />
                         ) : null}
@@ -3113,7 +3113,7 @@ const ExploreJobsPageContent = () => {
                   )}
                   {loadingMore && !loading ? (
                     <div className="flex justify-center py-4" aria-hidden>
-                      <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-[#28A8DF]/border-t-transparent" />
+                      <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-[#2098C8]/border-t-transparent" />
                     </div>
                   ) : null}
                   {false ? (
@@ -3175,7 +3175,7 @@ const ExploreJobsPageContent = () => {
                                 <span className="inline-flex items-center rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-bold text-blue-700">
                                   {matchBadge}
                                 </span>
-                                <span className="inline-flex items-center justify-center rounded-xl bg-[#28A8DF] px-4 py-2 text-sm font-semibold text-white">
+                                <span className="inline-flex items-center justify-center rounded-xl bg-[#2098C8] px-4 py-2 text-sm font-semibold text-white">
                                   Details
                                 </span>
                               </div>
@@ -3206,7 +3206,7 @@ const ExploreJobsPageContent = () => {
                       <button
                         type="button"
                         onClick={handleBackToGrid}
-                        className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition-all duration-200 hover:border-[rgba(40,168,225,0.24)] hover:text-[#28A8E1]"
+                        className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition-all duration-200 hover:border-[rgba(32,152,200,0.24)] hover:text-[#2098C8]"
                       >
                         {te('viewAll')}
                       </button>
@@ -3252,13 +3252,13 @@ const ExploreJobsPageContent = () => {
                               type="button"
                               disabled={applyPreflightLoading}
                               onClick={() => void handleApplyNow()}
-                              className="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(40,168,225,0.25)] transition-all duration-200 hover:bg-[#28A8DF] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#2098C8] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(32,152,200,0.25)] transition-all duration-200 hover:bg-[#2098C8] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {applyPreflightLoading ? te('loading') : te('applyNow')}
                             </button>
                             <button
                               onClick={() => handleSaveJob(selectedJob)}
-                              className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-[#28A8E1] transition-all duration-200 hover:bg-slate-50"
+                              className="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-[#2098C8] transition-all duration-200 hover:bg-slate-50"
                             >
                               {isSavedJob(selectedJob.id) ? te('savedButton') : te('saveJobButton')}
                             </button>
@@ -3298,13 +3298,13 @@ const ExploreJobsPageContent = () => {
                           return (insightJob.reasoning || insightJob.matchScore) ? (
                             <section className="mt-8 w-full">
                               <div
-                                className="rounded-[30px] p-px bg-linear-to-br from-[#28A8E1] via-[#28A8DF] to-[#7CCEF1]"
-                                style={{ boxShadow: "0 22px 48px -22px rgba(40, 168, 225, 0.36)" }}
+                                className="rounded-[30px] p-px bg-linear-to-br from-[#2098C8] via-[#2098C8] to-[#7CCEF1]"
+                                style={{ boxShadow: "0 22px 48px -22px rgba(32, 152, 200, 0.36)" }}
                               >
                                 <div className="overflow-hidden rounded-[29px] bg-white/96 backdrop-blur-xl">
                                   <div className="grid gap-0 lg:grid-cols-[34%_66%]">
-                                    <div className="relative border-b border-slate-100 bg-linear-to-b from-[rgba(40,168,225,0.15)] via-[rgba(40,168,225,0.08)] to-[rgba(40,168,225,0.03)] px-6 py-5 sm:px-8 lg:border-b-0 lg:border-r">
-                                      <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-[radial-gradient(circle_at_top,rgba(40,168,225,0.22),transparent_72%)]" />
+                                    <div className="relative border-b border-slate-100 bg-linear-to-b from-[rgba(32,152,200,0.15)] via-[rgba(32,152,200,0.08)] to-[rgba(32,152,200,0.03)] px-6 py-5 sm:px-8 lg:border-b-0 lg:border-r">
+                                      <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-[radial-gradient(circle_at_top,rgba(32,152,200,0.22),transparent_72%)]" />
 
                                       <div className="relative flex flex-col items-center gap-3">
                                         {/* 1. Partial Match Tag - Centered */}
@@ -3323,7 +3323,7 @@ const ExploreJobsPageContent = () => {
 
                                         {/* 3. Market Alignment Tag - Centered */}
                                         <div className="mt-1 text-center">
-                                          <div className="inline-flex rounded-full border border-[rgba(40,168,225,0.24)] bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#28A8E1] shadow-[0_8px_18px_rgba(40,168,225,0.12)]">
+                                          <div className="inline-flex rounded-full border border-[rgba(32,152,200,0.24)] bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#2098C8] shadow-[0_8px_18px_rgba(32,152,200,0.12)]">
                                             {te('marketAlignment')}
                                           </div>
                                         </div>
@@ -3342,7 +3342,7 @@ const ExploreJobsPageContent = () => {
                                               strokeDasharray={314}
                                               strokeDashoffset={314 - (314 * insightMatchValue) / 100}
                                               strokeLinecap="round"
-                                              className="text-[#28A8E1]"
+                                              className="text-[#2098C8]"
                                             />
                                           </svg>
                                           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -3354,7 +3354,7 @@ const ExploreJobsPageContent = () => {
                                         {/* 5. Button - Centered */}
                                         <button
                                           onClick={() => handleOptimizeCv(insightJob)}
-                                          className="mt-2 relative inline-flex h-fit w-full items-center justify-center rounded-xl bg-linear-to-r from-[#28A8E1] to-[#1F8FC2] px-4 py-2.5 text-[12px] font-bold text-white shadow-[0_12px_24px_rgba(40,168,225,0.26)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 active:scale-[0.99]"
+                                          className="mt-2 relative inline-flex h-fit w-full items-center justify-center rounded-xl bg-linear-to-r from-[#2098C8] to-[#1A86B3] px-4 py-2.5 text-[12px] font-bold text-white shadow-[0_12px_24px_rgba(32,152,200,0.26)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 active:scale-[0.99]"
                                         >
                                           {te('optimizeCv')}
                                         </button>
@@ -3363,7 +3363,7 @@ const ExploreJobsPageContent = () => {
 
                                     <div className="space-y-4 px-6 py-5 sm:px-7">
                                       <div className="flex flex-wrap items-center gap-3">
-                                        <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(40,168,225,0.2)] bg-[rgba(40,168,225,0.1)] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1F8FC2]">
+                                        <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(32,152,200,0.2)] bg-[rgba(32,152,200,0.1)] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1A86B3]">
                                           <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
                                           {te('aiMatchingInsight')}
                                         </div>
@@ -3403,7 +3403,7 @@ const ExploreJobsPageContent = () => {
 
                                           <div className="rounded-[22px] border border-[rgba(252,150,32,0.2)] bg-linear-to-br from-[rgba(252,150,32,0.12)] to-[rgba(252,150,32,0.06)] p-4 shadow-[0_8px_20px_rgba(252,150,32,0.10)]">
                                             <div className="flex items-center gap-2">
-                                              <AlertTriangle className="h-3.5 w-3.5 text-[#FC9620]" strokeWidth={2.2} />
+                                              <AlertTriangle className="h-3.5 w-3.5 text-[#2098C8]" strokeWidth={2.2} />
                                               <h5 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#d97706]">{te('strengthenNext')}</h5>
                                             </div>
                                             <p className="mt-1 text-[11px] font-medium leading-4 text-slate-500">

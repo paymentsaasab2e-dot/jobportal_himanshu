@@ -43,7 +43,7 @@ export function InterviewRoleOptions({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#28A8E1]">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2098C8]">
           Interview roles
         </p>
         <h3 className="mt-1 text-xl font-bold text-slate-900">Choose how you want to continue</h3>
@@ -56,7 +56,7 @@ export function InterviewRoleOptions({
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <div className="rounded-2xl border border-[#BFE7F8] bg-[#F4FBFF] p-4">
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#28A8E1]/15 text-[#1F8FC2]">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#2098C8]/15 text-[#1F8FC2]">
               <UserRoundSearch className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
@@ -73,7 +73,7 @@ export function InterviewRoleOptions({
             <button
               type="button"
               onClick={onRequestInterview}
-              className="inline-flex w-full items-center justify-center gap-1 rounded-xl bg-[#28A8E1] px-4 py-2.5 text-sm font-semibold text-white"
+              className="inline-flex w-full items-center justify-center gap-1 rounded-xl bg-[#2098C8] px-4 py-2.5 text-sm font-semibold text-white"
             >
               Request interview
               <ArrowRight className="h-4 w-4" />
@@ -128,7 +128,7 @@ export function InterviewRoleOptions({
           className="group rounded-2xl border border-blue-200 bg-blue-50/50 p-4 text-left transition hover:border-blue-300 hover:shadow-sm"
         >
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#28A8E1]/15 text-[#1F8FC2]">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#2098C8]/15 text-[#1F8FC2]">
               <UserRoundSearch className="h-5 w-5" />
             </span>
             <div>
@@ -137,7 +137,7 @@ export function InterviewRoleOptions({
             </div>
           </div>
           <div className="mt-3 space-y-2">
-            <span className="inline-flex rounded-full bg-[#28A8E1] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            <span className="inline-flex rounded-full bg-[#2098C8] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
               Be interviewed
             </span>
             <p className="text-sm text-slate-600">

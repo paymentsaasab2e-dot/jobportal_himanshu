@@ -200,7 +200,7 @@ export default function AiMockInterview() {
     }
   };
 
-  const PAGE_BG = "radial-gradient(circle at top left, rgba(40,168,225,0.13), transparent 28%), radial-gradient(circle at 85% 12%, rgba(40,168,223,0.1), transparent 16%), radial-gradient(circle at 18% 82%, rgba(252,150,32,0.08), transparent 18%), linear-gradient(180deg, #f5fafd 0%, #f8fcff 44%, #fcfdff 100%)";
+  const PAGE_BG = "radial-gradient(circle at top left, rgba(32,152,200,0.13), transparent 28%), radial-gradient(circle at 85% 12%, rgba(32,152,200,0.1), transparent 16%), radial-gradient(circle at 18% 82%, rgba(32,152,200,0.08), transparent 18%), linear-gradient(180deg, #f5fafd 0%, #f8fcff 44%, #fcfdff 100%)";
 
   if (!isStarted) {
     return (
@@ -244,7 +244,7 @@ export default function AiMockInterview() {
             <div className="lg:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
               <div>
                 <div className="text-center mb-5">
-                  <CheckCircle className="w-10 h-10 text-[#28A8E1] mx-auto mb-2" />
+                  <CheckCircle className="w-10 h-10 text-[#2098C8] mx-auto mb-2" />
                   <h2 className="text-2xl font-black text-slate-900 mb-1 tracking-tight">Interview Completed</h2>
                   <div className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-600 font-bold uppercase tracking-wide text-[10px]">Topic: {topic}</div>
                 </div>
@@ -255,7 +255,7 @@ export default function AiMockInterview() {
                     <p className="text-3xl font-black text-slate-900">{report.overallScore}<span className="text-sm text-slate-400 font-medium">/100</span></p>
                   </div>
                   <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center transition hover:shadow-md">
-                    <h3 className="text-[10px] font-bold text-[#28A8E1] uppercase tracking-wider mb-1">Detected Level</h3>
+                    <h3 className="text-[10px] font-bold text-[#2098C8] uppercase tracking-wider mb-1">Detected Level</h3>
                     <p className="text-xl font-black text-blue-900 mt-1">{report.skillLevel}</p>
                   </div>
                 </div>
@@ -284,7 +284,7 @@ export default function AiMockInterview() {
                 </div>
               </div>
 
-              <button onClick={() => window.location.reload()} className="hidden lg:block w-full py-3 bg-[#28A8E1] hover:bg-[#1a85b6] text-white rounded-xl text-sm font-bold transition-all shadow-md active:scale-[0.98]">Take Another Interview</button>
+              <button onClick={() => window.location.reload()} className="hidden lg:block w-full py-3 bg-[#2098C8] hover:bg-[#1a85b6] text-white rounded-xl text-sm font-bold transition-all shadow-md active:scale-[0.98]">Take Another Interview</button>
             </div>
 
             {/* Right Column - Improvement Plan */}
@@ -292,8 +292,8 @@ export default function AiMockInterview() {
               <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-2xl flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-full bg-[#28A8E1]/20 flex items-center justify-center">
-                       <CheckCircle className="w-4 h-4 text-[#28A8E1]" />
+                    <div className="w-8 h-8 rounded-full bg-[#2098C8]/20 flex items-center justify-center">
+                       <CheckCircle className="w-4 h-4 text-[#2098C8]" />
                     </div>
                     <h2 className="text-lg font-black tracking-tight">Your Next Steps</h2>
                   </div>
@@ -304,21 +304,21 @@ export default function AiMockInterview() {
                   <h3 className="text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wide flex items-center gap-2">Recommended Knowledge Topics</h3>
                   <div className="flex flex-wrap gap-2 mb-5">
                     {report.recommendedTopics?.slice(0,4).map((t: string, i: number) => (
-                      <span key={i} className="px-2.5 py-1 bg-[#28A8E1]/10 text-[#28A8E1] rounded-md text-[11px] font-bold border border-[#28A8E1]/20">{t}</span>
+                      <span key={i} className="px-2.5 py-1 bg-[#2098C8]/10 text-[#2098C8] rounded-md text-[11px] font-bold border border-[#2098C8]/20">{t}</span>
                     ))}
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-[#28A8E1]/20 to-blue-600/10 p-5 rounded-xl border border-[#28A8E1]/20">
+                <div className="bg-gradient-to-br from-[#2098C8]/20 to-blue-600/10 p-5 rounded-xl border border-[#2098C8]/20">
                   <h4 className="font-bold text-sm text-white mb-1.5">Master These Skills</h4>
                   <p className="text-[11px] text-blue-200/80 mb-4 leading-relaxed">We found some targeted Learning Management System courses specifically curated to accelerate your continued professional growth.</p>
-                  <button onClick={() => window.location.href='/lms/courses'} className="w-full py-2.5 bg-[#28A8E1] hover:bg-[#1a85b6] text-white rounded-xl text-sm font-bold transition-all shadow-[0_0_20px_rgba(40,168,225,0.3)] flex items-center justify-center gap-2">
+                  <button onClick={() => window.location.href='/lms/courses'} className="w-full py-2.5 bg-[#2098C8] hover:bg-[#1a85b6] text-white rounded-xl text-sm font-bold transition-all shadow-[0_0_20px_rgba(32,152,200,0.3)] flex items-center justify-center gap-2">
                     Find Recommended Courses <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                   </button>
                 </div>
               </div>
               
-              <button onClick={() => window.location.reload()} className="lg:hidden mt-4 w-full py-3 bg-[#28A8E1] hover:bg-[#1a85b6] text-white rounded-xl text-sm font-bold transition-all shadow-md">Take Another Interview</button>
+              <button onClick={() => window.location.reload()} className="lg:hidden mt-4 w-full py-3 bg-[#2098C8] hover:bg-[#1a85b6] text-white rounded-xl text-sm font-bold transition-all shadow-md">Take Another Interview</button>
             </div>
 
           </div>

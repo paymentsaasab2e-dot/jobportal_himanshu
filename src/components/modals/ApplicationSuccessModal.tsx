@@ -149,7 +149,7 @@ export default function ApplicationSuccessModal({
               <button
                 type="button"
                 onClick={handleTrackApplication}
-                className="profile-modal-btn flex-1 rounded-lg bg-[#28A8E1] px-4 py-2.5 text-[0.8125rem] font-medium text-white transition-colors hover:bg-[#1e96cc]"
+                className="profile-modal-btn flex-1 rounded-lg bg-[#2098C8] px-4 py-2.5 text-[0.8125rem] font-medium text-white transition-colors hover:bg-[#1e96cc]"
               >
                 Track application
               </button>

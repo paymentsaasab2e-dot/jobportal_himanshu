@@ -31,9 +31,9 @@ export function PendingEarnCard({ items }: Props) {
   );
 
   return (
-    <div className="rounded-[24px] border border-teal-100 bg-gradient-to-br from-teal-50/90 via-white to-blue-50/50 p-4 shadow-sm sm:p-5">
+    <div className="rounded-[24px] border border-[#2098C8]/20 bg-gradient-to-br from-[#E8F6FC]/90 via-white to-[#D6EEF8]/50 p-4 shadow-sm sm:p-5">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-sm">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#2098C8] text-white shadow-sm shadow-[#2098C8]/30">
           <Gift className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">

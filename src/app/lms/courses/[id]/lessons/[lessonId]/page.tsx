@@ -59,7 +59,7 @@ export default function CourseLessonPage({
           action={
             <Link
               href="/lms/courses"
-              className="inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
+              className="inline-flex items-center justify-center rounded-xl bg-[#2098C8] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
             >
               Browse courses
             </Link>
@@ -98,7 +98,7 @@ export default function CourseLessonPage({
           action={
             <Link
               href={`/lms/courses/${id}`}
-              className="inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
+              className="inline-flex items-center justify-center rounded-xl bg-[#2098C8] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
             >
               Open course overview
             </Link>

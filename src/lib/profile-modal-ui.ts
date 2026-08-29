@@ -15,7 +15,7 @@ export const PROFILE_TYPOGRAPHY = {
     cancel: '#334155',
     border: '#e2e8f0',
     closeIcon: '#9095a1',
-    saveBg: '#f97316',
+    saveBg: '#1A86B3',
   },
   drawerTitle: { size: '1.25rem', weight: 600, lineHeight: 1.3 },
   sectionTitle: { size: '0.875rem', weight: 600, lineHeight: 1.35 },

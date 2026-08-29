@@ -49,21 +49,21 @@ function actionLabelForItem(item: LmsPlannedItem) {
 
 function PlannedItemActionIcon({ item }: { item: LmsPlannedItem }) {
   if (item.type === 'course') {
-    return <BookOpen className="h-5 w-5 text-gray-400 group-hover:text-[#28A8E1]" />;
+    return <BookOpen className="h-5 w-5 text-gray-400 group-hover:text-[#2098C8]" />;
   }
   if (item.type === 'quiz') {
-    return <ClipboardList className="h-5 w-5 text-gray-400 group-hover:text-[#28A8E1]" />;
+    return <ClipboardList className="h-5 w-5 text-gray-400 group-hover:text-[#2098C8]" />;
   }
   if (item.type === 'event') {
-    return <CalendarDays className="h-5 w-5 text-gray-400 group-hover:text-[#28A8E1]" />;
+    return <CalendarDays className="h-5 w-5 text-gray-400 group-hover:text-[#2098C8]" />;
   }
   if (item.type === 'note') {
-    return <StickyNote className="h-5 w-5 text-gray-400 group-hover:text-[#28A8E1]" />;
+    return <StickyNote className="h-5 w-5 text-gray-400 group-hover:text-[#2098C8]" />;
   }
   if (item.type === 'resume') {
-    return <FileText className="h-5 w-5 text-gray-400 group-hover:text-[#28A8E1]" />;
+    return <FileText className="h-5 w-5 text-gray-400 group-hover:text-[#2098C8]" />;
   }
-  return <Lightbulb className="h-5 w-5 text-gray-400 group-hover:text-[#28A8E1]" />;
+  return <Lightbulb className="h-5 w-5 text-gray-400 group-hover:text-[#2098C8]" />;
 }
 
 export default function PlannedItemDetailPage() {
@@ -148,14 +148,14 @@ export default function PlannedItemDetailPage() {
               Source: <span className="text-gray-900">{item.sourceLabel || 'LMS Module'}</span>
             </p>
           </div>
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-[#28A8E1]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-[#2098C8]">
             <Target className="h-8 w-8" />
           </div>
         </div>
 
         <div className={`${LMS_CARD_CLASS} border-blue-50 bg-blue-50/10`}>
           <div className="flex gap-3">
-            <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#28A8E1]" />
+            <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#2098C8]" />
             <div className="space-y-3">
               <h3 className="text-sm font-bold uppercase tracking-tight text-gray-900">Why was this added?</h3>
               <p className="text-sm font-normal leading-relaxed text-gray-700">
@@ -183,7 +183,7 @@ export default function PlannedItemDetailPage() {
               {targetHref ? (
                 <Link
                   href={targetHref}
-                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 transition-all hover:border-[#28A8E1]/40 hover:shadow-md"
+                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 transition-all hover:border-[#2098C8]/40 hover:shadow-md"
                 >
                   <div className="flex items-center gap-3">
                     <PlannedItemActionIcon item={item} />
@@ -201,10 +201,10 @@ export default function PlannedItemDetailPage() {
               {sourceHref && sourceHref !== targetHref ? (
                 <Link
                   href={sourceHref}
-                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 transition-all hover:border-[#28A8E1]/40 hover:shadow-md"
+                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 transition-all hover:border-[#2098C8]/40 hover:shadow-md"
                 >
                   <div className="flex items-center gap-3">
-                    <BookOpen className="h-5 w-5 text-gray-400 group-hover:text-[#28A8E1]" />
+                    <BookOpen className="h-5 w-5 text-gray-400 group-hover:text-[#2098C8]" />
                     <span className="text-sm font-bold text-gray-900">Open source module</span>
                   </div>
                   <ExternalLink className="h-4 w-4 text-gray-300" />

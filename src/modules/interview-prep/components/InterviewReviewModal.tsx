@@ -48,7 +48,7 @@ export function InterviewReviewModal({
                 onClick={() => setRating(value)}
                 className={`h-9 w-9 rounded-full text-sm font-semibold ${
                   rating === value
-                    ? 'bg-[#28A8E1] text-white'
+                    ? 'bg-[#2098C8] text-white'
                     : 'border border-slate-200 bg-white text-slate-700'
                 }`}
               >
@@ -63,7 +63,7 @@ export function InterviewReviewModal({
             value={feedback}
             onChange={(event) => setFeedback(event.target.value.slice(0, 1000))}
             placeholder={`How was the ${label}? What went well?`}
-            className="mt-2 h-28 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#28A8E1]"
+            className="mt-2 h-28 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#2098C8]"
           />
           <p className="mt-1 text-xs text-slate-500">{feedback.length}/1000 · minimum 10 characters</p>
         </div>
@@ -82,7 +82,7 @@ export function InterviewReviewModal({
             type="button"
             disabled={submitting || feedback.trim().length < 10}
             onClick={() => onSubmit({ rating, feedback: feedback.trim() })}
-            className="rounded-xl bg-[#28A8E1] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="rounded-xl bg-[#2098C8] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
             {submitting ? 'Saving...' : 'Submit review'}
           </button>

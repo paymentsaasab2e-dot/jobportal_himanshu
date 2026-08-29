@@ -157,22 +157,22 @@ const APPLICATION_STATUS_META: Record<string, StatusMeta> = {
   },
   Screening: {
     chip: 'bg-sky-100 text-sky-800 ring-1 ring-sky-200/80',
-    progress: 'bg-[#28A8E1]',
+    progress: 'bg-[#2098C8]',
     spotlight: 'bg-sky-50 text-sky-800',
   },
   'Under Review': {
     chip: 'bg-sky-100 text-sky-800 ring-1 ring-sky-200/80',
-    progress: 'bg-[#28A8E1]',
+    progress: 'bg-[#2098C8]',
     spotlight: 'bg-sky-50 text-sky-800',
   },
   Shortlisted: {
     chip: 'bg-cyan-100 text-cyan-800 ring-1 ring-cyan-200/80',
-    progress: 'bg-[#28A8DF]',
+    progress: 'bg-[#2098C8]',
     spotlight: 'bg-cyan-50 text-cyan-800',
   },
   Assessment: {
     chip: 'bg-orange-100 text-orange-800 ring-1 ring-orange-200/80',
-    progress: 'bg-[#FC9620]',
+    progress: 'bg-[#2098C8]',
     spotlight: 'bg-orange-50 text-orange-800',
   },
   Interview: {
@@ -205,8 +205,8 @@ const INTERVIEW_STATUS_META: Record<InterviewItem['status'], string> = {
 };
 
 const COMPANY_THEMES = [
-  'from-[#28A8E1] to-[#28A8DF]',
-  'from-[#FC9620] to-[#F2B86B]',
+  'from-[#2098C8] to-[#2098C8]',
+  'from-[#2098C8] to-[#F2B86B]',
   'from-slate-700 to-slate-900',
   'from-emerald-500 to-teal-500',
   'from-indigo-500 to-sky-500',
@@ -566,7 +566,7 @@ function SegmentedControl({
             onClick={() => onChange(item.key)}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[0.8125rem] font-semibold transition-all duration-200 ${
               active
-                ? 'bg-[#28A8E1] text-white shadow-[0_10px_18px_rgba(40,168,225,0.18)]'
+                ? 'bg-[#2098C8] text-white shadow-[0_10px_18px_rgba(32,152,200,0.18)]'
                 : 'text-slate-600 hover:bg-slate-100/80'
             }`}
           >
@@ -611,7 +611,7 @@ function FilterPillRow({
               onClick={() => onChange(option.value)}
               className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all duration-200 ${
                 active
-                  ? 'bg-[#28A8E1] text-white shadow-[0_10px_18px_rgba(40,168,225,0.16)]'
+                  ? 'bg-[#2098C8] text-white shadow-[0_10px_18px_rgba(32,152,200,0.16)]'
                   : 'bg-slate-100/90 text-slate-600 hover:bg-slate-200/80'
               }`}
             >
@@ -1184,7 +1184,7 @@ export default function ApplicationsPageClient() {
                 onClick={() => {
                   window.open(matchingInterview.joinUrl, '_blank', 'noopener,noreferrer');
                 }}
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[rgba(40,168,225,0.22)] bg-white px-3 py-2 text-[12px] font-semibold text-(--brand-primary) transition-all duration-200 hover:bg-(--brand-primary-soft)"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[rgba(32,152,200,0.22)] bg-white px-3 py-2 text-[12px] font-semibold text-(--brand-primary) transition-all duration-200 hover:bg-(--brand-primary-soft)"
               >
                 {t('joinInterviewShort')}
                 <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -1194,7 +1194,7 @@ export default function ApplicationsPageClient() {
             <button
               type="button"
               onClick={() => router.push(`/applications/${application.id}`)}
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#2098C8] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(32,152,200,0.18)] transition-all duration-200 hover:bg-[#2098C8]"
             >
               {t('viewStatus')}
               <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -1279,7 +1279,7 @@ export default function ApplicationsPageClient() {
             <button
               type="button"
               onClick={() => handleToggleSavedJob(job.id)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(32,152,200,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
             >
               {t('removeSaved')}
               <BookmarkCheck className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -1289,7 +1289,7 @@ export default function ApplicationsPageClient() {
               onClick={() =>
                 router.push(`/explore-jobs?job=${encodeURIComponent(job.id)}`)
               }
-              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#2098C8] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(32,152,200,0.18)] transition-all duration-200 hover:bg-[#2098C8]"
             >
               {t('applyNow')}
               <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -1318,7 +1318,7 @@ export default function ApplicationsPageClient() {
               <button
                 type="button"
                 onClick={() => router.push('/whatsapp/verify')}
-                className="mt-8 inline-flex items-center justify-center rounded-full bg-[#28A8E1] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(40,168,225,0.2)] transition-all duration-200 hover:bg-[#28A8DF]"
+                className="mt-8 inline-flex items-center justify-center rounded-full bg-[#2098C8] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_36px_rgba(32,152,200,0.2)] transition-all duration-200 hover:bg-[#2098C8]"
               >
                 {t('continueWhatsapp')}
               </button>
@@ -1340,7 +1340,7 @@ export default function ApplicationsPageClient() {
         <div className="mx-auto max-w-[1180px] px-4 pt-0 pb-2 sm:px-5 sm:pb-3 lg:px-6 lg:pb-4">
           <div className="space-y-1.5">
             <DashboardPanel className="relative overflow-hidden px-4 py-1.5 sm:px-5 sm:py-2 lg:px-6 lg:py-3">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(40,168,225,0.16),transparent_34%),radial-gradient(circle_at_82%_18%,rgba(252,150,32,0.08),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(40,168,223,0.1),transparent_30%)]" />
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(32,152,200,0.16),transparent_34%),radial-gradient(circle_at_82%_18%,rgba(32,152,200,0.08),transparent_18%),radial-gradient(circle_at_bottom_right,rgba(32,152,200,0.1),transparent_30%)]" />
 
               <div className="relative flex flex-col gap-4">
                 <div className="max-w-2xl space-y-3">
@@ -1457,7 +1457,7 @@ export default function ApplicationsPageClient() {
                           `/explore-jobs?job=${encodeURIComponent(featuredSavedJob.id)}`,
                         )
                       }
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-4 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#2098C8] px-4 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(32,152,200,0.18)] transition-all duration-200 hover:bg-[#2098C8]"
                     >
                       {t('openJobsBoard')}
                       <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -1483,7 +1483,7 @@ export default function ApplicationsPageClient() {
                           ? t('searchInterviews')
                           : t('searchSavedJobs')
                       }
-                      className="profile-modal-field w-full rounded-[18px] border border-slate-200/80 bg-slate-50/85 py-3 pr-4 text-[0.8125rem] font-medium text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-[rgba(40,168,225,0.28)] focus:bg-white focus:ring-4 focus:ring-[rgba(40,168,225,0.08)]"
+                      className="profile-modal-field w-full rounded-[18px] border border-slate-200/80 bg-slate-50/85 py-3 pr-4 text-[0.8125rem] font-medium text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-[rgba(32,152,200,0.28)] focus:bg-white focus:ring-4 focus:ring-[rgba(32,152,200,0.08)]"
                       style={{ paddingLeft: '3.1rem' }}
                     />
                   </div>
@@ -1515,7 +1515,7 @@ export default function ApplicationsPageClient() {
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition-all duration-200 hover:border-[rgba(32,152,200,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
                     >
                       {t('clearFilters')}
                       <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -1539,7 +1539,7 @@ export default function ApplicationsPageClient() {
                       <button
                         type="button"
                         onClick={handleLoadMore}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-[rgba(32,152,200,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
                       >
                         {t('loadMoreApplications')}
                         <ChevronRight className="h-4 w-4" strokeWidth={2.1} />
@@ -1565,7 +1565,7 @@ export default function ApplicationsPageClient() {
                       <button
                         type="button"
                         onClick={() => router.push('/explore-jobs')}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#2098C8] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(32,152,200,0.18)] transition-all duration-200 hover:bg-[#2098C8]"
                       >
                         {t('exploreJobs')}
                         <ArrowUpRight className="h-4 w-4" strokeWidth={2.1} />
@@ -1607,7 +1607,7 @@ export default function ApplicationsPageClient() {
                     <button
                       type="button"
                       onClick={() => router.push('/explore-jobs')}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#2098C8] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(32,152,200,0.18)] transition-all duration-200 hover:bg-[#2098C8]"
                     >
                       {t('exploreJobs')}
                       <ArrowUpRight className="h-4 w-4" strokeWidth={2.1} />
@@ -1685,7 +1685,7 @@ export default function ApplicationsPageClient() {
                                 window.open(interview.joinUrl, '_blank', 'noopener,noreferrer');
                               }
                             }}
-                            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-3 py-2.5 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
+                            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#2098C8] px-3 py-2.5 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(32,152,200,0.18)] transition-all duration-200 hover:bg-[#2098C8]"
                           >
                             {t('join')}
                             <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -1703,7 +1703,7 @@ export default function ApplicationsPageClient() {
                         <button
                           type="button"
                           onClick={() => router.push(`/interviews/${interview.id}`)}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[12px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(40,168,225,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[12px] font-semibold text-slate-700 transition-all duration-200 hover:border-[rgba(32,152,200,0.22)] hover:bg-(--brand-primary-soft) hover:text-(--brand-primary)"
                         >
                           {t('viewDetails')}
                           <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.1} />
@@ -1727,7 +1727,7 @@ export default function ApplicationsPageClient() {
                 <button
                   type="button"
                   onClick={() => router.push('/explore-jobs')}
-                  className="mt-6 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#28A8E1] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(40,168,225,0.18)] transition-all duration-200 hover:bg-[#28A8DF]"
+                  className="mt-6 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#2098C8] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(32,152,200,0.18)] transition-all duration-200 hover:bg-[#2098C8]"
                 >
                   {t('exploreJobs')}
                   <ArrowUpRight className="h-4 w-4" strokeWidth={2.1} />

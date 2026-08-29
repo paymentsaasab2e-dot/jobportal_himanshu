@@ -31,7 +31,7 @@ export function AIRecommendationList({ sectionTitle, items, onCta, className = '
             {item.ctaHref ? (
               <Link
                 href={item.ctaHref}
-                className="mt-3 inline-block text-sm font-semibold text-[#28A8E1] transition-colors duration-200 hover:underline cursor-pointer"
+                className="mt-3 inline-block text-sm font-semibold text-[#2098C8] transition-colors duration-200 hover:underline cursor-pointer"
               >
                 {item.ctaLabel}
               </Link>
@@ -41,7 +41,7 @@ export function AIRecommendationList({ sectionTitle, items, onCta, className = '
                 onClick={onCta ? () => onCta(item) : undefined}
                 disabled={!onCta}
                 aria-disabled={!onCta}
-                className={`mt-3 text-sm font-semibold text-[#28A8E1] transition-colors duration-200 ${
+                className={`mt-3 text-sm font-semibold text-[#2098C8] transition-colors duration-200 ${
                   onCta ? 'hover:underline cursor-pointer' : 'cursor-not-allowed opacity-60'
                 }`}
               >

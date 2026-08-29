@@ -26,9 +26,9 @@ export const ProfileWorkspaceTabs = forwardRef<HTMLDivElement, ProfileWorkspaceT
               key={t.id}
               type="button"
               onClick={() => onSelect(t.id)}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-[0.8125rem] font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#28A8E1]/40 lg:px-2.5 lg:py-0.5 ${
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-[0.8125rem] font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2098C8]/40 lg:px-2.5 lg:py-0.5 ${
                 active
-                  ? 'profile-page-tab profile-page-tab-active border-[#28A8E1] bg-[#28A8E1] text-white shadow-none'
+                  ? 'profile-page-tab profile-page-tab-active border-[#2098C8] bg-[#2098C8] text-white shadow-none'
                   : 'profile-page-tab border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-white'
               }`}
             >

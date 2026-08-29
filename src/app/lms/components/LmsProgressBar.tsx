@@ -9,7 +9,7 @@ export function LmsProgressBar({ value, className = '' }: LmsProgressBarProps) {
     <div className={`w-full ${className} group`}>
       <div className="h-2.5 w-full rounded-full bg-slate-100/80 overflow-hidden border border-slate-200/60 shadow-inner">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-[#28A8E1] to-[#1e85b4] transition-all duration-[800ms] ease-out shadow-sm"
+          className="h-full rounded-full bg-gradient-to-r from-[#2098C8] to-[#1A86B3] transition-all duration-[800ms] ease-out shadow-sm"
           style={{ width: `${pct}%` }}
           role="progressbar"
           aria-valuenow={pct}

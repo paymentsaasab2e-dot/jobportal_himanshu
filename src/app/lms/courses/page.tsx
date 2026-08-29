@@ -361,7 +361,7 @@ function LmsCoursesPageContent() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-bold text-gray-900">
-                Suggested lessons for <span className="text-[#28A8E1]">{topic || focusParam}</span>
+                Suggested lessons for <span className="text-[#2098C8]">{topic || focusParam}</span>
               </p>
               <p className="mt-1 text-sm text-gray-600">
                 {focusMatchCount > 0
@@ -374,7 +374,7 @@ function LmsCoursesPageContent() {
                 </p>
               ) : null}
             </div>
-            <Link href="/lms/courses" className="text-sm font-semibold text-[#28A8E1] hover:underline">
+            <Link href="/lms/courses" className="text-sm font-semibold text-[#2098C8] hover:underline">
               Clear suggestion focus
             </Link>
           </div>
@@ -402,7 +402,7 @@ function LmsCoursesPageContent() {
                 setDurationBand('all');
                 setSortBy('recommended');
               }}
-              className="inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
+              className="inline-flex items-center justify-center rounded-xl bg-[#2098C8] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98]"
             >
               Reset filters
             </button>
@@ -422,7 +422,7 @@ function LmsCoursesPageContent() {
             return (
               <div
                 key={course.id}
-                className={`${LMS_CARD_INTERACTIVE} group ${isFocusMatch ? 'border-[#28A8E1]/30 bg-sky-50/20' : ''}`}
+                className={`${LMS_CARD_INTERACTIVE} group ${isFocusMatch ? 'border-[#2098C8]/30 bg-sky-50/20' : ''}`}
                 onClick={(e) => {
                   const target = e.target as HTMLElement;
                   if (target.closest('button')) return;
@@ -463,12 +463,12 @@ function LmsCoursesPageContent() {
                         {course.category || cover.eyebrow}
                       </span>
                       {course.videoUrl ? (
-                        <span className="rounded-full bg-[#28A8E1] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm">
+                        <span className="rounded-full bg-[#2098C8] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm">
                           Video
                         </span>
                       ) : null}
                     </div>
-                    <div className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl border border-white/60 bg-white/88 text-[#28A8E1] shadow-sm backdrop-blur-sm">
+                    <div className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl border border-white/60 bg-white/88 text-[#2098C8] shadow-sm backdrop-blur-sm">
                       <Icon className="h-5 w-5" strokeWidth={2} />
                     </div>
                   </div>
@@ -542,7 +542,7 @@ function LmsCoursesPageContent() {
                         <Link
                           href={courseHref}
                           onClick={() => setLastActiveCourseId(course.id)}
-                          className="flex-1 min-w-[6rem] rounded-xl bg-[#28A8E1] px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98] text-center"
+                          className="flex-1 min-w-[6rem] rounded-xl bg-[#2098C8] px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98] text-center"
                         >
                           {courseCtaLabel(pct)}
                         </Link>
@@ -553,7 +553,7 @@ function LmsCoursesPageContent() {
                           e.stopPropagation();
                           handleToggleSave(course.id, saved);
                         }}
-                        className={`flex-1 min-w-[6rem] rounded-xl border ${saved ? 'border-[#28A8E1] bg-sky-50 text-[#28A8E1]' : 'border-gray-200 bg-white text-gray-800'} px-3 py-2.5 text-sm font-semibold transition-all duration-200 hover:shadow-sm active:scale-[0.98] cursor-pointer`}
+                        className={`flex-1 min-w-[6rem] rounded-xl border ${saved ? 'border-[#2098C8] bg-sky-50 text-[#2098C8]' : 'border-gray-200 bg-white text-gray-800'} px-3 py-2.5 text-sm font-semibold transition-all duration-200 hover:shadow-sm active:scale-[0.98] cursor-pointer`}
                       >
                         {saved ? 'Unsave' : 'Save'}
                       </button>

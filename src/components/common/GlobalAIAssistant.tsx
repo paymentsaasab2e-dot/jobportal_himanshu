@@ -185,7 +185,7 @@ export default function GlobalAIAssistant() {
             className="mb-4 bg-white/90 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] border border-white/20 overflow-hidden flex flex-col backdrop-blur-2xl"
           >
             {/* Header */}
-            <div className="p-4 bg-gradient-to-br from-[#28A8DF] via-[#28A8DF] to-[#1e8dbd] text-white flex items-center justify-between shadow-lg relative overflow-hidden">
+            <div className="p-4 bg-gradient-to-br from-[#2098C8] via-[#2098C8] to-[#1e8dbd] text-white flex items-center justify-between shadow-lg relative overflow-hidden">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
               <div className="relative flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/30 shadow-inner">
@@ -231,7 +231,7 @@ export default function GlobalAIAssistant() {
                     >
                       <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${
                         message.role === 'user' 
-                          ? 'bg-[#28A8DF] text-white rounded-tr-none shadow-sm' 
+                          ? 'bg-[#2098C8] text-white rounded-tr-none shadow-sm' 
                           : 'bg-white border border-slate-100 text-slate-700 rounded-tl-none shadow-sm'
                       }`}>
                         {message.content}
@@ -259,16 +259,16 @@ export default function GlobalAIAssistant() {
                         <button
                           key={func.id}
                           onClick={() => handleFunctionClick(func)}
-                          className="flex items-center gap-2.5 p-2.5 bg-white border border-slate-100 rounded-xl hover:border-[#28A8DF]/30 hover:bg-[#28A8DF]/5 transition-all text-left group shadow-sm"
+                          className="flex items-center gap-2.5 p-2.5 bg-white border border-slate-100 rounded-xl hover:border-[#2098C8]/30 hover:bg-[#2098C8]/5 transition-all text-left group shadow-sm"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-[#28A8DF]/10 flex items-center justify-center text-[#28A8DF] group-hover:scale-110 transition-transform">
+                          <div className="w-8 h-8 rounded-lg bg-[#2098C8]/10 flex items-center justify-center text-[#2098C8] group-hover:scale-110 transition-transform">
                             <func.icon size={16} />
                           </div>
                           <div className="flex-1">
                             <p className="text-xs font-bold text-slate-700">{func.label}</p>
                             <p className="text-[10px] text-slate-400 line-clamp-1">{func.description}</p>
                           </div>
-                          <ChevronRight size={14} className="text-slate-300 group-hover:text-[#28A8DF] transition-colors" />
+                          <ChevronRight size={14} className="text-slate-300 group-hover:text-[#2098C8] transition-colors" />
                         </button>
                       ))}
                     </div>
@@ -284,12 +284,12 @@ export default function GlobalAIAssistant() {
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSendMessage('')}
                       placeholder="Ask me anything..."
-                      className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-black caret-black focus:outline-none focus:ring-2 focus:ring-[#28A8DF]/20 focus:border-[#28A8DF] transition-all"
+                      className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-black caret-black focus:outline-none focus:ring-2 focus:ring-[#2098C8]/20 focus:border-[#2098C8] transition-all"
                     />
                     <button
                       onClick={() => handleSendMessage('')}
                       disabled={!inputValue.trim() || isTyping}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-[#28A8DF] text-white rounded-lg hover:bg-[#1e8dbd] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-[#2098C8] text-white rounded-lg hover:bg-[#1e8dbd] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                     >
                       <Send size={16} />
                     </button>
@@ -308,14 +308,14 @@ export default function GlobalAIAssistant() {
       <motion.button
         whileHover={{ 
           scale: 1.08,
-          boxShadow: '0 15px 40px rgba(40,168,223,0.5)',
+          boxShadow: '0 15px 40px rgba(32,152,200,0.5)',
         }}
         whileTap={{ scale: 0.92 }}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-[0_12px_35px_rgba(40,168,223,0.4)] transition-all duration-500 relative overflow-hidden group ${
+        className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-[0_12px_35px_rgba(32,152,200,0.4)] transition-all duration-500 relative overflow-hidden group ${
           isOpen 
             ? 'bg-slate-900 rotate-90 rounded-full' 
-            : 'bg-gradient-to-br from-[#28A8DF] via-[#28A8DF] to-[#0EA5E9]'
+            : 'bg-gradient-to-br from-[#2098C8] via-[#2098C8] to-[#0EA5E9]'
         }`}
       >
         {/* Subtle glass reflection effect */}

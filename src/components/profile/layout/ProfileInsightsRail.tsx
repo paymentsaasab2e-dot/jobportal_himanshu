@@ -45,7 +45,7 @@ export function ProfileInsightsRail({
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-200">
           <div
             className="h-full rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${pct}%`, backgroundColor: '#28A8E1' }}
+            style={{ width: `${pct}%`, backgroundColor: '#2098C8' }}
           />
         </div>
       </section>

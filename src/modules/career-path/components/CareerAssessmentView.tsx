@@ -32,7 +32,7 @@ export function CareerAssessmentView({ submitting, onSubmit, onCancel }: Props) 
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-wide text-[#28A8E1]">Step 1 · Career assessment</p>
+        <p className="text-[11px] font-bold uppercase tracking-wide text-[#2098C8]">Step 1 · Career assessment</p>
         <h2 className="mt-1 text-xl font-bold text-gray-900">Tell AI about your career starting point</h2>
         <p className="mt-1 text-sm text-gray-600">
           We use this profile to generate your personalized roadmap, gap analysis, and milestones.
@@ -104,7 +104,7 @@ export function CareerAssessmentView({ submitting, onSubmit, onCancel }: Props) 
           type="button"
           disabled={submitting || !form.careerGoal.trim()}
           onClick={() => onSubmit({ ...form, targetRole: form.targetRole || form.careerGoal })}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#2098C8] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 disabled:opacity-50"
         >
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           Analyze & generate roadmap

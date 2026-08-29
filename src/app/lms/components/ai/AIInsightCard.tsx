@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { LMS_CARD_INTERACTIVE } from '../../constants';
 
 const ctaClassName =
-  'mt-1 inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-[#28A8E1] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98] cursor-pointer';
+  'mt-1 inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-[#2098C8] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:opacity-95 hover:shadow-md active:scale-[0.98] cursor-pointer';
 
 export type AIInsightCardProps = {
   icon: LucideIcon;

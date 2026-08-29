@@ -19,7 +19,7 @@ export function LmsSharedIntelligenceHint() {
             <Sparkles className="h-5 w-5" strokeWidth={2} />
           </div>
           <div className="space-y-0.5">
-            <p className="profile-page-label text-[#28A8E1]">
+            <p className="profile-page-label text-[#2098C8]">
               AI Connected
             </p>
             <p className="application-detail-helper leading-relaxed">
@@ -29,7 +29,7 @@ export function LmsSharedIntelligenceHint() {
         </div>
         
         <div className="profile-page-label flex items-center gap-2 self-end rounded-lg bg-white/80 px-3 py-1.5 normal-case shadow-sm sm:self-center">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#28A8E1]" />
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#2098C8]" />
           Flow Analysis Live
         </div>
       </div>

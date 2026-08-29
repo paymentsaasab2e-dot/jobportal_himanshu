@@ -1036,7 +1036,7 @@ export default function BecomeInterviewerPage() {
                           onClick={() =>
                             router.push(`/lms/interview-prep/interviewer-room/${item.id}`)
                           }
-                          className="rounded-lg bg-[#08428c] px-3 py-1.5 text-xs font-semibold text-white"
+                          className="rounded-lg bg-[#176F96] px-3 py-1.5 text-xs font-semibold text-white"
                         >
                           Open room
                         </button>
@@ -1134,7 +1134,7 @@ export default function BecomeInterviewerPage() {
                         setReviewError('');
                         setReviewRequestId(item.id);
                       }}
-                      className="mt-2 rounded-lg bg-[#28A8E1] px-3 py-1.5 text-xs font-semibold text-white"
+                      className="mt-2 rounded-lg bg-[#2098C8] px-3 py-1.5 text-xs font-semibold text-white"
                     >
                       Add review
                     </button>

@@ -280,7 +280,7 @@ export function ReferenceMessagingPanel({
         }
       >
         Conversation not found.
-        <button type="button" onClick={onClose} className="ml-2 font-semibold text-[#08428c]">
+        <button type="button" onClick={onClose} className="ml-2 font-semibold text-[#176F96]">
           Close
         </button>
       </div>
@@ -459,7 +459,7 @@ export function ReferenceMessagingPanel({
       <button
         type="button"
         onClick={() => setMinimized(false)}
-        className="fixed bottom-4 right-4 z-[80] flex w-[min(280px,calc(100vw-1.5rem))] items-center gap-2 rounded-t-xl border border-slate-700 bg-[#08428c] px-3 py-3 text-left text-white shadow-2xl"
+        className="fixed bottom-4 right-4 z-[80] flex w-[min(280px,calc(100vw-1.5rem))] items-center gap-2 rounded-t-xl border border-slate-700 bg-[#176F96] px-3 py-3 text-left text-white shadow-2xl"
       >
         {kind === 'hryantra' ? (
           <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
@@ -470,7 +470,7 @@ export function ReferenceMessagingPanel({
           <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-bold">
             {otherInitial}
             <span
-              className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-[#08428c] ${
+              className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-[#176F96] ${
                 online ? 'bg-emerald-400' : 'bg-rose-400'
               }`}
               title={online ? 'Online' : 'Offline'}
@@ -494,7 +494,7 @@ export function ReferenceMessagingPanel({
     <div
       className={
         embedded
-          ? 'flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[24px] bg-linear-to-br from-[#28A8E1] via-[#5BB8E8] to-[#FC9620] p-[1.5px] shadow-[0_12px_30px_rgba(40,168,225,0.12),0_4px_16px_rgba(252,150,32,0.1)]'
+          ? 'flex h-full min-h-0 w-full flex-col overflow-hidden rounded-[24px] bg-linear-to-br from-[#2098C8] via-[#4BB3D4] to-[#2098C8] p-[1.5px] shadow-[0_12px_30px_rgba(32,152,200,0.12),0_4px_16px_rgba(32,152,200,0.1)]'
           : 'fixed bottom-0 right-3 z-[80] flex h-[min(520px,75vh)] w-[min(400px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-t-xl border border-slate-200 border-b-0 bg-white shadow-[0_-8px_40px_rgba(15,23,42,0.2)] sm:bottom-4 sm:right-4 sm:rounded-xl sm:border-b'
       }
     >
@@ -505,8 +505,8 @@ export function ReferenceMessagingPanel({
             : 'contents'
         }
       >
-      <div className="relative flex shrink-0 items-center gap-2.5 overflow-hidden border-b border-slate-100/80 bg-linear-to-r from-[#062E5F] via-[#08428c] to-[#28A8E1] px-3 py-3 text-white">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(252,150,32,0.22),transparent_42%)]" />
+      <div className="relative flex shrink-0 items-center gap-2.5 overflow-hidden border-b border-slate-100/80 bg-linear-to-r from-[#0F5A7A] via-[#176F96] to-[#2098C8] px-3 py-3 text-white">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(32,152,200,0.22),transparent_42%)]" />
         {kind === 'hryantra' ? (
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/90 bg-white shadow-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -516,7 +516,7 @@ export function ReferenceMessagingPanel({
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white">
             {otherInitial}
             <span
-              className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-[#08428c] ${
+              className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-[#176F96] ${
                 online ? 'bg-emerald-400' : 'bg-rose-400'
               }`}
               title={online ? 'Online' : 'Offline'}
@@ -582,7 +582,7 @@ export function ReferenceMessagingPanel({
         style={{
           backgroundColor: '#DCEEF8',
           backgroundImage:
-            'radial-gradient(circle at 12% 18%, rgba(252,150,32,0.14), transparent 26%), radial-gradient(circle at 88% 12%, rgba(40,168,225,0.22), transparent 28%), radial-gradient(circle at 70% 78%, rgba(252,150,32,0.1), transparent 24%), linear-gradient(180deg, #E8F5FC 0%, #E3F1F9 42%, #F0F7FB 100%)',
+            'radial-gradient(circle at 12% 18%, rgba(32,152,200,0.14), transparent 26%), radial-gradient(circle at 88% 12%, rgba(32,152,200,0.22), transparent 28%), radial-gradient(circle at 70% 78%, rgba(32,152,200,0.1), transparent 24%), linear-gradient(180deg, #E8F5FC 0%, #E3F1F9 42%, #F0F7FB 100%)',
         }}
       >
         {messages.length === 0 ? (
@@ -617,7 +617,7 @@ export function ReferenceMessagingPanel({
               <div key={m.id}>
                 {showDay ? (
                   <div className="mb-2.5 flex justify-center pt-1">
-                    <span className="rounded-full bg-[#08428c]/85 px-3 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur-sm">
+                    <span className="rounded-full bg-[#176F96]/85 px-3 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur-sm">
                       {dayLabel || 'Earlier'}
                     </span>
                   </div>
@@ -631,7 +631,7 @@ export function ReferenceMessagingPanel({
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src="/fs.png" alt="" className="h-6 w-6 object-contain" />
                       ) : (
-                        <span className="text-[11px] font-bold text-[#28A8E1]">
+                        <span className="text-[11px] font-bold text-[#2098C8]">
                           {(other || 'U').slice(0, 1).toUpperCase()}
                         </span>
                       )}
@@ -640,7 +640,7 @@ export function ReferenceMessagingPanel({
                   <div
                     className={`max-w-[78%] min-w-[140px] whitespace-pre-wrap px-3 py-2 text-[13px] leading-relaxed shadow-[0_4px_14px_rgba(15,23,42,0.08)] ${
                       mine
-                        ? 'rounded-2xl rounded-br-md bg-linear-to-br from-[#5BB8E8] to-[#28A8E1] text-white'
+                        ? 'rounded-2xl rounded-br-md bg-linear-to-br from-[#4BB3D4] to-[#2098C8] text-white'
                         : isSystem
                           ? 'rounded-2xl rounded-tl-md border border-[#B8E0F4] bg-linear-to-br from-[#FFFFFF] via-[#F2FAFE] to-[#DFF2FB] text-slate-800'
                           : 'rounded-2xl rounded-tl-md border border-white/90 bg-white text-slate-800'
@@ -691,7 +691,7 @@ export function ReferenceMessagingPanel({
                         className={`mt-1.5 inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${
                           mine
                             ? 'bg-white/20 text-white hover:bg-white/30'
-                            : 'bg-[#28A8E1]/12 text-[#0285C7] hover:bg-[#28A8E1]/20'
+                            : 'bg-[#2098C8]/12 text-[#0285C7] hover:bg-[#2098C8]/20'
                         }`}
                       >
                         Open →
@@ -772,9 +772,9 @@ export function ReferenceMessagingPanel({
       ) : null}
 
       {canChat && !iAmRefAnswerer ? (
-        <div className="shrink-0 border-t border-[rgba(40,168,225,0.2)] bg-[var(--brand-primary-soft)] px-2.5 py-2">
+        <div className="shrink-0 border-t border-[rgba(32,152,200,0.2)] bg-[var(--brand-primary-soft)] px-2.5 py-2">
           {mediaPreview ? (
-            <div className="mb-1.5 flex items-center gap-2 rounded-[14px] border border-[rgba(40,168,225,0.22)] bg-white px-2.5 py-1.5">
+            <div className="mb-1.5 flex items-center gap-2 rounded-[14px] border border-[rgba(32,152,200,0.22)] bg-white px-2.5 py-1.5">
               {mediaKind === 'image' ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={mediaPreview} alt="" className="h-10 w-10 rounded-lg object-cover" />
@@ -793,7 +793,7 @@ export function ReferenceMessagingPanel({
               </button>
             </div>
           ) : null}
-          <div className="flex items-end gap-1.5 rounded-[16px] border border-[rgba(40,168,225,0.22)] bg-white px-1.5 py-1.5 shadow-sm">
+          <div className="flex items-end gap-1.5 rounded-[16px] border border-[rgba(32,152,200,0.22)] bg-white px-1.5 py-1.5 shadow-sm">
             <input
               ref={fileInputRef}
               type="file"
@@ -844,7 +844,7 @@ export function ReferenceMessagingPanel({
               type="button"
               onClick={handleSend}
               disabled={!draft.trim() && !mediaPreview}
-              className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#28A8E1] shadow-[0_4px_12px_rgba(40,168,225,0.28)] transition hover:bg-[#1F8FC2] disabled:opacity-40"
+              className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2098C8] shadow-[0_4px_12px_rgba(32,152,200,0.28)] transition hover:bg-[#1F8FC2] disabled:opacity-40"
               title="Send (Enter) · New line (Shift+Enter)"
             >
               <span className="brightness-0 invert">
@@ -873,7 +873,7 @@ export function ReferenceMessagingPanel({
               checked={acceptAnon || forcedAnon}
               disabled={forcedAnon || busy}
               onChange={(e) => setAcceptAnon(e.target.checked)}
-              className="rounded border-slate-300 text-[#08428c]"
+              className="rounded border-slate-300 text-[#176F96]"
             />
             Stay anonymous
             {forcedAnon ? ' (locked)' : ''}
@@ -914,7 +914,7 @@ export function ReferenceMessagingPanel({
               checked={acceptAnon || forcedAnon}
               disabled={forcedAnon || busy}
               onChange={(e) => setAcceptAnon(e.target.checked)}
-              className="rounded border-slate-300 text-[#08428c]"
+              className="rounded border-slate-300 text-[#176F96]"
             />
             Stay anonymous in this chat
             {forcedAnon ? ' (locked)' : ''}

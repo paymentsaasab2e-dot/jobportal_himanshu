@@ -397,7 +397,7 @@ export function ResumeStudioLayoutSection({
               onClick={() => onSelectTemplate(option.id, option.label)}
               className={`group flex w-full min-w-0 flex-col rounded-xl border p-1.5 text-center transition-all duration-300 ${
                 selected
-                  ? 'border-sky-400 bg-sky-50 shadow-[0_12px_24px_-18px_rgba(40,168,225,0.45)]'
+                  ? 'border-sky-400 bg-sky-50 shadow-[0_12px_24px_-18px_rgba(32,152,200,0.45)]'
                   : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
@@ -525,7 +525,7 @@ export function ResumeStudioCompletionSection({
           )}
         </div>
 
-        <div className="rounded-[1.8rem] border border-sky-100 bg-[linear-gradient(180deg,rgba(239,248,255,0.9),rgba(255,255,255,0.96))] p-6 shadow-[0_18px_44px_-28px_rgba(40,168,225,0.45)]">
+        <div className="rounded-[1.8rem] border border-sky-100 bg-[linear-gradient(180deg,rgba(239,248,255,0.9),rgba(255,255,255,0.96))] p-6 shadow-[0_18px_44px_-28px_rgba(32,152,200,0.45)]">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-sky-700">Final action</p>
           <h3 className="profile-page-section-title mt-3">
             Confirm and sync this version

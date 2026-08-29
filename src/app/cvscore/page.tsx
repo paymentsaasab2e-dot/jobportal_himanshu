@@ -66,7 +66,7 @@ export default function CVScorePage() {
                   <defs>
                     <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#3B82F6" />
-                      <stop offset="100%" stopColor="#2563EB" />
+                      <stop offset="100%" stopColor="#2098C8" />
                     </linearGradient>
                     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#F3F4F6" />
@@ -97,7 +97,7 @@ export default function CVScorePage() {
                     strokeLinecap="round"
                     className="transition-all duration-1000 ease-out"
                     style={{
-                      filter: 'drop-shadow(0 4px 12px rgba(40, 168, 223, 0.25))',
+                      filter: 'drop-shadow(0 4px 12px rgba(32, 152, 200, 0.25))',
                     }}
                   />
                 </svg>
@@ -116,7 +116,7 @@ export default function CVScorePage() {
 
               <div className="w-full bg-[#F1F5F9] rounded-full h-2 mb-4 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-[#28A8DF] transition-all duration-1000 ease-out"
+                  className="h-full rounded-full bg-[#2098C8] transition-all duration-1000 ease-out"
                   style={{ width: '85%' }}
                 ></div>
               </div>
@@ -137,7 +137,7 @@ export default function CVScorePage() {
                   <li key={index} className="flex items-start gap-3">
                     <div className="shrink-0 w-5 h-5 rounded-full bg-[#EBF8FF] flex items-center justify-center mt-0.5">
                       <svg
-                        className="w-3 h-3 text-[#28A8DF]"
+                        className="w-3 h-3 text-[#2098C8]"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"

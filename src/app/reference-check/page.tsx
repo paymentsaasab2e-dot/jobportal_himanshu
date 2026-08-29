@@ -142,7 +142,7 @@ function ReferenceCheckInner() {
       className="h-[calc(100dvh-var(--app-header-height,96px))] overflow-hidden"
       style={{
         background:
-          'radial-gradient(circle at top left, rgba(16,185,129,0.08), transparent 28%), radial-gradient(circle at 85% 10%, rgba(40,168,225,0.1), transparent 22%), linear-gradient(180deg, #f3f8fb 0%, #eef3f8 45%, #f7fafc 100%)',
+          'radial-gradient(circle at top left, rgba(16,185,129,0.08), transparent 28%), radial-gradient(circle at 85% 10%, rgba(32,152,200,0.1), transparent 22%), linear-gradient(180deg, #f3f8fb 0%, #eef3f8 45%, #f7fafc 100%)',
       }}
     >
       <div className="mx-auto flex h-full max-w-[1520px] flex-col gap-3 px-3 py-3 sm:px-4 lg:px-5">
@@ -215,7 +215,7 @@ function ReferenceCheckInner() {
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search companies by name or domain…"
-                      className="h-11 w-full rounded-full border border-slate-200 bg-slate-50/80 pl-10 pr-3 text-sm font-medium outline-none focus:border-[rgba(40,168,225,0.45)] focus:bg-white focus:ring-2 focus:ring-[rgba(40,168,225,0.12)]"
+                      className="h-11 w-full rounded-full border border-slate-200 bg-slate-50/80 pl-10 pr-3 text-sm font-medium outline-none focus:border-[rgba(32,152,200,0.45)] focus:bg-white focus:ring-2 focus:ring-[rgba(32,152,200,0.12)]"
                     />
                   </div>
 
@@ -230,9 +230,9 @@ function ReferenceCheckInner() {
                           <button
                             type="button"
                             onClick={() => openCompany(co.id)}
-                            className="flex w-full items-start gap-3 rounded-[16px] border border-slate-200/90 bg-slate-50/60 px-3 py-3 text-left transition hover:border-[rgba(40,168,225,0.35)] hover:bg-sky-50/80"
+                            className="flex w-full items-start gap-3 rounded-[16px] border border-slate-200/90 bg-slate-50/60 px-3 py-3 text-left transition hover:border-[rgba(32,152,200,0.35)] hover:bg-sky-50/80"
                           >
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#08428c] text-sm font-bold text-white">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#176F96] text-sm font-bold text-white">
                               {co.logoLetter || co.name.slice(0, 1).toUpperCase()}
                             </span>
                             <span className="min-w-0 flex-1">

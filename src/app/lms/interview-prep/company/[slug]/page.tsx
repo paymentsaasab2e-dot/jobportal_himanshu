@@ -39,7 +39,7 @@ export default function CompanyResearchPage() {
             <ArrowLeft className="h-4 w-4" /> Back to prep
           </Link>
           <div className="mt-4 flex items-center gap-4">
-             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#28A8E1]/10 text-[#28A8E1]">
+             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#2098C8]/10 text-[#2098C8]">
                <Building2 className="h-8 w-8" />
              </div>
              <div>

@@ -134,7 +134,7 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
                     key={href}
                     href={href}
                     className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-[0.8125rem] font-medium transition-all duration-300 ${active
-                      ? 'bg-[#28A8E1] text-white shadow-md shadow-[#28A8E1]/20 scale-[1.02] font-bold'
+                      ? 'bg-[#2098C8] text-white shadow-md shadow-[#2098C8]/20 scale-[1.02] font-bold'
                       : 'bg-slate-50 text-slate-900 font-medium border border-slate-200/60 hover:bg-slate-100'
                       }`}
                   >
@@ -181,7 +181,7 @@ function LmsLayoutInner({ children }: { children: ReactNode }) {
                       collapsed ? 'justify-center gap-0' : 'gap-3 justify-start'
                     } ${
                       active
-                        ? 'bg-gradient-to-r from-[#28A8E1] to-[#1e85b4] text-white shadow-md shadow-[#28A8E1]/20 font-bold'
+                        ? 'bg-gradient-to-r from-[#2098C8] to-[#1A86B3] text-white shadow-md shadow-[#2098C8]/20 font-bold'
                         : 'text-slate-900 font-medium hover:bg-slate-50 border border-transparent hover:border-slate-200/50'
                     }`}
                     onClick={() => { cancelCollapseTimer(); startCollapseTimer(); }}

@@ -45,7 +45,7 @@ export function getAvatarInitials(
 
 /** Shared gradient + initials styling used across dashboard, navbar, and profile drawer. */
 export const profileAvatarSurfaceClass =
-  'bg-[radial-gradient(circle_at_28%_22%,rgba(255,255,255,0.9),transparent_34%),linear-gradient(145deg,rgba(40,168,225,0.14),rgba(40,168,223,0.2))]';
+  'bg-[radial-gradient(circle_at_28%_22%,rgba(255,255,255,0.9),transparent_34%),linear-gradient(145deg,rgba(32,152,200,0.14),rgba(32,152,200,0.2))]';
 
 export const profileAvatarInitialsClass =
   'font-semibold uppercase tracking-[-0.04em] text-slate-600';

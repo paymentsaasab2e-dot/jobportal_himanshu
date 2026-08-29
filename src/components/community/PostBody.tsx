@@ -31,7 +31,7 @@ export function ExpandableCaption({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-1 text-[12px] font-semibold text-[#28A8E1] hover:underline"
+          className="mt-1 text-[12px] font-semibold text-[#2098C8] hover:underline"
         >
           {expanded ? 'Show less' : 'Read more'}
         </button>
@@ -72,7 +72,7 @@ export function ContainedPostMedia({
   if (post.type === 'video') {
     return (
       <div
-        className={`overflow-hidden rounded-[18px] bg-[#062E5F] ${className}`}
+        className={`overflow-hidden rounded-[18px] bg-[#0F5A7A] ${className}`}
       >
         <video
           src={urls[0]}
@@ -132,7 +132,7 @@ export function ContainedPostMedia({
               <span
                 key={i}
                 className={`h-1.5 w-1.5 rounded-full ${
-                  i === idx ? 'bg-[#28A8E1]' : 'bg-slate-400/60'
+                  i === idx ? 'bg-[#2098C8]' : 'bg-slate-400/60'
                 }`}
               />
             ))}

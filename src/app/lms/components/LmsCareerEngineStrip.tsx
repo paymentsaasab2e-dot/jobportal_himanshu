@@ -35,15 +35,15 @@ export function LmsCareerEngineStrip() {
 
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 lg:gap-4">
           <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white/90 px-3 py-2 shadow-sm">
-            <TrendingUp className="h-4 w-4 shrink-0 text-[#28A8E1]" strokeWidth={2} aria-hidden />
+            <TrendingUp className="h-4 w-4 shrink-0 text-[#2098C8]" strokeWidth={2} aria-hidden />
             <span className="text-sm font-bold text-gray-900">{progressPct}%</span>
             <span className="text-sm font-normal text-gray-500">→ {readinessStage}</span>
           </div>
           <Link
             href={nextActionHref}
-            className="group inline-flex items-center gap-1 rounded-xl border border-[#28A8E1]/30 bg-[#28A8E1]/10 px-3 py-2 text-sm font-semibold text-gray-900 transition-all duration-200 hover:bg-[#28A8E1]/15 hover:shadow-md hover:scale-[1.01] active:scale-[0.99]"
+            className="group inline-flex items-center gap-1 rounded-xl border border-[#2098C8]/30 bg-[#2098C8]/10 px-3 py-2 text-sm font-semibold text-gray-900 transition-all duration-200 hover:bg-[#2098C8]/15 hover:shadow-md hover:scale-[1.01] active:scale-[0.99]"
           >
-            <span className="text-[#28A8E1]">Next:</span>
+            <span className="text-[#2098C8]">Next:</span>
             <span className="truncate max-w-[150px]">{nextAction}</span>
             <ChevronRight className="h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200 group-hover:translate-x-0.5" />
           </Link>

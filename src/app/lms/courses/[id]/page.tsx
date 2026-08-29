@@ -109,7 +109,7 @@ export default function LmsCourseDetailPage({
           action={
             <Link
               href="/lms/courses"
-              className="inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+              className="inline-flex items-center justify-center rounded-xl bg-[#2098C8] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
             >
               Browse courses
             </Link>
@@ -231,7 +231,7 @@ export default function LmsCourseDetailPage({
               ) : (
                 <div className="flex aspect-video w-full items-center justify-center bg-gradient-to-br from-sky-100 via-white to-orange-50">
                   <div className="text-center">
-                    <PlayCircle className="mx-auto h-10 w-10 text-[#28A8E1]" strokeWidth={1.75} />
+                    <PlayCircle className="mx-auto h-10 w-10 text-[#2098C8]" strokeWidth={1.75} />
                     <p className="mt-2 text-sm font-semibold text-slate-600">No media added yet</p>
                   </div>
                 </div>
@@ -243,7 +243,7 @@ export default function LmsCourseDetailPage({
                 const Icon = item.icon;
                 return (
                   <div key={item.label} className="inline-flex min-w-0 items-center gap-2">
-                    <Icon className="h-4 w-4 shrink-0 text-[#28A8E1]" strokeWidth={2} />
+                    <Icon className="h-4 w-4 shrink-0 text-[#2098C8]" strokeWidth={2} />
                     <span className="text-slate-500">{item.label}:</span>
                     <span className="truncate font-semibold text-slate-900" title={item.value}>
                       {item.value}
@@ -257,7 +257,7 @@ export default function LmsCourseDetailPage({
           {tags.length ? (
             <section className={LMS_CARD_CLASS}>
               <h2 className={LMS_SECTION_TITLE}>
-                <Tag className="h-4 w-4 text-[#28A8E1]" strokeWidth={2} />
+                <Tag className="h-4 w-4 text-[#2098C8]" strokeWidth={2} />
                 Tags
               </h2>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -314,7 +314,7 @@ export default function LmsCourseDetailPage({
                         </span>
                         <span className="inline-flex shrink-0 items-center gap-2 text-xs font-semibold text-slate-500">
                           {lesson.estMin > 0 ? <span>{lesson.estMin} min</span> : null}
-                          <PlayCircle className="h-4 w-4 text-[#28A8E1]" strokeWidth={2} />
+                          <PlayCircle className="h-4 w-4 text-[#2098C8]" strokeWidth={2} />
                         </span>
                       </button>
                     </li>
@@ -379,7 +379,7 @@ export default function LmsCourseDetailPage({
                     ) : cp.type === 'quiz' && cp.quizId ? (
                       <Link
                         href={`/lms/quizzes/${cp.quizId}/attempt`}
-                        className="text-xs font-semibold text-[#28A8E1] hover:underline"
+                        className="text-xs font-semibold text-[#2098C8] hover:underline"
                       >
                         Open quiz
                       </Link>
@@ -423,7 +423,7 @@ export default function LmsCourseDetailPage({
                   type="button"
                   disabled={!startLesson}
                   onClick={() => startLesson && void openLesson(startLesson.lessonId, currentIndex)}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#28A8E1] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#2098C8] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <PlayCircle className="h-4 w-4" strokeWidth={2} />
                   {startLabel}

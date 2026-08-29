@@ -72,7 +72,7 @@ export default function LmsResumeBuilderPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {isAnalyzing ? (
-            <div className="col-span-3 flex py-10 items-center justify-center gap-3 text-[#28A8E1]">
+            <div className="col-span-3 flex py-10 items-center justify-center gap-3 text-[#2098C8]">
               <Sparkles className="h-6 w-6 animate-pulse" />
               <p className="font-bold">AI is analyzing your resume content...</p>
             </div>
@@ -163,7 +163,7 @@ export default function LmsResumeBuilderPage() {
             <ul className="mt-3 space-y-1 text-sm font-normal text-gray-600">
               {resumeJobMatch.improve.map((i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span className="text-[#28A8E1] font-bold">→</span>
+                  <span className="text-[#2098C8] font-bold">→</span>
                   {i}
                 </li>
               ))}

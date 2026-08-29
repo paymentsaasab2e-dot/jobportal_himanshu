@@ -31,7 +31,7 @@ export function MockInterviewCard({
   return (
     <section className="rounded-2xl border border-violet-100 bg-white p-5 sm:p-6 shadow-sm transition-all duration-200 ease-in-out hover:shadow-md space-y-4">
       <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#28A8E1]/10 text-[#28A8E1] ring-1 ring-[#28A8E1]/20">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#2098C8]/10 text-[#2098C8] ring-1 ring-[#2098C8]/20">
           <Mic2 className="h-6 w-6" strokeWidth={2} aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
@@ -47,7 +47,7 @@ export function MockInterviewCard({
 
       <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-5 space-y-4">
         <div className="space-y-1.5">
-          <span className="inline-block rounded-md bg-[#28A8E1] px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+          <span className="inline-block rounded-md bg-[#2098C8] px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white">
             Be interviewed
           </span>
           <p className="text-sm font-medium leading-relaxed text-gray-600">

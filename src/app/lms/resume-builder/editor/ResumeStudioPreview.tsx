@@ -96,7 +96,7 @@ function DocumentSection({
     <section
       className={`rounded-2xl border px-4 py-3 transition-all duration-200 ${
         active
-          ? 'border-sky-200 bg-sky-50/70 shadow-[0_10px_30px_-22px_rgba(40,168,225,0.7)]'
+          ? 'border-sky-200 bg-sky-50/70 shadow-[0_10px_30px_-22px_rgba(32,152,200,0.7)]'
           : 'border-transparent bg-transparent'
       }`}
     >

@@ -92,7 +92,7 @@ export function QuizResultClient({ quizId }: { quizId: string }) {
           </p>
           <Link
             href="/lms/quizzes"
-            className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#208bc0]"
+            className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#2098C8] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#208bc0]"
           >
             Back to quizzes
           </Link>

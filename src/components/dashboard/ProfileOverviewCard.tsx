@@ -154,7 +154,7 @@ export default function ProfileOverviewCard({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="absolute -bottom-1 -right-1 z-20 flex h-7 w-7 items-center justify-center rounded-[16px] border-[3px] border-white bg-[#2563EB] text-white shadow-[0_10px_20px_rgba(37,99,235,0.24)] transition-transform duration-200 hover:scale-105"
+              className="absolute -bottom-1 -right-1 z-20 flex h-7 w-7 items-center justify-center rounded-[16px] border-[3px] border-white bg-[#2098C8] text-white shadow-[0_10px_20px_rgba(32,152,200,0.24)] transition-transform duration-200 hover:scale-105"
               aria-label={tProfile("updateProfilePhoto")}
             >
               <Camera className="h-3 w-3" strokeWidth={2.05} />
@@ -188,7 +188,7 @@ export default function ProfileOverviewCard({
           </div>
         </div>
 
-        <div className="rounded-[18px] bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(29,78,216,0.05))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.74)]">
+        <div className="rounded-[18px] bg-[linear-gradient(135deg,rgba(32,152,200,0.1),rgba(26,134,179,0.05))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.74)]">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
@@ -201,7 +201,7 @@ export default function ProfileOverviewCard({
                 <p className="profile-page-empty">{completionLabel}</p>
               </div>
             </div>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/84 text-[var(--brand-accent)] shadow-[0_8px_18px_rgba(13,148,136,0.14)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/84 text-[var(--brand-accent)] shadow-[0_8px_18px_rgba(23,111,150,0.14)]">
               <Trophy className="h-4 w-4" strokeWidth={2.2} />
             </span>
           </div>
@@ -217,7 +217,7 @@ export default function ProfileOverviewCard({
             <button
               type="button"
               onClick={onCompleteProfile}
-              className="group mt-2.5 flex w-full items-start justify-between rounded-[15px] border border-white/70 bg-white/72 px-2.5 py-2.5 text-left shadow-[0_8px_18px_rgba(15,23,42,0.04)] transition-all duration-200 hover:border-[rgba(13,148,136,0.26)] hover:bg-white"
+              className="group mt-2.5 flex w-full items-start justify-between rounded-[15px] border border-white/70 bg-white/72 px-2.5 py-2.5 text-left shadow-[0_8px_18px_rgba(15,23,42,0.04)] transition-all duration-200 hover:border-[rgba(23,111,150,0.26)] hover:bg-white"
             >
               <span className="min-w-0 flex-1">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-accent-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-accent)]">

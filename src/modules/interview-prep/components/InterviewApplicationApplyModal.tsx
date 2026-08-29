@@ -57,7 +57,7 @@ export function InterviewApplicationApplyModal({
         aria-labelledby="interview-apply-modal-title"
         className="relative flex max-h-[min(92vh,820px)] w-full max-w-2xl flex-col overflow-hidden rounded-[1.75rem] border border-white/60 bg-white shadow-2xl shadow-slate-900/20"
       >
-        <div className="relative shrink-0 overflow-hidden border-b border-sky-100 bg-gradient-to-br from-[#28A8E1] via-[#2eb5ea] to-[#1a8fbf] px-6 py-6 text-white sm:px-8">
+        <div className="relative shrink-0 overflow-hidden border-b border-sky-100 bg-gradient-to-br from-[#2098C8] via-[#2eb5ea] to-[#1a8fbf] px-6 py-6 text-white sm:px-8">
           <div className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-12 left-8 h-32 w-32 rounded-full bg-cyan-300/20 blur-2xl" />
 
@@ -93,7 +93,7 @@ export function InterviewApplicationApplyModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
           <div className="mb-5 flex items-start gap-3 rounded-xl border border-sky-100 bg-sky-50/70 px-4 py-3">
-            <ClipboardList className="mt-0.5 shrink-0 text-[#28A8E1]" size={18} />
+            <ClipboardList className="mt-0.5 shrink-0 text-[#2098C8]" size={18} />
             <p className="text-xs leading-relaxed text-gray-600 sm:text-sm">
               Your responses are sent to the hiring team in Phase 2. Required fields are marked with{' '}
               <span className="font-semibold text-rose-500">*</span>.

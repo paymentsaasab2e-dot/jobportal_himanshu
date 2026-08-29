@@ -193,8 +193,8 @@ export function LessonPlayerClient({ course, courseMeta, flatLessons, initialInd
                 disabled={completed || mode === 'review' || completing}
                 className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${
                   completed || mode === 'review' || completing
-                    ? 'bg-[#28A8E1]/40 text-white cursor-not-allowed'
-                    : 'bg-[#28A8E1] text-white hover:opacity-95'
+                    ? 'bg-[#2098C8]/40 text-white cursor-not-allowed'
+                    : 'bg-[#2098C8] text-white hover:opacity-95'
                 }`}
               >
                 {mode === 'review' ? 'Read-only in review mode' : completed ? 'Completed' : completing ? 'Saving…' : 'Mark lesson complete'}
@@ -216,7 +216,7 @@ export function LessonPlayerClient({ course, courseMeta, flatLessons, initialInd
                     onClick={() => goLesson(idx)}
                     className={`w-full text-left rounded-xl border px-3 py-2 transition-all ${
                       isCurrent(idx)
-                        ? 'border-[#28A8E1]/40 bg-[#28A8E1]/10'
+                        ? 'border-[#2098C8]/40 bg-[#2098C8]/10'
                         : isCompleted(idx)
                           ? 'border-emerald-100 bg-emerald-50/30'
                           : isLocked(idx)
@@ -235,7 +235,7 @@ export function LessonPlayerClient({ course, courseMeta, flatLessons, initialInd
                         ) : isCompleted(idx) ? (
                           <CheckCircle2 className="h-4 w-4 text-emerald-700" strokeWidth={2} />
                         ) : (
-                          <PlayCircle className="h-4 w-4 text-[#28A8E1]" strokeWidth={2} />
+                          <PlayCircle className="h-4 w-4 text-[#2098C8]" strokeWidth={2} />
                         )}
                       </span>
                     </span>
@@ -293,7 +293,7 @@ export function LessonPlayerClient({ course, courseMeta, flatLessons, initialInd
 
           <section className={`${LMS_CARD_CLASS}`}>
             <div className="flex items-center gap-2">
-              <NotebookPen className="h-4 w-4 text-[#28A8E1]" strokeWidth={2} />
+              <NotebookPen className="h-4 w-4 text-[#2098C8]" strokeWidth={2} />
               <h2 className={LMS_SECTION_TITLE}>Quick notes</h2>
             </div>
             <textarea
@@ -321,7 +321,7 @@ export function LessonPlayerClient({ course, courseMeta, flatLessons, initialInd
               <div className="mt-4 flex flex-col sm:flex-row gap-2">
                 <Link
                   href={`/lms/courses/${course.id}?mode=review`}
-                  className="inline-flex items-center justify-center rounded-xl bg-[#28A8E1] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95"
+                  className="inline-flex items-center justify-center rounded-xl bg-[#2098C8] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95"
                 >
                   Review course
                 </Link>

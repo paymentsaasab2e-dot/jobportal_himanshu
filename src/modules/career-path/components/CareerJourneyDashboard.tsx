@@ -55,7 +55,7 @@ export function CareerJourneyDashboard({
   return (
     <div className="space-y-8">
       {/* Home hero */}
-      <section className="overflow-hidden rounded-2xl border border-[#28A8E1]/20 bg-gradient-to-br from-[#1e3a5f] via-[#2563ab] to-[#28A8E1] p-6 text-white shadow-lg sm:p-8">
+      <section className="overflow-hidden rounded-2xl border border-[#2098C8]/20 bg-gradient-to-br from-[#1e3a5f] via-[#2563ab] to-[#2098C8] p-6 text-white shadow-lg sm:p-8">
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">My career journey</p>
         <h2 className="mt-2 text-2xl font-bold">{journey.goal}</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -114,13 +114,13 @@ export function CareerJourneyDashboard({
 
       {/* Timeline */}
       <section className="space-y-3">
-        <h3 className="flex items-center gap-2 text-base font-bold text-gray-900"><Map className="h-5 w-5 text-[#28A8E1]" /> Career timeline</h3>
+        <h3 className="flex items-center gap-2 text-base font-bold text-gray-900"><Map className="h-5 w-5 text-[#2098C8]" /> Career timeline</h3>
         <div className={`${LMS_CARD_CLASS} space-y-0`}>
           {journey.milestones.map((m, index) => (
             <div key={m.id} className="flex gap-4 border-b border-gray-100 py-4 last:border-0">
               <div className="flex flex-col items-center">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${
-                  m.status === 'completed' ? 'bg-emerald-500 text-white' : m.status === 'in-progress' ? 'bg-[#28A8E1] text-white' : 'bg-gray-100 text-gray-400'
+                  m.status === 'completed' ? 'bg-emerald-500 text-white' : m.status === 'in-progress' ? 'bg-[#2098C8] text-white' : 'bg-gray-100 text-gray-400'
                 }`}>
                   {m.status === 'completed' ? <Check className="h-4 w-4" /> : index + 1}
                 </div>
@@ -133,7 +133,7 @@ export function CareerJourneyDashboard({
                 </div>
                 <p className="mt-1 text-sm text-gray-500">{m.durationMonths} months · {m.skills.join(' · ')}</p>
                 <div className="mt-2 h-1.5 max-w-xs rounded-full bg-gray-100">
-                  <div className="h-full rounded-full bg-[#28A8E1]" style={{ width: `${m.progress}%` }} />
+                  <div className="h-full rounded-full bg-[#2098C8]" style={{ width: `${m.progress}%` }} />
                 </div>
               </div>
             </div>
@@ -151,7 +151,7 @@ export function CareerJourneyDashboard({
               type="button"
               onClick={() => setActiveMilestoneId(m.id)}
               className={`w-full rounded-xl border px-4 py-3 text-left transition ${
-                activeMilestoneId === m.id ? 'border-[#28A8E1] bg-sky-50' : 'border-gray-100 bg-white hover:border-gray-200'
+                activeMilestoneId === m.id ? 'border-[#2098C8] bg-sky-50' : 'border-gray-100 bg-white hover:border-gray-200'
               }`}
             >
               <p className="text-sm font-bold text-gray-900">{m.title}</p>
@@ -164,12 +164,12 @@ export function CareerJourneyDashboard({
           <div className={`${LMS_CARD_CLASS}`}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-[#28A8E1]">{activeMilestone.phaseLabel}</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-[#2098C8]">{activeMilestone.phaseLabel}</p>
                 <h4 className="text-lg font-bold text-gray-900">{activeMilestone.title}</h4>
                 <p className="mt-1 text-sm text-gray-600">{activeMilestone.reason}</p>
               </div>
               {activeMilestone.targetRoute ? (
-                <Link href={activeMilestone.targetRoute} className="inline-flex items-center gap-1 rounded-xl bg-[#28A8E1] px-3 py-2 text-xs font-bold text-white">
+                <Link href={activeMilestone.targetRoute} className="inline-flex items-center gap-1 rounded-xl bg-[#2098C8] px-3 py-2 text-xs font-bold text-white">
                   Open LMS course <ChevronRight className="h-3 w-3" />
                 </Link>
               ) : null}
@@ -204,10 +204,10 @@ export function CareerJourneyDashboard({
             <div key={skill.name}>
               <div className="mb-1 flex justify-between text-sm">
                 <span className="font-semibold text-gray-900">{skill.name}</span>
-                <span className="font-bold text-[#28A8E1]">{skill.progress}%</span>
+                <span className="font-bold text-[#2098C8]">{skill.progress}%</span>
               </div>
               <div className="h-2 rounded-full bg-gray-100">
-                <div className="h-full rounded-full bg-gradient-to-r from-[#28A8E1] to-violet-500" style={{ width: `${skill.progress}%` }} />
+                <div className="h-full rounded-full bg-gradient-to-r from-[#2098C8] to-violet-500" style={{ width: `${skill.progress}%` }} />
               </div>
             </div>
           ))}
@@ -295,7 +295,7 @@ export function CareerJourneyDashboard({
         </div>
       </section>
 
-      <div className="flex flex-wrap gap-3 text-sm font-semibold text-[#28A8E1]">
+      <div className="flex flex-wrap gap-3 text-sm font-semibold text-[#2098C8]">
         <Link href="/lms/courses">Courses →</Link>
         <Link href="/lms/quizzes">Quizzes →</Link>
         <Link href="/lms/interview-prep">Interview prep →</Link>

@@ -167,7 +167,7 @@ export default function LmsNotesPage() {
               <ul className="space-y-1 text-sm font-semibold text-gray-800">
                 {notesLearningEngineOutput.concepts.map((c) => (
                   <li key={c} className="flex items-start gap-2">
-                    <BookOpen className="h-4 w-4 shrink-0 text-[#28A8E1] mt-0.5" strokeWidth={2} />
+                    <BookOpen className="h-4 w-4 shrink-0 text-[#2098C8] mt-0.5" strokeWidth={2} />
                     {c}
                   </li>
                 ))}
@@ -188,7 +188,7 @@ export default function LmsNotesPage() {
               </div>
               <Link
                 href="/lms/quizzes"
-                className="mt-3 inline-block text-sm font-semibold text-[#28A8E1] hover:underline"
+                className="mt-3 inline-block text-sm font-semibold text-[#2098C8] hover:underline"
               >
                 Open generated quizzes →
               </Link>
@@ -256,7 +256,7 @@ export default function LmsNotesPage() {
              <p className="mt-1 text-sm text-gray-500 mb-4">Try adjusting your search query or type filter.</p>
              <button
                onClick={() => { setSearchQuery(''); setActiveTab('All'); }}
-               className="text-sm font-semibold text-[#28A8E1] hover:underline"
+               className="text-sm font-semibold text-[#2098C8] hover:underline"
              >
                Clear all filters
              </button>

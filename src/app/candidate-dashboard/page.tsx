@@ -1171,7 +1171,7 @@ export default function CandidateDashboardPage() {
             <button
               type="button"
               onClick={() => router.push(localizePath("/whatsapp/verify", locale))}
-              className="mt-8 inline-flex items-center justify-center rounded-full bg-(--brand-primary) px-6 py-3 text-[0.8125rem] font-medium text-white shadow-[0_18px_36px_rgba(37,99,235,0.22)] transition-all duration-200 hover:bg-(--brand-primary-strong)"
+              className="mt-8 inline-flex items-center justify-center rounded-full bg-(--brand-primary) px-6 py-3 text-[0.8125rem] font-medium text-white shadow-[0_18px_36px_rgba(32,152,200,0.22)] transition-all duration-200 hover:bg-(--brand-primary-strong)"
             >
               {t("candidateDashboard.continueWithWhatsapp")}
             </button>

@@ -35,14 +35,14 @@ export default function DashboardHero({
 
   return (
     <DashboardPanel className="relative overflow-hidden px-4 py-4 sm:px-5 sm:py-5">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.16),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(29,78,216,0.1),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(13,148,136,0.08),transparent_18%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(32,152,200,0.16),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(26,134,179,0.1),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(23,111,150,0.08),transparent_18%)]" />
       <div className="pointer-events-none absolute right-0 top-0 h-32 w-32 rounded-full bg-[var(--brand-primary-glow)] blur-3xl" />
 
       <div className="relative space-y-4">
         <button
           type="button"
           onClick={onOpenMatches}
-          className="dashboard-status-pill inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-accent-soft)] bg-white/74 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-accent)] shadow-sm transition-all duration-200 hover:cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(37,99,235,0.28)] [&>*]:relative [&>*]:z-[1]"
+          className="dashboard-status-pill inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-accent-soft)] bg-white/74 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-accent)] shadow-sm transition-all duration-200 hover:cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(32,152,200,0.28)] [&>*]:relative [&>*]:z-[1]"
           aria-label={t("jumpToMatchesAria")}
         >
           <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
@@ -60,7 +60,7 @@ export default function DashboardHero({
             <button
               type="button"
               onClick={onRequestInterview}
-              className="inline-flex items-center rounded-full bg-linear-to-r from-[#2563EB] to-[#1D4ED8] px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white shadow-[0_10px_22px_rgba(37,99,235,0.26)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95"
+              className="inline-flex items-center rounded-full bg-linear-to-r from-[#2098C8] to-[#1A86B3] px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white shadow-[0_10px_22px_rgba(32,152,200,0.26)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95"
             >
               Request Interview
             </button>
@@ -83,7 +83,7 @@ export default function DashboardHero({
                   : {})}
                 className={`min-w-0 rounded-[18px] border border-white/80 bg-white/90 px-3 py-3 shadow-[0_8px_20px_rgba(15,23,42,0.04)] ${
                   onClick
-                    ? "group cursor-pointer text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[rgba(37,99,235,0.22)] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(37,99,235,0.24)]"
+                    ? "group cursor-pointer text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-[rgba(32,152,200,0.22)] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(32,152,200,0.24)]"
                     : ""
                 }`}
               >
@@ -96,7 +96,7 @@ export default function DashboardHero({
                       {value}
                     </p>
                   </div>
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] text-[var(--brand-primary)] transition-colors duration-200 group-hover:bg-[rgba(37,99,235,0.18)]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] text-[var(--brand-primary)] transition-colors duration-200 group-hover:bg-[rgba(32,152,200,0.18)]">
                     <Icon className="h-4 w-4" strokeWidth={2.2} />
                   </span>
                 </div>

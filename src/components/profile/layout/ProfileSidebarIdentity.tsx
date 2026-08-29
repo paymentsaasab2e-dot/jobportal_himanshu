@@ -45,7 +45,7 @@ export function ProfileSidebarIdentity({
       <div className="flex gap-3">
         <div
           className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-semibold text-white shadow-sm"
-          style={{ backgroundColor: '#28A8E1' }}
+          style={{ backgroundColor: '#2098C8' }}
         >
           {initials(firstName, lastName)}
         </div>
@@ -73,7 +73,7 @@ export function ProfileSidebarIdentity({
         <div className="h-2 min-w-[4rem] flex-1 overflow-hidden rounded-full bg-gray-100">
           <div
             className="h-full rounded-full transition-all duration-300"
-            style={{ width: `${pct}%`, backgroundColor: '#28A8E1' }}
+            style={{ width: `${pct}%`, backgroundColor: '#2098C8' }}
           />
         </div>
         <span className="text-xs font-semibold tabular-nums text-gray-800">
