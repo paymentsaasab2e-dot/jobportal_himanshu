@@ -269,7 +269,7 @@ function BulletList({ items }: { items: string[] }) {
             className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#2098C8]"
             aria-hidden
           />
-          <span className="text-sm leading-7 text-slate-600">{item}</span>
+          <span className="text-sm leading-7 text-slate-700">{item}</span>
         </li>
       ))}
     </ul>
@@ -281,7 +281,7 @@ function ParagraphBlock({ paragraphs }: { paragraphs: string[] }) {
   return (
     <div className="mt-3 space-y-3">
       {paragraphs.map((paragraph, index) => (
-        <p key={`${paragraph}-${index}`} className="text-sm leading-7 text-slate-600">
+        <p key={`${paragraph}-${index}`} className="text-sm leading-7 text-slate-700">
           {paragraph}
         </p>
       ))}
@@ -318,7 +318,7 @@ function MetaRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
       <dt className="w-40 shrink-0 text-sm font-semibold text-slate-500">{label}</dt>
-      <dd className="text-sm text-slate-800">{value}</dd>
+      <dd className="text-sm text-slate-900">{value}</dd>
     </div>
   )
 }
@@ -443,7 +443,7 @@ export function JobPostingDetailsPanel({ job }: { job: JobPostingDetailsJob }) {
 
       {show('aboutCompany') && String(job.aboutCompany || '').trim() ? (
         <ContentSection title="About the company">
-          <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+          <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
             {String(job.aboutCompany).trim()}
           </p>
         </ContentSection>

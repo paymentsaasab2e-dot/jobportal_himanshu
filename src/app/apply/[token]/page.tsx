@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Building2, Check, Loader2, MapPin, Share2 } from "lucide-react";
-import { Manrope, Syne } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 
 import {
   JobDetailHighlights,
@@ -14,16 +14,19 @@ import {
 import { JobApplyShareRail } from "@/components/jobs/JobApplyShareRail";
 import { savePendingJobApply } from "@/lib/job-apply-flow";
 
-const displayFont = Syne({
+/** Same pairing as Phase 2 dashboards: Jakarta for copy, Inter for figures. */
+const applyTextFont = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
-  variable: "--apply-display",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+  variable: "--apply-text",
 });
 
-const bodyFont = Manrope({
+const applyNumFont = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--apply-body",
+  display: "swap",
+  weight: ["500", "600", "700"],
+  variable: "--apply-num",
 });
 
 type PublicApplyJob = {
@@ -284,17 +287,18 @@ export default function ApplyLandingPage() {
 
   return (
     <div
-      className={`${displayFont.variable} ${bodyFont.variable} apply-page min-h-screen text-[var(--apply-ink)]`}
+      className={`${applyTextFont.variable} ${applyNumFont.variable} apply-page min-h-screen text-slate-900`}
       style={
         {
-          "--apply-ink": "#0f1c24",
-          "--apply-muted": "#5b6b76",
-          "--apply-line": "rgba(15, 28, 36, 0.08)",
-          "--apply-surface": "#f5fafc",
+          /* Phase 2 public job / dashboard text: slate-900 / slate-700 / slate-500 */
+          "--apply-ink": "#0F172A",
+          "--apply-copy": "#334155",
+          "--apply-muted": "#64748B",
+          "--apply-line": "rgba(15, 23, 42, 0.08)",
+          "--apply-surface": "#F8FAFC",
           "--apply-accent": "#2098C8",
           "--apply-accent-deep": "#1A86B3",
           "--apply-glow": "rgba(32, 152, 200, 0.2)",
-          fontFamily: "var(--apply-body), ui-sans-serif, system-ui, sans-serif",
         } as CSSProperties
       }
     >
@@ -304,10 +308,26 @@ export default function ApplyLandingPage() {
 
       <style>{`
         .apply-page {
+          color: var(--apply-ink);
+          font-family: var(--apply-text), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+          letter-spacing: -0.011em;
           background:
             radial-gradient(ellipse 90% 55% at 12% -10%, var(--apply-glow), transparent 55%),
             radial-gradient(ellipse 70% 45% at 95% 8%, rgba(240, 136, 24, 0.1), transparent 50%),
             linear-gradient(180deg, #e8f6fb 0%, var(--apply-surface) 38%, #ffffff 100%);
+        }
+        .apply-page :is(p, span, div, li, td, th, label, button, input, textarea, select, h1, h2, h3, h4, h5, h6) {
+          font-family: var(--apply-text), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+        }
+        .apply-page h1,
+        .apply-page h2,
+        .apply-page h3,
+        .apply-page h4 {
+          color: var(--apply-ink);
+          font-weight: 700;
+        }
+        .apply-page .tabular-nums {
+          font-family: var(--apply-num), Inter, ui-sans-serif, system-ui, sans-serif;
         }
         .apply-page::before {
           content: "";
@@ -479,18 +499,12 @@ export default function ApplyLandingPage() {
                 </div>
 
                 {job.company ? (
-                  <p
-                    className="relative text-xl font-extrabold tracking-tight text-[var(--apply-ink)] sm:text-2xl"
-                    style={{ fontFamily: "var(--apply-display), sans-serif" }}
-                  >
+                  <p className="relative text-xl font-bold tracking-tight text-[var(--apply-ink)] sm:text-2xl">
                     {job.company}
                   </p>
                 ) : null}
 
-                <h1
-                  className="relative mt-2 text-2xl font-extrabold leading-[1.15] tracking-tight text-[var(--apply-ink)] sm:text-[1.75rem]"
-                  style={{ fontFamily: "var(--apply-display), sans-serif" }}
-                >
+                <h1 className="relative mt-2 text-2xl font-bold leading-[1.15] tracking-tight text-[var(--apply-ink)] sm:text-[1.75rem]">
                   {job.title}
                 </h1>
 
@@ -547,16 +561,10 @@ export default function ApplyLandingPage() {
                 className={`apply-reveal apply-reveal-delay-3 rounded-[2rem] border border-[var(--apply-line)] bg-white/90 px-5 py-6 shadow-[0_18px_44px_rgba(15,28,36,0.06)] sm:px-7 sm:py-8 ${ready ? "is-ready" : ""}`}
               >
                 <div className="mb-6 border-b border-[var(--apply-line)] pb-5">
-                  <p
-                    className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-[var(--apply-accent)]"
-                    style={{ fontFamily: "var(--apply-display), sans-serif" }}
-                  >
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-[var(--apply-accent)]">
                     Role details
                   </p>
-                  <h2
-                    className="mt-1 text-xl font-bold tracking-tight text-[var(--apply-ink)] sm:text-2xl"
-                    style={{ fontFamily: "var(--apply-display), sans-serif" }}
-                  >
+                  <h2 className="mt-1 text-xl font-bold tracking-tight text-[var(--apply-ink)] sm:text-2xl">
                     Everything about this position
                   </h2>
                 </div>
