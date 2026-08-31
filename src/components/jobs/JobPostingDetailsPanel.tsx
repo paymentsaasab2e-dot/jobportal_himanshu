@@ -2,16 +2,17 @@
 
 import type { ReactNode } from 'react'
 import {
+  Banknote,
   Briefcase,
   Building2,
   Clock3,
   Globe2,
-  IndianRupee,
   Languages,
   MapPin,
   UserRound,
   Users,
 } from 'lucide-react'
+import { formatPublicSalaryLabel } from '@/lib/format-salary'
 import type { JobLanguageRow } from '@/lib/map-portal-job'
 import { displayJobField } from '@/lib/map-portal-job'
 import {
@@ -100,17 +101,16 @@ export function formatJobExperienceHeader(job: JobPostingDetailsJob): string | n
   return raw
 }
 
-/** Compact salary for header line (e.g. `10 · USD` or `5–10 · USD`). */
+/** Compact salary for header line (e.g. `XAF 200,000` or `$5–$10`). */
 export function formatJobHeaderSalary(job: JobPostingDetailsJob): string | null {
-  const currency = String(job.salaryCurrency || 'USD').trim()
-  const min = job.salaryMin != null ? String(job.salaryMin) : ''
-  const max = job.salaryMax != null ? String(job.salaryMax) : ''
-  if (min && max) return `${min}–${max} · ${currency}`
-  if (min) return `${min} · ${currency}`
-  if (max) return `Up to ${max} · ${currency}`
-  const raw = String(job.salary || '').trim()
-  if (!raw || raw === 'Salary not specified') return null
-  return raw
+  const label = formatPublicSalaryLabel({
+    currency: job.salaryCurrency,
+    min: job.salaryMin,
+    max: job.salaryMax,
+    fallback: job.salary,
+  })
+  if (!label || label === 'Salary not specified' || label === 'Not disclosed') return null
+  return label
 }
 
 /** Company • location subtitle for the detail header. */
@@ -160,14 +160,14 @@ function formatLocationLabel(job: JobPostingDetailsJob): string {
 }
 
 function formatSalaryLabel(job: JobPostingDetailsJob): string {
-  if (job.salary?.trim()) return job.salary.trim()
-  const currency = job.salaryCurrency || 'USD'
-  const min = job.salaryMin != null ? String(job.salaryMin) : ''
-  const max = job.salaryMax != null ? String(job.salaryMax) : ''
-  if (min && max) return `${currency} ${min} - ${max}`
-  if (min) return `${currency} ${min}+`
-  if (max) return `Up to ${currency} ${max}`
-  return 'Not disclosed'
+  return (
+    formatPublicSalaryLabel({
+      currency: job.salaryCurrency,
+      min: job.salaryMin,
+      max: job.salaryMax,
+      fallback: job.salary,
+    }) || 'Not disclosed'
+  )
 }
 
 function useJobVisibility(job: JobPostingDetailsJob) {
@@ -206,7 +206,7 @@ export function JobDetailHighlights({ job }: { job: JobPostingDetailsJob }) {
     chips.push(
       <HighlightChip
         key="salary"
-        icon={<IndianRupee size={16} strokeWidth={2} />}
+        icon={<Banknote size={16} strokeWidth={2} />}
         label={formatSalaryLabel(job)}
       />,
     )

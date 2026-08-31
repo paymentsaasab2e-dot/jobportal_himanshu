@@ -263,17 +263,13 @@ function formatCompactMoney(value: number, currency?: string | null) {
     maximumFractionDigits: 1,
   });
   const formattedValue = formatter.format(value);
-  const sym =
-    !currency || currency === 'USD'
-      ? '$'
-      : currency.length <= 4 && /^[A-Z$€£₹]{1,4}$/i.test(currency)
-        ? currency === 'INR'
-          ? '₹'
-          : currency
-        : null;
-  if (sym) return `${sym}${formattedValue}`;
-  if (/₹|rupee/i.test(currency || '')) return `₹${formattedValue}`;
-  return currency ? `${formattedValue} ${currency}` : `$${formattedValue}`;
+  const iso = String(currency || '').trim().toUpperCase();
+  if (iso === 'INR') return `₹${formattedValue}`;
+  if (iso === 'USD' || !iso) return `$${formattedValue}`;
+  if (iso === 'EUR') return `€${formattedValue}`;
+  if (iso === 'GBP') return `£${formattedValue}`;
+  if (/^[A-Z]{3}$/.test(iso)) return `${iso} ${formattedValue}`;
+  return `${formattedValue} ${currency}`.trim();
 }
 
 function formatSavedSalary(job: SavedJobRecord) {

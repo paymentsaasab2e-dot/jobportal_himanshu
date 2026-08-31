@@ -28,6 +28,7 @@ import {
   SALARY_FILTER_CURRENCIES,
   toFiniteNumber,
 } from '@/lib/job-salary-filter';
+import { formatPublicSalaryLabel } from '@/lib/format-salary';
 import { showInfoToast, showSuccessToast } from '@/components/common/toast/toast';
 import { notifyBellRefresh } from '@/lib/notifications';
 import { usePortalApplications } from '@/hooks/portal/usePortalApplications';
@@ -869,67 +870,25 @@ const ExploreJobsPageContent = () => {
 
   const formatSalary = (min: number | null, max: number | null, currency: string | null, type: string | null, amount?: string | null): string => {
     const typeLabel = type === 'ANNUAL' ? te('perYear') : type === 'MONTHLY' ? te('perMonth') : type === 'HOURLY' ? te('perHour') : ''
-    const cur = asString(currency)
     const toFinite = (v: unknown): number | null => {
       if (v === null || v === undefined) return null
       const n = typeof v === 'number' ? v : Number(v)
       return Number.isFinite(n) ? n : null
     }
-    const nMin = toFinite(min)
-    const nMax = toFinite(max)
-    const amountStr = asString(amount)
-
-    // Single amount (e.g. Phase 2 JSON salary: { amount, currency: "Rupees (₹ - India)" })
-    if (amountStr) {
-      if (cur) {
-        const curNorm = cur.toUpperCase()
-        const amountUpper = amountStr.toUpperCase()
-        const currencyAlreadyInAmount =
-          amountUpper.includes(curNorm) ||
-          (curNorm === 'USD' && amountStr.includes('$')) ||
-          (curNorm === 'EUR' && amountStr.includes('€')) ||
-          (curNorm === 'GBP' && amountStr.includes('£')) ||
-          (/₹|rupee/i.test(cur) && amountStr.includes('₹'))
-        if (currencyAlreadyInAmount) return amountStr
-        return `${amountStr} · ${cur}`
-      }
-      return amountStr
-    }
-
-    if (nMin == null && nMax == null) return te('salaryNotSpecified')
-
-    let rangeMin = nMin
-    let rangeMax = nMax
+    let rangeMin = toFinite(min)
+    let rangeMax = toFinite(max)
     if (rangeMin != null && rangeMax != null && rangeMin > rangeMax) {
       ;[rangeMin, rangeMax] = [rangeMax, rangeMin]
     }
 
-    // Short ISO-style codes / symbols → prefix; long labels (Rupees (₹ - India), etc.) → suffix
-    const sym = (() => {
-      if (!cur) return '$'
-      const u = cur.toUpperCase()
-      if (u === 'USD' || cur === '$') return '$'
-      if (u === 'EUR' || cur === '€') return '€'
-      if (u === 'GBP' || cur === '£') return '£'
-      if (u === 'INR') return '₹'
-      if (/₹|rupee/i.test(cur)) return '₹'
-      if (cur.length <= 4 && /^[A-Z$€£₹]{1,4}$/i.test(cur)) return cur
-      return null
-    })()
-
-    if (sym) {
-      if (rangeMin != null && rangeMax != null) {
-        return `${sym}${rangeMin.toLocaleString()} – ${sym}${rangeMax.toLocaleString()}${typeLabel}`
-      }
-      if (rangeMin != null) return `${sym}${rangeMin.toLocaleString()}+${typeLabel}`
-      return `${sym}${rangeMax!.toLocaleString()}${typeLabel}`
-    }
-
-    if (rangeMin != null && rangeMax != null) {
-      return `${rangeMin.toLocaleString()} – ${rangeMax.toLocaleString()} ${cur}${typeLabel}`.trim()
-    }
-    if (rangeMin != null) return `${rangeMin.toLocaleString()}+ ${cur}${typeLabel}`.trim()
-    return `${rangeMax!.toLocaleString()} ${cur}${typeLabel}`.trim()
+    const label = formatPublicSalaryLabel({
+      currency,
+      min: rangeMin,
+      max: rangeMax,
+      amount,
+    })
+    if (!label) return te('salaryNotSpecified')
+    return `${label}${typeLabel}`
   };
 
   const formatDate = (date: Date | string): string => {
