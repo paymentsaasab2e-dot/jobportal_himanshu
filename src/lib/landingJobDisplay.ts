@@ -1,3 +1,5 @@
+import { formatPublicSalaryLabel } from './format-salary';
+
 export type LandingJobLabels = {
   workRemote: string;
   workHybrid: string;
@@ -41,18 +43,6 @@ export function formatLandingTimeAgo(date: Date | string, labels: LandingJobLabe
   return fillCount(labels.timeMonths, Math.max(1, Math.floor(diffInDays / 30)));
 }
 
-function salarySymbol(currency: string | null | undefined): string {
-  const cur = asString(currency);
-  if (!cur) return '$';
-  const upper = cur.toUpperCase();
-  if (upper === 'USD' || cur === '$') return '$';
-  if (upper === 'EUR' || cur === '€') return '€';
-  if (upper === 'GBP' || cur === '£') return '£';
-  if (upper === 'INR' || /₹|rupee/i.test(cur)) return '₹';
-  if (cur.length <= 4) return cur;
-  return '';
-}
-
 export function formatLandingSalary(
   min: number | null | undefined,
   max: number | null | undefined,
@@ -77,23 +67,13 @@ export function formatLandingSalary(
   const nMax = toFinite(max);
   if (nMin == null && nMax == null) return labels.salaryUnspecified;
 
-  const sym = salarySymbol(currency);
-  const formatAmount = (value: number) => value.toLocaleString();
-
-  if (sym) {
-    if (nMin != null && nMax != null) {
-      return `${sym}${formatAmount(nMin)} - ${sym}${formatAmount(nMax)}${typeLabel}`;
-    }
-    if (nMin != null) return `${sym}${formatAmount(nMin)}+${typeLabel}`;
-    return `${sym}${formatAmount(nMax!)}${typeLabel}`;
-  }
-
-  const cur = asString(currency) || '';
-  if (nMin != null && nMax != null) {
-    return `${formatAmount(nMin)} - ${formatAmount(nMax)} ${cur}${typeLabel}`.trim();
-  }
-  if (nMin != null) return `${formatAmount(nMin)}+ ${cur}${typeLabel}`.trim();
-  return `${formatAmount(nMax!)} ${cur}${typeLabel}`.trim();
+  const label = formatPublicSalaryLabel({
+    currency,
+    min: nMin,
+    max: nMax,
+  });
+  if (!label) return labels.salaryUnspecified;
+  return `${label}${typeLabel}`;
 }
 
 export function resolveLandingWorkStyle(

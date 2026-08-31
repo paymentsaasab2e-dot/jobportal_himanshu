@@ -10,7 +10,7 @@ import { formatJobTitleDisplay } from '@/lib/format-job-title';
 import { withJobApiLocale } from '@/lib/jobApiLocale';
 import { resolvePortalCompanyLogo } from '@/lib/map-portal-job';
 import { redactPortalJobListing } from '@/lib/job-public-field-visibility';
-import { toPlainJobText } from '@/lib/job-description';
+import { formatPublicSalaryLabel } from '@/lib/format-salary';
 import {
   extractJobCountry,
   isCongoRegionLabel,
@@ -75,18 +75,6 @@ function formatWorkMode(raw: string): string {
   return formatEmploymentType(raw);
 }
 
-function formatCurrencySymbol(currency: unknown): string {
-  const cur = asText(currency);
-  if (!cur) return '$';
-  const u = cur.toUpperCase();
-  if (u === 'USD' || cur === '$') return '$';
-  if (u === 'EUR' || cur === '€') return '€';
-  if (u === 'GBP' || cur === '£') return '£';
-  if (u === 'INR' || /₹|rupee/i.test(cur)) return '₹';
-  if (cur.length <= 4) return cur;
-  return '';
-}
-
 function formatSalary(job: Record<string, unknown>): string {
   const salaryObj =
     job.salary && typeof job.salary === 'object' && !Array.isArray(job.salary)
@@ -94,7 +82,6 @@ function formatSalary(job: Record<string, unknown>): string {
       : null;
 
   const amount = asText(salaryObj?.amount);
-  if (amount) return amount;
 
   let min = toFiniteNumber(salaryObj?.min ?? job.salaryMin);
   let max = toFiniteNumber(salaryObj?.max ?? job.salaryMax);
@@ -104,16 +91,15 @@ function formatSalary(job: Record<string, unknown>): string {
     max = swap;
   }
 
-  const currencyRaw = salaryObj?.currency ?? job.salaryCurrency ?? 'USD';
-  const symbol = formatCurrencySymbol(currencyRaw);
-  const suffix = !symbol && asText(currencyRaw) ? ` ${asText(currencyRaw)}` : '';
-
-  if (min == null && max == null) return '';
-  if (min != null && max != null) {
-    return `${symbol}${min.toLocaleString()} – ${symbol}${max.toLocaleString()}${suffix}`.trim();
-  }
-  if (min != null) return `${symbol}${min.toLocaleString()}+${suffix}`.trim();
-  return `${symbol}${max!.toLocaleString()}${suffix}`.trim();
+  const currencyRaw = salaryObj?.currency ?? job.salaryCurrency ?? null;
+  return (
+    formatPublicSalaryLabel({
+      currency: asText(currencyRaw) || null,
+      min,
+      max,
+      amount,
+    }) || ''
+  );
 }
 
 function formatTimeAgo(date: Date | string) {
