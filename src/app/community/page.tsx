@@ -1611,7 +1611,7 @@ export default function OfficeGossipsPage() {
       className="profile-page-typography candidate-dashboard-page h-[calc(100dvh-var(--app-header-height,96px))] overflow-hidden"
       style={{ background: feedPageBg }}
     >
-      <div className="mx-auto flex h-full w-full max-w-[1520px] flex-col px-3 pb-[4.25rem] pt-3 sm:px-5 lg:px-6">
+      <div className="mx-auto flex h-full w-full max-w-380 flex-col px-3 pb-17 pt-3 sm:px-5 lg:px-6">
         {/* Top bar — profile views + account switcher */}
         {!isCompanyAccount || ownedCompanies.length > 0 ? (
           <div className="relative mb-2 flex shrink-0 items-center justify-between gap-2">
@@ -1619,7 +1619,7 @@ export default function OfficeGossipsPage() {
               <button
                 type="button"
                 onClick={() => setShowProfileViews(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-[var(--dashboard-shadow)] backdrop-blur-sm transition hover:border-[rgba(32,152,200,0.35)] hover:text-[#2098C8] lg:hidden"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-(--dashboard-shadow) backdrop-blur-sm transition hover:border-[rgba(32,152,200,0.35)] hover:text-[#2098C8] lg:hidden"
               >
                 <Eye className="h-3.5 w-3.5" />
                 {lockedProfileViews > 0 || recentProfileViews > 0
@@ -1639,7 +1639,7 @@ export default function OfficeGossipsPage() {
             <button
               type="button"
               onClick={() => setAccountMenuOpen((v) => !v)}
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-[var(--dashboard-shadow)] transition ${
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-(--dashboard-shadow) transition ${
                 isCompanyAccount
                   ? 'border-transparent bg-[#2098C8] text-white hover:bg-[#2098C8]'
                   : 'border-white/80 bg-white/80 text-slate-700 backdrop-blur-sm hover:border-[rgba(32,152,200,0.35)] hover:text-[#2098C8]'
@@ -1732,12 +1732,12 @@ export default function OfficeGossipsPage() {
           >
             <div className={`${card} relative overflow-hidden`}>
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(32,152,200,0.2),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(32,152,200,0.12),transparent_32%),radial-gradient(circle_at_82%_18%,rgba(32,152,200,0.14),transparent_22%),radial-gradient(circle_at_12%_88%,rgba(32,152,200,0.08),transparent_24%)]" />
-              <div className="pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full bg-[var(--brand-primary-glow)] blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-[var(--brand-accent-glow)] blur-3xl" />
+              <div className="pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full bg-(--brand-primary-glow) blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-(--brand-accent-glow) blur-3xl" />
               <div className="relative px-3.5 pb-4 pt-5 text-center">
                 {isCompanyAccount && actingCompany ? (
                   <>
-                    <div className="mx-auto flex h-[4.5rem] w-[4.5rem] items-center justify-center overflow-hidden rounded-[22px] border border-white/80 bg-white/75 text-xl font-bold tracking-tight text-[#2098C8] shadow-[0_14px_30px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] ring-2 ring-[rgba(32,152,200,0.18)]">
+                    <div className="mx-auto flex h-18 w-18 items-center justify-center overflow-hidden rounded-[22px] border border-white/80 bg-white/75 text-xl font-bold tracking-tight text-[#2098C8] shadow-[0_14px_30px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] ring-2 ring-[rgba(32,152,200,0.18)]">
                       {actingCompany.logoLetter}
                     </div>
                     <p className="mt-3 truncate text-[15px] font-semibold tracking-tight text-slate-900">
@@ -1750,13 +1750,13 @@ export default function OfficeGossipsPage() {
                       {actingCompany.memberIds.length} connections ·{' '}
                       {companyFollowerCount(actingCompany.id)} followers
                     </p>
-                    <p className="mt-1.5 inline-block rounded-full border border-[var(--brand-accent-soft)] bg-white/74 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--brand-accent)] shadow-sm">
+                    <p className="mt-1.5 inline-block rounded-full border border-(--brand-accent-soft) bg-white/74 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-(--brand-accent) shadow-sm">
                       Company account
                     </p>
                   </>
                 ) : (
                   <>
-                    <div className="mx-auto flex h-[4.5rem] w-[4.5rem] items-center justify-center overflow-hidden rounded-full border border-white/80 bg-white/75 text-xl font-bold tracking-tight text-[#2098C8] shadow-[0_14px_30px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] ring-2 ring-[rgba(32,152,200,0.2)]">
+                    <div className="mx-auto flex h-18 w-18 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-white/75 text-xl font-bold tracking-tight text-[#2098C8] shadow-[0_14px_30px_rgba(15,23,42,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] ring-2 ring-[rgba(32,152,200,0.2)]">
                       {user?.profilePhotoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -1820,13 +1820,13 @@ export default function OfficeGossipsPage() {
             <div className={`${card} relative flex min-h-0 flex-1 flex-col overflow-hidden`}>
               <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top_right,rgba(32,152,200,0.1),transparent_45%),radial-gradient(circle_at_top_left,rgba(32,152,200,0.1),transparent_40%)]" />
               <div className="relative flex items-center justify-between border-b border-slate-100/70 px-3.5 py-3">
-                <h2 className="dashboard-status-pill inline-flex items-center rounded-full border border-[var(--brand-accent-soft)] bg-white/74 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-accent)] shadow-sm">
+                <h2 className="dashboard-status-pill inline-flex items-center rounded-full border border-(--brand-accent-soft) bg-white/74 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-(--brand-accent) shadow-sm">
                   Circles
                 </h2>
                 <button
                   type="button"
                   onClick={() => setShowCreateCommunity(true)}
-                  className="rounded-full p-1.5 text-[#2098C8] transition hover:bg-[var(--brand-primary-soft)]"
+                  className="rounded-full p-1.5 text-[#2098C8] transition hover:bg-(--brand-primary-soft)"
                   title="Create circle"
                 >
                   <Plus className="h-4 w-4" />
@@ -2067,7 +2067,7 @@ export default function OfficeGossipsPage() {
 
             {!selectedCompany && !selectedProfileUserId ? (
               <div className="mb-1 flex shrink-0 items-center justify-between px-1">
-                <p className="dashboard-status-pill inline-flex items-center rounded-full border border-transparent bg-[var(--brand-primary-soft)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                <p className="dashboard-status-pill inline-flex items-center rounded-full border border-transparent bg-(--brand-primary-soft) px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-(--brand-primary)">
                   Your feed
                   <span className="ml-1.5 font-semibold normal-case tracking-normal text-slate-500">
                     · {feed.length}
@@ -2315,7 +2315,7 @@ export default function OfficeGossipsPage() {
                       <button
                         type="button"
                         onClick={() => openUserProfile(post.authorId)}
-                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border border-white/90 bg-linear-to-br from-[var(--brand-primary-soft)] to-white text-[15px] font-semibold text-[#2098C8] shadow-[0_10px_22px_rgba(32,152,200,0.14),inset_0_1px_0_rgba(255,255,255,0.95)] ring-2 ring-[rgba(32,152,200,0.12)] transition group-hover:ring-[rgba(32,152,200,0.22)]"
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border border-white/90 bg-linear-to-br from-(--brand-primary-soft) to-white text-[15px] font-semibold text-[#2098C8] shadow-[0_10px_22px_rgba(32,152,200,0.14),inset_0_1px_0_rgba(255,255,255,0.95)] ring-2 ring-[rgba(32,152,200,0.12)] transition group-hover:ring-[rgba(32,152,200,0.22)]"
                         aria-label={`Open ${post.authorName}`}
                       >
                         {post.authorName.slice(0, 1).toUpperCase()}
@@ -2339,7 +2339,7 @@ export default function OfficeGossipsPage() {
                             onClick={() => {
                               if (post.companyPageId) openCompanyPage(post.companyPageId);
                             }}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(32,152,200,0.14)] bg-[var(--brand-primary-soft)]/70 px-2.5 py-1 text-[11px] font-semibold text-[#2098C8] transition hover:border-[rgba(32,152,200,0.28)] hover:bg-[var(--brand-primary-soft)]"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(32,152,200,0.14)] bg-(--brand-primary-soft)/70 px-2.5 py-1 text-[11px] font-semibold text-[#2098C8] transition hover:border-[rgba(32,152,200,0.28)] hover:bg-(--brand-primary-soft)"
                           >
                             {post.companyPageId ? (
                               <Briefcase className="h-3 w-3" />
@@ -2417,7 +2417,7 @@ export default function OfficeGossipsPage() {
                                 type="button"
                                 onClick={handleSendComment}
                                 title="Send"
-                                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.96)] transition hover:border-[rgba(32,152,200,0.35)] hover:bg-[var(--brand-primary-soft)]"
+                                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.96)] transition hover:border-[rgba(32,152,200,0.35)] hover:bg-(--brand-primary-soft)"
                               >
                                 <ComposeAssetIcon src="/icons/send.png" alt="Send" size={18} />
                               </button>
@@ -2449,7 +2449,7 @@ export default function OfficeGossipsPage() {
           {/* RIGHT — discover circles only (feed sidebar) */}
           <aside
             className={`hidden h-full min-h-0 flex-col gap-3 overscroll-contain pb-6 xl:flex ${hideScroll} ${
-              ogTab === 'feed' ? '' : '!hidden'
+              ogTab === 'feed' ? '' : 'hidden!'
             } ${isCompanyAccount ? 'overflow-hidden' : 'overflow-y-auto'}`}
           >
             {/* Hot circles — LinkedIn News style (personal account only) */}
@@ -2457,10 +2457,10 @@ export default function OfficeGossipsPage() {
             <div className="shrink-0 rounded-[24px] bg-linear-to-br from-[#2098C8] via-[#4BB3D4] to-[#176F96] p-[1.5px] shadow-[0_12px_30px_rgba(32,152,200,0.12),0_4px_16px_rgba(32,152,200,0.1)]">
               <div className="relative overflow-hidden rounded-[22.5px] bg-linear-to-b from-white via-[#FBFCFE] to-[#F8FAFD]">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(32,152,200,0.14),transparent_36%),radial-gradient(circle_at_top_left,rgba(32,152,200,0.12),transparent_40%)]" />
-              <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[var(--brand-accent-glow)] blur-3xl" />
+              <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-(--brand-accent-glow) blur-3xl" />
               <div className="relative flex items-start justify-between px-4 pb-3 pt-4">
                 <div>
-                  <div className="dashboard-status-pill inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-accent-soft)] bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-accent)] shadow-sm">
+                  <div className="dashboard-status-pill inline-flex items-center gap-1.5 rounded-full border border-(--brand-accent-soft) bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-(--brand-accent) shadow-sm">
                     <Flame className="h-3 w-3" />
                     Hot circles
                   </div>
@@ -2515,7 +2515,7 @@ export default function OfficeGossipsPage() {
                           <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-slate-500">
                             <span>{label}</span>
                             {engagement > 0 ? (
-                              <span className="rounded-full bg-[var(--brand-accent-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand-accent)]">
+                              <span className="rounded-full bg-(--brand-accent-soft) px-1.5 py-0.5 text-[10px] font-semibold text-(--brand-accent)">
                                 {engagement} eng
                               </span>
                             ) : null}
@@ -2544,7 +2544,7 @@ export default function OfficeGossipsPage() {
                 <button
                   type="button"
                   onClick={() => setShowAllHot((v) => !v)}
-                  className="relative flex w-full items-center justify-center gap-1 border-t border-slate-100/80 px-4 py-3 text-[13px] font-semibold text-[#2098C8] hover:bg-[var(--brand-primary-soft)]/50"
+                  className="relative flex w-full items-center justify-center gap-1 border-t border-slate-100/80 px-4 py-3 text-[13px] font-semibold text-[#2098C8] hover:bg-(--brand-primary-soft)/50"
                 >
                   {showAllHot ? 'Show less' : 'Show more circles'}
                   <ChevronDown
@@ -2571,7 +2571,7 @@ export default function OfficeGossipsPage() {
                     Message & reference requests for {actingCompany?.name}.
                   </p>
                   {companyInboxItems.length === 0 ? (
-                    <p className="mt-3 flex min-h-[12rem] flex-1 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white/80 px-3 py-6 text-center text-[12px] text-slate-400">
+                    <p className="mt-3 flex min-h-48 flex-1 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white/80 px-3 py-6 text-center text-[12px] text-slate-400">
                       No open requests yet.
                     </p>
                   ) : (
@@ -2647,7 +2647,7 @@ export default function OfficeGossipsPage() {
                   </>
                 ) : (
                   <>
-                    <p className="dashboard-status-pill inline-flex rounded-full border border-transparent bg-[var(--brand-primary-soft)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                    <p className="dashboard-status-pill inline-flex rounded-full border border-transparent bg-(--brand-primary-soft) px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-(--brand-primary)">
                       Tip
                     </p>
                     <p className="mt-2.5 text-[13px] font-medium leading-relaxed text-slate-600">
@@ -2683,7 +2683,7 @@ export default function OfficeGossipsPage() {
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(32,152,200,0.12),transparent_36%),radial-gradient(circle_at_top_left,rgba(32,152,200,0.1),transparent_40%)]" />
                   <div className="relative flex shrink-0 items-center justify-between border-b border-slate-100/80 px-3.5 py-3">
                     <div>
-                      <h2 className="dashboard-status-pill inline-flex items-center rounded-full border border-[var(--brand-accent-soft)] bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-accent)] shadow-sm">
+                      <h2 className="dashboard-status-pill inline-flex items-center rounded-full border border-(--brand-accent-soft) bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-(--brand-accent) shadow-sm">
                         Communities
                       </h2>
                       <p className="mt-1.5 text-[12px] font-medium text-slate-500">
@@ -2738,7 +2738,7 @@ export default function OfficeGossipsPage() {
                             onClick={() => openCommunityRoom(c.id)}
                             className={`flex w-full items-center gap-3 rounded-[16px] border px-2.5 py-2.5 text-left transition ${
                               selected
-                                ? 'border-[rgba(32,152,200,0.28)] bg-[var(--brand-primary-soft)] shadow-[0_8px_18px_rgba(32,152,200,0.12)]'
+                                ? 'border-[rgba(32,152,200,0.28)] bg-(--brand-primary-soft) shadow-[0_8px_18px_rgba(32,152,200,0.12)]'
                                 : 'border-white/90 bg-white/85 shadow-[0_6px_16px_rgba(15,23,42,0.04)] hover:-translate-y-px hover:border-[rgba(32,152,200,0.22)]'
                             }`}
                           >
@@ -2802,7 +2802,7 @@ export default function OfficeGossipsPage() {
                     ) : null}
                   </ul>
                   <div className={`relative flex max-h-[42%] min-h-0 shrink-0 flex-col border-t border-slate-100/80 px-3.5 py-3`}>
-                    <h3 className="dashboard-status-pill inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--brand-accent-soft)] bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-accent)] shadow-sm">
+                    <h3 className="dashboard-status-pill inline-flex shrink-0 items-center gap-1.5 rounded-full border border-(--brand-accent-soft) bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-(--brand-accent) shadow-sm">
                       <Flame className="h-3 w-3" />
                       Discover
                     </h3>
@@ -3011,7 +3011,7 @@ export default function OfficeGossipsPage() {
                     )}
                   </div>
 
-                  <div className="relative shrink-0 rounded-[18px] border border-[rgba(32,152,200,0.2)] bg-[var(--brand-primary-soft)] px-2.5 py-2 shadow-[0_4px_14px_rgba(32,152,200,0.1)]">
+                  <div className="relative shrink-0 rounded-[18px] border border-[rgba(32,152,200,0.2)] bg-(--brand-primary-soft) px-2.5 py-2 shadow-[0_4px_14px_rgba(32,152,200,0.1)]">
                     {!(
                       userId &&
                       activeCommunityId &&
@@ -3061,7 +3061,7 @@ export default function OfficeGossipsPage() {
                               type="button"
                               onClick={insertAtMention}
                               title="Tag someone"
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-[var(--brand-primary-soft)]"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-(--brand-primary-soft)"
                             >
                               <ComposeAssetIcon src="/icons/email.png" alt="Tag" size={16} />
                             </button>
@@ -3069,7 +3069,7 @@ export default function OfficeGossipsPage() {
                               type="button"
                               onClick={() => fileInputRef.current?.click()}
                               title="Add image"
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-[var(--brand-primary-soft)]"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition hover:bg-(--brand-primary-soft)"
                             >
                               <ComposeAssetIcon src="/icons/image-.png" alt="Image" size={16} />
                             </button>
@@ -3079,7 +3079,7 @@ export default function OfficeGossipsPage() {
                                 recording ? mediaRecorderRef.current?.stop() : void startVoice()
                               }
                               title={recording ? 'Stop recording' : 'Voice note'}
-                              className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[var(--brand-primary-soft)] ${
+                              className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-(--brand-primary-soft) ${
                                 recording ? 'bg-rose-50 ring-1 ring-rose-300' : ''
                               }`}
                             >
@@ -3099,7 +3099,7 @@ export default function OfficeGossipsPage() {
                                 if (!posting) void handlePost();
                               }
                             }}
-                            className="max-h-24 min-h-[36px] w-full resize-none bg-transparent px-1.5 py-2 text-[13px] leading-snug text-slate-800 outline-none placeholder:text-slate-400"
+                            className="max-h-24 min-h-9 w-full resize-none bg-transparent px-1.5 py-2 text-[13px] leading-snug text-slate-800 outline-none placeholder:text-slate-400"
                           />
                           <button
                             type="button"
@@ -3122,7 +3122,7 @@ export default function OfficeGossipsPage() {
                   </div>
                 </>
               ) : (
-                <div className={`${card} relative flex h-full min-h-[420px] flex-col items-center justify-center overflow-hidden px-6 py-10 text-center`}>
+                <div className={`${card} relative flex h-full min-h-105 flex-col items-center justify-center overflow-hidden px-6 py-10 text-center`}>
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(32,152,200,0.1),transparent_36%),radial-gradient(circle_at_bottom_left,rgba(32,152,200,0.12),transparent_40%)]" />
                   <div className="relative flex h-16 w-16 items-center justify-center rounded-[22px] bg-linear-to-br from-[#2098C8] to-[#1F8FC2] text-white shadow-[0_12px_28px_rgba(32,152,200,0.28)]">
                     <Users className="h-8 w-8" />
@@ -3182,7 +3182,7 @@ export default function OfficeGossipsPage() {
                   onRefresh={refresh}
                 />
               ) : (
-                <div className={`${card} relative flex h-full min-h-[420px] flex-col items-center justify-center overflow-hidden px-6 py-10 text-center`}>
+                <div className={`${card} relative flex h-full min-h-105 flex-col items-center justify-center overflow-hidden px-6 py-10 text-center`}>
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(32,152,200,0.1),transparent_36%),radial-gradient(circle_at_bottom_left,rgba(32,152,200,0.12),transparent_40%)]" />
                   <div className="relative flex h-16 w-16 items-center justify-center rounded-[22px] bg-linear-to-br from-[#2098C8] to-[#1F8FC2] text-white shadow-[0_12px_28px_rgba(32,152,200,0.28)]">
                     <MessageCircle className="h-8 w-8" />
@@ -3227,7 +3227,7 @@ export default function OfficeGossipsPage() {
               <div className={`${card} relative overflow-hidden border border-slate-200/80`}>
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(32,152,200,0.18),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(32,152,200,0.1),transparent_36%)]" />
                 <div className="relative px-3.5 pb-4 pt-5 text-center">
-                  <div className="mx-auto flex h-[4.25rem] w-[4.25rem] items-center justify-center overflow-hidden rounded-full border border-white/80 bg-white/75 text-xl font-bold tracking-tight text-[#2098C8] shadow-[0_12px_26px_rgba(15,23,42,0.08)] ring-2 ring-[rgba(32,152,200,0.2)]">
+                  <div className="mx-auto flex h-17 w-17 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-white/75 text-xl font-bold tracking-tight text-[#2098C8] shadow-[0_12px_26px_rgba(15,23,42,0.08)] ring-2 ring-[rgba(32,152,200,0.2)]">
                     {user?.profilePhotoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -3292,7 +3292,7 @@ export default function OfficeGossipsPage() {
               }}
               onPointerCancel={resetEventsPull}
             >
-              <div className="mx-auto w-full max-w-[760px] space-y-3 px-1 sm:px-0">
+              <div className="mx-auto w-full max-w-190 space-y-3 px-1 sm:px-0">
               <div className="space-y-2">
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -3472,7 +3472,7 @@ export default function OfficeGossipsPage() {
                             </p>
                           </div>
                         </div>
-                        <div className="mx-auto w-full max-w-[480px]">
+                        <div className="mx-auto w-full max-w-120">
                           <CompanyPostMedia post={post} compact tight />
                         </div>
                         <ExpandableCaption text={post.text} className="mt-2" />
@@ -3581,7 +3581,7 @@ export default function OfficeGossipsPage() {
                     role={canOpen ? 'link' : undefined}
                     tabIndex={canOpen ? 0 : undefined}
                   >
-                    <div className={`${feedPostInner} border border-slate-200/70 !px-0 !py-0`}>
+                    <div className={`${feedPostInner} border border-slate-200/70 px-0! py-0!`}>
                     <div className="flex items-center gap-2.5 px-4 pt-3.5 sm:px-5">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200/80 bg-[#176F96] text-sm font-bold text-white">
                         {isJob ? <Briefcase className="h-4 w-4 text-white" /> : ev.hostInitial}
@@ -3614,8 +3614,8 @@ export default function OfficeGossipsPage() {
                           src={ev.imageUrl}
                           className={
                             isTalkEvent
-                              ? 'max-h-[140px] w-auto max-w-[min(100%,360px)] object-contain'
-                              : 'max-h-[220px] w-auto max-w-[min(100%,480px)] object-contain'
+                              ? 'max-h-35 w-auto max-w-[min(100%,360px)] object-contain'
+                              : 'max-h-55 w-auto max-w-[min(100%,480px)] object-contain'
                           }
                           muted
                           playsInline
@@ -3628,8 +3628,8 @@ export default function OfficeGossipsPage() {
                           alt={ev.title}
                           className={
                             isTalkEvent
-                              ? 'max-h-[140px] w-auto max-w-[min(100%,360px)] object-contain'
-                              : 'max-h-[220px] w-auto max-w-[min(100%,480px)] object-contain'
+                              ? 'max-h-35 w-auto max-w-[min(100%,360px)] object-contain'
+                              : 'max-h-55 w-auto max-w-[min(100%,480px)] object-contain'
                           }
                           loading="lazy"
                         />
@@ -3832,7 +3832,7 @@ export default function OfficeGossipsPage() {
         ) : null}
 
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[rgba(32,152,200,0.22)] bg-white/95 shadow-[0_-8px_24px_rgba(32,152,200,0.08)] backdrop-blur-md">
-          <div className="mx-auto flex h-[3.75rem] max-w-[1520px] items-stretch justify-around gap-1 px-2 py-1.5">
+          <div className="mx-auto flex h-15 max-w-380 items-stretch justify-around gap-1 px-2 py-1.5">
             {(
               isCompanyAccount
                 ? ([
@@ -3866,7 +3866,7 @@ export default function OfficeGossipsPage() {
                   }}
                   className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl text-[10px] font-semibold transition ${
                     active
-                      ? 'bg-[var(--brand-primary-soft)] text-[#176F96] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]'
+                      ? 'bg-(--brand-primary-soft) text-[#176F96] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]'
                       : 'text-slate-400 hover:bg-[rgba(232,247,253,0.6)] hover:text-[#176F96]'
                   }`}
                 >
@@ -3936,7 +3936,7 @@ export default function OfficeGossipsPage() {
       ) : null}
 
       {connectPromptPage ? (
-        <div className="fixed inset-0 z-[400] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-400 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">
               Connect to {connectPromptPage.name}
@@ -3995,7 +3995,7 @@ function CreateCommunityModal({
   const [visibility, setVisibility] = useState<CommunityVisibility>('public');
 
   return (
-    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-400 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
         <h3 className="text-lg font-semibold text-slate-900">Create circle</h3>
         <p className="mt-1 text-sm text-slate-500">
@@ -4126,7 +4126,7 @@ function CreateCompanyModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-slate-900/45 p-3 backdrop-blur-sm sm:p-4">
+    <div className="fixed inset-0 z-400 flex items-center justify-center bg-slate-900/45 p-3 backdrop-blur-sm sm:p-4">
       <div className="max-h-[min(92vh,860px)] w-full max-w-xl overflow-hidden rounded-[24px] bg-linear-to-br from-[#2098C8] via-[#4BB3D4] to-[#176F96] p-[1.5px] shadow-[0_24px_60px_rgba(15,23,42,0.28)]">
         <div className="flex max-h-[min(92vh,860px)] flex-col overflow-hidden rounded-[22.5px] bg-linear-to-b from-white via-[#FBFCFE] to-[#F8FAFD]">
           <div className="relative shrink-0 border-b border-slate-100/80 px-5 py-4">
@@ -4330,7 +4330,7 @@ function CreateGossipAccountModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[500] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-500 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
       <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
         <h3 className="text-xl font-bold text-slate-900">Create your Office Gossips account</h3>
         <p className="mt-1.5 text-sm text-slate-500">
