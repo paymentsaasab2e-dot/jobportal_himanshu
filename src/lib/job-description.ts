@@ -427,7 +427,7 @@ function parseHtmlJobDescriptionSections(html: string): JobDescriptionSection[] 
     current = null
   }
 
-  const isHeading = (el: Element) => /^H[1-3]$/i.test(el.tagName)
+  const isHeading = (el: Element) => /^H[1-4]$/i.test(el.tagName)
 
   const matchHeader = (text: string) => {
     const line = normalizeSectionHeader(text)
@@ -438,20 +438,36 @@ function parseHtmlJobDescriptionSections(html: string): JobDescriptionSection[] 
     return null
   }
 
+  const slugFromTitle = (title: string) =>
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'additional'
+
   const walk = (nodes: NodeListOf<ChildNode>) => {
     for (const node of Array.from(nodes)) {
       if (node.nodeType !== Node.ELEMENT_NODE) continue
       const el = node as HTMLElement
       if (isHeading(el)) {
-        const def = matchHeader(el.textContent || '')
-        if (def) {
-          flush()
-          current = { id: def.id, title: def.title, paragraphs: [], bullets: [] }
-          continue
+        const rawTitle = normalizeSectionHeader(el.textContent || '')
+        if (!rawTitle || /^job description$/i.test(rawTitle)) continue
+        const def = matchHeader(rawTitle)
+        flush()
+        const isLeadInUnknown = !def && sections.length === 0 && introParts.length === 0
+        current = {
+          id: def?.id || (isLeadInUnknown ? 'overview' : `additional-${slugFromTitle(rawTitle)}`),
+          title: def?.title || (isLeadInUnknown ? 'Overview' : rawTitle),
+          paragraphs: [],
+          bullets: [],
         }
+        continue
       }
 
       const tag = el.tagName.toLowerCase()
+      if (tag === 'div' && el.querySelector('h1, h2, h3, h4')) {
+        walk(el.childNodes)
+        continue
+      }
       if (tag === 'ul' || tag === 'ol') {
         const items = Array.from(el.querySelectorAll(':scope > li'))
           .map((li) => toPlainJobText(li.innerHTML))

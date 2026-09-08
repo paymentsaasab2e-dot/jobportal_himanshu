@@ -6,16 +6,20 @@ import { useLocale } from 'next-intl';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRight,
-  BarChart3,
+  BadgeCheck,
   Bot,
   Briefcase,
   Building2,
+  CalendarDays,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCheck,
   Coins,
-  LayoutDashboard,
-  Shield,
+  Receipt,
   Sparkles,
   Target,
+  UserCheck,
   Users,
   Wallet,
   Workflow,
@@ -36,36 +40,227 @@ import {
 } from '../employersPhase2Features';
 import { AppLocale, localizePath } from '@/lib/i18n';
 import { EMPLOYERS_DEMO_PATH, EMPLOYERS_TRIAL_PATH } from '@/lib/employers/constants';
-import { Phase3Features } from './phase3/Phase3Features';
 
-const HOW_IT_WORKS = [
-  { step: '01', title: 'Capture the lead', detail: 'Inbound forms, import, or CRM create — every prospect lands in one workspace.' },
-  { step: '02', title: 'Qualify & convert', detail: 'Follow-ups, meetings, and AI suggestions move the lead into a client account.' },
-  { step: '03', title: 'Open the job', detail: 'Publish roles, generate JDs with AI, and sync apply links to the candidate portal.' },
-  { step: '04', title: 'Match & interview', detail: '4-pass AI ranking, screening, panels, and client review tokens.' },
-  { step: '05', title: 'Place & bill', detail: 'Track joining, commission, invoices, and revenue in the same tenant.' },
-];
+const HOW_IT_WORKS_SLIDES = [
+  {
+    id: 'crm',
+    number: '01',
+    label: 'CRM',
+    titleLead: 'CRM — From Leads to Clients, ',
+    titleAccent: 'All in One Place',
+    description:
+      'Manage the complete customer journey from the first lead to a successful client conversion.',
+    steps: [
+      {
+        step: '01',
+        title: 'Capture the lead',
+        detail:
+          'Bring leads from inbound forms, imports, campaigns, or manual CRM entries into one workspace.',
+      },
+      {
+        step: '02',
+        title: 'Follow up',
+        detail:
+          'Manage calls, WhatsApp, emails, meetings, notes, and follow-up activities from the lead profile.',
+      },
+      {
+        step: '03',
+        title: 'Qualify the lead',
+        detail: 'Identify qualified prospects based on requirements, interest, and business potential.',
+      },
+      {
+        step: '04',
+        title: 'Schedule meetings',
+        detail: 'Plan client meetings, record discussions, and track meeting outcomes.',
+      },
+      {
+        step: '05',
+        title: 'Manage the opportunity',
+        detail:
+          'Move qualified leads through the sales pipeline and manage proposals, requirements, and negotiations.',
+      },
+      {
+        step: '06',
+        title: 'Convert to client',
+        detail:
+          'Convert successful opportunities into client accounts while keeping all communication and history connected.',
+      },
+    ],
+  },
+  {
+    id: 'recruitment',
+    number: '02',
+    label: 'Recruitment',
+    titleLead: 'Recruitment — From Candidates to Hires, ',
+    titleAccent: 'Made Simple',
+    description:
+      'Manage the complete recruitment journey from creating a job to successfully hiring a candidate.',
+    steps: [
+      {
+        step: '01',
+        title: 'Create the job',
+        detail: 'Create job openings, define requirements, generate JDs with AI, and publish jobs.',
+      },
+      {
+        step: '02',
+        title: 'Receive applications',
+        detail: 'Collect candidates from job portals, career pages, referrals, and your candidate portal.',
+      },
+      {
+        step: '03',
+        title: 'Screen candidates',
+        detail: 'Review resumes, skills, experience, and candidate profiles to identify suitable applicants.',
+      },
+      {
+        step: '04',
+        title: 'Shortlist candidates',
+        detail: 'Use AI matching and recruiter evaluation to shortlist the most relevant candidates.',
+      },
+      {
+        step: '05',
+        title: 'Conduct interviews',
+        detail:
+          'Schedule interviews, manage interview rounds, collect feedback, and track candidate progress.',
+      },
+      {
+        step: '06',
+        title: 'Select the candidate',
+        detail: 'Compare interview feedback and move the best-fit candidate to the selection stage.',
+      },
+      {
+        step: '07',
+        title: 'Complete the hire',
+        detail:
+          'Manage offer details, joining information, and convert the selected candidate into an employee.',
+      },
+    ],
+  },
+  {
+    id: 'employee',
+    number: '03',
+    label: 'Employee',
+    titleLead: 'Employee Management — From Onboarding to Growth, ',
+    titleAccent: 'All in One',
+    description:
+      'Manage the employee lifecycle from joining to everyday workforce management and development.',
+    steps: [
+      {
+        step: '01',
+        title: 'Start onboarding',
+        detail:
+          'Move new hires into onboarding and collect employee information, documents, and required details.',
+      },
+      {
+        step: '02',
+        title: 'Create employee profile',
+        detail:
+          'Maintain a centralized employee record with personal, professional, and employment information.',
+      },
+      {
+        step: '03',
+        title: 'Track attendance',
+        detail: 'Manage daily attendance, working hours, shifts, late marks, and attendance records.',
+      },
+      {
+        step: '04',
+        title: 'Manage leave',
+        detail: 'Handle leave applications, balances, approvals, and leave history.',
+      },
+      {
+        step: '05',
+        title: 'Track performance',
+        detail: 'Set goals, manage reviews, track performance, and monitor employee progress.',
+      },
+      {
+        step: '06',
+        title: 'Support employee growth',
+        detail: 'Manage training, development, skills, and career growth within the organization.',
+      },
+    ],
+  },
+  {
+    id: 'payroll',
+    number: '04',
+    label: 'Payroll',
+    titleLead: 'Payroll — From Calculation to Payment, ',
+    titleAccent: 'Effortlessly',
+    description: 'Manage the complete payroll cycle from employee salary data to final payment.',
+    steps: [
+      {
+        step: '01',
+        title: 'Set up salary',
+        detail: 'Configure employee salary structures, allowances, deductions, and payroll details.',
+      },
+      {
+        step: '02',
+        title: 'Collect attendance & leave data',
+        detail:
+          'Bring attendance, working days, overtime, leave, and other payroll inputs into the payroll cycle.',
+      },
+      {
+        step: '03',
+        title: 'Calculate payroll',
+        detail: 'Automatically calculate earnings, deductions, taxes, and final salary amounts.',
+      },
+      {
+        step: '04',
+        title: 'Verify payroll',
+        detail: 'Review payroll calculations, identify exceptions, and approve the payroll before processing.',
+      },
+      {
+        step: '05',
+        title: 'Generate payslips',
+        detail: 'Generate employee payslips with complete salary and deduction details.',
+      },
+      {
+        step: '06',
+        title: 'Process payment',
+        detail: 'Complete salary payments and maintain payroll records for every employee.',
+      },
+    ],
+  },
+] as const;
 
 const CORE_MODULES = [
   {
-    title: 'CRM & Revenue',
+    title: 'CRM',
     icon: Target,
-    items: ['Leads, merge & convert', 'Follow-ups & meetings', 'Client CRM + contacts', 'Agreements & KYC AI'],
+    items: [
+      'Leads, merge & convert',
+      'Follow-ups & meetings',
+      'Client CRM + contacts',
+      'Agreements & KYC AI',
+    ],
   },
   {
-    title: 'Recruitment Engine',
+    title: 'Recruitment',
     icon: Briefcase,
-    items: ['Jobs + public apply', 'Bulk CV intake', '4-pass AI matching', 'Interviews & placements'],
+    items: [
+      'Jobs + public apply',
+      'Bulk CV intake & AI matching',
+      'Interviews & shortlists',
+      'Offers & placements',
+    ],
   },
   {
-    title: 'Operations Hub',
-    icon: BarChart3,
-    items: ['Command dashboard', 'Tasks, inbox & calendar', 'Reports & exports', 'Billing & invoices'],
+    title: 'Employee',
+    icon: Users,
+    items: [
+      'Onboarding & employee profiles',
+      'Attendance & leave',
+      'Performance tracking',
+      'Training & growth',
+    ],
   },
   {
-    title: 'Platform & HQ',
-    icon: Shield,
-    items: ['Team + RBAC', 'Portal sync', 'AI coins wallet', 'Agency or standalone'],
+    title: 'Payroll',
+    icon: Wallet,
+    items: [
+      'Salary structures & setup',
+      'Attendance-linked payroll',
+      'Payslips & deductions',
+      'Payment processing',
+    ],
   },
 ];
 
@@ -128,8 +323,9 @@ export function EmployersServicesStyleBody() {
   const m = data.metrics;
   const availableCount = phase2Features.filter((f) => f.available).length;
 
-  const [crmHover, setCrmHover] = useState<string | null>(null);
-  const [matchStep, setMatchStep] = useState(0);
+  const [howItWorksIndex, setHowItWorksIndex] = useState(0);
+  const [howItWorksDir, setHowItWorksDir] = useState(1);
+  const [howItWorksPaused, setHowItWorksPaused] = useState(false);
   const [autoStep, setAutoStep] = useState(0);
   const [mode, setMode] = useState<'agency' | 'standalone'>('agency');
   const [cat, setCat] = useState<Phase2CategoryId>('crm');
@@ -137,28 +333,25 @@ export function EmployersServicesStyleBody() {
   const [searchPhase, setSearchPhase] = useState<'type' | 'chips' | 'results'>('type');
   const [ariaShown, setAriaShown] = useState(1);
 
-  const crmStages = [
-    { key: 'NEW', count: data.leadStages.NEW, color: 'text-[#176F96] bg-[#E8F6FC] ring-[#28A8E1]/20' },
-    { key: 'CONTACTED', count: data.leadStages.CONTACTED, color: 'text-indigo-700 bg-indigo-50 ring-indigo-100' },
-    { key: 'QUALIFIED', count: data.leadStages.QUALIFIED, color: 'text-violet-700 bg-violet-50 ring-violet-100' },
-    { key: 'MEETING', count: data.leadStages.MEETING, color: 'text-amber-700 bg-amber-50 ring-amber-100' },
-    { key: 'PROPOSAL', count: data.leadStages.PROPOSAL, color: 'text-orange-700 bg-orange-50 ring-orange-100' },
-    { key: 'CLIENT', count: data.leadStages.CLIENT, color: 'text-emerald-700 bg-emerald-50 ring-emerald-100' },
-  ];
-
-  const recruitFlow = ['Job', 'AI Match', 'Screen', 'Interview', 'Review', 'Placement'];
   const autoNodes = ['Lead', 'Assign', 'Follow-up', 'Meeting', 'Client', 'Job', 'Match', 'Interview', 'Place', 'Invoice'];
 
   useEffect(() => {
-    const a = setInterval(() => setMatchStep((s) => (s + 1) % recruitFlow.length), 1600);
     const b = setInterval(() => setAutoStep((s) => (s + 1) % autoNodes.length), 1100);
     const c = setInterval(() => setAriaShown((s) => (s >= 4 ? 1 : s + 1)), 2200);
     return () => {
-      clearInterval(a);
       clearInterval(b);
       clearInterval(c);
     };
-  }, [autoNodes.length, recruitFlow.length]);
+  }, [autoNodes.length]);
+
+  useEffect(() => {
+    if (howItWorksPaused) return undefined;
+    const id = setInterval(() => {
+      setHowItWorksDir(1);
+      setHowItWorksIndex((i) => (i === HOW_IT_WORKS_SLIDES.length - 1 ? 0 : i + 1));
+    }, 7000);
+    return () => clearInterval(id);
+  }, [howItWorksPaused]);
 
   useEffect(() => {
     const phrase = 'Find senior Java developers in Mumbai';
@@ -197,13 +390,43 @@ export function EmployersServicesStyleBody() {
   const catFeatures = useMemo(() => highlightFeatures(cat, 8), [cat]);
   const allCatFeatures = useMemo(() => featuresByCategory(cat), [cat]);
 
-  const stats = [
-    { label: 'Active jobs', value: formatCompact(m.activeJobs), icon: Briefcase, color: 'text-[#176F96]', bg: 'bg-[#E8F6FC]' },
-    { label: 'Candidates', value: formatCompact(m.totalCandidates), icon: Users, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { label: 'AI matches', value: formatCompact(m.aiMatches), icon: Sparkles, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { label: 'Placements', value: formatCompact(m.totalPlacements), icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Clients', value: formatCompact(m.totalClients), icon: Building2, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Capabilities', value: `${availableCount}+`, icon: LayoutDashboard, color: 'text-sky-600', bg: 'bg-sky-50' },
+  const glanceModules = [
+    {
+      title: 'CRM',
+      cards: [
+        { label: 'New Leads', value: formatCompact(m.activeLeads), icon: Target, color: 'text-[#176F96]', bg: 'bg-[#E8F6FC]' },
+        { label: 'Active Clients', value: formatCompact(m.totalClients), icon: Building2, color: 'text-amber-600', bg: 'bg-amber-50' },
+        { label: 'Follow-ups Due', value: formatCompact(data.leadStages.QUALIFIED), icon: ClipboardCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { label: 'Meetings Today', value: formatCompact(data.leadStages.MEETING), icon: CalendarDays, color: 'text-violet-600', bg: 'bg-violet-50' },
+      ],
+    },
+    {
+      title: 'Recruitment',
+      cards: [
+        { label: 'Open Jobs', value: formatCompact(m.activeJobs), icon: Briefcase, color: 'text-[#176F96]', bg: 'bg-[#E8F6FC]' },
+        { label: 'New Candidates', value: formatCompact(m.totalCandidates), icon: Users, color: 'text-violet-600', bg: 'bg-violet-50' },
+        { label: 'Shortlisted', value: formatCompact(m.aiMatches), icon: Sparkles, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+        { label: 'Interviews Today', value: formatCompact(m.totalInterviews), icon: CalendarDays, color: 'text-amber-600', bg: 'bg-amber-50' },
+      ],
+    },
+    {
+      title: 'Employee',
+      cards: [
+        { label: 'Total Staff', value: '248', icon: Users, color: 'text-[#176F96]', bg: 'bg-[#E8F6FC]' },
+        { label: 'Working Today', value: '219', icon: UserCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { label: 'On Leave', value: '18', icon: CalendarDays, color: 'text-amber-600', bg: 'bg-amber-50' },
+        { label: 'Requests Pending', value: '11', icon: ClipboardCheck, color: 'text-violet-600', bg: 'bg-violet-50' },
+      ],
+    },
+    {
+      title: 'Payroll',
+      cards: [
+        { label: 'Payroll Processed', value: '248', icon: Wallet, color: 'text-[#176F96]', bg: 'bg-[#E8F6FC]' },
+        { label: 'Payslips Ready', value: '248', icon: Receipt, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+        { label: 'Salary Pending', value: '11', icon: Coins, color: 'text-amber-600', bg: 'bg-amber-50' },
+        { label: 'Compliance Due', value: '6', icon: BadgeCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+      ],
+    },
   ];
 
   return (
@@ -213,35 +436,44 @@ export function EmployersServicesStyleBody() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
-              Platform snapshot
+              HRYantra glance
             </p>
             <DemoBadge mode={data.mode} loading={loading} />
           </div>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-            {loading
-              ? Array.from({ length: 6 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[72px] animate-pulse rounded-[1.25rem] border border-gray-200/80 bg-slate-100"
-                  />
-                ))
-              : stats.map((s) => {
-              const Icon = s.icon;
-              return (
-                <div
-                  key={s.label}
-                  className="flex items-center gap-3 rounded-[1.25rem] border border-gray-200/80 bg-white p-4 shadow-sm transition hover:shadow-md"
-                >
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${s.bg}`}>
-                    <Icon className={`h-5 w-5 ${s.color}`} strokeWidth={2} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xl font-bold tracking-tight text-gray-900">{s.value}</p>
-                    <p className="text-xs font-medium text-gray-500">{s.label}</p>
-                  </div>
+          <div className="grid gap-8">
+            {glanceModules.map((module) => (
+              <div key={module.title}>
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-700">
+                  {module.title}
+                </p>
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                  {loading
+                    ? Array.from({ length: 4 }).map((_, i) => (
+                        <div
+                          key={`${module.title}-skel-${i}`}
+                          className="h-[72px] animate-pulse rounded-[1.25rem] border border-gray-200/80 bg-slate-100"
+                        />
+                      ))
+                    : module.cards.map((s) => {
+                        const Icon = s.icon;
+                        return (
+                          <div
+                            key={`${module.title}-${s.label}`}
+                            className="flex items-center gap-3 rounded-[1.25rem] border border-gray-200/80 bg-white p-4 shadow-sm transition hover:shadow-md"
+                          >
+                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${s.bg}`}>
+                              <Icon className={`h-5 w-5 ${s.color}`} strokeWidth={2} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xl font-bold tracking-tight text-gray-900">{s.value}</p>
+                              <p className="text-xs font-medium text-gray-500">{s.label}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -252,31 +484,75 @@ export function EmployersServicesStyleBody() {
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_10%_-10%,rgba(40,168,225,0.14),transparent),radial-gradient(ellipse_60%_40%_at_90%_0%,rgba(15,90,122,0.08),transparent)]"
         />
-        <div className="relative z-10 mx-auto max-w-7xl px-6">
-          <div className="mb-12 max-w-2xl">
+        <div
+          className="relative z-10 mx-auto max-w-7xl px-6"
+          onMouseEnter={() => setHowItWorksPaused(true)}
+          onMouseLeave={() => setHowItWorksPaused(false)}
+        >
+          <div className="relative overflow-hidden">
             <Eyebrow>How it works</Eyebrow>
-            <h2 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl md:leading-[1.1]">
-              From lead to placement in{' '}
-              <span className="bg-gradient-to-r from-[#28A8E1] to-[#0F5A7A] bg-clip-text text-transparent">
-                one workspace
-              </span>
-            </h2>
-            <p className="mt-4 text-base leading-relaxed text-slate-600 md:text-lg">
-              HRYantra connects CRM, ATS, AI matching, interviews, and billing — the same operating
-              system your recruiters already run.
-            </p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-5">
-            {HOW_IT_WORKS.map((item) => (
-              <div
-                key={item.step}
-                className="rounded-[1.35rem] border border-white/80 bg-white/80 p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)] backdrop-blur-sm"
+            <AnimatePresence mode="wait" custom={howItWorksDir}>
+              <motion.div
+                key={HOW_IT_WORKS_SLIDES[howItWorksIndex].id}
+                custom={howItWorksDir}
+                initial={{ opacity: 0, x: howItWorksDir * 56 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: howItWorksDir * -56 }}
+                transition={{ duration: 0.28, ease: 'easeOut' }}
               >
-                <p className="text-[11px] font-black tabular-nums text-[#28A8E1]">{item.step}</p>
-                <h3 className="mt-2 text-[15px] font-bold tracking-tight text-slate-900">{item.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{item.detail}</p>
-              </div>
-            ))}
+                <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                  <div className="max-w-2xl">
+                    <h2 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl">
+                      {HOW_IT_WORKS_SLIDES[howItWorksIndex].titleLead}
+                      <span className="bg-gradient-to-r from-[#28A8E1] to-[#0F5A7A] bg-clip-text text-transparent">
+                        {HOW_IT_WORKS_SLIDES[howItWorksIndex].titleAccent}
+                      </span>
+                    </h2>
+                    <p className="mt-4 text-base leading-relaxed text-slate-600 md:text-lg">
+                      {HOW_IT_WORKS_SLIDES[howItWorksIndex].description}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      aria-label="Previous module"
+                      onClick={() => {
+                        setHowItWorksDir(-1);
+                        setHowItWorksIndex((i) => (i === 0 ? HOW_IT_WORKS_SLIDES.length - 1 : i - 1));
+                      }}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#28A8E1]/40 hover:text-[#176F96]"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Next module"
+                      onClick={() => {
+                        setHowItWorksDir(1);
+                        setHowItWorksIndex((i) => (i === HOW_IT_WORKS_SLIDES.length - 1 ? 0 : i + 1));
+                      }}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#28A8E1]/40 hover:text-[#176F96]"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {HOW_IT_WORKS_SLIDES[howItWorksIndex].steps.map((item) => (
+                    <div
+                      key={`${HOW_IT_WORKS_SLIDES[howItWorksIndex].id}-${item.step}`}
+                      className="rounded-[1.35rem] border border-white/80 bg-white/80 p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)] backdrop-blur-sm"
+                    >
+                      <p className="text-[11px] font-black tabular-nums text-[#28A8E1]">{item.step}</p>
+                      <h4 className="mt-2 text-[15px] font-bold tracking-tight text-slate-900">
+                        {item.title}
+                      </h4>
+                      <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </section>
@@ -288,14 +564,18 @@ export function EmployersServicesStyleBody() {
             <div className="max-w-2xl">
               <Eyebrow>Core modules</Eyebrow>
               <h2 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl">
-                Everything entrepreneurs need to{' '}
+                All-in-one solutions for{' '}
                 <span className="bg-gradient-to-r from-[#28A8E1] to-[#0F5A7A] bg-clip-text text-transparent">
-                  run hiring
+                  human-related hurdles.
                 </span>
               </h2>
+              <p className="mt-4 text-base leading-relaxed text-slate-600 md:text-lg">
+                To build a friction-free business, an entrepreneur needs to eliminate dependency on
+                manual human control.
+              </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {['CRM', 'ATS', 'AI matching', 'Billing', 'RBAC', 'Portal sync'].map((chip) => (
+              {['CRM', 'Recruitment', 'Employee', 'Payroll'].map((chip) => (
                 <span
                   key={chip}
                   className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 shadow-sm"
@@ -337,165 +617,22 @@ export function EmployersServicesStyleBody() {
         </div>
       </section>
 
-      {/* CRM pipeline */}
-      <section className="relative overflow-hidden border-t border-slate-200/60 bg-[#F4F8FB] py-20 md:py-24">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="mb-10 max-w-2xl">
-            <Eyebrow>CRM</Eyebrow>
-            <h2 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl">
-              Every relationship has a{' '}
-              <span className="bg-gradient-to-r from-[#28A8E1] to-[#0F5A7A] bg-clip-text text-transparent">
-                next move
-              </span>
-            </h2>
-            <p className="mt-4 text-base text-slate-600 md:text-lg">
-              Live stage counts from your workspace aggregates — never private names or contacts.
-            </p>
-          </div>
-          <div className="mb-10 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            {crmStages.map((stage) => (
-              <button
-                key={stage.key}
-                type="button"
-                onMouseEnter={() => setCrmHover(stage.key)}
-                onMouseLeave={() => setCrmHover(null)}
-                className={`rounded-[1.35rem] border border-white bg-white p-5 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md ${stage.color.split(' ').slice(2).join(' ')}`}
-              >
-                <p className={`text-[10px] font-bold uppercase tracking-[0.16em] ${stage.color.split(' ')[0]}`}>
-                  {stage.key}
-                </p>
-                <p className="mt-2 text-3xl font-black tabular-nums text-slate-900">{stage.count}</p>
-              </button>
-            ))}
-          </div>
-          <AnimatePresence>
-            {crmHover && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="mb-8 rounded-[1.35rem] border border-[#28A8E1]/25 bg-white p-5 shadow-sm"
-              >
-                <p className="text-sm font-bold text-slate-900">{crmHover} workspace</p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Follow-up, meeting, activity timeline, and AI next-best action — anonymized demo layer.
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {highlightFeatures('crm', 8).map((f) => (
-              <div key={f.id} className="rounded-2xl border border-slate-200/80 bg-white p-4">
-                <p className="text-sm font-bold text-slate-900">{f.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">{f.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Recruitment + AI match */}
-      <section className="border-t border-slate-200/60 bg-white py-20 md:py-24">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <Eyebrow>Recruitment</Eyebrow>
-              <h2 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl">
-                From requirement to{' '}
-                <span className="bg-gradient-to-r from-[#28A8E1] to-[#0F5A7A] bg-clip-text text-transparent">
-                  placement
-                </span>
-              </h2>
-            </div>
-            <DemoBadge mode={data.mode} loading={loading} />
-          </div>
-
-          <div className="mb-10 overflow-x-auto pb-2">
-            <div className="flex min-w-[640px] items-center gap-2">
-              {recruitFlow.map((label, i) => (
-                <React.Fragment key={label}>
-                  <div
-                    className={`flex h-20 min-w-[6.5rem] flex-1 items-center justify-center rounded-2xl border px-3 text-center text-[11px] font-bold uppercase tracking-[0.1em] transition ${
-                      i === matchStep
-                        ? 'border-[#28A8E1] bg-[#28A8E1] text-white shadow-lg'
-                        : i < matchStep
-                          ? 'border-[#28A8E1]/30 bg-[#E8F6FC] text-[#176F96]'
-                          : 'border-slate-200 bg-white text-slate-600'
-                    }`}
-                  >
-                    {label}
-                  </div>
-                  {i < recruitFlow.length - 1 && <div className="h-px w-4 bg-slate-200" />}
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid items-start gap-5 lg:grid-cols-[0.9fr_1.1fr_0.9fr]">
-            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Open role</p>
-              <p className="mt-2 text-xl font-black text-slate-900">Java Developer</p>
-              <ul className="mt-4 space-y-2 text-sm text-slate-600">
-                <li>Mumbai · Hybrid</li>
-                <li>5+ years</li>
-                <li>Spring Boot · Microservices · AWS</li>
-                <li>{formatCompact(m.activeJobs)} active jobs on platform</li>
-              </ul>
-            </div>
-            <div className="rounded-[1.5rem] border border-[#28A8E1]/25 bg-gradient-to-br from-[#E8F6FC] to-white p-6">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#176F96]">AI Match</p>
-              <p className="mt-2 text-lg font-black text-slate-900">4-pass ranking</p>
-              <div className="mt-5 space-y-3">
-                {[
-                  { id: '1042', score: 96 },
-                  { id: '1059', score: 92 },
-                  { id: '1076', score: 89 },
-                  { id: '1093', score: 84 },
-                ].map((c) => (
-                  <div key={c.id} className="flex items-center gap-3">
-                    <span className="w-28 text-sm text-slate-500">Candidate #{c.id}</span>
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-white">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-[#28A8E1] to-[#0F5A7A]"
-                        style={{ width: `${c.score}%` }}
-                      />
-                    </div>
-                    <span className="w-10 text-right text-sm font-bold text-emerald-600">{c.score}%</span>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-4 text-xs text-slate-500">
-                {formatCompact(m.aiMatches)} AI matches generated · anonymized profiles only
-              </p>
-            </div>
-            <div className="grid gap-3">
-              {highlightFeatures('recruitment', 6).map((f) => (
-                <div key={f.id} className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="text-sm font-bold text-slate-900">{f.title}</p>
-                  <p className="mt-1 text-xs text-slate-500">{f.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Premium AI */}
-      <section className="relative overflow-hidden border-y border-slate-800/10 bg-slate-950 py-20 md:py-24">
+      <section className="relative overflow-hidden border-t border-slate-200/60 bg-gradient-to-b from-[#E8F6FC] via-white to-[#F4F8FB] py-20 md:py-24">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_80%_-10%,rgba(245,158,11,0.18),transparent),radial-gradient(ellipse_50%_40%_at_10%_20%,rgba(56,189,248,0.1),transparent)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_85%_-5%,rgba(40,168,225,0.22),transparent),radial-gradient(ellipse_45%_40%_at_5%_90%,rgba(15,90,122,0.08),transparent)]"
         />
         <div className="relative z-10 mx-auto max-w-7xl px-6">
           <div className="mb-10 max-w-2xl">
-            <Eyebrow dark>Premium AI</Eyebrow>
-            <h2 className="text-4xl font-black tracking-tight text-white md:text-5xl">
+            <Eyebrow>Premium AI</Eyebrow>
+            <h2 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl">
               Intelligence that{' '}
-              <span className="bg-gradient-to-r from-amber-300 to-orange-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#28A8E1] to-[#0F5A7A] bg-clip-text text-transparent">
                 shortlists for you
               </span>
             </h2>
-            <p className="mt-4 text-base text-slate-300 md:text-lg">
+            <p className="mt-4 text-base text-slate-600 md:text-lg">
               Coin-powered tools that already exist in the employer workspace — not vapourware.
             </p>
           </div>
@@ -506,22 +643,24 @@ export function EmployersServicesStyleBody() {
               return (
                 <div
                   key={item.title}
-                  className={`flex items-start gap-3.5 rounded-[1.35rem] border p-5 ${
+                  className={`flex items-start gap-3.5 rounded-[1.35rem] border p-5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md ${
                     featured
-                      ? 'border-amber-400/30 bg-gradient-to-br from-amber-400/15 via-white/[0.06] to-transparent'
-                      : 'border-white/10 bg-white/[0.03]'
+                      ? 'border-[#28A8E1]/35 bg-gradient-to-br from-white via-[#E8F6FC]/80 to-white ring-1 ring-[#28A8E1]/10'
+                      : 'border-slate-200/90 bg-white'
                   }`}
                 >
                   <div
                     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
-                      featured ? 'bg-amber-400 text-slate-950' : 'bg-white/5 text-sky-300 ring-1 ring-white/10'
+                      featured
+                        ? 'bg-[#28A8E1] text-white shadow-sm shadow-[#28A8E1]/25'
+                        : 'bg-[#E8F6FC] text-[#28A8E1] ring-1 ring-[#28A8E1]/15'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-[15px] font-bold text-white">{item.title}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-slate-400">{item.line}</p>
+                    <p className="text-[15px] font-bold text-slate-900">{item.title}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-600">{item.line}</p>
                   </div>
                 </div>
               );
@@ -798,8 +937,6 @@ export function EmployersServicesStyleBody() {
           </div>
         </div>
       </section>
-
-      <Phase3Features />
 
       {/* Comparison */}
       <section className="border-t border-slate-200/60 bg-[#F4F8FB] py-20 md:py-24">

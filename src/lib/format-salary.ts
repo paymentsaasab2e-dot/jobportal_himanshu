@@ -30,12 +30,14 @@ export function resolveIsoCurrencyCode(currency?: string | null): string | null 
   if (!cur) return null;
 
   const upper = cur.toUpperCase();
+  if (upper === 'CFA') return 'XAF';
   if (ISO_CURRENCY.test(upper) && isValidIsoCurrency(upper)) {
     return upper;
   }
 
   // Only treat rupee/dollar labels as INR/USD when this is not already another ISO code.
   if (!ISO_CURRENCY.test(upper)) {
+    if (/cfa/i.test(cur)) return 'XAF';
     if (/₹|rupee/i.test(cur)) return 'INR';
     if (/dollar|usd|\$/i.test(cur)) return 'USD';
     if (/euro|eur|€/i.test(cur)) return 'EUR';

@@ -127,22 +127,6 @@ export function EmployersDashboardPreview() {
           role="region"
           style={previewStyle}
         >
-          <div className="mb-3 flex items-center justify-between gap-3 px-1">
-            <p className="text-xs font-medium text-[#0F5A7A] transition-colors duration-500">
-              Auto-touring Phase 2 modules · live aggregates when connected
-            </p>
-            <div className="flex items-center gap-1.5" aria-hidden="true">
-              {EMPLOYERS_PREVIEW_TOUR_PAGES.map((page, index) => (
-                <span
-                  key={page.id}
-                  className={`h-1.5 rounded-full transition-all duration-500 ease-out ${
-                    index === pageIndex ? "w-5" : "w-1.5 opacity-40"
-                  }`}
-                  style={{ backgroundColor: page.accent.primary }}
-                />
-              ))}
-            </div>
-          </div>
           <div
             className="employers-dashboard-preview__frame overflow-hidden rounded-xl border bg-white shadow-[0_24px_60px_rgba(8,66,140,0.12),0_8px_24px_var(--preview-accent-glow)] ring-1 transition-[border-color,box-shadow] duration-500"
             style={{

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Facebook, Instagram, Linkedin, X } from "lucide-react";
 
+import { useAuth } from "@/components/auth/AuthContext";
 import { AppLocale, localizePath, stripLocaleFromPathname } from "@/lib/i18n";
 
 const currentYear = new Date().getFullYear();
@@ -59,15 +60,19 @@ export default function Footer() {
   const pathname = usePathname();
   const locale = useLocale() as AppLocale;
   const t = useTranslations();
+  const { isAuthenticated } = useAuth();
   const normalizedPath = stripLocaleFromPathname(pathname || "/");
   const isEmployersPage =
     normalizedPath === "/employers" || normalizedPath.startsWith("/employers/");
+
+  // Logged-in candidates go to explore-jobs; guests keep the existing home link.
+  const findJobsHref = isAuthenticated ? "/explore-jobs" : "/";
 
   const footerLinks: FooterLinkGroup[] = [
     {
       title: t("footer.platform"),
       items: [
-        { href: "/", label: t("footer.findJobs") },
+        { href: findJobsHref, label: t("footer.findJobs") },
         { href: "/courses", label: t("footer.coursesLms") },
         { href: "/services", label: t("footer.expertServices") },
         { href: "/help", label: t("footer.helpCenter") },
@@ -173,4 +178,3 @@ export default function Footer() {
     </footer>
   );
 }
-

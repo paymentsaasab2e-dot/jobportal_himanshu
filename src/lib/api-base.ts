@@ -8,6 +8,17 @@ const LOCAL_PHASE2_ORIGIN = 'http://localhost:5001';
 const HOSTED_PHASE2_ORIGIN = 'https://api2.hryantra.com';
 const LOOPBACK_ORIGIN_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i;
 
+function isPrivateLanHostname(hostname: string): boolean {
+  const host = String(hostname || '').toLowerCase();
+  if (!host) return false;
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+  if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+  if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+  return false;
+}
+
 const normalizeToApiBaseUrl = (value: string): string => {
   const trimmed = value.trim();
   if (!trimmed) return '';
@@ -24,6 +35,18 @@ export const getApiBaseUrl = () => {
 
   if (process.env.NEXT_PUBLIC_API_URL) {
     _effectiveApiBaseUrl = normalizeToApiBaseUrl(process.env.NEXT_PUBLIC_API_URL);
+  } else if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    // Opening Next via Network URL (e.g. http://192.168.x.x:3000) must not call
+    // localhost:5000 — CORS blocks LAN origins, and phones can't reach that host.
+    // Same-origin /api/proxy forwards to backend1 on the Next machine.
+    if (isPrivateLanHostname(host) && host !== 'localhost' && host !== '127.0.0.1') {
+      _effectiveApiBaseUrl = '/api/proxy';
+    } else if (host === 'localhost' || host === '127.0.0.1') {
+      _effectiveApiBaseUrl = `${LOCAL_API_ORIGIN}/api`;
+    } else {
+      _effectiveApiBaseUrl = `${HOSTED_API_ORIGIN}/api`;
+    }
   } else if (process.env.NEXT_PUBLIC_VERCEL_URL) {
     _effectiveApiBaseUrl = `/api/proxy`;
   } else {
@@ -65,6 +88,7 @@ function isLocalApiBase(base: string) {
 /**
  * fetch against getApiBaseUrl(); on network failure against localhost,
  * flip to hosted api1 and retry once so Trendings / search keep working.
+ * If still failing, try same-origin /api/proxy (LAN Network URL sessions).
  */
 export async function fetchFromApi(pathWithQuery: string, init?: RequestInit): Promise<Response> {
   const path = pathWithQuery.startsWith('/') ? pathWithQuery : `/${pathWithQuery}`;
@@ -72,9 +96,28 @@ export async function fetchFromApi(pathWithQuery: string, init?: RequestInit): P
   try {
     return await fetch(primary, init);
   } catch (err) {
-    if (!isLocalApiBase(getApiBaseUrl())) throw err;
+    if (!isLocalApiBase(getApiBaseUrl())) {
+      // Last resort: same-origin Next proxy (avoids CORS when on 192.168.x).
+      if (typeof window !== 'undefined' && !getApiBaseUrl().startsWith('/')) {
+        _effectiveApiBaseUrl = '/api/proxy';
+        try {
+          return await fetch(`${getApiBaseUrl()}${path}`, init);
+        } catch {
+          throw err;
+        }
+      }
+      throw err;
+    }
     switchToHostedBackend();
-    return fetch(`${getApiBaseUrl()}${path}`, init);
+    try {
+      return await fetch(`${getApiBaseUrl()}${path}`, init);
+    } catch (hostedErr) {
+      if (typeof window !== 'undefined') {
+        _effectiveApiBaseUrl = '/api/proxy';
+        return fetch(`${getApiBaseUrl()}${path}`, init);
+      }
+      throw hostedErr;
+    }
   }
 }
 
