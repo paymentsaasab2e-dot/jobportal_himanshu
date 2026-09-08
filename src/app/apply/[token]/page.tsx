@@ -69,22 +69,76 @@ function parseSalary(salary: unknown): {
   salaryCurrency?: string | null;
   salaryMin?: number | null;
   salaryMax?: number | null;
+  salaryAmount?: string | null;
   salaryLabel?: string;
 } {
   if (salary == null) return {};
   if (typeof salary === "string" || typeof salary === "number") {
     const label = String(salary).trim();
-    return label ? { salaryLabel: label } : {};
+    return label ? { salaryLabel: label, salaryAmount: label } : {};
   }
   if (typeof salary !== "object") return {};
   const row = salary as Record<string, unknown>;
-  const currency = String(row.currency || row.salaryCurrency || "").trim() || null;
-  const minRaw = row.min ?? row.salaryMin ?? row.from;
-  const maxRaw = row.max ?? row.salaryMax ?? row.to;
-  const min = typeof minRaw === "number" ? minRaw : Number(minRaw);
-  const max = typeof maxRaw === "number" ? maxRaw : Number(maxRaw);
-  const salaryMin = Number.isFinite(min) ? min : null;
-  const salaryMax = Number.isFinite(max) ? max : null;
+  const rawCurrency = String(row.currency || row.salaryCurrency || "").trim() || null;
+  // Informal "CFA" → XAF for consistent public display
+  const currency =
+    rawCurrency && rawCurrency.toUpperCase() === "CFA" ? "XAF" : rawCurrency;
+
+  const parseMoney = (value: unknown): number | null => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    const text = String(value ?? "").trim();
+    if (!text) return null;
+    const cleaned = text.replace(/,/g, "");
+    const kMatch = cleaned.match(/^([\d.]+)\s*k\b/i);
+    if (kMatch) {
+      const n = Number(kMatch[1]) * 1000;
+      return Number.isFinite(n) ? Math.round(n) : null;
+    }
+    const n = Number(cleaned.replace(/[^\d.-]/g, ""));
+    return Number.isFinite(n) ? n : null;
+  };
+
+  let salaryMin = parseMoney(row.min ?? row.salaryMin ?? row.from);
+  let salaryMax = parseMoney(row.max ?? row.salaryMax ?? row.to);
+  const amountRaw = String(row.amount || "").trim() || null;
+
+  // If amount text has fuller numbers (e.g. "100,000 - 200,000") while min/max
+  // were truncated at save ("100"/"200"), prefer the amount values.
+  if (amountRaw) {
+    const amountNums = amountRaw
+      .replace(/,/g, "")
+      .match(/\d+(?:\.\d+)?/g)
+      ?.map((part) => Number(part))
+      .filter((n) => Number.isFinite(n)) ?? [];
+    if (amountNums.length >= 2) {
+      const [aMin, aMax] = amountNums;
+      const truncated =
+        (salaryMin != null && aMin >= salaryMin * 100 && aMin % Math.max(salaryMin, 1) === 0) ||
+        (salaryMax != null && aMax >= salaryMax * 100 && aMax % Math.max(salaryMax, 1) === 0) ||
+        (salaryMin != null && salaryMax != null && aMin > salaryMin * 10 && aMax > salaryMax * 10);
+      if (truncated || salaryMin == null || salaryMax == null) {
+        salaryMin = aMin;
+        salaryMax = aMax;
+      }
+    } else if (amountNums.length === 1 && salaryMin == null && salaryMax == null) {
+      salaryMin = amountNums[0];
+    }
+  }
+
+  // Recover comma-truncated CFA/XAF values (e.g. "100,000" saved as 100).
+  const francCurrency = Boolean(currency && /^(XAF|XOF|CFA)$/i.test(currency));
+  if (
+    francCurrency &&
+    salaryMin != null &&
+    salaryMax != null &&
+    salaryMin > 0 &&
+    salaryMax > 0 &&
+    salaryMax < 1000
+  ) {
+    salaryMin *= 1000;
+    salaryMax *= 1000;
+  }
+
   const parts: string[] = [];
   if (currency) parts.push(currency);
   if (salaryMin != null || salaryMax != null) {
@@ -98,7 +152,8 @@ function parseSalary(salary: unknown): {
     salaryCurrency: currency,
     salaryMin,
     salaryMax,
-    salaryLabel: parts.join(" ").trim() || undefined,
+    salaryAmount: amountRaw,
+    salaryLabel: parts.join(" ").trim() || amountRaw || undefined,
   };
 }
 
@@ -125,7 +180,7 @@ function mapPublicJobToDetails(job: PublicApplyJob): JobPostingDetailsJob {
     title: job.title,
     company: job.company || "Company",
     location: job.location || undefined,
-    salary: salary.salaryLabel,
+    salary: salary.salaryAmount || salary.salaryLabel,
     salaryCurrency: salary.salaryCurrency,
     salaryMin: salary.salaryMin,
     salaryMax: salary.salaryMax,
@@ -394,8 +449,26 @@ export default function ApplyLandingPage() {
             left: max(1.5rem, calc((100vw - 72rem) / 2 + 2rem));
             z-index: 10;
             width: 21.5rem;
-            max-height: none;
-            overflow: visible;
+            /* Keep Apply reachable on short viewports — card scrolls, CTA stays pinned */
+            max-height: calc(100vh - 6.5rem);
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            overscroll-behavior: contain;
+          }
+          .apply-left-card-cta {
+            position: sticky;
+            bottom: 0;
+            z-index: 2;
+            margin-top: auto;
+            padding-top: 1rem;
+            background: linear-gradient(
+              to bottom,
+              rgba(255, 255, 255, 0) 0%,
+              rgba(255, 255, 255, 0.92) 28%,
+              rgba(255, 255, 255, 0.98) 100%
+            );
           }
         }
         @media (min-width: 1280px) {
@@ -525,7 +598,7 @@ export default function ApplyLandingPage() {
                   <JobDetailHighlights job={detailsJob} />
                 </div>
 
-                <div className="relative mt-5 hidden gap-2 lg:flex">
+                <div className="apply-left-card-cta relative mt-5 hidden gap-2 lg:flex">
                   <button
                     type="button"
                     onClick={handleContinue}

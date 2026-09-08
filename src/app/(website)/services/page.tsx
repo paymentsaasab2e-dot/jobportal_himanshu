@@ -8,7 +8,6 @@ import {
   ArrowDown,
   ArrowRight,
   Award,
-  BarChart3,
   Bot,
   Briefcase,
   Building2,
@@ -19,7 +18,6 @@ import {
   GitBranch,
   GraduationCap,
   Mic2,
-  Shield,
   Sparkles,
   Target,
   Users,
@@ -136,24 +134,24 @@ const PHASE1_FEATURES: FeatureItem[] = [
 
 const PHASE2_MODULES = [
   {
-    title: "CRM & Revenue",
-    items: ["Leads & follow-ups", "Client CRM", "Contacts", "Smart search"],
+    title: "CRM",
+    items: ["Leads & follow-ups", "Client CRM", "Contacts", "Agreements & KYC"],
     icon: Target,
   },
   {
-    title: "Recruitment Engine",
-    items: ["AI job wizard", "Bulk CV intake", "4-pass AI matching", "Pipeline · Interviews · Placements"],
+    title: "Recruitment",
+    items: ["AI job wizard", "Bulk CV intake", "AI matching", "Interviews & placements"],
     icon: Briefcase,
   },
   {
-    title: "Operations Hub",
-    items: ["Command dashboard", "Reports", "Tasks & inbox", "Billing / invoices"],
-    icon: BarChart3,
+    title: "Employee",
+    items: ["Onboarding", "Attendance & leave", "Performance", "Training & growth"],
+    icon: Users,
   },
   {
-    title: "Platform & Control",
-    items: ["Team + RBAC", "Portal sync (Employees)", "HQ tab/module control", "Agency or standalone"],
-    icon: Shield,
+    title: "Payroll",
+    items: ["Salary setup", "Payroll calculation", "Payslips", "Payment processing"],
+    icon: Wallet,
   },
 ];
 

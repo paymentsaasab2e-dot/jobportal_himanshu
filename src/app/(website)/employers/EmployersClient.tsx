@@ -6,7 +6,7 @@ import { EmployersServicesStyleBody } from './sections/EmployersServicesStyleBod
 
 export default function EmployerLandingPage() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#fcfcfd] font-sans text-[#111827] antialiased selection:bg-[#28A8E1]/20 selection:text-[#0F5A7A]">
+    <div className="min-h-screen overflow-x-clip bg-[#fcfcfd] font-sans text-[#111827] antialiased selection:bg-[#28A8E1]/20 selection:text-[#0F5A7A]">
       <main>
         <EmployersHeroSection />
         <EmployersServicesStyleBody />

@@ -48,19 +48,19 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-31T11:52:02.577Z",
+      "capturedAt": "2026-09-08T16:34:05.926Z",
       "kind": "realtime_session",
       "session": {
-        "logins": 7,
-        "visits": 46,
+        "logins": 12,
+        "visits": 82,
         "applies": 0,
-        "activeMs": 645000,
-        "sessionCount": 7,
+        "activeMs": 5910000,
+        "sessionCount": 12,
         "topInsightIds": [
-          "balanced"
+          "browser_not_applier"
         ],
         "triggerFlags": [],
-        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
         "alertConfidence": "high",
         "topLocation": null,
         "preferredAlertHours": [
@@ -792,137 +792,109 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-08-31T11:52:02.577Z",
-      "activityStateUpdatedAt": "2026-08-31T11:52:01.254Z",
+      "capturedAt": "2026-09-08T16:34:05.926Z",
+      "activityStateUpdatedAt": "2026-09-08T16:33:26.789Z",
       "rollup7d": {
         "userId": "b1c869d84e75048c5c61c5e3",
         "range": "week",
-        "fromDate": "2026-08-25",
-        "toDate": "2026-08-31",
-        "logins": 7,
-        "visits": 46,
+        "fromDate": "2026-09-02",
+        "toDate": "2026-09-08",
+        "logins": 12,
+        "visits": 82,
         "jobCardClicks": 0,
         "applies": 0,
-        "activeMs": 645000,
-        "sessionCount": 7,
+        "activeMs": 5910000,
+        "sessionCount": 12,
         "pageVisitsByCategory": {
-          "other": 46
+          "other": 77,
+          "dashboard": 2,
+          "jobs": 3
         },
         "activeMsByCategory": {
-          "other": 645000
+          "other": 3765000,
+          "dashboard": 165000,
+          "jobs": 1980000
         },
         "firstOpenBreakdown": {
-          "other": 2
+          "other": 4
         },
-        "avgActiveMsPerDay": 161250,
+        "avgActiveMsPerDay": 1477500,
         "daysActive": 4,
         "topFirstOpen": "other",
         "insights": [
           {
-            "id": "balanced",
-            "label": "Balanced activity",
-            "severity": "info",
-            "summary": "No strong imbalance detected yet — keep collecting signals.",
+            "id": "browser_not_applier",
+            "label": "Browsing jobs, not applying",
+            "severity": "watch",
+            "summary": "High job time/clicks vs applies — hesitation or mismatch on listings.",
             "evidence": [
-              "0 job clicks",
-              "0 applies",
-              "11 min active"
+              "0 job card clicks · 33m on jobs",
+              "0 applies recorded this period"
             ]
           }
         ],
         "recentSessions": [
           {
-            "id": "sess_mth556e6_iiy8nk",
-            "startedAt": "2026-08-31T11:14:22.494Z",
-            "lastActiveAt": "2026-08-31T11:42:00.467Z",
-            "durationMs": 60000,
-            "pageCount": 12,
-            "firstPath": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "lastPath": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
+            "id": "sess_mtsw118r_bnplul",
+            "startedAt": "2026-09-08T16:32:26.761Z",
+            "lastActiveAt": "2026-09-08T16:33:26.789Z",
+            "durationMs": 15000,
+            "pageCount": 1,
+            "firstPath": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "lastPath": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
             "lastCategory": "other",
             "paths": [
-              "/apply/a1a1a13c6cf29dd97d2848150d025b827519"
+              "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8"
             ],
             "deviceType": "desktop",
             "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-08-31T11:19:40.538Z"
+            "operatingSystem": "Windows"
           },
           {
-            "id": "sess_mtbdo46l_x39h67",
-            "startedAt": "2026-08-27T10:26:25.962Z",
-            "lastActiveAt": "2026-08-27T10:49:06.786Z",
-            "durationMs": 135000,
-            "pageCount": 11,
+            "id": "sess_mtssodqg_4hf3ku",
+            "startedAt": "2026-09-08T14:58:37.575Z",
+            "lastActiveAt": "2026-09-08T15:54:11.415Z",
+            "durationMs": 2160000,
+            "pageCount": 10,
             "firstPath": "/",
-            "lastPath": "/privacypolicy",
+            "lastPath": "/employers",
             "lastCategory": "other",
             "paths": [
               "/",
-              "/privacypolicy"
+              "/employers",
+              "/whatsapp",
+              "/candidate-dashboard",
+              "/explore-jobs"
             ],
             "deviceType": "desktop",
             "browser": "Chrome",
             "operatingSystem": "Windows",
-            "endedAt": "2026-08-27T10:31:26.021Z"
+            "endedAt": "2026-09-08T14:59:21.035Z"
           },
           {
-            "id": "sess_mtacgmnc_k6f8rl",
-            "startedAt": "2026-08-26T17:04:50.843Z",
-            "lastActiveAt": "2026-08-26T17:04:50.920Z",
-            "durationMs": 62495119,
-            "pageCount": 1,
+            "id": "sess_mtsgqta8_642at1",
+            "startedAt": "2026-09-08T09:24:35.646Z",
+            "lastActiveAt": "2026-09-08T10:31:12.250Z",
+            "durationMs": 1905000,
+            "pageCount": 11,
             "firstPath": "/",
             "lastPath": "/",
             "lastCategory": "other",
             "paths": [
-              "/"
+              "/",
+              "/employers"
             ],
             "deviceType": "desktop",
             "browser": "Chrome",
             "operatingSystem": "Windows",
-            "endedAt": "2026-08-27T10:26:25.962Z"
+            "endedAt": "2026-09-08T09:28:41.298Z"
           },
           {
-            "id": "sess_mt9ry0qj_cndmdj",
-            "startedAt": "2026-08-26T07:30:30.330Z",
-            "lastActiveAt": "2026-08-26T07:30:30.333Z",
-            "durationMs": 34460513,
+            "id": "sess_mtotk7ta_n9bvbj",
+            "startedAt": "2026-09-05T20:12:18.188Z",
+            "lastActiveAt": "2026-09-05T20:12:24.503Z",
+            "durationMs": 0,
             "pageCount": 1,
-            "firstPath": "/",
-            "lastPath": "/",
-            "lastCategory": "other",
-            "paths": [
-              "/"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-08-26T17:04:50.843Z"
-          },
-          {
-            "id": "sess_mt9olevl_8u7k6c",
-            "startedAt": "2026-08-26T05:56:43.281Z",
-            "lastActiveAt": "2026-08-26T05:56:43.285Z",
-            "durationMs": 5627049,
-            "pageCount": 1,
-            "firstPath": "/",
-            "lastPath": "/",
-            "lastCategory": "other",
-            "paths": [
-              "/"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-08-26T07:30:30.330Z"
-          },
-          {
-            "id": "sess_mt8h857w_4zw0j9",
-            "startedAt": "2026-08-25T09:42:40.747Z",
-            "lastActiveAt": "2026-08-25T10:11:59.791Z",
-            "durationMs": 90000,
-            "pageCount": 4,
             "firstPath": "/employers",
             "lastPath": "/employers",
             "lastCategory": "other",
@@ -932,14 +904,83 @@
             "deviceType": "desktop",
             "browser": "Chrome",
             "operatingSystem": "Windows",
-            "endedAt": "2026-08-25T09:47:19.480Z"
+            "endedAt": "2026-09-05T20:12:24.503Z"
           },
           {
-            "id": "sess_mt89va5b_c233yz",
-            "startedAt": "2026-08-25T06:16:43.294Z",
-            "lastActiveAt": "2026-08-25T06:53:45.130Z",
-            "durationMs": 360000,
-            "pageCount": 16,
+            "id": "sess_mtofplqa_71afer",
+            "startedAt": "2026-09-05T13:44:34.880Z",
+            "lastActiveAt": "2026-09-05T13:54:21.862Z",
+            "durationMs": 0,
+            "pageCount": 1,
+            "firstPath": "/employers",
+            "lastPath": "/employers",
+            "lastCategory": "other",
+            "paths": [
+              "/employers"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-09-05T13:54:21.862Z"
+          },
+          {
+            "id": "sess_mtod4g0r_5fnu5t",
+            "startedAt": "2026-09-05T12:32:08.475Z",
+            "lastActiveAt": "2026-09-05T13:12:01.897Z",
+            "durationMs": 45000,
+            "pageCount": 2,
+            "firstPath": "/employers",
+            "lastPath": "/employers",
+            "lastCategory": "other",
+            "paths": [
+              "/employers"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-09-05T12:36:44.994Z"
+          },
+          {
+            "id": "sess_mto8nfp1_aclk0t",
+            "startedAt": "2026-09-05T10:26:56.437Z",
+            "lastActiveAt": "2026-09-05T11:52:03.614Z",
+            "durationMs": 450000,
+            "pageCount": 33,
+            "firstPath": "/employers",
+            "lastPath": "/employers",
+            "lastCategory": "other",
+            "paths": [
+              "/employers",
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-09-05T10:34:15.621Z"
+          },
+          {
+            "id": "sess_mto69wfu_eckkyt",
+            "startedAt": "2026-09-05T09:20:25.720Z",
+            "lastActiveAt": "2026-09-05T09:53:48.681Z",
+            "durationMs": 15000,
+            "pageCount": 2,
+            "firstPath": "/employers",
+            "lastPath": "/employers",
+            "lastCategory": "other",
+            "paths": [
+              "/employers"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-09-05T09:30:27.096Z"
+          },
+          {
+            "id": "sess_mtnzi4x4_05i0u0",
+            "startedAt": "2026-09-05T06:10:52.648Z",
+            "lastActiveAt": "2026-09-05T08:15:51.605Z",
+            "durationMs": 1125000,
+            "pageCount": 17,
             "firstPath": "/",
             "lastPath": "/employers",
             "lastCategory": "other",
@@ -950,249 +991,86 @@
             "deviceType": "desktop",
             "browser": "Chrome",
             "operatingSystem": "Windows",
-            "endedAt": "2026-08-25T06:20:02.955Z"
+            "endedAt": "2026-09-05T06:46:05.327Z"
           },
           {
-            "id": "sess_mt76fqmf_z2gyz3",
-            "startedAt": "2026-08-24T11:52:53.126Z",
-            "lastActiveAt": "2026-08-24T12:45:43.786Z",
-            "durationMs": 165000,
-            "pageCount": 14,
+            "id": "sess_mtjui887_fyez1g",
+            "startedAt": "2026-09-02T08:39:54.150Z",
+            "lastActiveAt": "2026-09-02T09:07:26.565Z",
+            "durationMs": 120000,
+            "pageCount": 2,
+            "firstPath": "/employers",
+            "lastPath": "/",
+            "lastCategory": "other",
+            "paths": [
+              "/employers",
+              "/"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-09-02T08:47:59.480Z"
+          },
+          {
+            "id": "sess_mtjt16su_rrlmqc",
+            "startedAt": "2026-09-02T07:58:39.533Z",
+            "lastActiveAt": "2026-09-02T07:59:39.550Z",
+            "durationMs": 2474617,
+            "pageCount": 0,
+            "paths": [],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "lastCategory": "other",
+            "endedAt": "2026-09-02T08:39:54.150Z"
+          },
+          {
+            "id": "sess_mtjq90lp_ycfhxq",
+            "startedAt": "2026-09-02T06:40:45.900Z",
+            "lastActiveAt": "2026-09-02T06:48:26.173Z",
+            "durationMs": 4673633,
+            "pageCount": 2,
             "firstPath": "/",
-            "lastPath": "/lms/interview-prep",
-            "lastCategory": "interview_prep",
+            "lastPath": "/employers",
+            "lastCategory": "other",
             "paths": [
               "/",
-              "/whatsapp",
-              "/candidate-dashboard",
-              "/lms/courses",
-              "/lms/interview-prep"
+              "/employers"
             ],
             "deviceType": "desktop",
             "browser": "Chrome",
             "operatingSystem": "Windows",
-            "endedAt": "2026-08-24T12:25:38.153Z"
-          },
-          {
-            "id": "sess_mt73gq6l_bdvlmv",
-            "startedAt": "2026-08-24T10:29:40.364Z",
-            "lastActiveAt": "2026-08-24T10:29:40.369Z",
-            "durationMs": 4992762,
-            "pageCount": 1,
-            "firstPath": "/",
-            "lastPath": "/",
-            "lastCategory": "other",
-            "paths": [
-              "/"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-08-24T11:52:53.126Z"
-          },
-          {
-            "id": "sess_mt713h24_e2kort",
-            "startedAt": "2026-08-24T09:23:22.779Z",
-            "lastActiveAt": "2026-08-24T09:40:27.442Z",
-            "durationMs": 0,
-            "pageCount": 3,
-            "firstPath": "/",
-            "lastPath": "/",
-            "lastCategory": "other",
-            "paths": [
-              "/"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-08-24T09:31:23.960Z"
-          },
-          {
-            "id": "sess_mt6ywyim_qwv8yq",
-            "startedAt": "2026-08-24T08:22:19.581Z",
-            "lastActiveAt": "2026-08-24T08:25:57.016Z",
-            "durationMs": 3663198,
-            "pageCount": 1,
-            "firstPath": "/",
-            "lastPath": "/",
-            "lastCategory": "other",
-            "paths": [
-              "/"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-08-24T09:23:22.779Z"
-          },
-          {
-            "id": "sess_mt5hnp5f_i4w3q9",
-            "startedAt": "2026-08-23T07:31:27.890Z",
-            "lastActiveAt": "2026-08-23T08:06:36.018Z",
-            "durationMs": 75000,
-            "pageCount": 20,
-            "firstPath": "/",
-            "lastPath": "/",
-            "lastCategory": "other",
-            "paths": [
-              "/"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-08-23T07:36:34.291Z"
+            "endedAt": "2026-09-02T07:58:39.533Z"
           }
         ],
         "recentEvents": [
           {
-            "id": "ev_mth64pp0_9n3o1u",
-            "at": "2026-08-31T11:42:00.468Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk"
-          },
-          {
-            "id": "ev_mth5ny1p_8vm1mj",
-            "at": "2026-08-31T11:28:58.141Z",
+            "id": "ev_mtsw2bk5_hwq1eh",
+            "at": "2026-09-08T16:33:26.789Z",
             "type": "time_slice",
             "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk",
+            "path": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "sessionId": "sess_mtsw118r_bnplul",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mth5llz6_v6uzra",
-            "at": "2026-08-31T11:27:09.186Z",
+            "id": "ev_mtsw1191_oxbi2f",
+            "at": "2026-09-08T16:32:26.773Z",
             "type": "page_visit",
             "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk"
+            "path": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "sessionId": "sess_mtsw118r_bnplul"
           },
           {
-            "id": "ev_mth5lfmh_8fgqcx",
-            "at": "2026-08-31T11:27:00.953Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk"
-          },
-          {
-            "id": "ev_mth5kwvw_ogf1j1",
-            "at": "2026-08-31T11:26:36.668Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk"
-          },
-          {
-            "id": "ev_mth5h4gy_aau1bu",
-            "at": "2026-08-31T11:23:39.874Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mth5gsti_7zkbe4",
-            "at": "2026-08-31T11:23:24.774Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk"
-          },
-          {
-            "id": "ev_mth5gj6o_ugrs7i",
-            "at": "2026-08-31T11:23:12.288Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk"
-          },
-          {
-            "id": "ev_mth5eoqe_l370km",
-            "at": "2026-08-31T11:21:46.166Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk"
-          },
-          {
-            "id": "ev_mth5e06c_q7z5ke",
-            "at": "2026-08-31T11:21:14.340Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk"
-          },
-          {
-            "id": "ev_mth5dcoe_g2kckg",
-            "at": "2026-08-31T11:20:43.886Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk"
-          },
-          {
-            "id": "ev_mth5cegu_j36u6n",
-            "at": "2026-08-31T11:19:59.550Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk"
-          },
-          {
-            "id": "ev_mth5c5dw_lpykyt",
-            "at": "2026-08-31T11:19:47.780Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk"
-          },
-          {
-            "id": "ev_mth5bzsq_dhkphc",
-            "at": "2026-08-31T11:19:40.538Z",
-            "type": "session_end",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk",
-            "meta": {
-              "durationMs": 30000
-            }
-          },
-          {
-            "id": "ev_mth55hz5_al73m0",
-            "at": "2026-08-31T11:14:37.505Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mth556eb_ule46b",
-            "at": "2026-08-31T11:14:22.499Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk"
-          },
-          {
-            "id": "ev_mth556e7_4r8ob2",
-            "at": "2026-08-31T11:14:22.495Z",
+            "id": "ev_mtsw118r_92f1hs",
+            "at": "2026-09-08T16:32:26.763Z",
             "type": "login",
             "category": "other",
-            "path": "/apply/a1a1a13c6cf29dd97d2848150d025b827519",
-            "sessionId": "sess_mth556e6_iiy8nk",
+            "path": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "sessionId": "sess_mtsw118r_bnplul",
             "meta": {
               "deviceType": "desktop",
               "browser": "Chrome",
@@ -1200,171 +1078,1063 @@
             }
           },
           {
-            "id": "ev_mtbeha78_9u7aq1",
-            "at": "2026-08-27T10:49:06.788Z",
-            "type": "time_slice",
+            "id": "ev_mtsunu53_usqs4g",
+            "at": "2026-09-08T15:54:11.415Z",
+            "type": "page_visit",
             "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67",
+            "path": "/employers",
+            "sessionId": "sess_mtssodqg_4hf3ku"
+          },
+          {
+            "id": "ev_mtsumylp_qk0f6w",
+            "at": "2026-09-08T15:53:30.541Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mtbedqvc_bwegz5",
-            "at": "2026-08-27T10:46:21.768Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67"
-          },
-          {
-            "id": "ev_mtbedl3s_sk70uo",
-            "at": "2026-08-27T10:46:14.296Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67"
-          },
-          {
-            "id": "ev_mtbed4ym_hij74j",
-            "at": "2026-08-27T10:45:53.374Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67"
-          },
-          {
-            "id": "ev_mtbeb7qz_yruqcd",
-            "at": "2026-08-27T10:44:23.675Z",
+            "id": "ev_mtsulcqj_4siprg",
+            "at": "2026-09-08T15:52:15.547Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mtbe9lvj_gui3iw",
-            "at": "2026-08-27T10:43:08.671Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67"
-          },
-          {
-            "id": "ev_mtbe8rfa_54sq6b",
-            "at": "2026-08-27T10:42:29.206Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67"
-          },
-          {
-            "id": "ev_mtbe7myk_hld20e",
-            "at": "2026-08-27T10:41:36.764Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67"
-          },
-          {
-            "id": "ev_mtbe5s4s_rzeb3x",
-            "at": "2026-08-27T10:40:10.156Z",
+            "id": "ev_mtsuk2fq_0bw5t0",
+            "at": "2026-09-08T15:51:15.542Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mtbe3eu8_stpml6",
-            "at": "2026-08-27T10:38:19.616Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67"
-          },
-          {
-            "id": "ev_mtbe3cc0_3cv77r",
-            "at": "2026-08-27T10:38:16.368Z",
+            "id": "ev_mtsuigkk_5ik8zz",
+            "at": "2026-09-08T15:50:00.548Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mtbe2dls_6akcwe",
-            "at": "2026-08-27T10:37:31.360Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67"
-          },
-          {
-            "id": "ev_mtbdwmnv_wlbdho",
-            "at": "2026-08-27T10:33:03.163Z",
+            "id": "ev_mtsuh69r_ik5v5b",
+            "at": "2026-09-08T15:49:00.543Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_mtbdup7i_p36k81",
-            "at": "2026-08-27T10:31:33.150Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67"
+            "id": "ev_mtsufkeg_li21t2",
+            "at": "2026-09-08T15:47:45.544Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
           },
           {
-            "id": "ev_mtbdujph_h5tsqt",
-            "at": "2026-08-27T10:31:26.021Z",
+            "id": "ev_mtsudyj2_0vksx6",
+            "at": "2026-09-08T15:46:30.542Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsuccnw_zoz058",
+            "at": "2026-09-08T15:45:15.548Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsuaqsg_1t55sv",
+            "at": "2026-09-08T15:44:00.544Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsu94x3_9r6w3n",
+            "at": "2026-09-08T15:42:45.543Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsu7j1t_9hqxcn",
+            "at": "2026-09-08T15:41:30.545Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsu5x6h_byml4m",
+            "at": "2026-09-08T15:40:15.545Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsu4bb4_0u0fv7",
+            "at": "2026-09-08T15:39:00.544Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsu2pg4_0tzb53",
+            "at": "2026-09-08T15:37:45.556Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsu1f5d_bh4uuk",
+            "at": "2026-09-08T15:36:45.553Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstzt9v_xnl604",
+            "at": "2026-09-08T15:35:30.547Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstyiz7_naq1sz",
+            "at": "2026-09-08T15:34:30.547Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstwx3w_5fce85",
+            "at": "2026-09-08T15:33:15.548Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstvmt1_7emqvt",
+            "at": "2026-09-08T15:32:15.541Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstu0xv_haq5yu",
+            "at": "2026-09-08T15:31:00.547Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstsqn2_jt4pjo",
+            "at": "2026-09-08T15:30:00.542Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstr4rv_i3492q",
+            "at": "2026-09-08T15:28:45.547Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstpuh7_lpeg64",
+            "at": "2026-09-08T15:27:45.547Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstok6f_hdyk95",
+            "at": "2026-09-08T15:26:45.543Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstn9vp_re9bv6",
+            "at": "2026-09-08T15:25:45.541Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstlzl0_dizh80",
+            "at": "2026-09-08T15:24:45.540Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstkdpx_acfack",
+            "at": "2026-09-08T15:23:30.549Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtstj29p_7v11de",
+            "at": "2026-09-08T15:22:29.053Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsthrz1_nt2md0",
+            "at": "2026-09-08T15:21:29.053Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsthge3_56l22q",
+            "at": "2026-09-08T15:21:14.043Z",
+            "type": "page_visit",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku"
+          },
+          {
+            "id": "ev_mtstgg67_ut9sh6",
+            "at": "2026-09-08T15:20:27.104Z",
+            "type": "time_slice",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtssznuu_vjy88t",
+            "at": "2026-09-08T15:07:23.910Z",
+            "type": "page_visit",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku"
+          },
+          {
+            "id": "ev_mtsszh3t_0r027f",
+            "at": "2026-09-08T15:07:15.161Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtssodqg_4hf3ku"
+          },
+          {
+            "id": "ev_mtsstmh0_mr7xlg",
+            "at": "2026-09-08T15:02:42.180Z",
+            "type": "page_visit",
+            "category": "jobs",
+            "path": "/explore-jobs",
+            "sessionId": "sess_mtssodqg_4hf3ku"
+          },
+          {
+            "id": "ev_mtssti9t_g20z1y",
+            "at": "2026-09-08T15:02:36.737Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtssrktr_5ky6w2",
+            "at": "2026-09-08T15:01:06.735Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtssqaj2_tq3bes",
+            "at": "2026-09-08T15:00:06.734Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsspbrg_eeavd5",
+            "at": "2026-09-08T14:59:21.676Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtssodqg_4hf3ku"
+          },
+          {
+            "id": "ev_mtsspb9n_n3miof",
+            "at": "2026-09-08T14:59:21.035Z",
+            "type": "session_end",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 30000
+            }
+          },
+          {
+            "id": "ev_mtssotri_7jcrkm",
+            "at": "2026-09-08T14:58:58.351Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mtssodqg_4hf3ku"
+          },
+          {
+            "id": "ev_mtssoqd0_g1691n",
+            "at": "2026-09-08T14:58:53.940Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/whatsapp",
+            "sessionId": "sess_mtssodqg_4hf3ku"
+          },
+          {
+            "id": "ev_mtssopbt_ftc7jx",
+            "at": "2026-09-08T14:58:52.601Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtssoglm_5yjzj2",
+            "at": "2026-09-08T14:58:41.291Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtssodqg_4hf3ku"
+          },
+          {
+            "id": "ev_mtssodqr_1pmt1a",
+            "at": "2026-09-08T14:58:37.587Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mtssodqg_4hf3ku"
+          },
+          {
+            "id": "ev_mtssodqi_td6lqg",
+            "at": "2026-09-08T14:58:37.578Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mtssodqg_4hf3ku",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_mtsj4h2y_d7dq3m",
+            "at": "2026-09-08T10:31:12.250Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsj2jml_vh9gao",
+            "at": "2026-09-08T10:29:42.237Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mtsgqta8_642at1"
+          },
+          {
+            "id": "ev_mtsj16km_m2fipx",
+            "at": "2026-09-08T10:28:38.663Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsixaqj_t4u1ct",
+            "at": "2026-09-08T10:25:37.435Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsipwix_kgjteq",
+            "at": "2026-09-08T10:19:52.425Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsinoly_tzaf3c",
+            "at": "2026-09-08T10:18:08.854Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsim2qv_ws6u8u",
+            "at": "2026-09-08T10:16:53.863Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsijtq3_xxylcq",
+            "at": "2026-09-08T10:15:08.859Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsiijfe_drrqrf",
+            "at": "2026-09-08T10:14:08.858Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsih94l_yiekd0",
+            "at": "2026-09-08T10:13:08.853Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsif03p_dnb7fa",
+            "at": "2026-09-08T10:11:23.845Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1"
+          },
+          {
+            "id": "ev_mtsie26g_b6a7rq",
+            "at": "2026-09-08T10:10:39.880Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsicgbc_awlmca",
+            "at": "2026-09-08T10:09:24.888Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsiaufr_qvj70r",
+            "at": "2026-09-08T10:08:09.879Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsi98ks_rqvab5",
+            "at": "2026-09-08T10:06:54.892Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsi7mp6_0b0tij",
+            "at": "2026-09-08T10:05:39.882Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsi60u1_7qu60b",
+            "at": "2026-09-08T10:04:24.889Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsi4qjb_4px662",
+            "at": "2026-09-08T10:03:24.887Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsi43dk_l78hr7",
+            "at": "2026-09-08T10:02:54.872Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1"
+          },
+          {
+            "id": "ev_mtsi2ayy_kvfbp7",
+            "at": "2026-09-08T10:01:31.402Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtshu37x_8cxplg",
+            "at": "2026-09-08T09:55:08.109Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1"
+          },
+          {
+            "id": "ev_mtshrex7_goitlv",
+            "at": "2026-09-08T09:53:03.307Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtshp5wl_z40nph",
+            "at": "2026-09-08T09:51:18.309Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtshoubf_hh9w0u",
+            "at": "2026-09-08T09:51:03.291Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1"
+          },
+          {
+            "id": "ev_mtshnt7l_bdejdv",
+            "at": "2026-09-08T09:50:15.201Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1"
+          },
+          {
+            "id": "ev_mtshjs6d_v7qnm0",
+            "at": "2026-09-08T09:47:07.237Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtshihvk_5xh58b",
+            "at": "2026-09-08T09:46:07.232Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtshgw0k_dvwkj9",
+            "at": "2026-09-08T09:44:52.244Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtshfa55_l4bbco",
+            "at": "2026-09-08T09:43:37.241Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtshdo9x_elvvus",
+            "at": "2026-09-08T09:42:22.245Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtshcdz8_lgcxc3",
+            "at": "2026-09-08T09:41:22.244Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtshas3y_gphbr8",
+            "at": "2026-09-08T09:40:07.246Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsh9hsw_h97qiu",
+            "at": "2026-09-08T09:39:07.232Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsh7vxy_0t394k",
+            "at": "2026-09-08T09:37:52.246Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsh6a28_fmkvk6",
+            "at": "2026-09-08T09:36:37.232Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsh4o6x_yalbj1",
+            "at": "2026-09-08T09:35:22.233Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsh32bn_irch69",
+            "at": "2026-09-08T09:34:07.235Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsh1jt3_kbveli",
+            "at": "2026-09-08T09:32:56.583Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsgwb9c_nonrnr",
+            "at": "2026-09-08T09:28:52.224Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1"
+          },
+          {
+            "id": "ev_mtsgw6jk_7x6ftu",
+            "at": "2026-09-08T09:28:46.113Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mtsgqta8_642at1"
+          },
+          {
+            "id": "ev_mtsgw2tu_dq7np9",
+            "at": "2026-09-08T09:28:41.298Z",
             "type": "session_end",
             "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67",
+            "path": "/",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 30000
+            }
+          },
+          {
+            "id": "ev_mtsguf76_z84pww",
+            "at": "2026-09-08T09:27:24.018Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mtsgqta8_642at1"
+          },
+          {
+            "id": "ev_mtsgub1u_i4rsdx",
+            "at": "2026-09-08T09:27:18.642Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsgreua_afu825",
+            "at": "2026-09-08T09:25:03.586Z",
+            "type": "time_slice",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_mtsgr39b_b8emfp",
+            "at": "2026-09-08T09:24:48.575Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtsgqta8_642at1"
+          },
+          {
+            "id": "ev_mtsgqtal_oe0b50",
+            "at": "2026-09-08T09:24:35.661Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mtsgqta8_642at1"
+          },
+          {
+            "id": "ev_mtsgqta9_67el6c",
+            "at": "2026-09-08T09:24:35.649Z",
+            "type": "login",
+            "category": "other",
+            "path": "/",
+            "sessionId": "sess_mtsgqta8_642at1",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_mtotkcon_hq5dft",
+            "at": "2026-09-05T20:12:24.503Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/employers",
+            "sessionId": "sess_mtotk7ta_n9bvbj",
             "meta": {
               "durationMs": 0
             }
           },
           {
-            "id": "ev_mtbdoacz_p6966c",
-            "at": "2026-08-27T10:26:33.971Z",
+            "id": "ev_mtotk7to_va2b6y",
+            "at": "2026-09-05T20:12:18.204Z",
             "type": "page_visit",
             "category": "other",
-            "path": "/privacypolicy",
-            "sessionId": "sess_mtbdo46l_x39h67"
+            "path": "/employers",
+            "sessionId": "sess_mtotk7ta_n9bvbj"
           },
           {
-            "id": "ev_mtbdo46r_dvhy9l",
-            "at": "2026-08-27T10:26:25.971Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mtbdo46l_x39h67"
-          },
-          {
-            "id": "ev_mtbdo46l_ys20ic",
-            "at": "2026-08-27T10:26:25.965Z",
+            "id": "ev_mtotk7ta_mhjyau",
+            "at": "2026-09-05T20:12:18.190Z",
             "type": "login",
             "category": "other",
-            "path": "/",
-            "sessionId": "sess_mtbdo46l_x39h67",
+            "path": "/employers",
+            "sessionId": "sess_mtotk7ta_n9bvbj",
             "meta": {
               "deviceType": "desktop",
               "browser": "Chrome",
@@ -1372,451 +2142,14 @@
             }
           },
           {
-            "id": "ev_mtbdo46j_zgp46e",
-            "at": "2026-08-27T10:26:25.963Z",
-            "type": "session_end",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mtacgmnc_k6f8rl",
-            "meta": {
-              "durationMs": 62495119
-            }
-          },
-          {
-            "id": "ev_mtacgmp6_aplus8",
-            "at": "2026-08-26T17:04:50.922Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mtacgmnc_k6f8rl"
-          },
-          {
-            "id": "ev_mtacgmne_h3qzdr",
-            "at": "2026-08-26T17:04:50.858Z",
-            "type": "login",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mtacgmnc_k6f8rl",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_mtacgmn5_97vouy",
-            "at": "2026-08-26T17:04:50.849Z",
-            "type": "session_end",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt9ry0qj_cndmdj",
-            "meta": {
-              "durationMs": 34460513
-            }
-          },
-          {
-            "id": "ev_mt9ry0ql_g122b1",
-            "at": "2026-08-26T07:30:30.333Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt9ry0qj_cndmdj"
-          },
-          {
-            "id": "ev_mt9ry0qj_d2zdbw",
-            "at": "2026-08-26T07:30:30.331Z",
-            "type": "login",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt9ry0qj_cndmdj",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_mt9ry0qi_wackgw",
-            "at": "2026-08-26T07:30:30.330Z",
-            "type": "session_end",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt9olevl_8u7k6c",
-            "meta": {
-              "durationMs": 5627049
-            }
-          },
-          {
-            "id": "ev_mt9olevq_brddwj",
-            "at": "2026-08-26T05:56:43.286Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt9olevl_8u7k6c"
-          },
-          {
-            "id": "ev_mt9olevl_chkn1n",
-            "at": "2026-08-26T05:56:43.281Z",
-            "type": "login",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt9olevl_8u7k6c",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_mt8i9ui7_ejejjk",
-            "at": "2026-08-25T10:11:59.791Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt8h857w_4zw0j9"
-          },
-          {
-            "id": "ev_mt8hh8p3_j82se2",
-            "at": "2026-08-25T09:49:45.159Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt8h857w_4zw0j9"
-          },
-          {
-            "id": "ev_mt8hfgza_fymcn4",
-            "at": "2026-08-25T09:48:22.582Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt8h857w_4zw0j9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt8he6o8_hr28st",
-            "at": "2026-08-25T09:47:22.568Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt8h857w_4zw0j9"
-          },
-          {
-            "id": "ev_mt8he4ag_tul7qq",
-            "at": "2026-08-25T09:47:19.480Z",
+            "id": "ev_mtog26nb_s7o1gt",
+            "at": "2026-09-05T13:54:21.863Z",
             "type": "session_end",
             "category": "other",
             "path": "/employers",
-            "sessionId": "sess_mt8h857w_4zw0j9",
+            "sessionId": "sess_mtofplqa_71afer",
             "meta": {
-              "durationMs": 60000
-            }
-          },
-          {
-            "id": "ev_mt8he04o_cku81i",
-            "at": "2026-08-25T09:47:14.088Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt8h857w_4zw0j9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt8h8gt9_a4ycm4",
-            "at": "2026-08-25T09:42:55.773Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt8h857w_4zw0j9",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt8h8580_phhnj3",
-            "at": "2026-08-25T09:42:40.752Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt8h857w_4zw0j9"
-          },
-          {
-            "id": "ev_mt8h857x_nyxu9p",
-            "at": "2026-08-25T09:42:40.749Z",
-            "type": "login",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt8h857w_4zw0j9",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_mt8b63vs_dmlp1w",
-            "at": "2026-08-25T06:53:08.008Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt8b4tl4_1fadlv",
-            "at": "2026-08-25T06:52:08.008Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt8b4i0a_26lyn5",
-            "at": "2026-08-25T06:51:53.002Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8b1l3m_38i1oa",
-            "at": "2026-08-25T06:49:37.042Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt8b0mdc_o7h7u4",
-            "at": "2026-08-25T06:48:52.032Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8azo42_3v7yfz",
-            "at": "2026-08-25T06:48:07.641Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8az9oa_wbhvp9",
-            "at": "2026-08-25T06:47:48.922Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8ayw04_cgtiw4",
-            "at": "2026-08-25T06:47:31.204Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8auv8g_4bg9ef",
-            "at": "2026-08-25T06:44:23.584Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt8asgjl_7siac0",
-            "at": "2026-08-25T06:42:31.233Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8arqel_ho9bt7",
-            "at": "2026-08-25T06:41:57.357Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8ardvc_lfjojg",
-            "at": "2026-08-25T06:41:41.112Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8aqkdp_v8b5wu",
-            "at": "2026-08-25T06:41:02.893Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8aq7c5_yhd019",
-            "at": "2026-08-25T06:40:45.989Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8alqf6_0se2e0",
-            "at": "2026-08-25T06:37:17.442Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt8ah7sw_eoxk8e",
-            "at": "2026-08-25T06:33:46.688Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8aed5e_w6mbs8",
-            "at": "2026-08-25T06:31:33.650Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt8a8ybr_poh898",
-            "at": "2026-08-25T06:27:21.159Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt8a5om6_n6f3no",
-            "at": "2026-08-25T06:24:48.606Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8a5cfj_z9eqed",
-            "at": "2026-08-25T06:24:32.815Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt8a23gc_6hgadu",
-            "at": "2026-08-25T06:22:01.212Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt89zu5n_72pdn6",
-            "at": "2026-08-25T06:20:15.851Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt89zk7f_qw7h9l",
-            "at": "2026-08-25T06:20:02.955Z",
-            "type": "session_end",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz",
-            "meta": {
-              "durationMs": 30000
-            }
-          },
-          {
-            "id": "ev_mt89w28t_se1osa",
-            "at": "2026-08-25T06:17:19.709Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt89vlqj_tihrll",
-            "at": "2026-08-25T06:16:58.315Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt89va5b_c233yz",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mt89va5h_tfec2j",
-            "at": "2026-08-25T06:16:43.301Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt89va5b_c233yz"
-          },
-          {
-            "id": "ev_mt89va5b_dikv8p",
-            "at": "2026-08-25T06:16:43.295Z",
-            "type": "login",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mt89va5b_c233yz",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
+              "durationMs": 0
             }
           }
         ],
@@ -1824,28 +2157,16 @@
         "topRoles": [],
         "hqTriggers": [],
         "profileSnapshot": {
-          "skillsCount": 8,
-          "profileCompleteness": 73,
-          "cvScore": 83,
-          "marketFit": 0,
-          "applicationsTotal": 1,
+          "skillsCount": 0,
+          "profileCompleteness": null,
+          "cvScore": null,
+          "marketFit": null,
+          "applicationsTotal": 0,
           "rejectionsTotal": 0,
           "postInterviewRejections": 0,
-          "missingSectionsCount": 11,
-          "missingSectionKeys": [
-            "work-experience",
-            "internships",
-            "gap-explanation",
-            "education",
-            "academic-achievements",
-            "competitive-exams",
-            "projects",
-            "certifications",
-            "accomplishments",
-            "visa-work-authorization",
-            "vaccination"
-          ],
-          "updatedAt": "2026-08-31T11:52:01.251Z"
+          "missingSectionsCount": 0,
+          "missingSectionKeys": [],
+          "updatedAt": "2026-09-08T16:32:28.405Z"
         },
         "behaviourSignals": {
           "userId": "b1c869d84e75048c5c61c5e3",
@@ -1859,31 +2180,37 @@
             "events",
             "community"
           ],
-          "insightIds": [],
+          "insightIds": [
+            "browser_not_applier"
+          ],
           "jobCardClicks7d": 0,
           "applies7d": 0,
-          "activeMs7d": 645000,
+          "activeMs7d": 5910000,
           "activeMsByCategory7d": {
-            "other": 645000
+            "other": 3765000,
+            "dashboard": 165000,
+            "jobs": 1980000
           },
           "pageVisitsByCategory7d": {
-            "other": 46
+            "other": 77,
+            "dashboard": 2,
+            "jobs": 3
           },
-          "skillsCount": 8,
+          "skillsCount": 0,
           "rejectionsTotal": 0,
-          "cvScore": 83,
-          "marketFit": 0,
-          "missingSectionsCount": 11,
+          "cvScore": null,
+          "marketFit": null,
+          "missingSectionsCount": 0,
           "topCompanies": [],
           "topRoles": [],
           "hqTriggers": [],
           "preferSlotIds": [
+            "jobs",
             "course",
             "events",
             "community"
           ],
           "deprioritizeSlotIds": [
-            "jobs",
             "career_path",
             "quizzes"
           ],
@@ -1899,163 +2226,163 @@
       },
       "suggestionMetrics": {
         "userId": "b1c869d84e75048c5c61c5e3",
-        "updatedAt": "2026-08-31T11:51:12.586Z",
+        "updatedAt": "2026-09-08T16:34:02.183Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
-        "suggestionsPushed": 28,
+        "suggestionsPushed": 54,
         "suggestionsClicked": 0,
         "suggestionsPurchased": 0,
         "salesFollowUpScore": 10,
         "salesFollowUpReady": false,
         "byScenario": {
-          "profile_match": 27,
-          "engagement": 1
+          "profile_match": 47,
+          "engagement": 7
         },
         "recentSuggestions": [
           {
-            "id": "sug_mt5ist67_l9uavz",
-            "dedupeKey": "engage:ai_cv",
-            "scenario": "profile_match",
-            "kind": "ai_cv",
-            "title": "Update your CV in AI editor",
-            "actionUrl": "/lms/resume-builder/editor",
-            "pushedAt": "2026-08-23T08:03:25.999Z"
-          },
-          {
-            "id": "sug_mt6yxd6l_zkvsy5",
-            "dedupeKey": "engage:ai_cv",
-            "scenario": "profile_match",
-            "kind": "ai_cv",
-            "title": "Update your CV in AI editor",
-            "actionUrl": "/lms/resume-builder/editor",
-            "pushedAt": "2026-08-24T08:22:38.589Z"
-          },
-          {
-            "id": "sug_mt714m8j_peb1uh",
-            "dedupeKey": "engage:ai_cv",
-            "scenario": "profile_match",
-            "kind": "ai_cv",
-            "title": "Update your CV in AI editor",
-            "actionUrl": "/lms/resume-builder/editor",
-            "pushedAt": "2026-08-24T09:24:16.147Z"
-          },
-          {
-            "id": "sug_mt73gy18_0fd6ik",
-            "dedupeKey": "engage:ai_cv",
-            "scenario": "profile_match",
-            "kind": "ai_cv",
-            "title": "Update your CV in AI editor",
-            "actionUrl": "/lms/resume-builder/editor",
-            "pushedAt": "2026-08-24T10:29:50.540Z"
-          },
-          {
-            "id": "sug_mt76g1gl_5fhs6u",
-            "dedupeKey": "engage:ai_cv",
-            "scenario": "profile_match",
-            "kind": "ai_cv",
-            "title": "Update your CV in AI editor",
-            "actionUrl": "/lms/resume-builder/editor",
-            "pushedAt": "2026-08-24T11:53:07.173Z"
-          },
-          {
-            "id": "sug_mt77j0yi_29mfs5",
-            "dedupeKey": "engage:ai_cv",
-            "scenario": "profile_match",
-            "kind": "ai_cv",
-            "title": "Update your CV in AI editor",
-            "actionUrl": "/lms/resume-builder/editor",
-            "pushedAt": "2026-08-24T12:23:26.106Z"
-          },
-          {
-            "id": "sug_mt89vl04_ez9re8",
-            "dedupeKey": "engage:ai_cv",
-            "scenario": "profile_match",
-            "kind": "ai_cv",
-            "title": "Update your CV in AI editor",
-            "actionUrl": "/lms/resume-builder/editor",
-            "pushedAt": "2026-08-25T06:16:57.364Z"
-          },
-          {
-            "id": "sug_mt8ayhnc_d90wbj",
-            "dedupeKey": "engage:ai_cv",
-            "scenario": "profile_match",
-            "kind": "ai_cv",
-            "title": "Update your CV in AI editor",
-            "actionUrl": "/lms/resume-builder/editor",
-            "pushedAt": "2026-08-25T06:47:12.600Z"
-          },
-          {
-            "id": "sug_mt8h8837_m46v84",
-            "dedupeKey": "engage:ai_cv",
-            "scenario": "profile_match",
-            "kind": "ai_cv",
-            "title": "Update your CV in AI editor",
-            "actionUrl": "/lms/resume-builder/editor",
-            "pushedAt": "2026-08-25T09:42:44.467Z"
-          },
-          {
-            "id": "sug_mt8ibt58_w4jr41",
-            "dedupeKey": "engage:ai_cv",
-            "scenario": "profile_match",
-            "kind": "ai_cv",
-            "title": "Update your CV in AI editor",
-            "actionUrl": "/lms/resume-builder/editor",
-            "pushedAt": "2026-08-25T10:13:31.340Z"
-          },
-          {
-            "id": "sug_mt9olpw4_hqaqu0",
+            "id": "sug_mto6a5nd_ijg9sp",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Career Narrative Lab",
             "actionUrl": "/lms/courses/c6",
-            "pushedAt": "2026-08-26T05:56:57.556Z"
+            "pushedAt": "2026-09-05T09:20:37.657Z"
           },
           {
-            "id": "sug_mt9rycxw_14slj1",
+            "id": "sug_mto7fght_7sc9xq",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Career Narrative Lab",
             "actionUrl": "/lms/courses/c6",
-            "pushedAt": "2026-08-26T07:30:46.148Z"
+            "pushedAt": "2026-09-05T09:52:44.609Z"
           },
           {
-            "id": "sug_mtacgyqc_gaqvs0",
+            "id": "sug_mto8nnuq_4ppedn",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Career Narrative Lab",
             "actionUrl": "/lms/courses/c6",
-            "pushedAt": "2026-08-26T17:05:06.517Z"
+            "pushedAt": "2026-09-05T10:27:07.010Z"
           },
           {
-            "id": "sug_mtbdoedy_svb1sf",
+            "id": "sug_mto9tptk_iz47br",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Career Narrative Lab",
             "actionUrl": "/lms/courses/c6",
-            "pushedAt": "2026-08-27T10:26:39.190Z"
+            "pushedAt": "2026-09-05T10:59:49.112Z"
           },
           {
-            "id": "sug_mth558ti_q0xoic",
+            "id": "sug_mtoaxji5_cwrokm",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Frontend Interview Readiness",
             "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-31T11:14:25.638Z"
+            "pushedAt": "2026-09-05T11:30:47.165Z"
           },
           {
-            "id": "sug_mth68l0e_hahdzd",
+            "id": "sug_mtoc0pjl_txmp3k",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-09-05T12:01:14.577Z"
+          },
+          {
+            "id": "sug_mtod4omg_71a8ks",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-09-05T12:32:19.624Z"
+          },
+          {
+            "id": "sug_mtoe8ejj_p3jjoc",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-09-05T13:03:12.799Z"
+          },
+          {
+            "id": "sug_mtofpua2_kijci8",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-09-05T13:44:45.962Z"
+          },
+          {
+            "id": "sug_mtsgqv4e_wuhrpn",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Career Narrative Lab",
+            "actionUrl": "/lms/courses/c6",
+            "pushedAt": "2026-09-08T09:24:38.030Z"
+          },
+          {
+            "id": "sug_mtshu5sd_wn7qwt",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Frontend Interview Readiness",
             "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-08-31T11:45:01.023Z"
+            "pushedAt": "2026-09-08T09:55:11.437Z"
+          },
+          {
+            "id": "sug_mtsiwsso_jip9wn",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-09-08T10:25:14.184Z"
+          },
+          {
+            "id": "sug_mtssoduk_99ixjn",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-09-08T14:58:37.724Z"
+          },
+          {
+            "id": "sug_mtstratd_1itu1x",
+            "dedupeKey": "engage:behaviour:hq_ready_but_not_applying",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-09-08T15:28:53.377Z"
+          },
+          {
+            "id": "sug_mtsuwe1w_0trejl",
+            "dedupeKey": "engage:profile",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish your profile",
+            "actionUrl": "/profile?open=work-experience&tab=work-experience",
+            "pushedAt": "2026-09-08T16:00:50.468Z"
+          },
+          {
+            "id": "sug_mtsw12hj_8nvpr8",
+            "dedupeKey": "engage:behaviour:hq_ready_but_not_applying",
+            "scenario": "engagement",
+            "kind": "sales_followup",
+            "title": "Prepare before you apply",
+            "actionUrl": "/services/mock-interview",
+            "pushedAt": "2026-09-08T16:32:28.375Z"
           }
         ]
       },
@@ -2074,6 +2401,12 @@
           "updatedAt": "2026-08-19T08:25:48.938Z"
         },
         {
+          "key": "job_search",
+          "label": "Job search",
+          "score": 18,
+          "updatedAt": "2026-09-08T15:58:47.133Z"
+        },
+        {
           "key": "profile",
           "label": "profile",
           "score": 12,
@@ -2087,6 +2420,15 @@
         }
       ],
       "personalizedRecs": [
+        {
+          "id": "rec_job_search",
+          "interestKey": "job_search",
+          "interestScore": 18,
+          "title": "Jobs that match your focus",
+          "text": "Strong Job search signal (18). Open 2–3 matching roles and apply to one.",
+          "actionUrl": "/explore-jobs",
+          "priority": 83
+        },
         {
           "id": "rec_learning",
           "interestKey": "learning",
@@ -2126,53 +2468,71 @@
       ],
       "sessionEngagement": {
         "sessionCount": 12,
-        "activeCount": 0,
-        "totalDurationMs": 112123641,
-        "avgDurationMs": 9343637,
-        "medianDurationMs": 262500,
+        "activeCount": 1,
+        "totalDurationMs": 12983250,
+        "avgDurationMs": 1081938,
+        "medianDurationMs": 285000,
         "uniqueIps": 0,
         "uniqueDevices": 1,
         "locations": [],
         "byHour": [
           {
-            "hour": 22,
-            "label": "10:00 PM",
+            "hour": 12,
+            "label": "12:00 PM",
             "sessions": 1,
-            "totalDurationMs": 62495119
+            "totalDurationMs": 4673633
           },
           {
             "hour": 13,
             "label": "1:00 PM",
-            "sessions": 3,
-            "totalDurationMs": 38198711
-          },
-          {
-            "hour": 11,
-            "label": "11:00 AM",
-            "sessions": 2,
-            "totalDurationMs": 5987049
-          },
-          {
-            "hour": 15,
-            "label": "3:00 PM",
-            "sessions": 3,
-            "totalDurationMs": 5217762
-          },
-          {
-            "hour": 17,
-            "label": "5:00 PM",
             "sessions": 1,
-            "totalDurationMs": 165000
+            "totalDurationMs": 2474617
           },
           {
-            "hour": 16,
-            "label": "4:00 PM",
+            "hour": 20,
+            "label": "8:00 PM",
             "sessions": 1,
-            "totalDurationMs": 60000
+            "totalDurationMs": 2160000
           },
           {
             "hour": 14,
             "label": "2:00 PM",
+            "sessions": 3,
+            "totalDurationMs": 2040000
+          },
+          {
+            "hour": 11,
+            "label": "11:00 AM",
+            "sessions": 1,
+            "totalDurationMs": 1125000
+          },
+          {
+            "hour": 15,
+            "label": "3:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 450000
+          },
+          {
+            "hour": 18,
+            "label": "6:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 45000
+          },
+          {
+            "hour": 22,
+            "label": "10:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 15000
+          },
+          {
+            "hour": 1,
+            "label": "1:00 AM",
+            "sessions": 1,
+            "totalDurationMs": 0
+          },
+          {
+            "hour": 19,
+            "label": "7:00 PM",
             "sessions": 1,
             "totalDurationMs": 0
           }
@@ -2182,94 +2542,2443 @@
             "weekday": 3,
             "label": "Wed",
             "sessions": 3,
-            "totalDurationMs": 102582681
-          },
-          {
-            "weekday": 1,
-            "label": "Mon",
-            "sessions": 5,
-            "totalDurationMs": 8880960
+            "totalDurationMs": 7268250
           },
           {
             "weekday": 2,
             "label": "Tue",
-            "sessions": 2,
-            "totalDurationMs": 450000
+            "sessions": 3,
+            "totalDurationMs": 4080000
           },
           {
-            "weekday": 4,
-            "label": "Thu",
-            "sessions": 1,
-            "totalDurationMs": 135000
+            "weekday": 6,
+            "label": "Sat",
+            "sessions": 5,
+            "totalDurationMs": 1635000
           },
           {
             "weekday": 0,
             "label": "Sun",
             "sessions": 1,
-            "totalDurationMs": 75000
+            "totalDurationMs": 0
           }
         ],
         "alertTiming": {
           "bestHours": [
-            22,
+            12,
             13,
-            11
+            20
           ],
           "bestHourLabels": [
-            "10:00 PM",
+            "12:00 PM",
             "1:00 PM",
-            "11:00 AM"
+            "8:00 PM"
           ],
           "bestWeekdays": [
             "Wed",
-            "Mon"
+            "Tue"
           ],
-          "bestWindowLabel": "Wed / Mon · 10:00 PM–1:00 PM",
+          "bestWindowLabel": "Wed / Tue · 12:00 PM–1:00 PM",
           "avoidHours": [
-            14,
-            16,
-            17
+            1,
+            19,
+            22
           ],
           "timezone": null,
           "confidence": "high",
-          "reason": "Most active around 10:00 PM and 1:00 PM local time · avg session 156 min",
+          "reason": "Most active around 12:00 PM and 1:00 PM local time · avg session 18 min",
           "sampleSessions": 12,
-          "avgDurationMs": 9343637,
-          "medianDurationMs": 262500
+          "avgDurationMs": 1081938,
+          "medianDurationMs": 285000
         }
       },
       "alertTiming": {
         "bestHours": [
-          22,
+          12,
           13,
-          11
+          20
         ],
         "bestHourLabels": [
-          "10:00 PM",
+          "12:00 PM",
           "1:00 PM",
-          "11:00 AM"
+          "8:00 PM"
         ],
         "bestWeekdays": [
           "Wed",
-          "Mon"
+          "Tue"
         ],
-        "bestWindowLabel": "Wed / Mon · 10:00 PM–1:00 PM",
+        "bestWindowLabel": "Wed / Tue · 12:00 PM–1:00 PM",
         "avoidHours": [
-          14,
-          16,
-          17
+          1,
+          19,
+          22
         ],
         "timezone": null,
         "confidence": "high",
-        "reason": "Most active around 10:00 PM and 1:00 PM local time · avg session 156 min",
+        "reason": "Most active around 12:00 PM and 1:00 PM local time · avg session 18 min",
         "sampleSessions": 12,
-        "avgDurationMs": 9343637,
-        "medianDurationMs": 262500
+        "avgDurationMs": 1081938,
+        "medianDurationMs": 285000
       },
       "locations": []
     }
   },
   "history": [
+    {
+      "id": "hist_mtsw120i_dmru",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T16:32:27.704Z",
+      "snapshot": {
+        "logins": 12,
+        "visits": 82,
+        "applies": 0,
+        "activeMs": 5895000,
+        "jobCardClicks": 0,
+        "triggerCount": 2,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsv717e_e556",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T16:09:06.881Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 81,
+        "applies": 0,
+        "activeMs": 5895000,
+        "jobCardClicks": 0,
+        "triggerCount": 2,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsuybdf_3ndc",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T16:02:20.085Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 81,
+        "applies": 0,
+        "activeMs": 5895000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "browser_not_applier"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsuqs43_m3gy",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T15:56:28.360Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 81,
+        "applies": 0,
+        "activeMs": 5895000,
+        "jobCardClicks": 0,
+        "triggerCount": 2,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsujs0e_fo35",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T15:51:01.996Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 80,
+        "applies": 0,
+        "activeMs": 5730000,
+        "jobCardClicks": 0,
+        "triggerCount": 2,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsudcee_qfkb",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T15:46:01.823Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 80,
+        "applies": 0,
+        "activeMs": 5430000,
+        "jobCardClicks": 0,
+        "triggerCount": 2,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsu6lgo_qbq9",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T15:40:46.971Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 80,
+        "applies": 0,
+        "activeMs": 5115000,
+        "jobCardClicks": 0,
+        "triggerCount": 2,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsu05xg_9kaj",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T15:35:46.904Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 80,
+        "applies": 0,
+        "activeMs": 4815000,
+        "jobCardClicks": 0,
+        "triggerCount": 2,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsttey9_sh9x",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T15:30:32.001Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 80,
+        "applies": 0,
+        "activeMs": 4500000,
+        "jobCardClicks": 0,
+        "triggerCount": 2,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtstmz7n_zy3s",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T15:25:31.690Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 80,
+        "applies": 0,
+        "activeMs": 4200000,
+        "jobCardClicks": 0,
+        "triggerCount": 2,
+        "insightIds": [
+          "skills_no_apply",
+          "browser_not_applier"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtstgee8_oyqu",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T15:20:24.771Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 79,
+        "applies": 0,
+        "activeMs": 3915000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtst99fk_x7l7",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T15:14:51.741Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 79,
+        "applies": 0,
+        "activeMs": 3915000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtst1pti_1i9f",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T15:08:59.723Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 79,
+        "applies": 0,
+        "activeMs": 3915000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtssv704_w180",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T15:03:55.398Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 77,
+        "applies": 0,
+        "activeMs": 3915000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtssoeq3_cqgu",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T14:58:38.705Z",
+      "snapshot": {
+        "logins": 11,
+        "visits": 72,
+        "applies": 0,
+        "activeMs": 3735000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsjlarx_3y2j",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T10:44:17.207Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 71,
+        "applies": 0,
+        "activeMs": 3735000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsjeuh6_5scp",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T10:39:16.146Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 71,
+        "applies": 0,
+        "activeMs": 3735000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsj7rvs_h83i",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T10:33:46.196Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 71,
+        "applies": 0,
+        "activeMs": 3735000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsj17d2_fpnn",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T10:28:39.670Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 3690000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsiuhgr_935a",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T10:23:26.149Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 3645000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsinpcr_dnn2",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T10:18:09.798Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 3570000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsigzcr_4ell",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T10:12:56.153Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 3285000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsiajm1_flru",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T10:07:55.820Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 69,
+        "applies": 0,
+        "activeMs": 3105000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsi3stm_u0ov",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T10:02:41.167Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 68,
+        "applies": 0,
+        "activeMs": 2820000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtshw29b_i5la",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T09:56:40.153Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 68,
+        "applies": 0,
+        "activeMs": 2790000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtshowl7_ym8v",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T09:51:06.091Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 67,
+        "applies": 0,
+        "activeMs": 2745000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtshhvh5_hzn0",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T09:45:38.183Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 65,
+        "applies": 0,
+        "activeMs": 2640000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtshbfzo_4t36",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T09:40:38.183Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 65,
+        "applies": 0,
+        "activeMs": 2340000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsh4oxy_s9us",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T09:35:23.185Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 65,
+        "applies": 0,
+        "activeMs": 2025000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsgy7yh_9ez9",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T09:30:21.204Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 65,
+        "applies": 0,
+        "activeMs": 1860000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtsgqx8h_yk94",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-08T09:24:38.264Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 61,
+        "applies": 0,
+        "activeMs": 1830000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 12:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtotkc5q_jwjj",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T20:12:23.665Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 72,
+        "applies": 0,
+        "activeMs": 1890000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–12:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtofxnqy_so3g",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T13:50:47.736Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 71,
+        "applies": 0,
+        "activeMs": 1890000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtofppw4_kirz",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T13:44:39.592Z",
+      "snapshot": {
+        "logins": 9,
+        "visits": 71,
+        "applies": 0,
+        "activeMs": 1890000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtoex1ff_kv81",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T13:22:21.532Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 1890000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtoeqbmw_6oe5",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T13:17:08.528Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 1890000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtoeisld_d4id",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T13:11:17.521Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 1875000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtoeb5yl_hca3",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T13:05:19.060Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 1875000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtoe4ohr_zebt",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T13:00:18.540Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 1860000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtodx1tg_q9p6",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T12:54:21.587Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 1860000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtodphmt_qhra",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T12:48:29.554Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 1860000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtodilme_63z3",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T12:43:08.219Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 1860000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtodbfvw_929j",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T12:37:34.285Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 70,
+        "applies": 0,
+        "activeMs": 1860000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtod4k92_4ve9",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T12:32:13.904Z",
+      "snapshot": {
+        "logins": 8,
+        "visits": 69,
+        "applies": 0,
+        "activeMs": 1845000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtoc0rnl_9wri",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T12:01:16.955Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 68,
+        "applies": 0,
+        "activeMs": 1845000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtobt3fp_e8e3",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T11:55:18.530Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 68,
+        "applies": 0,
+        "activeMs": 1845000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtoblibe_h6wq",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T11:49:25.326Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 28,
+        "applies": 0,
+        "activeMs": 630000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtobetad_s64m",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T11:44:11.544Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 23,
+        "applies": 0,
+        "activeMs": 630000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtob882n_0jh8",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T11:39:05.538Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 61,
+        "applies": 0,
+        "activeMs": 1770000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtob1frb_o6cu",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T11:33:48.666Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 55,
+        "applies": 0,
+        "activeMs": 1770000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtoauwje_phxs",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T11:28:44.059Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 51,
+        "applies": 0,
+        "activeMs": 1725000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtoaobaz_zuoy",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T11:23:36.607Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 45,
+        "applies": 0,
+        "activeMs": 1680000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtoahvtk_i3ap",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T11:18:36.545Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 44,
+        "applies": 0,
+        "activeMs": 1605000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtoaasf5_5jnu",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T11:13:05.576Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 43,
+        "applies": 0,
+        "activeMs": 1560000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtoa396v_nnsu",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T11:07:14.094Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 40,
+        "applies": 0,
+        "activeMs": 1560000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto9vq21_0r1k",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T11:01:22.536Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 40,
+        "applies": 0,
+        "activeMs": 1470000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto9p0bb_alwg",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T10:56:09.198Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 21,
+        "applies": 0,
+        "activeMs": 630000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto9hknq_z0zs",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T10:50:22.525Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 39,
+        "applies": 0,
+        "activeMs": 1410000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto9alyr_2d7t",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T10:44:57.617Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 21,
+        "applies": 0,
+        "activeMs": 600000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto93kxd_7snk",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T10:39:29.534Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 21,
+        "applies": 0,
+        "activeMs": 480000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto8wks5_jr2g",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T10:34:02.537Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 480000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto8po54_okx7",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T10:28:40.508Z",
+      "snapshot": {
+        "logins": 7,
+        "visits": 36,
+        "applies": 0,
+        "activeMs": 1395000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto8j2t5_suvx",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T10:23:32.806Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 450000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto8cdoa_cipx",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T10:18:20.558Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 435000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto85xpn_4fgj",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T10:13:19.539Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 435000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto7ybeu_y2mu",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T10:07:23.516Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 435000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto7rvxd_kqer",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T10:02:21.637Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 435000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto7lbi8_pyzn",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T09:57:16.984Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 435000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto7ek1t_yayc",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T09:52:02.514Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 435000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto7752b_nk31",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T09:46:16.518Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 420000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto6zg3l_04hg",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T09:40:17.527Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 420000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto6rraz_5tub",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T09:34:17.545Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 420000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto6khvh_typc",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T09:28:39.553Z",
+      "snapshot": {
+        "logins": 6,
+        "visits": 34,
+        "applies": 0,
+        "activeMs": 1380000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto6dwu0_1z2e",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T09:23:32.780Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 420000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto674rv_zcnr",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T09:18:16.531Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 405000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto5zf08_7t5j",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T09:12:16.538Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 405000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto5rp7o_7h7f",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T09:06:16.531Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 405000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto5jzf8_3p4r",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T09:00:16.508Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 405000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto5c9o9_4qv9",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T08:54:16.551Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 405000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto54jwg_fx8v",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T08:48:16.548Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 405000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto4wu3i_hsfn",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T08:42:16.519Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 405000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto4p4bb_iu9d",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T08:36:16.503Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 405000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto4hej9_o8gm",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T08:30:16.505Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 405000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto4aqkv_hvlv",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T08:25:05.521Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 33,
+        "applies": 0,
+        "activeMs": 1380000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto44axb_aby8",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T08:20:03.601Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 405000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto3wyhs_jyrj",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T08:14:22.572Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 32,
+        "applies": 0,
+        "activeMs": 1365000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto3p7wb_f6sx",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T08:08:21.509Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 18,
+        "applies": 0,
+        "activeMs": 375000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto3hi9n_qrvr",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T08:02:21.545Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 18,
+        "applies": 0,
+        "activeMs": 375000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto39v5j_ny7m",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T07:56:24.982Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 30,
+        "applies": 0,
+        "activeMs": 1185000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto32zsx_prcz",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T07:51:04.539Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 16,
+        "applies": 0,
+        "activeMs": 375000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto2vchv_s6pe",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T07:45:07.034Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 13,
+        "applies": 0,
+        "activeMs": 375000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto2nnpx_3775",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T07:39:08.579Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 13,
+        "applies": 0,
+        "activeMs": 375000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto2fqsz_uxzb",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T07:32:59.494Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 26,
+        "applies": 0,
+        "activeMs": 1035000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto29785_ql3r",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T07:27:54.506Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 12,
+        "applies": 0,
+        "activeMs": 345000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mto227ek_8wt1",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T07:22:27.980Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 735000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Sat · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto1utg7_i74m",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T07:16:43.514Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 23,
+        "applies": 0,
+        "activeMs": 705000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto1mus4_ebgh",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T07:10:32.001Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 23,
+        "applies": 0,
+        "activeMs": 645000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto1gdzh_yygo",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T07:05:30.288Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 22,
+        "applies": 0,
+        "activeMs": 360000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto19o6e_l3uj",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T07:00:16.744Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 21,
+        "applies": 0,
+        "activeMs": 345000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto12bbg_xq4n",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T06:54:33.525Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 20,
+        "applies": 0,
+        "activeMs": 300000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Tue · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto0uxk5_za1c",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T06:48:49.180Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 19,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active",
+          "short_sessions"
+        ],
+        "alertWindow": "Wed / Tue · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto0nlz1_z8zq",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T06:43:07.618Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 18,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active",
+          "short_sessions"
+        ],
+        "alertWindow": "Wed / Tue · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto0h5qa_dxdl",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T06:38:06.617Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 18,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active",
+          "short_sessions"
+        ],
+        "alertWindow": "Wed / Tue · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto0aq8d_hqfq",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T06:33:06.613Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 18,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active",
+          "short_sessions"
+        ],
+        "alertWindow": "Wed / Tue · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mto04aqz_gh8r",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T06:28:06.596Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 18,
+        "applies": 0,
+        "activeMs": 255000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active",
+          "short_sessions"
+        ],
+        "alertWindow": "Wed / Tue · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtnzxv8p_zugz",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T06:23:06.575Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 315000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtnzrfqz_j10s",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T06:18:06.565Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 315000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtnzjzsp_jq75",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T06:12:19.265Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 9,
+        "applies": 0,
+        "activeMs": 315000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtnzdic9_6r2e",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-05T06:07:13.619Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 8,
+        "applies": 0,
+        "activeMs": 300000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Sat / Sun · 12:00 AM–1:00 AM",
+        "topLocation": "Pune, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mtjvro58_3zen",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T09:15:13.905Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 27,
+        "applies": 0,
+        "activeMs": 390000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjvk0tl_yukk",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T09:09:16.423Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 27,
+        "applies": 0,
+        "activeMs": 390000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjvc8y4_i2mc",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T09:03:13.386Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 27,
+        "applies": 0,
+        "activeMs": 285000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "short_sessions"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjuq1gy_nhb4",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T08:45:58.571Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 26,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "short_sessions"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjuidg7_l90t",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T08:40:00.765Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 26,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active",
+          "short_sessions"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjtc80s_0xb1",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T08:07:13.976Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjt3c5t_3v5r",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T08:00:19.418Z",
+      "snapshot": {
+        "logins": 4,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 270000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjswszq_yqkp",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T07:55:14.925Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjsp2eq_pfdl",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T07:49:13.912Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjshde7_tcvt",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T07:43:14.905Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjs9nso_pa7c",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T07:37:14.966Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjs1xx1_z4bd",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T07:31:14.885Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjru78g_cx9x",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T07:25:13.856Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjrnrr4_ritf",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T07:20:13.852Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjrg2rs_atq5",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T07:14:14.864Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjr8cz9_59km",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T07:08:14.839Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjr1wr8_yyyd",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T07:03:13.893Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjqvh86_30u1",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T06:58:13.835Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjqojzu_p67x",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T06:52:50.816Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 25,
+        "applies": 0,
+        "activeMs": 240000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjqh1x3_h4j6",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T06:47:00.818Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 24,
+        "applies": 0,
+        "activeMs": 195000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "incomplete_profile_active"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
+    {
+      "id": "hist_mtjq93x3_alqr",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-02T06:40:48.261Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 24,
+        "applies": 0,
+        "activeMs": 195000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed / Mon · 10:00 PM–1:00 PM",
+        "topLocation": null
+      }
+    },
     {
       "id": "hist_mth6chxy_cyrz",
       "userId": "b1c869d84e75048c5c61c5e3",
@@ -14595,5 +17304,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-08-31T11:52:02.604Z"
+  "updatedAt": "2026-09-08T16:34:06.001Z"
 }
