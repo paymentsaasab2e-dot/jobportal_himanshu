@@ -8,10 +8,19 @@ const DIAL_DIGITS_LONGEST_FIRST = (() => {
   return [...unique].sort((a, b) => b.length - a.length);
 })();
 
+function looksLikeE164(raw?: string | null): boolean {
+  const value = String(raw || '').trim();
+  if (!value) return false;
+  if (value.startsWith('+')) return true;
+  // Bare international without +: country code + local (typically 11–15 digits)
+  const digits = value.replace(/\D/g, '');
+  return digits.length >= 11;
+}
+
 /** Strip dial code prefix so the input shows local digits only (e.g. 9321362064, not +919321362064). */
 export function stripDialCodeFromPhone(rawPhone: string, dialCode: string): string {
   if (!rawPhone) return '';
-  const normalizedDial = dialCode.trim();
+  const normalizedDial = dialCode.trim().split(/\s/)[0];
   const dialDigits = normalizedDial.replace(/\D/g, '');
   let value = rawPhone.trim();
 
@@ -21,7 +30,16 @@ export function stripDialCodeFromPhone(rawPhone: string, dialCode: string): stri
 
   let digits = value.replace(/\D/g, '');
   if (dialDigits && digits.startsWith(dialDigits)) {
-    digits = digits.slice(dialDigits.length);
+    // Only strip when this is clearly an international number, not a local
+    // mobile that happens to start with the same digits (e.g. Indian 92… vs +92).
+    const remainder = digits.slice(dialDigits.length);
+    const shouldStrip =
+      rawPhone.trim().startsWith('+') ||
+      digits.length >= dialDigits.length + 7 ||
+      remainder.length >= 8;
+    if (shouldStrip && remainder.length > 0) {
+      digits = remainder;
+    }
   }
 
   return digits;
@@ -29,6 +47,7 @@ export function stripDialCodeFromPhone(rawPhone: string, dialCode: string): stri
 
 /** Infer dial from full E.164 using longest matching country prefix. */
 export function inferDialFromE164(fullNumber?: string | null): string {
+  if (!looksLikeE164(fullNumber)) return '';
   const digits = String(fullNumber || '').replace(/\D/g, '');
   if (!digits) return '';
   for (const dial of DIAL_DIGITS_LONGEST_FIRST) {
@@ -42,6 +61,37 @@ export function inferDialFromE164(fullNumber?: string | null): string {
 export function dialCodeToLabel(dialCode: string): string {
   const match = ALL_COUNTRY_CODES.find((item) => item.dialCode === dialCode);
   return match ? formatPhoneCodeLabel(match) : dialCode;
+}
+
+/**
+ * Normalize pasted/typed phone input to local digits for the selected dial.
+ * Handles full E.164 pastes (+91XXXXXXXXXX) without truncating the country code into local digits.
+ */
+export function toLocalPhoneDigits(
+  rawInput: string,
+  dialCode: string,
+  maxLocalLength?: number,
+): string {
+  const raw = String(rawInput || '').trim();
+  if (!raw) return '';
+
+  const dialDigits = String(dialCode || '').replace(/\D/g, '');
+  const allDigits = raw.replace(/\D/g, '');
+  let local = allDigits;
+
+  if (
+    raw.startsWith('+') ||
+    (dialDigits &&
+      allDigits.startsWith(dialDigits) &&
+      allDigits.length > (maxLocalLength || 10))
+  ) {
+    local = stripDialCodeFromPhone(raw.startsWith('+') ? raw : `+${allDigits}`, dialCode);
+  }
+
+  if (maxLocalLength && maxLocalLength > 0) {
+    return local.slice(0, maxLocalLength);
+  }
+  return local;
 }
 
 /**
@@ -59,15 +109,22 @@ export function resolveSignupPhoneFields(input: {
   const fromWhatsApp = inferDialFromE164(input.whatsappNumber);
   const fromPhone = inferDialFromE164(input.phone);
   const fromCode =
+    input.phoneCode?.trim().split(/\s/)[0] ||
     input.countryCode?.trim().split(/\s/)[0] ||
-    input.phoneCode?.split(' ')[0]?.trim() ||
     '';
 
-  const dialCode = fromWhatsApp || fromPhone || fromCode || '+91';
+  // Prefer stored dial / WhatsApp E.164. Never infer dial from local-only phone digits
+  // (e.g. Indian mobiles starting with 92 were wrongly treated as +92 Pakistan).
+  const dialCode = fromWhatsApp || fromCode || fromPhone || '+91';
 
   let localPhone = '';
   if (input.phone?.trim()) {
-    localPhone = stripDialCodeFromPhone(input.phone, dialCode);
+    const raw = input.phone.trim();
+    if (looksLikeE164(raw)) {
+      localPhone = stripDialCodeFromPhone(raw, dialCode);
+    } else {
+      localPhone = raw.replace(/\D/g, '');
+    }
   }
   if (!localPhone && input.whatsappNumber) {
     localPhone = stripDialCodeFromPhone(input.whatsappNumber, dialCode);

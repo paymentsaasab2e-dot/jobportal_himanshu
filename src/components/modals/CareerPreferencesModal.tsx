@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { API_BASE_URL } from '@/lib/api-base';
 import ProfileDatePicker from '@/components/profile/ProfileDatePicker';
 import ProfileDrawer from '../ui/ProfileDrawer';
@@ -10,6 +10,11 @@ import {
   formatCitySuggestionLabel,
   searchCitySuggestions,
 } from '@/lib/geo-locations';
+import {
+  mergeSalaryFilterCurrencyOptions,
+  normalizeSalaryFilterCurrencyCode,
+  SALARY_FILTER_CURRENCIES,
+} from '@/lib/job-salary-filter';
 
 interface CareerPreferencesModalProps {
   isOpen: boolean;
@@ -86,7 +91,6 @@ const FUNCTIONAL_AREAS_PRESET = FUNCTIONAL_AREAS.filter((a) => a !== 'Other');
 
 const JOB_TYPES = ['Full-time', 'Contract', 'Part-time', 'Freelance', 'Internship'] as const;
 const WORK_MODE_OPTIONS = ['Remote', 'On-site', 'Hybrid'] as const;
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'INR', 'AED', 'CAD', 'AUD', 'SGD', 'JPY', 'CNY'] as const;
 const SALARY_TYPES = ['Annual', 'Monthly', 'Hourly', 'Daily'] as const;
 const RELOCATION_OPTIONS = [
   'Open to Relocate',
@@ -282,6 +286,23 @@ export default function CareerPreferencesModal({
   const [currentLocationHighlight, setCurrentLocationHighlight] = useState(-1);
 
   const [preferredCurrency, setPreferredCurrency] = useState('USD');
+
+  const currencyOptions = useMemo(() => {
+    const extras = [
+      normalizeSalaryFilterCurrencyCode(currentCurrency),
+      normalizeSalaryFilterCurrencyCode(preferredCurrency),
+      normalizeSalaryFilterCurrencyCode(initialData?.currentCurrency),
+      normalizeSalaryFilterCurrencyCode(initialData?.preferredCurrency),
+      normalizeSalaryFilterCurrencyCode(initialData?.salaryCurrency),
+    ].filter(Boolean) as string[];
+    return mergeSalaryFilterCurrencyOptions(SALARY_FILTER_CURRENCIES, extras);
+  }, [
+    currentCurrency,
+    preferredCurrency,
+    initialData?.currentCurrency,
+    initialData?.preferredCurrency,
+    initialData?.salaryCurrency,
+  ]);
   const [preferredSalaryType, setPreferredSalaryType] = useState('');
   const [preferredSalary, setPreferredSalary] = useState('');
   const [preferredBenefits, setPreferredBenefits] = useState<string[]>([]);
@@ -861,11 +882,11 @@ export default function CareerPreferencesModal({
                   onChange={setCurrentRoleValue}
                 />
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <PackageSelectField
+                  <PackageCurrencyField
                     label="Currency"
                     value={currentCurrency}
                     onChange={setCurrentCurrency}
-                    options={CURRENCIES}
+                    options={currencyOptions}
                   />
                   <PackageSelectField
                     label="Salary Type"
@@ -1053,11 +1074,11 @@ export default function CareerPreferencesModal({
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <PackageSelectField
+                  <PackageCurrencyField
                     label="Currency"
                     value={preferredCurrency}
                     onChange={setPreferredCurrency}
-                    options={CURRENCIES}
+                    options={currencyOptions}
                   />
                   <PackageSelectField
                     label="Salary Type"
@@ -1495,6 +1516,126 @@ function PackageTextField({
   );
 }
 
+
+function PackageCurrencyField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [focused, setFocused] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toUpperCase();
+    if (!q) return options;
+    return options.filter((code) => code.includes(q));
+  }, [options, search]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleDown = (event: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setOpen(false);
+        setSearch('');
+      }
+    };
+    document.addEventListener('mousedown', handleDown);
+    return () => document.removeEventListener('mousedown', handleDown);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={rootRef}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => {
+          setOpen((prev) => {
+            const next = !prev;
+            if (next) setSearch('');
+            return next;
+          });
+        }}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        className={`flex w-full appearance-none items-center justify-between px-4 pb-2 pr-10 text-left text-sm text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-100 ${
+          focused || value || open ? 'pt-5' : 'pt-3'
+        }`}
+        style={packageFieldStyle}
+      >
+        <span className={value ? 'font-medium' : 'text-transparent'}>{value || 'USD'}</span>
+      </button>
+      <label
+        className={`pointer-events-none absolute text-slate-500 transition-all duration-200 ${
+          focused || value || open
+            ? 'left-4 -top-2.5 bg-white px-1 text-xs font-medium'
+            : 'left-4 top-1/2 -translate-y-1/2 text-sm'
+        }`}
+        style={focused || value || open ? { color: '#239CD2' } : undefined}
+      >
+        {label}
+      </label>
+      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path
+            d="M3 4.5L6 7.5L9 4.5"
+            stroke="#99A1AF"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      {open ? (
+        <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+          <div className="border-b border-gray-100 p-2">
+            <input
+              type="text"
+              value={search}
+              autoComplete="off"
+              placeholder="Search currency…"
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 w-full rounded-md border border-gray-200 px-2 text-xs text-gray-800 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-100"
+            />
+          </div>
+          <div role="listbox" className="max-h-40 overflow-y-auto overscroll-contain py-1">
+            {filtered.length === 0 ? (
+              <p className="px-3 py-2 text-xs text-gray-500">No matching currencies</p>
+            ) : (
+              filtered.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  role="option"
+                  aria-selected={value === code}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onChange(code);
+                    setOpen(false);
+                    setSearch('');
+                  }}
+                  className={`flex w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${
+                    value === code ? 'bg-sky-50 font-semibold text-sky-700' : 'text-gray-700'
+                  }`}
+                >
+                  {code}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function PackageSelectField({
   label,

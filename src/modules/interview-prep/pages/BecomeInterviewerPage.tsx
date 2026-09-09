@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CheckCircle2, Loader2, Sparkles, Users } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -34,34 +34,12 @@ import {
 import {
   buildInterviewerFormPrefillFromProfile,
   experienceBucketFromYears,
+  INTERVIEWER_FORM_LANGUAGES,
+  INTERVIEWER_FORM_SKILLS,
+  INTERVIEWER_FORM_TYPES,
+  resolveInterviewerChipsFromProfile,
 } from '../lib/prefillInterviewerFormFromProfile';
 
-const SKILLS = [
-  'Frontend Development',
-  'Backend Development',
-  'Full Stack Development',
-  'Mobile Development',
-  'DevOps',
-  'Cloud',
-  'AI / Machine Learning',
-  'Data Science',
-  'UI / UX',
-  'HR Interview',
-  'Behavioral Interview',
-  'DSA',
-  'System Design',
-] as const;
-
-const INTERVIEW_TYPES = [
-  'Technical Interview',
-  'Coding Interview',
-  'Mock Interview',
-  'System Design',
-  'HR Round',
-  'Behavioral Round',
-] as const;
-
-const LANGUAGES = ['English', 'Hindi', 'Marathi', 'Gujarati', 'Tamil', 'Telugu', 'Kannada', 'Malayalam'] as const;
 const AVAILABILITY_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
 const AVAILABILITY_SLOT_OPTIONS = [
   '8:00 AM - 10:00 AM',
@@ -72,6 +50,75 @@ const AVAILABILITY_SLOT_OPTIONS = [
   '6:00 PM - 8:00 PM',
   '8:00 PM - 10:00 PM',
 ] as const;
+
+type CustomInterviewerChips = {
+  expertise: string[];
+  types: string[];
+  languages: string[];
+};
+
+const EMPTY_CUSTOM_CHIPS: CustomInterviewerChips = {
+  expertise: [],
+  types: [],
+  languages: [],
+};
+
+function customChipsStorageKey(candidateId: string) {
+  return `saasa:interviewer-custom-chips:${candidateId}`;
+}
+
+function uniqLabels(values: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    const label = String(value || '').trim().replace(/\s+/g, ' ');
+    const key = label.toLowerCase();
+    if (!label || seen.has(key)) continue;
+    seen.add(key);
+    out.push(label);
+  }
+  return out;
+}
+
+function notInCatalog(values: string[], catalog: readonly string[]): string[] {
+  const catalogKeys = new Set(catalog.map((item) => item.toLowerCase()));
+  return uniqLabels(values).filter((value) => !catalogKeys.has(value.toLowerCase()));
+}
+
+function loadStoredCustomChips(candidateId?: string | null): CustomInterviewerChips {
+  if (!candidateId || typeof window === 'undefined') return { ...EMPTY_CUSTOM_CHIPS };
+  try {
+    const raw = localStorage.getItem(customChipsStorageKey(candidateId));
+    if (!raw) return { ...EMPTY_CUSTOM_CHIPS };
+    const parsed = JSON.parse(raw) as Partial<CustomInterviewerChips>;
+    return {
+      expertise: uniqLabels(Array.isArray(parsed.expertise) ? parsed.expertise.map(String) : []),
+      types: uniqLabels(Array.isArray(parsed.types) ? parsed.types.map(String) : []),
+      languages: uniqLabels(Array.isArray(parsed.languages) ? parsed.languages.map(String) : []),
+    };
+  } catch {
+    return { ...EMPTY_CUSTOM_CHIPS };
+  }
+}
+
+function persistCustomChips(
+  candidateId: string | null | undefined,
+  next: CustomInterviewerChips,
+) {
+  if (!candidateId || typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(
+      customChipsStorageKey(candidateId),
+      JSON.stringify({
+        expertise: uniqLabels(next.expertise),
+        types: uniqLabels(next.types),
+        languages: uniqLabels(next.languages),
+      }),
+    );
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
 
 function yearsFromBucket(value: string) {
   if (value.startsWith('0-1')) return 1;
@@ -148,6 +195,15 @@ export default function BecomeInterviewerPage() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['Technical Interview']);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['English']);
+  const [customExpertise, setCustomExpertise] = useState<string[]>([]);
+  const [customTypes, setCustomTypes] = useState<string[]>([]);
+  const [customLanguages, setCustomLanguages] = useState<string[]>([]);
+  const [addingExpertise, setAddingExpertise] = useState(false);
+  const [addingType, setAddingType] = useState(false);
+  const [addingLanguage, setAddingLanguage] = useState(false);
+  const [expertiseDraft, setExpertiseDraft] = useState('');
+  const [typeDraft, setTypeDraft] = useState('');
+  const [languageDraft, setLanguageDraft] = useState('');
   const [selectedAvailabilityDays, setSelectedAvailabilityDays] = useState<string[]>([
     'Monday',
     'Tuesday',
@@ -217,6 +273,41 @@ export default function BecomeInterviewerPage() {
     staleTime: 60_000,
     retry: 0,
   });
+
+  const profileChips = useMemo(
+    () =>
+      resolveInterviewerChipsFromProfile(
+        (phase1ProfileQuery.data as Record<string, unknown>) || null,
+        {
+          fallbackName: String(user?.name || ''),
+        },
+      ),
+    [phase1ProfileQuery.data, user?.name],
+  );
+
+  // Keep chip order stable while toggling (avoids React removeChild DOM races)
+  const expertiseOptions = useMemo(() => {
+    const base = [...profileChips.expertiseOptions, ...customExpertise];
+    const seen = new Set(base.map((item) => item.toLowerCase()));
+    const extras = selectedSkills.filter((skill) => !seen.has(skill.toLowerCase()));
+    return extras.length ? [...base, ...extras] : base;
+  }, [customExpertise, profileChips.expertiseOptions, selectedSkills]);
+
+  const interviewTypeOptions = useMemo(() => {
+    const base = [...profileChips.interviewTypeOptions, ...customTypes];
+    const seen = new Set(base.map((item) => item.toLowerCase()));
+    const extras = selectedTypes.filter((type) => !seen.has(type.toLowerCase()));
+    return extras.length ? [...base, ...extras] : base;
+  }, [customTypes, profileChips.interviewTypeOptions, selectedTypes]);
+
+  const languageOptions = useMemo(() => {
+    const base = [...profileChips.languageOptions, ...customLanguages];
+    const seen = new Set(base.map((item) => item.toLowerCase()));
+    const extras = selectedLanguages.filter((language) => !seen.has(language.toLowerCase()));
+    return extras.length ? [...base, ...extras] : base;
+  }, [customLanguages, profileChips.languageOptions, selectedLanguages]);
+
+  const prevUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -310,9 +401,10 @@ export default function BecomeInterviewerPage() {
         }
       }
 
-      const draft = buildInterviewerFormPrefillFromProfile(profile, {
+      const chips = resolveInterviewerChipsFromProfile(profile, {
         fallbackName: String(user?.name || ''),
       });
+      const draft = chips.prefill;
       if (!draft) {
         setAutofillMessage('No usable profile data found to autofill.');
         return;
@@ -321,6 +413,9 @@ export default function BecomeInterviewerPage() {
         draft.aboutYourself = summaryText.slice(0, 1000);
       }
       applyProfilePrefill(draft, 'replace');
+      if (chips.suggestedExpertise.length) setSelectedSkills(chips.suggestedExpertise);
+      if (chips.suggestedInterviewTypes.length) setSelectedTypes(chips.suggestedInterviewTypes);
+      if (chips.suggestedLanguages.length) setSelectedLanguages(chips.suggestedLanguages);
       setHasManualCompanyRoleEdit(false);
       setPrefilledFromProfile(true);
       setAutofillMessage('Form autofilled from your profile. Review and edit before submitting.');
@@ -361,17 +456,51 @@ export default function BecomeInterviewerPage() {
   const kycVerified = Boolean(kyc?.kycVerified);
 
   useEffect(() => {
+    const nextId = user?.id ? String(user.id) : null;
+    const prevId = prevUserIdRef.current;
+    prevUserIdRef.current = nextId;
+    // Only reset when switching between two real candidates — not on first hydrate
+    if (!prevId || !nextId || prevId === nextId) {
+      if (nextId && !prevId) {
+        const stored = loadStoredCustomChips(nextId);
+        setCustomExpertise(stored.expertise);
+        setCustomTypes(stored.types);
+        setCustomLanguages(stored.languages);
+      }
+      return;
+    }
+    setPrefilledFromProfile(false);
+    setPrefilledFromSaved(false);
+    setSelectedSkills([]);
+    setSelectedTypes(['Technical Interview']);
+    setSelectedLanguages(['English']);
+    const stored = loadStoredCustomChips(nextId);
+    setCustomExpertise(stored.expertise);
+    setCustomTypes(stored.types);
+    setCustomLanguages(stored.languages);
+    setAddingExpertise(false);
+    setAddingType(false);
+    setAddingLanguage(false);
+    setExpertiseDraft('');
+    setTypeDraft('');
+    setLanguageDraft('');
+  }, [user?.id]);
+
+  useEffect(() => {
     if (prefilledFromSaved || prefilledFromProfile) return;
     if (interviewerProfile || (existingApplication && existingApplication.status !== 'REJECTED')) {
       return;
     }
     const profile = phase1ProfileQuery.data;
     if (!profile) return;
-    const draft = buildInterviewerFormPrefillFromProfile(profile as Record<string, unknown>, {
+    const chips = resolveInterviewerChipsFromProfile(profile as Record<string, unknown>, {
       fallbackName: String(user?.name || ''),
     });
-    if (!draft) return;
-    applyProfilePrefill(draft, 'gap-fill');
+    if (!chips.prefill) return;
+    applyProfilePrefill(chips.prefill, 'gap-fill');
+    if (chips.suggestedExpertise.length) setSelectedSkills(chips.suggestedExpertise);
+    if (chips.suggestedInterviewTypes.length) setSelectedTypes(chips.suggestedInterviewTypes);
+    if (chips.suggestedLanguages.length) setSelectedLanguages(chips.suggestedLanguages);
     setPrefilledFromProfile(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot gap-fill when profile arrives
   }, [
@@ -380,6 +509,7 @@ export default function BecomeInterviewerPage() {
     phase1ProfileQuery.data,
     prefilledFromProfile,
     prefilledFromSaved,
+    user?.id,
     user?.name,
   ]);
 
@@ -444,9 +574,39 @@ export default function BecomeInterviewerPage() {
       setCurrentRole(String(source.currentRole || ''));
     }
     setExperience(bucketFromYears(Number(source.yearsOfExperience || 0)));
-    setSelectedSkills(Array.isArray(source.expertiseAreas) ? source.expertiseAreas : []);
-    setSelectedTypes(Array.isArray(source.interviewTypes) ? source.interviewTypes : []);
-    setSelectedLanguages(Array.isArray(source.languages) ? source.languages : []);
+    const savedExpertise = Array.isArray(source.expertiseAreas)
+      ? source.expertiseAreas.map(String)
+      : [];
+    const savedTypes = Array.isArray(source.interviewTypes)
+      ? source.interviewTypes.map(String)
+      : [];
+    const savedLanguages = Array.isArray(source.languages)
+      ? source.languages.map(String)
+      : [];
+    setSelectedSkills(savedExpertise);
+    setSelectedTypes(savedTypes);
+    setSelectedLanguages(savedLanguages);
+
+    const stored = loadStoredCustomChips(user?.id);
+    const nextCustom: CustomInterviewerChips = {
+      expertise: uniqLabels([
+        ...stored.expertise,
+        ...notInCatalog(savedExpertise, INTERVIEWER_FORM_SKILLS),
+      ]),
+      types: uniqLabels([
+        ...stored.types,
+        ...notInCatalog(savedTypes, INTERVIEWER_FORM_TYPES),
+      ]),
+      languages: uniqLabels([
+        ...stored.languages,
+        ...notInCatalog(savedLanguages, INTERVIEWER_FORM_LANGUAGES),
+      ]),
+    };
+    setCustomExpertise(nextCustom.expertise);
+    setCustomTypes(nextCustom.types);
+    setCustomLanguages(nextCustom.languages);
+    persistCustomChips(user?.id, nextCustom);
+
     const parsedAvailability = parseWeeklyAvailability(String(source.weeklyAvailability || ''));
     if (parsedAvailability.days.length) setSelectedAvailabilityDays(parsedAvailability.days);
     if (parsedAvailability.slots.length) setSelectedAvailabilitySlots(parsedAvailability.slots);
@@ -454,7 +614,7 @@ export default function BecomeInterviewerPage() {
     setFeedbackStyle(String(source.feedbackStyle || ''));
     setInterviewPrice(Number(source.interviewPrice || 50));
     setPrefilledFromSaved(true);
-  }, [existingApplication, hasManualCompanyRoleEdit, interviewerProfile, prefilledFromSaved]);
+  }, [existingApplication, hasManualCompanyRoleEdit, interviewerProfile, prefilledFromSaved, user?.id]);
   const weeklyAvailabilitySummary = useMemo(() => {
     const dayPart = selectedAvailabilityDays.join(', ');
     const slotPart = selectedAvailabilitySlots.join(', ');
@@ -506,6 +666,39 @@ export default function BecomeInterviewerPage() {
     setter(getter.includes(value) ? getter.filter((item) => item !== value) : [...getter, value]);
   };
 
+  const addCustomChip = (
+    raw: string,
+    options: string[],
+    selected: string[],
+    setSelected: (next: string[] | ((prev: string[]) => string[])) => void,
+    setCustom: (next: string[] | ((prev: string[]) => string[])) => void,
+    kind: keyof CustomInterviewerChips,
+    close: () => void,
+    clearDraft: () => void,
+  ) => {
+    const value = raw.trim().replace(/\s+/g, ' ');
+    if (value.length < 2 || value.length > 60) return;
+    const key = value.toLowerCase();
+    const existing = options.find((item) => item.toLowerCase() === key);
+    const label = existing || value;
+    if (!existing) {
+      setCustom((prev) => {
+        const next = prev.some((item) => item.toLowerCase() === key) ? prev : [...prev, value];
+        persistCustomChips(user?.id, {
+          expertise: kind === 'expertise' ? next : customExpertise,
+          types: kind === 'types' ? next : customTypes,
+          languages: kind === 'languages' ? next : customLanguages,
+        });
+        return next;
+      });
+    }
+    if (!selected.some((item) => item.toLowerCase() === key)) {
+      setSelected((prev) => [...prev, label]);
+    }
+    clearDraft();
+    close();
+  };
+
   const handleSubmit = async () => {
     setAutofillMessage('');
     if (submitValidationMessage) {
@@ -540,6 +733,24 @@ export default function BecomeInterviewerPage() {
         await submitInterviewerApplication(payload);
         setSaveMessage('Interviewer application submitted for HQ approval. You can edit it anytime.');
       }
+      const nextCustom: CustomInterviewerChips = {
+        expertise: uniqLabels([
+          ...customExpertise,
+          ...notInCatalog(selectedSkills, INTERVIEWER_FORM_SKILLS),
+        ]),
+        types: uniqLabels([
+          ...customTypes,
+          ...notInCatalog(selectedTypes, INTERVIEWER_FORM_TYPES),
+        ]),
+        languages: uniqLabels([
+          ...customLanguages,
+          ...notInCatalog(selectedLanguages, INTERVIEWER_FORM_LANGUAGES),
+        ]),
+      };
+      setCustomExpertise(nextCustom.expertise);
+      setCustomTypes(nextCustom.types);
+      setCustomLanguages(nextCustom.languages);
+      persistCustomChips(user?.id, nextCustom);
       await profileQuery.refetch();
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Unable to save interviewer application');
@@ -800,70 +1011,259 @@ export default function BecomeInterviewerPage() {
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Expertise Areas</label>
+              {profileChips.suggestedExpertise.length > 0 ? (
+                <p className="mb-2 text-xs text-emerald-700">
+                  Suggested from your profile — options update for each candidate.
+                </p>
+              ) : phase1ProfileQuery.isLoading ? (
+                <p className="mb-2 text-xs text-slate-500">Loading suggestions from your profile…</p>
+              ) : (
+                <p className="mb-2 text-xs text-slate-500">
+                  Complete skills and experience on your profile for personalized suggestions.
+                </p>
+              )}
               <div className="flex flex-wrap gap-2">
-                {SKILLS.map((skill) => {
+                {expertiseOptions.map((skill) => {
                   const active = selectedSkills.includes(skill);
+                  const fromProfile = profileChips.suggestedExpertise.some(
+                    (item) => item.toLowerCase() === skill.toLowerCase(),
+                  );
                   return (
                     <button
-                      key={skill}
+                      key={`expertise:${skill}`}
                       type="button"
                       onClick={() => toggleArrayValue(skill, selectedSkills, setSelectedSkills)}
                       className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                         active
                           ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                          : fromProfile
+                            ? 'border-emerald-200 bg-emerald-50/60 text-emerald-800 hover:border-emerald-300'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                       }`}
                     >
                       {skill}
                     </button>
                   );
                 })}
+                {addingExpertise ? (
+                  <form
+                    className="flex min-w-[12rem] flex-1 items-center gap-1"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      addCustomChip(
+                        expertiseDraft,
+                        expertiseOptions,
+                        selectedSkills,
+                        setSelectedSkills,
+                        setCustomExpertise,
+                        'expertise',
+                        () => setAddingExpertise(false),
+                        () => setExpertiseDraft(''),
+                      );
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={expertiseDraft}
+                      onChange={(e) => setExpertiseDraft(e.target.value)}
+                      placeholder="Add expertise…"
+                      className="h-8 min-w-0 flex-1 rounded-full border border-emerald-300 px-3 text-xs outline-none focus:ring-2 focus:ring-emerald-100"
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-800"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddingExpertise(false);
+                        setExpertiseDraft('');
+                      }}
+                      className="rounded-full border border-slate-200 px-2.5 py-1.5 text-xs text-slate-600"
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setAddingExpertise(true)}
+                    className="rounded-full border border-dashed border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+                    aria-label="Add expertise area"
+                  >
+                    + Add
+                  </button>
+                )}
               </div>
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Interview Types</label>
+              {profileChips.suggestedInterviewTypes.length > 0 ? (
+                <p className="mb-2 text-xs text-[#1F8FC2]">
+                  Matched to your expertise profile for this candidate.
+                </p>
+              ) : null}
               <div className="flex flex-wrap gap-2">
-                {INTERVIEW_TYPES.map((type) => {
+                {interviewTypeOptions.map((type) => {
                   const active = selectedTypes.includes(type);
+                  const fromProfile = profileChips.suggestedInterviewTypes.some(
+                    (item) => item.toLowerCase() === type.toLowerCase(),
+                  );
                   return (
                     <button
-                      key={type}
+                      key={`type:${type}`}
                       type="button"
                       onClick={() => toggleArrayValue(type, selectedTypes, setSelectedTypes)}
                       className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                         active
                           ? 'border-[#82CFF0] bg-[#EAF7FD] text-[#1F8FC2]'
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                          : fromProfile
+                            ? 'border-[#B7E3F6] bg-[#F3FAFD] text-[#1F8FC2] hover:border-[#82CFF0]'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                       }`}
                     >
                       {type}
                     </button>
                   );
                 })}
+                {addingType ? (
+                  <form
+                    className="flex min-w-[12rem] flex-1 items-center gap-1"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      addCustomChip(
+                        typeDraft,
+                        interviewTypeOptions,
+                        selectedTypes,
+                        setSelectedTypes,
+                        setCustomTypes,
+                        'types',
+                        () => setAddingType(false),
+                        () => setTypeDraft(''),
+                      );
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={typeDraft}
+                      onChange={(e) => setTypeDraft(e.target.value)}
+                      placeholder="Add interview type…"
+                      className="h-8 min-w-0 flex-1 rounded-full border border-[#82CFF0] px-3 text-xs outline-none focus:ring-2 focus:ring-[#EAF7FD]"
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-full border border-[#82CFF0] bg-[#EAF7FD] px-2.5 py-1.5 text-xs font-semibold text-[#1F8FC2]"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddingType(false);
+                        setTypeDraft('');
+                      }}
+                      className="rounded-full border border-slate-200 px-2.5 py-1.5 text-xs text-slate-600"
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setAddingType(true)}
+                    className="rounded-full border border-dashed border-[#82CFF0] bg-white px-3 py-1.5 text-xs font-semibold text-[#1F8FC2] hover:bg-[#EAF7FD]"
+                    aria-label="Add interview type"
+                  >
+                    + Add
+                  </button>
+                )}
               </div>
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Languages</label>
+              {profileChips.suggestedLanguages.length > 0 ? (
+                <p className="mb-2 text-xs text-[#1F8FC2]">
+                  From languages on your candidate profile (plus common options).
+                </p>
+              ) : null}
               <div className="flex flex-wrap gap-2">
-                {LANGUAGES.map((language) => {
+                {languageOptions.map((language) => {
                   const active = selectedLanguages.includes(language);
+                  const fromProfile = profileChips.suggestedLanguages.some(
+                    (item) => item.toLowerCase() === language.toLowerCase(),
+                  );
                   return (
                     <button
-                      key={language}
+                      key={`lang:${language}`}
                       type="button"
                       onClick={() => toggleArrayValue(language, selectedLanguages, setSelectedLanguages)}
                       className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                         active
                           ? 'border-[#82CFF0] bg-[#EAF7FD] text-[#1F8FC2]'
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                          : fromProfile
+                            ? 'border-[#B7E3F6] bg-[#F3FAFD] text-[#1F8FC2] hover:border-[#82CFF0]'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                       }`}
                     >
                       {language}
                     </button>
                   );
                 })}
+                {addingLanguage ? (
+                  <form
+                    className="flex min-w-[12rem] flex-1 items-center gap-1"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      addCustomChip(
+                        languageDraft,
+                        languageOptions,
+                        selectedLanguages,
+                        setSelectedLanguages,
+                        setCustomLanguages,
+                        'languages',
+                        () => setAddingLanguage(false),
+                        () => setLanguageDraft(''),
+                      );
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={languageDraft}
+                      onChange={(e) => setLanguageDraft(e.target.value)}
+                      placeholder="Add language…"
+                      className="h-8 min-w-0 flex-1 rounded-full border border-[#82CFF0] px-3 text-xs outline-none focus:ring-2 focus:ring-[#EAF7FD]"
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-full border border-[#82CFF0] bg-[#EAF7FD] px-2.5 py-1.5 text-xs font-semibold text-[#1F8FC2]"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddingLanguage(false);
+                        setLanguageDraft('');
+                      }}
+                      className="rounded-full border border-slate-200 px-2.5 py-1.5 text-xs text-slate-600"
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setAddingLanguage(true)}
+                    className="rounded-full border border-dashed border-[#82CFF0] bg-white px-3 py-1.5 text-xs font-semibold text-[#1F8FC2] hover:bg-[#EAF7FD]"
+                    aria-label="Add language"
+                  >
+                    + Add
+                  </button>
+                )}
               </div>
             </div>
 
