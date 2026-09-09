@@ -2,9 +2,11 @@
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
+import { resolveSignupPhoneFields, toLocalPhoneDigits } from '@/lib/phone-utils';
 import {
   ALL_COUNTRY_CODES,
   countryCodeToFlag,
+  formatPhoneCodeLabel,
 } from '@/lib/country-codes';
 import {
   type CitySuggestion,
@@ -15,7 +17,6 @@ import {
   searchCitySuggestions,
 } from '@/lib/geo-locations';
 import { profileCancelBtnClass, profileFieldClass, profileSaveBtnClass } from '@/lib/profile-modal-ui';
-import { resolveSignupPhoneFields } from '@/lib/phone-utils';
 import { useAuth } from '@/components/auth/AuthContext';
 import { useTranslations } from 'next-intl';
 
@@ -705,10 +706,13 @@ export default function BasicInfoModal({
                                 key={`${item.code}-${item.dialCode}`}
                                 type="button"
                                 onClick={() => {
-                                  setPhoneCode(item.dialCode);
+                                  setPhoneCode(formatPhoneCodeLabel(item));
                                   setIsPhoneCodeOpen(false);
                                   setPhoneCodeSearch('');
-                                  setPhoneValue('');
+                                  // Keep typed digits when switching dial; only trim to new max length
+                                  setPhoneValue((prev) =>
+                                    prev.replace(/\D/g, '').slice(0, item.phoneLength || 15),
+                                  );
                                 }}
                                 className="profile-modal-dropdown-item flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-gray-50"
                               >
@@ -729,11 +733,16 @@ export default function BasicInfoModal({
                         type="tel"
                         value={phoneValue}
                         onChange={(e) => {
-                          const digitsOnly = e.target.value.replace(/\D/g, '');
-                          const maxLength = selectedPhoneCodeOption.phoneLength;
-                          setPhoneValue(digitsOnly.slice(0, maxLength));
+                          const maxLength = selectedPhoneCodeOption.phoneLength || 15;
+                          setPhoneValue(
+                            toLocalPhoneDigits(
+                              e.target.value,
+                              selectedPhoneCodeOption.dialCode,
+                              maxLength,
+                            ),
+                          );
                         }}
-                        maxLength={selectedPhoneCodeOption.phoneLength}
+                        maxLength={Math.max(selectedPhoneCodeOption.phoneLength || 15, 16)}
                         className={profileFieldClass(!phoneValue.trim() || Boolean(errors.phone))}
                         placeholder={`${selectedPhoneCodeOption.phoneLength} digits`}
                       />

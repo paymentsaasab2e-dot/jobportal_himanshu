@@ -14,6 +14,10 @@ export const INTERVIEWER_FORM_SKILLS = [
   'AI / Machine Learning',
   'Data Science',
   'UI / UX',
+  'Product Management',
+  'QA / Testing',
+  'Cybersecurity',
+  'Data Engineering',
   'HR Interview',
   'Behavioral Interview',
   'DSA',
@@ -27,6 +31,8 @@ export const INTERVIEWER_FORM_TYPES = [
   'System Design',
   'HR Round',
   'Behavioral Round',
+  'Managerial Round',
+  'Case Interview',
 ] as const;
 
 export const INTERVIEWER_FORM_LANGUAGES = [
@@ -38,6 +44,26 @@ export const INTERVIEWER_FORM_LANGUAGES = [
   'Telugu',
   'Kannada',
   'Malayalam',
+  'Bengali',
+  'Punjabi',
+  'Urdu',
+  'Odia',
+  'Assamese',
+  'French',
+  'Spanish',
+  'German',
+  'Arabic',
+  'Portuguese',
+  'Chinese',
+  'Japanese',
+  'Korean',
+  'Russian',
+  'Italian',
+  'Dutch',
+  'Turkish',
+  'Indonesian',
+  'Thai',
+  'Vietnamese',
 ] as const;
 
 export type InterviewerFormSkill = (typeof INTERVIEWER_FORM_SKILLS)[number];
@@ -78,6 +104,12 @@ type ProfileLike = {
   } | null;
   careerPreferences?: {
     currentRole?: string | null;
+    preferredJobTitles?: string[] | null;
+    preferredRoles?: string[] | null;
+    preferredIndustries?: string[] | null;
+    preferredIndustry?: string | null;
+    functionalAreas?: string[] | null;
+    functionalArea?: string | null;
   } | null;
   workExperience?: WorkExperienceLike[] | null;
   skills?: Array<{ name?: string | null; category?: string | null }> | null;
@@ -120,6 +152,22 @@ const SKILL_KEYWORD_MAP: Array<{ skill: InterviewerFormSkill; patterns: RegExp[]
   {
     skill: 'UI / UX',
     patterns: [/\bui\b/i, /\bux\b/i, /figma/i, /design\s*system/i, /wirefram/i, /prototyp/i],
+  },
+  {
+    skill: 'Product Management',
+    patterns: [/product\s*manag/i, /\bpm\b/i, /roadmap/i, /product\s*owner/i],
+  },
+  {
+    skill: 'QA / Testing',
+    patterns: [/\bqa\b/i, /quality\s*assurance/i, /test\s*automat/i, /selenium/i, /cypress/i, /playwright/i],
+  },
+  {
+    skill: 'Cybersecurity',
+    patterns: [/cyber\s*security/i, /infosec/i, /penetration/i, /security\s*engineer/i, /\bsoc\b/i],
+  },
+  {
+    skill: 'Data Engineering',
+    patterns: [/data\s*engineer/i, /etl/i, /spark/i, /airflow/i, /warehouse/i, /kafka/i],
   },
   {
     skill: 'HR Interview',
@@ -201,8 +249,23 @@ function collectSkillTexts(profile: ProfileLike): string[] {
     if (Array.isArray(workSkills)) texts.push(...workSkills.map(String));
     else if (typeof workSkills === 'string' && workSkills.trim()) texts.push(workSkills);
   }
-  const role = cleanText(profile.careerPreferences?.currentRole);
+  const prefs = profile.careerPreferences;
+  const role = cleanText(prefs?.currentRole);
   if (role) texts.push(role);
+  for (const title of prefs?.preferredJobTitles || []) {
+    if (title) texts.push(String(title));
+  }
+  for (const title of prefs?.preferredRoles || []) {
+    if (title) texts.push(String(title));
+  }
+  for (const area of prefs?.functionalAreas || []) {
+    if (area) texts.push(String(area));
+  }
+  if (prefs?.functionalArea) texts.push(String(prefs.functionalArea));
+  for (const industry of prefs?.preferredIndustries || []) {
+    if (industry) texts.push(String(industry));
+  }
+  if (prefs?.preferredIndustry) texts.push(String(prefs.preferredIndustry));
   const summary = cleanText(profile.summaryText);
   if (summary) texts.push(summary);
   return texts;
@@ -233,6 +296,10 @@ function inferInterviewTypes(expertise: InterviewerFormSkill[]): InterviewerForm
   if (expertise.includes('System Design')) types.add('System Design');
   if (expertise.includes('HR Interview')) types.add('HR Round');
   if (expertise.includes('Behavioral Interview')) types.add('Behavioral Round');
+  if (expertise.includes('Product Management')) {
+    types.add('Case Interview');
+    types.add('Managerial Round');
+  }
   if (expertise.includes('Frontend Development') || expertise.includes('Backend Development') || expertise.includes('Full Stack Development')) {
     types.add('Coding Interview');
   }
@@ -246,7 +313,97 @@ function matchLanguages(profile: ProfileLike): InterviewerFormLanguage[] {
   const matched = INTERVIEWER_FORM_LANGUAGES.filter((lang) =>
     names.some((name) => name.toLowerCase() === lang.toLowerCase() || name.toLowerCase().includes(lang.toLowerCase())),
   );
-  return matched.length ? matched : ['English'];
+  return matched.length ? matched : names.length ? [] : ['English'];
+}
+
+/** Extra spoken languages from profile that are not in the default chip catalog. */
+export function collectExtraProfileLanguages(profile: ProfileLike | null | undefined): string[] {
+  if (!profile) return [];
+  const catalog = new Set(INTERVIEWER_FORM_LANGUAGES.map((lang) => lang.toLowerCase()));
+  const extras: string[] = [];
+  const seen = new Set<string>();
+  for (const row of profile.languages || []) {
+    const name = cleanText(row?.name);
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (catalog.has(key) || seen.has(key)) continue;
+    // Skip proficiency-only or junk labels
+    if (name.length < 2 || name.length > 40) continue;
+    if (/^(native|fluent|basic|intermediate|advanced|beginner)$/i.test(name)) continue;
+    seen.add(key);
+    extras.push(name);
+  }
+  return extras;
+}
+
+export type InterviewerChipCatalog = {
+  expertiseOptions: string[];
+  interviewTypeOptions: string[];
+  languageOptions: string[];
+  suggestedExpertise: string[];
+  suggestedInterviewTypes: string[];
+  suggestedLanguages: string[];
+  prefill: InterviewerFormPrefill | null;
+};
+
+/**
+ * Build chip options + suggestions from this candidate's Phase 1 profile.
+ * Options change per candidate; full catalog remains available after profile matches.
+ */
+export function resolveInterviewerChipsFromProfile(
+  profile: ProfileLike | null | undefined,
+  options?: { fallbackName?: string; selectedExpertise?: string[]; selectedTypes?: string[]; selectedLanguages?: string[] },
+): InterviewerChipCatalog {
+  const uniq = (values: string[]) => {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const value of values) {
+      const key = String(value || '').trim().toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(String(value).trim());
+    }
+    return out;
+  };
+
+  const prefill = buildInterviewerFormPrefillFromProfile(profile, {
+    fallbackName: options?.fallbackName,
+  });
+  const extraLanguages = collectExtraProfileLanguages(profile);
+
+  const suggestedExpertise = prefill?.expertiseAreas?.length
+    ? [...prefill.expertiseAreas]
+    : [];
+  const suggestedInterviewTypes = prefill?.interviewTypes?.length
+    ? [...prefill.interviewTypes]
+    : ['Technical Interview', 'Mock Interview'];
+  const suggestedLanguages = uniq([
+    ...(prefill?.languages || []),
+    ...extraLanguages,
+  ]);
+  if (!suggestedLanguages.length) suggestedLanguages.push('English');
+
+  return {
+    suggestedExpertise,
+    suggestedInterviewTypes,
+    suggestedLanguages,
+    expertiseOptions: uniq([
+      ...suggestedExpertise,
+      ...(options?.selectedExpertise || []),
+      ...INTERVIEWER_FORM_SKILLS,
+    ]),
+    interviewTypeOptions: uniq([
+      ...suggestedInterviewTypes,
+      ...(options?.selectedTypes || []),
+      ...INTERVIEWER_FORM_TYPES,
+    ]),
+    languageOptions: uniq([
+      ...suggestedLanguages,
+      ...(options?.selectedLanguages || []),
+      ...INTERVIEWER_FORM_LANGUAGES,
+    ]),
+    prefill,
+  };
 }
 
 function buildAboutYourself(profile: ProfileLike, role: string, company: string, expertise: string[]): string {

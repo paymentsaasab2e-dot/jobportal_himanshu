@@ -2810,7 +2810,6 @@ const ExploreJobsPageContent = () => {
                                     type="text"
                                     value={currencySearch}
                                     autoComplete="off"
-                                    autoFocus
                                     placeholder={te('searchCurrency')}
                                     onChange={(e) => setCurrencySearch(e.target.value)}
                                     className="h-8 w-full rounded-md border border-gray-200 px-2 text-xs text-gray-800 outline-none focus:border-[#2098C8] focus:ring-1 focus:ring-[#2098C8]"
