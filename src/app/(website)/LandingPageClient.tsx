@@ -264,6 +264,9 @@ export default function LandingPage() {
                     (redacted.salaryType as string | null) ??
                     'MONTHLY',
                   jobLabels,
+                  (redacted.salary as { currencySymbol?: string } | undefined)?.currencySymbol ??
+                    (redacted.salaryCurrencySymbol as string | null) ??
+                    null,
                 )
               : '',
             match: `${Math.floor(Math.random() * 10) + 85}% Match`,

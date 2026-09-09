@@ -92,9 +92,15 @@ function formatSalary(job: Record<string, unknown>): string {
   }
 
   const currencyRaw = salaryObj?.currency ?? job.salaryCurrency ?? null;
+  const currencySymbolRaw =
+    salaryObj?.currencySymbol ??
+    salaryObj?.symbol ??
+    (job as { salaryCurrencySymbol?: unknown }).salaryCurrencySymbol ??
+    null;
   return (
     formatPublicSalaryLabel({
       currency: asText(currencyRaw) || null,
+      currencySymbol: asText(currencySymbolRaw) || null,
       min,
       max,
       amount,

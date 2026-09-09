@@ -31,6 +31,10 @@ import {
   hasCandidateReviewed,
   hasInterviewerReviewed,
 } from '@/lib/interview-session-window';
+import {
+  buildInterviewerFormPrefillFromProfile,
+  experienceBucketFromYears,
+} from '../lib/prefillInterviewerFormFromProfile';
 
 const SKILLS = [
   'Frontend Development',
@@ -78,11 +82,7 @@ function yearsFromBucket(value: string) {
 }
 
 function bucketFromYears(years: number) {
-  if (years >= 8) return '8+ Years';
-  if (years >= 5) return '5-8 Years';
-  if (years >= 3) return '3-5 Years';
-  if (years >= 1) return '1-3 Years';
-  return '0-1 Years';
+  return experienceBucketFromYears(years);
 }
 
 function parseWeeklyAvailability(summary: string) {
@@ -174,6 +174,9 @@ export default function BecomeInterviewerPage() {
   const [hasManualCompanyRoleEdit, setHasManualCompanyRoleEdit] = useState(false);
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [hubTab, setHubTab] = useState<'candidates' | 'active' | 'completed' | 'application'>('candidates');
+  const [prefilledFromProfile, setPrefilledFromProfile] = useState(false);
+  const [autofillBusy, setAutofillBusy] = useState(false);
+  const [autofillMessage, setAutofillMessage] = useState('');
 
   useEffect(() => {
     const tab = String(searchParams.get('tab') || '');
@@ -222,6 +225,114 @@ export default function BecomeInterviewerPage() {
     return () => window.clearInterval(timer);
   }, []);
 
+  const applyProfilePrefill = (
+    draft: NonNullable<ReturnType<typeof buildInterviewerFormPrefillFromProfile>>,
+    mode: 'gap-fill' | 'replace',
+  ) => {
+    const fill = (current: string, next: string) => {
+      if (mode === 'replace') return next || current;
+      return current.trim() ? current : next;
+    };
+
+    if (draft.fullName) setName((prev) => fill(prev, draft.fullName));
+    if (!hasManualCompanyRoleEdit || mode === 'replace') {
+      if (draft.currentCompany) {
+        setCurrentCompany((prev) => (mode === 'replace' ? draft.currentCompany : fill(prev, draft.currentCompany)));
+      }
+      if (draft.currentRole) {
+        setCurrentRole((prev) => (mode === 'replace' ? draft.currentRole : fill(prev, draft.currentRole)));
+      }
+    }
+    if (mode === 'replace' || experience === '1-3 Years') {
+      setExperience(draft.experienceBucket);
+    }
+    if (mode === 'replace' || selectedSkills.length === 0) {
+      if (draft.expertiseAreas.length) setSelectedSkills(draft.expertiseAreas);
+    }
+    if (mode === 'replace' || (selectedTypes.length === 1 && selectedTypes[0] === 'Technical Interview')) {
+      if (draft.interviewTypes.length) setSelectedTypes(draft.interviewTypes);
+    }
+    if (mode === 'replace' || (selectedLanguages.length === 1 && selectedLanguages[0] === 'English')) {
+      if (draft.languages.length) setSelectedLanguages(draft.languages);
+    }
+    if (mode === 'replace' || motivation.trim().length < 20) {
+      if (draft.aboutYourself) setMotivation(draft.aboutYourself);
+    }
+    if (mode === 'replace' || feedbackStyle.trim().length < 10) {
+      if (draft.feedbackStyle) setFeedbackStyle(draft.feedbackStyle);
+    }
+  };
+
+  const handleAutofillFromProfile = async () => {
+    if (!user?.id) {
+      setAutofillMessage('Sign in to autofill from your profile.');
+      return;
+    }
+    setAutofillBusy(true);
+    setAutofillMessage('');
+    setFormError('');
+    try {
+      let profile = phase1ProfileQuery.data as Record<string, unknown> | null;
+      if (!profile) {
+        const refreshed = await phase1ProfileQuery.refetch();
+        profile = (refreshed.data as Record<string, unknown> | null) || null;
+      }
+      if (!profile) {
+        setAutofillMessage('Could not load your Phase 1 profile. Complete your profile and try again.');
+        return;
+      }
+
+      // Prefer AI-generated professional summary when available.
+      let summaryText = String((profile as { summaryText?: string }).summaryText || '').trim();
+      if (summaryText.length < 40) {
+        try {
+          const response = await fetch(
+            `${getApiBaseUrl()}/profile/generate-summary/${encodeURIComponent(user.id)}`,
+            {
+              method: 'POST',
+              headers: {
+                ...getAuthHeaders(),
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({}),
+            },
+          );
+          const payload = await response.json().catch(() => ({}));
+          const generated = String(
+            payload?.data?.summaryText || payload?.data?.summary || payload?.summary || '',
+          ).trim();
+          if (response.ok && generated) {
+            summaryText = generated;
+            profile = { ...profile, summaryText: generated };
+          }
+        } catch {
+          // Keep deterministic aboutYourself fallback from profile facts.
+        }
+      }
+
+      const draft = buildInterviewerFormPrefillFromProfile(profile, {
+        fallbackName: String(user?.name || ''),
+      });
+      if (!draft) {
+        setAutofillMessage('No usable profile data found to autofill.');
+        return;
+      }
+      if (summaryText.length >= 20) {
+        draft.aboutYourself = summaryText.slice(0, 1000);
+      }
+      applyProfilePrefill(draft, 'replace');
+      setHasManualCompanyRoleEdit(false);
+      setPrefilledFromProfile(true);
+      setAutofillMessage('Form autofilled from your profile. Review and edit before submitting.');
+    } catch (error) {
+      setAutofillMessage(
+        error instanceof Error ? error.message : 'Unable to autofill from profile right now.',
+      );
+    } finally {
+      setAutofillBusy(false);
+    }
+  };
+
   useEffect(() => {
     if (name.trim()) return;
     const profile = phase1ProfileQuery.data;
@@ -248,7 +359,30 @@ export default function BecomeInterviewerPage() {
   const interviewerProfile = profileQuery.data?.profile || null;
   const kyc = profileQuery.data?.kyc || null;
   const kycVerified = Boolean(kyc?.kycVerified);
-  const kycMissing = Array.isArray(kyc?.missing) ? kyc.missing : [];
+
+  useEffect(() => {
+    if (prefilledFromSaved || prefilledFromProfile) return;
+    if (interviewerProfile || (existingApplication && existingApplication.status !== 'REJECTED')) {
+      return;
+    }
+    const profile = phase1ProfileQuery.data;
+    if (!profile) return;
+    const draft = buildInterviewerFormPrefillFromProfile(profile as Record<string, unknown>, {
+      fallbackName: String(user?.name || ''),
+    });
+    if (!draft) return;
+    applyProfilePrefill(draft, 'gap-fill');
+    setPrefilledFromProfile(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot gap-fill when profile arrives
+  }, [
+    existingApplication,
+    interviewerProfile,
+    phase1ProfileQuery.data,
+    prefilledFromProfile,
+    prefilledFromSaved,
+    user?.name,
+  ]);
+
   const accountPhotoUrl = useMemo(() => {
     const profile = phase1ProfileQuery.data as
       | {
@@ -333,6 +467,7 @@ export default function BecomeInterviewerPage() {
   const submitValidationMessage = useMemo(
     () => {
       if (name.trim().length < 2) return 'Please enter full name (minimum 2 characters).';
+      if (currentCompany.trim().length < 2) return 'Please enter current company.';
       if (currentRole.trim().length < 2) return 'Please enter current role.';
       if (selectedSkills.length === 0) return 'Please select at least one expertise area.';
       if (selectedTypes.length === 0) return 'Please select at least one interview type.';
@@ -348,6 +483,7 @@ export default function BecomeInterviewerPage() {
       return '';
     },
     [
+      currentCompany,
       currentRole,
       feedbackStyle,
       motivation,
@@ -371,14 +507,7 @@ export default function BecomeInterviewerPage() {
   };
 
   const handleSubmit = async () => {
-    if (!kycVerified) {
-      setFormError(
-        `Complete KYC / ID verification on your profile before applying as an interviewer.${
-          kycMissing.length ? ` Missing: ${kycMissing.join(', ')}.` : ''
-        }`,
-      );
-      return;
-    }
+    setAutofillMessage('');
     if (submitValidationMessage) {
       setFormError(submitValidationMessage);
       return;
@@ -409,7 +538,7 @@ export default function BecomeInterviewerPage() {
         );
       } else {
         await submitInterviewerApplication(payload);
-        setSaveMessage('Interviewer application submitted. You can edit it from Profile anytime.');
+        setSaveMessage('Interviewer application submitted for HQ approval. You can edit it anytime.');
       }
       await profileQuery.refetch();
     } catch (error) {
@@ -498,30 +627,6 @@ export default function BecomeInterviewerPage() {
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading interviewer profile...
           </div>
-        ) : !kycVerified ? (
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
-            <p className="text-sm font-semibold text-amber-900">KYC required to apply</p>
-            <p className="mt-1 text-xs text-amber-800">
-              Complete identity verification on your profile first
-              {kycMissing.length ? ` (${kycMissing.join(', ')})` : ''}. Then reload this page.
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => router.push('/profile')}
-                className="rounded-lg bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white"
-              >
-                Open Profile
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push('/completion-profile')}
-                className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900"
-              >
-                Profile completion
-              </button>
-            </div>
-          </div>
         ) : existingApplication?.status === 'REJECTED' ? (
           <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3">
             <p className="text-sm font-semibold text-rose-900">HQ rejected this interviewer form</p>
@@ -544,12 +649,14 @@ export default function BecomeInterviewerPage() {
         ) : existingApplication && existingApplication.status !== 'REJECTED' ? (
           <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-3">
             <p className="text-xs font-semibold text-sky-800">Application status: {existingApplication.statusLabel}</p>
-            <p className="mt-0.5 text-xs text-sky-700">Use the tabs below to review candidates.</p>
+            <p className="mt-0.5 text-xs text-sky-700">Submitted for HQ approval. You can keep editing this form.</p>
           </div>
         ) : (
           <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs font-semibold text-slate-800">Application needed</p>
-            <p className="mt-0.5 text-xs text-slate-600">Open the Application tab to submit your interviewer profile.</p>
+            <p className="mt-0.5 text-xs text-slate-600">
+              Fill this form completely, then submit it for HQ approval.
+            </p>
           </div>
         )}
       </section>
@@ -594,28 +701,50 @@ export default function BecomeInterviewerPage() {
                 </p>
               </div>
             ) : null}
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              {accountPhotoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={accountPhotoUrl}
-                  alt=""
-                  className="h-14 w-14 rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 text-lg font-bold text-slate-600">
-                  {String(name || user?.name || 'U').slice(0, 1).toUpperCase()}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <div className="flex items-center gap-3">
+                {accountPhotoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={accountPhotoUrl}
+                    alt=""
+                    className="h-14 w-14 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 text-lg font-bold text-slate-600">
+                    {String(name || user?.name || 'U').slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Profile photo</p>
+                  <p className="text-xs text-slate-500">
+                    {accountPhotoUrl
+                      ? 'Using the photo from your Phase 1 account.'
+                      : 'No account photo yet. Add one from your profile and it will appear here.'}
+                  </p>
                 </div>
-              )}
-              <div>
-                <p className="text-sm font-semibold text-slate-800">Profile photo</p>
-                <p className="text-xs text-slate-500">
-                  {accountPhotoUrl
-                    ? 'Using the photo from your Phase 1 account.'
-                    : 'No account photo yet. Add one from your profile and it will appear here.'}
-                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  void handleAutofillFromProfile();
+                }}
+                disabled={autofillBusy || !user?.id}
+                className="inline-flex items-center gap-2 rounded-xl border border-[#BFE7F8] bg-white px-3 py-2 text-xs font-semibold text-[#1F8FC2] transition hover:bg-[#F4FBFF] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {autofillBusy ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                {autofillBusy ? 'Autofilling…' : 'Autofill from profile'}
+              </button>
             </div>
+            {autofillMessage ? (
+              <p className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800">
+                {autofillMessage}
+              </p>
+            ) : null}
             <div className="grid gap-3 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-semibold text-slate-700">Personal Information - Full Name</label>
@@ -847,8 +976,10 @@ export default function BecomeInterviewerPage() {
 
             <button
               type="button"
-              onClick={handleSubmit}
-              disabled={submitting || !kycVerified}
+              onClick={() => {
+                void handleSubmit();
+              }}
+              disabled={submitting || Boolean(submitValidationMessage)}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -860,9 +991,13 @@ export default function BecomeInterviewerPage() {
             </button>
             {submitValidationMessage ? (
               <p className="text-xs text-slate-500">
-                Pending: {submitValidationMessage}
+                Complete the form to submit: {submitValidationMessage}
               </p>
-            ) : null}
+            ) : (
+              <p className="text-xs text-slate-500">
+                Once submitted, HQ will review this application for approval.
+              </p>
+            )}
           </div>
         </section>
       ) : null}

@@ -64,6 +64,7 @@ export interface DashboardJob {
   salaryMin?: number | null;
   salaryMax?: number | null;
   salaryCurrency?: string | null;
+  salaryCurrencySymbol?: string | null;
   salaryAmount?: string | null;
   experienceLevel?: string | null;
   employmentType?: string;

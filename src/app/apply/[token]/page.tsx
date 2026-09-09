@@ -67,6 +67,7 @@ function asStringList(value: unknown): string[] {
 
 function parseSalary(salary: unknown): {
   salaryCurrency?: string | null;
+  salaryCurrencySymbol?: string | null;
   salaryMin?: number | null;
   salaryMax?: number | null;
   salaryAmount?: string | null;
@@ -79,10 +80,9 @@ function parseSalary(salary: unknown): {
   }
   if (typeof salary !== "object") return {};
   const row = salary as Record<string, unknown>;
-  const rawCurrency = String(row.currency || row.salaryCurrency || "").trim() || null;
-  // Informal "CFA" → XAF for consistent public display
-  const currency =
-    rawCurrency && rawCurrency.toUpperCase() === "CFA" ? "XAF" : rawCurrency;
+  const currency = String(row.currency || row.salaryCurrency || "").trim() || null;
+  const salaryCurrencySymbol =
+    String(row.currencySymbol || row.symbol || row.salaryCurrencySymbol || "").trim() || null;
 
   const parseMoney = (value: unknown): number | null => {
     if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -140,7 +140,8 @@ function parseSalary(salary: unknown): {
   }
 
   const parts: string[] = [];
-  if (currency) parts.push(currency);
+  if (salaryCurrencySymbol) parts.push(salaryCurrencySymbol);
+  else if (currency) parts.push(currency);
   if (salaryMin != null || salaryMax != null) {
     parts.push(
       [salaryMin != null ? String(salaryMin) : "", salaryMax != null ? String(salaryMax) : ""]
@@ -150,6 +151,7 @@ function parseSalary(salary: unknown): {
   }
   return {
     salaryCurrency: currency,
+    salaryCurrencySymbol,
     salaryMin,
     salaryMax,
     salaryAmount: amountRaw,
@@ -182,6 +184,7 @@ function mapPublicJobToDetails(job: PublicApplyJob): JobPostingDetailsJob {
     location: job.location || undefined,
     salary: salary.salaryAmount || salary.salaryLabel,
     salaryCurrency: salary.salaryCurrency,
+    salaryCurrencySymbol: salary.salaryCurrencySymbol,
     salaryMin: salary.salaryMin,
     salaryMax: salary.salaryMax,
     workMode: job.workMode || undefined,

@@ -46,6 +46,7 @@ export type JobPostingDetailsJob = {
   experienceLevel?: string
   experienceDisplay?: string | null
   salaryCurrency?: string | null
+  salaryCurrencySymbol?: string | null
   salaryMin?: number | null
   salaryMax?: number | null
   languages?: JobLanguageRow[]
@@ -105,6 +106,7 @@ export function formatJobExperienceHeader(job: JobPostingDetailsJob): string | n
 export function formatJobHeaderSalary(job: JobPostingDetailsJob): string | null {
   const label = formatPublicSalaryLabel({
     currency: job.salaryCurrency,
+    currencySymbol: job.salaryCurrencySymbol,
     min: job.salaryMin,
     max: job.salaryMax,
     fallback: job.salary,
@@ -163,6 +165,7 @@ function formatSalaryLabel(job: JobPostingDetailsJob): string {
   return (
     formatPublicSalaryLabel({
       currency: job.salaryCurrency,
+      currencySymbol: job.salaryCurrencySymbol,
       min: job.salaryMin,
       max: job.salaryMax,
       fallback: job.salary,

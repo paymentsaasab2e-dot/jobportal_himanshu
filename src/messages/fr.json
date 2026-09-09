@@ -681,6 +681,8 @@
     "yrsAny": "Tout",
     "salary": "Salaire",
     "currency": "Devise",
+    "searchCurrency": "Rechercher une devise…",
+    "noMatchingCurrencies": "Aucune devise correspondante",
     "minSalary": "Salaire min.",
     "maxSalary": "Salaire max.",
     "min": "Min",

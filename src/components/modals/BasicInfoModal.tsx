@@ -5,7 +5,6 @@ import Image from 'next/image';
 import {
   ALL_COUNTRY_CODES,
   countryCodeToFlag,
-  formatPhoneCodeLabel,
 } from '@/lib/country-codes';
 import {
   type CitySuggestion,
@@ -278,8 +277,6 @@ export default function BasicInfoModal({
     const countryName = getCountryNameByIso(suggestion.countryCode);
     if (!countryName) return;
     setCountryValue(countryName);
-    const dialMatch = ALL_COUNTRY_CODES.find((c) => c.code === suggestion.countryCode);
-    if (dialMatch) setPhoneCode(formatPhoneCodeLabel(dialMatch));
   }, []);
 
   const applyCitySuggestion = useCallback(
@@ -843,8 +840,8 @@ export default function BasicInfoModal({
                       onChange={(e) => {
                         const nextCountry = e.target.value;
                         setCountryValue(nextCountry);
-                        const dialMatch = ALL_COUNTRY_CODES.find((c) => c.name === nextCountry);
-                        if (dialMatch) setPhoneCode(dialMatch.dialCode);
+                        // Location country must not change the phone dial code —
+                        // that was resetting Indian numbers to +234 (etc.) after edits.
                         clearCityCacheForCountry();
                         setCitySuggestions([]);
                         setCitySuggestOpen(false);

@@ -22,8 +22,10 @@ import {
 // Jobs list comes from backend1 (job portal DB). CRM creates/updates mirror into that DB from Phase 2.
 import { API_BASE_URL } from '@/lib/api-base';
 import {
+  collectJobPostedCurrencies,
   isSalaryFilterActive,
   jobMatchesSalaryFilter,
+  mergeSalaryFilterCurrencyOptions,
   parseSalaryFilterInput,
   SALARY_FILTER_CURRENCIES,
   toFiniteNumber,
@@ -119,6 +121,7 @@ interface JobListing {
   salaryMin?: number | null
   salaryMax?: number | null
   salaryCurrency?: string | null
+  salaryCurrencySymbol?: string | null
   type: string
   skills: string[]
   match: string
@@ -640,6 +643,9 @@ const ExploreJobsPageContent = () => {
   const [countrySearch, setCountrySearch] = useState('')
   const [countryPickerOpen, setCountryPickerOpen] = useState(false)
   const countryPickerRef = useRef<HTMLDivElement>(null)
+  const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false)
+  const [currencySearch, setCurrencySearch] = useState('')
+  const currencyPickerRef = useRef<HTMLDivElement>(null)
 
   // View More expand states
   const [showMoreIndustry, setShowMoreIndustry] = useState(false)
@@ -721,6 +727,8 @@ const ExploreJobsPageContent = () => {
     setSalaryFilterCurrency('INR')
     setSalaryFilterMin('')
     setSalaryFilterMax('')
+    setCurrencyPickerOpen(false)
+    setCurrencySearch('')
     setMatchScore(createInitialMatchScoreState())
     setIndustry({ 'IT Services & Consulting': false, 'Software Product': false, 'Recruitment / Staffing': false, 'Miscellaneous': false, 'Banking & Finance': false, 'Healthcare & Pharma': false, 'E-commerce & Retail': false, 'Manufacturing': false, 'Education & Training': false, 'Media & Entertainment': false, 'Telecommunications': false })
     setSelectedCountry('')
@@ -868,7 +876,14 @@ const ExploreJobsPageContent = () => {
     return fallback ? fallback.replace(/_/g, ' ') : tJobs('onsite')
   }
 
-  const formatSalary = (min: number | null, max: number | null, currency: string | null, type: string | null, amount?: string | null): string => {
+  const formatSalary = (
+    min: number | null,
+    max: number | null,
+    currency: string | null,
+    type: string | null,
+    amount?: string | null,
+    currencySymbol?: string | null,
+  ): string => {
     const typeLabel = type === 'ANNUAL' ? te('perYear') : type === 'MONTHLY' ? te('perMonth') : type === 'HOURLY' ? te('perHour') : ''
     const toFinite = (v: unknown): number | null => {
       if (v === null || v === undefined) return null
@@ -883,6 +898,7 @@ const ExploreJobsPageContent = () => {
 
     const label = formatPublicSalaryLabel({
       currency,
+      currencySymbol,
       min: rangeMin,
       max: rangeMax,
       amount,
@@ -1033,6 +1049,8 @@ const ExploreJobsPageContent = () => {
               asString(job.salary?.currency ?? job.salaryCurrency) ||
               asString(job.currency) ||
               null,
+            salaryCurrencySymbol:
+              asString(job.salary?.currencySymbol ?? job.salaryCurrencySymbol) || null,
             salary: fieldVisible('salary')
               ? formatSalary(
                   job.salary?.min ?? job.salaryMin,
@@ -1040,6 +1058,7 @@ const ExploreJobsPageContent = () => {
                   job.salary?.currency ?? job.salaryCurrency,
                   job.salary?.type ?? job.salaryType,
                   job.salary?.amount || asString(job.expectedSalary) || parsedText.expectedSalary || asString(job.compensation),
+                  job.salary?.currencySymbol ?? job.salaryCurrencySymbol,
                 )
               : '',
             type: fieldVisible('employmentType')
@@ -1377,6 +1396,9 @@ const ExploreJobsPageContent = () => {
           (apiJob.salary as { amount?: string } | undefined)?.amount ||
             asString(apiJob.expectedSalary) ||
             parsedText.expectedSalary,
+          portalMeta.salaryCurrencySymbol ??
+            (apiJob.salary as { currencySymbol?: string } | undefined)?.currencySymbol ??
+            apiJob.salaryCurrencySymbol,
         )
       : ''
 
@@ -1439,6 +1461,9 @@ const ExploreJobsPageContent = () => {
       salaryMin: fieldVisible('salary') ? (portalMeta.salaryMin ?? null) : null,
       salaryMax: fieldVisible('salary') ? (portalMeta.salaryMax ?? null) : null,
       salaryCurrency: fieldVisible('salary') ? (portalMeta.salaryCurrency ?? null) : null,
+      salaryCurrencySymbol: fieldVisible('salary')
+        ? (portalMeta.salaryCurrencySymbol ?? null)
+        : null,
       salaryType: fieldVisible('salary') ? (portalMeta.salaryType ?? null) : null,
       showClientNamePublicly,
       publicFieldVisibility,
@@ -1894,6 +1919,18 @@ const ExploreJobsPageContent = () => {
     return locationFacets.countries.filter((facet) => facet.name.toLowerCase().includes(q))
   }, [locationFacets.countries, countrySearch])
 
+  // Include currencies from Phase 2 job postings (salary range) without duplicates
+  const salaryCurrencyOptions = useMemo(() => {
+    const posted = collectJobPostedCurrencies(jobListings)
+    return mergeSalaryFilterCurrencyOptions(SALARY_FILTER_CURRENCIES, posted)
+  }, [jobListings])
+
+  const filteredCurrenciesForPicker = useMemo(() => {
+    const q = currencySearch.trim().toUpperCase()
+    if (!q) return salaryCurrencyOptions
+    return salaryCurrencyOptions.filter((code) => code.includes(q))
+  }, [currencySearch, salaryCurrencyOptions])
+
   const countrySearchNoJobs = useMemo(
     () => countrySearchHasNoJobs(countrySearch, locationFacets),
     [countrySearch, locationFacets],
@@ -1910,6 +1947,18 @@ const ExploreJobsPageContent = () => {
     document.addEventListener('mousedown', handleDown)
     return () => document.removeEventListener('mousedown', handleDown)
   }, [countryPickerOpen, selectedCountry])
+
+  useEffect(() => {
+    if (!currencyPickerOpen) return
+    const handleDown = (event: MouseEvent) => {
+      if (currencyPickerRef.current && !currencyPickerRef.current.contains(event.target as Node)) {
+        setCurrencyPickerOpen(false)
+        setCurrencySearch('')
+      }
+    }
+    document.addEventListener('mousedown', handleDown)
+    return () => document.removeEventListener('mousedown', handleDown)
+  }, [currencyPickerOpen])
 
   useEffect(() => {
     if (!selectedCountry) return
@@ -2643,10 +2692,10 @@ const ExploreJobsPageContent = () => {
 
                 {/* Main Grid */}
                 <div className="mt-6 grid grid-cols-12 gap-5 items-start relative">
-              {/* Sidebar filters — sticky floating */}
+              {/* Sidebar filters — sticky floating, scrollable body */}
               <aside className="col-span-12 lg:col-span-4 xl:col-span-3 sticky top-[calc(var(--app-header-height,92px)+8px)] self-start z-20">
-                <div className="dashboard-surface rounded-[24px] border border-white/80 p-6 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
-                  <div className="flex items-center justify-between gap-3">
+                <div className="dashboard-surface flex max-h-[calc(100dvh-var(--app-header-height,92px)-24px)] flex-col overflow-hidden rounded-[24px] border border-white/80 p-6 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
+                  <div className="flex shrink-0 items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <p className="profile-page-section-title">{te('filters')}</p>
                       <span className="inline-flex rounded-full bg-[rgba(32,152,200,0.10)] px-2.5 py-1 text-[11px] font-semibold text-[#2098C8]">
@@ -2662,7 +2711,7 @@ const ExploreJobsPageContent = () => {
                     </button>
                   </div>
 
-                  <div className="mt-5 space-y-5 pr-1">
+                  <div className="mt-5 min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                     {/* Smart Filters */}
                     <div className="space-y-4">
                       <SectionHeader
@@ -2734,20 +2783,73 @@ const ExploreJobsPageContent = () => {
                       <SectionHeader title={te('salary')} open={salaryOpen} onToggle={() => setSalaryOpen((v) => !v)} />
                       {salaryOpen ? (
                         <div className="space-y-3">
-                          <div>
+                          <div ref={currencyPickerRef} className="relative">
                             <label className="mb-1 block text-xs font-medium text-gray-500">{te('currency')}</label>
-                            <select
-                              value={salaryFilterCurrency}
-                              onChange={(e) => setSalaryFilterCurrency(e.target.value)}
-                              className="profile-modal-field h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              style={{ fontSize: '12px', lineHeight: '1.25rem' }}
+                            <button
+                              type="button"
+                              aria-haspopup="listbox"
+                              aria-expanded={currencyPickerOpen}
+                              onClick={() => {
+                                setCurrencyPickerOpen((open) => {
+                                  const next = !open
+                                  if (next) setCurrencySearch('')
+                                  return next
+                                })
+                              }}
+                              className="profile-modal-field flex h-10 w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-3 text-left text-xs text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                              {SALARY_FILTER_CURRENCIES.map((currency) => (
-                                <option key={currency} value={currency} style={{ fontSize: '12px' }}>
-                                  {currency}
-                                </option>
-                              ))}
-                            </select>
+                              <span className="font-medium">{salaryFilterCurrency}</span>
+                              <span className="text-gray-400" aria-hidden>
+                                ▾
+                              </span>
+                            </button>
+                            {currencyPickerOpen ? (
+                              <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-40 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                                <div className="border-b border-gray-100 p-2">
+                                  <input
+                                    type="text"
+                                    value={currencySearch}
+                                    autoComplete="off"
+                                    autoFocus
+                                    placeholder={te('searchCurrency')}
+                                    onChange={(e) => setCurrencySearch(e.target.value)}
+                                    className="h-8 w-full rounded-md border border-gray-200 px-2 text-xs text-gray-800 outline-none focus:border-[#2098C8] focus:ring-1 focus:ring-[#2098C8]"
+                                  />
+                                </div>
+                                <div
+                                  role="listbox"
+                                  className="max-h-40 overflow-y-auto overscroll-contain py-1"
+                                >
+                                  {filteredCurrenciesForPicker.length === 0 ? (
+                                    <p className="px-3 py-2 text-xs text-gray-500">
+                                      {te('noMatchingCurrencies')}
+                                    </p>
+                                  ) : (
+                                    filteredCurrenciesForPicker.map((currency) => (
+                                      <button
+                                        key={currency}
+                                        type="button"
+                                        role="option"
+                                        aria-selected={salaryFilterCurrency === currency}
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => {
+                                          setSalaryFilterCurrency(currency)
+                                          setCurrencyPickerOpen(false)
+                                          setCurrencySearch('')
+                                        }}
+                                        className={`flex w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${
+                                          salaryFilterCurrency === currency
+                                            ? 'bg-blue-50 font-semibold text-[#2098C8]'
+                                            : 'text-gray-700'
+                                        }`}
+                                      >
+                                        {currency}
+                                      </button>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+                            ) : null}
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div>

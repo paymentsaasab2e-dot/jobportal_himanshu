@@ -137,6 +137,10 @@ function mapJobRecord(job: Record<string, unknown>, fallbackId: string): Dashboa
       asString(redacted.salaryCurrency) ??
       asString((redacted.salary as { currency?: unknown } | undefined)?.currency) ??
       "USD",
+    salaryCurrencySymbol:
+      asString(redacted.salaryCurrencySymbol) ??
+      asString((redacted.salary as { currencySymbol?: unknown } | undefined)?.currencySymbol) ??
+      null,
     salaryAmount:
       asString((redacted.salary as { amount?: unknown } | undefined)?.amount) ?? null,
     experienceLevel:
