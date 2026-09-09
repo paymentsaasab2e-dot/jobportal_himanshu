@@ -48,19 +48,19 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-09-08T16:34:05.926Z",
+      "capturedAt": "2026-09-09T04:59:37.758Z",
       "kind": "realtime_session",
       "session": {
-        "logins": 12,
-        "visits": 82,
+        "logins": 10,
+        "visits": 79,
         "applies": 0,
-        "activeMs": 5910000,
-        "sessionCount": 12,
+        "activeMs": 5715000,
+        "sessionCount": 10,
         "topInsightIds": [
           "browser_not_applier"
         ],
         "triggerFlags": [],
-        "alertWindow": "Wed / Tue · 12:00 PM–1:00 PM",
+        "alertWindow": "Tue / Wed · 1:00 PM–8:00 PM",
         "alertConfidence": "high",
         "topLocation": null,
         "preferredAlertHours": [
@@ -792,33 +792,33 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-09-08T16:34:05.926Z",
-      "activityStateUpdatedAt": "2026-09-08T16:33:26.789Z",
+      "capturedAt": "2026-09-09T04:59:37.758Z",
+      "activityStateUpdatedAt": "2026-09-09T04:59:36.832Z",
       "rollup7d": {
         "userId": "b1c869d84e75048c5c61c5e3",
         "range": "week",
-        "fromDate": "2026-09-02",
-        "toDate": "2026-09-08",
-        "logins": 12,
-        "visits": 82,
+        "fromDate": "2026-09-03",
+        "toDate": "2026-09-09",
+        "logins": 10,
+        "visits": 79,
         "jobCardClicks": 0,
         "applies": 0,
-        "activeMs": 5910000,
-        "sessionCount": 12,
+        "activeMs": 5715000,
+        "sessionCount": 10,
         "pageVisitsByCategory": {
-          "other": 77,
+          "other": 74,
           "dashboard": 2,
           "jobs": 3
         },
         "activeMsByCategory": {
-          "other": 3765000,
+          "other": 3570000,
           "dashboard": 165000,
           "jobs": 1980000
         },
         "firstOpenBreakdown": {
           "other": 4
         },
-        "avgActiveMsPerDay": 1477500,
+        "avgActiveMsPerDay": 1428750,
         "daysActive": 4,
         "topFirstOpen": "other",
         "insights": [
@@ -835,10 +835,10 @@
         ],
         "recentSessions": [
           {
-            "id": "sess_mtsw118r_bnplul",
-            "startedAt": "2026-09-08T16:32:26.761Z",
-            "lastActiveAt": "2026-09-08T16:33:26.789Z",
-            "durationMs": 15000,
+            "id": "sess_mttmpv4x_6sv2ns",
+            "startedAt": "2026-09-09T04:59:35.264Z",
+            "lastActiveAt": "2026-09-09T04:59:35.273Z",
+            "durationMs": 0,
             "pageCount": 1,
             "firstPath": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
             "lastPath": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
@@ -849,6 +849,23 @@
             "deviceType": "desktop",
             "browser": "Chrome",
             "operatingSystem": "Windows"
+          },
+          {
+            "id": "sess_mtsw118r_bnplul",
+            "startedAt": "2026-09-08T16:32:26.761Z",
+            "lastActiveAt": "2026-09-08T16:35:16.242Z",
+            "durationMs": 15000,
+            "pageCount": 1,
+            "firstPath": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "lastPath": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "lastCategory": "other",
+            "paths": [
+              "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8"
+            ],
+            "deviceType": "desktop",
+            "browser": "Chrome",
+            "operatingSystem": "Windows",
+            "endedAt": "2026-09-08T16:35:16.242Z"
           },
           {
             "id": "sess_mtssodqg_4hf3ku",
@@ -1023,27 +1040,41 @@
             "operatingSystem": "Windows",
             "lastCategory": "other",
             "endedAt": "2026-09-02T08:39:54.150Z"
-          },
-          {
-            "id": "sess_mtjq90lp_ycfhxq",
-            "startedAt": "2026-09-02T06:40:45.900Z",
-            "lastActiveAt": "2026-09-02T06:48:26.173Z",
-            "durationMs": 4673633,
-            "pageCount": 2,
-            "firstPath": "/",
-            "lastPath": "/employers",
-            "lastCategory": "other",
-            "paths": [
-              "/",
-              "/employers"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-09-02T07:58:39.533Z"
           }
         ],
         "recentEvents": [
+          {
+            "id": "ev_mttmpv55_jc24s5",
+            "at": "2026-09-09T04:59:35.273Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "sessionId": "sess_mttmpv4x_6sv2ns"
+          },
+          {
+            "id": "ev_mttmpv4x_saou7l",
+            "at": "2026-09-09T04:59:35.265Z",
+            "type": "login",
+            "category": "other",
+            "path": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "sessionId": "sess_mttmpv4x_6sv2ns",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows"
+            }
+          },
+          {
+            "id": "ev_mtsw4o0i_stcz1r",
+            "at": "2026-09-08T16:35:16.242Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/apply/361eeac432196796c5fd4e0fa6eeb1cbf5f8",
+            "sessionId": "sess_mtsw118r_bnplul",
+            "meta": {
+              "durationMs": 15000
+            }
+          },
           {
             "id": "ev_mtsw2bk5_hwq1eh",
             "at": "2026-09-08T16:33:26.789Z",
@@ -2119,38 +2150,6 @@
             "meta": {
               "durationMs": 0
             }
-          },
-          {
-            "id": "ev_mtotk7to_va2b6y",
-            "at": "2026-09-05T20:12:18.204Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mtotk7ta_n9bvbj"
-          },
-          {
-            "id": "ev_mtotk7ta_mhjyau",
-            "at": "2026-09-05T20:12:18.190Z",
-            "type": "login",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mtotk7ta_n9bvbj",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_mtog26nb_s7o1gt",
-            "at": "2026-09-05T13:54:21.863Z",
-            "type": "session_end",
-            "category": "other",
-            "path": "/employers",
-            "sessionId": "sess_mtofplqa_71afer",
-            "meta": {
-              "durationMs": 0
-            }
           }
         ],
         "topCompanies": [],
@@ -2166,7 +2165,7 @@
           "postInterviewRejections": 0,
           "missingSectionsCount": 0,
           "missingSectionKeys": [],
-          "updatedAt": "2026-09-08T16:32:28.405Z"
+          "updatedAt": "2026-09-09T04:59:36.832Z"
         },
         "behaviourSignals": {
           "userId": "b1c869d84e75048c5c61c5e3",
@@ -2185,14 +2184,14 @@
           ],
           "jobCardClicks7d": 0,
           "applies7d": 0,
-          "activeMs7d": 5910000,
+          "activeMs7d": 5715000,
           "activeMsByCategory7d": {
-            "other": 3765000,
+            "other": 3570000,
             "dashboard": 165000,
             "jobs": 1980000
           },
           "pageVisitsByCategory7d": {
-            "other": 77,
+            "other": 74,
             "dashboard": 2,
             "jobs": 3
           },
@@ -2226,29 +2225,20 @@
       },
       "suggestionMetrics": {
         "userId": "b1c869d84e75048c5c61c5e3",
-        "updatedAt": "2026-09-08T16:34:02.183Z",
+        "updatedAt": "2026-09-09T04:59:36.830Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
-        "suggestionsPushed": 54,
+        "suggestionsPushed": 55,
         "suggestionsClicked": 0,
         "suggestionsPurchased": 0,
         "salesFollowUpScore": 10,
         "salesFollowUpReady": false,
         "byScenario": {
           "profile_match": 47,
-          "engagement": 7
+          "engagement": 8
         },
         "recentSuggestions": [
-          {
-            "id": "sug_mto6a5nd_ijg9sp",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Career Narrative Lab",
-            "actionUrl": "/lms/courses/c6",
-            "pushedAt": "2026-09-05T09:20:37.657Z"
-          },
           {
             "id": "sug_mto7fght_7sc9xq",
             "dedupeKey": "engage:course",
@@ -2383,6 +2373,15 @@
             "title": "Prepare before you apply",
             "actionUrl": "/services/mock-interview",
             "pushedAt": "2026-09-08T16:32:28.375Z"
+          },
+          {
+            "id": "sug_mttmpwc7_2ceysk",
+            "dedupeKey": "engage:behaviour:hq_profile_incomplete_job_hunter",
+            "scenario": "engagement",
+            "kind": "profile",
+            "title": "Finish missing profile sections",
+            "actionUrl": "/profile",
+            "pushedAt": "2026-09-09T04:59:36.823Z"
           }
         ]
       },
@@ -2469,19 +2468,13 @@
       "sessionEngagement": {
         "sessionCount": 12,
         "activeCount": 1,
-        "totalDurationMs": 12983250,
-        "avgDurationMs": 1081938,
-        "medianDurationMs": 285000,
+        "totalDurationMs": 8309617,
+        "avgDurationMs": 692468,
+        "medianDurationMs": 82500,
         "uniqueIps": 0,
         "uniqueDevices": 1,
         "locations": [],
         "byHour": [
-          {
-            "hour": 12,
-            "label": "12:00 PM",
-            "sessions": 1,
-            "totalDurationMs": 4673633
-          },
           {
             "hour": 13,
             "label": "1:00 PM",
@@ -2525,6 +2518,12 @@
             "totalDurationMs": 15000
           },
           {
+            "hour": 10,
+            "label": "10:00 AM",
+            "sessions": 1,
+            "totalDurationMs": 0
+          },
+          {
             "hour": 1,
             "label": "1:00 AM",
             "sessions": 1,
@@ -2539,16 +2538,16 @@
         ],
         "byWeekday": [
           {
-            "weekday": 3,
-            "label": "Wed",
-            "sessions": 3,
-            "totalDurationMs": 7268250
-          },
-          {
             "weekday": 2,
             "label": "Tue",
             "sessions": 3,
             "totalDurationMs": 4080000
+          },
+          {
+            "weekday": 3,
+            "label": "Wed",
+            "sessions": 3,
+            "totalDurationMs": 2594617
           },
           {
             "weekday": 6,
@@ -2565,65 +2564,83 @@
         ],
         "alertTiming": {
           "bestHours": [
-            12,
             13,
-            20
+            20,
+            14
           ],
           "bestHourLabels": [
-            "12:00 PM",
             "1:00 PM",
-            "8:00 PM"
+            "8:00 PM",
+            "2:00 PM"
           ],
           "bestWeekdays": [
-            "Wed",
-            "Tue"
+            "Tue",
+            "Wed"
           ],
-          "bestWindowLabel": "Wed / Tue · 12:00 PM–1:00 PM",
+          "bestWindowLabel": "Tue / Wed · 1:00 PM–8:00 PM",
           "avoidHours": [
+            10,
             1,
-            19,
-            22
+            19
           ],
           "timezone": null,
           "confidence": "high",
-          "reason": "Most active around 12:00 PM and 1:00 PM local time · avg session 18 min",
+          "reason": "Most active around 1:00 PM and 8:00 PM local time · avg session 12 min",
           "sampleSessions": 12,
-          "avgDurationMs": 1081938,
-          "medianDurationMs": 285000
+          "avgDurationMs": 692468,
+          "medianDurationMs": 82500
         }
       },
       "alertTiming": {
         "bestHours": [
-          12,
           13,
-          20
+          20,
+          14
         ],
         "bestHourLabels": [
-          "12:00 PM",
           "1:00 PM",
-          "8:00 PM"
+          "8:00 PM",
+          "2:00 PM"
         ],
         "bestWeekdays": [
-          "Wed",
-          "Tue"
+          "Tue",
+          "Wed"
         ],
-        "bestWindowLabel": "Wed / Tue · 12:00 PM–1:00 PM",
+        "bestWindowLabel": "Tue / Wed · 1:00 PM–8:00 PM",
         "avoidHours": [
+          10,
           1,
-          19,
-          22
+          19
         ],
         "timezone": null,
         "confidence": "high",
-        "reason": "Most active around 12:00 PM and 1:00 PM local time · avg session 18 min",
+        "reason": "Most active around 1:00 PM and 8:00 PM local time · avg session 12 min",
         "sampleSessions": 12,
-        "avgDurationMs": 1081938,
-        "medianDurationMs": 285000
+        "avgDurationMs": 692468,
+        "medianDurationMs": 82500
       },
       "locations": []
     }
   },
   "history": [
+    {
+      "id": "hist_mttmpwjf_qooj",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-09T04:59:36.216Z",
+      "snapshot": {
+        "logins": 10,
+        "visits": 79,
+        "applies": 0,
+        "activeMs": 5715000,
+        "jobCardClicks": 0,
+        "triggerCount": 1,
+        "insightIds": [
+          "browser_not_applier"
+        ],
+        "alertWindow": "Tue / Wed · 1:00 PM–8:00 PM",
+        "topLocation": null
+      }
+    },
     {
       "id": "hist_mtsw120i_dmru",
       "userId": "b1c869d84e75048c5c61c5e3",
@@ -17304,5 +17321,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-09-08T16:34:06.001Z"
+  "updatedAt": "2026-09-09T04:59:37.809Z"
 }

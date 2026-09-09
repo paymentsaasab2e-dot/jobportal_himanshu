@@ -456,6 +456,13 @@ export default function ApplyLandingPage() {
             display: flex;
             flex-direction: column;
             overscroll-behavior: contain;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* legacy Edge */
+          }
+          .apply-left-card-fixed::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+            display: none; /* Chrome / Safari */
           }
           .apply-left-card-cta {
             position: sticky;
