@@ -125,11 +125,16 @@ export function formatCompactSalary(
   max?: number | null,
   currency?: string | null,
   amount?: string | null,
-  options?: { locale?: AppLocale; unspecifiedLabel?: string }
+  options?: {
+    locale?: AppLocale;
+    unspecifiedLabel?: string;
+    currencySymbol?: string | null;
+  }
 ) {
   return formatCompactSalarySafe(min, max, currency, amount, {
     numberLocale: getSalaryNumberLocale(options?.locale ?? "en"),
     unspecifiedLabel: options?.unspecifiedLabel,
+    currencySymbol: options?.currencySymbol,
   });
 }
 

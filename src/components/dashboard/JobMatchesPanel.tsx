@@ -293,6 +293,7 @@ export default function JobMatchesPanel({
                             {
                               locale,
                               unspecifiedLabel: t("salaryUnspecified"),
+                              currencySymbol: job.salaryCurrencySymbol,
                             }
                           )}
                         </span>

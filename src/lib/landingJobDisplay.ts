@@ -49,6 +49,7 @@ export function formatLandingSalary(
   currency: string | null | undefined,
   salaryType: string | null | undefined,
   labels: LandingJobLabels,
+  currencySymbol?: string | null,
 ): string {
   const typeLabel =
     salaryType === 'ANNUAL'
@@ -69,6 +70,7 @@ export function formatLandingSalary(
 
   const label = formatPublicSalaryLabel({
     currency,
+    currencySymbol,
     min: nMin,
     max: nMax,
   });

@@ -105,6 +105,7 @@ export function redactPortalJobListing<T extends Record<string, unknown>>(
     out.salaryMin = null;
     out.salaryMax = null;
     out.salaryCurrency = null;
+    out.salaryCurrencySymbol = null;
   }
   if (!show('experience')) {
     out.experienceLevel = '';

@@ -20,6 +20,7 @@ export type PortalJobMeta = {
   experienceMax?: number | null
   experienceDisplay?: string | null
   salaryCurrency?: string | null
+  salaryCurrencySymbol?: string | null
   salaryMin?: number | null
   salaryMax?: number | null
   salaryType?: string | null
@@ -212,6 +213,10 @@ export function extractPortalJobMeta(job: Record<string, unknown>): PortalJobMet
     experienceMax: exp.max,
     experienceDisplay: exp.display || undefined,
     salaryCurrency: asString(job.salaryCurrency) || undefined,
+    salaryCurrencySymbol:
+      asString(job.salaryCurrencySymbol) ||
+      asString((job.salary as { currencySymbol?: unknown } | undefined)?.currencySymbol) ||
+      undefined,
     salaryMin: typeof job.salaryMin === 'number' ? job.salaryMin : null,
     salaryMax: typeof job.salaryMax === 'number' ? job.salaryMax : null,
     salaryType: asString(job.salaryType) || undefined,
