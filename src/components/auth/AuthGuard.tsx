@@ -51,12 +51,16 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children })
     normalizedPathname === '/candmain' ||
     normalizedPathname.startsWith('/candmain/');
 
+  // CV upload / extract: never block with GlobalLoader (felt like a hung page).
+  // Also never return null — that left /extract blank while Earn/Profile floats still showed.
+  const isCvOnboardingRoute =
+    normalizedPathname === '/uploadcv' ||
+    normalizedPathname.startsWith('/uploadcv/') ||
+    normalizedPathname === '/extract' ||
+    normalizedPathname.startsWith('/extract/');
+
   if (isLoading) {
-    if (pathname === '/extract' || pathname?.startsWith('/extract/')) {
-      return null;
-    }
-    // Keep public pages usable even when auth/session refresh is still pending.
-    if (isPublicRoute) {
+    if (isCvOnboardingRoute || isPublicRoute) {
       return <>{children}</>;
     }
     return <GlobalLoader />;

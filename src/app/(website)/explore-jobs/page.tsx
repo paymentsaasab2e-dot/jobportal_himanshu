@@ -30,7 +30,7 @@ import {
   SALARY_FILTER_CURRENCIES,
   toFiniteNumber,
 } from '@/lib/job-salary-filter';
-import { formatPublicSalaryLabel } from '@/lib/format-salary';
+import { formatPublicSalaryLabel, getSalaryDisplaySymbol } from '@/lib/format-salary';
 import { showInfoToast, showSuccessToast } from '@/components/common/toast/toast';
 import { notifyBellRefresh } from '@/lib/notifications';
 import { usePortalApplications } from '@/hooks/portal/usePortalApplications';
@@ -2798,7 +2798,9 @@ const ExploreJobsPageContent = () => {
                               }}
                               className="profile-modal-field flex h-10 w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-3 text-left text-xs text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                              <span className="font-medium">{salaryFilterCurrency}</span>
+                              <span className="font-medium">
+                                {getSalaryDisplaySymbol(salaryFilterCurrency) || salaryFilterCurrency}
+                              </span>
                               <span className="text-gray-400" aria-hidden>
                                 ▾
                               </span>
@@ -2842,7 +2844,7 @@ const ExploreJobsPageContent = () => {
                                             : 'text-gray-700'
                                         }`}
                                       >
-                                        {currency}
+                                        {getSalaryDisplaySymbol(currency) || currency}
                                       </button>
                                     ))
                                   )}

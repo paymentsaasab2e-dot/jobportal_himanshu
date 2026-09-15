@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, Sparkles, FileText, UploadCloud, Phone } from "lucide-react";
+import { ArrowRight, Sparkles, FileText, UploadCloud, Phone, AlertCircle } from "lucide-react";
 import { useAuth } from '@/components/auth/AuthContext';
 
 import { API_BASE_URL } from '@/lib/api-base';

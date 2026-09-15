@@ -268,8 +268,24 @@ function formatCompactMoney(value: number, currency?: string | null) {
   if (iso === 'USD' || !iso) return `$${formattedValue}`;
   if (iso === 'EUR') return `€${formattedValue}`;
   if (iso === 'GBP') return `£${formattedValue}`;
-  if (/^[A-Z]{3}$/.test(iso)) return `${iso} ${formattedValue}`;
-  return `${formattedValue} ${currency}`.trim();
+  if (iso === 'XAF' || iso === 'XOF' || iso === 'CFA') return `Fr ${formattedValue}`;
+  if (/^[A-Z]{3}$/.test(iso)) {
+    try {
+      const parts = new Intl.NumberFormat('en', {
+        style: 'currency',
+        currency: iso,
+        currencyDisplay: 'narrowSymbol',
+      }).formatToParts(0);
+      const sym = parts.find((part) => part.type === 'currency')?.value?.trim() || '';
+      if (sym && sym.toUpperCase() !== iso) {
+        return sym.length > 1 ? `${sym} ${formattedValue}` : `${sym}${formattedValue}`;
+      }
+    } catch {
+      /* fall through */
+    }
+    return formattedValue;
+  }
+  return formattedValue;
 }
 
 function formatSavedSalary(job: SavedJobRecord) {

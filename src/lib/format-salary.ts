@@ -3,6 +3,8 @@
  * Phase 2 often stores human-readable currency labels (e.g. "Rupees (₹ - India)")
  * which are NOT valid ISO 4217 codes for Intl.NumberFormat.
  * Prefer salary.currencySymbol (persisted from create-job Symbol field) when present.
+ *
+ * Display rule: never show ISO currency codes (USD, INR, …) in UI — symbols only.
  */
 
 const ISO_CURRENCY = /^[A-Z]{3}$/;
@@ -14,8 +16,32 @@ const SYMBOL_BY_ISO: Record<string, string> = {
   INR: '₹',
   JPY: '¥',
   CNY: '¥',
+  AUD: 'A$',
+  CAD: 'C$',
+  SGD: 'S$',
+  HKD: 'HK$',
+  NZD: 'NZ$',
+  AED: 'د.إ',
+  CHF: 'CHF',
+  SEK: 'kr',
+  NOK: 'kr',
+  DKK: 'kr',
+  ZAR: 'R',
+  MXN: 'Mex$',
+  BRL: 'R$',
+  KRW: '₩',
+  THB: '฿',
+  PHP: '₱',
+  MYR: 'RM',
+  IDR: 'Rp',
+  VND: '₫',
+  TRY: '₺',
+  RUB: '₽',
+  PLN: 'zł',
   XAF: 'Fr',
   XOF: 'Fr',
+  CFA: 'Fr',
+  CHF: 'Fr.',
 };
 
 const ISO_CURRENCY_SYMBOL_CACHE = new Map<string, string>();
@@ -54,6 +80,10 @@ function resolveIntlCurrencySymbol(code: string): string {
   } catch {
     symbol = '';
   }
+  if (!symbol || symbol.toUpperCase() === key) {
+    symbol = SYMBOL_BY_ISO[key] || '';
+  }
+  if (symbol.toUpperCase() === key) symbol = '';
   ISO_CURRENCY_SYMBOL_CACHE.set(key, symbol);
   return symbol;
 }
@@ -102,26 +132,38 @@ export function stripMismatchedRupeeMark(text: string, currency?: string | null)
   return raw;
 }
 
+/** Remove leading ISO currency codes from legacy salary strings. */
+export function stripLeadingCurrencyCode(text: string, currency?: string | null): string {
+  let next = String(text || '').trim();
+  if (!next) return '';
+  const iso = resolveIsoCurrencyCode(currency);
+  if (iso) {
+    next = next.replace(new RegExp(`^${iso}\\s*`, 'i'), '').trim();
+  }
+  next = next.replace(/^[A-Z]{3}\s+(?=\d)/, '').trim();
+  return next;
+}
+
 function joinSymbolAmount(sym: string, formatted: string): string {
   const clean = String(sym || '').trim();
   if (!clean) return formatted;
-  if (/^[A-Z]{2,5}$/i.test(clean) && clean.length >= 2) {
-    return `${clean.toUpperCase()} ${formatted}`;
-  }
+  // Never treat an ISO-like token as a display symbol.
+  if (/^[A-Z]{2,5}$/.test(clean)) return formatted;
   if (clean.length > 1) return `${clean} ${formatted}`;
   return `${clean}${formatted}`;
 }
 
 /**
- * Prefix symbol for compact display, or the ISO/code.
+ * Prefix symbol for compact display.
  * Prefer explicit currencySymbol from Phase 2 job salary (Symbol field).
+ * Never returns an ISO currency code.
  */
 export function getSalaryDisplaySymbol(
   currency?: string | null,
   currencySymbol?: string | null,
 ): string | null {
   const stored = String(currencySymbol ?? '').trim();
-  if (stored) return stored;
+  if (stored && !/^[A-Z]{2,5}$/.test(stored)) return stored;
 
   const cur = String(currency ?? '').trim();
   if (!cur) return null;
@@ -134,7 +176,6 @@ export function getSalaryDisplaySymbol(
   if (iso) {
     const intlSym = resolveIntlCurrencySymbol(iso);
     if (intlSym) return intlSym;
-    return iso;
   }
 
   if (upper === 'USD' || cur === '$') return '$';
@@ -142,10 +183,10 @@ export function getSalaryDisplaySymbol(
   if (upper === 'GBP' || cur === '£') return '£';
   if (ISO_CURRENCY.test(upper)) {
     const intlSym = resolveIntlCurrencySymbol(upper);
-    return intlSym || upper;
+    return intlSym || null;
   }
   if (/₹|rupee/i.test(cur)) return '₹';
-  if (cur.length <= 4 && /^[A-Z$€£¥₣]{1,4}$/i.test(cur)) return cur;
+  if (cur.length <= 4 && /^[A-Z$€£¥₣]{1,4}$/i.test(cur) && !/^[A-Z]{2,5}$/.test(cur)) return cur;
 
   return null;
 }
@@ -164,19 +205,14 @@ function formatAmountWithCurrency(
   const formatted = compact
     ? compactNumber(value, numberLocale)
     : value.toLocaleString(numberLocale, { maximumFractionDigits: 0 });
-  const iso = resolveIsoCurrencyCode(currency);
   const sym = getSalaryDisplaySymbol(currency, currencySymbol);
-  if (sym && sym.toUpperCase() !== String(currency || '').trim().toUpperCase()) {
-    return joinSymbolAmount(sym, formatted);
-  }
-  if (iso) return `${iso} ${formatted}`;
   if (sym) return joinSymbolAmount(sym, formatted);
-  if (currency) return `${currency} ${formatted}`;
   return formatted;
 }
 
 /**
  * Compact salary for dashboard cards. Never throws on invalid currency strings.
+ * Never appends ISO currency codes.
  */
 export function formatCompactSalarySafe(
   min?: number | null,
@@ -193,19 +229,19 @@ export function formatCompactSalarySafe(
   const unspecifiedLabel = options?.unspecifiedLabel ?? 'Salary not specified';
   const cur = String(currency ?? '').trim() || null;
   const currencySymbol = options?.currencySymbol ?? null;
-  const amountStr = stripMismatchedRupeeMark(String(amount ?? '').trim(), cur) || null;
+  const amountStr =
+    stripLeadingCurrencyCode(
+      stripMismatchedRupeeMark(String(amount ?? '').trim(), cur),
+      cur,
+    ) || null;
 
   if (amountStr) {
     const amountUpper = amountStr.toUpperCase();
-    const curUpper = (cur || '').toUpperCase();
-    if (cur && (amountUpper.includes(curUpper) || (isInrCurrency(cur) && amountStr.includes('₹')))) {
-      return amountStr;
-    }
     const sym = getSalaryDisplaySymbol(cur, currencySymbol);
     if (sym && !amountUpper.includes(sym.toUpperCase())) {
       return joinSymbolAmount(sym, amountStr);
     }
-    return cur ? `${amountStr} · ${cur}` : amountStr;
+    return amountStr;
   }
 
   const nMin = typeof min === 'number' && Number.isFinite(min) ? min : null;
@@ -239,7 +275,10 @@ export function formatPublicSalaryLabel(input: {
   if (min != null) return formatAmountWithCurrency(min, currency, 'en-US', false, currencySymbol);
   if (max != null) return `Up to ${formatAmountWithCurrency(max, currency, 'en-US', false, currencySymbol)}`;
 
-  const amount = stripMismatchedRupeeMark(String(input.amount || '').trim(), currency);
+  const amount = stripLeadingCurrencyCode(
+    stripMismatchedRupeeMark(String(input.amount || '').trim(), currency),
+    currency,
+  );
   if (amount) {
     const sym = getSalaryDisplaySymbol(currency, currencySymbol);
     if (sym && !amount.toUpperCase().includes(sym.toUpperCase())) {
@@ -247,6 +286,9 @@ export function formatPublicSalaryLabel(input: {
     }
     return amount;
   }
-  const fallback = stripMismatchedRupeeMark(String(input.fallback || '').trim(), currency);
+  const fallback = stripLeadingCurrencyCode(
+    stripMismatchedRupeeMark(String(input.fallback || '').trim(), currency),
+    currency,
+  );
   return fallback || null;
 }

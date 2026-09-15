@@ -140,8 +140,38 @@ function parseSalary(salary: unknown): {
   }
 
   const parts: string[] = [];
-  if (salaryCurrencySymbol) parts.push(salaryCurrencySymbol);
-  else if (currency) parts.push(currency);
+  const SYMBOLS: Record<string, string> = {
+    USD: "$",
+    EUR: "€",
+    GBP: "£",
+    INR: "₹",
+    JPY: "¥",
+    XAF: "Fr",
+    XOF: "Fr",
+    CFA: "Fr",
+  };
+  const storedSym = String(salaryCurrencySymbol || "").trim();
+  if (storedSym && !/^[A-Z]{2,5}$/.test(storedSym)) {
+    parts.push(storedSym);
+  } else if (currency) {
+    const key = currency.toUpperCase();
+    const mapped = SYMBOLS[key];
+    if (mapped) {
+      parts.push(mapped);
+    } else if (/^[A-Z]{3}$/.test(key)) {
+      try {
+        const intlParts = new Intl.NumberFormat("en", {
+          style: "currency",
+          currency: key,
+          currencyDisplay: "narrowSymbol",
+        }).formatToParts(0);
+        const sym = intlParts.find((part) => part.type === "currency")?.value?.trim() || "";
+        if (sym && sym.toUpperCase() !== key) parts.push(sym);
+      } catch {
+        /* omit code from public label */
+      }
+    }
+  }
   if (salaryMin != null || salaryMax != null) {
     parts.push(
       [salaryMin != null ? String(salaryMin) : "", salaryMax != null ? String(salaryMax) : ""]
