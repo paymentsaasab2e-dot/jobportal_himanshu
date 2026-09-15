@@ -158,6 +158,9 @@ function shouldHideOnPath(pathname: string | null): boolean {
     '/help',
     '/faq',
     '/executive-services',
+    // Onboarding CV flow — keep the screen clean (no Earn / Profile Alert cards)
+    '/uploadcv',
+    '/extract',
   ]);
   if (exact.has(path)) return true;
   return (
@@ -171,6 +174,8 @@ function shouldHideOnPath(pathname: string | null): boolean {
     path.startsWith('/events/') ||
     path.startsWith('/services/') ||
     path.startsWith('/explore-jobs/') ||
+    path.startsWith('/uploadcv/') ||
+    path.startsWith('/extract/') ||
     path.startsWith('/lms/interview-prep/live-room')
   );
 }

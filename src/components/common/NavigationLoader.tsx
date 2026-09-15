@@ -78,8 +78,10 @@ export function NavigationLoader() {
   if (
     !showLoader ||
     normalizedPath === '/' ||
-    pathname === '/extract' ||
-    pathname?.startsWith('/extract/')
+    normalizedPath === '/extract' ||
+    normalizedPath.startsWith('/extract/') ||
+    normalizedPath === '/uploadcv' ||
+    normalizedPath.startsWith('/uploadcv/')
   ) {
     return null;
   }

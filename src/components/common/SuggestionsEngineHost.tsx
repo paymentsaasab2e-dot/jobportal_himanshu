@@ -17,6 +17,7 @@ import {
   SUGGESTIONS_ENGINE_STORAGE_KEY,
 } from '@/lib/suggestions-engine';
 import { warmSuggestionJobsCache } from '@/lib/suggestions-engine/job-intent-resolve';
+import { stripLocaleFromPathname } from '@/lib/i18n';
 
 /**
  * Runs the suggestions engine globally:
@@ -33,6 +34,17 @@ export function SuggestionsEngineHost() {
 
   useEffect(() => {
     if (isLoading || !isAuthenticated || !userId) return;
+
+    // Skip heavy profile/dashboard fetches on CV upload & extract (keeps those pages snappy).
+    const bare = stripLocaleFromPathname(pathname || '/');
+    if (
+      bare === '/uploadcv' ||
+      bare.startsWith('/uploadcv/') ||
+      bare === '/extract' ||
+      bare.startsWith('/extract/')
+    ) {
+      return;
+    }
 
     let cancelled = false;
     let timer: number | undefined;
@@ -75,7 +87,7 @@ export function SuggestionsEngineHost() {
       cancelled = true;
       if (timer) window.clearInterval(timer);
     };
-  }, [isAuthenticated, isLoading, userId]);
+  }, [isAuthenticated, isLoading, userId, pathname]);
 
   useEffect(() => {
     if (!userId || !pathname) return;

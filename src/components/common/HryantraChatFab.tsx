@@ -257,6 +257,11 @@ export function HryantraChatFab() {
   const barePath = stripLocaleFromPathname(pathname);
   const onLiveInterviewRoom = barePath.startsWith('/lms/interview-prep/live-room');
   const onLanding = barePath === '/' || barePath === '';
+  const onCvOnboarding =
+    barePath === '/uploadcv' ||
+    barePath.startsWith('/uploadcv/') ||
+    barePath === '/extract' ||
+    barePath.startsWith('/extract/');
   const onCommunity =
     barePath === '/community' || barePath.startsWith('/community/');
   const onApply =
@@ -293,6 +298,7 @@ export function HryantraChatFab() {
   // Hide on landing, public/marketing pages, apply flows, while already reading Chat, or when everything is read
   if (
     onLanding ||
+    onCvOnboarding ||
     onLiveInterviewRoom ||
     onSearchJobs ||
     onCourses ||
