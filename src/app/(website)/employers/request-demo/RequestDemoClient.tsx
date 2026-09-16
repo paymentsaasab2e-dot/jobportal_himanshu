@@ -291,6 +291,23 @@ export function RequestDemoClient({ intent = "demo" }: { intent?: "demo" | "tria
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const prefillEmail = String(params.get("email") || "").trim();
+    const prefillPhone = String(params.get("phone") || "").replace(/\D/g, "");
+    const prefillDial = String(params.get("dialCode") || "").trim();
+    const prefillCountry = String(params.get("country") || "").trim();
+    if (!prefillEmail && !prefillPhone && !prefillDial && !prefillCountry) return;
+    setForm((prev) => ({
+      ...prev,
+      email: prev.email || prefillEmail,
+      phoneNumber: prev.phoneNumber || prefillPhone,
+      dialCode: prev.dialCode || prefillDial,
+      countryCode: prev.countryCode || prefillCountry,
+    }));
+  }, []);
+
+  useEffect(() => {
     if (hasAutoDetectedCountry.current || !countries.length) return;
     hasAutoDetectedCountry.current = true;
 

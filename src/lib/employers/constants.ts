@@ -43,6 +43,11 @@ export function getTryFreeLoginApiUrl(): string {
   return '/api/employers/try-free-login';
 }
 
+/** Capture Try it free email + mobile into HQ CRM as soon as the visitor clicks Next. */
+export function getTryFreeInterestApiUrl(): string {
+  return '/api/employers/try-free-interest';
+}
+
 /** Phase 2 API root including `/api/v1` — server-side / legacy use. Browser try-free uses getTryFreeLoginApiUrl(). */
 export function getPhase2AuthApiBase(): string {
   const fromEnv = process.env.NEXT_PUBLIC_PHASE2_API_URL?.trim().replace(/\/$/, "");

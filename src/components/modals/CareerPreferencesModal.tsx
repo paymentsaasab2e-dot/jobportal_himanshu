@@ -15,6 +15,11 @@ import {
   normalizeSalaryFilterCurrencyCode,
   SALARY_FILTER_CURRENCIES,
 } from '@/lib/job-salary-filter';
+import {
+  findWorldCurrency,
+  worldCurrencyMatches,
+  type WorldCurrencyEntry,
+} from '@/lib/world-currencies';
 
 interface CareerPreferencesModalProps {
   isOpen: boolean;
@@ -1534,9 +1539,13 @@ function PackageCurrencyField({
   const rootRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toUpperCase();
-    if (!q) return options;
-    return options.filter((code) => code.includes(q));
+    const rows: WorldCurrencyEntry[] = options.map((code) => {
+      const known = findWorldCurrency(code);
+      return known || { code, name: code, countries: '' };
+    });
+    const q = search.trim();
+    if (!q) return rows;
+    return rows.filter((row) => worldCurrencyMatches(row, q));
   }, [options, search]);
 
   useEffect(() => {
@@ -1601,32 +1610,40 @@ function PackageCurrencyField({
               type="text"
               value={search}
               autoComplete="off"
-              placeholder="Search currency…"
+              placeholder="Search code, name, or country…"
               onChange={(e) => setSearch(e.target.value)}
               className="h-8 w-full rounded-md border border-gray-200 px-2 text-xs text-gray-800 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-100"
             />
           </div>
-          <div role="listbox" className="max-h-40 overflow-y-auto overscroll-contain py-1">
+          <div role="listbox" className="max-h-64 overflow-y-auto overscroll-contain py-1">
             {filtered.length === 0 ? (
               <p className="px-3 py-2 text-xs text-gray-500">No matching currencies</p>
             ) : (
-              filtered.map((code) => (
+              filtered.map((row) => (
                 <button
-                  key={code}
+                  key={row.code}
                   type="button"
                   role="option"
-                  aria-selected={value === code}
+                  aria-selected={value === row.code}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    onChange(code);
+                    onChange(row.code);
                     setOpen(false);
                     setSearch('');
                   }}
-                  className={`flex w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${
-                    value === code ? 'bg-sky-50 font-semibold text-sky-700' : 'text-gray-700'
+                  className={`flex w-full flex-col px-3 py-1.5 text-left hover:bg-gray-50 ${
+                    value === row.code ? 'bg-sky-50 font-semibold text-sky-700' : 'text-gray-700'
                   }`}
                 >
-                  {code}
+                  <span className="text-xs font-semibold">
+                    {row.code}
+                    {row.name && row.name !== row.code ? (
+                      <span className="ml-1.5 font-medium text-gray-500">{row.name}</span>
+                    ) : null}
+                  </span>
+                  {row.countries ? (
+                    <span className="truncate text-[10px] font-normal text-gray-400">{row.countries}</span>
+                  ) : null}
                 </button>
               ))
             )}

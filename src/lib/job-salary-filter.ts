@@ -1,4 +1,5 @@
 import { resolveIsoCurrencyCode } from '@/lib/format-salary';
+import { WORLD_CURRENCY_CODES } from '@/lib/world-currencies';
 
 /** Common currencies shown first in the salary filter dropdown. */
 const SALARY_FILTER_CURRENCY_PRIORITY = [
@@ -51,11 +52,14 @@ const SALARY_FILTER_CURRENCY_PRIORITY = [
 ] as const;
 
 /**
- * All ISO 4217 currencies for the explore-jobs salary filter.
- * Prefer Intl.supportedValuesOf when available; otherwise use the priority list.
+ * All ISO 4217 currencies for salary pickers (career preferences + job filter).
+ * Always include the full world catalog; Intl.supportedValuesOf is extra coverage only.
  */
 function buildSalaryFilterCurrencies(): string[] {
-  const collected = new Set<string>(SALARY_FILTER_CURRENCY_PRIORITY);
+  const collected = new Set<string>([
+    ...SALARY_FILTER_CURRENCY_PRIORITY,
+    ...WORLD_CURRENCY_CODES,
+  ]);
 
   try {
     const supportedValuesOf = (
@@ -70,7 +74,7 @@ function buildSalaryFilterCurrencies(): string[] {
       }
     }
   } catch {
-    // Keep fallback priority list
+    // Keep the hardcoded world catalog
   }
 
   const priority = SALARY_FILTER_CURRENCY_PRIORITY.filter((code) => collected.has(code));
