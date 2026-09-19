@@ -64,7 +64,7 @@ export async function fetchPortalApplicationDetail(
 
 export async function fetchPortalJobsList(
   locale: AppLocale,
-  limit = 200,
+  limit = 50,
   signal?: AbortSignal,
 ): Promise<unknown[]> {
   const page = await fetchPortalJobsPage(locale, { page: 1, limit, signal });

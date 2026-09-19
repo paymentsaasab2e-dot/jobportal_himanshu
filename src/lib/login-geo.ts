@@ -1,5 +1,5 @@
 import { getCountryCodeForTimeZone } from '@/lib/country-codes';
-import { Country } from 'country-state-city';
+import Country from 'country-state-city/lib/country';
 
 export type LoginGeoPayload = {
   country?: string;

@@ -363,7 +363,7 @@ function SearchJobsContent() {
     async function loadJobs() {
       try {
         setLoading(true);
-        const response = await fetch(withJobApiLocale(`${API_BASE_URL}/jobs?limit=500`, locale), {
+        const response = await fetch(withJobApiLocale(`${API_BASE_URL}/jobs?limit=50`, locale), {
           method: 'GET',
         });
         const result = await response.json();

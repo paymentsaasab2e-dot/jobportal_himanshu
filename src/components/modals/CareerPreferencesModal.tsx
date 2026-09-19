@@ -21,42 +21,21 @@ import {
   type WorldCurrencyEntry,
 } from '@/lib/world-currencies';
 
+import type { CareerPreferencesData } from '@/lib/career-preferences-normalize';
+import {
+  normalizeCareerPreferencesFromApi,
+  parsePreferenceList,
+} from '@/lib/career-preferences-normalize';
+
+export type { CareerPreferencesData };
+export { normalizeCareerPreferencesFromApi, parsePreferenceList };
+
 interface CareerPreferencesModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: CareerPreferencesData) => void;
   initialData?: CareerPreferencesData;
   currentRole?: string;
-}
-
-export interface CareerPreferencesData {
-  currentRole?: string;
-  preferredJobTitles: string[];
-  preferredRoles?: string[];
-  preferredIndustries: string[];
-  functionalAreas: string[];
-  preferredIndustry?: string;
-  functionalArea?: string;
-  jobTypes: string[];
-  workModes: string[];
-  preferredWorkMode?: string;
-  preferredLocations: string[];
-  relocationPreference: string;
-  salaryCurrency: string;
-  salaryAmount: string;
-  salaryFrequency: string;
-  preferredCurrency?: string;
-  preferredSalary?: string;
-  preferredSalaryType?: string;
-  preferredBenefits?: string[];
-  currentCurrency?: string;
-  currentSalaryType?: string;
-  currentSalary?: string;
-  currentLocation?: string;
-  currentBenefits?: string[];
-  availabilityToStart: string;
-  noticePeriod?: string;
-  passportNumbersByLocation?: Record<string, string>;
 }
 
 const INDUSTRIES = [
@@ -197,63 +176,6 @@ function buildBenefitOptions(data?: CareerPreferencesData): string[] {
     ...(data?.currentBenefits || []),
     ...(data?.preferredBenefits || []),
   ]);
-}
-
-export function parsePreferenceList(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return uniqueStrings(value.map(String));
-  }
-  const s = typeof value === 'string' ? value.trim() : '';
-  if (!s) return [];
-  return uniqueStrings(s.split(/[,;|]\s*/));
-}
-
-export function normalizeCareerPreferencesFromApi(raw: unknown): CareerPreferencesData | undefined {
-  if (raw === null || raw === undefined || typeof raw !== 'object') return undefined;
-  const r = raw as Record<string, unknown>;
-  const preferredIndustries = parsePreferenceList(r.preferredIndustries ?? r.preferredIndustry);
-  const functionalAreas = parsePreferenceList(r.functionalAreas ?? r.functionalArea);
-  const preferredJobTitles = parseStringArray(r.preferredJobTitles ?? r.preferredRoles);
-  const preferredWorkMode = normalizeWorkModeLabel(r.preferredWorkMode);
-  const workModes = uniqueStrings(
-    parseStringArray(r.workModes).map((mode) => normalizeWorkModeLabel(mode)).filter(Boolean),
-  );
-  const normalizedWorkModes = workModes.length > 0 ? workModes : preferredWorkMode ? [preferredWorkMode] : [];
-  // Passport numbers are intentionally not handled in this drawer UI.
-  // Keep preferredLocations strictly from preferredLocations only.
-  const preferredLocations = uniqueStrings([...parseStringArray(r.preferredLocations)]);
-  const preferredCurrency = String(r.preferredCurrency ?? r.salaryCurrency ?? 'USD');
-  const preferredSalary = String(r.preferredSalary ?? r.salaryAmount ?? '');
-  const preferredSalaryType = normalizeSalaryTypeLabel(r.preferredSalaryType ?? r.salaryFrequency);
-  const currentRole = String(r.currentRole ?? r.currentTitle ?? r.designation ?? '').trim();
-  return {
-    currentRole: currentRole || undefined,
-    preferredJobTitles,
-    preferredRoles: preferredJobTitles,
-    preferredIndustries,
-    functionalAreas,
-    preferredIndustry: preferredIndustries.length ? preferredIndustries.join('; ') : undefined,
-    functionalArea: functionalAreas.length ? functionalAreas.join('; ') : undefined,
-    jobTypes: parseStringArray(r.jobTypes),
-    workModes: normalizedWorkModes,
-    preferredWorkMode: preferredWorkMode || normalizedWorkModes[0] || '',
-    preferredLocations,
-    relocationPreference: String(r.relocationPreference ?? ''),
-    salaryCurrency: preferredCurrency,
-    salaryAmount: preferredSalary,
-    salaryFrequency: preferredSalaryType,
-    preferredCurrency,
-    preferredSalary,
-    preferredSalaryType,
-    preferredBenefits: parseStringArray(r.preferredBenefits),
-    currentCurrency: String(r.currentCurrency ?? ''),
-    currentSalaryType: normalizeSalaryTypeLabel(r.currentSalaryType),
-    currentSalary: String(r.currentSalary ?? ''),
-    currentLocation: String(r.currentLocation ?? ''),
-    currentBenefits: parseStringArray(r.currentBenefits),
-    availabilityToStart: String(r.availabilityToStart ?? ''),
-    noticePeriod: r.noticePeriod ? String(r.noticePeriod) : undefined,
-  };
 }
 
 export default function CareerPreferencesModal({

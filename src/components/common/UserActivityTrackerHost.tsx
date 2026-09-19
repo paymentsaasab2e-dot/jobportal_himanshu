@@ -150,7 +150,7 @@ export function UserActivityTrackerHost() {
           ? dashboard!.topSkills.length
           : 0;
         const missing = completeness
-          ? getMissingProfileSections(null, completeness)
+          ? getMissingProfileSections(null, completeness, { forAlerts: true })
           : [];
 
         syncProfileActivitySnapshot(userId, {

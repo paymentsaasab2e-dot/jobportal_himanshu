@@ -19,6 +19,7 @@ import {
 import { profileCancelBtnClass, profileFieldClass, profileSaveBtnClass } from '@/lib/profile-modal-ui';
 import { useAuth } from '@/components/auth/AuthContext';
 import { useTranslations } from 'next-intl';
+import { dispatchProfileEditorOpen } from '@/lib/profile-section-open';
 
 function isValidCalendarYmd(year: number, month: number, day: number) {
   const dt = new Date(year, month - 1, day);
@@ -527,6 +528,13 @@ export default function BasicInfoModal({
   ]);
 
   useEffect(() => {
+    dispatchProfileEditorOpen(isOpen);
+    return () => {
+      if (isOpen) dispatchProfileEditorOpen(false);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
     if (!isOpen) return;
     setErrors({});
 
@@ -561,7 +569,7 @@ export default function BasicInfoModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-[9999]">
+      <div className="fixed inset-0 z-[12000]">
         {/* Backdrop */}
         <div
           className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-all duration-300"
@@ -570,7 +578,7 @@ export default function BasicInfoModal({
 
         {/* Drawer */}
         <div
-          className="profile-modal-typography profile-modal-chrome fixed top-0 right-0 z-[10000] flex h-full w-full max-w-[520px] flex-col border-l border-gray-200 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.2)] transform transition-all duration-300 ease-out translate-x-0"
+          className="profile-modal-typography profile-modal-chrome fixed top-0 right-0 z-[12010] flex h-full w-full max-w-[520px] flex-col border-l border-gray-200 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.2)] transform transition-all duration-300 ease-out translate-x-0"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

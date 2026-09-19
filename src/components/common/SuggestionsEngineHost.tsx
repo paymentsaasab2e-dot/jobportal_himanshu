@@ -66,7 +66,7 @@ export function SuggestionsEngineHost() {
           ? buildProfileSignalsFromDashboard(dashboard)
           : null;
         const missingProfileSections = profileDetails
-          ? getMissingProfileSections(null, profileDetails)
+          ? getMissingProfileSections(null, profileDetails, { forAlerts: true })
           : [];
 
         runSuggestionsEngine({

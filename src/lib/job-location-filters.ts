@@ -1,4 +1,9 @@
-import { City, Country } from 'country-state-city';
+/**
+ * Country-only import — do NOT pull `City` / city.json (~7.8 MB) onto
+ * landing / explore-jobs / searchjobs critical paths.
+ * Ambiguous city→country fallback uses CITY_COUNTRY_HINTS only.
+ */
+import Country from 'country-state-city/lib/country';
 
 export type ParsedJobLocation = {
   city: string;
@@ -22,31 +27,6 @@ const COUNTRY_NAME_BY_LOWER = new Map(
 const ISO_TO_COUNTRY_NAME = new Map(
   Country.getAllCountries().map((c) => [c.isoCode.toUpperCase(), c.name] as const),
 );
-
-let cityNameToCountry: Map<string, string> | null = null;
-
-function getCountryNameByIso(iso: string): string {
-  return ISO_TO_COUNTRY_NAME.get(iso.trim().toUpperCase()) || '';
-}
-
-function buildCityNameToCountryIndex(): Map<string, string> {
-  const map = new Map<string, string>();
-  for (const city of City.getAllCities()) {
-    const key = city.name.trim().toLowerCase();
-    if (!key || map.has(key)) continue;
-    map.set(key, getCountryNameByIso(city.countryCode));
-  }
-  return map;
-}
-
-function inferCountryFromCityName(city: string): string {
-  if (!city.trim()) return '';
-  const key = city.trim().toLowerCase();
-  const hinted = CITY_COUNTRY_HINTS[key];
-  if (hinted) return hinted;
-  if (!cityNameToCountry) cityNameToCountry = buildCityNameToCountryIndex();
-  return cityNameToCountry.get(key) || '';
-}
 
 const COUNTRY_ALIASES: Record<string, string> = {
   usa: 'United States',
@@ -100,6 +80,11 @@ const CITY_COUNTRY_HINTS: Record<string, string> = {
   'pointe-noire': 'Congo',
   'pointe noire': 'Congo',
 };
+
+function inferCountryFromCityName(city: string): string {
+  if (!city.trim()) return '';
+  return CITY_COUNTRY_HINTS[city.trim().toLowerCase()] || '';
+}
 
 const ALIAS_KEYS_BY_LENGTH = Object.keys(COUNTRY_ALIASES)
   .filter((key) => key.length >= 3)

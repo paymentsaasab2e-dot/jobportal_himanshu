@@ -1,0 +1,154 @@
+{
+  "generatedAt": "2026-09-18T10:17:15.297Z",
+  "jsChunkCount": 188,
+  "totalStaticJsKb": 14879.3,
+  "largestChunks": [
+    {
+      "kb": 8418.1,
+      "file": "static\\chunks\\5baf010acef86561.js"
+    },
+    {
+      "kb": 379.3,
+      "file": "static\\chunks\\663543525e062938.js"
+    },
+    {
+      "kb": 352.1,
+      "file": "static\\chunks\\071d342ece6f1b4d.js"
+    },
+    {
+      "kb": 209.8,
+      "file": "static\\chunks\\e68aa2e1382755f9.js"
+    },
+    {
+      "kb": 193.5,
+      "file": "static\\chunks\\cf4fc1e20e39d4cb.js"
+    },
+    {
+      "kb": 179.6,
+      "file": "static\\chunks\\230cf7237848fb3d.js"
+    },
+    {
+      "kb": 163.3,
+      "file": "static\\chunks\\c3cc23b2399c89a3.js"
+    },
+    {
+      "kb": 154.5,
+      "file": "static\\chunks\\8b484d2a886a342b.js"
+    },
+    {
+      "kb": 133.6,
+      "file": "static\\chunks\\99b26b210645bb27.js"
+    },
+    {
+      "kb": 110,
+      "file": "static\\chunks\\a6dad97d9634a72d.js"
+    },
+    {
+      "kb": 103.9,
+      "file": "static\\chunks\\bb321036af60f751.js"
+    },
+    {
+      "kb": 102.8,
+      "file": "static\\chunks\\46a7063232115676.js"
+    },
+    {
+      "kb": 95.3,
+      "file": "static\\chunks\\dc7c37f7112bfb6b.js"
+    },
+    {
+      "kb": 94.4,
+      "file": "static\\chunks\\2aa1a0ee419e205b.js"
+    },
+    {
+      "kb": 93.6,
+      "file": "static\\chunks\\4dd34b27c9eb85ab.js"
+    }
+  ],
+  "midSizeChunks": [
+    {
+      "kb": 379.3,
+      "file": "static\\chunks\\663543525e062938.js"
+    },
+    {
+      "kb": 352.1,
+      "file": "static\\chunks\\071d342ece6f1b4d.js"
+    },
+    {
+      "kb": 209.8,
+      "file": "static\\chunks\\e68aa2e1382755f9.js"
+    },
+    {
+      "kb": 193.5,
+      "file": "static\\chunks\\cf4fc1e20e39d4cb.js"
+    },
+    {
+      "kb": 179.6,
+      "file": "static\\chunks\\230cf7237848fb3d.js"
+    },
+    {
+      "kb": 163.3,
+      "file": "static\\chunks\\c3cc23b2399c89a3.js"
+    },
+    {
+      "kb": 154.5,
+      "file": "static\\chunks\\8b484d2a886a342b.js"
+    },
+    {
+      "kb": 133.6,
+      "file": "static\\chunks\\99b26b210645bb27.js"
+    },
+    {
+      "kb": 110,
+      "file": "static\\chunks\\a6dad97d9634a72d.js"
+    },
+    {
+      "kb": 103.9,
+      "file": "static\\chunks\\bb321036af60f751.js"
+    },
+    {
+      "kb": 102.8,
+      "file": "static\\chunks\\46a7063232115676.js"
+    },
+    {
+      "kb": 95.3,
+      "file": "static\\chunks\\dc7c37f7112bfb6b.js"
+    },
+    {
+      "kb": 94.4,
+      "file": "static\\chunks\\2aa1a0ee419e205b.js"
+    },
+    {
+      "kb": 93.6,
+      "file": "static\\chunks\\4dd34b27c9eb85ab.js"
+    },
+    {
+      "kb": 87.3,
+      "file": "static\\chunks\\682504c2e7074b19.js"
+    },
+    {
+      "kb": 83.6,
+      "file": "static\\chunks\\ba96c87559cb2d83.js"
+    },
+    {
+      "kb": 80.3,
+      "file": "static\\chunks\\11b15b8ab403860e.js"
+    },
+    {
+      "kb": 78.9,
+      "file": "static\\chunks\\6995cca8be0de6b5.js"
+    },
+    {
+      "kb": 76.5,
+      "file": "static\\chunks\\1438fe8aa258a4c1.js"
+    },
+    {
+      "kb": 76.5,
+      "file": "static\\chunks\\20ba53f22672963a.js"
+    }
+  ],
+  "budgetsNote": "Budgets are observational. Fail CI only after a measured baseline is agreed. Watch totalStaticJsKb and top chunk growth; avoid re-importing profile modals into critical path.",
+  "advisoryBudgetsKb": {
+    "totalStaticJsWarn": 20000,
+    "largestJsChunkWarn": 9000
+  }
+}

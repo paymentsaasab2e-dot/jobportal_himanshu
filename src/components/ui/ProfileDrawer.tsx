@@ -6,6 +6,8 @@ import { useEffect } from 'react';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { dispatchProfileEditorOpen } from '@/lib/profile-section-open';
+
 
 
 interface ProfileDrawerProps {
@@ -45,6 +47,13 @@ export default function ProfileDrawer({
   widthClassName = 'w-full md:w-[50vw] md:max-w-[50vw]',
 
 }: ProfileDrawerProps) {
+
+  useEffect(() => {
+    dispatchProfileEditorOpen(isOpen);
+    return () => {
+      if (isOpen) dispatchProfileEditorOpen(false);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
 
@@ -92,7 +101,7 @@ export default function ProfileDrawer({
 
       {isOpen && (
 
-        <div className="fixed inset-0 z-[9999] overflow-hidden">
+        <div className="fixed inset-0 z-[12000] overflow-hidden">
 
           <motion.div
 

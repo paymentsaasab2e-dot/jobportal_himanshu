@@ -71,8 +71,8 @@ export function prefetchPortalRoute(
       staleTime: STALE_TIMES.dashboard,
     });
     void queryClient.prefetchQuery({
-      queryKey: portalQueryKeys.jobsList(locale, 200),
-      queryFn: ({ signal }) => fetchPortalJobsList(locale, 200, signal),
+      queryKey: portalQueryKeys.jobsList(locale, 50),
+      queryFn: ({ signal }) => fetchPortalJobsList(locale, 50, signal),
       staleTime: STALE_TIMES.jobs,
     });
     void queryClient.prefetchQuery({
@@ -85,8 +85,8 @@ export function prefetchPortalRoute(
 
   if (normalizedPath === '/explore-jobs' || normalizedPath.endsWith('/explore-jobs')) {
     void queryClient.prefetchQuery({
-      queryKey: portalQueryKeys.jobsList(locale, 200),
-      queryFn: ({ signal }) => fetchPortalJobsList(locale, 200, signal),
+      queryKey: portalQueryKeys.jobsList(locale, 50),
+      queryFn: ({ signal }) => fetchPortalJobsList(locale, 50, signal),
       staleTime: STALE_TIMES.jobs,
     });
   }

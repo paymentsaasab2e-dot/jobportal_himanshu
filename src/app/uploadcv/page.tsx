@@ -8,6 +8,7 @@ import { useAuth } from '@/components/auth/AuthContext';
 
 import { API_BASE_URL } from '@/lib/api-base';
 import { getLocaleFromPathname, localizePath } from "@/lib/i18n";
+import { getStoredToken } from '@/lib/auth-storage';
 
 export default function UploadCV() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -126,6 +127,10 @@ export default function UploadCV() {
 
       // Open and send the request
       xhr.open("POST", `${API_BASE_URL}/cv/upload`);
+      const token = getStoredToken();
+      if (token) {
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      }
       xhr.send(formData);
 
       // Redirect to extract page immediately after starting upload
