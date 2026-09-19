@@ -744,8 +744,11 @@ export function LmsStateProvider({ children }: { children: ReactNode }) {
            });
         }
 
-        if (dashboard.status === 'fulfilled' && dashboard.value) {
-          dispatch({ type: 'setDashboardData', data: dashboard.value });
+        if (dashboard.status === 'fulfilled') {
+          dispatch({ type: 'setDashboardData', data: dashboard.value || {} });
+        } else {
+          // Fail open so /lms does not stay on an infinite loader behind the navbar.
+          dispatch({ type: 'setDashboardData', data: {} });
         }
       } catch (err) {
         // Silently fail
@@ -943,11 +946,13 @@ export function LmsStateProvider({ children }: { children: ReactNode }) {
   const fetchDashboard = useCallback(async () => {
     try {
       const data = await fetchLmsDashboard();
-      dispatch({ type: 'setDashboardData', data });
-      return data;
+      // Always clear loading — empty object if API fails so LMS page does not hang on GlobalLoader.
+      dispatch({ type: 'setDashboardData', data: data || {} });
+      return data || {};
     } catch (error) {
       console.error('Failed to fetch dashboard data', error);
-      return null;
+      dispatch({ type: 'setDashboardData', data: {} });
+      return {};
     }
   }, []);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { LMS_CARD_INTERACTIVE, LMS_PRIMARY_LINK_CLASS, LMS_SECTION_TITLE } from './constants';
 import { LmsPageHeader } from './components/LmsPageHeader';
-import { GlobalLoader } from '@/components/auth/GlobalLoader';
+import { LmsSkeleton } from './components/states/LmsSkeleton';
 import { LmsProgressBar } from './components/LmsProgressBar';
 import {
   AISectionHeading,
@@ -25,7 +25,6 @@ import {
 import { useLmsOverlay } from './components/overlays/LmsOverlayProvider';
 import { useLmsState } from './state/LmsStateProvider';
 import { useLmsToast } from './components/ux/LmsToastProvider';
-import { fetchLmsDashboard } from './api/client';
 import {
   dashboardPrimaryInsight,
   dashboardNextActions,
@@ -82,11 +81,11 @@ export default function LmsDashboardPage() {
   const toast = useLmsToast();
   const { state, registerEvent, unregisterEvent, addPlannedItem, setLastActiveCourseId, fetchDashboard } = useLmsState();
   const dashboardData = state.dashboardData;
-  const isLoading = !state.isHydrated || !dashboardData;
+  const isLoading = !state.isHydrated || dashboardData == null;
 
   useEffect(() => {
-    if (state.isHydrated && !dashboardData) {
-      fetchDashboard();
+    if (state.isHydrated && dashboardData == null) {
+      void fetchDashboard();
     }
   }, [state.isHydrated, dashboardData, fetchDashboard]);
 
@@ -203,7 +202,17 @@ export default function LmsDashboardPage() {
   };
 
   if (isLoading) {
-    return <GlobalLoader />;
+    return (
+      <div className="space-y-6 pb-10 pt-2">
+        <LmsSkeleton lines={3} className="max-w-xl" />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <LmsSkeleton lines={4} />
+          <LmsSkeleton lines={4} />
+          <LmsSkeleton lines={4} />
+        </div>
+        <LmsSkeleton lines={6} />
+      </div>
+    );
   }
 
   return (

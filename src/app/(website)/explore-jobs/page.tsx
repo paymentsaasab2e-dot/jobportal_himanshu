@@ -7,15 +7,14 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import DashboardContainer from '@/components/layout/DashboardContainer';
 import DashboardPanel from '@/components/dashboard/DashboardPanel';
-import { ModalLoadShell } from '@/components/profile/ModalLoadShell';
 
 const ApplicationSuccessModal = dynamic(
   () => import('@/components/modals/ApplicationSuccessModal'),
-  { ssr: false, loading: () => <ModalLoadShell /> },
+  { ssr: false },
 );
 const ScreeningQuestionsDrawer = dynamic(
   () => import('@/components/jobs/ScreeningQuestionsDrawer'),
-  { ssr: false, loading: () => <ModalLoadShell /> },
+  { ssr: false },
 );
 import {
   AlertTriangle,
@@ -31,6 +30,7 @@ import {
 
 // Jobs list comes from backend1 (job portal DB). CRM creates/updates mirror into that DB from Phase 2.
 import { API_BASE_URL } from '@/lib/api-base';
+import { getAuthHeaders } from '@/lib/auth-storage';
 import {
   collectJobPostedCurrencies,
   isSalaryFilterActive,
@@ -1724,9 +1724,7 @@ const ExploreJobsPageContent = () => {
       try {
         response = await fetch(`${API_BASE_URL}/applications`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             candidateId,
             jobId: selectedJobId,

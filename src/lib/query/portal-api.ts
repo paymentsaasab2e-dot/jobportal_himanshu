@@ -14,7 +14,7 @@ export async function fetchPortalApplications(
 ): Promise<unknown[]> {
   const response = await fetch(`${getApiBaseUrl()}/applications/${candidateId}`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     signal,
   });
   const payload = await parseJson<{ success?: boolean; data?: unknown[]; message?: string }>(
@@ -51,7 +51,11 @@ export async function fetchPortalApplicationDetail(
 ): Promise<Record<string, unknown>> {
   const response = await fetch(
     `${getApiBaseUrl()}/applications/detail/${encodeURIComponent(applicationId)}`,
-    { signal },
+    {
+      method: 'GET',
+      headers: getAuthHeaders(),
+      signal,
+    },
   );
   const payload = await parseJson<{ success?: boolean; data?: Record<string, unknown>; message?: string }>(
     response,

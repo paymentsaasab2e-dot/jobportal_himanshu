@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from './api-base';
+import { getAuthHeaders } from './auth-storage';
 
 const CACHE_TTL_MS = 60_000;
 
@@ -42,8 +43,11 @@ export async function fetchApplicationsCached(
   const promise = (async () => {
     const response = await fetch(`${getApiBaseUrl()}/applications/${key}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
       ...init,
+      headers: {
+        ...getAuthHeaders(),
+        ...(init?.headers || {}),
+      },
     });
     const payload = (await response.json().catch(() => ({}))) as ApplicationsPayload;
     const data =

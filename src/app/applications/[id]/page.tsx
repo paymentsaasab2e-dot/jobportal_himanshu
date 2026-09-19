@@ -23,6 +23,7 @@ import { ApplicationDetailSectionCard } from '@/components/applications/Applicat
 import { getLocaleFromPathname, localizePath } from '@/lib/i18n';
 import { removePortalApplicationLocally } from '@/lib/portal-page-caches';
 import { formatInUserTimeZone } from '@/lib/user-timezone';
+import { getAuthHeaders } from '@/lib/auth-storage';
 
 interface CommunicationUpdate {
   id: string;
@@ -1899,7 +1900,7 @@ export default function ApplicationStatusPage() {
         `${API_BASE_URL}/applications/detail/${encodeURIComponent(applicationId)}/offer-response`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             candidateId,
             decision,
@@ -1965,7 +1966,7 @@ export default function ApplicationStatusPage() {
       const qs = new URLSearchParams({ candidateId });
       const response = await fetch(
         `${API_BASE_URL}/applications/detail/${encodeURIComponent(applicationId)}?${qs.toString()}`,
-        { method: 'DELETE' }
+        { method: 'DELETE', headers: getAuthHeaders() }
       );
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result?.success) {

@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from '@/lib/api-base';
+import { getAuthHeaders } from '@/lib/auth-storage';
 import type { ScreeningQuestion } from '@/lib/screening-questions';
 
 function buildApiBaseCandidates(primaryBase: string): string[] {
@@ -96,7 +97,7 @@ export async function submitJobApplication(params: {
   const apiBase = String(params.apiBase || getApiBaseUrl()).replace(/\/$/, '');
   const response = await fetch(`${apiBase}/applications`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       candidateId: params.candidateId,
       jobId: params.jobId,

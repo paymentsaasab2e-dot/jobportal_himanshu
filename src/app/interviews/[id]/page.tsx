@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api-base';
+import { getAuthHeaders } from '@/lib/auth-storage';
 import { formatInUserTimeZone } from '@/lib/user-timezone';
 
 const PAGE_BG =
@@ -482,7 +483,8 @@ export default function InterviewDetailsPage() {
       setError(null);
       try {
         const response = await fetch(
-          `${API_BASE_URL}/applications/detail/${encodeURIComponent(applicationId)}`
+          `${API_BASE_URL}/applications/detail/${encodeURIComponent(applicationId)}`,
+          { headers: getAuthHeaders() },
         );
         const result = await response.json();
         if (!response.ok || !result?.success || !result?.data) {

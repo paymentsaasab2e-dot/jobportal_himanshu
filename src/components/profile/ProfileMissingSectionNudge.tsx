@@ -20,6 +20,8 @@ type ProfileMissingSectionNudgeProps = {
   storageKeyPrefix?: string;
   /** When true, parent owns positioning (e.g. top alert stack). */
   placement?: 'fixed-bottom' | 'inline';
+  /** Fired when the nudge becomes visible or is dismissed. */
+  onVisibleChange?: (visible: boolean) => void;
 };
 
 function readDismissRecord(key: string): DismissRecord | null {
@@ -55,6 +57,7 @@ export default function ProfileMissingSectionNudge({
   onNavigate,
   storageKeyPrefix = 'profileMissingNudge',
   placement = 'fixed-bottom',
+  onVisibleChange,
 }: ProfileMissingSectionNudgeProps) {
   const [visible, setVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -71,18 +74,21 @@ export default function ProfileMissingSectionNudge({
   const syncVisibility = useCallback(() => {
     if (missingSections.length === 0) {
       setVisible(false);
+      onVisibleChange?.(false);
       return;
     }
 
     const record = readDismissRecord(dismissKey);
     if (isDismissCooldownActive(record, signature)) {
       setVisible(false);
+      onVisibleChange?.(false);
       return;
     }
 
     setActiveIndex(0);
     setVisible(true);
-  }, [dismissKey, missingSections.length, signature]);
+    onVisibleChange?.(true);
+  }, [dismissKey, missingSections.length, onVisibleChange, signature]);
 
   useEffect(() => {
     syncVisibility();
@@ -107,6 +113,7 @@ export default function ProfileMissingSectionNudge({
     };
     localStorage.setItem(dismissKey, JSON.stringify(payload));
     setVisible(false);
+    onVisibleChange?.(false);
   };
 
   const handleComplete = () => {
