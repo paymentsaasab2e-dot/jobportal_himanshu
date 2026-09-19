@@ -12,6 +12,10 @@ import {
   openProfileSectionBySlug,
   type ProfileModalHandlers,
 } from '@/lib/profile-section-routes';
+import {
+  PROFILE_OPEN_SECTION_EVENT,
+  type ProfileOpenSectionDetail,
+} from '@/lib/profile-section-open';
 
 import { ProfilePageShell } from '@/components/profile/layout';
 import {
@@ -83,12 +87,11 @@ const PROFILE_SECTIONS: ProfileSectionGroup[] = [
     sections: ['visa-work-authorization', 'vaccination'],
   },
 ];
-import BasicInfoModal, { BasicInfoData } from '../../components/modals/BasicInfoModal';
-import SummaryModal from '../../components/modals/SummaryModal';
-import GapExplanationModal, { GapExplanationData } from '../../components/modals/GapExplanationModal';
-import WorkExperienceModal, {
-  type WorkExperienceData,
-  type WorkExperienceEntry,
+import type { BasicInfoData } from '../../components/modals/BasicInfoModal';
+import type { GapExplanationData } from '../../components/modals/GapExplanationModal';
+import type {
+  WorkExperienceData,
+  WorkExperienceEntry,
 } from '../../components/modals/WorkExperienceModal';
 import { dedupeWorkExperiences } from '@/lib/work-experience-utils';
 import {
@@ -103,28 +106,47 @@ import {
   persistCertificationEntry,
 } from '@/lib/certification-api';
 import { persistInternshipEntry } from '@/lib/internship-api';
-import InternshipModal, { InternshipData } from '../../components/modals/InternshipModal';
-import EducationModal, { EducationData as EducationEntryData } from '../../components/modals/EducationModal';
+import type { InternshipData } from '../../components/modals/InternshipModal';
+import type { EducationData as EducationEntryData } from '../../components/modals/EducationModal';
 
 // Education data structure for profile page (array of entries)
 interface EducationData {
   educations: (EducationEntryData & { documents?: string[] })[];
 }
-import AcademicAchievementModal, { AcademicAchievementData } from '../../components/modals/AcademicAchievementModal';
-import CompetitiveExamsModal, { CompetitiveExamsData } from '../../components/modals/CompetitiveExamsModal';
-import SkillsModal, { SkillsData } from '../../components/modals/SkillsModal';
-import LanguagesModal, { LanguagesData } from '../../components/modals/LanguagesModal';
-import ProjectModal, { ProjectData } from '../../components/modals/ProjectModal';
-import PortfolioLinksModal, { PortfolioLinksData } from '../../components/modals/PortfolioLinksModal';
-import CertificationModal, { CertificationsData } from '../../components/modals/CertificationModal';
-import AccomplishmentModal, { AccomplishmentsData } from '../../components/modals/AccomplishmentModal';
-import CareerPreferencesModal, {
-  CareerPreferencesData,
-  normalizeCareerPreferencesFromApi,
-} from '../../components/modals/CareerPreferencesModal';
-import VisaWorkAuthorizationModal, { VisaWorkAuthorizationData } from '../../components/modals/VisaWorkAuthorizationModal';
-import VaccinationModal, { VaccinationData } from '../../components/modals/VaccinationModal';
-import ResumeModal, { ResumeData as BaseResumeData } from '../../components/modals/ResumeModal';
+import type { AcademicAchievementData } from '../../components/modals/AcademicAchievementModal';
+import type { CompetitiveExamsData } from '../../components/modals/CompetitiveExamsModal';
+import type { SkillsData } from '../../components/modals/SkillsModal';
+import type { LanguagesData } from '../../components/modals/LanguagesModal';
+import type { ProjectData } from '../../components/modals/ProjectModal';
+import type { PortfolioLinksData } from '../../components/modals/PortfolioLinksModal';
+import type { CertificationsData } from '../../components/modals/CertificationModal';
+import type { AccomplishmentsData } from '../../components/modals/AccomplishmentModal';
+import type { CareerPreferencesData } from '@/lib/career-preferences-normalize';
+import { normalizeCareerPreferencesFromApi } from '@/lib/career-preferences-normalize';
+import type { VisaWorkAuthorizationData } from '../../components/modals/VisaWorkAuthorizationModal';
+import type { VaccinationData } from '../../components/modals/VaccinationModal';
+import type { ResumeData as BaseResumeData } from '../../components/modals/ResumeModal';
+import {
+  BasicInfoModal,
+  SummaryModal,
+  GapExplanationModal,
+  WorkExperienceModal,
+  InternshipModal,
+  EducationModal,
+  AcademicAchievementModal,
+  CompetitiveExamsModal,
+  SkillsModal,
+  LanguagesModal,
+  ProjectModal,
+  PortfolioLinksModal,
+  CertificationModal,
+  AccomplishmentModal,
+  CareerPreferencesModal,
+  VisaWorkAuthorizationModal,
+  VaccinationModal,
+  ResumeModal,
+} from '@/components/profile/lazy-profile-modals';
+import { applySectionPatch } from '@/lib/profile-section-patch';
 import { API_BASE_URL } from '@/lib/api-base';
 import {
   fetchProfileCompleteness,
@@ -143,7 +165,6 @@ import { useTabVisibilityRefresh } from '@/hooks/useTabVisibilityRefresh';
 import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
 import {
   isProfileSessionCacheFresh,
-  patchProfileSessionCache,
   readProfileSessionCache,
   writeProfileSessionCache,
 } from '@/lib/profile-session-cache';
@@ -1286,11 +1307,12 @@ export default function ProfilePage() {
 
     const completionPercentage = Math.round((completedSections.length / mandatorySections.length) * 100);
 
-    setProfileCompleteness({
+    setProfileCompleteness((prev) => ({
       percentage: completionPercentage,
       completedSections,
       missingSections,
-    });
+      sections: prev.sections || [],
+    }));
 
     return { completionPercentage, completedSections, missingSections };
   };
@@ -1508,6 +1530,19 @@ export default function ProfilePage() {
   }, [searchParams]);
 
   useEffect(() => {
+    const onOpenSection = (event: Event) => {
+      const detail = (event as CustomEvent<ProfileOpenSectionDetail>).detail;
+      const slug = detail?.slug;
+      if (!isProfileSectionSlug(slug)) return;
+      const tabId = detail?.tabId || getProfileSectionTabId(slug);
+      scrollToWorkspaceTab(tabId);
+      openProfileSectionBySlug(slug, profileModalHandlers);
+    };
+    window.addEventListener(PROFILE_OPEN_SECTION_EVENT, onOpenSection);
+    return () => window.removeEventListener(PROFILE_OPEN_SECTION_EVENT, onOpenSection);
+  }, [profileModalHandlers, scrollToWorkspaceTab]);
+
+  useEffect(() => {
     if (deepLinkHandledRef.current || !pendingDeepLinkRef.current) return;
     if (!profileSessionReady || isLoadingProfile) return;
 
@@ -1521,7 +1556,7 @@ export default function ProfilePage() {
     scrollToWorkspaceTab(tabId);
     window.setTimeout(() => {
       openProfileSectionBySlug(open, profileModalHandlers);
-    }, 120);
+    }, 40);
 
     router.replace(localizePath('/profile', locale), { scroll: false });
   }, [
@@ -1960,7 +1995,7 @@ export default function ProfilePage() {
                                     setWorkExperienceData(prev => ({
                                       workExperiences: prev?.workExperiences?.filter(e => e.id !== entry.id) || []
                                     }));
-                                    await refreshProfileData(candidateId);
+                                    void syncProfileEarnRewardsRef.current(candidateId);
                                     showAlert('Work experience deleted successfully');
                                   } catch (error) {
                                     console.error('Error deleting work experience:', error);
@@ -2072,7 +2107,7 @@ export default function ProfilePage() {
                                   if (editingInternshipId === (internshipItem.id || null)) {
                                     setEditingInternshipId(null);
                                   }
-                                  await refreshProfileData(candidateId);
+                                  void syncProfileEarnRewardsRef.current(candidateId);
                                   showAlert('Internship deleted successfully');
                                 } catch (error) {
                                   console.error('Error deleting internship:', error);
@@ -2185,7 +2220,7 @@ export default function ProfilePage() {
                                   if (editingGapExplanationId === (gapItem.id || null)) {
                                     setEditingGapExplanationId(null);
                                   }
-                                  await refreshProfileData(candidateId);
+                                  void syncProfileEarnRewardsRef.current(candidateId);
                                   showAlert('Gap explanation deleted successfully');
                                 } catch (error) {
                                   console.error('Error deleting gap explanation:', error);
@@ -2290,7 +2325,7 @@ export default function ProfilePage() {
                                     setEducationData(prev => ({
                                       educations: prev?.educations?.filter(e => e.id !== entry.id) || []
                                     }));
-                                    await refreshProfileData(candidateId);
+                                    void syncProfileEarnRewardsRef.current(candidateId);
                                     showAlert('Education deleted successfully');
                                   } catch (error) {
                                     console.error('Error deleting education:', error);
@@ -2407,7 +2442,7 @@ export default function ProfilePage() {
                                   if (editingAcademicAchievementId === (achievementItem.id || null)) {
                                     setEditingAcademicAchievementId(null);
                                   }
-                                  await refreshProfileData(candidateId);
+                                  void syncProfileEarnRewardsRef.current(candidateId);
                                   showAlert('Academic achievement deleted successfully');
                                 } catch (error) {
                                   console.error('Error deleting academic achievement:', error);
@@ -2516,7 +2551,7 @@ export default function ProfilePage() {
                                   if (editingCompetitiveExamId === (exam.id || null)) {
                                     setEditingCompetitiveExamId(null);
                                   }
-                                  await refreshProfileData(candidateId);
+                                  void syncProfileEarnRewardsRef.current(candidateId);
                                   showAlert('Competitive exam deleted successfully');
                                 } catch (error) {
                                   console.error('Error deleting competitive exam:', error);
@@ -2596,7 +2631,7 @@ export default function ProfilePage() {
                               if (!response.ok) throw new Error(tPage('skills.deleteFailed'));
                               // Optimistically clear from UI immediately
                               setSkillsData(undefined);
-                              await refreshProfileData(candidateId);
+                              void syncProfileEarnRewardsRef.current(candidateId);
                               showAlert(tPage('skills.deletedSuccess'));
                             } catch (error) {
                               console.error('Error deleting skills:', error);
@@ -2698,7 +2733,7 @@ export default function ProfilePage() {
                               if (!response.ok) throw new Error('Failed to delete languages');
                               // Optimistically clear from UI immediately
                               setLanguagesData(undefined);
-                              await refreshProfileData(candidateId);
+                              void syncProfileEarnRewardsRef.current(candidateId);
                               showAlert('Languages deleted successfully');
                             } catch (error) {
                               console.error('Error deleting languages:', error);
@@ -2811,7 +2846,7 @@ export default function ProfilePage() {
                                   if (editingProjectId === (projectItem.id || null)) {
                                     setEditingProjectId(null);
                                   }
-                                  await refreshProfileData(candidateId);
+                                  void syncProfileEarnRewardsRef.current(candidateId);
                                   showAlert('Project deleted successfully');
                                 } catch (error) {
                                   console.error('Error deleting project:', error);
@@ -2905,7 +2940,7 @@ export default function ProfilePage() {
                                 if (!prev || !prev.links) return prev;
                                 return { ...prev, links: prev.links.filter(l => l.id !== link.id) };
                               });
-                              await refreshProfileData(candidateId);
+                              void syncProfileEarnRewardsRef.current(candidateId);
                               showAlert('Portfolio link deleted successfully');
                             } catch (error) {
                               console.error('Error deleting portfolio link:', error);
@@ -3014,7 +3049,7 @@ export default function ProfilePage() {
                                       ...prev,
                                       certifications: prev.certifications?.filter(c => c.id !== cert.id) || []
                                     } : undefined);
-                                    await refreshProfileData(candidateId);
+                                    void syncProfileEarnRewardsRef.current(candidateId);
                                     showAlert('Certification deleted successfully');
                                   } catch (error) {
                                     console.error('Error deleting certification:', error);
@@ -3121,7 +3156,7 @@ export default function ProfilePage() {
                                       ...prev,
                                       accomplishments: prev.accomplishments?.filter(a => a.id !== acc.id) || []
                                     } : undefined);
-                                    await refreshProfileData(candidateId);
+                                    void syncProfileEarnRewardsRef.current(candidateId);
                                     showAlert('Accomplishment deleted successfully');
                                   } catch (error) {
                                     console.error('Error deleting accomplishment:', error);
@@ -3213,7 +3248,7 @@ export default function ProfilePage() {
                               if (!response.ok) throw new Error('Failed to delete career preferences');
                               // Optimistically clear from UI immediately
                               setCareerPreferencesData(undefined);
-                              await refreshProfileData(candidateId);
+                              void syncProfileEarnRewardsRef.current(candidateId);
                               showAlert('Career preferences deleted successfully');
                             } catch (error) {
                               console.error('Error deleting career preferences:', error);
@@ -3313,7 +3348,7 @@ export default function ProfilePage() {
                                       { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
                                     );
                                     if (!response.ok) throw new Error('Failed to delete visa work authorization');
-                                    await refreshProfileData(candidateId);
+                                    void syncProfileEarnRewardsRef.current(candidateId);
                                     showAlert('Visa & work authorization deleted successfully');
                                   } catch (error) {
                                     console.error('Error deleting visa work authorization:', error);
@@ -3380,7 +3415,7 @@ export default function ProfilePage() {
                                       { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
                                     );
                                     if (!response.ok) throw new Error('Failed to delete visa work authorization entry');
-                                    await refreshProfileData(candidateId);
+                                    void syncProfileEarnRewardsRef.current(candidateId);
                                     showAlert('Visa entry deleted successfully');
                                   } catch (error) {
                                     console.error('Error deleting visa entry:', error);
@@ -3465,7 +3500,7 @@ export default function ProfilePage() {
                               if (!response.ok) throw new Error('Failed to delete vaccination');
                               // Optimistically clear from UI immediately
                               setVaccinationData(undefined);
-                              await refreshProfileData(candidateId);
+                              void syncProfileEarnRewardsRef.current(candidateId);
                               showAlert('Vaccination information deleted successfully');
                             } catch (error) {
                               console.error('Error deleting vaccination:', error);
@@ -3543,7 +3578,7 @@ export default function ProfilePage() {
 
           const previousBasicInfo = basicInfoData;
           setBasicInfoData(data);
-          patchProfileSessionCache(candidateId, { personalInfo: data });
+          applySectionPatch(candidateId, { personalInfo: data });
 
           try {
             const response = await fetch(`${API_BASE_URL}/profile/personal-info/${candidateId}`, {
@@ -3571,7 +3606,7 @@ export default function ProfilePage() {
                 ...savedPersonalInfo,
                 email: savedPersonalInfo.email || data.email,
               }));
-              patchProfileSessionCache(savedCandidateId, {
+              applySectionPatch(savedCandidateId, {
                 personalInfo: {
                   ...(data as object),
                   ...savedPersonalInfo,
@@ -3620,7 +3655,7 @@ export default function ProfilePage() {
               throw new Error('Failed to save summary');
             }
 
-            patchProfileSessionCache(candidateId, { summaryText });
+            applySectionPatch(candidateId, { summaryText });
             void syncProfileEarnRewardsRef.current(candidateId);
             setIsSummaryModalOpen(false);
             showSuccessToast('Saved', 'Summary updated');
@@ -3665,7 +3700,7 @@ export default function ProfilePage() {
               throw new Error('Failed to save gap explanation');
             }
 
-            await refreshProfileData(candidateId);
+            void syncProfileEarnRewardsRef.current(candidateId);
           setIsGapExplanationModalOpen(false);
           showAlert('Gap explanation saved');
           } catch (error) {
@@ -3723,15 +3758,24 @@ export default function ProfilePage() {
               savedEntries.push(await persistWorkExperienceEntry(candidateId, exp));
             }
 
-            const profileData = await refreshProfileData(candidateId);
-            if (!profileData) {
-              setWorkExperienceData((prev) => ({
-                workExperiences: dedupeWorkExperiences([
-                  ...(prev?.workExperiences ?? []),
-                  ...savedEntries,
-                ]),
-              }));
-            }
+            setWorkExperienceData((prev) => ({
+              workExperiences: dedupeWorkExperiences([
+                ...(prev?.workExperiences ?? []).filter(
+                  (e) => !savedEntries.some((s) => s.id && e.id && s.id === e.id),
+                ),
+                ...savedEntries,
+              ]),
+            }));
+            applySectionPatch(candidateId, {
+              workExperiences: dedupeWorkExperiences([
+                ...(workExperienceData?.workExperiences ?? []).filter(
+                  (e) => !savedEntries.some((s) => s.id && e.id && s.id === e.id),
+                ),
+                ...savedEntries,
+              ]),
+            });
+            void syncProfileEarnRewardsRef.current(candidateId);
+            setIsWorkExperienceModalOpen(false);
 
             const wasEditingWorkExp = Boolean(editingWorkExperienceId);
             setEditingWorkExperienceId(null);
@@ -3771,7 +3815,7 @@ export default function ProfilePage() {
               : null;
 
           await persistInternshipEntry(candidateId, data, { entryId });
-          await refreshProfileData(candidateId);
+          void syncProfileEarnRewardsRef.current(candidateId);
           setIsInternshipModalOpen(false);
           setEditingInternshipId(null);
           showAlert(entryId ? 'Internship updated' : 'Internship saved');
@@ -3849,9 +3893,40 @@ export default function ProfilePage() {
               });
 
               if (response.ok) {
+                const result = await response.json().catch(() => ({}));
+                const list = Array.isArray(result?.data?.educations)
+                  ? result.data.educations
+                  : null;
+                if (list) {
+                  setEducationData({ educations: list });
+                  applySectionPatch(candidateId, { educations: list });
+                } else {
+                  const saved = result?.data?.education || result?.data;
+                  setEducationData((prev) => {
+                    const existing = prev?.educations || [];
+                    let next: EducationData['educations'];
+                    if (saved?.id && method === 'POST') {
+                      next = [
+                        ...existing.filter((e) => e.id !== saved.id),
+                        { ...educationData, id: saved.id },
+                      ];
+                    } else if (saved?.id && method === 'PUT') {
+                      next = existing.map((e) =>
+                        e.id === saved.id ? { ...e, ...educationData, id: saved.id } : e,
+                      );
+                    } else {
+                      next = [
+                        ...existing.filter((e) => e.id !== data.id),
+                        { ...educationData, id: data.id },
+                      ];
+                    }
+                    applySectionPatch(candidateId, { educations: next });
+                    return { educations: next };
+                  });
+                }
                 setIsEducationModalOpen(false);
                 setEditingEducationId(null);
-                await refreshProfileData(candidateId);
+                void syncProfileEarnRewardsRef.current(candidateId);
                 showAlert('Education saved');
               } else {
                 showAlert('Failed to save education');
@@ -3897,7 +3972,7 @@ export default function ProfilePage() {
             setAcademicAchievementData(savedEntries);
           }
 
-          await refreshProfileData(candidateId);
+          void syncProfileEarnRewardsRef.current(candidateId);
           setIsAcademicAchievementModalOpen(false);
           setAcademicAchievementModalMode('edit');
           setEditingAcademicAchievementId(null);
@@ -3940,7 +4015,7 @@ export default function ProfilePage() {
             setCompetitiveExamsData(savedEntries);
           }
 
-          await refreshProfileData(candidateId);
+          void syncProfileEarnRewardsRef.current(candidateId);
           setIsCompetitiveExamsModalOpen(false);
           setCompetitiveExamsModalMode('edit');
           setEditingCompetitiveExamId(null);
@@ -3970,9 +4045,14 @@ export default function ProfilePage() {
               });
 
               if (response.ok) {
-          setSkillsData(data);
-          setIsSkillsModalOpen(false);
-                await refreshProfileData(candidateId);
+                const result = await response.json().catch(() => ({}));
+                const savedSkills = Array.isArray(result?.data?.skills)
+                  ? { ...data, skills: result.data.skills, additionalNotes: result.data.additionalNotes ?? data.additionalNotes }
+                  : data;
+                setSkillsData(savedSkills);
+                applySectionPatch(candidateId, { skills: savedSkills });
+                setIsSkillsModalOpen(false);
+                void syncProfileEarnRewardsRef.current(candidateId);
                 showAlert('Skills updated');
               } else {
                 showAlert('Failed to save skills');
@@ -4044,9 +4124,14 @@ export default function ProfilePage() {
               });
 
               if (response.ok) {
-                setLanguagesData({ languages: languagesWithUploadedDocs });
-          setIsLanguagesModalOpen(false);
-                await refreshProfileData(candidateId);
+                const result = await response.json().catch(() => ({}));
+                const savedLanguages = Array.isArray(result?.data?.languages)
+                  ? result.data.languages
+                  : languagesWithUploadedDocs;
+                setLanguagesData({ languages: savedLanguages });
+                applySectionPatch(candidateId, { languages: { languages: savedLanguages } });
+                setIsLanguagesModalOpen(false);
+                void syncProfileEarnRewardsRef.current(candidateId);
                 showAlert('Languages updated');
               } else {
                 showAlert('Failed to save languages');
@@ -4084,7 +4169,7 @@ export default function ProfilePage() {
             setProjectData(savedEntries);
           }
 
-          await refreshProfileData(candidateId);
+          void syncProfileEarnRewardsRef.current(candidateId);
           setIsProjectModalOpen(false);
           const wasEditingProject = Boolean(entryId);
           setProjectModalMode('edit');
@@ -4146,7 +4231,11 @@ export default function ProfilePage() {
               throw new Error('Failed to save portfolio links');
             }
 
-            await refreshProfileData(candidateId);
+            const result = await response.json().catch(() => ({}));
+            const savedLinks = Array.isArray(result?.data?.links) ? result.data.links : dedupedLinks;
+            setPortfolioLinksData({ links: savedLinks });
+            applySectionPatch(candidateId, { portfolioLinks: { links: savedLinks } });
+            void syncProfileEarnRewardsRef.current(candidateId);
             showAlert('Portfolio links updated');
           } catch (error) {
             console.error('Error saving portfolio links:', error);
@@ -4199,7 +4288,7 @@ export default function ProfilePage() {
             }
 
             // Refresh profile data to get updated links
-            await refreshProfileData(candidateId);
+            void syncProfileEarnRewardsRef.current(candidateId);
             showAlert(editingPortfolioLinkId ? 'Portfolio link updated' : 'Portfolio link saved');
           } catch (error) {
             console.error('Error saving portfolio link:', error);
@@ -4241,7 +4330,7 @@ export default function ProfilePage() {
               setCertificationsData({ certifications: savedCerts });
             }
 
-            await refreshProfileData(candidateId);
+            void syncProfileEarnRewardsRef.current(candidateId);
             setIsCertificationModalOpen(false);
             const wasEditing = Boolean(entryId);
             setCertificationModalMode('edit');
@@ -4353,7 +4442,7 @@ export default function ProfilePage() {
               throw new Error('Failed to save accomplishments');
             }
 
-            await refreshProfileData(candidateId);
+            void syncProfileEarnRewardsRef.current(candidateId);
             setIsAccomplishmentModalOpen(false);
             const wasEditingAccomplishment = editingAccomplishmentId;
             setEditingAccomplishmentId(null);
@@ -4399,7 +4488,14 @@ export default function ProfilePage() {
               });
 
               if (response.ok) {
-                await refreshProfileData(candidateId);
+                const result = await response.json().catch(() => ({}));
+                const saved =
+                  result?.data && typeof result.data === 'object'
+                    ? normalizeCareerPreferencesFromApi(result.data) || data
+                    : data;
+                setCareerPreferencesData(saved);
+                applySectionPatch(candidateId, { careerPreferences: saved });
+                void syncProfileEarnRewardsRef.current(candidateId);
                 setCareerPreferencesSuccessMessage('');
                 setIsCareerPreferencesModalOpen(false);
                 showAlert(t("profile.careerPreferencesUpdated"));
@@ -4496,7 +4592,7 @@ export default function ProfilePage() {
               throw new Error('Failed to save visa work authorization');
             }
 
-            await refreshProfileData(candidateId);
+            void syncProfileEarnRewardsRef.current(candidateId);
           setIsVisaWorkAuthorizationModalOpen(false);
           showAlert('Visa and work authorization updated');
           } catch (error) {
@@ -4564,7 +4660,7 @@ export default function ProfilePage() {
 
             // Try to refresh profile data, but don't fail if it errors
             try {
-            await refreshProfileData(candidateId);
+            void syncProfileEarnRewardsRef.current(candidateId);
             } catch (refreshError) {
               console.warn('⚠️ Failed to refresh profile data after saving vaccination:', refreshError);
               // Don't throw - the save was successful, just the refresh failed
@@ -4673,7 +4769,7 @@ export default function ProfilePage() {
                 });
               }
 
-              await refreshProfileData(candidateId);
+              void syncProfileEarnRewardsRef.current(candidateId);
               await loadResumeVersions();
               setIsResumeModalOpen(false);
               showAlert('Resume replaced successfully');
@@ -4696,7 +4792,7 @@ export default function ProfilePage() {
                 throw new Error('Failed to save resume');
               }
 
-              await refreshProfileData(candidateId);
+              void syncProfileEarnRewardsRef.current(candidateId);
               await loadResumeVersions();
               setIsResumeModalOpen(false);
               showAlert('Resume updated');

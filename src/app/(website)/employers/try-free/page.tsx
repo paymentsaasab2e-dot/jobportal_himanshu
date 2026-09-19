@@ -4,7 +4,7 @@ import { TryFreeLoginClient } from "./TryFreeLoginClient";
 export const metadata: Metadata = {
   title: "Try it free",
   description:
-    "Sign in with HQ-granted try-free credentials to access the SAASA B2E employer workspace.",
+    "Enter your email and mobile to try HR Yantra. Valid credentials open the workspace; otherwise request a demo.",
 };
 
 export default function TryFreePage() {

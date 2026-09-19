@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { GlobalLoader } from '@/components/auth/GlobalLoader';
-
 import { stripLocaleFromPathname } from '@/lib/i18n';
 
-const SHOW_DELAY_MS = 180;
+const SHOW_DELAY_MS = 220;
 
+/**
+ * Top progress bar for internal navigations — replaces full-screen GlobalLoader
+ * so page shells / skeletons can paint immediately.
+ */
 export function NavigationLoader() {
   const pathname = usePathname();
   const normalizedPath = stripLocaleFromPathname(pathname || '/');
@@ -85,5 +87,13 @@ export function NavigationLoader() {
   ) {
     return null;
   }
-  return <GlobalLoader />;
+
+  return (
+    <div
+      className="pointer-events-none fixed inset-x-0 top-0 z-[99999] h-0.5 overflow-hidden bg-transparent"
+      aria-hidden
+    >
+      <div className="h-full w-1/3 animate-pulse bg-sky-500/90 shadow-[0_0_8px_rgba(14,165,233,0.6)]" />
+    </div>
+  );
 }

@@ -4,9 +4,19 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 
 import Image from 'next/image';
-import ApplicationSuccessModal from '@/components/modals/ApplicationSuccessModal';
+import dynamic from 'next/dynamic';
 import DashboardContainer from '@/components/layout/DashboardContainer';
 import DashboardPanel from '@/components/dashboard/DashboardPanel';
+import { ModalLoadShell } from '@/components/profile/ModalLoadShell';
+
+const ApplicationSuccessModal = dynamic(
+  () => import('@/components/modals/ApplicationSuccessModal'),
+  { ssr: false, loading: () => <ModalLoadShell /> },
+);
+const ScreeningQuestionsDrawer = dynamic(
+  () => import('@/components/jobs/ScreeningQuestionsDrawer'),
+  { ssr: false, loading: () => <ModalLoadShell /> },
+);
 import {
   AlertTriangle,
   ArrowRight,
@@ -69,7 +79,6 @@ import {
   parseJobPublicFieldVisibility,
   redactPortalJobListing,
 } from '@/lib/job-public-field-visibility';
-import ScreeningQuestionsDrawer from '@/components/jobs/ScreeningQuestionsDrawer';
 import { getScreeningValidationError } from '@/lib/screening-questions';
 import {
   assessmentBannerMessage,

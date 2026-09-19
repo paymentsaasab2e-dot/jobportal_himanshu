@@ -85,14 +85,18 @@ export async function persistWorkExperienceEntry(
       throw new Error(errorData.message || 'Failed to update work experience');
     }
 
-    return {
+    const result = await response.json().catch(() => ({}));
+    const saved = result?.data as WorkExperienceEntry | undefined;
+    return normalizeWorkExperienceFromApi({
       ...entry,
+      ...(saved || {}),
+      id: saved?.id || entry.id,
       documents: documentUrls.map((url) => ({
         id: url,
         url,
         name: getProfileDocumentDisplayName(url),
       })),
-    };
+    });
   }
 
   const response = await fetch(`${API_BASE_URL}/profile/work-experience/${candidateId}`, {

@@ -28,6 +28,7 @@ async function fetchWithRetry(
 export type ProfileSectionKey =
   | "basicInformation"
   | "summary"
+  | "workExperience"
   | "education"
   | "skills"
   | "languages"
@@ -359,7 +360,7 @@ export async function saveSectionDraft(
       break;
     }
     default:
-      throw new Error(`Unsupported section: ${sectionKey satisfies never}`);
+      throw new Error(`Unsupported section: ${String(sectionKey)}`);
   }
 
   if (!response.ok) {

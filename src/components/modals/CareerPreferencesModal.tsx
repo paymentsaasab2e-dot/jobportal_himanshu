@@ -15,6 +15,20 @@ import {
   normalizeSalaryFilterCurrencyCode,
   SALARY_FILTER_CURRENCIES,
 } from '@/lib/job-salary-filter';
+import {
+  findWorldCurrency,
+  worldCurrencyMatches,
+  type WorldCurrencyEntry,
+} from '@/lib/world-currencies';
+
+import type { CareerPreferencesData } from '@/lib/career-preferences-normalize';
+import {
+  normalizeCareerPreferencesFromApi,
+  parsePreferenceList,
+} from '@/lib/career-preferences-normalize';
+
+export type { CareerPreferencesData };
+export { normalizeCareerPreferencesFromApi, parsePreferenceList };
 
 interface CareerPreferencesModalProps {
   isOpen: boolean;
@@ -22,36 +36,6 @@ interface CareerPreferencesModalProps {
   onSave: (data: CareerPreferencesData) => void;
   initialData?: CareerPreferencesData;
   currentRole?: string;
-}
-
-export interface CareerPreferencesData {
-  currentRole?: string;
-  preferredJobTitles: string[];
-  preferredRoles?: string[];
-  preferredIndustries: string[];
-  functionalAreas: string[];
-  preferredIndustry?: string;
-  functionalArea?: string;
-  jobTypes: string[];
-  workModes: string[];
-  preferredWorkMode?: string;
-  preferredLocations: string[];
-  relocationPreference: string;
-  salaryCurrency: string;
-  salaryAmount: string;
-  salaryFrequency: string;
-  preferredCurrency?: string;
-  preferredSalary?: string;
-  preferredSalaryType?: string;
-  preferredBenefits?: string[];
-  currentCurrency?: string;
-  currentSalaryType?: string;
-  currentSalary?: string;
-  currentLocation?: string;
-  currentBenefits?: string[];
-  availabilityToStart: string;
-  noticePeriod?: string;
-  passportNumbersByLocation?: Record<string, string>;
 }
 
 const INDUSTRIES = [
@@ -192,63 +176,6 @@ function buildBenefitOptions(data?: CareerPreferencesData): string[] {
     ...(data?.currentBenefits || []),
     ...(data?.preferredBenefits || []),
   ]);
-}
-
-export function parsePreferenceList(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return uniqueStrings(value.map(String));
-  }
-  const s = typeof value === 'string' ? value.trim() : '';
-  if (!s) return [];
-  return uniqueStrings(s.split(/[,;|]\s*/));
-}
-
-export function normalizeCareerPreferencesFromApi(raw: unknown): CareerPreferencesData | undefined {
-  if (raw === null || raw === undefined || typeof raw !== 'object') return undefined;
-  const r = raw as Record<string, unknown>;
-  const preferredIndustries = parsePreferenceList(r.preferredIndustries ?? r.preferredIndustry);
-  const functionalAreas = parsePreferenceList(r.functionalAreas ?? r.functionalArea);
-  const preferredJobTitles = parseStringArray(r.preferredJobTitles ?? r.preferredRoles);
-  const preferredWorkMode = normalizeWorkModeLabel(r.preferredWorkMode);
-  const workModes = uniqueStrings(
-    parseStringArray(r.workModes).map((mode) => normalizeWorkModeLabel(mode)).filter(Boolean),
-  );
-  const normalizedWorkModes = workModes.length > 0 ? workModes : preferredWorkMode ? [preferredWorkMode] : [];
-  // Passport numbers are intentionally not handled in this drawer UI.
-  // Keep preferredLocations strictly from preferredLocations only.
-  const preferredLocations = uniqueStrings([...parseStringArray(r.preferredLocations)]);
-  const preferredCurrency = String(r.preferredCurrency ?? r.salaryCurrency ?? 'USD');
-  const preferredSalary = String(r.preferredSalary ?? r.salaryAmount ?? '');
-  const preferredSalaryType = normalizeSalaryTypeLabel(r.preferredSalaryType ?? r.salaryFrequency);
-  const currentRole = String(r.currentRole ?? r.currentTitle ?? r.designation ?? '').trim();
-  return {
-    currentRole: currentRole || undefined,
-    preferredJobTitles,
-    preferredRoles: preferredJobTitles,
-    preferredIndustries,
-    functionalAreas,
-    preferredIndustry: preferredIndustries.length ? preferredIndustries.join('; ') : undefined,
-    functionalArea: functionalAreas.length ? functionalAreas.join('; ') : undefined,
-    jobTypes: parseStringArray(r.jobTypes),
-    workModes: normalizedWorkModes,
-    preferredWorkMode: preferredWorkMode || normalizedWorkModes[0] || '',
-    preferredLocations,
-    relocationPreference: String(r.relocationPreference ?? ''),
-    salaryCurrency: preferredCurrency,
-    salaryAmount: preferredSalary,
-    salaryFrequency: preferredSalaryType,
-    preferredCurrency,
-    preferredSalary,
-    preferredSalaryType,
-    preferredBenefits: parseStringArray(r.preferredBenefits),
-    currentCurrency: String(r.currentCurrency ?? ''),
-    currentSalaryType: normalizeSalaryTypeLabel(r.currentSalaryType),
-    currentSalary: String(r.currentSalary ?? ''),
-    currentLocation: String(r.currentLocation ?? ''),
-    currentBenefits: parseStringArray(r.currentBenefits),
-    availabilityToStart: String(r.availabilityToStart ?? ''),
-    noticePeriod: r.noticePeriod ? String(r.noticePeriod) : undefined,
-  };
 }
 
 export default function CareerPreferencesModal({
@@ -1534,9 +1461,13 @@ function PackageCurrencyField({
   const rootRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toUpperCase();
-    if (!q) return options;
-    return options.filter((code) => code.includes(q));
+    const rows: WorldCurrencyEntry[] = options.map((code) => {
+      const known = findWorldCurrency(code);
+      return known || { code, name: code, countries: '' };
+    });
+    const q = search.trim();
+    if (!q) return rows;
+    return rows.filter((row) => worldCurrencyMatches(row, q));
   }, [options, search]);
 
   useEffect(() => {
@@ -1601,32 +1532,40 @@ function PackageCurrencyField({
               type="text"
               value={search}
               autoComplete="off"
-              placeholder="Search currency…"
+              placeholder="Search code, name, or country…"
               onChange={(e) => setSearch(e.target.value)}
               className="h-8 w-full rounded-md border border-gray-200 px-2 text-xs text-gray-800 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-100"
             />
           </div>
-          <div role="listbox" className="max-h-40 overflow-y-auto overscroll-contain py-1">
+          <div role="listbox" className="max-h-64 overflow-y-auto overscroll-contain py-1">
             {filtered.length === 0 ? (
               <p className="px-3 py-2 text-xs text-gray-500">No matching currencies</p>
             ) : (
-              filtered.map((code) => (
+              filtered.map((row) => (
                 <button
-                  key={code}
+                  key={row.code}
                   type="button"
                   role="option"
-                  aria-selected={value === code}
+                  aria-selected={value === row.code}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    onChange(code);
+                    onChange(row.code);
                     setOpen(false);
                     setSearch('');
                   }}
-                  className={`flex w-full px-3 py-1.5 text-left text-xs hover:bg-gray-50 ${
-                    value === code ? 'bg-sky-50 font-semibold text-sky-700' : 'text-gray-700'
+                  className={`flex w-full flex-col px-3 py-1.5 text-left hover:bg-gray-50 ${
+                    value === row.code ? 'bg-sky-50 font-semibold text-sky-700' : 'text-gray-700'
                   }`}
                 >
-                  {code}
+                  <span className="text-xs font-semibold">
+                    {row.code}
+                    {row.name && row.name !== row.code ? (
+                      <span className="ml-1.5 font-medium text-gray-500">{row.name}</span>
+                    ) : null}
+                  </span>
+                  {row.countries ? (
+                    <span className="truncate text-[10px] font-normal text-gray-400">{row.countries}</span>
+                  ) : null}
                 </button>
               ))
             )}

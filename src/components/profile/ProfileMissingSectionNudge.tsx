@@ -16,7 +16,7 @@ type DismissRecord = {
 type ProfileMissingSectionNudgeProps = {
   locale: AppLocale;
   missingSections: ProfileMissingSection[];
-  onNavigate: (href: string) => void;
+  onNavigate: (href: string, section?: ProfileMissingSection) => void;
   storageKeyPrefix?: string;
   /** When true, parent owns positioning (e.g. top alert stack). */
   placement?: 'fixed-bottom' | 'inline';
@@ -114,7 +114,8 @@ export default function ProfileMissingSectionNudge({
       `/profile?open=${encodeURIComponent(activeSection.slug)}&tab=${encodeURIComponent(activeSection.tabId)}`,
       locale,
     );
-    onNavigate(href);
+    handleDismiss();
+    onNavigate(href, activeSection);
   };
 
   const handleNext = () => {

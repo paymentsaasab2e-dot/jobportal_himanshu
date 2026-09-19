@@ -44,6 +44,11 @@ import {
   localizeEarnPath,
   resolveEarnTaskHref,
 } from '@/lib/earn-lifecycle';
+import {
+  PROFILE_EDITOR_OPEN_EVENT,
+  dispatchOpenProfileSection,
+} from '@/lib/profile-section-open';
+import type { ProfileMissingSection } from '@/lib/profile-section-routes';
 
 const POLL_MS = 45_000;
 const FLOAT_DURATION_MS = 7_000;
@@ -190,6 +195,7 @@ export function FloatingAlertsHost() {
   const [missingSections, setMissingSections] = useState<ProfileMissingSection[]>([]);
   const [floats, setFloats] = useState<FloatItem[]>([]);
   const [earnVisible, setEarnVisible] = useState(false);
+  const [profileEditorOpen, setProfileEditorOpen] = useState(false);
   const seenRef = useRef<Set<string>>(new Set());
   const bootstrappedRef = useRef(false);
   const timersRef = useRef<Map<string, number>>(new Map());
@@ -238,7 +244,7 @@ export function FloatingAlertsHost() {
     }
     try {
       const details = await fetchProfileCompleteness(candidateId);
-      const missing = getMissingProfileSections(null, details);
+      const missing = getMissingProfileSections(null, details, { forAlerts: true });
       setMissingSections(missing);
       if (missing.length > 0 && bootstrappedRef.current) {
         // Only float a suggestion when sections change after first load
@@ -318,6 +324,15 @@ export function FloatingAlertsHost() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const onEditorOpen = (event: Event) => {
+      const open = Boolean((event as CustomEvent<{ open?: boolean }>).detail?.open);
+      setProfileEditorOpen(open);
+    };
+    window.addEventListener(PROFILE_EDITOR_OPEN_EVENT, onEditorOpen);
+    return () => window.removeEventListener(PROFILE_EDITOR_OPEN_EVENT, onEditorOpen);
   }, []);
 
   useEffect(() => {
@@ -478,8 +493,8 @@ export function FloatingAlertsHost() {
     }
   };
 
-  const showEarn = earnVisible && pendingEarn.length > 0;
-  const showProfile = missingSections.length > 0;
+  const showEarn = earnVisible && pendingEarn.length > 0 && !profileEditorOpen;
+  const showProfile = missingSections.length > 0 && !profileEditorOpen;
   const showStack = showEarn || showProfile || floats.length > 0;
 
   if (!showStack) return null;
@@ -573,7 +588,14 @@ export function FloatingAlertsHost() {
             <ProfileMissingSectionNudge
               locale={locale}
               missingSections={missingSections}
-              onNavigate={(href) => router.push(href)}
+              onNavigate={(href, section) => {
+                const path = stripLocaleFromPathname(pathname || '/');
+                if (path === '/profile' && section?.slug) {
+                  dispatchOpenProfileSection(section.slug, section.tabId);
+                  return;
+                }
+                router.push(href);
+              }}
               storageKeyPrefix={`${candidateId}:profileMissingNudge`}
               placement="inline"
             />

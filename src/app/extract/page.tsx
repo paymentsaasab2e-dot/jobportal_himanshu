@@ -11,6 +11,7 @@ import { dispatchTokenEarn } from '@/lib/token-earn-events';
 import { showSuccessToast } from '@/components/common/toast/toast';
 import HryantraLoader from "@/components/loader/CV Parsing Loader Final";
 import { getLocaleFromPathname, localizePath, stripLocaleFromPathname } from "@/lib/i18n";
+import { getAuthHeaders } from '@/lib/auth-storage';
 
 export default function ExtractPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -162,11 +163,26 @@ export default function ExtractPage() {
       if (!isPageActiveRef.current || !storedCandidateId) return;
 
       try {
-        const response = await fetch(`${API_BASE_URL}/cv/status/${storedCandidateId}`);
+        const response = await fetch(`${API_BASE_URL}/cv/status/${storedCandidateId}`, {
+          headers: getAuthHeaders(),
+          cache: 'no-store',
+        });
         if (!response.ok || !isPageActiveRef.current) return;
 
         const data = await response.json();
-        if (data.processed && data.aiAnalyzed) {
+        if (data.status === 'failed' || data.error) {
+          isProcessingRef.current = false;
+          setIsProcessing(false);
+          setStatus(data.error || 'CV analysis failed. Please try uploading again.');
+          clearPolling();
+          sessionStorage.removeItem('uploadStatus');
+          scheduleTimeout(() => {
+            if (!isPageActiveRef.current) return;
+            router.push('/uploadcv');
+          }, 3500);
+          return;
+        }
+        if (data.processed && (data.aiAnalyzed || data.status === 'completed')) {
           if (!completionToastShownRef.current) {
             completionToastShownRef.current = true;
             showSuccessToast("Resume uploaded", "Your profile has been analyzed successfully.");
@@ -175,8 +191,16 @@ export default function ExtractPage() {
             "CV analysis complete! Redirecting to dashboard...",
             redirectToDashboard,
           );
-        } else if (data.hasResume && !data.aiAnalyzed) {
-          setStatus("Processing CV with AI...");
+        } else if (data.status === 'processing' || (data.hasResume && !data.aiAnalyzed)) {
+          setStatus(
+            data.stage === 'persisting'
+              ? 'Saving profile data...'
+              : data.stage === 'extracting'
+                ? 'Extracting text and analyzing with AI...'
+                : 'Processing CV with AI...',
+          );
+        } else if (data.status === 'queued') {
+          setStatus('Queued for analysis...');
         }
       } catch {
         if (!isPageActiveRef.current) return;
@@ -198,21 +222,20 @@ export default function ExtractPage() {
     checkStatusInterval = setInterval(checkProcessingStatus, 2000);
     scheduleTimeout(() => void checkProcessingStatus(), 1000);
 
-    // Only force-complete when the user is still in the post-upload flow on this page
-    const awaitingFreshUpload = sessionStorage.getItem("uploadStatus") === "processing";
-    if (awaitingFreshUpload) {
+    // Truthful status only — do not force-complete on a fixed timeout.
+    // Cap wait with a failure message so the UI never spins forever.
+    scheduleTimeout(() => {
+      if (!isPageActiveRef.current || !isProcessingRef.current) return;
+      isProcessingRef.current = false;
+      setIsProcessing(false);
+      setStatus('Analysis is taking longer than expected. Please check your profile or re-upload.');
+      clearPolling();
+      sessionStorage.removeItem('uploadStatus');
       scheduleTimeout(() => {
-        if (!isPageActiveRef.current || !isProcessingRef.current) return;
-        if (!completionToastShownRef.current) {
-          completionToastShownRef.current = true;
-          showSuccessToast("Resume uploaded", "Your profile has been analyzed successfully.");
-        }
-        finishProcessing(
-          "Processing complete! Redirecting to dashboard...",
-          redirectToDashboard,
-        );
-      }, 60000);
-    }
+        if (!isPageActiveRef.current) return;
+        redirectToDashboard();
+      }, 4000);
+    }, 180000);
 
     return () => {
       isPageActiveRef.current = false;

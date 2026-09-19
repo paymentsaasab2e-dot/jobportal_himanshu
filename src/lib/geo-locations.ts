@@ -1,4 +1,10 @@
-import { City, Country, State } from 'country-state-city';
+/**
+ * Full geo dataset (includes city.json ~7.8 MB). Only import from
+ * interaction-gated code (profile modals), never from route critical paths.
+ */
+import City from 'country-state-city/lib/city';
+import Country from 'country-state-city/lib/country';
+import State from 'country-state-city/lib/state';
 
 export type CitySuggestion = {
   label: string;

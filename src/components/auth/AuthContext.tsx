@@ -187,47 +187,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (token !== storedToken) setToken(storedToken);
       setUser((prev) => prev ?? buildPlaceholderUser(candidateId));
+      // Allow AuthGuard to unblock immediately — /auth/me hydrates in background.
+      setIsLoading(false);
 
-      const response = await fetch(`${API_BASE_URL}/profile/${candidateId}`, {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${storedToken}`
-        }
+          Authorization: `Bearer ${storedToken}`,
+        },
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.data) {
-          const profile = result.data;
-          const personalInfo = profile.personalInfo || {};
+          const me = result.data;
+          const personalInfo = me.personalInfo || {};
           persistAuthSession(storedToken, candidateId);
-          
+
           setUser({
             id: candidateId,
-            whatsappNumber: profile.whatsappNumber || '',
-            email: personalInfo.email || '',
-            name: getAuthContextDisplayName(profile),
-            profilePhotoUrl: personalInfo.profilePhotoUrl || null
+            whatsappNumber: me.whatsappNumber || '',
+            email: me.email || personalInfo.email || '',
+            name:
+              me.name ||
+              getAuthContextDisplayName({
+                personalInfo,
+                whatsappNumber: me.whatsappNumber,
+              }),
+            profilePhotoUrl: me.profilePhotoUrl || personalInfo.profilePhotoUrl || null,
           });
         } else {
           setUser((prev) => prev ?? buildPlaceholderUser(candidateId));
         }
       } else if (response.status === 401) {
-        // Brief wait + one retry: session row may lag the JWT by a few ms on cold DB.
         await new Promise((r) => setTimeout(r, 400));
-        const retry = await fetch(`${API_BASE_URL}/profile/${candidateId}`, {
+        const retry = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: { Authorization: `Bearer ${storedToken}` },
         });
         if (retry.ok) {
           const result = await retry.json();
           if (result.success && result.data) {
-            const profile = result.data;
-            const personalInfo = profile.personalInfo || {};
+            const me = result.data;
+            const personalInfo = me.personalInfo || {};
             setUser({
               id: candidateId,
-              whatsappNumber: profile.whatsappNumber || '',
-              email: personalInfo.email || '',
-              name: [personalInfo.firstName, personalInfo.lastName].filter(Boolean).join(' ') || 'User',
-              profilePhotoUrl: personalInfo.profilePhotoUrl || null,
+              whatsappNumber: me.whatsappNumber || '',
+              email: me.email || personalInfo.email || '',
+              name:
+                me.name ||
+                [personalInfo.firstName, personalInfo.lastName].filter(Boolean).join(' ') ||
+                'User',
+              profilePhotoUrl: me.profilePhotoUrl || personalInfo.profilePhotoUrl || null,
             });
           }
         } else {

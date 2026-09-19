@@ -10,7 +10,7 @@ import {
 } from '@/lib/query/portal-api';
 import { portalQueryKeys } from '@/lib/query/portal-query-keys';
 
-export function usePortalJobsList(locale: AppLocale, limit = 200) {
+export function usePortalJobsList(locale: AppLocale, limit = 50) {
   return useQuery({
     queryKey: portalQueryKeys.jobsList(locale, limit),
     queryFn: ({ signal }) => fetchPortalJobsList(locale, limit, signal),

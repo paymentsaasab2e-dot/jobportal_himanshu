@@ -53,7 +53,7 @@ const AI_FUNCTIONS = [
     id: 'career-advice',
     label: 'Career Advice',
     icon: BrainCircuit,
-    description: 'Ask anything about your career path or industry trends.',
+    description: 'Ask about your career path, role growth, or industry skills.',
     prompt: 'What skills should I learn next to advance my career in my field?'
   }
 ];
@@ -88,7 +88,7 @@ export default function GlobalAIAssistant() {
     {
       id: '1',
       role: 'assistant',
-      content: 'Hello! I am your AI Career Assistant. How can I help you advance your career today?',
+      content: 'Hi — I am your HRYANTRA Career Assistant. Ask me about your CV, profile, interviews, skills, or job search. I stay focused on career help only.',
       timestamp: new Date()
     }
   ]);
@@ -126,14 +126,24 @@ export default function GlobalAIAssistant() {
     setIsTyping(true);
 
     try {
+      const token =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('token') || sessionStorage.getItem('token')
+          : null;
       const response = await fetch(`${API_BASE_URL}/ai/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           message: text,
           candidateId,
-          history: messages.map(m => ({ role: m.role, content: m.content }))
-        })
+          history: messages
+            .filter((m) => m.id !== '1')
+            .slice(-12)
+            .map((m) => ({ role: m.role, content: m.content })),
+        }),
       });
 
       if (response.ok) {
@@ -283,7 +293,7 @@ export default function GlobalAIAssistant() {
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSendMessage('')}
-                      placeholder="Ask me anything..."
+                      placeholder="Ask about CV, jobs, interviews..."
                       className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-black caret-black focus:outline-none focus:ring-2 focus:ring-[#2098C8]/20 focus:border-[#2098C8] transition-all"
                     />
                     <button

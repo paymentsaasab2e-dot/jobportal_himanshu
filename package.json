@@ -6,7 +6,8 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "analyze:bundles": "node scripts/analyze-bundles.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

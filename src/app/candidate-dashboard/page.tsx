@@ -6,9 +6,18 @@ import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/components/auth/AuthContext";
 import { BookMarked, BriefcaseBusiness, Gauge, Target } from "lucide-react";
 import { GlobalLoader } from "@/components/auth/GlobalLoader";
-import ApplicationSuccessModal from "@/components/modals/ApplicationSuccessModal";
-import ProfileCompletionDrawer from "@/components/profile/ProfileCompletionDrawer";
+import dynamic from "next/dynamic";
+import { ModalLoadShell } from "@/components/profile/ModalLoadShell";
 import { showSuccessToast } from "@/components/common/toast/toast";
+
+const ApplicationSuccessModal = dynamic(
+  () => import("@/components/modals/ApplicationSuccessModal"),
+  { ssr: false, loading: () => <ModalLoadShell /> },
+);
+const ProfileCompletionDrawer = dynamic(
+  () => import("@/components/profile/ProfileCompletionDrawer"),
+  { ssr: false, loading: () => <ModalLoadShell /> },
+);
 import ApplicationPipelineCard from "@/components/dashboard/ApplicationPipelineCard";
 import DashboardHero, { type DashboardHeroStat } from "@/components/dashboard/DashboardHero";
 import JobMatchesPanel from "@/components/dashboard/JobMatchesPanel";

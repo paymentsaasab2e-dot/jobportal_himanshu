@@ -1,4 +1,5 @@
-import { Country } from 'country-state-city';
+/** Deep import avoids bundling city.json (~7.8 MB) with dial-code helpers. */
+import Country from 'country-state-city/lib/country';
 
 export interface CountryCodeOption {
   code: string;
