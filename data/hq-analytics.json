@@ -48,14 +48,14 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-09-18T18:24:34.637Z",
+      "capturedAt": "2026-09-19T08:59:26.908Z",
       "kind": "realtime_session",
       "session": {
-        "logins": 4,
-        "visits": 17,
+        "logins": 2,
+        "visits": 2,
         "applies": 0,
-        "activeMs": 255000,
-        "sessionCount": 4,
+        "activeMs": 0,
+        "sessionCount": 2,
         "topInsightIds": [
           "balanced"
         ],
@@ -64,9 +64,7 @@
         "alertConfidence": "high",
         "topLocation": "Mumbai, Maharashtra, India",
         "preferredAlertHours": [
-          13,
-          17,
-          23
+          14
         ]
       },
       "hasFullLatest": true
@@ -792,37 +790,28 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-09-18T18:24:34.637Z",
-      "activityStateUpdatedAt": "2026-09-18T18:24:33.468Z",
+      "capturedAt": "2026-09-19T08:59:26.908Z",
+      "activityStateUpdatedAt": "2026-09-19T08:59:25.102Z",
       "rollup7d": {
         "userId": "b1c869d84e75048c5c61c5e3",
         "range": "week",
-        "fromDate": "2026-09-12",
-        "toDate": "2026-09-18",
-        "logins": 4,
-        "visits": 17,
+        "fromDate": "2026-09-13",
+        "toDate": "2026-09-19",
+        "logins": 2,
+        "visits": 2,
         "jobCardClicks": 0,
         "applies": 0,
-        "activeMs": 255000,
-        "sessionCount": 4,
+        "activeMs": 0,
+        "sessionCount": 2,
         "pageVisitsByCategory": {
-          "other": 5,
-          "dashboard": 6,
-          "jobs": 2,
-          "applications": 2,
-          "courses": 2
+          "other": 1,
+          "dashboard": 1
         },
-        "activeMsByCategory": {
-          "dashboard": 90000,
-          "jobs": 15000,
-          "applications": 15000,
-          "courses": 60000,
-          "other": 75000
-        },
+        "activeMsByCategory": {},
         "firstOpenBreakdown": {
           "dashboard": 1
         },
-        "avgActiveMsPerDay": 255000,
+        "avgActiveMsPerDay": 0,
         "daysActive": 1,
         "topFirstOpen": "dashboard",
         "insights": [
@@ -834,57 +823,19 @@
             "evidence": [
               "0 job clicks",
               "0 applies",
-              "4 min active"
+              "0 min active"
             ]
           }
         ],
         "recentSessions": [
           {
-            "id": "sess_mu7a9mxw_5qxx1j",
-            "startedAt": "2026-09-18T18:19:49.220Z",
-            "lastActiveAt": "2026-09-18T18:24:33.467Z",
-            "durationMs": 15000,
-            "pageCount": 2,
-            "firstPath": "/",
-            "lastPath": "/",
-            "lastCategory": "other",
-            "paths": [
-              "/"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-09-18T18:23:43.057Z"
-          },
-          {
-            "id": "sess_mu6vvwsq_wkwrzq",
-            "startedAt": "2026-09-18T11:37:14.185Z",
-            "lastActiveAt": "2026-09-18T12:37:10.131Z",
-            "durationMs": 45000,
+            "id": "sess_mu85oil6_jqh0l9",
+            "startedAt": "2026-09-19T08:59:11.514Z",
+            "lastActiveAt": "2026-09-19T08:59:25.101Z",
+            "durationMs": 0,
             "pageCount": 1,
-            "firstPath": "/",
-            "lastPath": "/",
-            "lastCategory": "other",
             "paths": [
-              "/"
-            ],
-            "deviceType": "desktop",
-            "browser": "Chrome",
-            "operatingSystem": "Windows",
-            "endedAt": "2026-09-18T12:37:10.131Z"
-          },
-          {
-            "id": "sess_mu6ojypl_m62r4h",
-            "startedAt": "2026-09-18T08:11:59.481Z",
-            "lastActiveAt": "2026-09-18T09:22:05.124Z",
-            "durationMs": 195000,
-            "pageCount": 13,
-            "paths": [
-              "/candidate-dashboard",
-              "/explore-jobs",
-              "/applications",
-              "/lms/courses",
-              "/"
+              "/candidate-dashboard"
             ],
             "deviceType": "desktop",
             "browser": "Chrome",
@@ -893,17 +844,16 @@
             "state": "Maharashtra",
             "city": "Mumbai",
             "timezone": "Asia/Calcutta",
-            "ipAddress": "110.226.180.16",
-            "lastPath": "/",
-            "lastCategory": "other",
-            "firstPath": "/candidate-dashboard",
-            "endedAt": "2026-09-18T08:23:01.144Z"
+            "ipAddress": "110.226.180.222",
+            "lastPath": "/candidate-dashboard",
+            "lastCategory": "dashboard",
+            "firstPath": "/candidate-dashboard"
           },
           {
-            "id": "sess_mu6ojyos_o7d8gw",
-            "startedAt": "2026-09-18T08:11:59.452Z",
-            "lastActiveAt": "2026-09-18T08:11:59.453Z",
-            "durationMs": 29,
+            "id": "sess_mu85oiig_jkafje",
+            "startedAt": "2026-09-19T08:59:11.415Z",
+            "lastActiveAt": "2026-09-19T08:59:11.418Z",
+            "durationMs": 99,
             "pageCount": 1,
             "firstPath": "/whatsapp",
             "lastPath": "/whatsapp",
@@ -918,360 +868,25 @@
             "state": "Maharashtra",
             "city": "Mumbai",
             "timezone": "Asia/Calcutta",
-            "ipAddress": "110.226.180.16",
-            "endedAt": "2026-09-18T08:11:59.481Z"
+            "ipAddress": "110.226.180.222",
+            "endedAt": "2026-09-19T08:59:11.514Z"
           }
         ],
         "recentEvents": [
           {
-            "id": "ev_mu7afq9o_vyyraw",
-            "at": "2026-09-18T18:24:33.468Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu7a9mxw_5qxx1j",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu7aerbu_8k10eb",
-            "at": "2026-09-18T18:23:48.186Z",
+            "id": "ev_mu85or8w_7nqsxv",
+            "at": "2026-09-19T08:59:22.736Z",
             "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu7a9mxw_5qxx1j"
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_mu85oil6_jqh0l9"
           },
           {
-            "id": "ev_mu7aendd_hd0k6s",
-            "at": "2026-09-18T18:23:43.057Z",
-            "type": "session_end",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu7a9mxw_5qxx1j",
-            "meta": {
-              "durationMs": 0
-            }
-          },
-          {
-            "id": "ev_mu7a9mxz_xq83n6",
-            "at": "2026-09-18T18:19:49.223Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu7a9mxw_5qxx1j"
-          },
-          {
-            "id": "ev_mu7a9mxw_cd4fho",
-            "at": "2026-09-18T18:19:49.220Z",
+            "id": "ev_mu85oil6_7l452r",
+            "at": "2026-09-19T08:59:11.514Z",
             "type": "login",
             "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu7a9mxw_5qxx1j",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_mu6y0zg3_kaq624",
-            "at": "2026-09-18T12:37:10.132Z",
-            "type": "session_end",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu6vvwsq_wkwrzq",
-            "meta": {
-              "durationMs": 45000
-            }
-          },
-          {
-            "id": "ev_mu6xmyu5_gsnsjx",
-            "at": "2026-09-18T12:26:16.157Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu6vvwsq_wkwrzq",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu6wxvol_x6vg4w",
-            "at": "2026-09-18T12:06:45.669Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu6vvwsq_wkwrzq",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu6whysc_srdkvw",
-            "at": "2026-09-18T11:54:23.196Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu6vvwsq_wkwrzq",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu6vvwss_6xiysx",
-            "at": "2026-09-18T11:37:14.188Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu6vvwsq_wkwrzq"
-          },
-          {
-            "id": "ev_mu6vvwsq_xnj33f",
-            "at": "2026-09-18T11:37:14.186Z",
-            "type": "login",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu6vvwsq_wkwrzq",
-            "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
-            }
-          },
-          {
-            "id": "ev_mu6r23t1_fhuad9",
-            "at": "2026-09-18T09:22:05.125Z",
-            "type": "time_slice",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu6ojypl_m62r4h",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu6qvte2_cz8wmt",
-            "at": "2026-09-18T09:17:11.690Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6qkgie_nw3exg",
-            "at": "2026-09-18T09:08:21.782Z",
-            "type": "time_slice",
-            "category": "courses",
-            "path": "/lms/courses",
-            "sessionId": "sess_mu6ojypl_m62r4h",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu6qiydi_6yv99a",
-            "at": "2026-09-18T09:07:11.622Z",
-            "type": "time_slice",
-            "category": "courses",
-            "path": "/lms/courses",
-            "sessionId": "sess_mu6ojypl_m62r4h",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu6q5jqh_hfuf82",
-            "at": "2026-09-18T08:56:46.121Z",
-            "type": "page_visit",
-            "category": "courses",
-            "path": "/lms/courses",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6pptii_un1pzd",
-            "at": "2026-09-18T08:44:32.298Z",
-            "type": "page_visit",
-            "category": "courses",
-            "path": "/lms/courses",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6ppml4_nylzib",
-            "at": "2026-09-18T08:44:23.320Z",
-            "type": "page_visit",
-            "category": "applications",
-            "path": "/applications",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6ppken_g65jmv",
-            "at": "2026-09-18T08:44:20.495Z",
-            "type": "page_visit",
-            "category": "jobs",
-            "path": "/explore-jobs",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6ppgcj_sh5ojq",
-            "at": "2026-09-18T08:44:15.235Z",
-            "type": "page_visit",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6ppd1e_ox3cz1",
-            "at": "2026-09-18T08:44:10.946Z",
-            "type": "time_slice",
-            "category": "applications",
-            "path": "/applications",
-            "sessionId": "sess_mu6ojypl_m62r4h",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu6pj8u0_q90wq3",
-            "at": "2026-09-18T08:39:25.560Z",
-            "type": "page_visit",
-            "category": "applications",
-            "path": "/applications",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6pj807_k58zlm",
-            "at": "2026-09-18T08:39:24.487Z",
-            "type": "time_slice",
-            "category": "jobs",
-            "path": "/explore-jobs",
-            "sessionId": "sess_mu6ojypl_m62r4h",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu6pikua_isyls0",
-            "at": "2026-09-18T08:38:54.466Z",
-            "type": "page_visit",
-            "category": "jobs",
-            "path": "/explore-jobs",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6phxbg_42pt5j",
-            "at": "2026-09-18T08:38:23.980Z",
-            "type": "time_slice",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mu6ojypl_m62r4h",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu6phlo9_ipw70e",
-            "at": "2026-09-18T08:38:08.889Z",
-            "type": "page_visit",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6pfy33_jhtiz9",
-            "at": "2026-09-18T08:36:51.663Z",
-            "type": "time_slice",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mu6ojypl_m62r4h",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu6pfmi4_drlthm",
-            "at": "2026-09-18T08:36:36.652Z",
-            "type": "page_visit",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6pf1y6_uor831",
-            "at": "2026-09-18T08:36:10.014Z",
-            "type": "page_visit",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6pdxjb_ojmrqp",
-            "at": "2026-09-18T08:35:17.639Z",
-            "type": "time_slice",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mu6ojypl_m62r4h",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu6pbcxk_4cqjbo",
-            "at": "2026-09-18T08:33:17.624Z",
-            "type": "page_visit",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6oy595_4mhhbv",
-            "at": "2026-09-18T08:23:01.145Z",
-            "type": "session_end",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mu6ojypl_m62r4h",
-            "meta": {
-              "durationMs": 15000
-            }
-          },
-          {
-            "id": "ev_mu6okijp_5p1asz",
-            "at": "2026-09-18T08:12:25.189Z",
-            "type": "time_slice",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mu6ojypl_m62r4h",
-            "meta": {
-              "durationMs": 15000,
-              "rolling": true
-            }
-          },
-          {
-            "id": "ev_mu6ok6yo_byo1cv",
-            "at": "2026-09-18T08:12:10.176Z",
-            "type": "page_visit",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mu6ojypl_m62r4h"
-          },
-          {
-            "id": "ev_mu6ojypl_mgprow",
-            "at": "2026-09-18T08:11:59.481Z",
-            "type": "login",
-            "category": "other",
-            "sessionId": "sess_mu6ojypl_m62r4h",
+            "sessionId": "sess_mu85oil6_jqh0l9",
             "meta": {
               "deviceType": "desktop",
               "browser": "Chrome",
@@ -1280,35 +895,35 @@
               "state": "Maharashtra",
               "city": "Mumbai",
               "timezone": "Asia/Calcutta",
-              "ipAddress": "110.226.180.16"
+              "ipAddress": "110.226.180.222"
             }
           },
           {
-            "id": "ev_mu6ojypl_mdlt3q",
-            "at": "2026-09-18T08:11:59.481Z",
+            "id": "ev_mu85oil6_1godu9",
+            "at": "2026-09-19T08:59:11.514Z",
             "type": "session_end",
             "category": "other",
             "path": "/whatsapp",
-            "sessionId": "sess_mu6ojyos_o7d8gw",
+            "sessionId": "sess_mu85oiig_jkafje",
             "meta": {
-              "durationMs": 29
+              "durationMs": 99
             }
           },
           {
-            "id": "ev_mu6ojyou_98ejfm",
-            "at": "2026-09-18T08:11:59.454Z",
+            "id": "ev_mu85oiii_h19ttt",
+            "at": "2026-09-19T08:59:11.418Z",
             "type": "page_visit",
             "category": "other",
             "path": "/whatsapp",
-            "sessionId": "sess_mu6ojyos_o7d8gw"
+            "sessionId": "sess_mu85oiig_jkafje"
           },
           {
-            "id": "ev_mu6ojyot_7dttng",
-            "at": "2026-09-18T08:11:59.453Z",
+            "id": "ev_mu85oiig_piazux",
+            "at": "2026-09-19T08:59:11.416Z",
             "type": "login",
             "category": "other",
             "path": "/whatsapp",
-            "sessionId": "sess_mu6ojyos_o7d8gw",
+            "sessionId": "sess_mu85oiig_jkafje",
             "meta": {
               "deviceType": "desktop",
               "browser": "Chrome",
@@ -1317,7 +932,7 @@
               "state": "Maharashtra",
               "city": "Mumbai",
               "timezone": "Asia/Calcutta",
-              "ipAddress": "110.226.180.16"
+              "ipAddress": "110.226.180.222"
             }
           }
         ],
@@ -1329,20 +944,20 @@
           "profileCompleteness": 75,
           "cvScore": 83,
           "marketFit": 0,
-          "applicationsTotal": 1,
+          "applicationsTotal": 0,
           "rejectionsTotal": 0,
           "postInterviewRejections": 0,
           "missingSectionsCount": 1,
           "missingSectionKeys": [
             "projects"
           ],
-          "updatedAt": "2026-09-18T18:24:17.483Z"
+          "updatedAt": "2026-09-19T08:59:16.345Z"
         },
         "behaviourSignals": {
           "userId": "b1c869d84e75048c5c61c5e3",
           "topCategories": [
-            "courses",
             "jobs",
+            "courses",
             "lms"
           ],
           "weakCategories": [
@@ -1353,20 +968,11 @@
           "insightIds": [],
           "jobCardClicks7d": 0,
           "applies7d": 0,
-          "activeMs7d": 255000,
-          "activeMsByCategory7d": {
-            "dashboard": 90000,
-            "jobs": 15000,
-            "applications": 15000,
-            "courses": 60000,
-            "other": 75000
-          },
+          "activeMs7d": 0,
+          "activeMsByCategory7d": {},
           "pageVisitsByCategory7d": {
-            "other": 5,
-            "dashboard": 6,
-            "jobs": 2,
-            "applications": 2,
-            "courses": 2
+            "other": 1,
+            "dashboard": 1
           },
           "skillsCount": 8,
           "rejectionsTotal": 0,
@@ -1382,88 +988,41 @@
             "community"
           ],
           "deprioritizeSlotIds": [
+            "jobs",
             "career_path",
-            "quizzes",
-            "jobs"
+            "quizzes"
           ],
           "userSuggestionHints": [],
           "preferredAlertHours": [
-            13,
-            17,
-            23
+            14
           ],
-          "preferredAlertWindowLabel": "Fri · 1:00 PM–5:00 PM",
-          "alertTimingConfidence": "medium"
+          "preferredAlertWindowLabel": "Sat · 2:00 PM",
+          "alertTimingConfidence": "low"
         }
       },
       "suggestionMetrics": {
         "userId": "b1c869d84e75048c5c61c5e3",
-        "updatedAt": "2026-09-18T18:24:10.257Z",
+        "updatedAt": "2026-09-19T08:59:24.896Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
-        "suggestionsPushed": 6,
+        "suggestionsPushed": 1,
         "suggestionsClicked": 0,
         "suggestionsPurchased": 0,
-        "salesFollowUpScore": 10,
+        "salesFollowUpScore": 0,
         "salesFollowUpReady": false,
         "byScenario": {
-          "profile_match": 6
+          "profile_match": 1
         },
         "recentSuggestions": [
           {
-            "id": "sug_mu6ok2di_8l5etw",
+            "id": "sug_mu85olkc_bb30pc",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Frontend Interview Readiness",
             "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-09-18T08:12:04.230Z"
-          },
-          {
-            "id": "sug_mu6pn6rf_kxfvj9",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Career Narrative Lab",
-            "actionUrl": "/lms/courses/c6",
-            "pushedAt": "2026-09-18T08:42:29.499Z"
-          },
-          {
-            "id": "sug_mu6qvybk_02srvy",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Frontend Interview Readiness",
-            "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-09-18T09:17:18.080Z"
-          },
-          {
-            "id": "sug_mu6vw1sd_5q3srg",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Frontend Interview Readiness",
-            "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-09-18T11:37:20.653Z"
-          },
-          {
-            "id": "sug_mu6x0gkr_e55j4n",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Frontend Interview Readiness",
-            "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-09-18T12:08:46.059Z"
-          },
-          {
-            "id": "sug_mu7a9q3d_rrxwzm",
-            "dedupeKey": "engage:course",
-            "scenario": "profile_match",
-            "kind": "course",
-            "title": "Career Narrative Lab",
-            "actionUrl": "/lms/courses/c6",
-            "pushedAt": "2026-09-18T18:19:53.305Z"
+            "pushedAt": "2026-09-19T08:59:15.372Z"
           }
         ]
       },
@@ -1473,13 +1032,13 @@
           "key": "learning",
           "label": "Learning & courses",
           "score": 18,
-          "updatedAt": "2026-09-18T08:12:00.930Z"
+          "updatedAt": "2026-09-19T08:59:12.464Z"
         },
         {
           "key": "watercooler",
           "label": "Workplace chat",
           "score": 18,
-          "updatedAt": "2026-09-18T08:12:00.931Z"
+          "updatedAt": "2026-09-19T08:59:12.465Z"
         }
       ],
       "personalizedRecs": [
@@ -1503,12 +1062,12 @@
         }
       ],
       "sessionEngagement": {
-        "sessionCount": 16,
-        "activeCount": 16,
-        "totalDurationMs": 75610032476,
-        "avgDurationMs": 4725627030,
-        "medianDurationMs": 4787277517,
-        "uniqueIps": 5,
+        "sessionCount": 17,
+        "activeCount": 17,
+        "totalDurationMs": 76449924537,
+        "avgDurationMs": 4497054385,
+        "medianDurationMs": 4420564268,
+        "uniqueIps": 6,
         "uniqueDevices": 1,
         "locations": [
           {
@@ -1516,8 +1075,8 @@
             "city": "Mumbai",
             "state": "Maharashtra",
             "country": "India",
-            "sessions": 3,
-            "totalDurationMs": 4688066005
+            "sessions": 4,
+            "totalDurationMs": 4845558543
           },
           {
             "key": "Mangalore, Karnataka, India",
@@ -1525,7 +1084,7 @@
             "state": "Karnataka",
             "country": "India",
             "sessions": 2,
-            "totalDurationMs": 8028438541
+            "totalDurationMs": 8133423083
           },
           {
             "key": "Thane, Maharashtra, India",
@@ -1533,7 +1092,7 @@
             "state": "Maharashtra",
             "country": "India",
             "sessions": 1,
-            "totalDurationMs": 2627927529
+            "totalDurationMs": 2680419800
           }
         ],
         "byHour": [
@@ -1541,49 +1100,49 @@
             "hour": 15,
             "label": "3:00 PM",
             "sessions": 3,
-            "totalDurationMs": 21607327556
+            "totalDurationMs": 21764804369
           },
           {
             "hour": 12,
             "label": "12:00 PM",
             "sessions": 3,
-            "totalDurationMs": 15585074236
+            "totalDurationMs": 15742551049
           },
           {
             "hour": 19,
             "label": "7:00 PM",
             "sessions": 2,
-            "totalDurationMs": 8758393617
+            "totalDurationMs": 8863378159
           },
           {
             "hour": 11,
             "label": "11:00 AM",
             "sessions": 1,
-            "totalDurationMs": 7819503802
+            "totalDurationMs": 7871996073
           },
           {
             "hour": 14,
             "label": "2:00 PM",
-            "sessions": 1,
-            "totalDurationMs": 6515174038
-          },
-          {
-            "hour": 17,
-            "label": "5:00 PM",
             "sessions": 2,
-            "totalDurationMs": 5489721634
+            "totalDurationMs": 6567682034
           },
           {
             "hour": 13,
             "label": "1:00 PM",
             "sessions": 3,
-            "totalDurationMs": 5466765596
+            "totalDurationMs": 5624242409
+          },
+          {
+            "hour": 17,
+            "label": "5:00 PM",
+            "sessions": 2,
+            "totalDurationMs": 5594706176
           },
           {
             "hour": 10,
             "label": "10:00 AM",
             "sessions": 1,
-            "totalDurationMs": 4368071997
+            "totalDurationMs": 4420564268
           }
         ],
         "byWeekday": [
@@ -1591,43 +1150,43 @@
             "weekday": 1,
             "label": "Mon",
             "sessions": 5,
-            "totalDurationMs": 21857544571
+            "totalDurationMs": 22120005926
           },
           {
             "weekday": 5,
             "label": "Fri",
             "sessions": 4,
-            "totalDurationMs": 17652948574
+            "totalDurationMs": 17862917658
           },
           {
             "weekday": 2,
             "label": "Tue",
             "sessions": 3,
-            "totalDurationMs": 14768861965
+            "totalDurationMs": 14926338778
           },
           {
             "weekday": 6,
             "label": "Sat",
-            "sessions": 1,
-            "totalDurationMs": 7819503802
+            "sessions": 2,
+            "totalDurationMs": 7872011798
           },
           {
             "weekday": 0,
             "label": "Sun",
             "sessions": 1,
-            "totalDurationMs": 6515174038
+            "totalDurationMs": 6567666309
           },
           {
             "weekday": 4,
             "label": "Thu",
             "sessions": 1,
-            "totalDurationMs": 4368071997
+            "totalDurationMs": 4420564268
           },
           {
             "weekday": 3,
             "label": "Wed",
             "sessions": 1,
-            "totalDurationMs": 2627927529
+            "totalDurationMs": 2680419800
           }
         ],
         "alertTiming": {
@@ -1648,15 +1207,15 @@
           "bestWindowLabel": "Mon / Fri · 3:00 PM–12:00 PM",
           "avoidHours": [
             10,
-            13,
-            17
+            17,
+            13
           ],
           "timezone": "Asia/Calcutta",
           "confidence": "high",
-          "reason": "Most active around 3:00 PM and 12:00 PM local time · avg session 78760 min · often from Mumbai, Maharashtra, India",
-          "sampleSessions": 16,
-          "avgDurationMs": 4725627030,
-          "medianDurationMs": 4787277517
+          "reason": "Most active around 3:00 PM and 12:00 PM local time · avg session 74951 min · often from Mumbai, Maharashtra, India",
+          "sampleSessions": 17,
+          "avgDurationMs": 4497054385,
+          "medianDurationMs": 4420564268
         }
       },
       "alertTiming": {
@@ -1677,15 +1236,15 @@
         "bestWindowLabel": "Mon / Fri · 3:00 PM–12:00 PM",
         "avoidHours": [
           10,
-          13,
-          17
+          17,
+          13
         ],
         "timezone": "Asia/Calcutta",
         "confidence": "high",
-        "reason": "Most active around 3:00 PM and 12:00 PM local time · avg session 78760 min · often from Mumbai, Maharashtra, India",
-        "sampleSessions": 16,
-        "avgDurationMs": 4725627030,
-        "medianDurationMs": 4787277517
+        "reason": "Most active around 3:00 PM and 12:00 PM local time · avg session 74951 min · often from Mumbai, Maharashtra, India",
+        "sampleSessions": 17,
+        "avgDurationMs": 4497054385,
+        "medianDurationMs": 4420564268
       },
       "locations": [
         {
@@ -1693,8 +1252,8 @@
           "city": "Mumbai",
           "state": "Maharashtra",
           "country": "India",
-          "sessions": 3,
-          "totalDurationMs": 4688066005
+          "sessions": 4,
+          "totalDurationMs": 4845558543
         },
         {
           "key": "Mangalore, Karnataka, India",
@@ -1702,7 +1261,7 @@
           "state": "Karnataka",
           "country": "India",
           "sessions": 2,
-          "totalDurationMs": 8028438541
+          "totalDurationMs": 8133423083
         },
         {
           "key": "Thane, Maharashtra, India",
@@ -1710,12 +1269,48 @@
           "state": "Maharashtra",
           "country": "India",
           "sessions": 1,
-          "totalDurationMs": 2627927529
+          "totalDurationMs": 2680419800
         }
       ]
     }
   },
   "history": [
+    {
+      "id": "hist_mu85mxuw_aahv",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-19T08:57:57.954Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 18,
+        "applies": 0,
+        "activeMs": 255000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "short_sessions"
+        ],
+        "alertWindow": "Fri / Sat · 1:00 PM–5:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_mu85fedy_mchd",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-19T08:51:41.350Z",
+      "snapshot": {
+        "logins": 5,
+        "visits": 18,
+        "applies": 0,
+        "activeMs": 255000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "short_sessions"
+        ],
+        "alertWindow": "Fri / Sat · 1:00 PM–5:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
     {
       "id": "hist_mu7aesj8_3hbv",
       "userId": "b1c869d84e75048c5c61c5e3",
@@ -18008,5 +17603,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-09-18T18:24:34.678Z"
+  "updatedAt": "2026-09-19T08:59:27.079Z"
 }
