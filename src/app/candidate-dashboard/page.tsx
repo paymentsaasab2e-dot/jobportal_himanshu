@@ -7,16 +7,15 @@ import { useAuth } from "@/components/auth/AuthContext";
 import { BookMarked, BriefcaseBusiness, Gauge, Target } from "lucide-react";
 import { GlobalLoader } from "@/components/auth/GlobalLoader";
 import dynamic from "next/dynamic";
-import { ModalLoadShell } from "@/components/profile/ModalLoadShell";
 import { showSuccessToast } from "@/components/common/toast/toast";
 
 const ApplicationSuccessModal = dynamic(
   () => import("@/components/modals/ApplicationSuccessModal"),
-  { ssr: false, loading: () => <ModalLoadShell /> },
+  { ssr: false },
 );
 const ProfileCompletionDrawer = dynamic(
   () => import("@/components/profile/ProfileCompletionDrawer"),
-  { ssr: false, loading: () => <ModalLoadShell /> },
+  { ssr: false },
 );
 import ApplicationPipelineCard from "@/components/dashboard/ApplicationPipelineCard";
 import DashboardHero, { type DashboardHeroStat } from "@/components/dashboard/DashboardHero";
@@ -1284,10 +1283,10 @@ export default function CandidateDashboardPage() {
         </div>
       </main>
 
-      {candidateId && profileCompletionDetails ? (
+      {candidateId && profileCompletionDetails && isProfileDrawerOpen ? (
         <ProfileCompletionDrawer
           candidateId={candidateId}
-          isOpen={isProfileDrawerOpen}
+          isOpen
           initialCompleteness={profileCompletionDetails}
           onClose={dismissProfileDrawer}
           onCompletionUpdated={(details) => {
@@ -1296,14 +1295,16 @@ export default function CandidateDashboardPage() {
         />
       ) : null}
 
-      <ApplicationSuccessModal
-        isOpen={Boolean(submittedApplicationModal)}
-        onClose={() => setSubmittedApplicationModal(null)}
-        jobTitle={submittedApplicationModal?.jobTitle || t("candidateDashboard.jobFallback")}
-        company={submittedApplicationModal?.company || t("candidateDashboard.companyFallback")}
-        appliedDate={submittedApplicationModal?.appliedDate || formatAppliedDate(locale)}
-        applicationId={submittedApplicationModal?.applicationId}
-      />
+      {submittedApplicationModal ? (
+        <ApplicationSuccessModal
+          isOpen
+          onClose={() => setSubmittedApplicationModal(null)}
+          jobTitle={submittedApplicationModal.jobTitle || t("candidateDashboard.jobFallback")}
+          company={submittedApplicationModal.company || t("candidateDashboard.companyFallback")}
+          appliedDate={submittedApplicationModal.appliedDate || formatAppliedDate(locale)}
+          applicationId={submittedApplicationModal.applicationId}
+        />
+      ) : null}
     </ProfilePageShell>
   );
 }

@@ -196,6 +196,7 @@ export function FloatingAlertsHost() {
   const [floats, setFloats] = useState<FloatItem[]>([]);
   const [earnVisible, setEarnVisible] = useState(false);
   const [profileEditorOpen, setProfileEditorOpen] = useState(false);
+  const [profileNudgeVisible, setProfileNudgeVisible] = useState(false);
   const seenRef = useRef<Set<string>>(new Set());
   const bootstrappedRef = useRef(false);
   const timersRef = useRef<Map<string, number>>(new Map());
@@ -406,6 +407,7 @@ export function FloatingAlertsHost() {
     setFloats([]);
     setEarnVisible(false);
     setMissingSections([]);
+    setProfileNudgeVisible(false);
     bootstrappedRef.current = false;
   }, [loggedIn, hidden]);
   // Pending earn floating nudge (dismissible, 30m cooldown)
@@ -493,8 +495,13 @@ export function FloatingAlertsHost() {
     }
   };
 
-  const showEarn = earnVisible && pendingEarn.length > 0 && !profileEditorOpen;
   const showProfile = missingSections.length > 0 && !profileEditorOpen;
+  // One persistent nudge at a time — profile first, then earn (avoids two popups after login).
+  const showEarn =
+    earnVisible &&
+    pendingEarn.length > 0 &&
+    !profileEditorOpen &&
+    !profileNudgeVisible;
   const showStack = showEarn || showProfile || floats.length > 0;
 
   if (!showStack) return null;
@@ -588,6 +595,7 @@ export function FloatingAlertsHost() {
             <ProfileMissingSectionNudge
               locale={locale}
               missingSections={missingSections}
+              onVisibleChange={setProfileNudgeVisible}
               onNavigate={(href, section) => {
                 const path = stripLocaleFromPathname(pathname || '/');
                 if (path === '/profile' && section?.slug) {

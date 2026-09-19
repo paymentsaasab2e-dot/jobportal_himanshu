@@ -22,7 +22,6 @@ import { LmsEmptyState } from '../components/states/LmsEmptyState';
 import { LmsSkeleton } from '../components/states/LmsSkeleton';
 import { courseStatusFromPct, parseDurationToMinutes } from './course-utils';
 import { fetchCourses, toggleSaveCourse, enrollCourse } from '../api/client';
-import { GlobalLoader } from '@/components/auth/GlobalLoader';
 import { CourseAccessBadge, TokenSpendButton } from '../components/ux/TokenSpendButton';
 
 const ICON_MAP: Record<string, typeof Code2> = {
@@ -277,7 +276,16 @@ function LmsCoursesPageContent() {
   }
 
   if (loading) {
-    return <GlobalLoader />;
+    return (
+      <div className="space-y-6 pt-2">
+        <LmsSkeleton lines={3} className="max-w-xl" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <LmsSkeleton lines={5} />
+          <LmsSkeleton lines={5} />
+          <LmsSkeleton lines={5} />
+        </div>
+      </div>
+    );
   }
 
   return (
