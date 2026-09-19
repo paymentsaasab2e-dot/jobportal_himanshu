@@ -30,13 +30,21 @@ type LoginUserData = Partial<User> & {
   id?: string | number;
 };
 
+type LogoutOptions = {
+  /** When true, skip success toast (forced session expiry / stale refresh). */
+  silent?: boolean;
+  /** When true, skip POST /auth/logout (token already rejected by API). */
+  skipServer?: boolean;
+  logoutAll?: boolean;
+};
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (token: string, candidateId: string, userData?: LoginUserData) => void;
-  logout: () => void;
+  logout: (logoutAllOrOptions?: boolean | LogoutOptions) => void;
   refreshUser: () => Promise<void>;
 }
 
@@ -90,9 +98,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const pathname = usePathname();
   const normalizedPathname = stripLocaleFromPathname(pathname || '/');
   const currentLocale = getLocaleFromPathname(pathname || '/');
+  /** Bumped on every login so in-flight /auth/me calls from a prior token cannot wipe the new session. */
+  const authGenerationRef = useRef(0);
+  /** Ignore forced logout for a short window right after login (stale 401 races). */
+  const loginGraceUntilRef = useRef(0);
 
-  const logout = useCallback(async (logoutAll: boolean = false) => {
+  const logout = useCallback(async (logoutAllOrOptions: boolean | LogoutOptions = false) => {
+    const options: LogoutOptions =
+      typeof logoutAllOrOptions === 'boolean'
+        ? { logoutAll: logoutAllOrOptions }
+        : logoutAllOrOptions || {};
+    const logoutAll = Boolean(options.logoutAll);
+    const silent = Boolean(options.silent);
+    const skipServer = Boolean(options.skipServer);
+
     setIsLoggingOut(true);
+    authGenerationRef.current += 1;
     const candidateId = getStoredCandidateId();
     const storedToken = getStoredToken();
 
@@ -104,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       /* ignore */
     }
 
-    if (storedToken) {
+    if (storedToken && !skipServer) {
       try {
         await fetch(`${API_BASE_URL}/auth/logout`, {
           method: 'POST',
@@ -112,14 +133,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             Authorization: `Bearer ${storedToken}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ logoutAll: Boolean(logoutAll) }),
+          body: JSON.stringify({ logoutAll }),
         });
       } catch {
         /* ignore network errors — still clear local session */
       }
     }
 
-    showSuccessToast(logoutAll ? 'Logged out from all devices' : 'Logged out successfully');
+    if (!silent) {
+      showSuccessToast(logoutAll ? 'Logged out from all devices' : 'Logged out successfully');
+    }
 
     try {
       const { clearAllPortalPageCaches } = await import('@/lib/portal-page-caches');
@@ -176,6 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     syncAuthStorage();
     const storedToken = getStoredToken();
     const candidateId = getStoredCandidateId();
+    const generationAtStart = authGenerationRef.current;
 
     if (!storedToken || !candidateId) {
       setIsLoading(false);
@@ -183,6 +207,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       return;
     }
+
+    const isStale = () =>
+      generationAtStart !== authGenerationRef.current || getStoredToken() !== storedToken;
 
     try {
       if (token !== storedToken) setToken(storedToken);
@@ -196,8 +223,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
 
+      if (isStale()) return;
+
       if (response.ok) {
         const result = await response.json();
+        if (isStale()) return;
         if (result.success && result.data) {
           const me = result.data;
           const personalInfo = me.personalInfo || {};
@@ -219,12 +249,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser((prev) => prev ?? buildPlaceholderUser(candidateId));
         }
       } else if (response.status === 401) {
+        // Post-login grace: a stale in-flight /auth/me from a previous token must
+        // never call logout() — logout() reads the *current* storage token and
+        // would revoke the brand-new session ("logged in → logged out" loop).
+        if (Date.now() < loginGraceUntilRef.current || isStale()) {
+          return;
+        }
+
         await new Promise((r) => setTimeout(r, 400));
+        if (isStale()) return;
+
         const retry = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: { Authorization: `Bearer ${storedToken}` },
         });
+        if (isStale()) return;
+
         if (retry.ok) {
           const result = await retry.json();
+          if (isStale()) return;
           if (result.success && result.data) {
             const me = result.data;
             const personalInfo = me.personalInfo || {};
@@ -239,8 +281,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               profilePhotoUrl: me.profilePhotoUrl || personalInfo.profilePhotoUrl || null,
             });
           }
-        } else {
-          logout();
+        } else if (retry.status === 401) {
+          // Only clear THIS token — never a newer login that replaced storage mid-flight.
+          if (isStale() || Date.now() < loginGraceUntilRef.current) return;
+          if (getStoredToken() !== storedToken) return;
+          logout({ silent: true, skipServer: true });
         }
       }
     } catch {
@@ -250,6 +295,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [logout, token]);
 
   const login = useCallback((newToken: string, candidateId: string, userData?: LoginUserData) => {
+    authGenerationRef.current += 1;
+    loginGraceUntilRef.current = Date.now() + 8000;
+
     localStorage.setItem('token', newToken);
     localStorage.setItem('candidateId', candidateId);
     sessionStorage.setItem('token', newToken);
@@ -273,11 +321,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(buildPlaceholderUser(candidateId));
     }
     setIsLoading(false);
-    // Defer profile fetch to the next macrotask so navigation from /whatsapp/verify
-    // can settle first (closer to pre–package.json behaviour, fewer 401 races on cold Prisma).
+    // Defer profile fetch so navigation from /whatsapp/verify can settle first,
+    // and so any in-flight refresh against a prior token finishes without racing logout.
     setTimeout(() => {
       void refreshUser();
-    }, 0);
+    }, 50);
     // Count explicit login as a fresh activity session
     if (typeof window !== 'undefined') {
       void import('@/lib/user-activity-tracker').then((m) => {
