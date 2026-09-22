@@ -4,7 +4,18 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import Link from '@tiptap/extension-link';
-import { useState, useEffect } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
+
+export type CVEditorHandle = {
+  /** Live TipTap document HTML (use this on Save — not React state). */
+  getHtml: () => string;
+};
 
 interface CVEditorProps {
   content: string;
@@ -50,9 +61,15 @@ function convertMarkdownToHTML(html: string): string {
   return html;
 }
 
-export default function CVEditor({ content, onUpdate, onImproveText }: CVEditorProps) {
+const CVEditor = forwardRef<CVEditorHandle, CVEditorProps>(function CVEditor(
+  { content, onUpdate, onImproveText },
+  ref,
+) {
   const [selectedText, setSelectedText] = useState('');
   const [isImproving, setIsImproving] = useState(false);
+  /** Last HTML we pushed into TipTap from an external load (not from typing). */
+  const lastExternalContentRef = useRef<string | null>(null);
+  const applyingExternalRef = useRef(false);
 
   const editor = useEditor({
     extensions: [
@@ -71,19 +88,21 @@ export default function CVEditor({ content, onUpdate, onImproveText }: CVEditorP
         },
       }),
     ],
-    content: convertMarkdownToHTML(content),
+    content: convertMarkdownToHTML(content || ''),
     editorProps: {
       attributes: {
         class: 'prose prose-lg max-w-none focus:outline-none min-h-[800px] p-8 text-black',
       },
     },
-    onUpdate: ({ editor }) => {
-      onUpdate(editor.getHTML());
+    onUpdate: ({ editor: ed }) => {
+      // Ignore the update fired by our own setContent from an external load.
+      if (applyingExternalRef.current) return;
+      onUpdate(ed.getHTML());
     },
-    onSelectionUpdate: ({ editor }) => {
-      const { from, to } = editor.state.selection;
+    onSelectionUpdate: ({ editor: ed }) => {
+      const { from, to } = ed.state.selection;
       if (from !== to) {
-        const text = editor.state.doc.textBetween(from, to);
+        const text = ed.state.doc.textBetween(from, to);
         setSelectedText(text);
       } else {
         setSelectedText('');
@@ -91,12 +110,45 @@ export default function CVEditor({ content, onUpdate, onImproveText }: CVEditorP
     },
   });
 
-  // Update editor content when prop changes
+  useImperativeHandle(
+    ref,
+    () => ({
+      getHtml: () => {
+        if (!editor) return content || '';
+        // Flush any pending transaction before reading.
+        try {
+          editor.commands.blur();
+        } catch {
+          /* ignore */
+        }
+        return editor.getHTML();
+      },
+    }),
+    [editor, content],
+  );
+
+  // Apply prop content ONLY for external loads (initial fetch / remount).
+  // Never push stale React state back into TipTap while the user is editing —
+  // that was restoring deleted text after Save.
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      const convertedContent = convertMarkdownToHTML(content);
-      editor.commands.setContent(convertedContent);
+    if (!editor) return;
+    const next = convertMarkdownToHTML(content || '');
+    if (next === lastExternalContentRef.current) return;
+    if (next === editor.getHTML()) {
+      lastExternalContentRef.current = next;
+      return;
     }
+    // While focused, treat prop changes as echo from onUpdate — do not clobber deletes.
+    if (editor.isFocused && lastExternalContentRef.current !== null) {
+      return;
+    }
+
+    applyingExternalRef.current = true;
+    editor.commands.setContent(next, false);
+    lastExternalContentRef.current = next;
+    queueMicrotask(() => {
+      applyingExternalRef.current = false;
+    });
   }, [content, editor]);
 
   const handleImproveText = async () => {
@@ -583,4 +635,6 @@ export default function CVEditor({ content, onUpdate, onImproveText }: CVEditorP
       `}</style>
     </div>
   );
-}
+});
+
+export default CVEditor;

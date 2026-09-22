@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/common/Header';
-import CVEditor from '@/components/cveditor/CVEditor';
+import CVEditor, { type CVEditorHandle } from '@/components/cveditor/CVEditor';
 import { GlobalLoader } from '@/components/auth/GlobalLoader';
 
 import { API_BASE_URL } from '@/lib/api-base';
+import { getAuthHeaders } from '@/lib/auth-storage';
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
@@ -16,6 +17,13 @@ export default function CVEditorPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const editorRef = useRef<CVEditorHandle>(null);
+
+  const readLiveHtml = () => {
+    const live = editorRef.current?.getHtml();
+    if (typeof live === 'string') return live;
+    return resumeHtml;
+  };
 
   // Load resume HTML on mount
   useEffect(() => {
@@ -32,7 +40,7 @@ export default function CVEditorPage() {
         const response = await fetch(`${API_BASE_URL}/cveditor/resume/${candidateId}`, {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
           },
         });
 
@@ -77,7 +85,7 @@ export default function CVEditorPage() {
     setResumeHtml(html);
   };
 
-  // Save resume HTML
+  // Save resume HTML — always read live TipTap HTML so deletions persist.
   const saveResume = async () => {
     const candidateId = sessionStorage.getItem('candidateId');
     if (!candidateId) {
@@ -85,14 +93,17 @@ export default function CVEditorPage() {
       return;
     }
 
+    const htmlToSave = readLiveHtml();
+    setResumeHtml(htmlToSave);
+
     try {
       setIsSaving(true);
       const response = await fetch(`${API_BASE_URL}/cveditor/save`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...getAuthHeaders() },
         body: JSON.stringify({
           candidateId,
-          resume_html: resumeHtml,
+          resume_html: htmlToSave,
         }),
       });
 
@@ -100,6 +111,9 @@ export default function CVEditorPage() {
       
       const result = await response.json();
       if (result.success) {
+        if (result.data?.resume_html) {
+          setResumeHtml(result.data.resume_html);
+        }
         alert('CV saved successfully!');
       }
     } catch (error) {
@@ -118,14 +132,17 @@ export default function CVEditorPage() {
       return;
     }
 
+    const htmlToExport = readLiveHtml();
+    setResumeHtml(htmlToExport);
+
     try {
       setIsExporting(true);
       const response = await fetch(`${API_BASE_URL}/cveditor/export`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...getAuthHeaders() },
         body: JSON.stringify({
           candidateId,
-          resume_html: resumeHtml,
+          resume_html: htmlToExport,
         }),
       });
 
@@ -172,7 +189,7 @@ export default function CVEditorPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/cveditor/ai-improve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...getAuthHeaders() },
         body: JSON.stringify({ text }),
       });
 
@@ -227,6 +244,7 @@ export default function CVEditorPage() {
         {/* TipTap Editor */}
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <CVEditor
+            ref={editorRef}
             content={resumeHtml}
             onUpdate={handleEditorUpdate}
             onImproveText={improveTextWithAI}
