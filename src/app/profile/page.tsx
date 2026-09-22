@@ -154,6 +154,7 @@ import {
 import { dispatchTokenEarn, formatEarnLabel } from '@/lib/token-earn-events';
 import {
   getAuthHeaders,
+  getAuthHeadersForFormData,
   getStoredCandidateId,
   getStoredToken,
   persistAuthSession,
@@ -772,9 +773,7 @@ export default function ProfilePage() {
     if (candidateId) {
       fetch(`${API_BASE_URL}/cv-analysis/${candidateId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
       })
         .then(async (response) => {
           if (response.ok) return response.json();
@@ -782,17 +781,13 @@ export default function ProfilePage() {
           if (response.status === 404) {
             await fetch(`${API_BASE_URL}/cv-analysis/analyze`, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: getAuthHeaders(),
               body: JSON.stringify({ candidateId }),
             });
 
             const retry = await fetch(`${API_BASE_URL}/cv-analysis/${candidateId}`, {
               method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: getAuthHeaders(),
             });
             if (retry.ok) return retry.json();
           }
@@ -1981,9 +1976,7 @@ export default function ProfilePage() {
                                   try {
                                     const response = await fetch(`${API_BASE_URL}/profile/work-experience/${entry.id}`, {
                                       method: 'DELETE',
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                      },
+                                      headers: getAuthHeaders(),
                                     });
 
                                     if (!response.ok) {
@@ -2092,7 +2085,7 @@ export default function ProfilePage() {
                                     `${API_BASE_URL}/profile/internship/${candidateId}${entryIdParam}`,
                                     {
                                       method: 'DELETE',
-                                      headers: { 'Content-Type': 'application/json' },
+                                      headers: getAuthHeaders(),
                                     },
                                   );
                                   if (!response.ok) {
@@ -2205,7 +2198,7 @@ export default function ProfilePage() {
                                     `${API_BASE_URL}/profile/gap-explanation/${candidateId}${entryIdParam}`,
                                     {
                                       method: 'DELETE',
-                                      headers: { 'Content-Type': 'application/json' },
+                                      headers: getAuthHeaders(),
                                     },
                                   );
                                   if (!response.ok) {
@@ -2315,7 +2308,7 @@ export default function ProfilePage() {
                                   try {
                                     const response = await fetch(`${API_BASE_URL}/profile/education/${entry.id}`, {
                                       method: 'DELETE',
-                                      headers: { 'Content-Type': 'application/json' },
+                                      headers: getAuthHeaders(),
                                     });
                                     if (!response.ok) {
                                       const errorData = await response.json().catch(() => ({}));
@@ -2426,7 +2419,7 @@ export default function ProfilePage() {
                                     `${API_BASE_URL}/profile/academic-achievement/${candidateId}${entryIdParam}`,
                                     {
                                       method: 'DELETE',
-                                      headers: { 'Content-Type': 'application/json' },
+                                      headers: getAuthHeaders(),
                                     },
                                   );
                                   if (!response.ok)
@@ -2539,7 +2532,7 @@ export default function ProfilePage() {
                                     `${API_BASE_URL}/profile/competitive-exam/${candidateId}${query}`,
                                     {
                                       method: 'DELETE',
-                                      headers: { 'Content-Type': 'application/json' },
+                                      headers: getAuthHeaders(),
                                     },
                                   );
                                   if (!response.ok) throw new Error('Failed to delete competitive exam');
@@ -2626,7 +2619,7 @@ export default function ProfilePage() {
                             try {
                               const response = await fetch(
                                 `${API_BASE_URL}/profile/skills/${candidateId}`,
-                                { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
+                                { method: 'DELETE', headers: getAuthHeaders() },
                               );
                               if (!response.ok) throw new Error(tPage('skills.deleteFailed'));
                               // Optimistically clear from UI immediately
@@ -2728,7 +2721,7 @@ export default function ProfilePage() {
                             try {
                               const response = await fetch(
                                 `${API_BASE_URL}/profile/languages/${candidateId}`,
-                                { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
+                                { method: 'DELETE', headers: getAuthHeaders() },
                               );
                               if (!response.ok) throw new Error('Failed to delete languages');
                               // Optimistically clear from UI immediately
@@ -2834,7 +2827,7 @@ export default function ProfilePage() {
                                     `${API_BASE_URL}/profile/project/${candidateId}${query}`,
                                     {
                                       method: 'DELETE',
-                                      headers: { 'Content-Type': 'application/json' },
+                                      headers: getAuthHeaders(),
                                     },
                                   );
                                   if (!response.ok) throw new Error('Failed to delete project');
@@ -2931,7 +2924,7 @@ export default function ProfilePage() {
                                 `${API_BASE_URL}/profile/portfolio-links/${candidateId}?entryId=${link.id}`,
                                 {
                                   method: 'DELETE',
-                                  headers: { 'Content-Type': 'application/json' },
+                                  headers: getAuthHeaders(),
                                 },
                               );
                               if (!response.ok) throw new Error('Failed to delete portfolio link');
@@ -3040,7 +3033,7 @@ export default function ProfilePage() {
                                       `${API_BASE_URL}/profile/certifications/${cert.id}`,
                                       {
                                         method: 'DELETE',
-                                        headers: { 'Content-Type': 'application/json' },
+                                        headers: getAuthHeaders(),
                                       },
                                     );
                                     if (!response.ok) throw new Error('Failed to delete certification');
@@ -3147,7 +3140,7 @@ export default function ProfilePage() {
                                       `${API_BASE_URL}/profile/accomplishments/${acc.id}`,
                                       {
                                         method: 'DELETE',
-                                        headers: { 'Content-Type': 'application/json' },
+                                        headers: getAuthHeaders(),
                                       },
                                     );
                                     if (!response.ok) throw new Error('Failed to delete accomplishment');
@@ -3243,7 +3236,7 @@ export default function ProfilePage() {
                             try {
                               const response = await fetch(`${API_BASE_URL}/profile/career-preferences/${candidateId}`, {
                                 method: 'DELETE',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: getAuthHeaders(),
                               });
                               if (!response.ok) throw new Error('Failed to delete career preferences');
                               // Optimistically clear from UI immediately
@@ -3345,7 +3338,7 @@ export default function ProfilePage() {
                                   try {
                                     const response = await fetch(
                                       `${API_BASE_URL}/profile/visa-work-authorization/${candidateId}?entryId=top-level`,
-                                      { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
+                                      { method: 'DELETE', headers: getAuthHeaders() },
                                     );
                                     if (!response.ok) throw new Error('Failed to delete visa work authorization');
                                     void syncProfileEarnRewardsRef.current(candidateId);
@@ -3412,7 +3405,7 @@ export default function ProfilePage() {
                                   try {
                                     const response = await fetch(
                                       `${API_BASE_URL}/profile/visa-work-authorization/${candidateId}?entryId=${entry.id}`,
-                                      { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
+                                      { method: 'DELETE', headers: getAuthHeaders() },
                                     );
                                     if (!response.ok) throw new Error('Failed to delete visa work authorization entry');
                                     void syncProfileEarnRewardsRef.current(candidateId);
@@ -3494,7 +3487,7 @@ export default function ProfilePage() {
                                 `${API_BASE_URL}/profile/vaccination/${candidateId}`,
                                 {
                                   method: 'DELETE',
-                                  headers: { 'Content-Type': 'application/json' },
+                                  headers: getAuthHeaders(),
                                 },
                               );
                               if (!response.ok) throw new Error('Failed to delete vaccination');
@@ -3645,9 +3638,7 @@ export default function ProfilePage() {
           try {
             const response = await fetch(`${API_BASE_URL}/profile/summary/${candidateId}`, {
               method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: getAuthHeaders(),
               body: JSON.stringify({ summaryText }),
             });
 
@@ -3690,9 +3681,7 @@ export default function ProfilePage() {
                 : data;
             const response = await fetch(`${API_BASE_URL}/profile/gap-explanation/${candidateId}`, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: getAuthHeaders(),
               body: JSON.stringify(payload),
             });
 
@@ -3854,6 +3843,7 @@ export default function ProfilePage() {
 
                   const uploadResponse = await fetch(`${API_BASE_URL}/profile/education/documents/${candidateId}`, {
                     method: 'POST',
+                    headers: getAuthHeadersForFormData(),
                     body: formData,
                   });
 
@@ -3886,9 +3876,7 @@ export default function ProfilePage() {
 
               const response = await fetch(url, {
                 method,
-                headers: {
-                  'Content-Type': 'application/json',
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(educationData),
               });
 
@@ -4038,9 +4026,7 @@ export default function ProfilePage() {
             try {
               const response = await fetch(`${API_BASE_URL}/profile/skills/${candidateId}`, {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(data),
               });
 
@@ -4095,6 +4081,7 @@ export default function ProfilePage() {
 
                       const uploadResponse = await postWithProxyFallback(`${API_BASE_URL}/profile/languages/documents/${candidateId}`, {
                         method: 'POST',
+                        headers: getAuthHeadersForFormData(),
                         body: formData,
                       });
 
@@ -4117,9 +4104,7 @@ export default function ProfilePage() {
 
               const response = await postWithProxyFallback(`${API_BASE_URL}/profile/languages/${candidateId}`, {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify({ languages: languagesWithUploadedDocs }),
               });
 
@@ -4221,9 +4206,7 @@ export default function ProfilePage() {
 
             const response = await fetch(`${API_BASE_URL}/profile/portfolio-links/${candidateId}`, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: getAuthHeaders(),
               body: JSON.stringify({ links: dedupedLinks }),
             });
 
@@ -4277,9 +4260,7 @@ export default function ProfilePage() {
 
             const response = await fetch(`${API_BASE_URL}/profile/portfolio-links/${candidateId}`, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: getAuthHeaders(),
               body: JSON.stringify({ links: updatedLinks }),
             });
 
@@ -4400,6 +4381,7 @@ export default function ProfilePage() {
 
                     const uploadResponse = await fetch(`${API_BASE_URL}/profile/accomplishment/documents/${candidateId}`, {
                       method: 'POST',
+                      headers: getAuthHeadersForFormData(),
                       body: formData,
                     });
 
@@ -4432,9 +4414,7 @@ export default function ProfilePage() {
 
             const response = await fetch(`${API_BASE_URL}/profile/accomplishments/${candidateId}`, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: getAuthHeaders(),
               body: JSON.stringify(payload),
             });
 
@@ -4476,36 +4456,45 @@ export default function ProfilePage() {
           || ''
         }
         onSave={async (data) => {
-          const candidateId = getStoredCandidateId();
-          if (candidateId) {
-            try {
-              const response = await fetch(`${API_BASE_URL}/profile/career-preferences/${candidateId}`, {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-              });
+          const candidateId = resolveCandidateIdForApi(user?.id);
+          if (!candidateId) {
+            showAlert('Session expired. Please log in again.');
+            return;
+          }
+          try {
+            const response = await fetch(`${API_BASE_URL}/profile/career-preferences/${candidateId}`, {
+              method: 'PUT',
+              headers: getAuthHeaders(),
+              body: JSON.stringify(data),
+            });
 
-              if (response.ok) {
-                const result = await response.json().catch(() => ({}));
-                const saved =
-                  result?.data && typeof result.data === 'object'
-                    ? normalizeCareerPreferencesFromApi(result.data) || data
-                    : data;
-                setCareerPreferencesData(saved);
-                applySectionPatch(candidateId, { careerPreferences: saved });
-                void syncProfileEarnRewardsRef.current(candidateId);
-                setCareerPreferencesSuccessMessage('');
-                setIsCareerPreferencesModalOpen(false);
-                showAlert(t("profile.careerPreferencesUpdated"));
-              } else {
-                showAlert(t("profile.failedToSaveCareerPreferences"));
-              }
-            } catch (error) {
-              console.error('Error saving career preferences:', error);
-              showAlert(t("profile.errorSavingCareerPreferences"));
+            const result = await response.json().catch(() => ({}));
+            if (response.ok && result?.success !== false) {
+              const saved =
+                result?.data && typeof result.data === 'object'
+                  ? normalizeCareerPreferencesFromApi(result.data) || data
+                  : data;
+              setCareerPreferencesData(saved);
+              applySectionPatch(candidateId, { careerPreferences: saved });
+              void syncProfileEarnRewardsRef.current(candidateId);
+              // Keep Phase 2 common pool in sync with Phase 1 profile edits.
+              void fetch(`${API_BASE_URL}/profile/sync-common-dashboard/${candidateId}`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+              }).catch(() => null);
+              setCareerPreferencesSuccessMessage('');
+              setIsCareerPreferencesModalOpen(false);
+              showAlert(t("profile.careerPreferencesUpdated"));
+            } else {
+              const detail =
+                typeof result?.message === 'string' && result.message.trim()
+                  ? result.message
+                  : t("profile.failedToSaveCareerPreferences");
+              showAlert(detail);
             }
+          } catch (error) {
+            console.error('Error saving career preferences:', error);
+            showAlert(t("profile.errorSavingCareerPreferences"));
           }
         }}
         initialData={careerPreferencesData}
@@ -4530,7 +4519,7 @@ export default function ProfilePage() {
               files.forEach((file) => formData.append('documents', file));
               const uploadResponse = await fetch(
                 `${API_BASE_URL}/profile/visa-work-authorization/documents/${candidateId}`,
-                { method: 'POST', body: formData },
+                { method: 'POST', headers: getAuthHeadersForFormData(), body: formData },
               );
               if (!uploadResponse.ok) {
                 throw new Error('Failed to upload documents');
@@ -4582,9 +4571,7 @@ export default function ProfilePage() {
 
             const response = await fetch(`${API_BASE_URL}/profile/visa-work-authorization/${candidateId}`, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: getAuthHeaders(),
               body: JSON.stringify(serializeVisaData(processedData)),
             });
 
@@ -4621,7 +4608,7 @@ export default function ProfilePage() {
                 });
                 const uploadResponse = await fetch(
                   `${API_BASE_URL}/profile/vaccination/documents/${candidateId}`,
-                  { method: 'POST', body: formData },
+                  { method: 'POST', headers: getAuthHeadersForFormData(), body: formData },
                 );
                 if (!uploadResponse.ok) throw new Error('Failed to upload vaccination documents');
                 const uploadResult = await uploadResponse.json();
@@ -4646,9 +4633,7 @@ export default function ProfilePage() {
 
             const response = await fetch(`${API_BASE_URL}/profile/vaccination/${candidateId}`, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+              headers: getAuthHeaders(),
               body: JSON.stringify(payload),
             });
 
@@ -4749,6 +4734,7 @@ export default function ProfilePage() {
 
               const uploadResponse = await fetch(`${API_BASE_URL}/profile/resume/upload/${candidateId}`, {
                 method: 'POST',
+                headers: getAuthHeadersForFormData(),
                 body: formData,
               });
 
@@ -4782,9 +4768,7 @@ export default function ProfilePage() {
 
               const response = await fetch(`${API_BASE_URL}/profile/resume/${candidateId}`, {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(payload),
               });
 

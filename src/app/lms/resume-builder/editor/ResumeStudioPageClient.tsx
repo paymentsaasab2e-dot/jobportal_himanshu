@@ -14,7 +14,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LMS_CARD_CLASS } from '../../constants';
 import { useLmsToast } from '../../components/ux/LmsToastProvider';
-import CVEditor from '@/components/cveditor/CVEditor';
+import CVEditor, { type CVEditorHandle } from '@/components/cveditor/CVEditor';
 import { 
   fetchResumeHtml, 
   saveResumeHtml, 
@@ -131,9 +131,16 @@ export function ResumeStudioPageClient() {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const editorScrollRef = useRef<HTMLElement | null>(null);
   const previewShellRef = useRef<HTMLElement | null>(null);
+  const cvEditorRef = useRef<CVEditorHandle>(null);
   const [editorPanelHeight, setEditorPanelHeight] = useState<number | undefined>(undefined);
   const [jobTailor, setJobTailor] = useState<JobCvTailorContext | null>(null);
   const pendingApplyHandledRef = useRef(false);
+
+  const readLiveResumeHtml = useCallback(() => {
+    const live = cvEditorRef.current?.getHtml();
+    if (typeof live === 'string' && live.length > 0) return live;
+    return resumeHtml;
+  }, [resumeHtml]);
 
   const captureStudioPreviewHtml = useCallback((): string | undefined => {
     if (typeof document === 'undefined') return undefined;
@@ -164,7 +171,10 @@ export function ResumeStudioPageClient() {
   const buildTailorSyncOptions = useCallback(() => {
     if (!jobTailor) return undefined;
     const studioHtml = editorMode === 'studio' ? captureStudioPreviewHtml() : undefined;
-    const aiHtml = editorMode === 'ai' && resumeHtml.trim() ? resumeHtml : undefined;
+    const aiHtml =
+      editorMode === 'ai'
+        ? (cvEditorRef.current?.getHtml() || resumeHtml).trim() || undefined
+        : undefined;
     return {
       jobTailorJobId: jobTailor.jobId,
       jobTitle: jobTailor.title,
@@ -750,8 +760,12 @@ export function ResumeStudioPageClient() {
 
   const persistCvBeforeApply = async () => {
     await syncResumeDraftToBackend(undefined, buildTailorSyncOptions());
-    if (editorMode === 'ai' && resumeHtml.trim()) {
-      await saveResumeHtml(resumeHtml);
+    if (editorMode === 'ai') {
+      const liveHtml = readLiveResumeHtml();
+      if (liveHtml.trim()) {
+        setResumeHtml(liveHtml);
+        await saveResumeHtml(liveHtml);
+      }
     }
     markResumeSaved();
   };
@@ -1170,7 +1184,9 @@ export function ResumeStudioPageClient() {
   const handleSaveHtml = async () => {
     setIsHtmlSaving(true);
     try {
-      await saveResumeHtml(resumeHtml);
+      const liveHtml = readLiveResumeHtml();
+      setResumeHtml(liveHtml);
+      await saveResumeHtml(liveHtml);
       toast.push({ title: 'Resume saved', message: 'Your rich-text changes were preserved.', tone: 'success' });
     } catch (err) {
       toast.push({ title: 'Save failed', message: 'Could not reach backend to save your content.', tone: 'warning' });
@@ -1208,7 +1224,7 @@ export function ResumeStudioPageClient() {
 
       // Fallback to the rich-text state if studio capture failed or if in AI mode
       if (!finalHtml || finalHtml.includes('Start editing your resume...')) {
-        finalHtml = resumeHtml;
+        finalHtml = readLiveResumeHtml();
       }
 
       if (!finalHtml || finalHtml.trim().length < 50 || finalHtml.includes('Start editing your resume...')) {
@@ -1264,7 +1280,16 @@ export function ResumeStudioPageClient() {
     const minDelay = new Promise(resolve => setTimeout(resolve, 1000));
     try {
       toast.push({ id: toastId, title: 'Saving draft...', message: 'Syncing with secure cloud storage.', tone: 'info' });
-      await Promise.all([syncResumeDraftToBackend(), minDelay]);
+      const liveHtml = editorMode === 'ai' ? readLiveResumeHtml() : '';
+      if (liveHtml.trim()) setResumeHtml(liveHtml);
+      await Promise.all([
+        syncResumeDraftToBackend(
+          undefined,
+          liveHtml.trim() ? { ...buildTailorSyncOptions(), resumeHtml: liveHtml } : buildTailorSyncOptions(),
+        ),
+        liveHtml.trim() ? saveResumeHtml(liveHtml) : Promise.resolve(null),
+        minDelay,
+      ]);
       toast.dismiss(toastId);
       toast.push({
         title: 'Draft saved',
@@ -1477,6 +1502,7 @@ export function ResumeStudioPageClient() {
                      </div>
                    </div>
                    <CVEditor
+                     ref={cvEditorRef}
                      content={resumeHtml}
                      onUpdate={setResumeHtml}
                      onImproveText={improveResumeText}

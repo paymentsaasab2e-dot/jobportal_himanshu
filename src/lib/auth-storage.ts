@@ -44,6 +44,12 @@ export function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
+/** Multipart uploads — do not set Content-Type (browser sets boundary). */
+export function getAuthHeadersForFormData(): Record<string, string> {
+  const token = getStoredToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 /** Prefer AuthContext user id so profile APIs match the JWT (avoids stale localStorage candidateId). */
 export function resolveCandidateIdForApi(authUserId?: string | null): string | null {
   const fromAuth = String(authUserId || '').trim();
