@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -12,7 +12,7 @@ import { useAuth } from "@/components/auth/AuthContext";
 import { AppLocale, localizePath } from "@/lib/i18n";
 
 export default function SetPasswordPage() {
-  const { token } = useAuth();
+  const { token, refreshUser } = useAuth();
   const router = useRouter();
   const locale = useLocale() as AppLocale;
   const t = useTranslations("whatsapp.setPassword");
@@ -22,6 +22,14 @@ export default function SetPasswordPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem("saasa:defer-dashboard-redirect");
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,34 +69,28 @@ export default function SetPasswordPage() {
       }
 
       showSuccessToast(t("successTitle"), t("successDescription"));
+      await refreshUser();
 
       const signupOnboarding = sessionStorage.getItem("signupOnboarding") === "true";
-      const pendingSetPassword = sessionStorage.getItem("pendingSetPassword") === "true";
+      sessionStorage.removeItem("pendingSetPassword");
       sessionStorage.removeItem("skipCvUpload");
 
       const postLoginRedirect = sessionStorage.getItem("postLoginRedirect");
 
-      if (signupOnboarding) {
-        router.push(localizePath("/uploadcv", locale));
-        return;
-      }
-
-      if (pendingSetPassword) {
-        sessionStorage.removeItem("pendingSetPassword");
-        router.push(localizePath("/candidate-dashboard", locale));
-        return;
-      }
-
       const skipCv = data.data?.skipCvUpload === true;
 
-      if (!skipCv) {
+      if (signupOnboarding || !skipCv) {
         router.push(localizePath("/uploadcv", locale));
-      } else if (postLoginRedirect) {
+        return;
+      }
+
+      if (postLoginRedirect) {
         sessionStorage.removeItem("postLoginRedirect");
         router.push(postLoginRedirect);
-      } else {
-        router.push(localizePath("/candidate-dashboard", locale));
+        return;
       }
+
+      router.push(localizePath("/candidate-dashboard", locale));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("failed"));
     } finally {

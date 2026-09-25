@@ -18,6 +18,7 @@ import {
 } from '@/lib/profile-section-open';
 
 import { ProfilePageShell } from '@/components/profile/layout';
+import { ResumeRequiredNotice } from '@/components/profile/ResumeRequiredNotice';
 import {
   WorkspaceSectionCard,
   ProfileWorkspaceTabs,
@@ -1669,6 +1670,22 @@ export default function ProfilePage() {
       <>
 
       <main className="profile-page-typography candidate-dashboard-page mx-auto max-w-[1180px] px-4 py-3 sm:px-5 lg:px-6 lg:py-5">
+        <div className="mb-3">
+          <ResumeRequiredNotice
+            visible={
+              !isLoadingProfile &&
+              !resumeData?.fileName &&
+              !resumeData?.fileUrl &&
+              !(resumeVersionsData?.versions?.length ?? 0)
+            }
+            onUpload={() => router.push(localizePath('/uploadcv', locale))}
+            title={t('candidateDashboard.resumeRequiredTitle')}
+            body={t('candidateDashboard.resumeRequiredBody')}
+            hint={t('candidateDashboard.resumeRequiredHint')}
+            actionLabel={t('candidateDashboard.resumeRequiredAction')}
+            laterLabel={t('candidateDashboard.resumeRequiredLater')}
+          />
+        </div>
         {careerPreferencesSuccessMessage && (
           <div className="mb-6">
             <div className="flex items-start justify-between gap-4 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-slate-900 shadow-sm">

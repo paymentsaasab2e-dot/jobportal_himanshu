@@ -162,21 +162,21 @@ export default function VerifyOTP() {
       sessionStorage.removeItem("otpPreview");
       sessionStorage.removeItem("authFlow");
 
-      if (isSignupFlow) {
-        sessionStorage.setItem("signupOnboarding", "true");
-        sessionStorage.setItem("pendingSetPassword", needsPassword ? "true" : "false");
-        sessionStorage.removeItem("skipCvUpload");
-        showSuccessToast(t("loginSuccessfulTitle"), t("loginSuccessfulDescription"));
-        router.push(localizePath("/uploadcv", locale));
-        return;
-      }
-
       const skipCv = data.data.skipCvUpload === true;
 
       if (needsPassword) {
+        if (isSignupFlow) sessionStorage.setItem("signupOnboarding", "true");
         sessionStorage.setItem("skipCvUpload", skipCv ? "true" : "false");
         showSuccessToast(t("setPasswordNextTitle"), t("setPasswordNextDescription"));
         router.push(localizePath("/whatsapp/set-password", locale));
+        return;
+      }
+
+      if (isSignupFlow) {
+        sessionStorage.setItem("signupOnboarding", "true");
+        sessionStorage.removeItem("skipCvUpload");
+        showSuccessToast(t("loginSuccessfulTitle"), t("loginSuccessfulDescription"));
+        router.push(localizePath("/uploadcv", locale));
         return;
       }
 
