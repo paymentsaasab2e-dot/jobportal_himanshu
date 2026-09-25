@@ -7,6 +7,7 @@ import SettingsCard from '@/components/settings/SettingsCard';
 import { User, Bell, Shield, SlidersHorizontal, Briefcase, AlertTriangle, MessagesSquare } from 'lucide-react';
 import { showSuccessToast, showErrorToast } from '@/components/common/toast/toast';
 import { API_BASE_URL } from '@/lib/api-base';
+import { getStoredToken } from '@/lib/auth-storage';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
 import { WritingAssistField } from '@/components/common/WritingSuggestions';
@@ -477,34 +478,39 @@ export default function SettingsPage() {
     }
   };
 
-  // Delete account
+  // Delete account, then leave for the homepage the same way logout does.
   const handleDeleteAccount = async () => {
     const candidateId = getCandidateId();
-    if (!candidateId) return;
+    const token = getStoredToken();
+    if (!candidateId || !token) {
+      logout({ skipServer: true, silent: true });
+      return;
+    }
 
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/settings/account/${candidateId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-      const result = await response.json();
+      const result = await response.json().catch(() => ({}));
+      const sessionDead =
+        response.status === 401 ||
+        result?.code === 'TOKEN_INVALID' ||
+        result?.code === 'SESSION_INVALID' ||
+        result?.code === 'SESSION_EXPIRED';
 
-      if (result.success) {
-        showSuccessToast('Account deleted successfully');
-        
-        // Thorough cleanup
-        localStorage.clear();
-        sessionStorage.clear();
-        
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1500);
-      } else {
-        showErrorToast(result.message || 'Failed to delete account');
+      if (result.success || sessionDead) {
+        if (result.success) {
+          showSuccessToast('Account deleted successfully');
+        }
+        logout({ skipServer: true, silent: true });
+        return;
       }
+
+      showErrorToast(result.message || 'Failed to delete account');
     } catch (error) {
       console.error('Error deleting account:', error);
       showErrorToast('Failed to delete account');

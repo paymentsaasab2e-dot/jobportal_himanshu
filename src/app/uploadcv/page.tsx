@@ -22,6 +22,14 @@ export default function UploadCV() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    try {
+      sessionStorage.removeItem("saasa:defer-dashboard-redirect");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
     if (!authLoading) {
       if (!isAuthenticated) {
         router.push(localizePath("/whatsapp", getLocaleFromPathname(window.location.pathname)));
@@ -58,6 +66,53 @@ export default function UploadCV() {
     }
   };
 
+  const uploadOnce = (file: File, id: string) =>
+    new Promise<{ ok: true; payload: any } | { ok: false; message: string }>((resolve) => {
+      const formData = new FormData();
+      formData.append("cv", file);
+      formData.append("candidateId", id);
+
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable) {
+          setUploadProgress((e.loaded / e.total) * 100);
+        }
+      });
+      xhr.addEventListener("load", () => {
+        let payload: any = null;
+        try {
+          payload = JSON.parse(xhr.responseText);
+        } catch {
+          payload = null;
+        }
+        if (xhr.status >= 200 && xhr.status < 300 && payload?.success !== false) {
+          resolve({ ok: true, payload });
+          return;
+        }
+        resolve({
+          ok: false,
+          message:
+            payload?.message ||
+            `Upload failed (HTTP ${xhr.status}). Please try again.`,
+        });
+      });
+      xhr.addEventListener("error", () => {
+        resolve({
+          ok: false,
+          message: "Network error. Please check your connection and try again.",
+        });
+      });
+      xhr.addEventListener("abort", () => {
+        resolve({ ok: false, message: "Upload was cancelled. Please try again." });
+      });
+      xhr.open("POST", `${API_BASE_URL}/cv/upload`);
+      const token = getStoredToken();
+      if (token) {
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      }
+      xhr.send(formData);
+    });
+
   const handleUpload = async () => {
     if (!selectedFile || !candidateId) {
       setError("Please select a file to upload.");
@@ -68,80 +123,59 @@ export default function UploadCV() {
     setError("");
     setSuccess("");
     setUploadProgress(0);
-
-    // Store candidateId in sessionStorage for extract page
     sessionStorage.setItem("candidateId", candidateId);
-    sessionStorage.setItem("uploadStatus", "processing");
+    sessionStorage.removeItem("uploadError");
+
+    const maxAttempts = 3;
+    let lastError = "Upload failed. Please try again.";
 
     try {
-      const formData = new FormData();
-      formData.append("cv", selectedFile);
-      formData.append("candidateId", candidateId);
-
-      // Start the upload and redirect to extract page
-      const xhr = new XMLHttpRequest();
-
-      // Track upload progress (for reference)
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = (e.loaded / e.total) * 100;
-          setUploadProgress(percentComplete);
-        }
-      });
-
-      // Handle upload completion/errors
-      xhr.addEventListener("load", () => {
-        if (xhr.status !== 200) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            sessionStorage.setItem("uploadError", response.message || "Upload failed");
-          } catch (e) {
-            sessionStorage.setItem("uploadError", "Upload failed. Please try again.");
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        setSuccess(
+          attempt === 1
+            ? "Uploading your CV securely…"
+            : `Connection issue — retrying upload (${attempt}/${maxAttempts})…`,
+        );
+        const result = await uploadOnce(selectedFile, candidateId);
+        if (result.ok) {
+          sessionStorage.setItem("uploadStatus", "processing");
+          const earn = result.payload?.data?.tokenEarn;
+          if (earn?.amount) {
+            sessionStorage.setItem(
+              "tokenEarnToast",
+              JSON.stringify({ amount: earn.amount, reason: "CV upload" }),
+            );
           }
-        } else {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            const earn = response?.data?.tokenEarn;
-            if (earn?.amount) {
-              sessionStorage.setItem(
-                "tokenEarnToast",
-                JSON.stringify({ amount: earn.amount, reason: "CV upload" }),
-              );
-            }
-            if (typeof response?.data?.tokenBalance === "number") {
-              window.dispatchEvent(
-                new CustomEvent("saasa:token-balance", {
-                  detail: { tokenBalance: response.data.tokenBalance },
-                }),
-              );
-            }
-          } catch {
-            // ignore parse errors
+          if (typeof result.payload?.data?.tokenBalance === "number") {
+            window.dispatchEvent(
+              new CustomEvent("saasa:token-balance", {
+                detail: { tokenBalance: result.payload.data.tokenBalance },
+              }),
+            );
           }
+          setSuccess("CV uploaded. Analyzing your profile…");
+          const locale = getLocaleFromPathname(window.location.pathname);
+          router.push(localizePath("/extract", locale));
+          return;
         }
-      });
-
-      xhr.addEventListener("error", () => {
-        sessionStorage.setItem("uploadError", "Network error. Please check your connection and try again.");
-      });
-
-      // Open and send the request
-      xhr.open("POST", `${API_BASE_URL}/cv/upload`);
-      const token = getStoredToken();
-      if (token) {
-        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        lastError = result.message;
+        // Retry only transient/network-style failures; stop on validation errors.
+        const retryable = /network|timeout|failed \(HTTP 5|connection/i.test(result.message);
+        if (!retryable || attempt === maxAttempts) break;
+        await new Promise((r) => setTimeout(r, 800 * attempt));
+        setUploadProgress(0);
       }
-      xhr.send(formData);
 
-      // Redirect to extract page immediately after starting upload
-      // The extract page will poll for completion status
-      setTimeout(() => {
-        const locale = getLocaleFromPathname(window.location.pathname);
-        router.push(localizePath("/extract", locale));
-      }, 100);
+      sessionStorage.setItem("uploadError", lastError);
+      setError(lastError);
+      setSuccess("");
     } catch (err: any) {
-      sessionStorage.setItem("uploadError", err.message || "Upload failed. Please try again.");
-      router.push("/extract");
+      const message = err?.message || "Upload failed. Please try again.";
+      sessionStorage.setItem("uploadError", message);
+      setError(message);
+      setSuccess("");
+    } finally {
+      setIsUploading(false);
     }
   };
 
