@@ -65,6 +65,7 @@ import {
   localizeSkillName,
 } from "@/lib/displayContentLocale";
 import { ProfilePageShell } from "@/components/profile/layout";
+import { ResumeRequiredNotice } from "@/components/profile/ResumeRequiredNotice";
 import { getMissingProfileSections } from "@/lib/profile-section-routes";
 import { useTokensOptional } from "@/components/tokens/TokensContext";
 import { useQueryClient } from "@tanstack/react-query";
@@ -1209,6 +1210,20 @@ export default function CandidateDashboardPage() {
             onRequestInterview={() =>
               router.push(localizePath('/lms/interview-prep?requestInterview=1', locale))
             }
+          />
+
+          <ResumeRequiredNotice
+            visible={Boolean(
+              profileCompletionDetails &&
+                profileSnapshot &&
+                missingProfileSections.some((section) => section.slug === "resume"),
+            )}
+            onUpload={() => router.push(localizePath("/uploadcv", locale))}
+            title={t("candidateDashboard.resumeRequiredTitle")}
+            body={t("candidateDashboard.resumeRequiredBody")}
+            hint={t("candidateDashboard.resumeRequiredHint")}
+            actionLabel={t("candidateDashboard.resumeRequiredAction")}
+            laterLabel={t("candidateDashboard.resumeRequiredLater")}
           />
 
           {pendingApplyBanner ? (

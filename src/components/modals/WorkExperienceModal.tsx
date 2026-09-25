@@ -58,6 +58,7 @@ export interface WorkExperienceEntry {
   workLocation: string;
   workMode: string;
   companyProfile: string;
+  companyWebsite?: string;
   companyTurnover: string;
   keyResponsibilities: string;
   achievements: string;
@@ -213,6 +214,7 @@ export default function WorkExperienceModal({
   const [workLocation, setWorkLocation] = useState('');
   const [workMode, setWorkMode] = useState('');
   const [companyProfile, setCompanyProfile] = useState('');
+  const [companyWebsite, setCompanyWebsite] = useState('');
   const [isGeneratingWorkExpAi, setIsGeneratingWorkExpAi] = useState(false);
   const [workExpAiError, setWorkExpAiError] = useState<string | null>(null);
   const lastAutofilledKeyRef = useRef('');
@@ -284,6 +286,7 @@ export default function WorkExperienceModal({
     workLocationSuggestUserInitiatedRef.current = false;
     setWorkMode(normalizeWorkModeFromApi(entry.workMode));
     setCompanyProfile(entry.companyProfile || '');
+    setCompanyWebsite(entry.companyWebsite || '');
     const parsed = parseStoredTurnover(entry.companyTurnover || '');
     setCompanyTurnoverCurrency(parsed.currency);
     setCompanyTurnoverAmount(parsed.amount);
@@ -454,6 +457,7 @@ export default function WorkExperienceModal({
     workLocationSuggestUserInitiatedRef.current = false;
     setWorkMode('');
     setCompanyProfile('');
+    setCompanyWebsite('');
     setWorkExpAiError(null);
     lastAutofilledKeyRef.current = '';
     setCompanyTurnoverCurrency('INR');
@@ -697,6 +701,7 @@ export default function WorkExperienceModal({
       workLocation,
       workMode,
       companyProfile,
+      companyWebsite: companyWebsite.trim(),
       companyTurnover: formatStoredTurnover(companyTurnoverCurrency, companyTurnoverAmount),
       keyResponsibilities,
       achievements,
@@ -1018,6 +1023,7 @@ export default function WorkExperienceModal({
       workLocation.trim() ||
       workMode ||
       companyProfile.trim() ||
+      companyWebsite.trim() ||
       formatStoredTurnover(companyTurnoverCurrency, companyTurnoverAmount).trim() ||
       keyResponsibilities.trim() ||
       achievements.trim() ||
@@ -1047,6 +1053,7 @@ export default function WorkExperienceModal({
         workLocation,
         workMode,
         companyProfile,
+        companyWebsite: companyWebsite.trim(),
         companyTurnover: formatStoredTurnover(companyTurnoverCurrency, companyTurnoverAmount),
         keyResponsibilities,
         achievements,
@@ -1269,6 +1276,7 @@ export default function WorkExperienceModal({
                     <option value="contract">Contract</option>
                     <option value="internship">Internship</option>
                     <option value="freelance">Freelance</option>
+                    <option value="volunteer">Volunteer</option>
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -1574,6 +1582,16 @@ export default function WorkExperienceModal({
                     placeholder="Brief description of the company (auto-filled from your CV and company name)..."
                     className={textareaClassName}
                     rows={4}
+                  />
+                </div>
+                <div className="col-span-2 space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Company website</label>
+                  <input
+                    type="url"
+                    value={companyWebsite}
+                    onChange={(e) => setCompanyWebsite(e.target.value)}
+                    placeholder="https://company.com"
+                    className={inputClassName}
                   />
                 </div>
                 <div className="col-span-2 space-y-2">

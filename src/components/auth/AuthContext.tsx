@@ -24,6 +24,9 @@ interface User {
   email?: string;
   name?: string;
   profilePhotoUrl?: string | null;
+  hasPassword?: boolean;
+  hasResume?: boolean;
+  hasProfileName?: boolean;
 }
 
 type LoginUserData = Partial<User> & {
@@ -77,6 +80,26 @@ const PUBLIC_ROUTES = [
   '/contact'
 ];
 
+function userFromMe(candidateId: string, me: any): User {
+  const personalInfo = me?.personalInfo || {};
+  return {
+    id: candidateId,
+    whatsappNumber: me?.whatsappNumber || '',
+    email: me?.email || personalInfo.email || '',
+    name:
+      me?.name ||
+      getAuthContextDisplayName({
+        personalInfo,
+        whatsappNumber: me?.whatsappNumber,
+      }) ||
+      'Candidate',
+    profilePhotoUrl: me?.profilePhotoUrl || personalInfo.profilePhotoUrl || null,
+    hasPassword: typeof me?.hasPassword === 'boolean' ? me.hasPassword : undefined,
+    hasResume: typeof me?.hasResume === 'boolean' ? me.hasResume : undefined,
+    hasProfileName: typeof me?.hasProfileName === 'boolean' ? me.hasProfileName : undefined,
+  };
+}
+
 function buildPlaceholderUser(candidateId: string): User {
   return {
     id: candidateId,
@@ -102,6 +125,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const authGenerationRef = useRef(0);
   /** Ignore forced logout for a short window right after login (stale 401 races). */
   const loginGraceUntilRef = useRef(0);
+  /** CV persist updates the profile after the cached /auth/me flags. Confirm once before leaving the dashboard. */
+  const completionConfirmRef = useRef<{ key: string; settled: boolean }>({ key: '', settled: false });
+  const [completionTick, setCompletionTick] = useState(0);
 
   const logout = useCallback(async (logoutAllOrOptions: boolean | LogoutOptions = false) => {
     const options: LogoutOptions =
@@ -229,22 +255,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const result = await response.json();
         if (isStale()) return;
         if (result.success && result.data) {
-          const me = result.data;
-          const personalInfo = me.personalInfo || {};
           persistAuthSession(storedToken, candidateId);
-
-          setUser({
-            id: candidateId,
-            whatsappNumber: me.whatsappNumber || '',
-            email: me.email || personalInfo.email || '',
-            name:
-              me.name ||
-              getAuthContextDisplayName({
-                personalInfo,
-                whatsappNumber: me.whatsappNumber,
-              }),
-            profilePhotoUrl: me.profilePhotoUrl || personalInfo.profilePhotoUrl || null,
-          });
+          setUser(userFromMe(candidateId, result.data));
         } else {
           setUser((prev) => prev ?? buildPlaceholderUser(candidateId));
         }
@@ -268,18 +280,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const result = await retry.json();
           if (isStale()) return;
           if (result.success && result.data) {
-            const me = result.data;
-            const personalInfo = me.personalInfo || {};
-            setUser({
-              id: candidateId,
-              whatsappNumber: me.whatsappNumber || '',
-              email: me.email || personalInfo.email || '',
-              name:
-                me.name ||
-                [personalInfo.firstName, personalInfo.lastName].filter(Boolean).join(' ') ||
-                'User',
-              profilePhotoUrl: me.profilePhotoUrl || personalInfo.profilePhotoUrl || null,
-            });
+            setUser(userFromMe(candidateId, result.data));
           }
         } else if (retry.status === 401) {
           // Only clear THIS token — never a newer login that replaced storage mid-flight.
@@ -355,6 +356,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  // HQ Account Support → direct candidate login handoff
+  // URL shape: /candidate-dashboard#hqCandidateLogin=<jwt>
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = String(window.location.hash || '');
+    const marker = '#hqCandidateLogin=';
+    const idx = hash.indexOf(marker);
+    if (idx < 0) return;
+
+    const raw = hash.slice(idx + marker.length);
+    const tokenValue = decodeURIComponent(raw.split('&')[0] || '').trim();
+    if (!tokenValue) return;
+
+    let candidateId = '';
+    try {
+      const payloadPart = tokenValue.split('.')[1];
+      if (payloadPart) {
+        const json = JSON.parse(atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/')));
+        candidateId = String(json?.candidateId || '').trim();
+      }
+    } catch {
+      candidateId = '';
+    }
+
+    if (!candidateId) return;
+
+    login(tokenValue, candidateId);
+    // Clear hash so refresh doesn't re-apply.
+    const nextUrl = `${window.location.pathname}${window.location.search}`;
+    window.history.replaceState({}, '', nextUrl);
+    showSuccessToast('Signed in via HQ account support');
+  }, [login]);
+
   useTabVisibilityRefresh(() => {
     if (getStoredToken()) {
       void refreshUserRef.current();
@@ -393,12 +427,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         (path !== '/' && normalizedPathname.startsWith(path + '/'))
     );
     
+    const accountComplete =
+      user?.hasPassword === true && user?.hasResume === true && user?.hasProfileName === true;
+    const onDashboard =
+      normalizedPathname === '/candidate-dashboard' ||
+      normalizedPathname.startsWith('/candidate-dashboard/');
+    const onUploadCv = normalizedPathname === '/uploadcv';
+
     if (!token && !isPublicRoute) {
       router.push(localizePath('/whatsapp', currentLocale));
-    } else if (token && isPublicAuthRoute) {
+      return;
+    }
+
+    // Dashboard is only for a finished account. Cached flags can still say
+    // "no name" for a moment after CV extraction saves the profile, so confirm
+    // with a fresh /auth/me before sending the user back to upload.
+    if (token && (onDashboard || onUploadCv) && !accountComplete) {
+      const checkKey = `${normalizedPathname}:${user?.hasPassword}:${user?.hasResume}:${user?.hasProfileName}`;
+      if (completionConfirmRef.current.key !== checkKey) {
+        completionConfirmRef.current = { key: checkKey, settled: false };
+        void refreshUser().finally(() => {
+          if (completionConfirmRef.current.key !== checkKey) return;
+          completionConfirmRef.current.settled = true;
+          setCompletionTick((n) => n + 1);
+        });
+        return;
+      }
+      if (!completionConfirmRef.current.settled) return;
+      if (!onDashboard) return;
+      if (user?.hasPassword === false) {
+        router.replace(localizePath('/whatsapp/set-password', currentLocale));
+        return;
+      }
+      if (user?.hasPassword === true && (user?.hasResume !== true || user?.hasProfileName !== true)) {
+        router.replace(localizePath('/uploadcv', currentLocale));
+        return;
+      }
+      router.replace(localizePath('/whatsapp', currentLocale));
+      return;
+    }
+
+    if (token && onUploadCv && accountComplete) {
+      router.replace(localizePath('/candidate-dashboard', currentLocale));
+      return;
+    }
+
+    // Saved sign-in opens the dashboard only when that account is finished.
+    if (token && isPublicAuthRoute && accountComplete) {
       router.push(localizePath('/candidate-dashboard', currentLocale));
     }
-  }, [token, isLoading, isLoggingOut, normalizedPathname, currentLocale, router]);
+  }, [token, user?.hasPassword, user?.hasResume, user?.hasProfileName, isLoading, isLoggingOut, normalizedPathname, currentLocale, router, refreshUser, completionTick]);
 
   return (
     <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, isLoading, login, logout, refreshUser }}>

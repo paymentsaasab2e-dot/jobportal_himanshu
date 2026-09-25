@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, Suspense } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -100,6 +101,10 @@ function WhatsAppLoginInner() {
   const [signInMethod, setSignInMethod] = useState<SignInMethod>("password");
   const [signInContact, setSignInContact] = useState<SignInContact>("whatsapp");
   const [showAccountNotFound, setShowAccountNotFound] = useState(false);
+  const [showAccountIncomplete, setShowAccountIncomplete] = useState(false);
+  const [resumeStage, setResumeStage] = useState<"" | "verify_otp" | "set_password">("");
+  const [resumeRegistration, setResumeRegistration] = useState(false);
+  const [finishRegistrationOpen, setFinishRegistrationOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [captchaAnswer, setCaptchaAnswer] = useState("");
@@ -119,6 +124,7 @@ function WhatsAppLoginInner() {
   const hasAutoDetectedCountry = useRef(false);
 
   const isSignIn = authMode === "signin";
+  const authNoticeOpen = showAccountIncomplete || showAccountNotFound;
   const isOtpSignIn = isSignIn && signInMethod === "otp";
   const showCaptcha = !isSignIn;
   const showSignInWhatsApp = isSignIn && signInContact === "whatsapp";
@@ -153,8 +159,10 @@ function WhatsAppLoginInner() {
     setCaptchaError("");
     resetSignInOtpFlow();
     setShowAccountNotFound(false);
+    setShowAccountIncomplete(false);
     setPasswordValue("");
     if (mode === "signin") {
+      setResumeRegistration(false);
       setSignInMethod("password");
       setSignInContact("whatsapp");
     }
@@ -449,8 +457,15 @@ function WhatsAppLoginInner() {
 
       const data = await response.json();
 
+      if (data.code === "ACCOUNT_INCOMPLETE" && data.needsPhone) {
+        setFinishRegistrationOpen(true);
+        setShowAccountNotFound(false);
+        return;
+      }
+
       if (data.code === "ACCOUNT_NOT_FOUND" || response.status === 404) {
         setShowAccountNotFound(true);
+        setShowAccountIncomplete(false);
         return;
       }
 
@@ -595,12 +610,22 @@ function WhatsAppLoginInner() {
         throw new Error(data.message || t("whatsapp.verify.invalidOtp"));
       }
 
+      const needsPassword = data.data?.needsPassword === true;
+      const skipCv = data.data?.skipCvUpload === true;
+      try {
+        if (needsPassword || !skipCv) {
+          sessionStorage.setItem('saasa:defer-dashboard-redirect', '1');
+        } else {
+          sessionStorage.removeItem('saasa:defer-dashboard-redirect');
+        }
+      } catch {
+        /* ignore */
+      }
+
       if (data.data?.token && data.data?.candidateId) {
         login(data.data.token, data.data.candidateId);
       }
 
-      const needsPassword = data.data?.needsPassword === true;
-      const skipCv = data.data?.skipCvUpload === true;
       resetSignInOtpFlow();
 
       if (needsPassword) {
@@ -632,6 +657,83 @@ function WhatsAppLoginInner() {
             ? err.message
             : t("whatsapp.verify.verificationFailed"),
       );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resumeFromStage = async (stage: "verify_otp" | "set_password") => {
+    setSignInMethod("otp");
+    setAuthMode("signin");
+    setShowAccountNotFound(false);
+    setShowAccountIncomplete(false);
+    setFinishRegistrationOpen(false);
+    setResumeStage(stage);
+    setError("");
+    setIsLoading(true);
+    try {
+      const normalizedEmail = emailValue.trim().toLowerCase();
+      const cleanNumber = whatsappNumberValue.replace(/\D/g, "");
+      const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          signInContact === "email"
+            ? { email: normalizedEmail, intent: "login" }
+            : {
+                whatsappNumber: cleanNumber,
+                countryCode: selectedCountry.dialCode || "+91",
+                intent: "login",
+              },
+        ),
+      });
+      const data = await response.json();
+      if (data.needsPhone) {
+        setFinishRegistrationOpen(true);
+        return;
+      }
+      if (data.code === "ACCOUNT_NOT_FOUND" || response.status === 404) {
+        setResumeStage("");
+        setShowAccountNotFound(true);
+        return;
+      }
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || t("whatsapp.failedToSendOtp"));
+      }
+      const resolvedEmail = String(data.data?.email || normalizedEmail || "").toLowerCase();
+      const sentStage = String(data.data?.stage || stage);
+      const nextStage = sentStage === "set_password" ? "set_password" : sentStage === "verify_otp" ? "verify_otp" : "";
+      setResumeStage(nextStage);
+      if (nextStage === "set_password") {
+        showSuccessToast(t("whatsapp.resumeNoticeTitlePassword"), t("whatsapp.resumeSetPassword"));
+      } else if (nextStage === "verify_otp") {
+        showSuccessToast(t("whatsapp.resumeNoticeTitleVerify"), t("whatsapp.resumeVerifyOtp"));
+      } else {
+        showSuccessToast(t("whatsapp.otpSent"), t("whatsapp.checkEmailForCode"));
+      }
+      const resolvedFull = String(data.data?.whatsappNumber || "");
+      const resolvedCountry = String(data.data?.countryCode || selectedCountry.dialCode);
+      const dialDigits = resolvedCountry.replace(/\D/g, "");
+      const fullDigits = resolvedFull.replace(/\D/g, "");
+      const resolvedLocal =
+        dialDigits && fullDigits.startsWith(dialDigits)
+          ? fullDigits.slice(dialDigits.length)
+          : cleanNumber || fullDigits;
+      sessionStorage.setItem("otpEmail", resolvedEmail);
+      sessionStorage.setItem("authFlow", "login");
+      if (data.data?.candidateId) sessionStorage.setItem("candidateId", String(data.data.candidateId));
+      setSignInOtpContext({
+        whatsappNumber: resolvedLocal,
+        countryCode: resolvedCountry,
+        email: resolvedEmail,
+        candidateId: data.data?.candidateId ? String(data.data.candidateId) : undefined,
+      });
+      setSignInOtpSent(true);
+      setOtpResendTimer(29);
+      setOtpValue("");
+    } catch (err: unknown) {
+      setResumeStage("");
+      setError(err instanceof Error ? err.message : t("whatsapp.failedToSendOtp"));
     } finally {
       setIsLoading(false);
     }
@@ -680,11 +782,17 @@ function WhatsAppLoginInner() {
     }
 
     if (!passwordValue) {
+      if (signInContact === "email") {
+        await resumeFromStage("verify_otp");
+        return;
+      }
       setError(t("whatsapp.enterPassword"));
       return;
     }
 
     setIsLoading(true);
+    setShowAccountNotFound(false);
+    setShowAccountIncomplete(false);
 
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -711,16 +819,19 @@ function WhatsAppLoginInner() {
 
       const data = await response.json();
 
-      if (data.code === "ACCOUNT_NOT_FOUND" || response.status === 404) {
-        setShowAccountNotFound(true);
+      if (data.code === "ACCOUNT_INCOMPLETE" || data.stage === "verify_otp") {
+        await resumeFromStage("verify_otp");
         return;
       }
 
-      if (data.code === "PASSWORD_NOT_SET") {
-        setError(t("whatsapp.passwordNotSet"));
-        if (signInContact === "email") {
-          setSignInMethod("otp");
-        }
+      if (data.code === "ACCOUNT_NOT_FOUND" || response.status === 404) {
+        setShowAccountNotFound(true);
+        setShowAccountIncomplete(false);
+        return;
+      }
+
+      if (data.code === "PASSWORD_NOT_SET" || data.stage === "set_password") {
+        await resumeFromStage("set_password");
         return;
       }
 
@@ -728,13 +839,19 @@ function WhatsAppLoginInner() {
         throw new Error(data.message || t("whatsapp.invalidCredentials"));
       }
 
+      const skipCv = data.data?.skipCvUpload === true;
+      try {
+        if (!skipCv) sessionStorage.setItem('saasa:defer-dashboard-redirect', '1');
+        else sessionStorage.removeItem('saasa:defer-dashboard-redirect');
+      } catch {
+        /* ignore */
+      }
+
       if (data.data?.token && data.data?.candidateId) {
         login(data.data.token, data.data.candidateId);
       }
 
       showSuccessToast(t("whatsapp.verify.loginSuccessfulTitle"), t("whatsapp.verify.loginSuccessfulDescription"));
-
-      const skipCv = data.data?.skipCvUpload === true;
       const postLoginRedirect = sessionStorage.getItem("postLoginRedirect");
 
       if (!skipCv) {
@@ -757,6 +874,89 @@ function WhatsAppLoginInner() {
             : t("whatsapp.somethingWentWrong"),
       );
       console.error("Error signing in:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const submitFinishRegistration = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError("");
+    setCaptchaError("");
+
+    const normalizedEmail = emailValue.trim().toLowerCase();
+    const cleanNumber = whatsappNumberValue.replace(/\D/g, "");
+
+    if (!normalizedEmail || !EMAIL_REGEX.test(normalizedEmail)) {
+      setError(
+        !normalizedEmail
+          ? t("whatsapp.enterMailAddress")
+          : t("whatsapp.enterValidMailAddress"),
+      );
+      return;
+    }
+    if (!cleanNumber || cleanNumber.length !== selectedCountry.phoneLength) {
+      setError(
+        !cleanNumber
+          ? t("whatsapp.enterWhatsappNumber")
+          : t("whatsapp.exactDigitsWhatsapp", { count: selectedCountry.phoneLength }),
+      );
+      return;
+    }
+    if (!captchaChallenge || !validateMathCaptchaAnswer(captchaChallenge, captchaAnswer)) {
+      setCaptchaError(t("whatsapp.solveMathQuestion"));
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          whatsappNumber: cleanNumber,
+          countryCode: selectedCountry.dialCode,
+          email: normalizedEmail,
+          intent: "signup",
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || t("whatsapp.failedToSendOtp"));
+      }
+
+      const resolvedEmail = String(data.data?.email || normalizedEmail).toLowerCase();
+      const resolvedCountry = String(data.data?.countryCode || selectedCountry.dialCode);
+      const resolvedFull = String(
+        data.data?.whatsappNumber || `${selectedCountry.dialCode}${cleanNumber}`,
+      );
+      const dialDigits = resolvedCountry.replace(/\D/g, "");
+      const fullDigits = resolvedFull.replace(/\D/g, "");
+      const resolvedLocal =
+        dialDigits && fullDigits.startsWith(dialDigits)
+          ? fullDigits.slice(dialDigits.length)
+          : cleanNumber;
+
+      sessionStorage.setItem("whatsappNumber", resolvedLocal);
+      sessionStorage.setItem("countryCode", resolvedCountry);
+      sessionStorage.setItem(
+        "fullWhatsAppNumber",
+        resolvedFull.startsWith("+") ? resolvedFull : `${resolvedCountry}${resolvedLocal}`,
+      );
+      sessionStorage.setItem("otpEmail", resolvedEmail);
+      sessionStorage.setItem("authFlow", "signup");
+      sessionStorage.setItem("signupOnboarding", "true");
+      if (data.data?.candidateId) {
+        sessionStorage.setItem("candidateId", String(data.data.candidateId));
+      }
+      sessionStorage.removeItem("otpPreview");
+
+      setFinishRegistrationOpen(false);
+      setShowAccountIncomplete(false);
+      showSuccessToast(t("whatsapp.otpSent"), t("whatsapp.checkEmailForCode"));
+      router.push(localizePath("/whatsapp/verify", locale));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("whatsapp.failedToSendOtp"));
     } finally {
       setIsLoading(false);
     }
@@ -834,10 +1034,14 @@ function WhatsAppLoginInner() {
               </button>
               <button
                 type="button"
-                onClick={() => switchMode("signup")}
+                onClick={() => {
+                  if (authNoticeOpen) return;
+                  switchMode("signup");
+                }}
+                disabled={authNoticeOpen}
                 className={`relative z-10 flex-1 h-9 sm:h-10 rounded-full text-[13px] font-bold tracking-tight transition-colors duration-500 ${
                   !isSignIn ? "text-white" : "text-slate-500 hover:text-[#08428c]"
-                }`}
+                } ${authNoticeOpen ? "cursor-default opacity-50" : ""}`}
               >
                 {!isSignIn && (
                   <motion.span
@@ -1011,6 +1215,13 @@ function WhatsAppLoginInner() {
               {/* CREATE ACCOUNT: WhatsApp + Email fields restored (both visible) */}
               {!isSignIn && (
                 <>
+                  {resumeRegistration ? (
+                    <p className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-[12px] font-medium leading-snug text-sky-950">
+                      {emailValue.trim()
+                        ? t("whatsapp.resumeRegistrationEmailKept")
+                        : t("whatsapp.resumeRegistrationPhoneKept")}
+                    </p>
+                  ) : null}
                   <div className={isDropdownOpen ? "relative z-50" : "relative"}>
                     <label className="block text-[11px] font-black text-slate-700 uppercase tracking-widest mb-1.5 ml-1">{t("whatsapp.whatsappNumber")}</label>
                     <div className={`relative ${isDropdownOpen ? "z-50" : "z-30"}`} ref={dropdownRef}>
@@ -1198,6 +1409,20 @@ function WhatsAppLoginInner() {
                           transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
                           className="overflow-hidden space-y-2"
                         >
+                          {resumeStage ? (
+                            <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-left">
+                              <p className="text-[13px] font-semibold text-sky-950">
+                                {resumeStage === "set_password"
+                                  ? t("whatsapp.resumeNoticeTitlePassword")
+                                  : t("whatsapp.resumeNoticeTitleVerify")}
+                              </p>
+                              <p className="mt-1 text-[12px] font-medium leading-snug text-sky-900">
+                                {resumeStage === "set_password"
+                                  ? t("whatsapp.resumeSetPassword")
+                                  : t("whatsapp.resumeVerifyOtp")}
+                              </p>
+                            </div>
+                          ) : null}
                           <p className="text-[12px] font-medium text-slate-500 leading-relaxed px-1">
                             {signInOtpSent
                               ? t("whatsapp.signInOtpEnterCode", {
@@ -1277,27 +1502,46 @@ function WhatsAppLoginInner() {
                 </div>
               )}
 
+              {showAccountIncomplete && (
+                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 mt-2 text-left">
+                  <p className="text-[13px] font-semibold text-sky-950">
+                    {t("whatsapp.accountIncompleteTitle")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setFinishRegistrationOpen(true);
+                    }}
+                    className="btn-brand mt-3 w-full h-10 rounded-full text-[13px] font-bold"
+                  >
+                    {t("whatsapp.accountIncompleteCta")}
+                  </button>
+                </div>
+              )}
+
               {showAccountNotFound && (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 mt-2 text-left space-y-3">
-                  <div className="flex gap-3 items-start">
-                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-[14px] font-black text-amber-900">{t("whatsapp.accountNotFoundTitle")}</p>
-                      <p className="mt-1 text-[13px] font-medium text-amber-800 leading-snug">
-                        {t("whatsapp.accountNotFoundMessage")}
-                      </p>
-                    </div>
-                  </div>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 mt-2 text-left">
+                  <p className="text-[13px] font-semibold text-amber-950">
+                    {t("whatsapp.accountNotFoundTitle")}
+                  </p>
+                  <p className="mt-1 text-[12px] font-medium text-amber-900 leading-snug">
+                    {signInContact === "email"
+                      ? t("whatsapp.accountNotFoundMessageEmail")
+                      : t("whatsapp.accountNotFoundMessage")}
+                  </p>
                   <button
                     type="button"
                     onClick={() => switchMode("signup")}
-                    className="btn-brand-accent w-full h-11 rounded-full text-[13px] font-bold"
+                    className="btn-brand-accent mt-3 w-full h-10 rounded-full text-[13px] font-bold"
                   >
                     {t("whatsapp.accountNotFoundCta")}
                   </button>
                 </div>
               )}
 
+              {!authNoticeOpen && (
               <button
                 type="submit"
                 disabled={
@@ -1321,6 +1565,7 @@ function WhatsAppLoginInner() {
                   </>
                 )}
               </button>
+              )}
             </form>
 
             {/* Trust + legal inside card so nothing clips below the fold */}
@@ -1331,6 +1576,7 @@ function WhatsAppLoginInner() {
                   {isSignIn ? t("whatsapp.signInTrust") : t("whatsapp.securePasswordlessEntry")}
                 </p>
               </div>
+              {!authNoticeOpen ? (
               <p className="text-[11px] font-medium text-slate-500 text-center">
                 {isSignIn ? t("whatsapp.switchToSignUpPrompt") : t("whatsapp.switchToSignInPrompt")}{" "}
                 <button
@@ -1341,6 +1587,7 @@ function WhatsAppLoginInner() {
                   {isSignIn ? t("whatsapp.switchToSignUpAction") : t("whatsapp.switchToSignInAction")}
                 </button>
               </p>
+              ) : null}
               <p className="mt-0.5 text-center text-[10px] font-medium text-slate-400 leading-snug max-w-[460px]">
                 {t("whatsapp.byContinuing")}{" "}
                 <Link href={localizePath("/terms", locale)} className="text-slate-600 hover:text-[#08428c] transition-colors font-bold">
@@ -1471,6 +1718,107 @@ function WhatsAppLoginInner() {
         </div>
 
       </main>
+
+      {finishRegistrationOpen && typeof document !== "undefined"
+        ? createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 px-4 py-6">
+          <div className="relative w-full max-w-[460px] overflow-hidden rounded-[28px] border border-[#08428c]/10 bg-white px-7 py-6 shadow-[0_28px_70px_rgba(8,66,140,0.18)]">
+            <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-[#08428c] via-[#28a8e1] to-[#FC9620]" />
+            <p className="text-[22px] font-black tracking-tight text-[#0B1F3A]">
+              {t("whatsapp.finishRegistrationTitle")}
+            </p>
+
+            <form className="mt-4 space-y-3" onSubmit={(event) => void submitFinishRegistration(event)}>
+              <div className={isDropdownOpen ? "relative z-50" : "relative"}>
+                <label className="mb-1.5 ml-1 block text-[11px] font-black uppercase tracking-widest text-slate-700">
+                  {t("whatsapp.whatsappNumber")}
+                </label>
+                <div className="flex overflow-visible rounded-[14px] border border-slate-200 bg-white shadow-sm focus-within:border-[#28a8e1] focus-within:ring-4 focus-within:ring-[#28a8e1]/15">
+                  <button
+                    type="button"
+                    className="flex h-[50px] items-center gap-2 px-3.5 text-[14px] font-medium text-slate-700"
+                    onClick={toggleCountryDropdown}
+                  >
+                    <span className="text-[20px] leading-none">{countryCodeToFlag(selectedCountry.code)}</span>
+                    <span className="text-[13px] font-bold">{selectedCountry.dialCode}</span>
+                  </button>
+                  <div className="my-auto h-7 w-px bg-slate-200" />
+                  <input
+                    type="tel"
+                    value={whatsappNumberValue}
+                    onChange={(e) =>
+                      setWhatsappNumberValue(
+                        e.target.value.replace(/\D/g, "").slice(0, selectedCountry.phoneLength),
+                      )
+                    }
+                    maxLength={selectedCountry.phoneLength}
+                    inputMode="numeric"
+                    className="h-[50px] w-full bg-transparent px-3 text-[15px] font-bold text-slate-900 outline-none"
+                    placeholder={`${selectedCountry.phoneLength} digits`}
+                  />
+                </div>
+                {countryDropdownPanel}
+              </div>
+
+              <div>
+                <label className="mb-1.5 ml-1 block text-[11px] font-black uppercase tracking-widest text-slate-700">
+                  {t("whatsapp.mailAddress")}
+                </label>
+                <div className="relative overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-sm focus-within:border-[#28a8e1] focus-within:ring-4 focus-within:ring-[#28a8e1]/15">
+                  <div className="pointer-events-none absolute bottom-0 left-4 top-0 flex items-center">
+                    <Mail className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type="email"
+                    value={emailValue}
+                    onChange={(e) => setEmailValue(e.target.value)}
+                    className="h-[50px] w-full bg-transparent pl-[48px] pr-4 text-[15px] font-bold text-slate-900 outline-none"
+                    placeholder="name@company.com"
+                    autoComplete="email"
+                  />
+                </div>
+              </div>
+
+              <MathCaptcha
+                value={captchaAnswer}
+                onChange={(v) => {
+                  setCaptchaAnswer(v);
+                  if (captchaError) setCaptchaError("");
+                }}
+                onChallengeChange={setCaptchaChallenge}
+                disabled={isLoading}
+                error={captchaError}
+                compact
+              />
+
+              {error ? (
+                <p className="text-[12px] font-semibold leading-snug text-red-600">{error}</p>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="btn-brand flex h-[46px] w-full items-center justify-center gap-2 rounded-full text-[14px] font-bold"
+              >
+                {isLoading ? t("whatsapp.sendingCode") : t("whatsapp.continue")}
+                {!isLoading ? <ArrowRight className="h-4 w-4" /> : null}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFinishRegistrationOpen(false);
+                  setError("");
+                }}
+                className="w-full text-center text-[12px] font-semibold text-slate-500 hover:text-slate-800"
+              >
+                {t("whatsapp.finishRegistrationBack")}
+              </button>
+            </form>
+          </div>
+        </div>,
+        document.body,
+      )
+        : null}
     </div>
   );
 }

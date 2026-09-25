@@ -156,6 +156,12 @@ export function EducationEntryPreview({
               {entry.modeOfStudy ? (
                 <PreviewMetaItem label="Mode of study" value={entry.modeOfStudy} />
               ) : null}
+              {entry.additionalCourses ? (
+                <PreviewMetaItem label="Courses" value={entry.additionalCourses} />
+              ) : null}
+              {entry.description ? (
+                <PreviewMetaItem label="Extracurricular activities" value={entry.description} />
+              ) : null}
             </div>
           ) : entry.grade ? (
             <PreviewMetaItem
