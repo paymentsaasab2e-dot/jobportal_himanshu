@@ -207,6 +207,10 @@ export function WorkExperienceEntryCard({
               }
             />
             <PreviewMetaItem
+              label="Company website"
+              value={entry.companyWebsite || '—'}
+            />
+            <PreviewMetaItem
               label="Company turnover"
               value={entry.companyTurnover || '—'}
             />

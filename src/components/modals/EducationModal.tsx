@@ -55,6 +55,10 @@ export interface EducationData {
   grade: string;
   modeOfStudy: string;
   courseDuration: string;
+  /** Extra courses taken alongside this education. */
+  additionalCourses?: string;
+  /** Extracurricular activities for this education. */
+  description?: string;
   documents?: EducationDocument[];
 }
 
@@ -337,6 +341,8 @@ export default function EducationModal({
   const [gradeInput, setGradeInput] = useState('');
   const [modeOfStudy, setModeOfStudy] = useState(initialData?.modeOfStudy || '');
   const [courseDuration, setCourseDuration] = useState(initialData?.courseDuration || '');
+  const [additionalCourses, setAdditionalCourses] = useState(initialData?.additionalCourses || '');
+  const [extracurricular, setExtracurricular] = useState(initialData?.description || '');
   const [durationManuallyEdited, setDurationManuallyEdited] = useState(false);
   const [documents, setDocuments] = useState<EducationDocument[]>(initialData?.documents || []);
   const [dragActive, setDragActive] = useState(false);
@@ -387,6 +393,8 @@ export default function EducationModal({
     setGradeInput('');
     setModeOfStudy('');
     setCourseDuration('');
+    setAdditionalCourses('');
+    setExtracurricular('');
     setDurationManuallyEdited(false);
     setDocuments([]);
     setDateError('');
@@ -421,6 +429,8 @@ export default function EducationModal({
     );
     const savedDuration = String(data.courseDuration || '').trim();
     setCourseDuration(savedDuration || computedDuration || '');
+    setAdditionalCourses(data.additionalCourses || '');
+    setExtracurricular(data.description || '');
     setDurationManuallyEdited(Boolean(savedDuration && savedDuration !== computedDuration));
     setDocuments(normalizeEducationDocuments(data.documents));
     setDateError('');
@@ -811,6 +821,8 @@ export default function EducationModal({
       grade: encodeStoredGrade(gradeMetricType, gradeInput),
       modeOfStudy,
       courseDuration: effectiveCourseDuration,
+      additionalCourses: additionalCourses.trim() || undefined,
+      description: extracurricular.trim() || undefined,
       documents: documents.length > 0 ? documents : undefined,
     };
 
@@ -1299,6 +1311,33 @@ export default function EducationModal({
                 </div>
               </div>
               ) : null}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Courses
+                  </label>
+                  <textarea
+                    value={additionalCourses}
+                    onChange={(e) => setAdditionalCourses(e.target.value)}
+                    placeholder="Courses taken alongside this education"
+                    className={profileTextareaClass}
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Extracurricular activities
+                  </label>
+                  <textarea
+                    value={extracurricular}
+                    onChange={(e) => setExtracurricular(e.target.value)}
+                    placeholder="Clubs, sports, competitions, and other activities"
+                    className={profileTextareaClass}
+                    rows={3}
+                  />
+                </div>
+              </div>
 
               {/* Upload Documents */}
               <div>

@@ -92,6 +92,11 @@ export function ProfileBasicInfoFilled({ data }: { data: BasicInfoData }) {
         />
         <PreviewMetaItem label={t('fields.city')} value={data.city || '—'} />
         <PreviewMetaItem label={t('fields.country')} value={data.country || '—'} />
+        <PreviewMetaItem label="Marital status" value={data.maritalStatus || data.portalExtras?.maritalStatus || '—'} />
+        <PreviewMetaItem label="Current address" value={data.address || '—'} />
+        <PreviewMetaItem label="Nationality" value={data.nationality || '—'} />
+        <PreviewMetaItem label="State" value={data.state || data.portalExtras?.state || '—'} />
+        <PreviewMetaItem label="Zip" value={data.zip || data.portalExtras?.zip || '—'} />
       </PreviewMetaGrid>
       {data.passportNumber ? (
         <div className="rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2">

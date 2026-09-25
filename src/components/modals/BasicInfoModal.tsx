@@ -83,6 +83,13 @@ export interface BasicInfoData {
   passportNumber?: string;
   whatsappNumber?: string;
   countryCode?: string;
+  address?: string;
+  nationality?: string;
+  linkedinUrl?: string;
+  maritalStatus?: string;
+  state?: string;
+  zip?: string;
+  portalExtras?: Record<string, string>;
 }
 
 type BasicInfoFieldKey =
@@ -126,6 +133,15 @@ export default function BasicInfoModal({
   const [cityValue, setCityValue] = useState(initialData?.city || '');
   const [employmentValue, setEmploymentValue] = useState(initialData?.employment || '');
   const [passportNumberValue, setPassportNumberValue] = useState(initialData?.passportNumber || '');
+  const [addressValue, setAddressValue] = useState(initialData?.address || '');
+  const [nationalityValue, setNationalityValue] = useState(initialData?.nationality || '');
+  const [maritalStatusValue, setMaritalStatusValue] = useState(
+    initialData?.maritalStatus || initialData?.portalExtras?.maritalStatus || '',
+  );
+  const [stateValue, setStateValue] = useState(
+    initialData?.state || initialData?.portalExtras?.state || '',
+  );
+  const [zipValue, setZipValue] = useState(initialData?.zip || initialData?.portalExtras?.zip || '');
   const [errors, setErrors] = useState<Partial<Record<BasicInfoFieldKey, string>>>({});
   const phoneCodeRef = useRef<HTMLDivElement>(null);
   const hiddenDobPickerRef = useRef<HTMLInputElement>(null);
@@ -236,6 +252,11 @@ export default function BasicInfoModal({
       setCityValue(initialData.city || '');
       setEmploymentValue(initialData.employment || '');
       setPassportNumberValue(initialData.passportNumber || '');
+      setAddressValue(initialData.address || '');
+      setNationalityValue(initialData.nationality || '');
+      setMaritalStatusValue(initialData.maritalStatus || initialData.portalExtras?.maritalStatus || '');
+      setStateValue(initialData.state || initialData.portalExtras?.state || '');
+      setZipValue(initialData.zip || initialData.portalExtras?.zip || '');
       setCitySuggestOpen(false);
       setCitySuggestions([]);
       setCitySuggestError(null);
@@ -253,6 +274,11 @@ export default function BasicInfoModal({
       setCityValue('');
       setEmploymentValue('');
       setPassportNumberValue('');
+      setAddressValue('');
+      setNationalityValue('');
+      setMaritalStatusValue('');
+      setStateValue('');
+      setZipValue('');
       setCitySuggestOpen(false);
       setCitySuggestions([]);
       setCitySuggestError(null);
@@ -376,6 +402,15 @@ export default function BasicInfoModal({
     city: getTrimmed(cityValue),
     employment: getTrimmed(employmentValue),
     passportNumber: getTrimmed(passportNumberValue),
+    address: getTrimmed(addressValue),
+    nationality: getTrimmed(nationalityValue),
+    maritalStatus: getTrimmed(maritalStatusValue),
+    state: getTrimmed(stateValue),
+    zip: getTrimmed(zipValue),
+    portalExtras: {
+      state: getTrimmed(stateValue),
+      zip: getTrimmed(zipValue),
+    },
   });
 
   const validate = (payload: BasicInfoData) => {
@@ -841,6 +876,20 @@ export default function BasicInfoModal({
                     </div>
                     {errors.dob && <p className="profile-modal-helper text-red-600">{errors.dob}</p>}
                   </div>
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">Marital status</label>
+                    <select
+                      value={maritalStatusValue}
+                      onChange={(e) => setMaritalStatusValue(e.target.value)}
+                      className={`${profileFieldClass()} appearance-none`}
+                    >
+                      <option value="">Select marital status</option>
+                      <option value="Single">Single</option>
+                      <option value="Married">Married</option>
+                      <option value="Divorced">Divorced</option>
+                      <option value="Widowed">Widowed</option>
+                    </select>
+                  </div>
                 </div>
               </section>
 
@@ -972,6 +1021,44 @@ export default function BasicInfoModal({
                       Pick a city from the list — country will update to match
                     </p>
                     {errors.city && <p className="profile-modal-helper text-red-600">{errors.city}</p>}
+                  </div>
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">Current address</label>
+                    <input
+                      type="text"
+                      value={addressValue}
+                      onChange={(e) => setAddressValue(e.target.value)}
+                      className={profileFieldClass()}
+                      placeholder="Street, area, landmark"
+                    />
+                  </div>
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">Nationality</label>
+                    <input
+                      type="text"
+                      value={nationalityValue}
+                      onChange={(e) => setNationalityValue(e.target.value)}
+                      className={profileFieldClass()}
+                      placeholder="e.g. Indian"
+                    />
+                  </div>
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">State</label>
+                    <input
+                      type="text"
+                      value={stateValue}
+                      onChange={(e) => setStateValue(e.target.value)}
+                      className={profileFieldClass()}
+                    />
+                  </div>
+                  <div className="profile-modal-field-group">
+                    <label className="profile-modal-label">Zip</label>
+                    <input
+                      type="text"
+                      value={zipValue}
+                      onChange={(e) => setZipValue(e.target.value)}
+                      className={profileFieldClass()}
+                    />
                   </div>
                 </div>
               </section>
