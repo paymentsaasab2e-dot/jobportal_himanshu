@@ -31,6 +31,17 @@ const normalizeToApiBaseUrl = (value: string): string => {
 let _effectiveApiBaseUrl: string = '';
 
 export const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname.toLowerCase();
+    // jobs.poyeso.com and api1.poyeso.com are different origins. A cert
+    // exception on the portal does not cover api1, so wallet/CV-score
+    // fetches fail while session-cached profile HTML still paints.
+    if (host === 'poyeso.com' || host.endsWith('.poyeso.com')) {
+      _effectiveApiBaseUrl = '/api/proxy';
+      return _effectiveApiBaseUrl;
+    }
+  }
+
   if (_effectiveApiBaseUrl) return _effectiveApiBaseUrl;
 
   if (process.env.NEXT_PUBLIC_API_URL) {
@@ -75,6 +86,7 @@ export const switchToLocalBackend = () => {
 
 /** Prefer hosted api1 when local Phase 1 backend is down (common in local UI-only sessions). */
 export const switchToHostedBackend = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) return;
   const hosted = `${HOSTED_API_ORIGIN}/api`;
   if (_effectiveApiBaseUrl === hosted) return;
   console.warn('⚠️ Switching to Hosted Backend (api1.hryantra.com) — local :5000 unreachable');

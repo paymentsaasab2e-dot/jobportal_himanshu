@@ -564,6 +564,7 @@ const ExploreJobsPageContent = () => {
   const [jobsMatchTotal, setJobsMatchTotal] = useState(0)
   const [loadingMore, setLoadingMore] = useState(false)
   const jobsLoadGenRef = useRef(0)
+  const deepLinkFetchedRef = useRef('')
   const [cvResumeSections, setCvResumeSections] = useState<CvResumeSections | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -1212,6 +1213,29 @@ const ExploreJobsPageContent = () => {
         })
         .filter((job) => job !== null) as JobListing[];
   };
+
+  useEffect(() => {
+    if (loading) return
+    const jobId = searchParams.get('job')?.trim()
+    if (!jobId) return
+    if (jobListings.some((job) => String(job.id) === jobId)) return
+    if (deepLinkFetchedRef.current === jobId) return
+    deepLinkFetchedRef.current = jobId
+    let cancelled = false
+    void (async () => {
+      const detail = await fetchJobDetailForApply(jobId, String(API_BASE_URL))
+      if (cancelled || !detail) return
+      const mapped = transformRawJobs([detail])[0]
+      if (!mapped || cancelled) return
+      setSelectedJob(mapped)
+      setViewMode('detail')
+    })()
+    return () => {
+      cancelled = true
+    }
+    // transformRawJobs is recreated each render; the ref prevents repeat fetches.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, jobListings, searchParams])
 
   const loadJobListings = async (opts?: { force?: boolean }) => {
     const gen = ++jobsLoadGenRef.current;

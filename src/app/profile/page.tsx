@@ -18,7 +18,6 @@ import {
 } from '@/lib/profile-section-open';
 
 import { ProfilePageShell } from '@/components/profile/layout';
-import { ResumeRequiredNotice } from '@/components/profile/ResumeRequiredNotice';
 import {
   WorkspaceSectionCard,
   ProfileWorkspaceTabs,
@@ -166,6 +165,7 @@ import { useAuth } from '@/components/auth/AuthContext';
 import { useTabVisibilityRefresh } from '@/hooks/useTabVisibilityRefresh';
 import { filterPortfolioLinksForProfileDisplay } from '@/lib/portfolio-links-display';
 import {
+  invalidateProfileSessionCache,
   isProfileSessionCacheFresh,
   readProfileSessionCache,
   writeProfileSessionCache,
@@ -313,6 +313,25 @@ export default function ProfilePage() {
   const [visaModalMode, setVisaModalMode] = useState<'add' | 'edit'>('edit');
   const [isVaccinationModalOpen, setIsVaccinationModalOpen] = useState(false);
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
+  const isProfileDrawerOpen =
+    isBasicInfoModalOpen ||
+    isSummaryModalOpen ||
+    isGapExplanationModalOpen ||
+    isWorkExperienceModalOpen ||
+    isInternshipModalOpen ||
+    isEducationModalOpen ||
+    isAcademicAchievementModalOpen ||
+    isCompetitiveExamsModalOpen ||
+    isSkillsModalOpen ||
+    isLanguagesModalOpen ||
+    isProjectModalOpen ||
+    isPortfolioLinksModalOpen ||
+    isCertificationModalOpen ||
+    isAccomplishmentModalOpen ||
+    isCareerPreferencesModalOpen ||
+    isVisaWorkAuthorizationModalOpen ||
+    isVaccinationModalOpen ||
+    isResumeModalOpen;
   const [careerPreferencesSuccessMessage, setCareerPreferencesSuccessMessage] = useState('');
 
   // Summary form state
@@ -939,7 +958,7 @@ export default function ProfilePage() {
       return;
     }
     void refreshProfileDataRef.current(id);
-  });
+  }, !isProfileDrawerOpen);
 
   // Fetch and populate profile data on component mount
   useEffect(() => {
@@ -1043,7 +1062,7 @@ export default function ProfilePage() {
     };
 
     fetchCvAnalysis();
-  }, []);
+  }, [user?.id]);
 
   // Recalculate completeness whenever relevant data changes
   const syncProfileEarnRewards = async (candidateId: string) => {
@@ -1102,14 +1121,13 @@ export default function ProfilePage() {
   const fetchAndUpdateCompleteness = async () => {
     const candidateId = getStoredCandidateId();
     if (!candidateId) {
-      calculateProfileCompleteness();
       return;
     }
 
-    const details = await syncProfileEarnRewards(candidateId);
-    if (!details) {
-      calculateProfileCompleteness();
-    }
+    // Server completeness is 12 scoring sections (11/12 = 92%). Never fall back
+    // to the local 6-field formula (5/6 = 83%) — that made health look worse
+    // after AI answers even when the profile had not lost any scoring section.
+    await syncProfileEarnRewards(candidateId);
   };
 
   useEffect(() => {
@@ -1266,6 +1284,14 @@ export default function ProfilePage() {
 
   const detailedMissingSections = useMemo(
     () => getMissingProfileSections(profileSnapshotForMissing, profileCompletenessResponse),
+    [profileSnapshotForMissing, profileCompletenessResponse],
+  );
+
+  const scoringMissingSections = useMemo(
+    () =>
+      getMissingProfileSections(profileSnapshotForMissing, profileCompletenessResponse, {
+        forAlerts: true,
+      }),
     [profileSnapshotForMissing, profileCompletenessResponse],
   );
 
@@ -1512,11 +1538,11 @@ export default function ProfilePage() {
   } = useProfileTabNavigation(PROFILE_SECTIONS, !isLoadingProfile);
 
   const openFirstMissingModal = useCallback(() => {
-    const firstMissing = detailedMissingSections[0];
+    const firstMissing = scoringMissingSections[0] || detailedMissingSections[0];
     if (!firstMissing) return;
     scrollToWorkspaceTab(firstMissing.tabId);
     openProfileSectionBySlug(firstMissing.slug, profileModalHandlers);
-  }, [detailedMissingSections, profileModalHandlers, scrollToWorkspaceTab]);
+  }, [scoringMissingSections, detailedMissingSections, profileModalHandlers, scrollToWorkspaceTab]);
 
   useEffect(() => {
     const open = searchParams.get('open');
@@ -1649,7 +1675,9 @@ export default function ProfilePage() {
   const atsDisplay =
     atsPct !== undefined && atsPct !== null && !Number.isNaN(Number(atsPct))
       ? `${Math.round(Number(atsPct))}%`
-      : null;
+      : resumeData?.fileUrl
+        ? 'pending'
+        : null;
 
   useEffect(() => {
     if (!careerPreferencesSuccessMessage) return;
@@ -1670,22 +1698,6 @@ export default function ProfilePage() {
       <>
 
       <main className="profile-page-typography candidate-dashboard-page mx-auto max-w-[1180px] px-4 py-3 sm:px-5 lg:px-6 lg:py-5">
-        <div className="mb-3">
-          <ResumeRequiredNotice
-            visible={
-              !isLoadingProfile &&
-              !resumeData?.fileName &&
-              !resumeData?.fileUrl &&
-              !(resumeVersionsData?.versions?.length ?? 0)
-            }
-            onUpload={() => router.push(localizePath('/uploadcv', locale))}
-            title={t('candidateDashboard.resumeRequiredTitle')}
-            body={t('candidateDashboard.resumeRequiredBody')}
-            hint={t('candidateDashboard.resumeRequiredHint')}
-            actionLabel={t('candidateDashboard.resumeRequiredAction')}
-            laterLabel={t('candidateDashboard.resumeRequiredLater')}
-          />
-        </div>
         {careerPreferencesSuccessMessage && (
           <div className="mb-6">
             <div className="flex items-start justify-between gap-4 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-slate-900 shadow-sm">
@@ -1742,7 +1754,7 @@ export default function ProfilePage() {
         >
           <ProfileWorkspaceRail
             completionPct={profileCompleteness.percentage}
-            pendingRows={detailedMissingSections.map((section) =>
+            pendingRows={scoringMissingSections.map((section) =>
               tSections(section.slug as never),
             )}
             atsDisplay={atsDisplay}
@@ -1850,9 +1862,17 @@ export default function ProfilePage() {
                           <ProfileResumeFilled
                             resumeData={resumeData}
                             scorePercent={
-                              cvAnalysis?.cv_score ??
-                              resumeData?.atsScore ??
-                              0
+                              (() => {
+                                const fromAnalysis = Number(cvAnalysis?.cv_score);
+                                if (Number.isFinite(fromAnalysis) && fromAnalysis > 0) {
+                                  return fromAnalysis;
+                                }
+                                const fromResume = Number(resumeData?.atsScore);
+                                if (Number.isFinite(fromResume) && fromResume > 0) {
+                                  return fromResume;
+                                }
+                                return null;
+                              })()
                             }
                             onReplace={() => setIsResumeModalOpen(true)}
                           />
@@ -4714,12 +4734,15 @@ export default function ProfilePage() {
 
               const inspectResponse = await fetch(`${API_BASE_URL}/profile/resume/inspect/${candidateId}`, {
                 method: 'POST',
+                headers: getAuthHeadersForFormData(),
                 body: inspectFormData,
               });
               const inspectResult = await inspectResponse.json().catch(() => ({}));
 
+              // Name-check is optional. If inspect fails (no AI key, parse error),
+              // still upload so the CV is stored.
               if (!inspectResponse.ok) {
-                throw new Error(inspectResult.message || 'Failed to inspect resume');
+                console.warn('Resume inspect skipped:', inspectResult.message || inspectResponse.status);
               }
 
               const inspectData = inspectResult.data || {};
@@ -4772,10 +4795,29 @@ export default function ProfilePage() {
                 });
               }
 
+              invalidateProfileSessionCache(candidateId);
+              showAlert('Resume uploaded. Filling your profile from the CV…');
+              const parseDeadline = Date.now() + 90_000;
+              while (Date.now() < parseDeadline) {
+                const statusRes = await fetch(`${API_BASE_URL}/cv/status/${candidateId}`, {
+                  headers: getAuthHeaders(),
+                  cache: 'no-store',
+                });
+                const statusJson = await statusRes.json().catch(() => ({} as { processed?: boolean; aiAnalyzed?: boolean; status?: string }));
+                const status = String(statusJson.status || '').toLowerCase();
+                if (statusJson.processed || statusJson.aiAnalyzed || status === 'completed') {
+                  break;
+                }
+                if (status === 'failed') {
+                  break;
+                }
+                await new Promise((resolve) => window.setTimeout(resolve, 1500));
+              }
+              await refreshProfileData(candidateId);
               void syncProfileEarnRewardsRef.current(candidateId);
               await loadResumeVersions();
               setIsResumeModalOpen(false);
-              showAlert('Resume replaced successfully');
+              showAlert('Resume saved. Profile updated from your CV.');
             } else if (data.fileName && !data.file) {
               // If only fileName is provided (no new file), just update metadata
               const payload = {

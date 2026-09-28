@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ProfileDrawer from '../ui/ProfileDrawer';
 
 interface PortfolioLinksModalProps {
@@ -28,11 +28,6 @@ const LINK_TYPES = [
   'Portfolio Website',
   'GitHub',
   'LinkedIn',
-  'Twitter',
-  'Xing',
-  'Skype',
-  'Facebook',
-  'Stack Overflow',
   'Behance',
   'Dribbble',
   'Medium',
@@ -135,36 +130,48 @@ export default function PortfolioLinksModal({
   const [description, setDescription] = useState('');
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
   const [urlError, setUrlError] = useState('');
+  // Only seed the form when the drawer opens — not when the parent refetches
+  // profile (e.g. user copies a URL from LinkedIn in another tab and comes back).
+  const sessionInitKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (!isOpen) {
+      sessionInitKeyRef.current = null;
+      return;
+    }
+
+    const initKey = initialEditingLinkId ? `edit:${initialEditingLinkId}` : 'add';
+    if (sessionInitKeyRef.current === initKey) {
+      return;
+    }
+    sessionInitKeyRef.current = initKey;
+
     if (initialData) {
       setLinks(dedupePortfolioLinks(initialData.links || []));
     } else {
       setLinks([]);
     }
-    // Reset form or set initial edit state when modal opens
-    if (isOpen) {
-      if (initialEditingLinkId && initialData?.links) {
-        const linkToEdit = initialData.links.find(l => l.id === initialEditingLinkId);
-        if (linkToEdit) {
-          setLinkType(linkToEdit.linkType);
-          setUrl(linkToEdit.url);
-          setTitle(linkToEdit.title || '');
-          setDescription(linkToEdit.description || '');
-          setEditingLinkId(linkToEdit.id);
-          setUrlError('');
-          return;
-        }
+
+    if (initialEditingLinkId && initialData?.links) {
+      const linkToEdit = initialData.links.find((l) => l.id === initialEditingLinkId);
+      if (linkToEdit) {
+        setLinkType(linkToEdit.linkType);
+        setUrl(linkToEdit.url);
+        setTitle(linkToEdit.title || '');
+        setDescription(linkToEdit.description || '');
+        setEditingLinkId(linkToEdit.id);
+        setUrlError('');
+        return;
       }
-      
-      setLinkType('');
-      setUrl('');
-      setTitle('');
-      setDescription('');
-      setEditingLinkId(null);
-      setUrlError('');
     }
-  }, [initialData, isOpen, initialEditingLinkId]);
+
+    setLinkType('');
+    setUrl('');
+    setTitle('');
+    setDescription('');
+    setEditingLinkId(null);
+    setUrlError('');
+  }, [isOpen, initialEditingLinkId, initialData]);
 
   const handleUrlChange = (value: string) => {
     setUrl(value);

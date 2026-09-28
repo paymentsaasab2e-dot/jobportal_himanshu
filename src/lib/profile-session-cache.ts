@@ -18,7 +18,7 @@ export type ProfileSessionCacheEntry = {
 };
 
 const memory = new Map<string, ProfileSessionCacheEntry>();
-const STORAGE_PREFIX = 'saasa:profile-cache:v1:';
+const STORAGE_PREFIX = 'saasa:profile-cache:v2:';
 
 function storageKey(candidateId: string) {
   return `${STORAGE_PREFIX}${candidateId}`;

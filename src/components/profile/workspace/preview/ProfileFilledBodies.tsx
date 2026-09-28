@@ -92,11 +92,6 @@ export function ProfileBasicInfoFilled({ data }: { data: BasicInfoData }) {
         />
         <PreviewMetaItem label={t('fields.city')} value={data.city || '—'} />
         <PreviewMetaItem label={t('fields.country')} value={data.country || '—'} />
-        <PreviewMetaItem label="Marital status" value={data.maritalStatus || data.portalExtras?.maritalStatus || '—'} />
-        <PreviewMetaItem label="Current address" value={data.address || '—'} />
-        <PreviewMetaItem label="Nationality" value={data.nationality || '—'} />
-        <PreviewMetaItem label="State" value={data.state || data.portalExtras?.state || '—'} />
-        <PreviewMetaItem label="Zip" value={data.zip || data.portalExtras?.zip || '—'} />
       </PreviewMetaGrid>
       {data.passportNumber ? (
         <div className="rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-2">
@@ -114,7 +109,7 @@ export function ProfileResumeFilled({
   onReplace,
 }: {
   resumeData: ResumeViewData;
-  scorePercent: number;
+  scorePercent: number | null;
   onReplace: () => void;
 }) {
   const t = useTranslations('profilePage');
@@ -159,13 +154,13 @@ export function ProfileResumeFilled({
               stroke="#2098C8"
               strokeWidth="8"
               fill="none"
-              strokeDasharray={`${Math.min(100, Math.max(0, scorePercent)) * 2.83} 283`}
+              strokeDasharray={`${Math.min(100, Math.max(0, Number(scorePercent) || 0)) * 2.83} 283`}
               strokeLinecap="round"
               className="-rotate-90 origin-center"
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-900">
-            {Math.round(scorePercent)}%
+            {scorePercent == null ? '—' : `${Math.round(scorePercent)}%`}
           </div>
         </div>
         <div className="min-w-0 flex-1 space-y-2">

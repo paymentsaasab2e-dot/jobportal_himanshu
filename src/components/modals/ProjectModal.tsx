@@ -53,7 +53,6 @@ const PROJECT_TYPES = [
   'Open Source',
   'Company Project',
   'Research Project',
-  'Hackathon',
   'Other'
 ];
 

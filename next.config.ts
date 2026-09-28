@@ -52,10 +52,11 @@ const nextConfig: NextConfig = {
         ],
         unoptimized: true, // Allow unoptimized images for local development
     },
-    // Temporarily unblock CI/Vercel deployments while the app is being stabilized.
-    // The pages are still compiled; this only prevents TypeScript from failing the build.
     typescript: {
-        ignoreBuildErrors: true,
+        ignoreBuildErrors: process.env.UAT_SKIP_FRONT_GATES === "1",
+    },
+    eslint: {
+        ignoreDuringBuilds: process.env.UAT_SKIP_FRONT_GATES === "1",
     },
     async headers() {
         return [

@@ -43,58 +43,82 @@ type TokensContextValue = {
 
 const TokensContext = createContext<TokensContextValue | null>(null);
 
+function readCachedTokenBalance(): number {
+  if (typeof window === 'undefined') return 0;
+  const n = Number(window.localStorage.getItem('saasa:last-token-balance'));
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+function persistCachedTokenBalance(value: number) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem('saasa:last-token-balance', String(value));
+}
+
 export function TokensProvider({ children }: { children: ReactNode }) {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(false);
   const [catalog, setCatalog] = useState<TokenCatalog | null>(null);
 
+  useEffect(() => {
+    const cached = readCachedTokenBalance();
+    if (cached > 0) setBalance(cached);
+  }, []);
+
   const refresh = useCallback(async () => {
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated) {
       setBalance(0);
       setCatalog(null);
       return;
     }
     setLoading(true);
     try {
-      const [bal, cat] = await Promise.all([fetchTokenBalance(), fetchTokenCatalog()]);
-      if (bal) {
+      // Never wait on /tokens/catalog to paint the header. Catalog can hang on
+      // HQ Phase-2 lookup; that used to leave the coin badge stuck at 0.
+      const bal = await fetchTokenBalance();
+      if (bal && typeof bal.tokenBalance === 'number') {
         setBalance(bal.tokenBalance);
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('saasa:last-token-balance', String(bal.tokenBalance));
-        }
+        persistCachedTokenBalance(bal.tokenBalance);
       }
-      if (cat) {
-        setCatalog(cat);
-        setBalance(cat.tokenBalance);
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem('saasa:last-token-balance', String(cat.tokenBalance));
-        }
-        const granted = cat.lifecycleGranted || [];
-        if (granted.length > 0) {
-          // Skip welcome here — dashboard already celebrates it once.
-          const items = granted.filter((g) => g.earnKey && g.earnKey !== 'welcome');
-          const total = items.reduce((s, g) => s + (Number(g.amount) || 0), 0);
-          if (total > 0) {
-            dispatchTokenEarn({
-              amount: total,
-              title: items.length === 1 ? formatEarnLabel(items[0].earnKey) : 'Rewards unlocked',
-              subtitle: 'Tokens credited for completed earn tasks.',
-              tokenBalance: cat.tokenBalance,
-              items: items.map((g) => ({
-                label: formatEarnLabel(g.earnKey),
-                amount: g.amount,
-              })),
-            });
+      void fetchTokenCatalog()
+        .then((cat) => {
+          if (!cat) return;
+          setCatalog(cat);
+          if (
+            typeof cat.tokenBalance === 'number' &&
+            Number.isFinite(cat.tokenBalance) &&
+            cat.tokenBalance > 0
+          ) {
+            setBalance(cat.tokenBalance);
+            persistCachedTokenBalance(cat.tokenBalance);
           }
-        }
-      }
+          const granted = cat.lifecycleGranted || [];
+          if (granted.length > 0) {
+            const items = granted.filter((g) => g.earnKey && g.earnKey !== 'welcome');
+            const total = items.reduce((s, g) => s + (Number(g.amount) || 0), 0);
+            if (total > 0) {
+              dispatchTokenEarn({
+                amount: total,
+                title: items.length === 1 ? formatEarnLabel(items[0].earnKey) : 'Rewards unlocked',
+                subtitle: 'Tokens credited for completed earn tasks.',
+                tokenBalance: bal?.tokenBalance ?? cat.tokenBalance,
+                items: items.map((g) => ({
+                  label: formatEarnLabel(g.earnKey),
+                  amount: g.amount,
+                })),
+              });
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn('[tokens] catalog refresh failed', err);
+        });
     } catch (err) {
       console.warn('[tokens] refresh failed', err);
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     void refresh();

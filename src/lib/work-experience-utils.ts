@@ -6,7 +6,6 @@ const EMPLOYMENT_FROM_DB: Record<string, string> = {
   CONTRACT: 'contract',
   INTERNSHIP: 'internship',
   FREELANCE: 'freelance',
-  VOLUNTEER: 'volunteer',
 };
 
 const WORK_MODE_FROM_DB: Record<string, string> = {

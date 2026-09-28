@@ -109,6 +109,7 @@ interface JobMatchesPanelProps {
   isBadgeHighlighted?: boolean;
   onToggleFilter: (filter: JobFilterKey) => void;
   onToggleSave: (jobId: string) => void;
+  onOpenJob: (jobId: string) => void;
   onApply: (jobId: string) => void;
   onViewAll: () => void;
 }
@@ -121,6 +122,7 @@ export default function JobMatchesPanel({
   isBadgeHighlighted = false,
   onToggleFilter,
   onToggleSave,
+  onOpenJob,
   onApply,
   onViewAll,
 }: JobMatchesPanelProps) {
@@ -223,7 +225,17 @@ export default function JobMatchesPanel({
               return (
                 <div
                   key={job.id}
-                  className="rounded-[20px] bg-slate-50/90 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition-all duration-200 hover:bg-white"
+                  role="link"
+                  tabIndex={0}
+                  aria-label={t("viewJobDetails")}
+                  onClick={() => onOpenJob(job.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onOpenJob(job.id);
+                    }
+                  }}
+                  className="group cursor-pointer rounded-[20px] bg-slate-50/90 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition-all duration-200 hover:bg-white hover:shadow-[0_10px_24px_rgba(15,23,42,0.06)]"
                 >
                   <div className="flex min-w-0 items-start gap-3">
                     <CompanyLogoBadge
@@ -236,7 +248,7 @@ export default function JobMatchesPanel({
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0">
-                          <p className="profile-page-value truncate font-semibold">
+                          <p className="profile-page-value truncate font-semibold group-hover:text-[#1A86B3]">
                             {formatJobTitleDisplay(job.title)}
                           </p>
                           <p className="profile-page-value mt-0.5 font-medium">
@@ -255,7 +267,10 @@ export default function JobMatchesPanel({
                           ) : null}
                           <button
                             type="button"
-                            onClick={() => onToggleSave(job.id)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onToggleSave(job.id);
+                            }}
                             aria-label={isSaved ? t("removeFromSaved") : t("saveJobAria")}
                             className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition-all duration-200 ${
                               isSaved
@@ -271,7 +286,10 @@ export default function JobMatchesPanel({
                           </button>
                           <button
                             type="button"
-                            onClick={() => onApply(job.id)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onApply(job.id);
+                            }}
                             className="inline-flex items-center justify-center rounded-xl bg-[#2098C8] px-3 py-2 text-[12px] font-semibold text-white shadow-[0_10px_22px_rgba(32,152,200,0.22)] transition-all duration-200 hover:bg-[#1A86B3]"
                           >
                             {t("applyNow")}
