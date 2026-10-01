@@ -152,7 +152,7 @@ export async function fetchPortalPersonalizedJobsDetailed(
       `${getApiBaseUrl()}/jobs/personalized?candidateId=${encodeURIComponent(candidateId)}&skipAi=${skipAi ? '1' : '0'}&limit=${limit}`,
       locale,
     ),
-    { method: 'GET', signal: opts.signal },
+    { method: 'GET', headers: getAuthHeaders(), signal: opts.signal },
   );
   const payload = await parseJson<{
     success?: boolean;

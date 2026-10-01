@@ -49,9 +49,18 @@ export function HryantraChatSyncHost() {
           return;
         }
         const qs = `?since=${encodeURIComponent(since)}`;
+        const token =
+          typeof window !== 'undefined'
+            ? localStorage.getItem('token') || sessionStorage.getItem('token')
+            : null;
         const res = await fetch(
           `${API_BASE_URL}/hq-chat/users/${encodeURIComponent(userId)}/pending${qs}`,
-          { cache: 'no-store' },
+          {
+            cache: 'no-store',
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          },
         );
         const json = await res.json().catch(() => null);
         if (!res.ok || !json?.success || cancelled) return;
@@ -102,9 +111,18 @@ export function HryantraChatSyncHost() {
       const detail = (event as CustomEvent<{ userId?: string; unreadCount?: number }>).detail;
       if (detail?.userId && detail.userId !== userId) return;
       if (detail?.unreadCount === 0) {
+        const token =
+          typeof window !== 'undefined'
+            ? localStorage.getItem('token') || sessionStorage.getItem('token')
+            : null;
         void fetch(
           `${API_BASE_URL}/hq-chat/users/${encodeURIComponent(userId)}/mark-read`,
-          { method: 'POST' },
+          {
+            method: 'POST',
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          },
         ).catch(() => {});
       }
     };

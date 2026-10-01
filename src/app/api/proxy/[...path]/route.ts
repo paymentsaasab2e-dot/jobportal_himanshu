@@ -122,8 +122,8 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
   const method = req.method.toUpperCase();
   const hasBody = !['GET', 'HEAD'].includes(method);
 
-  try {
-    const response = await fetch(targetUrl, {
+  const doFetch = async () => {
+    return fetch(targetUrl, {
       method,
       headers,
       body: hasBody ? req.body : undefined,
@@ -131,6 +131,17 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
       duplex: hasBody ? 'half' : undefined,
       redirect: 'manual',
     } as RequestInit & { duplex?: 'half' });
+  };
+
+  try {
+    let response: Response;
+    try {
+      response = await doFetch();
+    } catch (initialErr: any) {
+      // If backend was briefly restarting, wait 400ms and retry once
+      await new Promise((r) => setTimeout(r, 400));
+      response = await doFetch();
+    }
 
     const respHeaders = new Headers(response.headers);
     // Avoid passing compression/length headers that can mismatch proxied body.
@@ -145,7 +156,7 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
       headers: respHeaders,
     });
   } catch (error) {
-    console.error(`Proxy error connecting to ${targetUrl}:`, error);
+    console.warn(`[proxy] Backend temporarily unreachable at ${targetUrl}:`, (error as Error)?.message || error);
     // Return empty response for phase2-public-jobs when backend is unavailable
     if (pathParts[0] === 'phase2-public-jobs') {
       return NextResponse.json({ jobs: [], total: 0, page: 1, limit: 120 }, { status: 200 });

@@ -36,7 +36,17 @@ export async function fetchCvDashboardData(
   if (pending) return pending;
 
   const promise = (async () => {
-    const response = await fetch(`${getApiBaseUrl()}/cv/dashboard/${key}`, init);
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('token') || sessionStorage.getItem('token')
+        : null;
+    const response = await fetch(`${getApiBaseUrl()}/cv/dashboard/${key}`, {
+      ...init,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init?.headers,
+      },
+    });
     const payload = (await response.json().catch(() => ({}))) as DashboardPayload;
     const data =
       response.ok && payload.success && payload.data && typeof payload.data === 'object'

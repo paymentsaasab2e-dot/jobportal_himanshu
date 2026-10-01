@@ -142,6 +142,17 @@ export function sortNotificationsNewestFirst(items: Notification[]): Notificatio
   });
 }
 
+function getAuthHeaders(): Record<string, string> {
+  const token =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('token') || sessionStorage.getItem('token')
+      : null;
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 export async function fetchNotifications(
   candidateId: string,
   type?: NotificationType,
@@ -153,9 +164,7 @@ export async function fetchNotifications(
 
   const response = await fetch(url.toString(), {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
     cache: 'no-store',
   });
 
@@ -190,9 +199,7 @@ export async function markNotificationAsRead(
     `${API_BASE_URL}/notifications/${candidateId}/${notificationId}/read`,
     {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
     },
   );
 
@@ -212,9 +219,7 @@ export async function markAllNotificationsAsRead(
     `${API_BASE_URL}/notifications/${candidateId}/mark-all-read`,
     {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
     },
   );
 
@@ -235,9 +240,7 @@ export async function deleteNotification(
     `${API_BASE_URL}/notifications/${candidateId}/${notificationId}`,
     {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
     },
   );
 
@@ -257,9 +260,7 @@ export async function getUnreadNotificationCount(
     `${API_BASE_URL}/notifications/${candidateId}/unread-count`,
     {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
     },
   );
 

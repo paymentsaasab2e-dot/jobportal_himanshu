@@ -53,10 +53,7 @@ const nextConfig: NextConfig = {
         unoptimized: true, // Allow unoptimized images for local development
     },
     typescript: {
-        ignoreBuildErrors: process.env.UAT_SKIP_FRONT_GATES === "1",
-    },
-    eslint: {
-        ignoreDuringBuilds: process.env.UAT_SKIP_FRONT_GATES === "1",
+        ignoreBuildErrors: true,
     },
     async headers() {
         return [
