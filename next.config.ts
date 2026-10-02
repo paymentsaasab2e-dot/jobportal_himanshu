@@ -53,7 +53,7 @@ const nextConfig: NextConfig = {
         unoptimized: true, // Allow unoptimized images for local development
     },
     typescript: {
-        ignoreBuildErrors: true,
+        ignoreBuildErrors: process.env.IGNORE_TS_ERRORS === "true" || process.env.NEXT_PUBLIC_IGNORE_BUILD_ERRORS === "true",
     },
     async headers() {
         return [

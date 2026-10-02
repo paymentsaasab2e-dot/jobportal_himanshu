@@ -157,9 +157,19 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
     });
   } catch (error) {
     console.warn(`[proxy] Backend temporarily unreachable at ${targetUrl}:`, (error as Error)?.message || error);
-    // Return empty response for phase2-public-jobs when backend is unavailable
+    // Return 503 service unavailable response when backend is unreachable
     if (pathParts[0] === 'phase2-public-jobs') {
-      return NextResponse.json({ jobs: [], total: 0, page: 1, limit: 120 }, { status: 200 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unable to connect to jobs service right now. Please try again in a little while.',
+          jobs: [],
+          total: 0,
+          page: 1,
+          limit: 120,
+        },
+        { status: 503 },
+      );
     }
     if (pathParts[0] === 'phase2-public-apply') {
       return NextResponse.json(
@@ -168,7 +178,10 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
       );
     }
     if (pathParts[0] === 'phase2-pre-screen-assessments') {
-      return NextResponse.json({ success: true, data: [] }, { status: 200 });
+      return NextResponse.json(
+        { success: false, error: 'Unable to load pre-screen assessments right now.', data: [] },
+        { status: 503 },
+      );
     }
     if (pathParts[0] === 'phase2-interview-forms') {
       return NextResponse.json(
