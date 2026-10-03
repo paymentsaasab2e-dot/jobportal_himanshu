@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       {
         success: false,
         message:
-          'Employer workspace is unavailable. Start backendphase2 on port 5001 (pnpm dev) and try again.',
+          'Employer workspace is unavailable. Start backendphase2 on port 5001 (npm run dev) and try again.',
       },
       { status: 503 },
     );

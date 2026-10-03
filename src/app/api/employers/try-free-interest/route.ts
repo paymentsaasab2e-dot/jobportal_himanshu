@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       {
         success: false,
         message:
-          'Unable to save your details right now. Start backendphase2 on port 5001 (pnpm dev) and try again.',
+          'Unable to save your details right now. Start backendphase2 on port 5001 (npm run dev) and try again.',
       },
       { status: 503 },
     );
