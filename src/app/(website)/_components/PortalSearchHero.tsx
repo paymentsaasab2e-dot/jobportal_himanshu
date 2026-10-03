@@ -59,7 +59,8 @@ export function PortalSearchHero() {
         const res = await fetchFromApi('/jobs?page=1&limit=300');
         if (!res.ok) return;
         const result = await res.json();
-        const jobs = Array.isArray(result?.data?.jobs)
+        // API job rows are heterogeneous (company object | string fields); keep as any[].
+        const jobs: any[] = Array.isArray(result?.data?.jobs)
           ? result.data.jobs
           : Array.isArray(result?.data)
             ? result.data
@@ -85,13 +86,21 @@ export function PortalSearchHero() {
             if (!titleSeen.has(key)) {
               titleSeen.add(key);
               titles.push(title);
+              const companyObj =
+                job.company && typeof job.company === 'object' ? job.company : null;
+              const clientObj =
+                job.client && typeof job.client === 'object' ? job.client : null;
               catalog.push({
                 id: job.id,
                 title,
-                company: job.company?.name || job.companyName || job.client?.companyName || null,
+                company:
+                  companyObj?.name ||
+                  job.companyName ||
+                  clientObj?.companyName ||
+                  null,
                 location: job.location || '',
                 type: job.type || job.employmentType || '',
-                logo: job.logo || job.company?.logoUrl || '',
+                logo: job.logo || companyObj?.logoUrl || '',
                 isAiSuggestion: false,
               });
             }
