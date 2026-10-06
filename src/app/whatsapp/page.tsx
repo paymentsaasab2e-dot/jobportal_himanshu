@@ -69,6 +69,14 @@ type AuthMode = "signin" | "signup";
 type SignInMethod = "password" | "otp";
 type SignInContact = "whatsapp" | "email";
 
+const FALLBACK_COUNTRY: LocalizedCountryCodeOption = {
+  code: "IN",
+  dialCode: "+91",
+  name: "India",
+  phoneLength: 10,
+  displayName: "India",
+};
+
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -85,10 +93,14 @@ function WhatsAppLoginInner() {
   const { login } = useAuth();
   const countryOptions = useMemo(() => getCountryCodesForLocale(locale), [locale]);
   const [selectedCountryCode, setSelectedCountryCode] = useState("");
-  const selectedCountry = useMemo(
-    () => countryOptions.find((c) => c.code === selectedCountryCode) ?? countryOptions[0],
-    [countryOptions, selectedCountryCode],
-  );
+  const selectedCountry = useMemo((): LocalizedCountryCodeOption => {
+    if (!countryOptions.length) return FALLBACK_COUNTRY;
+    return (
+      countryOptions.find((c) => c.code === selectedCountryCode) ??
+      countryOptions[0] ??
+      FALLBACK_COUNTRY
+    );
+  }, [countryOptions, selectedCountryCode]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
   const [whatsappNumberValue, setWhatsappNumberValue] = useState("");
@@ -151,6 +163,9 @@ function WhatsAppLoginInner() {
     setAuthMode(mode);
     setError("");
     setCaptchaError("");
+    setCaptchaAnswer("");
+    setIsDropdownOpen(false);
+    setCountrySearch("");
     resetSignInOtpFlow();
     setShowAccountNotFound(false);
     setPasswordValue("");
@@ -186,7 +201,7 @@ function WhatsAppLoginInner() {
     }
 
     // Fallback to first sorted option when no browser hint is available.
-    setSelectedCountryCode(countryOptions[0].code);
+    setSelectedCountryCode(countryOptions[0]?.code || FALLBACK_COUNTRY.code);
   }, [countryOptions]);
 
   const filteredCountries = countryOptions
@@ -815,41 +830,37 @@ function WhatsAppLoginInner() {
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           >
           
-          <div className={`w-full bg-white/95 backdrop-blur-xl rounded-[28px] shadow-[0_28px_70px_rgba(8,66,140,0.10)] border border-[#08428c]/10 relative overflow-visible ${isSignIn ? "px-7 py-5 sm:px-8 sm:py-6" : "px-6 py-4 sm:px-8 sm:py-5"}`}>
+          <div className={`w-full bg-white/95 backdrop-blur-xl rounded-[28px] shadow-[0_28px_70px_rgba(8,66,140,0.10)] border border-[#08428c]/10 relative overflow-visible ${isSignIn ? "px-5 py-5 sm:px-8 sm:py-6" : "px-5 py-4 sm:px-8 sm:py-5"}`}>
             <div className="absolute inset-x-0 top-0 h-1 rounded-t-[28px] bg-linear-to-r from-[#08428c] via-[#28a8e1] to-[#FC9620]" />
             
-            <div className={`${isSignIn ? "mb-4" : "mb-2.5"} relative flex p-1 rounded-full bg-[#08428c]/06 border border-[#08428c]/10`}>
+            <div className={`${isSignIn ? "mb-4" : "mb-2.5"} relative grid grid-cols-2 gap-1 p-1 rounded-full bg-[#08428c]/06 border border-[#08428c]/10`}>
+              <motion.span
+                aria-hidden
+                className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-linear-to-r from-[#08428c] to-[#28a8e1] shadow-[0_8px_22px_rgba(8,66,140,0.35)]"
+                initial={false}
+                animate={{
+                  left: isSignIn ? "4px" : "calc(50% + 2px)",
+                  width: "calc(50% - 6px)",
+                }}
+                transition={{ type: "spring", stiffness: 320, damping: 34, mass: 0.8 }}
+              />
               <button
                 type="button"
                 onClick={() => switchMode("signin")}
-                className={`relative z-10 flex-1 h-9 sm:h-10 rounded-full text-[13px] font-bold tracking-tight transition-colors duration-500 ${
+                className={`relative z-10 min-w-0 h-9 sm:h-10 rounded-full px-1.5 sm:px-3 text-[11px] sm:text-[13px] font-bold tracking-tight transition-colors duration-300 ${
                   isSignIn ? "text-white" : "text-slate-500 hover:text-[#08428c]"
                 }`}
               >
-                {isSignIn && (
-                  <motion.span
-                    layoutId="auth-mode-pill"
-                    className="absolute inset-0 rounded-full bg-linear-to-r from-[#08428c] to-[#28a8e1] shadow-[0_8px_22px_rgba(8,66,140,0.35)]"
-                    transition={{ type: "spring", stiffness: 280, damping: 32, mass: 0.85 }}
-                  />
-                )}
-                <span className="relative z-10">{t("whatsapp.modeSignIn")}</span>
+                <span className="block truncate text-center leading-none">{t("whatsapp.modeSignIn")}</span>
               </button>
               <button
                 type="button"
                 onClick={() => switchMode("signup")}
-                className={`relative z-10 flex-1 h-9 sm:h-10 rounded-full text-[13px] font-bold tracking-tight transition-colors duration-500 ${
+                className={`relative z-10 min-w-0 h-9 sm:h-10 rounded-full px-1.5 sm:px-3 text-[11px] sm:text-[13px] font-bold tracking-tight transition-colors duration-300 ${
                   !isSignIn ? "text-white" : "text-slate-500 hover:text-[#08428c]"
                 }`}
               >
-                {!isSignIn && (
-                  <motion.span
-                    layoutId="auth-mode-pill"
-                    className="absolute inset-0 rounded-full bg-linear-to-r from-[#08428c] to-[#28a8e1] shadow-[0_8px_22px_rgba(8,66,140,0.35)]"
-                    transition={{ type: "spring", stiffness: 280, damping: 32, mass: 0.85 }}
-                  />
-                )}
-                <span className="relative z-10">{t("whatsapp.modeCreateAccount")}</span>
+                <span className="block truncate text-center leading-none">{t("whatsapp.modeCreateAccount")}</span>
               </button>
             </div>
 
