@@ -120,13 +120,15 @@ const VALUE_POINTS = [
   },
 ] as const;
 
+const EASE_OUT = [0.22, 1, 0.36, 1] as const;
+
 const stepVariants = {
   hidden: { opacity: 0, y: 18, scale: 0.92 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { delay: 0.12 + i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+    transition: { delay: 0.12 + i * 0.08, duration: 0.45, ease: EASE_OUT },
   }),
 };
 
@@ -135,7 +137,7 @@ const cardVariants = {
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: 0.35 + i * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+    transition: { delay: 0.35 + i * 0.1, duration: 0.5, ease: EASE_OUT },
   }),
 };
 

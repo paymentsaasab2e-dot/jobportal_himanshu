@@ -48,26 +48,24 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-09-22T11:17:06.396Z",
+      "capturedAt": "2026-09-30T13:05:01.507Z",
       "kind": "realtime_session",
       "session": {
         "logins": 3,
-        "visits": 7,
+        "visits": 5,
         "applies": 0,
-        "activeMs": 30000,
+        "activeMs": 90000,
         "sessionCount": 3,
         "topInsightIds": [
-          "low_market_fit_active"
+          "balanced"
         ],
-        "triggerFlags": [
-          "career_assist"
-        ],
-        "alertWindow": "Tue / Sat · 1:00 PM–2:00 PM",
+        "triggerFlags": [],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
         "alertConfidence": "high",
         "topLocation": "Mumbai, Maharashtra, India",
         "preferredAlertHours": [
-          16,
-          14
+          17,
+          18
         ]
       },
       "hasFullLatest": true
@@ -793,73 +791,73 @@
     },
     "b1c869d84e75048c5c61c5e3": {
       "userId": "b1c869d84e75048c5c61c5e3",
-      "capturedAt": "2026-09-22T11:17:06.396Z",
-      "activityStateUpdatedAt": "2026-09-22T11:17:03.001Z",
+      "capturedAt": "2026-09-30T13:05:01.507Z",
+      "activityStateUpdatedAt": "2026-09-30T13:04:42.027Z",
       "rollup7d": {
         "userId": "b1c869d84e75048c5c61c5e3",
         "range": "week",
-        "fromDate": "2026-09-16",
-        "toDate": "2026-09-22",
+        "fromDate": "2026-09-24",
+        "toDate": "2026-09-30",
         "logins": 3,
-        "visits": 7,
+        "visits": 5,
         "jobCardClicks": 0,
         "applies": 0,
-        "activeMs": 30000,
+        "activeMs": 90000,
         "sessionCount": 3,
         "pageVisitsByCategory": {
-          "other": 3,
-          "dashboard": 3,
-          "profile": 1
+          "other": 1,
+          "dashboard": 4
         },
         "activeMsByCategory": {
-          "other": 15000,
-          "dashboard": 15000
+          "dashboard": 90000
         },
         "firstOpenBreakdown": {
-          "dashboard": 2
+          "dashboard": 1
         },
-        "avgActiveMsPerDay": 15000,
-        "daysActive": 2,
+        "avgActiveMsPerDay": 90000,
+        "daysActive": 1,
         "topFirstOpen": "dashboard",
         "insights": [
           {
-            "id": "low_market_fit_active",
-            "label": "Low market fit while job hunting",
-            "severity": "watch",
-            "summary": "Market-fit score is weak relative to activity — retarget skills/keywords to the role.",
+            "id": "balanced",
+            "label": "Balanced activity",
+            "severity": "info",
+            "summary": "No strong imbalance detected yet — keep collecting signals.",
             "evidence": [
-              "Market fit 0%",
-              "0 job views",
-              "3 apps"
+              "0 job clicks",
+              "0 applies",
+              "2 min active"
             ]
           }
         ],
         "recentSessions": [
           {
-            "id": "sess_muckw2yh_xle0b6",
-            "startedAt": "2026-09-22T11:16:03.448Z",
-            "lastActiveAt": "2026-09-22T11:17:03.001Z",
-            "durationMs": 30000,
-            "pageCount": 5,
-            "firstPath": "/",
-            "lastPath": "/profile",
-            "lastCategory": "profile",
+            "id": "sess_muo378u5_eidg2e",
+            "startedAt": "2026-09-30T12:34:05.293Z",
+            "lastActiveAt": "2026-09-30T13:04:42.027Z",
+            "durationMs": 60000,
+            "pageCount": 3,
             "paths": [
-              "/",
-              "/whatsapp",
-              "/candidate-dashboard",
-              "/profile"
+              "/candidate-dashboard"
             ],
             "deviceType": "desktop",
             "browser": "Chrome",
             "operatingSystem": "Windows",
-            "endedAt": "2026-09-22T11:16:39.882Z"
+            "country": "India",
+            "state": "Maharashtra",
+            "city": "Mumbai",
+            "timezone": "Asia/Calcutta",
+            "ipAddress": "110.226.180.23",
+            "lastCategory": "dashboard",
+            "endedAt": "2026-09-30T12:45:48.054Z",
+            "lastPath": "/candidate-dashboard",
+            "firstPath": "/candidate-dashboard"
           },
           {
-            "id": "sess_mu85oil6_jqh0l9",
-            "startedAt": "2026-09-19T08:59:11.514Z",
-            "lastActiveAt": "2026-09-19T09:00:26.041Z",
-            "durationMs": 0,
+            "id": "sess_muo1gjha_ijm9yx",
+            "startedAt": "2026-09-30T11:45:19.774Z",
+            "lastActiveAt": "2026-09-30T11:53:41.528Z",
+            "durationMs": 2925519,
             "pageCount": 1,
             "paths": [
               "/candidate-dashboard"
@@ -871,17 +869,17 @@
             "state": "Maharashtra",
             "city": "Mumbai",
             "timezone": "Asia/Calcutta",
-            "ipAddress": "110.226.180.222",
+            "ipAddress": "110.226.180.23",
             "lastPath": "/candidate-dashboard",
             "lastCategory": "dashboard",
             "firstPath": "/candidate-dashboard",
-            "endedAt": "2026-09-19T09:00:26.041Z"
+            "endedAt": "2026-09-30T12:34:05.293Z"
           },
           {
-            "id": "sess_mu85oiig_jkafje",
-            "startedAt": "2026-09-19T08:59:11.415Z",
-            "lastActiveAt": "2026-09-19T08:59:11.418Z",
-            "durationMs": 99,
+            "id": "sess_muo1gj9m_disg10",
+            "startedAt": "2026-09-30T11:45:19.498Z",
+            "lastActiveAt": "2026-09-30T11:45:19.499Z",
+            "durationMs": 276,
             "pageCount": 1,
             "firstPath": "/whatsapp",
             "lastPath": "/whatsapp",
@@ -896,112 +894,87 @@
             "state": "Maharashtra",
             "city": "Mumbai",
             "timezone": "Asia/Calcutta",
-            "ipAddress": "110.226.180.222",
-            "endedAt": "2026-09-19T08:59:11.514Z"
+            "ipAddress": "110.226.180.23",
+            "endedAt": "2026-09-30T11:45:19.774Z"
           }
         ],
         "recentEvents": [
           {
-            "id": "ev_muckxcwp_1wu1ha",
-            "at": "2026-09-22T11:17:03.001Z",
-            "type": "page_visit",
-            "category": "profile",
-            "path": "/profile",
-            "sessionId": "sess_muckw2yh_xle0b6"
-          },
-          {
-            "id": "ev_muckww7p_615m69",
-            "at": "2026-09-22T11:16:41.365Z",
-            "type": "page_visit",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_muckw2yh_xle0b6"
-          },
-          {
-            "id": "ev_muckwv2i_rikj15",
-            "at": "2026-09-22T11:16:39.882Z",
-            "type": "session_end",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_muckw2yh_xle0b6",
-            "meta": {
-              "durationMs": 15000
-            }
-          },
-          {
-            "id": "ev_muckwpuz_bgnzot",
-            "at": "2026-09-22T11:16:33.131Z",
-            "type": "page_visit",
-            "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_muckw2yh_xle0b6"
-          },
-          {
-            "id": "ev_muckwifb_76qh69",
-            "at": "2026-09-22T11:16:23.495Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/whatsapp",
-            "sessionId": "sess_muckw2yh_xle0b6"
-          },
-          {
-            "id": "ev_muckwel0_l2ktki",
-            "at": "2026-09-22T11:16:18.516Z",
+            "id": "ev_muo4am23_2gphn9",
+            "at": "2026-09-30T13:04:42.027Z",
             "type": "time_slice",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_muckw2yh_xle0b6",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_muo378u5_eidg2e",
             "meta": {
               "durationMs": 15000,
               "rolling": true
             }
           },
           {
-            "id": "ev_muckw2yl_tetp2k",
-            "at": "2026-09-22T11:16:03.453Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_muckw2yh_xle0b6"
-          },
-          {
-            "id": "ev_muckw2yi_ar6hp5",
-            "at": "2026-09-22T11:16:03.450Z",
-            "type": "login",
-            "category": "other",
-            "path": "/",
-            "sessionId": "sess_muckw2yh_xle0b6",
+            "id": "ev_muo46c5n_3hfm7p",
+            "at": "2026-09-30T13:01:22.571Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_muo378u5_eidg2e",
             "meta": {
-              "deviceType": "desktop",
-              "browser": "Chrome",
-              "operatingSystem": "Windows"
+              "durationMs": 15000,
+              "rolling": true
             }
           },
           {
-            "id": "ev_mu85q43d_ax1pq2",
-            "at": "2026-09-19T09:00:26.041Z",
+            "id": "ev_muo44q78_dvftaa",
+            "at": "2026-09-30T13:00:07.460Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_muo378u5_eidg2e"
+          },
+          {
+            "id": "ev_muo3mu4s_f4wrec",
+            "at": "2026-09-30T12:46:12.748Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_muo378u5_eidg2e"
+          },
+          {
+            "id": "ev_muo3mdx8_r8zk6e",
+            "at": "2026-09-30T12:45:51.740Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_muo378u5_eidg2e"
+          },
+          {
+            "id": "ev_muo3mb2u_i9oztd",
+            "at": "2026-09-30T12:45:48.054Z",
             "type": "session_end",
             "category": "dashboard",
-            "path": "/candidate-dashboard",
-            "sessionId": "sess_mu85oil6_jqh0l9",
+            "sessionId": "sess_muo378u5_eidg2e",
             "meta": {
-              "durationMs": 0
+              "durationMs": 15000
             }
           },
           {
-            "id": "ev_mu85or8w_7nqsxv",
-            "at": "2026-09-19T08:59:22.736Z",
-            "type": "page_visit",
+            "id": "ev_muo3795w_2o76jl",
+            "at": "2026-09-30T12:34:05.732Z",
+            "type": "time_slice",
             "category": "dashboard",
             "path": "/candidate-dashboard",
-            "sessionId": "sess_mu85oil6_jqh0l9"
+            "sessionId": "sess_muo378u5_eidg2e",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
           },
           {
-            "id": "ev_mu85oil6_7l452r",
-            "at": "2026-09-19T08:59:11.514Z",
+            "id": "ev_muo378u6_yy3gae",
+            "at": "2026-09-30T12:34:05.310Z",
             "type": "login",
             "category": "other",
-            "sessionId": "sess_mu85oil6_jqh0l9",
+            "sessionId": "sess_muo378u5_eidg2e",
             "meta": {
               "deviceType": "desktop",
               "browser": "Chrome",
@@ -1010,35 +983,58 @@
               "state": "Maharashtra",
               "city": "Mumbai",
               "timezone": "Asia/Calcutta",
-              "ipAddress": "110.226.180.222"
+              "ipAddress": "110.226.180.23"
             }
           },
           {
-            "id": "ev_mu85oil6_1godu9",
-            "at": "2026-09-19T08:59:11.514Z",
+            "id": "ev_muo378ty_mhfprh",
+            "at": "2026-09-30T12:34:05.302Z",
             "type": "session_end",
-            "category": "other",
-            "path": "/whatsapp",
-            "sessionId": "sess_mu85oiig_jkafje",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_muo1gjha_ijm9yx",
             "meta": {
-              "durationMs": 99
+              "durationMs": 2925519
             }
           },
           {
-            "id": "ev_mu85oiii_h19ttt",
-            "at": "2026-09-19T08:59:11.418Z",
-            "type": "page_visit",
-            "category": "other",
-            "path": "/whatsapp",
-            "sessionId": "sess_mu85oiig_jkafje"
+            "id": "ev_muo1ramx_nwhtak",
+            "at": "2026-09-30T11:53:41.529Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_muo1gjha_ijm9yx",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
           },
           {
-            "id": "ev_mu85oiig_piazux",
-            "at": "2026-09-19T08:59:11.416Z",
+            "id": "ev_muo1jx3c_pxgocn",
+            "at": "2026-09-30T11:47:57.384Z",
+            "type": "time_slice",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_muo1gjha_ijm9yx",
+            "meta": {
+              "durationMs": 15000,
+              "rolling": true
+            }
+          },
+          {
+            "id": "ev_muo1gk0o_b2i3me",
+            "at": "2026-09-30T11:45:20.472Z",
+            "type": "page_visit",
+            "category": "dashboard",
+            "path": "/candidate-dashboard",
+            "sessionId": "sess_muo1gjha_ijm9yx"
+          },
+          {
+            "id": "ev_muo1gjha_alkdv4",
+            "at": "2026-09-30T11:45:19.774Z",
             "type": "login",
             "category": "other",
-            "path": "/whatsapp",
-            "sessionId": "sess_mu85oiig_jkafje",
+            "sessionId": "sess_muo1gjha_ijm9yx",
             "meta": {
               "deviceType": "desktop",
               "browser": "Chrome",
@@ -1047,203 +1043,174 @@
               "state": "Maharashtra",
               "city": "Mumbai",
               "timezone": "Asia/Calcutta",
-              "ipAddress": "110.226.180.222"
+              "ipAddress": "110.226.180.23"
+            }
+          },
+          {
+            "id": "ev_muo1gjha_hulr1j",
+            "at": "2026-09-30T11:45:19.774Z",
+            "type": "session_end",
+            "category": "other",
+            "path": "/whatsapp",
+            "sessionId": "sess_muo1gj9m_disg10",
+            "meta": {
+              "durationMs": 276
+            }
+          },
+          {
+            "id": "ev_muo1gj9n_55szk9",
+            "at": "2026-09-30T11:45:19.499Z",
+            "type": "page_visit",
+            "category": "other",
+            "path": "/whatsapp",
+            "sessionId": "sess_muo1gj9m_disg10"
+          },
+          {
+            "id": "ev_muo1gj9m_3u4ae1",
+            "at": "2026-09-30T11:45:19.498Z",
+            "type": "login",
+            "category": "other",
+            "path": "/whatsapp",
+            "sessionId": "sess_muo1gj9m_disg10",
+            "meta": {
+              "deviceType": "desktop",
+              "browser": "Chrome",
+              "operatingSystem": "Windows",
+              "country": "India",
+              "state": "Maharashtra",
+              "city": "Mumbai",
+              "timezone": "Asia/Calcutta",
+              "ipAddress": "110.226.180.23"
             }
           }
         ],
         "topCompanies": [],
         "topRoles": [],
-        "hqTriggers": [
-          {
-            "id": "hq_low_market_fit",
-            "flag": "career_assist",
-            "title": "Low market fit while actively job hunting",
-            "reason": "Market-fit score is weak relative to activity — skills/keywords/role target may be off.",
-            "evidence": [
-              "Market fit 0%",
-              "3 applications",
-              "0 job clicks"
-            ],
-            "recommendedAction": "User: CV gap coach + role quizzes. Sales: market-fit consultation.",
-            "priority": 81,
-            "audience": "both",
-            "comboSignals": [
-              "low_market_fit",
-              "job_activity"
-            ]
-          }
-        ],
+        "hqTriggers": [],
         "profileSnapshot": {
           "skillsCount": 8,
           "profileCompleteness": 75,
           "cvScore": 83,
           "marketFit": 0,
-          "applicationsTotal": 3,
-          "rejectionsTotal": 1,
+          "applicationsTotal": 1,
+          "rejectionsTotal": 0,
           "postInterviewRejections": 0,
           "missingSectionsCount": 1,
           "missingSectionKeys": [
             "projects"
           ],
-          "updatedAt": "2026-09-22T11:16:43.790Z"
+          "updatedAt": "2026-09-30T13:02:08.806Z"
         },
         "behaviourSignals": {
           "userId": "b1c869d84e75048c5c61c5e3",
           "topCategories": [
-            "profile",
             "jobs",
-            "courses"
+            "courses",
+            "lms"
           ],
           "weakCategories": [
             "premium",
             "events",
             "community"
           ],
-          "insightIds": [
-            "low_market_fit_active"
-          ],
+          "insightIds": [],
           "jobCardClicks7d": 0,
           "applies7d": 0,
-          "activeMs7d": 30000,
+          "activeMs7d": 90000,
           "activeMsByCategory7d": {
-            "other": 15000,
-            "dashboard": 15000
+            "dashboard": 90000
           },
           "pageVisitsByCategory7d": {
-            "other": 3,
-            "dashboard": 3,
-            "profile": 1
+            "other": 1,
+            "dashboard": 4
           },
           "skillsCount": 8,
-          "rejectionsTotal": 1,
+          "rejectionsTotal": 0,
           "cvScore": 83,
           "marketFit": 0,
           "missingSectionsCount": 1,
           "topCompanies": [],
           "topRoles": [],
-          "hqTriggers": [
-            {
-              "id": "hq_low_market_fit",
-              "flag": "career_assist",
-              "title": "Low market fit while actively job hunting",
-              "reason": "Market-fit score is weak relative to activity — skills/keywords/role target may be off.",
-              "evidence": [
-                "Market fit 0%",
-                "3 applications",
-                "0 job clicks"
-              ],
-              "recommendedAction": "User: CV gap coach + role quizzes. Sales: market-fit consultation.",
-              "priority": 81,
-              "audience": "both",
-              "comboSignals": [
-                "low_market_fit",
-                "job_activity"
-              ]
-            }
-          ],
+          "hqTriggers": [],
           "preferSlotIds": [
-            "ai_cv",
             "course",
-            "quizzes",
-            "jobs",
             "events",
             "community"
           ],
           "deprioritizeSlotIds": [
-            "profile",
-            "career_path"
+            "jobs",
+            "career_path",
+            "quizzes"
           ],
-          "userSuggestionHints": [
-            "Prepare before you apply — You’ve been looking at this company roles, but your scores look low (market fit ~0%, CV ~83%). Start “Frontend Interview Readiness” or open a guided premium service to close the gap, then apply when you’re stronger."
-          ],
+          "userSuggestionHints": [],
           "preferredAlertHours": [
-            16,
-            14
+            17,
+            18
           ],
-          "preferredAlertWindowLabel": "Tue / Sat · 4:00 PM–2:00 PM",
+          "preferredAlertWindowLabel": "Wed · 5:00 PM–6:00 PM",
           "alertTimingConfidence": "medium"
         }
       },
       "suggestionMetrics": {
         "userId": "b1c869d84e75048c5c61c5e3",
-        "updatedAt": "2026-09-22T11:17:04.040Z",
+        "updatedAt": "2026-09-30T13:04:04.685Z",
         "totalRejections": 0,
         "postInterviewRejections": 0,
         "repeatRejectionCount": 0,
-        "suggestionsPushed": 7,
+        "suggestionsPushed": 3,
         "suggestionsClicked": 0,
         "suggestionsPurchased": 0,
         "salesFollowUpScore": 10,
         "salesFollowUpReady": false,
         "byScenario": {
-          "profile_match": 1,
-          "interest_nudge": 6
+          "profile_match": 3
         },
         "recentSuggestions": [
           {
-            "id": "sug_mu85olkc_bb30pc",
+            "id": "sug_muo1goz1_eyjy59",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Frontend Interview Readiness",
             "actionUrl": "/lms/courses/c1",
-            "pushedAt": "2026-09-19T08:59:15.372Z"
+            "pushedAt": "2026-09-30T11:45:26.893Z"
           },
           {
-            "id": "sug_muckw8xk_slmcpe",
+            "id": "sug_muo2ja00_cg8co3",
+            "dedupeKey": "engage:course",
+            "scenario": "profile_match",
+            "kind": "course",
+            "title": "Frontend Interview Readiness",
+            "actionUrl": "/lms/courses/c1",
+            "pushedAt": "2026-09-30T12:15:27.072Z"
+          },
+          {
+            "id": "sug_muo3mewp_0p0h17",
             "dedupeKey": "engage:course",
             "scenario": "profile_match",
             "kind": "course",
             "title": "Career Narrative Lab",
             "actionUrl": "/lms/courses/c6",
-            "pushedAt": "2026-09-22T11:16:11.192Z"
+            "pushedAt": "2026-09-30T12:45:53.017Z"
           }
         ]
       },
-      "triggers": [
-        {
-          "id": "hq_low_market_fit",
-          "flag": "career_assist",
-          "title": "Low market fit while actively job hunting",
-          "reason": "Market-fit score is weak relative to activity — skills/keywords/role target may be off.",
-          "evidence": [
-            "Market fit 0%",
-            "3 applications",
-            "0 job clicks"
-          ],
-          "recommendedAction": "User: CV gap coach + role quizzes. Sales: market-fit consultation.",
-          "priority": 81,
-          "audience": "both",
-          "comboSignals": [
-            "low_market_fit",
-            "job_activity"
-          ]
-        }
-      ],
+      "triggers": [],
       "interests": [
         {
           "key": "learning",
           "label": "Learning & courses",
           "score": 18,
-          "updatedAt": "2026-09-19T08:59:12.464Z"
+          "updatedAt": "2026-09-30T11:45:21.981Z"
         },
         {
           "key": "watercooler",
           "label": "Workplace chat",
           "score": 18,
-          "updatedAt": "2026-09-19T08:59:12.465Z"
+          "updatedAt": "2026-09-30T11:45:21.981Z"
         }
       ],
       "personalizedRecs": [
-        {
-          "id": "rec_interview_prep",
-          "interestKey": "interview_prep",
-          "interestScore": 18,
-          "title": "Quick interview practice",
-          "text": "You’re about 18 on Interview prep — try one short mock today.",
-          "actionUrl": "/lms/interview-prep",
-          "priority": 85
-        },
         {
           "id": "rec_learning",
           "interestKey": "learning",
@@ -1261,41 +1228,32 @@
           "text": "You engage with Workplace chat — check one new circle post today.",
           "actionUrl": "/community",
           "priority": 61
-        },
-        {
-          "id": "rec_ai_cv",
-          "interestKey": "ai_cv",
-          "interestScore": 12,
-          "title": "Stay on ai cv",
-          "text": "You’re 12 into ai cv — pick one job, course, or post on that theme.",
-          "actionUrl": "/explore-jobs",
-          "priority": 44
         }
       ],
       "sessionEngagement": {
-        "sessionCount": 30,
-        "activeCount": 22,
-        "totalDurationMs": 52682438828,
-        "avgDurationMs": 1756081294,
-        "medianDurationMs": 562967574,
-        "uniqueIps": 13,
-        "uniqueDevices": 1,
+        "sessionCount": 29,
+        "activeCount": 26,
+        "totalDurationMs": 96495456359,
+        "avgDurationMs": 3327429530,
+        "medianDurationMs": 1300865468,
+        "uniqueIps": 10,
+        "uniqueDevices": 2,
         "locations": [
           {
             "key": "Mumbai, Maharashtra, India",
             "city": "Mumbai",
             "state": "Maharashtra",
             "country": "India",
-            "sessions": 7,
-            "totalDurationMs": 2095003105
+            "sessions": 13,
+            "totalDurationMs": 11294543050
           },
           {
-            "key": "Calcutta, Calcutta, India",
-            "city": "Calcutta",
-            "state": "Calcutta",
+            "key": "Mangalore, Karnataka, India",
+            "city": "Mangalore",
+            "state": "Karnataka",
             "country": "India",
-            "sessions": 3,
-            "totalDurationMs": 517462580
+            "sessions": 2,
+            "totalDurationMs": 10063692281
           },
           {
             "key": "Thane, Maharashtra, India",
@@ -1303,161 +1261,171 @@
             "state": "Maharashtra",
             "country": "India",
             "sessions": 2,
-            "totalDurationMs": 5445848191
-          },
-          {
-            "key": "Pune, Maharashtra, India",
-            "city": "Pune",
-            "state": "Maharashtra",
-            "country": "India",
-            "sessions": 1,
-            "totalDurationMs": 2150167462
+            "totalDurationMs": 3645565276
           }
         ],
         "byHour": [
           {
-            "hour": 13,
-            "label": "1:00 PM",
-            "sessions": 5,
-            "totalDurationMs": 12684783069
-          },
-          {
-            "hour": 14,
-            "label": "2:00 PM",
-            "sessions": 6,
-            "totalDurationMs": 10769621864
+            "hour": 15,
+            "label": "3:00 PM",
+            "sessions": 7,
+            "totalDurationMs": 25385141953
           },
           {
             "hour": 12,
             "label": "12:00 PM",
-            "sessions": 2,
-            "totalDurationMs": 6591992892
-          },
-          {
-            "hour": 11,
-            "label": "11:00 AM",
-            "sessions": 1,
-            "totalDurationMs": 6498146294
-          },
-          {
-            "hour": 17,
-            "label": "5:00 PM",
             "sessions": 3,
-            "totalDurationMs": 6132496068
+            "totalDurationMs": 18637954846
           },
           {
             "hour": 19,
             "label": "7:00 PM",
-            "sessions": 3,
-            "totalDurationMs": 4900402550
+            "sessions": 2,
+            "totalDurationMs": 10793647357
           },
           {
-            "hour": 15,
-            "label": "3:00 PM",
+            "hour": 17,
+            "label": "5:00 PM",
+            "sessions": 5,
+            "totalDurationMs": 9440492076
+          },
+          {
+            "hour": 11,
+            "label": "11:00 AM",
+            "sessions": 2,
+            "totalDurationMs": 8862507374
+          },
+          {
+            "hour": 13,
+            "label": "1:00 PM",
+            "sessions": 4,
+            "totalDurationMs": 8539256483
+          },
+          {
+            "hour": 14,
+            "label": "2:00 PM",
             "sessions": 3,
-            "totalDurationMs": 3723310003
+            "totalDurationMs": 8498935877
+          },
+          {
+            "hour": 10,
+            "label": "10:00 AM",
+            "sessions": 1,
+            "totalDurationMs": 5385698867
+          },
+          {
+            "hour": 18,
+            "label": "6:00 PM",
+            "sessions": 1,
+            "totalDurationMs": 951139180
           },
           {
             "hour": 16,
             "label": "4:00 PM",
-            "sessions": 7,
-            "totalDurationMs": 1381686088
+            "sessions": 1,
+            "totalDurationMs": 682346
           }
         ],
         "byWeekday": [
           {
-            "weekday": 2,
-            "label": "Tue",
-            "sessions": 5,
-            "totalDurationMs": 15128278781
-          },
-          {
-            "weekday": 6,
-            "label": "Sat",
-            "sessions": 9,
-            "totalDurationMs": 14383790718
-          },
-          {
             "weekday": 1,
             "label": "Mon",
-            "sessions": 7,
-            "totalDurationMs": 7119041490
-          },
-          {
-            "weekday": 4,
-            "label": "Thu",
-            "sessions": 1,
-            "totalDurationMs": 6498146294
-          },
-          {
-            "weekday": 3,
-            "label": "Wed",
-            "sessions": 3,
-            "totalDurationMs": 6333429607
+            "sessions": 5,
+            "totalDurationMs": 26945678921
           },
           {
             "weekday": 5,
             "label": "Fri",
             "sessions": 5,
-            "totalDurationMs": 3219751938
+            "totalDurationMs": 21723466931
+          },
+          {
+            "weekday": 2,
+            "label": "Tue",
+            "sessions": 6,
+            "totalDurationMs": 18019671673
+          },
+          {
+            "weekday": 6,
+            "label": "Sat",
+            "sessions": 6,
+            "totalDurationMs": 12664837028
+          },
+          {
+            "weekday": 0,
+            "label": "Sun",
+            "sessions": 1,
+            "totalDurationMs": 7532800908
+          },
+          {
+            "weekday": 4,
+            "label": "Thu",
+            "sessions": 2,
+            "totalDurationMs": 5913677324
+          },
+          {
+            "weekday": 3,
+            "label": "Wed",
+            "sessions": 4,
+            "totalDurationMs": 3695323574
           }
         ],
         "alertTiming": {
           "bestHours": [
-            13,
-            14,
-            12
+            15,
+            12,
+            19
           ],
           "bestHourLabels": [
-            "1:00 PM",
-            "2:00 PM",
-            "12:00 PM"
+            "3:00 PM",
+            "12:00 PM",
+            "7:00 PM"
           ],
           "bestWeekdays": [
-            "Tue",
-            "Sat"
+            "Mon",
+            "Fri"
           ],
-          "bestWindowLabel": "Tue / Sat · 1:00 PM–2:00 PM",
+          "bestWindowLabel": "Mon / Fri · 3:00 PM–12:00 PM",
           "avoidHours": [
             16,
-            15,
-            19
+            18,
+            10
           ],
           "timezone": "Asia/Calcutta",
           "confidence": "high",
-          "reason": "Most active around 1:00 PM and 2:00 PM local time · avg session 29268 min · often from Mumbai, Maharashtra, India",
-          "sampleSessions": 30,
-          "avgDurationMs": 1756081294,
-          "medianDurationMs": 562967574
+          "reason": "Most active around 3:00 PM and 12:00 PM local time · avg session 55457 min · often from Mumbai, Maharashtra, India",
+          "sampleSessions": 29,
+          "avgDurationMs": 3327429530,
+          "medianDurationMs": 1300865468
         }
       },
       "alertTiming": {
         "bestHours": [
-          13,
-          14,
-          12
+          15,
+          12,
+          19
         ],
         "bestHourLabels": [
-          "1:00 PM",
-          "2:00 PM",
-          "12:00 PM"
+          "3:00 PM",
+          "12:00 PM",
+          "7:00 PM"
         ],
         "bestWeekdays": [
-          "Tue",
-          "Sat"
+          "Mon",
+          "Fri"
         ],
-        "bestWindowLabel": "Tue / Sat · 1:00 PM–2:00 PM",
+        "bestWindowLabel": "Mon / Fri · 3:00 PM–12:00 PM",
         "avoidHours": [
           16,
-          15,
-          19
+          18,
+          10
         ],
         "timezone": "Asia/Calcutta",
         "confidence": "high",
-        "reason": "Most active around 1:00 PM and 2:00 PM local time · avg session 29268 min · often from Mumbai, Maharashtra, India",
-        "sampleSessions": 30,
-        "avgDurationMs": 1756081294,
-        "medianDurationMs": 562967574
+        "reason": "Most active around 3:00 PM and 12:00 PM local time · avg session 55457 min · often from Mumbai, Maharashtra, India",
+        "sampleSessions": 29,
+        "avgDurationMs": 3327429530,
+        "medianDurationMs": 1300865468
       },
       "locations": [
         {
@@ -1465,16 +1433,16 @@
           "city": "Mumbai",
           "state": "Maharashtra",
           "country": "India",
-          "sessions": 7,
-          "totalDurationMs": 2095003105
+          "sessions": 13,
+          "totalDurationMs": 11294543050
         },
         {
-          "key": "Calcutta, Calcutta, India",
-          "city": "Calcutta",
-          "state": "Calcutta",
+          "key": "Mangalore, Karnataka, India",
+          "city": "Mangalore",
+          "state": "Karnataka",
           "country": "India",
-          "sessions": 3,
-          "totalDurationMs": 517462580
+          "sessions": 2,
+          "totalDurationMs": 10063692281
         },
         {
           "key": "Thane, Maharashtra, India",
@@ -1482,15 +1450,7 @@
           "state": "Maharashtra",
           "country": "India",
           "sessions": 2,
-          "totalDurationMs": 5445848191
-        },
-        {
-          "key": "Pune, Maharashtra, India",
-          "city": "Pune",
-          "state": "Maharashtra",
-          "country": "India",
-          "sessions": 1,
-          "totalDurationMs": 2150167462
+          "totalDurationMs": 3645565276
         }
       ]
     },
@@ -2016,6 +1976,402 @@
     }
   },
   "history": [
+    {
+      "id": "hist_muo44u03_mrzu",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T13:00:12.261Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 5,
+        "applies": 0,
+        "activeMs": 45000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muo3gqbe_bfbv",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T12:41:27.811Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 45000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muo38a9m_5uil",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T12:34:53.796Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 45000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muo31bhm_nqd7",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T12:29:28.792Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 30000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muo2tkzf_a474",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T12:23:27.849Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 30000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muo2lvym_vw5s",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T12:17:28.813Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 30000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muo2e5dr_5lsp",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T12:11:27.791Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 30000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muo26flw_v4eh",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T12:05:27.792Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 30000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muo1ypuj_67ez",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T11:59:27.804Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 30000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muo1rbya_gdv9",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T11:53:43.174Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 30000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muo1kgrd_lpkl",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T11:48:22.836Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 15000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muo1e11g_mgx4",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T11:43:21.792Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 3,
+        "applies": 0,
+        "activeMs": 15000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_munufdc6_r2du",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T08:28:27.802Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 15000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_munu7nk9_pqm0",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T08:22:27.815Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 15000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muntzyl8_9y5n",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T08:16:28.841Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 15000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 1:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_munts805_zbkw",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T08:10:27.810Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 15000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muntkiac_g89o",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T08:04:27.855Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 15000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_muntcsik_ssrb",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T07:58:27.874Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 15000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_munt53jr_a2g1",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T07:52:28.878Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 0,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_munsydwp_tsg6",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T07:47:15.794Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 0,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_munsqo4b_qubw",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T07:41:15.784Z",
+      "snapshot": {
+        "logins": 2,
+        "visits": 2,
+        "applies": 0,
+        "activeMs": 0,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Mon / Fri · 3:00 PM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
+    {
+      "id": "hist_munsjndh_1p6p",
+      "userId": "b1c869d84e75048c5c61c5e3",
+      "capturedAt": "2026-09-30T07:35:46.143Z",
+      "snapshot": {
+        "logins": 3,
+        "visits": 4,
+        "applies": 0,
+        "activeMs": 60000,
+        "jobCardClicks": 0,
+        "triggerCount": 0,
+        "insightIds": [
+          "balanced"
+        ],
+        "alertWindow": "Wed · 11:00 AM–12:00 PM",
+        "topLocation": "Mumbai, Maharashtra, India"
+      }
+    },
     {
       "id": "hist_mugw8t4l_emy1",
       "userId": "895edca8e0c3f5c9ac309804",
@@ -19842,5 +20198,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-09-22T11:17:06.419Z"
+  "updatedAt": "2026-09-30T13:05:02.079Z"
 }

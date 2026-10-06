@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Lightweight post-build bundle report for Next 16 / Turbopack.
- * Run after `pnpm build`. Does not fail CI — prints baselines for P2 budgets.
+ * Run after `npm run build`. Does not fail CI — prints baselines for P2 budgets.
  *
  *   node scripts/analyze-bundles.mjs
  */
@@ -30,7 +30,7 @@ function kb(n) {
 
 const files = walk(chunksDir);
 if (!files.length) {
-  console.error('No .next/static/chunks JS found. Run `pnpm build` first.');
+  console.error('No .next/static/chunks JS found. Run `npm run build` first.');
   process.exit(1);
 }
 

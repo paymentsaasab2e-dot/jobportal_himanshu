@@ -122,8 +122,8 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
   const method = req.method.toUpperCase();
   const hasBody = !['GET', 'HEAD'].includes(method);
 
-  try {
-    const response = await fetch(targetUrl, {
+  const doFetch = async () => {
+    return fetch(targetUrl, {
       method,
       headers,
       body: hasBody ? req.body : undefined,
@@ -131,6 +131,17 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
       duplex: hasBody ? 'half' : undefined,
       redirect: 'manual',
     } as RequestInit & { duplex?: 'half' });
+  };
+
+  try {
+    let response: Response;
+    try {
+      response = await doFetch();
+    } catch (initialErr: any) {
+      // If backend was briefly restarting, wait 400ms and retry once
+      await new Promise((r) => setTimeout(r, 400));
+      response = await doFetch();
+    }
 
     const respHeaders = new Headers(response.headers);
     // Avoid passing compression/length headers that can mismatch proxied body.
@@ -145,10 +156,20 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
       headers: respHeaders,
     });
   } catch (error) {
-    console.error(`Proxy error connecting to ${targetUrl}:`, error);
-    // Return empty response for phase2-public-jobs when backend is unavailable
+    console.warn(`[proxy] Backend temporarily unreachable at ${targetUrl}:`, (error as Error)?.message || error);
+    // Return 503 service unavailable response when backend is unreachable
     if (pathParts[0] === 'phase2-public-jobs') {
-      return NextResponse.json({ jobs: [], total: 0, page: 1, limit: 120 }, { status: 200 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unable to connect to jobs service right now. Please try again in a little while.',
+          jobs: [],
+          total: 0,
+          page: 1,
+          limit: 120,
+        },
+        { status: 503 },
+      );
     }
     if (pathParts[0] === 'phase2-public-apply') {
       return NextResponse.json(
@@ -157,7 +178,10 @@ async function proxyRequest(req: NextRequest, pathParts: string[]) {
       );
     }
     if (pathParts[0] === 'phase2-pre-screen-assessments') {
-      return NextResponse.json({ success: true, data: [] }, { status: 200 });
+      return NextResponse.json(
+        { success: false, error: 'Unable to load pre-screen assessments right now.', data: [] },
+        { status: 503 },
+      );
     }
     if (pathParts[0] === 'phase2-interview-forms') {
       return NextResponse.json(

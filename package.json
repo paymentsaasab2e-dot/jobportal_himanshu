@@ -51,6 +51,7 @@
     "@tailwindcss/postcss": "^4",
     "@types/canvas-confetti": "^1.9.0",
     "@types/html2canvas": "^1.0.0",
+    "@types/minimatch": "^5.1.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

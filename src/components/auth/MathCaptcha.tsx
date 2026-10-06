@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useTranslations } from "next-intl";
 
@@ -56,21 +56,29 @@ export function MathCaptcha({
 }: MathCaptchaProps) {
   const t = useTranslations();
   const [challenge, setChallenge] = useState<MathCaptchaChallenge>(INITIAL_CHALLENGE);
+  const onChallengeChangeRef = useRef(onChallengeChange);
+  const onChangeRef = useRef(onChange);
 
   useEffect(() => {
-    setChallenge(buildChallenge());
+    onChallengeChangeRef.current = onChallengeChange;
+  }, [onChallengeChange]);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    const next = buildChallenge();
+    setChallenge(next);
+    onChallengeChangeRef.current?.(next);
   }, []);
-
-  useEffect(() => {
-    onChallengeChange?.(challenge);
-  }, [challenge, onChallengeChange]);
 
   const refresh = useCallback(() => {
     const next = buildChallenge();
     setChallenge(next);
-    onChange('');
-    onChallengeChange?.(next);
-  }, [onChange, onChallengeChange]);
+    onChangeRef.current('');
+    onChallengeChangeRef.current?.(next);
+  }, []);
 
   const isCorrect = useMemo(() => {
     const trimmed = value.trim();

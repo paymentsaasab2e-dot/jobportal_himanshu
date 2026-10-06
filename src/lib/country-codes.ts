@@ -287,9 +287,14 @@ export function formatPhoneCodeLabel(option: CountryCodeOption): string {
 }
 
 export function countryCodeToFlag(code: string): string {
-  return code
+  const normalized = String(code || "")
     .toUpperCase()
-    .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)));
+    .replace(/[^A-Z]/g, "")
+    .slice(0, 2);
+  if (normalized.length !== 2) return "";
+  return normalized.replace(/./g, (char) =>
+    String.fromCodePoint(127397 + char.charCodeAt(0)),
+  );
 }
 
 /** Resolve ISO country code from IANA timezone (e.g. "Asia/Kolkata" -> "IN"). */

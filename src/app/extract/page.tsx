@@ -14,7 +14,7 @@ import { getLocaleFromPathname, localizePath, stripLocaleFromPathname } from "@/
 import { getAuthHeaders } from '@/lib/auth-storage';
 
 export default function ExtractPage() {
-  const { user, isLoading: authLoading, refreshUser } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Starting CV analysis...");
@@ -30,7 +30,7 @@ export default function ExtractPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const redirectToDashboard = useCallback(async () => {
+  const redirectToDashboard = useCallback(() => {
     if (!isPageActiveRef.current) return;
     if (typeof window !== "undefined") {
       const internalPath = stripLocaleFromPathname(window.location.pathname);
@@ -48,23 +48,11 @@ export default function ExtractPage() {
           return;
         }
       }
-      try {
-        const meResponse = await fetch(`${API_BASE_URL}/auth/me`, { headers: getAuthHeaders() });
-        const me = await meResponse.json();
-        if (!me?.data?.hasProfileName) {
-          router.push(localizePath("/uploadcv", locale));
-          return;
-        }
-      } catch {
-        router.push(localizePath("/uploadcv", locale));
-        return;
-      }
-      await refreshUser();
       router.push(localizePath("/candidate-dashboard", locale));
       return;
     }
     router.push("/candidate-dashboard");
-  }, [router, refreshUser]);
+  }, [router]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -215,8 +203,8 @@ export default function ExtractPage() {
           setStatus('Queued for analysis...');
         }
       } catch {
-        // Transient network blips while polling — keep waiting unless upload already failed.
         if (!isPageActiveRef.current) return;
+
         const uploadError = sessionStorage.getItem("uploadError");
         if (uploadError) {
           isProcessingRef.current = false;
@@ -227,9 +215,7 @@ export default function ExtractPage() {
             if (!isPageActiveRef.current) return;
             router.push("/uploadcv");
           }, 3000);
-          return;
         }
-        setStatus("Connection hiccup — still waiting for CV analysis…");
       }
     };
 
@@ -242,15 +228,12 @@ export default function ExtractPage() {
       if (!isPageActiveRef.current || !isProcessingRef.current) return;
       isProcessingRef.current = false;
       setIsProcessing(false);
-      setStatus(
-        'Analysis is taking longer than expected. Please re-upload your CV so your profile can finish.',
-      );
+      setStatus('Analysis is taking longer than expected. Please check your profile or re-upload.');
       clearPolling();
       sessionStorage.removeItem('uploadStatus');
       scheduleTimeout(() => {
         if (!isPageActiveRef.current) return;
-        const locale = getLocaleFromPathname(window.location.pathname);
-        router.push(localizePath('/uploadcv', locale));
+        redirectToDashboard();
       }, 4000);
     }, 180000);
 

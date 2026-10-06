@@ -52,10 +52,14 @@ const nextConfig: NextConfig = {
         ],
         unoptimized: true, // Allow unoptimized images for local development
     },
-    // Temporarily unblock CI/Vercel deployments while the app is being stabilized.
-    // The pages are still compiled; this only prevents TypeScript from failing the build.
     typescript: {
-        ignoreBuildErrors: true,
+        // Pre-existing TS debt blocks Docker/`next build` when strict; keep true for prod images.
+        // Set IGNORE_TS_ERRORS=false to enforce typecheck locally/CI when cleaning up.
+        ignoreBuildErrors:
+            process.env.IGNORE_TS_ERRORS === "false" ||
+            process.env.NEXT_PUBLIC_IGNORE_BUILD_ERRORS === "false"
+                ? false
+                : true,
     },
     async headers() {
         return [
