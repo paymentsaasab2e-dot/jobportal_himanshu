@@ -269,14 +269,25 @@ export type JobDescriptionSection = {
   title: string
   paragraphs: string[]
   bullets: string[]
+  /** 1 = major JD heading, 2 = nested subheading (e.g. Market Research). */
+  level?: 1 | 2
 }
 
 const PLAIN_SECTION_HEADERS: Array<{ id: string; title: string; patterns: RegExp[] }> = [
-  { id: 'overview', title: 'Overview', patterns: [/^overview$/i, /^about the role$/i, /^job overview$/i] },
+  {
+    id: 'overview',
+    title: 'Overview',
+    patterns: [/^overview$/i, /^about the role$/i, /^job overview$/i, /^main objectives$/i],
+  },
   {
     id: 'key-responsibilities',
     title: 'Key Responsibilities',
-    patterns: [/^key responsibilities$/i, /^responsibilities$/i, /^role & responsibilities$/i],
+    patterns: [
+      /^key responsibilities$/i,
+      /^key responsibilities and tasks$/i,
+      /^responsibilities$/i,
+      /^role & responsibilities$/i,
+    ],
   },
   {
     id: 'skills',
@@ -304,6 +315,7 @@ const PLAIN_SECTION_HEADERS: Array<{ id: string; title: string; patterns: RegExp
     patterns: [/^benefits$/i, /^compensation & benefits$/i, /^compensation$/i],
   },
   { id: 'job-summary', title: 'Job Summary', patterns: [/^job summary$/i] },
+  { id: 'profile', title: 'Profile', patterns: [/^profile$/i] },
 ]
 
 function normalizeSectionHeader(line: string): string {
@@ -373,7 +385,7 @@ function parsePlainJobDescriptionSections(text: string): JobDescriptionSection[]
     if (!current) return
     const body = bodyLines.join('\n')
     const { paragraphs, bullets } = finalizeSectionBody(body)
-    if (paragraphs.length || bullets.length) {
+    if (paragraphs.length || bullets.length || current.level === 1) {
       sections.push({ ...current, paragraphs, bullets })
     }
     current = null
@@ -384,7 +396,7 @@ function parsePlainJobDescriptionSections(text: string): JobDescriptionSection[]
     const header = isSectionHeaderLine(line)
     if (header) {
       flushCurrent()
-      current = { id: header.id, title: header.title, paragraphs: [], bullets: [] }
+      current = { id: header.id, title: header.title, paragraphs: [], bullets: [], level: 1 }
       continue
     }
     if (current) {
@@ -401,9 +413,10 @@ function parsePlainJobDescriptionSections(text: string): JobDescriptionSection[]
     if (paragraphs.length || bullets.length) {
       sections.unshift({
         id: 'intro',
-        title: 'About this role',
+        title: '',
         paragraphs,
         bullets,
+        level: 1,
       })
     }
   }
@@ -427,7 +440,9 @@ function parseHtmlJobDescriptionSections(html: string): JobDescriptionSection[] 
     current = null
   }
 
-  const isHeading = (el: Element) => /^H[1-4]$/i.test(el.tagName)
+  const isHeading = (el: Element) => /^H[1-6]$/i.test(el.tagName)
+  const headingHasNestedBlocks = (element: Element) =>
+    Boolean(element.querySelector('p, ul, ol, div, table, h1, h2, h3, h4, h5, h6'))
 
   const matchHeader = (text: string) => {
     const line = normalizeSectionHeader(text)
@@ -444,27 +459,51 @@ function parseHtmlJobDescriptionSections(html: string): JobDescriptionSection[] 
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') || 'additional'
 
+  const startSection = (rawTitle: string, level: 1 | 2) => {
+    const def = matchHeader(rawTitle)
+    flush()
+    const isLeadInUnknown = !def && sections.length === 0 && introParts.length === 0
+    current = {
+      id: def?.id || (isLeadInUnknown ? 'overview' : `additional-${slugFromTitle(rawTitle)}`),
+      title: isLeadInUnknown ? 'Overview' : rawTitle,
+      paragraphs: [],
+      bullets: [],
+      level,
+    }
+  }
+
+  const appendText = (text: string) => {
+    if (!text) return
+    if (current) current.paragraphs.push(text)
+    else introParts.push(text)
+  }
+
   const walk = (nodes: NodeListOf<ChildNode>) => {
     for (const node of Array.from(nodes)) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = decodeHtmlEntities(String(node.textContent || ''))
+          .replace(/\s+/g, ' ')
+          .trim()
+        appendText(text)
+        continue
+      }
       if (node.nodeType !== Node.ELEMENT_NODE) continue
       const el = node as HTMLElement
       if (isHeading(el)) {
+        // Word / rich-text paste often wraps lists and paragraphs in <h2>/<h3>.
+        // Walking nested blocks keeps the body; using textContent would swallow it as a title.
+        if (headingHasNestedBlocks(el)) {
+          walk(el.childNodes)
+          continue
+        }
         const rawTitle = normalizeSectionHeader(el.textContent || '')
         if (!rawTitle || /^job description$/i.test(rawTitle)) continue
-        const def = matchHeader(rawTitle)
-        flush()
-        const isLeadInUnknown = !def && sections.length === 0 && introParts.length === 0
-        current = {
-          id: def?.id || (isLeadInUnknown ? 'overview' : `additional-${slugFromTitle(rawTitle)}`),
-          title: def?.title || (isLeadInUnknown ? 'Overview' : rawTitle),
-          paragraphs: [],
-          bullets: [],
-        }
+        startSection(rawTitle, 1)
         continue
       }
 
       const tag = el.tagName.toLowerCase()
-      if (tag === 'div' && el.querySelector('h1, h2, h3, h4')) {
+      if (tag === 'div' && el.querySelector('p, ul, ol, table, h1, h2, h3, h4, h5, h6')) {
         walk(el.childNodes)
         continue
       }
@@ -483,12 +522,21 @@ function parseHtmlJobDescriptionSections(html: string): JobDescriptionSection[] 
       const text = toPlainJobText(el.innerHTML)
       if (!text) continue
 
-      if (current) {
-        if (tag === 'p' || tag === 'div') current.paragraphs.push(text)
-        else current.paragraphs.push(text)
-      } else {
-        introParts.push(text)
+      const titleLike = normalizeSectionHeader(text)
+      const strong = el.querySelector('strong, b')
+      const strongText = normalizeSectionHeader(strong?.textContent || '')
+      const isBoldTitle =
+        Boolean(strong) &&
+        titleLike.length > 0 &&
+        titleLike.length <= 80 &&
+        strongText === titleLike &&
+        !/[.!?]$/.test(titleLike)
+      if ((tag === 'p' || tag === 'div') && isBoldTitle) {
+        startSection(titleLike, 2)
+        continue
       }
+
+      appendText(text)
     }
   }
 
@@ -500,13 +548,16 @@ function parseHtmlJobDescriptionSections(html: string): JobDescriptionSection[] 
     const { paragraphs, bullets } = finalizeSectionBody(introText, { preferParagraphs: true })
     sections.unshift({
       id: 'intro',
-      title: 'About this role',
+      title: '',
       paragraphs,
       bullets,
+      level: 1,
     })
   }
 
-  return sections.filter((s) => s.paragraphs.length > 0 || s.bullets.length > 0)
+  return sections.filter(
+    (s) => s.paragraphs.length > 0 || s.bullets.length > 0 || s.level === 1,
+  )
 }
 
 /** Split CRM HTML or plain job description into titled sections for Phase 1 detail UI. */
@@ -514,7 +565,9 @@ export function parseJobDescriptionSections(raw?: string | null): JobDescription
   const value = String(raw || '').trim()
   if (!value) return []
   if (looksLikeHtmlJobDescription(value)) {
-    return parseHtmlJobDescriptionSections(value)
+    const htmlSections = parseHtmlJobDescriptionSections(value)
+    if (htmlSections.length) return htmlSections
+    return parsePlainJobDescriptionSections(toPlainJobText(value))
   }
   return parsePlainJobDescriptionSections(toPlainJobText(value))
 }
@@ -542,7 +595,7 @@ export function buildJobDescriptionSections(
     if (existing) {
       existing.bullets = mergeSectionBullets(existing.bullets, bullets)
     } else {
-      byId.set(id, { id, title, paragraphs: [], bullets })
+      byId.set(id, { id, title, paragraphs: [], bullets, level: 1 })
     }
   }
 
@@ -562,16 +615,19 @@ export function buildJobDescriptionSections(
     'benefits',
   ]
 
+  const hasBody = (section: JobDescriptionSection) =>
+    Boolean(section.paragraphs.length || section.bullets.length || section.level === 1)
+
   const ordered: JobDescriptionSection[] = []
   for (const id of order) {
     const section = byId.get(id)
-    if (section && (section.paragraphs.length || section.bullets.length)) {
+    if (section && hasBody(section)) {
       ordered.push(section)
     }
     byId.delete(id)
   }
   for (const section of byId.values()) {
-    if (section.paragraphs.length || section.bullets.length) ordered.push(section)
+    if (hasBody(section)) ordered.push(section)
   }
   return ordered
 }

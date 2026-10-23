@@ -34,8 +34,12 @@ export function getEmployerPortalOrigin(): string {
 }
 
 /** Phase 2 employer workspace login URL (always absolute `/login` → dashboard). */
-export function getEmployerPortalLoginUrl(): string {
-  return `${getEmployerPortalOrigin()}/login?redirect=${encodeURIComponent("/dashboard")}`;
+export function getEmployerPortalLoginUrl(tenantDbName?: string): string {
+  const qs = new URLSearchParams();
+  qs.set("redirect", "/dashboard");
+  const tenant = String(tenantDbName || "").trim();
+  if (tenant) qs.set("tenantDbName", tenant);
+  return `${getEmployerPortalOrigin()}/login?${qs.toString()}`;
 }
 
 /** Phase 2 auth login from marketing try-free (same-origin API route). */
@@ -66,6 +70,6 @@ export const EMPLOYERS_FREE_TRIAL_HREF = EMPLOYERS_TRIAL_PATH;
 /** Default trial length when HQ does not override (days). */
 export const TRIAL_DURATION_DAYS = 5;
 
-/** Marketing note: try-free credentials are emailed after HQ grants access from a demo request. */
+/** Marketing note: try-free credentials are issued after OTP on this page. */
 export const TRY_FREE_ACCESS_NOTE =
-  "Try-free access is granted by HQ after you request a demo. Sign in here with the credentials they email you.";
+  "Submit the try-free form, verify your email, and we create a 5-day workspace login with all modules.";
