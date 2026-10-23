@@ -17,6 +17,7 @@ import type { JobLanguageRow } from '@/lib/map-portal-job'
 import { displayJobField } from '@/lib/map-portal-job'
 import {
   buildJobDescriptionSections,
+  looksLikeHtmlJobDescription,
   sectionVisibleOnPortal,
   type JobDescriptionSection,
 } from '@/lib/job-description'
@@ -261,43 +262,118 @@ function SectionHeading({ children }: { children: ReactNode }) {
   )
 }
 
-function BulletList({ items }: { items: string[] }) {
+function BulletList({ items, compact }: { items: string[]; compact?: boolean }) {
   const filtered = items.map((item) => String(item).trim()).filter(Boolean)
   if (!filtered.length) return null
   return (
-    <ul className="mt-3 space-y-2.5">
+    <ul className={compact ? 'mt-2 space-y-1.5' : 'mt-3 space-y-2.5'}>
       {filtered.map((item, index) => (
         <li key={`${item}-${index}`} className="flex items-start gap-3">
           <span
             className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#2098C8]"
             aria-hidden
           />
-          <span className="text-sm leading-7 text-slate-700">{item}</span>
+          <span className="text-sm leading-6 text-slate-700 sm:leading-7">
+            {renderLabeledText(item)}
+          </span>
         </li>
       ))}
     </ul>
   )
 }
 
-function ParagraphBlock({ paragraphs }: { paragraphs: string[] }) {
+function ParagraphBlock({
+  paragraphs,
+  compact,
+}: {
+  paragraphs: string[]
+  compact?: boolean
+}) {
   if (!paragraphs.length) return null
   return (
-    <div className="mt-3 space-y-3">
+    <div className={compact ? 'mt-2 space-y-2' : 'mt-3 space-y-3'}>
       {paragraphs.map((paragraph, index) => (
-        <p key={`${paragraph}-${index}`} className="text-sm leading-7 text-slate-700">
-          {paragraph}
+        <p key={`${paragraph}-${index}`} className="text-sm leading-6 text-slate-700 sm:leading-7">
+          {renderLabeledText(paragraph)}
         </p>
       ))}
     </div>
   )
 }
 
-function DescriptionSectionBlock({ section }: { section: JobDescriptionSection }) {
+function parseFactLine(text: string): { label: string; value: string } | null {
+  const match = String(text || '')
+    .trim()
+    .match(/^([A-Za-z][A-Za-z0-9 ./-]{0,48}):\s+(.+)$/)
+  if (!match) return null
+  return { label: match[1].trim(), value: match[2].trim() }
+}
+
+function renderLabeledText(text: string) {
+  const fact = parseFactLine(text)
+  if (!fact) return text
   return (
     <>
-      <ParagraphBlock paragraphs={section.paragraphs} />
-      {section.paragraphs.length === 0 ? <BulletList items={section.bullets} /> : null}
+      <span className="font-semibold text-slate-900">{fact.label}:</span> {fact.value}
     </>
+  )
+}
+
+function expandSectionLines(section: JobDescriptionSection): string[] {
+  return [
+    ...section.paragraphs.flatMap((p) =>
+      String(p)
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean),
+    ),
+    ...section.bullets.map((item) => String(item).trim()).filter(Boolean),
+  ]
+}
+
+function factRowsFromSection(section: JobDescriptionSection) {
+  const lines = expandSectionLines(section)
+  if (lines.length < 2) return null
+  const rows = lines.map(parseFactLine)
+  if (rows.some((row) => !row)) return null
+  return rows as { label: string; value: string }[]
+}
+
+function JobDescriptionDocument({ sections }: { sections: JobDescriptionSection[] }) {
+  return (
+    <div className="mt-3">
+      {sections.map((section, index) => {
+        const facts = !section.title ? factRowsFromSection(section) : null
+        const isSub = section.level === 2
+        const headingClass = isSub
+          ? 'text-sm font-bold text-slate-900'
+          : 'text-[15px] font-bold text-slate-900 sm:text-base'
+        const spacingClass = index === 0 ? '' : isSub ? 'mt-4' : 'mt-6'
+
+        if (facts) {
+          return (
+            <div key={`${section.id}-${index}`} className={spacingClass}>
+              <dl className="space-y-1">
+                {facts.map((row) => (
+                  <div key={`${row.label}-${row.value}`} className="text-sm leading-6 text-slate-700">
+                    <dt className="inline font-semibold text-slate-900">{row.label}:</dt>{' '}
+                    <dd className="inline">{row.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )
+        }
+
+        return (
+          <div key={`${section.id}-${index}`} className={spacingClass}>
+            {section.title ? <h3 className={headingClass}>{section.title}</h3> : null}
+            <ParagraphBlock paragraphs={section.paragraphs} compact={Boolean(section.title)} />
+            <BulletList items={section.bullets} compact={Boolean(section.title)} />
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -390,11 +466,20 @@ export function JobPostingDetailsPanel({ job }: { job: JobPostingDetailsJob }) {
   return (
     <div className="space-y-6">
       {descriptionSections.length > 0 ? (
-        descriptionSections.map((section) => (
-          <ContentSection key={section.id} title={section.title}>
-            <DescriptionSectionBlock section={section} />
-          </ContentSection>
-        ))
+        <ContentSection title="Job description">
+          <JobDescriptionDocument sections={descriptionSections} />
+        </ContentSection>
+      ) : rawDesc ? (
+        <ContentSection title="Job description">
+          {looksLikeHtmlJobDescription(rawDesc) ? (
+            <div
+              className="mt-3 max-w-none text-sm leading-7 text-slate-700 [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-bold [&_h3]:mt-5 [&_h3]:mb-2 [&_h3]:text-[15px] [&_h3]:font-bold [&_p]:my-2 [&_ul]:my-2 [&_ul]:list-none [&_ul]:space-y-1.5 [&_li]:leading-6 [&_strong]:font-semibold [&_strong]:text-slate-900"
+              dangerouslySetInnerHTML={{ __html: rawDesc }}
+            />
+          ) : (
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-700">{rawDesc}</p>
+          )}
+        </ContentSection>
       ) : show('jobDescription') ? (
         <ContentSection title="Job description">
           <p className="text-sm text-slate-500">No description provided for this role.</p>
