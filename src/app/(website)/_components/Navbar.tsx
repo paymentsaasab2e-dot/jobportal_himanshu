@@ -191,20 +191,14 @@ export default function WebsiteNavbar() {
         </div>
 
         <div className="hidden md:flex items-center justify-end justify-self-end gap-3 shrink-0">
-          {isEmployersPage && (
-            <Link
-              href={employersTrialHref}
-              className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full font-bold transition-all duration-500 ${
-                isScrolled ? "px-4 py-1.5 text-[13px]" : "px-5 py-2 text-[14px]"
-              } ${
-                isEmployersTransparent
-                  ? "bg-linear-to-r from-[#E8770E] to-[#FC9620] text-white shadow-[0_8px_22px_rgba(252,150,32,0.38)] hover:brightness-105"
-                  : "bg-linear-to-r from-[#E8770E] to-[#FC9620] text-white shadow-[0_8px_22px_rgba(252,150,32,0.32)] hover:brightness-105"
-              }`}
-            >
-              {tEmployers("tryItFree")}
-            </Link>
-          )}
+          <Link
+            href={employersTrialHref}
+            className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full font-bold transition-all duration-500 ${
+              isScrolled ? "px-4 py-1.5 text-[13px]" : "px-5 py-2 text-[14px]"
+            } bg-linear-to-r from-[#E8770E] to-[#FC9620] text-white shadow-[0_8px_22px_rgba(252,150,32,0.32)] hover:brightness-105`}
+          >
+            {tEmployers("postAJob")}
+          </Link>
           {!isServicesPage && (
             <Link
               href={loginSignupHref}
@@ -258,17 +252,15 @@ export default function WebsiteNavbar() {
               </div>
             ))}
             <div className="h-px bg-white/70 my-2" />
+            <Link
+              href={employersTrialHref}
+              className="flex items-center justify-center bg-linear-to-r from-[#E8770E] to-[#FC9620] text-center py-4 rounded-[18px] font-bold text-lg text-white shadow-[0_8px_22px_rgba(252,150,32,0.35)]"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {tEmployers("postAJob")}
+            </Link>
             {!isServicesPage && (
               <div className="flex flex-col gap-3 mt-2">
-                {isEmployersPage && (
-                  <Link
-                    href={employersTrialHref}
-                    className="flex items-center justify-center bg-linear-to-r from-[#E8770E] to-[#FC9620] text-center py-4 rounded-[18px] font-bold text-lg text-white shadow-[0_8px_22px_rgba(252,150,32,0.35)]"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {tEmployers("tryItFree")}
-                  </Link>
-                )}
                 <Link
                   href={loginSignupHref}
                   className="flex items-center justify-center bg-linear-to-r from-[#08428c] to-[#28a8e1] text-center py-4 rounded-full font-bold text-lg text-white shadow-[0_8px_22px_rgba(8,66,140,0.35)]"

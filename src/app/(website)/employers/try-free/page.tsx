@@ -1,24 +1,29 @@
 import type { Metadata } from "next";
-import { CheckCircle2, Shield, Timer, Zap } from "lucide-react";
+import { Briefcase, CheckCircle2, Shield, Timer, Zap } from "lucide-react";
 import { TryFreeLoginClient } from "./TryFreeLoginClient";
 import { TRIAL_DURATION_DAYS } from "@/lib/employers/constants";
 
 export const metadata: Metadata = {
-  title: "Try it free",
+  title: "Post a job — 10 free this month",
   description:
-    "Request a tailored Agency or Standalone workspace. Verify your email and get a 5-day try-free login with all modules.",
+    "Open an employer workspace, post up to 10 jobs this month free, and review applicants. Verify your email to start.",
 };
 
 const HIGHLIGHTS = [
   {
+    icon: Briefcase,
+    title: "10 free job posts this month",
+    body: "Publish on HRYantra. Applicants stay free. Upgrade only if you need more posts.",
+  },
+  {
     icon: Timer,
-    title: `${TRIAL_DURATION_DAYS}-day free trial`,
-    body: "Full workspace access — no credit card to start.",
+    title: `${TRIAL_DURATION_DAYS}-day full workspace`,
+    body: "Jobs, candidates, interviews, and matches — no credit card to start.",
   },
   {
     icon: Zap,
-    title: "All modules unlocked",
-    body: "Jobs, candidates, interviews, matches, and more.",
+    title: "Same company workspace",
+    body: "Founder or HR — one account, one quota, one applicant inbox.",
   },
   {
     icon: Shield,
@@ -56,18 +61,17 @@ export default function TryFreePage() {
         <aside className="mx-auto w-full max-w-lg lg:mx-0 lg:sticky lg:top-32 lg:max-w-none">
           <p className="inline-flex items-center gap-2 rounded-full border border-orange-200/80 bg-white/70 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-orange-700 shadow-sm backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-            Try HRyantra free
+            Post a job — free
           </p>
           <h1 className="mt-5 text-balance text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
-            Start hiring in{" "}
+            Post a job in minutes.{" "}
             <span className="bg-gradient-to-r from-orange-500 to-[#28A8DF] bg-clip-text text-transparent">
-              {TRIAL_DURATION_DAYS} days
+              10 free this month.
             </span>
-            , not weeks.
           </h1>
           <p className="mt-4 max-w-md text-base leading-relaxed text-slate-600 sm:text-[17px]">
-            Tell us Agency or Standalone, verify your email, and we create your try-free login
-            with every module ready to explore.
+            Company HR and founders use the same workspace. Verify your email, publish on
+            HRYantra, and see every applicant — Premium is only for extra posts.
           </p>
 
           <ul className="mt-8 space-y-4">
