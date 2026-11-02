@@ -58,6 +58,8 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children })
     normalizedPathname.startsWith('/services/') ||
     normalizedPathname === '/employers' ||
     normalizedPathname.startsWith('/employers/') ||
+    normalizedPathname === '/free-jobs' ||
+    normalizedPathname.startsWith('/free-jobs/') ||
     normalizedPathname === '/aicveditor' ||
     normalizedPathname.startsWith('/aicveditor/') ||
     normalizedPathname === '/apply' ||

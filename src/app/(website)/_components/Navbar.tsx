@@ -13,12 +13,14 @@ import { AppLocale, localizePath, stripLocaleFromPathname } from "@/lib/i18n";
 import {
   EMPLOYERS_TRIAL_PATH,
   EMPLOYERS_LOGIN_HREF,
+  FREE_JOBS_PATH,
 } from "@/lib/employers/constants";
 
 const navLinks = [
   { key: "exploreJobs", href: "/" },
   { key: "employers", href: "/employers" },
   { key: "services", href: "/services" },
+  { key: "freeJobs", href: FREE_JOBS_PATH },
 ] as const;
 
 const MARKETING_NAV_PILL_ID = "website-nav-marketing-pill";
@@ -29,9 +31,13 @@ function isNavLinkActive(normalizedPath: string, href: string) {
 }
 
 function navPillClass(linkKey: (typeof navLinks)[number]["key"]) {
-  return linkKey === "employers"
-    ? "from-[#E8770E] to-[#FC9620] shadow-[0_8px_22px_rgba(252,150,32,0.38)]"
-    : "from-[#08428c] to-[#28a8e1] shadow-[0_8px_22px_rgba(8,66,140,0.35)]";
+  if (linkKey === "employers") {
+    return "from-[#E8770E] to-[#FC9620] shadow-[0_8px_22px_rgba(252,150,32,0.38)]";
+  }
+  if (linkKey === "freeJobs") {
+    return "from-emerald-600 to-[#28a8e1] shadow-[0_8px_22px_rgba(16,185,129,0.35)]";
+  }
+  return "from-[#08428c] to-[#28a8e1] shadow-[0_8px_22px_rgba(8,66,140,0.35)]";
 }
 
 export default function WebsiteNavbar() {
@@ -44,12 +50,17 @@ export default function WebsiteNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const employersLoginHref = EMPLOYERS_LOGIN_HREF;
   const employersTrialHref = localizePath(EMPLOYERS_TRIAL_PATH, locale);
+  const freeJobsHref = localizePath(FREE_JOBS_PATH, locale);
   const isEmployersPage = normalizedPath === "/employers" || normalizedPath.startsWith("/employers/");
   const isEmployersLandingPage = normalizedPath === "/employers";
+  const isFreeJobsPage =
+    normalizedPath === FREE_JOBS_PATH || normalizedPath.startsWith(`${FREE_JOBS_PATH}/`);
   const isServicesPage = normalizedPath === "/services" || normalizedPath.startsWith("/services/");
-  const loginSignupHref = isEmployersPage
-    ? employersLoginHref
-    : `${localizePath("/whatsapp", locale)}?mode=signin`;
+  const loginSignupHref = isFreeJobsPage
+    ? freeJobsHref
+    : isEmployersPage
+      ? employersLoginHref
+      : `${localizePath("/whatsapp", locale)}?mode=signin`;
 
   const isHomePage = normalizedPath === "/";
   const activeIndex = navLinks.findIndex((l) => isNavLinkActive(normalizedPath, l.href));
@@ -58,7 +69,10 @@ export default function WebsiteNavbar() {
   const isEmployersTransparent = isEmployersLandingPage && isTopOfPage;
   const isHomeTransparent = isHomePage && isTopOfPage;
   const isLightMarketingNav =
-    isHomeTransparent || isEmployersTransparent || (isEmployersPage && !isEmployersLandingPage);
+    isHomeTransparent ||
+    isEmployersTransparent ||
+    (isEmployersPage && !isEmployersLandingPage) ||
+    isFreeJobsPage;
   const isNavbarShellTransparent = isEmployersTransparent || isHomeTransparent;
   const hasMountedPath = useRef(false);
 
@@ -228,7 +242,15 @@ export default function WebsiteNavbar() {
                 <Link
                   href={localizePath(link.href, locale)}
                   prefetch
-                  className={`text-lg font-bold ${isNavLinkActive(normalizedPath, link.href) ? (link.key === "employers" ? "text-[#E8770E]" : "text-[#08428c]") : "text-slate-800"}`}
+                  className={`text-lg font-bold ${
+                    isNavLinkActive(normalizedPath, link.href)
+                      ? link.key === "employers"
+                        ? "text-[#E8770E]"
+                        : link.key === "freeJobs"
+                          ? "text-emerald-700"
+                          : "text-[#08428c]"
+                      : "text-slate-800"
+                  }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {t(`nav.${link.key}`)}

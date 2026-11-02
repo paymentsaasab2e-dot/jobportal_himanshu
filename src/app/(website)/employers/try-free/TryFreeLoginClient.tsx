@@ -24,6 +24,7 @@ import {
 } from '@/lib/api/employerDemoApi';
 import {
   EMPLOYERS_DEMO_PATH,
+  FREE_JOBS_MONTHLY_LIMIT,
   TRIAL_DURATION_DAYS,
   getEmployerPortalLoginUrl,
   getEmployerPortalOrigin,
@@ -109,9 +110,21 @@ function looksLikeEmail(value: string): boolean {
   return EMAIL_REGEX.test(value.trim());
 }
 
-export function TryFreeLoginClient() {
+type TryFreeLoginClientProps = {
+  /** Phase 2 path after successful auth (default dashboard). Free Jobs uses `/job`. */
+  postLoginRedirect?: string;
+  /** Compact copy for freemium Free Jobs entry. */
+  variant?: 'try-free' | 'free-jobs';
+};
+
+export function TryFreeLoginClient({
+  postLoginRedirect = '/dashboard',
+  variant = 'try-free',
+}: TryFreeLoginClientProps = {}) {
   const locale = useLocale() as AppLocale;
   const demoHref = localizePath(EMPLOYERS_DEMO_PATH, locale);
+  const isFreeJobs = variant === 'free-jobs';
+  const redirectAfterAuth = String(postLoginRedirect || '/dashboard').trim() || '/dashboard';
 
   const [view, setView] = useState<View>('signup');
   const [accessMode, setAccessMode] = useState(false);
@@ -169,21 +182,24 @@ export function TryFreeLoginClient() {
     return () => window.clearTimeout(timer);
   }, [resendTimer]);
 
-  const buildFormPayload = (requestKind: 'trial' | 'demo') => ({
+  const buildFormPayload = (requestKind: 'trial' | 'free_jobs' | 'demo') => ({
     email: email.trim().toLowerCase(),
     fullName: fullName.trim() || email.trim().split('@')[0] || 'Employer',
     countryCode,
     dialCode,
     phoneNumber: phoneNumber.replace(/\D/g, ''),
     companySize: companySize || '1–10 employees',
-    organizationName: organizationName.trim() || 'Trial company',
+    organizationName:
+      organizationName.trim() || (requestKind === 'free_jobs' ? 'Free Jobs company' : 'Trial company'),
     organizationType: (organizationType || 'agency') as OrganizationType,
     requestKind,
     outcome:
       outcome.trim() ||
-      (requestKind === 'trial'
-        ? `Auto try-free (${TRIAL_DURATION_DAYS} days)`
-        : 'Trial expired — request further access'),
+      (requestKind === 'free_jobs'
+        ? `Free Jobs account (up to ${FREE_JOBS_MONTHLY_LIMIT} jobs/month)`
+        : requestKind === 'trial'
+          ? `Auto try-free (${TRIAL_DURATION_DAYS} days)`
+          : 'Trial expired — request further access'),
   });
 
   const validateSignupForm = (forAccessRequest = false): string | null => {
@@ -212,7 +228,9 @@ export function TryFreeLoginClient() {
 
     setLoading(true);
     try {
-      const result = await sendEmployerDemoOtp(buildFormPayload(accessMode ? 'demo' : 'trial'));
+      const result = await sendEmployerDemoOtp(
+        buildFormPayload(accessMode ? 'demo' : isFreeJobs ? 'free_jobs' : 'trial'),
+      );
       setRequestId(result.data?.requestId || '');
       setOtpPreview(result.data?.otp || '');
       setOtp('');
@@ -220,7 +238,13 @@ export function TryFreeLoginClient() {
       setResendTimer(30);
       setOtpModalOpen(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start try-free signup.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : isFreeJobs
+            ? 'Failed to start Free Jobs signup.'
+            : 'Failed to start try-free signup.',
+      );
     } finally {
       setLoading(false);
     }
@@ -313,7 +337,10 @@ export function TryFreeLoginClient() {
 
       const data = payload?.data || {};
       if (data.duplicateSession) {
-        window.location.href = getEmployerPortalLoginUrl();
+        window.location.href = getEmployerPortalLoginUrl(
+          undefined,
+          redirectAfterAuth,
+        );
         return;
       }
 
@@ -329,7 +356,9 @@ export function TryFreeLoginClient() {
       hash.set('accessToken', accessToken);
       if (refreshToken) hash.set('refreshToken', refreshToken);
       if (tenantDbName) hash.set('tenantDbName', tenantDbName);
-      window.location.href = `${getEmployerPortalOrigin()}/login#tryFreeHandoff=${encodeURIComponent(hash.toString())}`;
+      const loginQs = new URLSearchParams();
+      loginQs.set('redirect', redirectAfterAuth);
+      window.location.href = `${getEmployerPortalOrigin()}/login?${loginQs.toString()}#tryFreeHandoff=${encodeURIComponent(hash.toString())}`;
     } catch (err) {
       const detail = err instanceof Error ? err.message : '';
       setError(
@@ -360,12 +389,25 @@ export function TryFreeLoginClient() {
       <div className="overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/90 shadow-[0_28px_80px_-36px_rgba(15,23,42,0.45)] ring-1 ring-slate-200/60 backdrop-blur-xl">
         <div className="border-b border-slate-100 bg-gradient-to-r from-orange-50/80 via-white to-sky-50/80 px-6 py-4 sm:px-8">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-orange-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-orange-700">
-              Free trial
-            </span>
-            <span className="rounded-full bg-sky-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sky-700">
-              {TRIAL_DURATION_DAYS} days · all modules
-            </span>
+            {isFreeJobs ? (
+              <>
+                <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-700">
+                  Free account
+                </span>
+                <span className="rounded-full bg-sky-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sky-700">
+                  Up to {FREE_JOBS_MONTHLY_LIMIT} jobs / month
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="rounded-full bg-orange-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-orange-700">
+                  Free trial
+                </span>
+                <span className="rounded-full bg-sky-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sky-700">
+                  {TRIAL_DURATION_DAYS} days · all modules
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -383,8 +425,16 @@ export function TryFreeLoginClient() {
                 <p className="mt-3 text-center text-sm leading-relaxed text-slate-500">
                   {credentialEmailSent
                     ? 'We have sent your User ID and password to your email. Kindly check your inbox (and spam folder) to sign in.'
-                    : 'Your try-free workspace is ready. If the email is delayed, wait a minute and check spam — or use Sign in below once you receive the credentials.'}
-                  {issuedTrialEndsAt ? (
+                    : isFreeJobs
+                      ? 'Your Free Jobs account is ready. If the email is delayed, wait a minute and check spam.'
+                      : 'Your try-free workspace is ready. If the email is delayed, wait a minute and check spam.'}
+                  {isFreeJobs ? (
+                    <>
+                      {' '}
+                      This is a free employer account — it does not expire. You can publish up to{' '}
+                      <strong className="text-slate-700">{FREE_JOBS_MONTHLY_LIMIT} jobs per month</strong>.
+                    </>
+                  ) : issuedTrialEndsAt ? (
                     <>
                       {' '}
                       Your {TRIAL_DURATION_DAYS}-day access is valid until{' '}
@@ -394,23 +444,6 @@ export function TryFreeLoginClient() {
                     <> Your try-free access includes all modules for {TRIAL_DURATION_DAYS} days.</>
                   )}
                 </p>
-                <a
-                  href={getEmployerPortalLoginUrl(issuedTenantDbName || undefined)}
-                  className={`mt-6 inline-flex ${primaryBtn} items-center justify-center`}
-                >
-                  Open Phase 2 login
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </a>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setView('login');
-                    setError('');
-                  }}
-                  className="mt-3 w-full text-center text-sm font-semibold text-slate-500 hover:text-slate-800"
-                >
-                  Or sign in here with emailed credentials
-                </button>
               </>
             ) : (
               <>
@@ -446,12 +479,18 @@ export function TryFreeLoginClient() {
               <Sparkles className="h-6 w-6" />
             </div>
             <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-[1.65rem]">
-              {accessMode ? 'Request further access' : 'Request your tailored demo'}
+              {accessMode
+                ? 'Request further access'
+                : isFreeJobs
+                  ? 'Create your free employer account'
+                  : 'Request your tailored demo'}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-500">
               {accessMode
                 ? 'Tell us how we can help after your trial. We’ll add this to HQ CRM Leads for the HRyantra team.'
-                : `Choose Agency or Standalone. We’ll email a verification code, then create your ${TRIAL_DURATION_DAYS}-day try-free login with all modules.`}
+                : isFreeJobs
+                  ? 'Sign up free — post up to 10 jobs this month. Upgrade to Premium only when you need more posts. Applicants stay free.'
+                  : `Choose Agency or Standalone. We’ll email a verification code, then create your ${TRIAL_DURATION_DAYS}-day try-free login with all modules.`}
             </p>
 
             <form onSubmit={handleSignupSubmit} className="mt-7 space-y-4">
@@ -588,7 +627,9 @@ export function TryFreeLoginClient() {
                   ? 'Sending code…'
                   : accessMode
                     ? 'Verify & request access'
-                    : `Start ${TRIAL_DURATION_DAYS}-day free trial`}
+                    : isFreeJobs
+                      ? 'Verify email & get started'
+                      : `Start ${TRIAL_DURATION_DAYS}-day free trial`}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </form>
@@ -603,7 +644,9 @@ export function TryFreeLoginClient() {
                 }}
                 className="font-semibold text-[#28A8DF] hover:underline"
               >
-                Already have try-free credentials? Sign in
+                {isFreeJobs
+                  ? 'Already have an employer account? Sign in'
+                  : 'Already have try-free credentials? Sign in'}
               </button>
               <p>
                 Prefer a live walkthrough?{' '}
@@ -620,9 +663,13 @@ export function TryFreeLoginClient() {
             <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-50 to-sky-50 text-[#28A8DF] ring-1 ring-sky-100">
               <LogIn className="h-6 w-6" />
             </div>
-            <h2 className="text-2xl font-black tracking-tight text-slate-900">Sign in to try free</h2>
+            <h2 className="text-2xl font-black tracking-tight text-slate-900">
+              {isFreeJobs ? 'Sign in to post jobs' : 'Sign in to try free'}
+            </h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-500">
-              Use the User ID and password from your trial email.
+              {isFreeJobs
+                ? 'Use your employer User ID / email and password to open Jobs.'
+                : 'Use the User ID and password from your trial email.'}
             </p>
             <form onSubmit={handleLogin} className="mt-7 space-y-4">
               <div className="space-y-1.5">
@@ -635,7 +682,7 @@ export function TryFreeLoginClient() {
                   autoComplete="username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name_xx@trial"
+                  placeholder={isFreeJobs ? 'name_xx@free' : 'name_xx@trial'}
                   className={fieldClass}
                 />
               </div>
@@ -797,7 +844,13 @@ export function TryFreeLoginClient() {
               onClick={() => void submitOtpVerification(otp)}
               className="mt-5 h-11 w-full bg-[#28A8DF] text-white hover:bg-[#1f97cb]"
             >
-              {isVerifying ? 'Verifying…' : accessMode ? 'Confirm access request' : 'Create try-free account'}
+              {isVerifying
+                ? 'Verifying…'
+                : accessMode
+                  ? 'Confirm access request'
+                  : isFreeJobs
+                    ? 'Create free account'
+                    : 'Create try-free account'}
             </Button>
             <button
               type="button"

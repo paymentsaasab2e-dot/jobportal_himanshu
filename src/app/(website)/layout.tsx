@@ -20,6 +20,7 @@ export default function WebsiteSiteLayout({
   // Always marketing chrome (even when signed in)
   const alwaysMarketingNavbarPaths = new Set<string>([
     "/employers",
+    "/free-jobs",
     "/events",
     "/services",
     "/ats-check",
@@ -38,6 +39,7 @@ export default function WebsiteSiteLayout({
   const usesMarketingNavbar =
     alwaysMarketingNavbarPaths.has(normalizedPath) ||
     normalizedPath.startsWith("/employers/") ||
+    normalizedPath.startsWith("/free-jobs/") ||
     normalizedPath.startsWith("/events/") ||
     normalizedPath.startsWith("/services/") ||
     normalizedPath.startsWith("/searchjobs/");

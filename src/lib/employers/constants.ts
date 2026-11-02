@@ -1,5 +1,8 @@
 export const EMPLOYERS_DEMO_PATH = "/employers/request-demo";
 export const EMPLOYERS_TRIAL_PATH = "/employers/try-free";
+/** Freemium job posting entry (navbar Free Jobs → login/signup → Jobs module). */
+export const FREE_JOBS_PATH = "/free-jobs";
+export const FREE_JOBS_POST_LOGIN_PATH = "/recruitment";
 
 /** Phase 2 employer app origin (no path). */
 export const EMPLOYERS_PORTAL_ORIGIN = "https://employers.hryantra.com";
@@ -33,13 +36,22 @@ export function getEmployerPortalOrigin(): string {
   return EMPLOYERS_PORTAL_ORIGIN;
 }
 
-/** Phase 2 employer workspace login URL (always absolute `/login` → dashboard). */
-export function getEmployerPortalLoginUrl(tenantDbName?: string): string {
+/** Phase 2 employer workspace login URL (absolute `/login` → redirect path). */
+export function getEmployerPortalLoginUrl(
+  tenantDbName?: string,
+  redirectPath: string = "/dashboard",
+): string {
   const qs = new URLSearchParams();
-  qs.set("redirect", "/dashboard");
+  const redirect = String(redirectPath || "/dashboard").trim() || "/dashboard";
+  qs.set("redirect", redirect.startsWith("/") ? redirect : `/${redirect}`);
   const tenant = String(tenantDbName || "").trim();
   if (tenant) qs.set("tenantDbName", tenant);
   return `${getEmployerPortalOrigin()}/login?${qs.toString()}`;
+}
+
+/** Freemium Free Jobs flow — land on Jobs module after auth. */
+export function getFreeJobsPortalLoginUrl(tenantDbName?: string): string {
+  return getEmployerPortalLoginUrl(tenantDbName, FREE_JOBS_POST_LOGIN_PATH);
 }
 
 /** Phase 2 auth login from marketing try-free (same-origin API route). */
@@ -70,6 +82,13 @@ export const EMPLOYERS_FREE_TRIAL_HREF = EMPLOYERS_TRIAL_PATH;
 /** Default trial length when HQ does not override (days). */
 export const TRIAL_DURATION_DAYS = 5;
 
+/** Free Jobs freemium monthly publish limit (matches Phase 2 JOB_POSTING_FREE_LIMIT). */
+export const FREE_JOBS_MONTHLY_LIMIT = 10;
+
 /** Marketing note: try-free credentials are issued after OTP on this page. */
 export const TRY_FREE_ACCESS_NOTE =
   "Submit the try-free form, verify your email, and we create a 5-day workspace login with all modules.";
+
+/** Marketing note: Free Jobs is a lasting free employer account with a monthly job-post limit. */
+export const FREE_JOBS_ACCESS_NOTE =
+  "Create a free employer account, verify your email, then post jobs. Free plan includes a monthly post limit — upgrade to Premium only when you need more.";
