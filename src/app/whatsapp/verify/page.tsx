@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -26,6 +26,7 @@ export default function VerifyOTP() {
   const [countryCode, setCountryCode] = useState("");
   const [otpEmail, setOtpEmail] = useState("");
   const [candidateId, setCandidateId] = useState("");
+  const requestLockRef = useRef(false);
 
   useEffect(() => {
     // Get WhatsApp number from sessionStorage
@@ -64,12 +65,17 @@ export default function VerifyOTP() {
   };
 
   const handleResend = async () => {
+    if (requestLockRef.current || isResendDisabled || timer > 0) return;
+    requestLockRef.current = true;
     setError("");
     setTimer(29);
     setIsResendDisabled(true);
 
     if (!whatsappNumber || !countryCode || !otpEmail) {
       setError(t("missingWhatsappNumber"));
+      requestLockRef.current = false;
+      setIsResendDisabled(false);
+      setTimer(0);
       return;
     }
 
@@ -90,7 +96,12 @@ export default function VerifyOTP() {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || t("failedToResendOtp"));
+        const sec = Number(data?.retryAfterSec);
+        const base = data.message || t("failedToResendOtp");
+        if (Number.isFinite(sec) && sec > 0) {
+          throw new Error(`${base} Try again in about ${Math.max(1, Math.ceil(sec / 60))} minute(s).`);
+        }
+        throw new Error(base);
       }
 
       sessionStorage.removeItem("otpPreview");
@@ -98,19 +109,25 @@ export default function VerifyOTP() {
     } catch (err: any) {
       setError(err.message || t("failedToResendOtp"));
       console.error("Error resending OTP:", err);
+    } finally {
+      requestLockRef.current = false;
     }
   };
 
   const handleVerifyOTP = async () => {
+    if (requestLockRef.current || isLoading) return;
+    requestLockRef.current = true;
     setError("");
 
     if (!otp || otp.length !== 6) {
       setError(t("enterValidOtp"));
+      requestLockRef.current = false;
       return;
     }
 
     if (!whatsappNumber || !countryCode) {
       setError(t("missingWhatsappNumber"));
+      requestLockRef.current = false;
       return;
     }
 
@@ -199,6 +216,7 @@ export default function VerifyOTP() {
       setError(err.message || t("verificationFailed"));
       console.error("Error verifying OTP:", err);
     } finally {
+      requestLockRef.current = false;
       setIsLoading(false);
     }
   };

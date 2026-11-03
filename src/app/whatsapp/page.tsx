@@ -129,11 +129,33 @@ function WhatsAppLoginInner() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
   const hasAutoDetectedCountry = useRef(false);
+  /** Sync lock — React `isLoading` alone cannot stop double-clicks while the network is slow. */
+  const authRequestLockRef = useRef(false);
 
   const isSignIn = authMode === "signin";
   const isOtpSignIn = isSignIn && signInMethod === "otp";
   const showCaptcha = !isSignIn;
   const showSignInWhatsApp = isSignIn && signInContact === "whatsapp";
+
+  const beginAuthRequest = () => {
+    if (authRequestLockRef.current || isLoading) return false;
+    authRequestLockRef.current = true;
+    setIsLoading(true);
+    return true;
+  };
+
+  const endAuthRequest = () => {
+    authRequestLockRef.current = false;
+    setIsLoading(false);
+  };
+
+  const otpRateLimitMessage = (data: { message?: string; retryAfterSec?: number } | null, fallback: string) => {
+    const base = String(data?.message || fallback).trim() || fallback;
+    const sec = Number(data?.retryAfterSec);
+    if (!Number.isFinite(sec) || sec <= 0) return base;
+    const mins = Math.max(1, Math.ceil(sec / 60));
+    return `${base} Try again in about ${mins} minute${mins === 1 ? "" : "s"}.`;
+  };
 
   useEffect(() => {
     if (otpResendTimer <= 0) return;
@@ -369,6 +391,8 @@ function WhatsAppLoginInner() {
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!beginAuthRequest()) return;
+
     setError("");
     setCaptchaError("");
     setShowAccountNotFound(false);
@@ -380,9 +404,11 @@ function WhatsAppLoginInner() {
     // Sign-in via mobile OTP not available yet
     if (intent === "login" && signInContact === "whatsapp") {
       setError(t("whatsapp.mobileOtpComingSoon"));
+      endAuthRequest();
       return;
     }
 
+    try {
     if (intent === "signup") {
       if (!whatsappNumberValue.trim() || cleanNumber.length !== selectedCountry.phoneLength) {
         setError(
@@ -442,9 +468,6 @@ function WhatsAppLoginInner() {
       }
     }
 
-    setIsLoading(true);
-
-    try {
       const response = await fetch(`${API_BASE_URL}/auth/send-otp`, {
         method: "POST",
         headers: {
@@ -476,7 +499,7 @@ function WhatsAppLoginInner() {
           setSignInMethod("password");
           return;
         }
-        throw new Error(data.message || t("whatsapp.failedToSendOtp"));
+        throw new Error(otpRateLimitMessage(data, t("whatsapp.failedToSendOtp")));
       }
 
       const resolvedEmail = String(data.data?.email || normalizedEmail || "").toLowerCase();
@@ -536,14 +559,14 @@ function WhatsAppLoginInner() {
       );
       console.error("Error sending OTP:", err);
     } finally {
-      setIsLoading(false);
+      endAuthRequest();
     }
   };
 
   const handleResendSignInOtp = async () => {
     if (otpResendTimer > 0 || !signInOtpContext) return;
+    if (!beginAuthRequest()) return;
     setError("");
-    setIsLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
         method: "POST",
@@ -557,33 +580,35 @@ function WhatsAppLoginInner() {
       });
       const data = await response.json();
       if (!response.ok || !data.success) {
-        throw new Error(data.message || t("whatsapp.verify.failedToResendOtp"));
+        throw new Error(otpRateLimitMessage(data, t("whatsapp.verify.failedToResendOtp")));
       }
       setOtpResendTimer(29);
       showSuccessToast(t("whatsapp.verify.otpResentTitle"), t("whatsapp.verify.otpResentDescription"));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("whatsapp.verify.failedToResendOtp"));
     } finally {
-      setIsLoading(false);
+      endAuthRequest();
     }
   };
 
   const handleVerifySignInOtp = async () => {
+    if (!beginAuthRequest()) return;
     setError("");
     setShowAccountNotFound(false);
 
     if (!otpValue || otpValue.length !== 6) {
       setError(t("whatsapp.verify.enterValidOtp"));
+      endAuthRequest();
       return;
     }
 
     const ctx = signInOtpContext;
     if (!ctx) {
       setError(t("whatsapp.signInOtpSendFirst"));
+      endAuthRequest();
       return;
     }
 
-    setIsLoading(true);
     try {
       const geo = await import("@/lib/login-geo").then((m) => m.collectLoginGeoPayload());
       try {
@@ -648,7 +673,7 @@ function WhatsAppLoginInner() {
             : t("whatsapp.verify.verificationFailed"),
       );
     } finally {
-      setIsLoading(false);
+      endAuthRequest();
     }
   };
 
@@ -668,6 +693,8 @@ function WhatsAppLoginInner() {
       return;
     }
 
+    if (!beginAuthRequest()) return;
+
     setError("");
     setShowAccountNotFound(false);
 
@@ -681,25 +708,27 @@ function WhatsAppLoginInner() {
             ? t("whatsapp.enterMailAddress")
             : t("whatsapp.enterValidMailAddress"),
         );
+        endAuthRequest();
         return;
       }
     } else {
       if (!whatsappNumberValue.trim()) {
         setError(t("whatsapp.enterWhatsappNumber"));
+        endAuthRequest();
         return;
       }
       if (cleanNumber.length !== selectedCountry.phoneLength) {
         setError(t("whatsapp.exactDigitsWhatsapp", { count: selectedCountry.phoneLength }));
+        endAuthRequest();
         return;
       }
     }
 
     if (!passwordValue) {
       setError(t("whatsapp.enterPassword"));
+      endAuthRequest();
       return;
     }
-
-    setIsLoading(true);
 
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -776,7 +805,7 @@ function WhatsAppLoginInner() {
       );
       console.error("Error signing in:", err);
     } finally {
-      setIsLoading(false);
+      endAuthRequest();
     }
   };
 
