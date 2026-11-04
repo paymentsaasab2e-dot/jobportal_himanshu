@@ -593,7 +593,10 @@ export function buildJobDescriptionSections(
     if (!bullets.length) return
     const existing = byId.get(id)
     if (existing) {
-      existing.bullets = mergeSectionBullets(existing.bullets, bullets)
+      // Live job API arrays are the source of truth after CRM edits — replace
+      // HTML-parsed bullets instead of merging (which kept stale JD text).
+      existing.bullets = [...new Set(bullets.map((s) => s.trim()).filter(Boolean))]
+      existing.paragraphs = []
     } else {
       byId.set(id, { id, title, paragraphs: [], bullets, level: 1 })
     }
