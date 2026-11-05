@@ -67,10 +67,39 @@ export async function verifyEmployerDemoOtp(requestId: string, email: string, ot
   });
 }
 
+export type EmployerPurchasePaymentOrder = {
+  mode?: 'live' | 'clone';
+  orderId: string;
+  amount?: number;
+  amountPaise?: number;
+  amountInr?: string;
+  currency?: string;
+  keyId?: string;
+  merchantName?: string;
+  merchantUpi?: string;
+  packageSlug?: string;
+  billingCycle?: 'monthly' | 'annual';
+  description?: string;
+};
+
+export async function createEmployerPurchaseOrder(body: {
+  requestId: string;
+  email: string;
+  packageSlug?: string;
+  billingCycle?: 'monthly' | 'annual';
+}) {
+  return postDemoRequest<EmployerPurchasePaymentOrder>('/payment-order', body);
+}
+
 export async function completeEmployerPurchase(body: {
   requestId: string;
   email: string;
-  paymentReference: string;
+  paymentReference?: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+  packageSlug?: string;
+  billingCycle?: 'monthly' | 'annual';
 }) {
   return postDemoRequest<{
     requestId: string;

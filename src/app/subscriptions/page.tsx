@@ -100,7 +100,12 @@ export default function SubscriptionsPage() {
       showSuccessToast(`Added ${result.credited}`, `Balance: ${result.tokenBalance}`);
       void refresh();
     } catch (err) {
-      showErrorToast('Purchase failed', err instanceof Error ? err.message : 'Try again');
+      const message = err instanceof Error ? err.message : 'Try again';
+      if (/cancelled|canceled/i.test(message)) {
+        showErrorToast('Payment cancelled', 'No tokens were charged.');
+      } else {
+        showErrorToast('Purchase failed', message);
+      }
     } finally {
       setBuyingId(null);
     }

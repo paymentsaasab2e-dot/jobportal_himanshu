@@ -5,16 +5,66 @@ const MERCHANT_NAME = 'Hryantra SAASA';
 const USD_TO_INR_RATE = 83;
 
 export type SignupPaymentOrder = {
+  mode?: 'live' | 'clone';
   orderId: string;
   amountInr: string;
   amountPaise: number;
-  currency: 'INR';
+  currency: string;
+  keyId?: string;
   merchantUpi: string;
   merchantName: string;
   packageName: string;
   description: string;
   upiPayLink: string;
+  packageSlug?: string;
+  billingCycle?: 'monthly' | 'annual';
 };
+
+export function toSignupPaymentOrder(
+  order: {
+    mode?: 'live' | 'clone';
+    orderId: string;
+    amountInr?: string;
+    amountPaise?: number;
+    amount?: number;
+    currency?: string;
+    keyId?: string;
+    merchantUpi?: string;
+    merchantName?: string;
+    description?: string;
+    packageSlug?: string;
+    billingCycle?: 'monthly' | 'annual';
+  },
+  packageName: string,
+): SignupPaymentOrder {
+  const merchantUpi = order.merchantUpi || MERCHANT_UPI;
+  const merchantName = order.merchantName || MERCHANT_NAME;
+  const amountInr = String(order.amountInr || ((Number(order.amountPaise || order.amount || 0) || 0) / 100).toFixed(2));
+  const amountPaise = Number(order.amountPaise || order.amount || Math.max(100, Math.round(Number(amountInr) * 100)));
+  const params = new URLSearchParams({
+    pa: merchantUpi,
+    pn: merchantName,
+    am: amountInr,
+    cu: order.currency || 'INR',
+    tn: order.description || packageName,
+    tr: order.orderId,
+  });
+  return {
+    mode: order.mode || 'clone',
+    orderId: order.orderId,
+    amountInr,
+    amountPaise,
+    currency: order.currency || 'INR',
+    keyId: order.keyId,
+    merchantUpi,
+    merchantName,
+    packageName,
+    description: order.description || `${packageName} package`,
+    upiPayLink: `upi://pay?${params.toString()}`,
+    packageSlug: order.packageSlug,
+    billingCycle: order.billingCycle,
+  };
+}
 
 function packageChargeUsd(plan: PricingPlan, isMonthly: boolean) {
   if (isMonthly) return Number(plan.price) || 0;

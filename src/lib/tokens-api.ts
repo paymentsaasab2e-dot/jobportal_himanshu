@@ -118,15 +118,83 @@ export async function fetchTokenCatalog(signal?: AbortSignal): Promise<TokenCata
   return payload.data;
 }
 
+export type TokenPaymentOrder = {
+  mode?: 'live' | 'clone';
+  orderId: string;
+  amount?: number;
+  amountPaise?: number;
+  amountInr?: string;
+  currency?: string;
+  keyId?: string;
+  merchantName?: string;
+  merchantUpi?: string;
+  packageId?: string;
+  tokens?: number;
+  description?: string;
+};
+
+export async function createTokenPackPaymentOrder(
+  packageId: string,
+): Promise<TokenPaymentOrder> {
+  const response = await fetch(`${getApiBaseUrl()}/tokens/purchase/payment-order`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ packageId }),
+  });
+  const payload = await parseJson<{
+    success?: boolean;
+    data?: TokenPaymentOrder;
+    message?: string;
+  }>(response);
+  if (!response.ok || !payload.success || !payload.data?.orderId) {
+    throw new Error(payload.message || 'Could not start checkout');
+  }
+  return payload.data;
+}
+
 export async function purchaseTokenPack(packageId: string): Promise<{
   tokenBalance: number;
   credited: number;
   reference: string;
 } | null> {
+  const order = await createTokenPackPaymentOrder(packageId);
+
+  let razorpayOrderId: string | undefined;
+  let razorpayPaymentId: string | undefined;
+  let razorpaySignature: string | undefined;
+  let paymentReference: string | undefined;
+
+  if (order.mode === 'live' && order.keyId) {
+    const { openRazorpayCheckout, readCandidatePrefill } = await import('@/lib/razorpayCheckout');
+    await openRazorpayCheckout({
+      keyId: order.keyId,
+      orderId: order.orderId,
+      amount: Number(order.amountPaise || order.amount || 0),
+      currency: String(order.currency || 'INR'),
+      merchantName: String(order.merchantName || 'Hryantra SAASA'),
+      description: String(order.description || 'Token pack'),
+      merchantUpi: order.merchantUpi,
+      prefill: readCandidatePrefill(),
+      onSuccess: (response) => {
+        razorpayOrderId = response.razorpay_order_id;
+        razorpayPaymentId = response.razorpay_payment_id;
+        razorpaySignature = response.razorpay_signature;
+      },
+    });
+  } else {
+    paymentReference = `pay_clone_${order.orderId}_${Date.now()}`;
+  }
+
   const response = await fetch(`${getApiBaseUrl()}/tokens/purchase`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ packageId }),
+    body: JSON.stringify({
+      packageId,
+      paymentReference,
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+    }),
   });
   const payload = await parseJson<{
     success?: boolean;
@@ -135,6 +203,14 @@ export async function purchaseTokenPack(packageId: string): Promise<{
   }>(response);
   if (!response.ok || !payload.success || !payload.data) {
     throw new Error(payload.message || 'Purchase failed');
+  }
+  if (typeof window !== 'undefined' && typeof payload.data.tokenBalance === 'number') {
+    window.localStorage.setItem('saasa:last-token-balance', String(payload.data.tokenBalance));
+    window.dispatchEvent(
+      new CustomEvent('saasa:token-balance', {
+        detail: { tokenBalance: payload.data.tokenBalance },
+      }),
+    );
   }
   return payload.data;
 }

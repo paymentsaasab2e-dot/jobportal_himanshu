@@ -9,14 +9,15 @@ import { Label } from "@/components/ui/label";
 import { ALL_COUNTRY_CODES } from "@/lib/country-codes";
 import {
   completeEmployerPurchase,
+  createEmployerPurchaseOrder,
   resendEmployerDemoOtp,
   sendEmployerDemoOtp,
   verifyEmployerDemoOtp,
 } from "@/lib/api/employerDemoApi";
 import {
-  buildSignupPaymentOrder,
   formatInr,
   qrImageUrl,
+  toSignupPaymentOrder,
   type SignupPaymentOrder,
 } from "@/lib/employers/signupPayment";
 import { CountrySelectField } from "@/app/(website)/employers/request-demo/CountrySelectField";
@@ -227,7 +228,16 @@ export function EmployerPackageSignupModal({ open, plan, isMonthly, onClose }: P
       try {
         const result = await verifyEmployerDemoOtp(requestId, form.email.trim(), code);
         if (result.data?.readyForPayment) {
-          setPaymentOrder(buildSignupPaymentOrder(plan, isMonthly));
+          const orderRes = await createEmployerPurchaseOrder({
+            requestId,
+            email: form.email.trim(),
+            packageSlug: plan.packageSlug,
+            billingCycle: isMonthly ? "monthly" : "annual",
+          });
+          if (!orderRes.data?.orderId) {
+            throw new Error("Could not start checkout.");
+          }
+          setPaymentOrder(toSignupPaymentOrder(orderRes.data, plan.name));
           setStep("pay");
           return;
         }
@@ -263,11 +273,45 @@ export function EmployerPackageSignupModal({ open, plan, isMonthly, onClose }: P
     setIsPaying(true);
     setPayError("");
     try {
-      const paymentReference = `pay_clone_${paymentOrder.orderId}_${Date.now()}`;
+      let razorpayOrderId: string | undefined;
+      let razorpayPaymentId: string | undefined;
+      let razorpaySignature: string | undefined;
+      let paymentReference: string | undefined;
+
+      if (paymentOrder.mode === "live" && paymentOrder.keyId) {
+        const { openRazorpayCheckout } = await import("@/lib/razorpayCheckout");
+        await openRazorpayCheckout({
+          keyId: paymentOrder.keyId,
+          orderId: paymentOrder.orderId,
+          amount: paymentOrder.amountPaise,
+          currency: paymentOrder.currency || "INR",
+          merchantName: paymentOrder.merchantName,
+          description: paymentOrder.description,
+          merchantUpi: paymentOrder.merchantUpi,
+          prefill: {
+            name: form.fullName.trim() || undefined,
+            email: form.email.trim() || undefined,
+            contact: form.phoneNumber.replace(/\D/g, "") || undefined,
+          },
+          onSuccess: (response) => {
+            razorpayOrderId = response.razorpay_order_id;
+            razorpayPaymentId = response.razorpay_payment_id;
+            razorpaySignature = response.razorpay_signature;
+          },
+        });
+      } else {
+        paymentReference = `pay_clone_${paymentOrder.orderId}_${Date.now()}`;
+      }
+
       const result = await completeEmployerPurchase({
         requestId,
         email: form.email.trim(),
         paymentReference,
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature,
+        packageSlug: paymentOrder.packageSlug || plan?.packageSlug,
+        billingCycle: paymentOrder.billingCycle || (isMonthly ? "monthly" : "annual"),
       });
       setAccess({
         loginUrl: result.data?.loginUrl,
@@ -415,21 +459,29 @@ export function EmployerPackageSignupModal({ open, plan, isMonthly, onClose }: P
                 <p className="mt-1 text-sm text-slate-600">{paymentOrder.description}</p>
               </div>
 
-              <p className="text-center text-sm font-medium text-slate-700">Scan QR with any UPI app</p>
-              <div className="mx-auto w-fit rounded-2xl border-2 border-slate-100 bg-white p-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={qrImageUrl(paymentOrder.upiPayLink)} alt="UPI QR code" width={220} height={220} className="rounded-lg" />
-              </div>
+              {paymentOrder.mode === "live" ? (
+                <p className="text-center text-sm text-slate-600">
+                  Pay securely with Razorpay (UPI, cards, netbanking). Your workspace activates after payment.
+                </p>
+              ) : (
+                <>
+                  <p className="text-center text-sm font-medium text-slate-700">Scan QR with any UPI app</p>
+                  <div className="mx-auto w-fit rounded-2xl border-2 border-slate-100 bg-white p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={qrImageUrl(paymentOrder.upiPayLink)} alt="UPI QR code" width={220} height={220} className="rounded-lg" />
+                  </div>
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">UPI ID</p>
-                <div className="mt-1 flex items-center justify-between gap-2">
-                  <p className="font-mono text-sm font-semibold">{paymentOrder.merchantUpi}</p>
-                  <button type="button" onClick={() => void copyUpi()} className="inline-flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1.5 text-xs font-semibold">
-                    <Copy className="h-3.5 w-3.5" /> {copied ? "Copied" : "Copy"}
-                  </button>
-                </div>
-              </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">UPI ID</p>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <p className="font-mono text-sm font-semibold">{paymentOrder.merchantUpi}</p>
+                      <button type="button" onClick={() => void copyUpi()} className="inline-flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1.5 text-xs font-semibold">
+                        <Copy className="h-3.5 w-3.5" /> {copied ? "Copied" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {payError ? <p className="text-sm text-rose-600">{payError}</p> : null}
 
@@ -440,7 +492,13 @@ export function EmployerPackageSignupModal({ open, plan, isMonthly, onClose }: P
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2b7fff] text-base font-semibold"
               >
                 {isPaying ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                {isPaying ? "Activating workspace…" : "Pay & activate workspace"}
+                {isPaying
+                  ? paymentOrder.mode === "live"
+                    ? "Opening Razorpay…"
+                    : "Activating workspace…"
+                  : paymentOrder.mode === "live"
+                    ? "Pay with Razorpay"
+                    : "Pay & activate workspace"}
               </Button>
             </div>
           ) : null}
