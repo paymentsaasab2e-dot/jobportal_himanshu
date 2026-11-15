@@ -49,6 +49,9 @@ type PublicApplyJob = {
   workMode?: string | null;
   openings?: number | null;
   salary?: unknown;
+  nationality?: string | null;
+  languages?: Array<{ language?: string; proficiency?: string }>;
+  industryType?: string | null;
   showClientNamePublicly?: boolean;
   publicFieldVisibility?: Record<string, boolean> | null;
   aboutCompany?: string | null;
@@ -231,6 +234,16 @@ function mapPublicJobToDetails(job: PublicApplyJob): JobPostingDetailsJob {
     candidateRequirements: asStringList(job.candidateRequirements),
     education: job.education || undefined,
     benefits: asStringList(job.benefits),
+    nationality: job.nationality || undefined,
+    industryType: job.industryType || undefined,
+    languages: Array.isArray(job.languages)
+      ? job.languages
+          .map((row) => ({
+            language: String(row?.language || '').trim(),
+            proficiency: String(row?.proficiency || '').trim(),
+          }))
+          .filter((row) => row.language)
+      : [],
     fullDescription: job.description || job.overview || undefined,
     description: job.description || undefined,
     jobOverview: job.overview || undefined,

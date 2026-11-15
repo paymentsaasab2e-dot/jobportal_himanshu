@@ -406,21 +406,10 @@ function MetaRow({ label, value }: { label: string; value: string }) {
 export function JobPostingDetailsPanel({ job }: { job: JobPostingDetailsJob }) {
   const { show } = useJobVisibility(job)
 
-  const skills = show('skills')
-    ? [
-        ...new Set(
-          [...(job.requiredSkills || []), ...(job.skills || [])]
-            .map((s) => String(s).trim())
-            .filter(Boolean),
-        ),
-      ]
-    : []
-  const languages = show('languages') && Array.isArray(job.languages) ? job.languages : []
-
   const rawDesc =
     job.fullDescription?.trim() || job.description?.trim() || job.jobOverview?.trim() || ''
 
-  const descriptionSections = buildJobDescriptionSections(rawDesc, {
+  const allDescriptionSections = buildJobDescriptionSections(rawDesc, {
     responsibilities: show('keyResponsibilities') ? job.responsibilities : [],
     preferredQualifications: show('qualifications') ? job.preferredQualifications : [],
     candidateRequirements: show('candidateRequirements') ? job.candidateRequirements : [],
@@ -430,6 +419,27 @@ export function JobPostingDetailsPanel({ job }: { job: JobPostingDetailsJob }) {
       sectionVisibleOnPortal(section.id, show) &&
       htmlSectionTitleVisibleOnPortal(section.title, show),
   )
+
+  const skillsFromDescription = allDescriptionSections
+    .filter((section) => section.id === 'skills' || /^skills$|^key skills$/i.test(section.title))
+    .flatMap((section) => [...(section.bullets || []), ...(section.paragraphs || [])])
+    .map((s) => String(s).trim())
+    .filter(Boolean)
+
+  const skills = show('skills')
+    ? [
+        ...new Set(
+          [...(job.requiredSkills || []), ...(job.skills || []), ...skillsFromDescription]
+            .map((s) => String(s).trim())
+            .filter(Boolean),
+        ),
+      ]
+    : []
+  // Skills render as chips below — keep them out of the JD document body.
+  const descriptionSections = allDescriptionSections.filter(
+    (section) => section.id !== 'skills' && !/^skills$|^key skills$/i.test(section.title),
+  )
+  const languages = show('languages') && Array.isArray(job.languages) ? job.languages : []
 
   const metaRows: { label: string; value: string }[] = []
   if (show('nationality') && job.nationality) {
